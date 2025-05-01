@@ -1483,6 +1483,9 @@ public:
     void testShouldPingTest() {
         SKIP_IF(notRoot());
 
+        // Mnemonic local.
+        ConstHostPtr empty_host;
+
         // Create manager with thread-pool size of 3, min_echos 1,
         // reply_timeout 250 milliseconds.
         // ST mode should ingore requested thread number.
@@ -1503,7 +1506,7 @@ public:
 
         // Ping checking enabled, no old lease, channel doesn't exist, should return CONTINUE.
         ASSERT_TRUE(config->getEnablePingCheck());
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
 
         // Start the manager, then pause it.  This lets us start pings without
@@ -1513,34 +1516,59 @@ public:
 
         // Ping checking disabled, no old lease, should return CONTINUE.
         config->setEnablePingCheck(false);
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
 
         // Ping checking enabled, no old lease, should return PARK.
         config->setEnablePingCheck(true);
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
 
         // Make an old lease based on the first lease.
         time_t now = time(0);
         Lease4Ptr old_lease(new Lease4(*(lqp1.lease_)));
 
-        // Prior lease belonging to the same client with cltt greater than ping-cltt-secs
+        // Expired prior lease belonging to the same client with cltt greater than ping-cltt-secs
         // should return PARK.
         old_lease->cltt_ = now - config->getPingClttSecs() * 2;
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, config));
+        ASSERT_TRUE(old_lease->expired());
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, 
+                            empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
 
-        // Prior lease belonging to the same client but with cltt less than ping-cltt-secs
+        // Lease with host with no address reserved should ping.
+        ConstHostPtr host;
+        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address", 
+                                             SubnetID(0), SubnetID(0), IOAddress("0.0.0.0")))));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, 
+                                                      host, config));
+        EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
+
+        // Lease with host with address reserved should not ping.
+        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address", 
+                                            SubnetID(0), SubnetID(0), lqp1.lease_->addr_))));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, 
+                                                      host, config));
+        EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
+
+        // Expired prior lease belonging to the same client but with cltt less than ping-cltt-secs
         // should return CONTINUE.
         old_lease->cltt_ = now - config->getPingClttSecs() / 2;
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, config));
+        ASSERT_TRUE(old_lease->expired());
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, empty_host, config));
+        EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
+
+        // An active prior lease belonging to the same client should return continue.
+        old_lease->cltt_ = now - config->getPingClttSecs() * 2;
+        old_lease->valid_lft_ = 86400;
+        ASSERT_FALSE(old_lease->expired());
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
 
         // Prior lease belonging to a different client, should return PARK.
         const uint8_t id2[] = { 0x35, 0x36, 0x37, 0x34 };
         old_lease->client_id_.reset(new ClientId(id2, sizeof(id2)));
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
 
         // Now let's start a ping for the lease-query pair.
@@ -1551,7 +1579,7 @@ public:
         lqp2.lease_->client_id_ = old_lease->client_id_;
 
         // Trying to start a ping for an address already being checked should return DROP.
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp2.lease_, lqp2.query_, empty_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp2.lease_, lqp2.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_DROP);
 
         // Stop the mgr.
@@ -1559,7 +1587,7 @@ public:
 
         // Ping checking enabled, no old lease, channel isn't open, should return CONTINUE.
         ASSERT_TRUE(config->getEnablePingCheck());
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
     }
 

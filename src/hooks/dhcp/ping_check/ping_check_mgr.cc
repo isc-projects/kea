@@ -487,8 +487,8 @@ PingCheckMgr::expirationTimedOut() {
 CalloutHandle::CalloutNextStep
 PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
                          Lease4Ptr& old_lease,
+                         ConstHostPtr host,
                          const PingCheckConfigPtr& config) {
-
     // If ping-check is disabled or the channel isn't open,
     // drop the query from parking and release the offer to the client.
     if (!config->getEnablePingCheck() || !channel_ || !channel_->isOpen()) {
@@ -505,14 +505,19 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
         return (CalloutHandle::CalloutNextStep::NEXT_STEP_DROP);
     }
 
+    // Reserved addresses are never checked.
+    if (host && (host->getIPv4Reservation() == lease->addr_)) {
+        return (CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE);
+    }
+
     // If there's a previous lease that belongs to this client and
     // it was touched by the client less than ping-cltt-secs ago then
     // no check is needed.  Drop the query from parking and release the
     // offer to the client,
     if (old_lease && (old_lease->addr_ == lease->addr_)) {
         if (old_lease->belongsToClient(lease->hwaddr_, lease->client_id_)) {
-            auto now = time(0);
-            if ((now - old_lease->cltt_) < config->getPingClttSecs()) {
+            if (!old_lease->expired() || 
+                ((time(0) - old_lease->cltt_) < config->getPingClttSecs())) {
                 return (CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE);
             }
         }

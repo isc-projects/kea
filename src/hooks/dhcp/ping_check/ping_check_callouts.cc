@@ -130,6 +130,9 @@ int lease4_offer(CalloutHandle& handle) {
         Lease4Ptr old_lease;
         handle.getArgument("old_lease", old_lease);
 
+        ConstHostPtr host;
+        handle.getArgument("host", host);
+
         if (query4->getType() != DHCPDISCOVER) {
             isc_throw(InvalidOperation, "query4 is not a DHCPDISCOVER");
         }
@@ -162,7 +165,7 @@ int lease4_offer(CalloutHandle& handle) {
         // - status == PARK - ping check it
         // - status == CONTINUE - check not needed, release DHCPOFFER to client
         // - status == DROP - duplicate check, drop the duplicate DHCPOFFER
-        status =  mgr->shouldPing(lease4, query4, old_lease, config);
+        status =  mgr->shouldPing(lease4, query4, old_lease, host, config);
         handle.setStatus(status);
         if (status == CalloutHandle::NEXT_STEP_PARK) {
             mgr->startPing(lease4, query4, parking_lot, config);

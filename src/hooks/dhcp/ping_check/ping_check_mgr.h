@@ -13,6 +13,7 @@
 #include <asiolink/io_service_thread_pool.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <dhcpsrv/host.h>
 #include <dhcpsrv/srv_config.h>
 #include <hooks/callout_handle.h>
 #include <dhcp/pkt4.h>
@@ -252,6 +253,7 @@ public:
     /// @param lease prospective lease to check.
     /// @param query DHCPDISCOVER associated with the lease.
     /// @param old_lease pre-existing lease for this client (if one).
+    /// @param host host reservation associated with lease (if one)
     /// @param config configuration parameters to employ.
     ///
     /// @return CalloutNextStep indicating what should happen next:
@@ -261,6 +263,7 @@ public:
     virtual hooks::CalloutHandle::CalloutNextStep shouldPing(dhcp::Lease4Ptr& lease,
                                                              dhcp::Pkt4Ptr& query,
                                                              dhcp::Lease4Ptr& old_lease,
+                                                             dhcp::ConstHostPtr host,
                                                              const PingCheckConfigPtr& config);
 
     /// @brief Check if the current thread can perform thread pool state
