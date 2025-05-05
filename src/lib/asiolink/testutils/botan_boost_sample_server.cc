@@ -160,7 +160,7 @@ private:
 class server
 {
 public:
-  server(boost::asio::io_service& io_context,
+  server(boost::asio::io_context& io_context,
          unsigned short port,
          Botan::Credentials_Manager& creds_mgr,
          Botan::RandomNumberGenerator& rng,
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    boost::asio::io_service io_context;
+    boost::asio::io_context io_context;
 
     Botan::AutoSeeded_RNG rng;
     Server_Credentials_Manager creds_mgr(rng);

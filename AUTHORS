@@ -265,3 +265,9 @@ We have received the following contributions:
 
  - Kevin P. Fleming
    2023-02: Fixed several examples in DHCPv6 section of the ARM.
+
+ - Dimitry Andric
+   2024-09: Added support for libc++ 19 and later.
+
+ - q66
+   2025-01: Added support for building with Boost 1.87.

@@ -44,7 +44,7 @@ namespace ph = std::placeholders;
 namespace isc {
 namespace asiodns {
 
-const boost::asio::ip::address TEST_HOST(boost::asio::ip::address::from_string("127.0.0.1"));
+const boost::asio::ip::address TEST_HOST(boost::asio::ip::make_address("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 const int SEND_INTERVAL = 250;      // Interval in ms between TCP sends
 const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB

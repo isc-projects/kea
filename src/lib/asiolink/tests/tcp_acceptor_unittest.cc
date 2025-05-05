@@ -82,7 +82,7 @@ public:
     /// connectHandler as a callback function.
     void connect() {
         boost::asio::ip::tcp::endpoint
-            endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
+            endpoint(boost::asio::ip::make_address(SERVER_ADDRESS),
                      SERVER_PORT);
         socket_.async_connect(endpoint,
                               std::bind(&TCPClient::connectHandler, this,
@@ -208,7 +208,7 @@ public:
     /// unsuccessful.
     TCPAcceptorTest()
         : io_service_(new IOService()), acceptor_(io_service_),
-          asio_endpoint_(boost::asio::ip::address::from_string(SERVER_ADDRESS),
+          asio_endpoint_(boost::asio::ip::make_address(SERVER_ADDRESS),
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),

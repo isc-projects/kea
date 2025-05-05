@@ -1,3 +1,16 @@
+2263.	[build]		fdupont, q66
+	Kea can now build with Boost 1.87. The minimum supported Boost
+	version has been bumped up from 1.57 to 1.66. Thanks to q66
+	for the patch.
+	(Gitlab #3823, #3696)
+
+2262.	[build]		dim
+	Replace ``std::basic_string<uint8_t>`` with equivalent
+	``std::vector<uint8_t>`` constructs, since the former has been
+	deprecated for a while in libc++, and has been completely
+	removed as of libc++ 19.
+	(Gitlab #3823, #3532)
+
 Kea 2.6.2 (stable) released on March 26, 2025
 
 2261.	[build]		mgodzina

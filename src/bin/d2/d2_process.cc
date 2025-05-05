@@ -133,16 +133,7 @@ size_t
 D2Process::runIO() {
     // Handle events registered by hooks using external IOService objects.
     IOServiceMgr::instance().pollIOServices();
-    // We want to block until at least one handler is called.  We'll use
-    // boost::asio::io_service directly for two reasons. First off
-    // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
-    // is not present in older versions of boost.  We need to know if any
-    // handlers ran or if the io_service was stopped.  That latter represents
-    // some form of error and the application cannot proceed with a stopped
-    // service.  Secondly, asiolink::IOService does not provide the poll
-    // method.  This is a handy method which runs all ready handlers without
-    // blocking.
-
+    // We want to block until at least one handler is called.
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
     size_t cnt = getIOService()->poll();

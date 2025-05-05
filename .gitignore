@@ -34,7 +34,7 @@ config.h.in~
 /ltmain.sh
 /missing
 /py-compile
-/stamp-h1
+/stamp-h*
 /test-driver
 /ylwrap
 /kea_version.h

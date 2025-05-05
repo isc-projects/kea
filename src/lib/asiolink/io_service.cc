@@ -30,7 +30,7 @@ public:
     /// @brief The constructor.
     IOServiceImpl() :
         io_service_(),
-        work_(new boost::asio::io_service::work(io_service_)) {
+        work_(boost::asio::make_work_guard(io_service_)) {
     };
 
     /// @brief The destructor.
@@ -92,7 +92,7 @@ public:
 
     /// @brief Restarts the IOService in preparation for a subsequent @ref run() invocation.
     void restart() {
-        io_service_.reset();
+        io_service_.restart();
     }
 
     /// @brief Removes IO service work object to let it finish running
@@ -101,13 +101,13 @@ public:
         work_.reset();
     }
 
-    /// @brief Return the native @c io_service object used in this wrapper.
+    /// @brief Return the native @c io_context object used in this wrapper.
     ///
     /// This is a short term work around to support other Kea modules
-    /// that share the same @c io_service with the authoritative server.
+    /// that share the same @c io_context with the authoritative server.
     /// It will eventually be removed once the wrapper interface is
     /// generalized.
-    boost::asio::io_service& getInternalIOService() {
+    boost::asio::io_context& getInternalIOService() {
         return (io_service_);
     }
 
@@ -115,12 +115,12 @@ public:
     ///
     /// @param callback The callback to be run on the IO service.
     void post(const std::function<void ()>& callback) {
-        io_service_.post(callback);
+        boost::asio::post(io_service_, callback);
     }
 
 private:
-    boost::asio::io_service io_service_;
-    boost::shared_ptr<boost::asio::io_service::work> work_;
+    boost::asio::io_context io_service_;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
 };
 
 IOService::IOService() : io_impl_(new IOServiceImpl()) {
@@ -169,7 +169,7 @@ IOService::stopWork() {
     io_impl_->stopWork();
 }
 
-boost::asio::io_service&
+boost::asio::io_context&
 IOService::getInternalIOService() {
     return (io_impl_->getInternalIOService());
 }

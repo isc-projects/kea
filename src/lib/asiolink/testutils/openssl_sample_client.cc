@@ -34,7 +34,7 @@ enum { max_length = 1024 };
 class client
 {
 public:
-  client(boost::asio::io_service& io_context,
+  client(boost::asio::io_context& io_context,
       boost::asio::ssl::context& context,
       const tcp::endpoint& endpoint)
     : socket_(io_context, context)
@@ -154,11 +154,11 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    boost::asio::io_service io_context;
+    boost::asio::io_context io_context;
 
     using namespace std; // For atoi.
     tcp::endpoint endpoint(
-      boost::asio::ip::address::from_string(argv[1]), atoi(argv[2]));
+      boost::asio::ip::make_address(argv[1]), atoi(argv[2]));
 
     boost::asio::ssl::context ctx(boost::asio::ssl::context::method::tls);
     ctx.load_verify_file(CA_("kea-ca.crt"));

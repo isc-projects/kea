@@ -32,7 +32,7 @@ typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> ssl_socket;
 class session
 {
 public:
-  session(boost::asio::io_service& io_context,
+  session(boost::asio::io_context& io_context,
       boost::asio::ssl::context& context)
     : socket_(io_context, context)
   {
@@ -106,7 +106,7 @@ private:
 class server
 {
 public:
-  server(boost::asio::io_service& io_context, unsigned short port)
+  server(boost::asio::io_context& io_context, unsigned short port)
     : io_context_(io_context),
       acceptor_(io_context,
           boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
@@ -152,7 +152,7 @@ public:
   }
 
 private:
-  boost::asio::io_service& io_context_;
+  boost::asio::io_context& io_context_;
   boost::asio::ip::tcp::acceptor acceptor_;
   boost::asio::ssl::context context_;
 };
@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    boost::asio::io_service io_context;
+    boost::asio::io_context io_context;
 
     using namespace std; // For atoi.
     server s(io_context, atoi(argv[1]));

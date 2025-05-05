@@ -772,7 +772,7 @@ TEST_F(TLSTest, noHandshake) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -877,7 +877,7 @@ TEST_F(TLSTest, serverNotConfigured) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -975,7 +975,7 @@ TEST_F(TLSTest, clientNotConfigured) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1072,7 +1072,7 @@ TEST_F(TLSTest, clientHTTPnoS) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1165,7 +1165,7 @@ TEST_F(TLSTest, unknownClient) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1254,7 +1254,7 @@ TEST_F(TLSTest, anotherClient) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1353,7 +1353,7 @@ TEST_F(TLSTest, selfSigned) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1460,7 +1460,7 @@ TEST_F(TLSTest, noHandshakeCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1561,7 +1561,7 @@ TEST_F(TLSTest, serverNotConfiguredCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1658,7 +1658,7 @@ TEST_F(TLSTest, clientNotConfiguredCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1754,7 +1754,7 @@ TEST_F(TLSTest, clientHTTPnoSCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1847,7 +1847,7 @@ TEST_F(TLSTest, anotherClientCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -1944,7 +1944,7 @@ TEST_F(TLSTest, selfSignedCloseonError) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2048,7 +2048,7 @@ TEST_F(TLSTest, anotherClientNoReq) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2118,7 +2118,7 @@ TEST_F(TLSTest, serverRaw) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2189,7 +2189,7 @@ TEST_F(TLSTest, trustedSelfSigned) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2265,7 +2265,7 @@ TEST_F(TLSTest, shutdownInactive) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2360,7 +2360,7 @@ TEST_F(TLSTest, shutdownActive) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2469,7 +2469,7 @@ TEST_F(TLSTest, shutdownCloseInactive) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));
@@ -2570,7 +2570,7 @@ TEST_F(TLSTest, shutdownCloseActive) {
     server_.reset(new TlsStream<TestCallback>(io_service_, server_ctx));
 
     // Accept a client.
-    tcp::endpoint server_ep(tcp::endpoint(address::from_string(SERVER_ADDRESS),
+    tcp::endpoint server_ep(tcp::endpoint(make_address(SERVER_ADDRESS),
                                           SERVER_PORT));
     tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(tcp::acceptor::reuse_address(true));

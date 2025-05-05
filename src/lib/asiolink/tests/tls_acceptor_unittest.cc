@@ -83,8 +83,7 @@ public:
     /// connectHandler as a callback function.
     void connect() {
         ip::tcp::endpoint
-            endpoint(ip::address::from_string(SERVER_ADDRESS),
-                     SERVER_PORT);
+            endpoint(ip::make_address(SERVER_ADDRESS), SERVER_PORT);
         socket_.async_connect(endpoint,
                               std::bind(&TLSClient::connectHandler, this,
                                         ph::_1));
@@ -215,8 +214,7 @@ public:
     /// unsuccessful.
     TLSAcceptorTest()
         : io_service_(new IOService()), acceptor_(io_service_),
-          asio_endpoint_(ip::address::from_string(SERVER_ADDRESS),
-                         SERVER_PORT),
+          asio_endpoint_(ip::make_address(SERVER_ADDRESS), SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
           max_connections_(1), running_(true) {

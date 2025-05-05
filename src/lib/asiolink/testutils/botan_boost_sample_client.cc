@@ -101,7 +101,7 @@ public:
 class client
 {
 public:
-  client(boost::asio::io_service& io_context,
+  client(boost::asio::io_context& io_context,
       Botan::TLS::Context& context,
       const tcp::endpoint& endpoint)
     : socket_(io_context, context)
@@ -205,11 +205,11 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    boost::asio::io_service io_context;
+    boost::asio::io_context io_context;
 
     using namespace std; // For atoi.
     tcp::endpoint endpoint(
-      boost::asio::ip::address::from_string(argv[1]), atoi(argv[2]));
+      boost::asio::ip::make_address(argv[1]), atoi(argv[2]));
     Botan::AutoSeeded_RNG rng;
     Client_Credentials_Manager creds_mgr(rng);
     Client_Session_Manager sess_mgr;

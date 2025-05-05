@@ -50,7 +50,7 @@ public:
     ///
     /// @param request HTTP request in the textual format.
     void startRequest(const std::string& request) {
-        tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
+        tcp::endpoint endpoint(make_address(server_address_), server_port_);
         socket_.async_connect(endpoint,
         [this, request](const boost::system::error_code& ec) {
             receive_done_ = false;
