@@ -12,6 +12,8 @@ Some critical details:
   but Botan and other algorithms require PKCS#8
  - some tools check the alternate subject name of the server so put
   a correct value in it
+ - some tools require an autority key identifier in all certificates
+  and the basic constraint to be critical
 
 Files:
  - doc.txt this file
@@ -43,7 +45,8 @@ Files:
  - server-addr-conf.cnf OpenSSL configuration file to add an IP address
   subject alternative name (127.0.0.1 and ::1)
  - server-conf.cnf OpenSSL configuration file to add a DNS subject
-  alternative name (localhost)
+  alternative name (localhost), make the basic constraint critical and
+  add cert sign key usage for CAs.
 
 NOTE: On some systems, the openssl pkcs8 commands require -topk8 parameter.
 

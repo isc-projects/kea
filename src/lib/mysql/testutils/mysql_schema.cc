@@ -131,8 +131,8 @@ string getMySQLTlsServerVariable(string variable) {
         if (result) {
             mysql_free_result(result);
         }
+        throw;
     }
-    return (string());
 }
 
 bool isMySQLTlsConfigured() {

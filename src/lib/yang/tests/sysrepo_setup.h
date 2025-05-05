@@ -31,8 +31,8 @@ struct SysrepoSetup {
     /// is the equivalent of running "make shm_clean" in sysrepo:
     /// https://github.com/sysrepo/sysrepo/blob/v1.4.140/CMakeLists.txt#L329-L334
     static void cleanSharedMemory() {
-        call_system("rm -rf /Users/razvan/isc/git/sysrepo/shm/sr_*");
-        call_system("rm -rf /Users/razvan/isc/git/sysrepo/shm/srsub_*");
+        call_system("rm -rf /dev/shm/sr_*");
+        call_system("rm -rf /dev/shm/srsub_*");
     }
 
 private:
