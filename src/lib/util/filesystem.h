@@ -8,6 +8,7 @@
 #define KEA_UTIL_FILESYSTEM_H
 
 #include <string>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -146,9 +147,39 @@ private:
     std::string dir_name_;
 };
 
-/// @brief Class that provides basic file related tasks.
-class FileManager {
+/// @brief Embodies a supported path against which file paths can be validated.
+class PathChecker {
 public:
+    /// @brief Constructor.
+    ///
+    /// Makes a call to getPath(true) to initialize the supported path.
+    ///
+    /// @param default_path path to use unless overidden by explicitly or via
+    /// environment variable.
+    /// @param env_name name of environment variable (if one), that can override
+    /// the default path.
+    PathChecker(const std::string default_path, const std::string env_name = "");
+
+    /// @brief Destructor.
+    virtual ~PathChecker() {};
+
+    /// @brief Fetches the supported path.
+    ///
+    /// When called with reset=true it will calculate the supported path as
+    /// follows:
+    ///
+    /// 1. Use the value of explicit_path parameter if not blank
+    /// 2. Use the value of the environment variable, if one is provided and it
+    /// is defined in the environment
+    /// 3. Use the value of default path.
+    ///
+    /// @param reset recalculate when true, defaults to false.
+    /// @param explicit_path set default hooks path to this value. This is
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default hooks path.
+    std::string getPath(bool reset = false, const std::string explicit_path = "");
+
     /// @brief Validates a file path against a supported path.
     ///
     /// If the input path specifies a parent path and file name, the parent path
@@ -156,8 +187,6 @@ public:
     /// the validated path. If the input path contains only a file name the function
     /// returns valid path using the supported path and the input path name.
     ///
-    /// @param supported_path_str absolute path specifying the  supported path
-    /// of the file against which the input path is validated.
     /// @param input_path_str file path to validate.
     /// @param enforce_path enables validation against the supported path.  If false
     /// verifies only that the path contains a file name.
@@ -166,10 +195,32 @@ public:
     ///
     /// @throw BadValue if the input path does not include a file name or if the
     /// it the parent path does not path the supported path.
-    static std::string validatePath(const std::string supported_path_str,
-                                    const std::string input_path_str,
-                                    bool enforce_path = true);
+    std::string validatePath(const std::string input_path_str,
+                             bool enforce_path = true) const;
+
+    /// @brief Fetches the default path.
+    std::string getDefaultPath() const {
+        return (default_path_);
+    }
+
+    /// @brief Fetches the environment variable name.
+    std::string getEnvName() const {
+        return (env_name_);
+    }
+
+private:
+    /// @brief Default supported path.
+    std::string default_path_;
+
+    /// @brief Name of environment variable (if one) that can override the default.
+    std::string env_name_;
+
+    /// @brief The supported path currently in effect.
+    std::string path_;
 };
+
+/// @brief Defines a pointer to a PathChecker.
+typedef boost::shared_ptr<PathChecker> PathCheckerPtr;
 
 }  // namespace file
 }  // namespace util
