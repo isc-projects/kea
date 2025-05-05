@@ -22,8 +22,6 @@ kea_asiolink_lib = shared_library(
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
     version: '85.0.0',
-    # Avoids: ld: error: undefined symbol: environ on FreeBSD
-    override_options: ENVIRON_SHLIB_FLAGS,
 )
 LIBS_BUILT_SO_FAR = [kea_asiolink_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')

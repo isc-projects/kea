@@ -23,6 +23,7 @@ project(
     license_files: ['COPYING'],
     default_options: [
         'b_asneeded=true',
+        'b_lundef=false',  # required for clang++ when used with sanitizers and for BSD ld when linking with extern char **environ.
         'b_pch=false',
         'b_pie=true',
         'warning_level=2',
@@ -398,19 +399,6 @@ result = cpp.run(
     name: 'CHRONO_SAME_DURATION',
 )
 conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
-
-ENVIRON_SHLIB_FLAGS = []
-# --no-undefined is not supported by all loaders.
-if cpp.has_link_argument('-Wl,--no-undefined')
-    result = cpp.links(
-        fs.read('compiler-checks/environ-in-shlib.cc'),
-        name: 'ENVIRON_SHLIB_FLAGS',
-        args: ['--shared', '-fPIC', '-Wl,--no-undefined'],
-    )
-    if not result
-        ENVIRON_SHLIB_FLAGS += 'b_lundef=false'
-    endif
-endif
 
 if CRYPTO_DEP.name() == openssl.name()
     result1 = cpp.run(
