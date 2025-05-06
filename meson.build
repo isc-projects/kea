@@ -530,8 +530,9 @@ kea_pkg_version_in_configure = run_command(
 ).stdout().strip()
 if kea_pkg_type_in_configure != '' and kea_pkg_version_in_configure != ''
     SOURCE_OF_INSTALLATION = f'@kea_pkg_version_in_configure@ @kea_pkg_type_in_configure@'
-else
-    if fs.is_dir('.git') and git.found()
+elif fs.is_dir('.git')
+    SOURCE_OF_INSTALLATION = 'git'
+    if git.found()
         result = run_command(
             CD_AND_RUN,
             TOP_SOURCE_DIR,
@@ -541,11 +542,11 @@ else
             check: false,
         )
         if result.returncode() == 0
-            SOURCE_OF_INSTALLATION = 'git ' + result.stdout().strip()
+            SOURCE_OF_INSTALLATION += ' ' + result.stdout().strip()
         endif
-    else
-        SOURCE_OF_INSTALLATION = 'tarball'
     endif
+else
+    SOURCE_OF_INSTALLATION = 'tarball'
 endif
 conf_data.set(
     'EXTENDED_VERSION',
