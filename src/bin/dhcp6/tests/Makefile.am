@@ -15,6 +15,7 @@ DISTCLEANFILES += marker_file.h
 DISTCLEANFILES += test_data_files_config.h
 DISTCLEANFILES += test_libraries.h
 
+dhcp_data_dir = @localstatedir@/lib/@PACKAGE@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
