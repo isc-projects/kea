@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO: Needs migration to meson.
+
 set -eu
 
 script_path=$(cd "$(dirname "${0}")" && pwd)

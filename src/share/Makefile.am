@@ -1,1 +1,0 @@
-SUBDIRS = api database yang

@@ -60,7 +60,7 @@ done
 
 # For all modules that were modified in this branch:
 # - rename it to the new revision
-# - change its name in Makefile.am
+# - change its name in meson.build
 # - change its name in yang_revisions.h
 ca=$(git merge-base origin/master "$(git rev-parse --abbrev-ref HEAD)")
 for module in $(git diff "${ca}" --name-only . | grep  -E '\.yang$'); do
@@ -68,7 +68,7 @@ for module in $(git diff "${ca}" --name-only . | grep  -E '\.yang$'); do
   new_module="$(printf '%s' "${module}" | sed "s/@.*\.yang/@${wednesday}.yang/g")"
   if test "${module}" != "${new_module}"; then
     mv "${module}" "${new_module}"
-    sed -i "s/${module}/${new_module}/g" ./Makefile.am
+    sed -i "s/${module}/${new_module}/g" ./meson.build
     sed -i "s/${module}/${new_module}/g" ../../../lib/yang/yang_revisions.h
   fi
 done

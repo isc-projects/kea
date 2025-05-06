@@ -1,1 +1,0 @@
-SUBDIRS = mysql pgsql

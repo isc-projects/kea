@@ -138,7 +138,6 @@ for lib in $(git diff --name-only "${old_release_tag}" src/lib | cut -d '/' -f 3
   old_version=$(grep -Eo "version: '[0-9.]+'," "src/lib/${lib}/meson.build" | grep -Eo '[0-9.]+' | cut -d '.' -f 1)
   new_version=$((old_version + increment))
   sed -i'' "s/version: '.*',/version: '${new_version}.0.0',/" "src/lib/${lib}/meson.build"
-  sed -i'' "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
 done
 
 if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
@@ -155,7 +154,6 @@ if ! ${is_new_tag_stable_release} && ${is_old_tag_stable_release}; then
     old_version=$(grep -Eo "version: '[0-9.]+'," "src/lib/${lib}/meson.build" | grep -Eo '[0-9.]+' | cut -d '.' -f 1)
     new_version=$((old_version + increment_extra))
     sed -i'' "s/version: '.*',/version: '${new_version}.0.0',/" "src/lib/${lib}/meson.build"
-    sed -i'' "s/version-info .*/version-info ${new_version}:0:0/" "src/lib/${lib}/Makefile.am"
   done
 fi
 
