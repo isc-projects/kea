@@ -20,7 +20,8 @@ namespace isc {
 namespace dhcp {
 
 CfgMgr::CfgMgr()
-    : datadir_(DHCP_DATA_DIR, true), d2_client_mgr_(new D2ClientMgr()),
+    : data_dir_checker_(new file::PathChecker(DHCP_DATA_DIR, "KEA_DHCP_DATA_DIR")),
+      d2_client_mgr_(new D2ClientMgr()),
       configuration_(new SrvConfig()), family_(AF_INET) {
 }
 
@@ -30,14 +31,14 @@ CfgMgr::instance() {
     return (cfg_mgr);
 }
 
-Optional<std::string>
-CfgMgr::getDataDir() const {
-    return (datadir_);
+std::string
+CfgMgr::getDataDir(bool reset /* = false */, const std::string explicit_path /* = "" */) {
+    return (data_dir_checker_->getPath(reset, explicit_path));
 }
 
-void
-CfgMgr::setDataDir(const std::string& datadir, bool unspecified) {
-    datadir_ = Optional<std::string>(datadir, unspecified);
+std::string
+CfgMgr::validatePath(const std::string data_path, bool enforce_path /* = true */) const {
+    return (data_dir_checker_->validatePath(data_path, enforce_path));
 }
 
 void

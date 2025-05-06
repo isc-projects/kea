@@ -35,6 +35,7 @@ extern const isc::log::MessageID DHCP6_CONFIG_START = "DHCP6_CONFIG_START";
 extern const isc::log::MessageID DHCP6_CONFIG_SYNTAX_WARNING = "DHCP6_CONFIG_SYNTAX_WARNING";
 extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR = "DHCP6_CONFIG_UNRECOVERABLE_ERROR";
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT = "DHCP6_CONFIG_UNSUPPORTED_OBJECT";
+extern const isc::log::MessageID DHCP6_DATA_DIRECTORY_DEPRECATED = "DHCP6_DATA_DIRECTORY_DEPRECATED";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_DISABLED = "DHCP6_DB_RECONNECT_DISABLED";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_FAILED = "DHCP6_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_LOST_CONNECTION = "DHCP6_DB_RECONNECT_LOST_CONNECTION";
@@ -209,6 +210,7 @@ const char* values[] = {
     "DHCP6_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP6_CONFIG_UNRECOVERABLE_ERROR", "DHCPv6 server new configuration failed with an error which cannot be recovered",
     "DHCP6_CONFIG_UNSUPPORTED_OBJECT", "DHCPv6 server configuration includes an unsupported object: %1",
+    "DHCP6_DATA_DIRECTORY_DEPRECATED", "'data-directory' has been deprecated, the specified path %1 will be ignored, using %2",
     "DHCP6_DB_RECONNECT_DISABLED", "database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4",
     "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3",
     "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost: manager ID: %1, timer: %2.",

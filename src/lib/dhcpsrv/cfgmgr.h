@@ -15,6 +15,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/buffer.h>
+#include <util/filesystem.h>
 #include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
@@ -75,18 +76,31 @@ public:
     /// accessing it.
     static CfgMgr& instance();
 
-    /// @brief returns path do the data directory
+    /// @brief Fetches the supported DHCP data directory.
     ///
-    /// This method returns a path to writable directory that DHCP servers
-    /// can store data in.
-    /// @return data directory
-    util::Optional<std::string> getDataDir() const;
+    /// The first call to this function with no arguments will set the default
+    /// hooks path to either the value of DHCP_DATA_DIR or the environment
+    /// variable KEA_DHCP_DATA_DIR if it is defined.  Subsequent calls with no
+    /// arguments will simply return this value.
+    ///
+    /// @param reset recalculate when true, defaults to false. This is for
+    /// testing purposes only.
+    /// @param explicit_path set default hooks path to this value. This is
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default data directory.
+    std::string getDataDir(bool reset = false,
+                                  const std::string explicit_path = "");
 
-    /// @brief Sets new data directory.
+    /// @brief Validates a file path against the supported directory for DHDP data.
     ///
-    /// @param datadir New data directory.
-    /// @param unspecified Initial state. Default is "unspecified".
-    void setDataDir(const std::string& datadir, bool unspecified = true);
+    /// @param data_path data path to validate.
+    /// @param enforce_path enables validation against the supported path.
+    /// If false verifies only that the path contains a file name.
+    ///
+    /// @return validated path
+    std::string validatePath(const std::string data_path,
+                             bool enforce_path = true) const;
 
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///
@@ -260,8 +274,9 @@ private:
     /// @param seq Source configuration sequence number.
     void mergeIntoCfg(const SrvConfigPtr& taget_config, const uint32_t seq);
 
-    /// @brief directory where data files (e.g. server-id) are stored
-    util::Optional<std::string> datadir_;
+    /// @brief PathChecker that provides the supported DHCP data directory
+    /// where data files (e.g. lease files and server-id) are stored.
+    util::file::PathCheckerPtr data_dir_checker_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgrPtr d2_client_mgr_;

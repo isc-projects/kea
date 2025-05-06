@@ -41,7 +41,7 @@ namespace test {
 
 BaseServerTest::BaseServerTest()
     : original_datadir_(CfgMgr::instance().getDataDir()) {
-    CfgMgr::instance().setDataDir(TEST_DATA_BUILDDIR);
+    CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
 }
 
 BaseServerTest::~BaseServerTest() {
@@ -51,7 +51,7 @@ BaseServerTest::~BaseServerTest() {
     static_cast<void>(::remove(s2.str().c_str()));
 
     // Revert to original data directory.
-    CfgMgr::instance().setDataDir(original_datadir_);
+    CfgMgr::instance().getDataDir(true, original_datadir_);
 
     // Revert to unit test logging, in case the test reconfigured it.
     isc::log::initLogger();

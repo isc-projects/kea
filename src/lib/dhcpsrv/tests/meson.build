@@ -130,7 +130,7 @@ kea_dhcpsrv_tests = executable(
     sources,
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
-        f'-DDHCP_DATA_DIR="@current_build_dir@"',
+        f'-DDHCP_DATA_DIR="@SHAREDSTATEDIR_INSTALLED@"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_BUILT@"',
         f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"',
     ],

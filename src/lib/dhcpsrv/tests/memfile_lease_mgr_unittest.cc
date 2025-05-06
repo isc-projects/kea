@@ -542,7 +542,7 @@ TEST_F(MemfileLeaseMgrTest, lfcEnv) {
     pmap["lfc-interval"] = "1";
 
     std::ostringstream s;
-    s << DHCP_DATA_DIR << "/test_kea_lfc_env.sh";
+    s << TEST_DATA_BUILDDIR << "/test_kea_lfc_env.sh";
     setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
 
     boost::scoped_ptr<NakedMemfileLeaseMgr> lease_mgr(new NakedMemfileLeaseMgr(pmap));

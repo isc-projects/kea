@@ -6487,16 +6487,13 @@ TEST_F(Dhcp6ParserTest, notDirDataDir) {
 
 /// Check that a valid data directory is accepted.
 TEST_F(Dhcp6ParserTest, testDataDir) {
-
-    EXPECT_TRUE(CfgMgr::instance().getDataDir().unspecified());
     string original_datadir(CfgMgr::instance().getDataDir());
-    string datadir(TEST_DATA_BUILDDIR);
     string config_txt = "{\n"
-        "\"data-directory\": \"" + datadir + "\"\n"
+        "\"data-directory\": \"/tmp\"\n"
         "}";
+
     ConstElementPtr config;
     ASSERT_NO_THROW(config = parseDHCP6(config_txt));
-    // Do not export it as it will keep the current TEST_DATA_BUILDDIR...
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = Dhcpv6SrvTest::configure(srv_, config));
@@ -6504,10 +6501,8 @@ TEST_F(Dhcp6ParserTest, testDataDir) {
     // returned value should be 0 (success);
     checkResult(status, 0);
 
-    // The value of data-directory was updated.
-    EXPECT_FALSE(CfgMgr::instance().getDataDir().unspecified());
-    EXPECT_EQ(datadir, string(CfgMgr::instance().getDataDir()));
-    EXPECT_NE(original_datadir, string(CfgMgr::instance().getDataDir()));
+    // The value of data-directory should not have been updated.
+    ASSERT_EQ(CfgMgr::instance().getDataDir(), std::string(DHCP_DATA_DIR));
 }
 
 /// Check that the dhcp4o6-port default value has a default value if not

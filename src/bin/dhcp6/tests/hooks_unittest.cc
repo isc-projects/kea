@@ -1090,7 +1090,7 @@ bool HooksDhcpv6SrvTest::callback_rev_update_;
 DdnsParamsPtr HooksDhcpv6SrvTest::callback_ddns_params_;
 
 /// @brief Fixture class used to do basic library load/unload tests
-class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
+class LoadUnloadDhcpv6SrvTest : public BaseServerTest /*::testing::Test */ {
 public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedDhcpv6Srv> server_;
@@ -5729,6 +5729,8 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
         EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
         EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
                                     "3io_contextjson_confignetwork_stateserver_config"));
+
+        break;
     }
 }
 

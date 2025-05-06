@@ -258,7 +258,6 @@ class CfgMgrTest : public ::testing::Test {
 public:
     CfgMgrTest() {
         // make sure we start with a clean configuration
-        original_datadir_ = CfgMgr::instance().getDataDir();
         clear();
     }
 
@@ -279,9 +278,22 @@ public:
 
     void clear() {
         CfgMgr::instance().setFamily(AF_INET);
-        CfgMgr::instance().setDataDir(original_datadir_);
+        resetDataDir();
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
+    }
+
+    /// @brief Sets the DHCP data path for server data files.
+    /// @param custom_path path to use.
+    void setDataDir(const std::string explicit_path = "") {
+        CfgMgr::instance().getDataDir(true, 
+                                      (!explicit_path.empty() ?
+                                      explicit_path : std::string(DHCP_DATA_DIR)));
+    }
+
+    /// @brief Resets the DHCP data path to DHCP_DATA_DIR.
+    void resetDataDir() {
+        CfgMgr::instance().getDataDir(true);
     }
 
     /// @brief Creates instance of the backend.
@@ -303,16 +315,11 @@ public:
 
     /// used in client classification (or just empty container for other tests)
     isc::dhcp::ClientClasses classify_;
-
-private:
-    /// to restore it in destructor.
-    string original_datadir_;
 };
 
 // Checks that there is a configuration structure available and that
 // it is empty by default.
 TEST_F(CfgMgrTest, configuration) {
-
     ConstSrvConfigPtr configuration = CfgMgr::instance().getCurrentCfg();
     ASSERT_TRUE(configuration);
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
@@ -322,62 +329,18 @@ TEST_F(CfgMgrTest, configuration) {
     EXPECT_TRUE(configuration->getLoggingInfo().empty());
 }
 
-// This test checks the data directory handling.
-TEST_F(CfgMgrTest, dataDir) {
-    // It is only in DHCPv6 syntax so switch to IPv6.
-    CfgMgr::instance().setFamily(AF_INET6);
+TEST_F(CfgMgrTest, getDataDir) {
+    // No environment variable or explicit path should
+    // return the default path after construction.
+    ASSERT_FALSE(getenv("KEA_DHCP_DATA_DIR"));
+    ASSERT_EQ(CfgMgr::instance().getDataDir(), std::string(DHCP_DATA_DIR));
 
-    // Default.
-    EXPECT_TRUE(CfgMgr::instance().getDataDir().unspecified());
-    ConstElementPtr json = CfgMgr::instance().getCurrentCfg()->toElement();
-    ASSERT_TRUE(json);
-    ASSERT_EQ(Element::map, json->getType());
-    ConstElementPtr dhcp = json->get("Dhcp6");
-    ASSERT_TRUE(dhcp);
-    ASSERT_EQ(Element::map, dhcp->getType());
-    ConstElementPtr datadir = dhcp->get("data-directory");
-    EXPECT_FALSE(datadir);
+    setenv("KEA_DHCP_DATA_DIR", "/tmp/envpath", 1);
+    ASSERT_EQ(CfgMgr::instance().getDataDir(true),"/tmp/envpath");
+    ASSERT_EQ(CfgMgr::instance().getDataDir(),"/tmp/envpath");
 
-    // Set but not specified.
-    CfgMgr::instance().setDataDir("/tmp");
-    EXPECT_TRUE(CfgMgr::instance().getDataDir().unspecified());
-    EXPECT_EQ("/tmp", string(CfgMgr::instance().getDataDir()));
-    json = CfgMgr::instance().getCurrentCfg()->toElement();
-    ASSERT_TRUE(json);
-    ASSERT_EQ(Element::map, json->getType());
-    dhcp = json->get("Dhcp6");
-    ASSERT_TRUE(dhcp);
-    ASSERT_EQ(Element::map, dhcp->getType());
-    datadir = dhcp->get("data-directory");
-    EXPECT_FALSE(datadir);
-
-    // Set and specified.
-    CfgMgr::instance().setDataDir("/tmp", false);
-    EXPECT_FALSE(CfgMgr::instance().getDataDir().unspecified());
-    EXPECT_EQ("/tmp", string(CfgMgr::instance().getDataDir()));
-    json = CfgMgr::instance().getCurrentCfg()->toElement();
-    ASSERT_TRUE(json);
-    ASSERT_EQ(Element::map, json->getType());
-    dhcp = json->get("Dhcp6");
-    ASSERT_TRUE(dhcp);
-    ASSERT_EQ(Element::map, dhcp->getType());
-    datadir = dhcp->get("data-directory");
-    ASSERT_TRUE(datadir);
-    ASSERT_EQ(Element::string, datadir->getType());
-    EXPECT_EQ("/tmp", datadir->stringValue());
-
-    // Still IPv6 only.
-    CfgMgr::instance().setFamily(AF_INET);
-    EXPECT_FALSE(CfgMgr::instance().getDataDir().unspecified());
-    EXPECT_EQ("/tmp", string(CfgMgr::instance().getDataDir()));
-    json = CfgMgr::instance().getCurrentCfg()->toElement();
-    ASSERT_TRUE(json);
-    ASSERT_EQ(Element::map, json->getType());
-    dhcp = json->get("Dhcp4");
-    ASSERT_TRUE(dhcp);
-    ASSERT_EQ(Element::map, dhcp->getType());
-    datadir = dhcp->get("data-directory");
-    EXPECT_FALSE(datadir);
+    ASSERT_EQ(CfgMgr::instance().getDataDir(true, "/tmp/explicit"), "/tmp/explicit");
+    ASSERT_EQ(CfgMgr::instance().getDataDir(), "/tmp/explicit");
 }
 
 // This test checks the D2ClientMgr wrapper methods.

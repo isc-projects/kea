@@ -191,8 +191,9 @@ public:
 
         // Set the data directory for server id file.
         if (global->contains("data-directory")) {
-            CfgMgr::instance().setDataDir(getString(global, "data-directory"),
-                                          false);
+            LOG_WARN(dhcp6_logger, DHCP6_DATA_DIRECTORY_DEPRECATED)
+                .arg(getString(global, "data-directory"))
+                .arg(CfgMgr::instance().getDataDir());
         }
 
         // Set the probation period for decline handling.

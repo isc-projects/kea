@@ -26,6 +26,7 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp6_parser.yy\"
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(abs_top_srcdir)/src/lib/asiolink/testutils/ca\"
+AM_CPPFLAGS += -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
 
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)

@@ -324,7 +324,7 @@ LeaseFileLoaderTest::~LeaseFileLoaderTest() {
 std::string
 LeaseFileLoaderTest::absolutePath(const std::string& filename) {
     std::ostringstream s;
-    s << DHCP_DATA_DIR << "/" << filename;
+    s << TEST_DATA_BUILDDIR << "/" << filename;
     return (s.str());
 }
 
