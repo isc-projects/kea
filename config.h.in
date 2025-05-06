@@ -13,14 +13,8 @@
 /* Fuzzing enabled. */
 #mesondefine FUZZING
 
-/* Fuzzing running in CI. */
-#mesondefine FUZZING_IN_CI
-
 /* AFL compiler enabled. */
 #mesondefine HAVE_AFL
-
-/* Whether you have the <botan/asio_stream.h> header file. */
-#mesondefine HAVE_BOTAN_ASIO_STREAM_H
 
 /* Whether gtest defines edit_distance::CreateUnifiedDiff */
 #mesondefine HAVE_CREATE_UNIFIED_DIFF

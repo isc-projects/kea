@@ -123,9 +123,10 @@ KEA_MSG_COMPILER = disabler()
 
 #### Configuration Data
 
-# 'HAVE_BOTAN_ASIO_STREAM_H': false,
-# 'HAVE_PGSQL_SSL': false,
-# 'USE_STATIC_LINK': false,
+# TODO: Remaining define macros used in code, but not handled by meson:
+# - HAVE_PGSQL_SSL
+# - USE_STATIC_LINK
+
 conf_data = configuration_data(
     {
         'PACKAGE': 'kea',
@@ -489,7 +490,6 @@ endif
 #### Other checks.
 
 if POSTGRESQL_DEP.found()
-    # TODO: change to proper check, not version check.
     version = POSTGRESQL_DEP.version()
     conf_data.set(
         'HAVE_PGSQL_TCP_USER_TIMEOUT',
@@ -989,7 +989,7 @@ CONFIG_REPORT = configure_file(
 
 # TODO: Change to config.h.in when autotools are removed.
 configure_file(
-    input: 'meson-config.h.in',
+    input: 'config.h.in',
     output: 'config.h',
     configuration: conf_data,
     install: true,
@@ -998,7 +998,7 @@ configure_file(
 
 # TODO: Change to kea_version.h.in when autotools are removed.
 configure_file(
-    input: 'meson-kea_version.h.in',
+    input: 'kea_version.h.in',
     output: 'kea_version.h',
     configuration: conf_data,
     install: true,

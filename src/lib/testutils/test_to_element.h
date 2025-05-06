@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,9 +11,7 @@
 #include <cc/cfg_to_element.h>
 #include <gtest/gtest.h>
 #include <string>
-#ifdef HAVE_IS_BASE_OF
 #include <type_traits>
-#endif
 
 #ifndef CONFIG_H_WAS_INCLUDED
 #error config.h must be included before test_to_element.h
@@ -52,10 +50,8 @@ template <typename Cfg>
 void
 runToElementTest(const std::string& expected, const Cfg& cfg) {
     using namespace isc::data;
-#ifdef HAVE_IS_BASE_OF
     static_assert(std::is_base_of<CfgToElement, Cfg>::value,
                   "CfgToElement is not a base of the template parameter");
-#endif
     ConstElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(expected)) << expected;
     ConstElementPtr unparsed;
@@ -77,10 +73,8 @@ runToElementTest(const std::string& expected, const Cfg& cfg) {
 /// @param cfg an instance of the Cfg class
 template<typename Cfg>
 void runToElementTest(isc::data::ConstElementPtr expected, const Cfg& cfg) {
-#ifdef HAVE_IS_BASE_OF
     static_assert(std::is_base_of<isc::data::CfgToElement, Cfg>::value,
                   "CfgToElement is not a base of the template parameter");
-#endif
     isc::data::ConstElementPtr unparsed;
     ASSERT_NO_THROW(unparsed = cfg.toElement());
     if (!isEquivalent(expected, unparsed)) {
