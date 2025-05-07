@@ -620,6 +620,11 @@ that static host reservations cannot be specified within
 :isccmd:`subnet4-delta-add`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
+The command uses keys to identify the respective object. The keys cannot be updated.
+Objects must first be deleted in order to add other objects with conflicting keys.
+The address pools are identified by the `pool` parameter; the options are identified
+by the `name` or `code`, and `space` parameters.
+
 ::
 
    {
@@ -675,10 +680,10 @@ The response to this command has the following structure:
        }
    }
 
-The command updates subnet "10.20.30.0/24" with id 123 by changing the valid
-lifetime, adding or changing the subnet level option 3 ("routers"), by adding
-or changing the pool "10.20.30.1-10.20.30.10" and by adding or changing the pool
-level option 4 ("time-servers").
+The command updates subnet "10.20.30.0/24" with ID 123 by changing the valid
+lifetime, by adding or changing the subnet level option 3 ("routers"), by adding
+or changing parameters of the pool "10.20.30.1-10.20.30.10", and by adding or
+changing the pool level option 4 ("time-servers").
 
 .. isccmd:: subnet6-delta-add
 .. _command-subnet6-delta-add:
@@ -697,6 +702,12 @@ subnet information in the server configuration file, with the exception
 that static host reservations cannot be specified within
 :isccmd:`subnet6-delta-add`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
+
+The command uses keys to identify the respective object. The keys cannot be updated.
+Objects must first be deleted in order to add other objects with conflicting keys.
+The address pools are identified by the `pool` parameter; the prefix pools are identified
+by the `prefix`, `prefix-len`, and `delegated-len` parameters; and the options are identified
+by the `name` or `code`, and `space` parameters.
 
 ::
 
@@ -770,12 +781,12 @@ The response to this command has the following structure:
        }
    }
 
-The command updates subnet "2001:db8:1::/64" with id 243 by changing the valid
-lifetime, adding or changing the subnet level option 23 ("dns-servers"), by
-adding or changing the pool "2001:db8:1::1-2001:db8:1::10", by adding or
-changing the pool level option 31 ("sntp-servers"), by adding or changing the
-pd-pool "2001:db8:2::" with prefix-len 48 and by adding or changing the pd-pool
-level option 22 ("sip-server-addr").
+The command updates subnet "2001:db8:1::/64" with ID 243 by changing the valid
+lifetime, by adding or changing the subnet level option 23 ("dns-servers"), by
+adding or changing parameters of the pool "2001:db8:1::1-2001:db8:1::10", by
+adding or changing the pool level option 31 ("sntp-servers"), by adding or
+changing parameters of the pd-pool "2001:db8:2::" with prefix-len 48, and by adding
+or changing the pd-pool level option 22 ("sip-server-addr").
 
 .. isccmd:: subnet4-delta-del
 .. _command-subnet4-delta-del:
@@ -795,12 +806,12 @@ that static host reservations cannot be specified within
 :isccmd:`subnet4-delta-del`. The commands described in :ref:`hooks-host-cmds` should
 be used to update, remove, and modify static reservations.
 
-The command is flexible and can delete the part of the subnet by either
+The command is flexible and can delete part of the subnet by either
 specifying the entire object that needs to be deleted, or just the keys
 identifying the respective object. The address pools are identified by the
-'pool' parameter, the options are identified by the 'name' or 'code' and
-'space' parameters. The 'space' parameter can be omitted if the option belongs
-to the default 'dhcp4' space.
+`pool` parameter; and the options are identified by the `name` or `code`, and
+`space` parameters. The `space` parameter can be omitted if the option belongs
+to the default `dhcp4` space.
 
 ::
 
@@ -875,10 +886,10 @@ be used to update, remove, and modify static reservations.
 The command is flexible and can delete the part of the subnet by either
 specifying the entire object that needs to be deleted, or just the keys
 identifying the respective object. The address pools are identified by the
-'pool' parameter, the prefix pools are identified by the "prefix", "prefix-len"
-and "delegated-len" parameters, the options are identified by the 'name' or
-'code' and 'space' parameters. The 'space' parameter can be omitted if the
-option belongs to the default 'dhcp6' space.
+`pool` parameter; the prefix pools are identified by the `prefix`, `prefix-len`
+and `delegated-len` parameters; and the options are identified by the `name` or
+`code`, and `space` parameters. The `space` parameter can be omitted if the
+option belongs to the default `dhcp6` space.
 
 .. code-block:: json
 
