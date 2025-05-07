@@ -228,6 +228,7 @@ public:
 
 // Test a simple configuration.
 TEST_F(NetconfGetCfgTest, simple) {
+    ASSERT_TRUE(NETCONF_HOOKS_TEST_PATH); // Avoid unused warning
 
     // get the simple configuration
     string simple_file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";

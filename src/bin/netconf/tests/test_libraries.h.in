@@ -19,6 +19,9 @@ namespace {
 // Basic library with context_create and three "standard" callouts.
 static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/.libs/libbasic.so";
 
+// Test path to use for in place of DEFAULT_HOOKS_PATH
+static const char* NETCONF_HOOKS_TEST_PATH = "@abs_builddir@/.libs";
+
 }  // anonymous namespace
 
 #endif  // TEST_LIBRARIES_H
