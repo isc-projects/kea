@@ -1,0 +1,4 @@
+[build]		andrei
+	The Autootols build system has been removed and superseded by
+	Meson.
+	(Gitlab #3734)
