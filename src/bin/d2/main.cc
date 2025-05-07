@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_manager.h>
 #include <log/logger_support.h>
+#include <util/filesystem.h>
 
 #include <iostream>
 
@@ -23,6 +24,8 @@ using namespace std;
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ret = EXIT_SUCCESS;
 
     // Launch the controller passing in command line arguments.

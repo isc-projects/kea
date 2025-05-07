@@ -42,14 +42,6 @@ isFile(string const& path) {
     return ((statbuf.st_mode & S_IFMT) == S_IFREG);
 }
 
-Umask::Umask(mode_t mask) : orig_umask_(umask(S_IWGRP | S_IWOTH)) {
-    umask(orig_umask_ | mask);
-}
-
-Umask::~Umask() {
-    umask(orig_umask_);
-}
-
 bool
 isSocket(string const& path) {
     struct stat statbuf;
@@ -57,6 +49,17 @@ isSocket(string const& path) {
         return (false);
     }
     return ((statbuf.st_mode & S_IFMT) == S_IFSOCK);
+}
+
+void
+setUmask() {
+    // No group write and no other access.
+    mode_t mask(S_IWGRP | S_IRWXO);
+    mode_t orig = umask(mask);
+    // Handle the case where the original umask was already more restrictive.
+    if ((orig | mask) != mask) {
+        static_cast<void>(umask(orig | mask));
+    }
 }
 
 Path::Path(string const& full_name) {

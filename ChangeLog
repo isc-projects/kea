@@ -1,3 +1,9 @@
+2262.	[sec]*		fdupont
+	Change the umask to no group write and no other access
+	at the entry of Kea server/agent binaries.
+	CVE:2025-32803
+	(Gitlab #3841, #3832)
+
 2170.	[sec]*		tmark
 	kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and kea-ctrl-agent will
 	now only load hook libraries from the default installation

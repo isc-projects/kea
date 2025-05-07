@@ -22,6 +22,39 @@ using namespace std;
 
 namespace {
 
+/// @brief Test fixture class for testing operations on umask.
+struct UMaskUtilTest : ::testing::Test {
+    /// @brief Constructor.
+    ///
+    /// Cache the original umask value.
+    UMaskUtilTest() : orig_umask_(umask(S_IWGRP | S_IWOTH)) { }
+
+    /// @brief Destructor.
+    ///
+    /// Restore the original umask value.
+    virtual ~UMaskUtilTest() {
+        static_cast<void>(umask(orig_umask_));
+    }
+
+private:
+    /// @brief Original umask.
+    mode_t orig_umask_;
+};
+
+/// @brief Check setUmask from 0000.
+TEST_F(UMaskUtilTest, umask0) {
+    static_cast<void>(umask(0));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IWGRP | S_IRWXO, umask(0));
+}
+
+/// @brief Check setUmask from no group access.
+TEST_F(UMaskUtilTest, umask077) {
+    static_cast<void>(umask(S_IRWXG | S_IRWXO));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IRWXG | S_IRWXO, umask(0));
+}
+
 /// @brief Check that the components are split correctly.
 TEST(PathTest, components) {
     // Complete name

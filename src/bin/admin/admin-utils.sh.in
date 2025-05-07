@@ -22,6 +22,10 @@
 # used.
 set -eu
 
+# Set no group write and no other access umask
+orig_umask=$(umask)
+umask $((orig_umask | 0027))
+
 # These are the default parameters. They will likely not work in any
 # specific deployment. Also used in unit tests.
 db_host='localhost'

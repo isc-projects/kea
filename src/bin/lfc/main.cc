@@ -9,6 +9,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
+#include <util/filesystem.h>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception_ptr.hpp>
 #include <iostream>
@@ -24,6 +25,8 @@ using namespace isc::lfc;
 /// The exit value of the program will be EXIT_SUCCESS if there were no
 /// errors, EXIT_FAILURE otherwise.
 int main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ret = EXIT_SUCCESS;
     try {
         // Ask scheduling to not give too much resources to LFC.
