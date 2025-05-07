@@ -35,7 +35,7 @@ Kea in embedded regime.
 Optionally you can also:
 
 -# Implement unit tests for your backend in the src/bin/dhcp4/tests directory.
--# Modify src/bin/dhcp4/tests/Makefile.am to include the file(s) containing the
+-# Modify src/bin/dhcp4/tests/meson.build to include the file(s) containing the
    unit tests.
 
 @section configBackendJSONDesign The JSON Configuration Backend

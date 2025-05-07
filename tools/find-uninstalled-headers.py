@@ -2,7 +2,7 @@
 
 """
 This script checks that all source headers are installed by inspecting
-Makefile.am files.
+meson.build files.
 
 Usage: ./tools/find-uninstalled-headers.py
 """
@@ -18,49 +18,53 @@ EXCLUDE_LIST = [
 
 
 def main():
-    makefile_ams = sorted(pathlib.Path('./src/lib').glob('**/Makefile.am'))
+    meson_builds = sorted(pathlib.Path('./src/lib').glob('**/meson.build'))
     headers = sorted(pathlib.Path('./src/lib').glob('**/*.h'))
-
-    headers_pattern = re.compile(r'_HEADERS [+]?= (.*\.h|)(.*)')
-    backslash_pattern = re.compile(r'(.*\.h) \\$')
-
+    headers_pattern = re.compile(r'kea_.*_headers = \[([^]]*)(\]?)$')
     failure = False
-
-    for makefile_am in makefile_ams:
-        with open(makefile_am, 'r', encoding='utf-8') as f:
+    for meson_build in meson_builds:
+        with open(meson_build, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             in_headers_block = False
             for line in lines:
-
-                if len(line) == 0:
+                line = line.strip()
+                if line == ']':
                     in_headers_block = False
+                    continue
 
-                header = None
-
-                backslash_matches = backslash_pattern.search(line)
                 headers_matches = headers_pattern.search(line)
                 if headers_matches is None:
-                    if not in_headers_block:
-                        continue
+                    # Entries on multiple lines.
+                    if in_headers_block:
+                        header = line.strip().strip(',').strip("'").strip()
+                        if header == '':
+                            continue
+                        relative_path = meson_build.parent / header
+                        if relative_path not in headers:
+                            print(f'ERROR: Header {relative_path} not installed.')
+                            failure = True
+                            continue
+                        headers.remove(relative_path)
+                else:
+                    # Entries on a single line.
+                    header_line = headers_matches.group(1)
+                    for header in header_line.split(','):
+                        header = header.strip().strip("'")
+                        if header == '':
+                            # TODO: Why does this happen?
+                            continue
+                        relative_path = meson_build.parent / header.strip()
+                        if relative_path not in headers:
+                            print(f'ERROR: Header {relative_path} not installed.')
+                            failure = True
+                            continue
+                        headers.remove(relative_path)
 
-                    if backslash_matches is None:
-                        header = line
+                    end_square_bracket = headers_matches.group(2)
+                    if end_square_bracket == ']':
                         in_headers_block = False
                     else:
-                        header = backslash_matches.group(1)
-                else:
-                    in_headers_block = True
-                    candidate = headers_matches.group(1)
-                    if backslash_matches is None and len(candidate):
-                        header = candidate
-
-                if header is not None:
-                    relative_path = makefile_am.parent / header.strip()
-                    if relative_path not in headers:
-                        print(f'ERROR: Header {relative_path} not in Makefile.am')
-                        failure = True
-                        continue
-                    headers.remove(relative_path)
+                        in_headers_block = True
 
     first = True
     for header in headers:
@@ -69,8 +73,8 @@ def main():
         if any(i in header.parts for i in ['tests', 'testutils', 'unittests']):
             continue
         if first:
-            print('The following headers are not in the _HEADERS section of '
-                  'their respective Makefile.am file:')
+            print('The following headers are not mentioned in an install_headers call of '
+                  'their respective meson.build file:')
             first = False
         print(f'- {header}')
         failure = True

@@ -13,15 +13,10 @@ There are several steps needed to document new API command:
    (resp-syntax) or any comment about response (resp-comment), simply
    remove those unused keys. The generator will attempt to generate
    boilerplates for it.
-3. Update api_files.mk. You can also run: ./generate-api-files > api_files.mk
-   or check the update by: ./generate-api-files | diff - api_files.mk
-4. Rebuild User's Guide as usual, run in doc/sphinx folder: make
+3. Rebuild User's Guide as usual, run "meson compile doc -C build".
 
 Files in this directory:
  - README: this file
  - _template.json: template used by generate-templates
- - api-files.mk: list of command files for inclusion in Makefiles
-   (can be build by ./generate-api-files)
  - generate-templates: script generating new command files from the
   the template (_template.json)
- - generate-api-files: script generating api-files.mk
