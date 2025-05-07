@@ -12,6 +12,7 @@ AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../netconf_parser.yy\"
 AM_CPPFLAGS += -DTEST_DATA_SOURCEDIR=\"$(abs_top_srcdir)/src/bin/netconf/tests\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
 AM_CPPFLAGS += -DBASIC_CALLOUT_LIBRARY=\"$(abs_top_builddir)/src/bin/netconf/tests/.libs/libbasic.so\"
+AM_CPPFLAGS += -DNETCONF_HOOKS_TEST_PATH=\"$(abs_top_builddir)/src/bin/netconf/tests/.libs\"
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += $(LIBYANG_CPPFLAGS)
 AM_CPPFLAGS += $(LIBYANG_INCLUDEDIR)

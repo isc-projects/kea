@@ -32,6 +32,7 @@ kea_netconf_tests = executable(
         f'-DSYNTAX_FILE="@current_source_dir@/../netconf_parser.yy"',
         f'-DTEST_DATA_SOURCEDIR="@current_source_dir@"',
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
+        f'-DNETCONF_HOOKS_TEST_PATH="@current_build_dir@"',
     ],
     dependencies: [NETCONF_DEP, GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
