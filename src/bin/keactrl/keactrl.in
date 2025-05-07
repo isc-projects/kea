@@ -21,6 +21,10 @@
 # used.
 set -eu
 
+# Set no group write and no other access umask
+orig_umask=$(umask)
+umask $((orig_umask | 0027))
+
 PACKAGE_VERSION="@PACKAGE_VERSION@"
 EXTENDED_VERSION="@EXTENDED_VERSION@"
 

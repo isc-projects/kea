@@ -7,6 +7,7 @@
 #include <config.h>
 #include <agent/ca_controller.h>
 #include <exceptions/exceptions.h>
+#include <util/filesystem.h>
 #include <cstdlib>
 #include <iostream>
 
@@ -14,6 +15,8 @@ using namespace isc::agent;
 using namespace isc::process;
 
 int main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ret = EXIT_SUCCESS;
 
     // Launch the controller passing in command line arguments.

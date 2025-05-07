@@ -1,3 +1,9 @@
+2265.	[sec]*		fdupont
+	Change the umask to no group write and no other access
+	at the entry of Kea server/agent binaries.
+	CVE:2025-32803
+	(Gitlab #3842, #3832)
+
 2264.	[sec]*		tmark
 	kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and kea-ctrl-agent will
 	now only load hook libraries from the default installation
@@ -19,7 +25,6 @@
 	deprecated for a while in libc++, and has been completely
 	removed as of libc++ 19.
 	(Gitlab #3823, #3532)
-
 
 Kea 2.6.2 (stable) released on March 26, 2025
 

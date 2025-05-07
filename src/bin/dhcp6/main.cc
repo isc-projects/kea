@@ -18,6 +18,7 @@
 #include <log/output_option.h>
 #include <process/cfgrpt/config_report.h>
 #include <process/daemon.h>
+#include <util/filesystem.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -71,6 +72,8 @@ usage() {
 
 int
 main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ch;
     // The default. Any other values are useful for testing only.
     int server_port_number = DHCP6_SERVER_PORT;

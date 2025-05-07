@@ -70,16 +70,37 @@ TEST_F(FileUtilTest, isFile) {
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 
-/// @brief Check Umask.
-TEST_F(FileUtilTest, umask) {
-    // Protect the test itself assuming that Umask does what we expect...
-    Umask m0(0);
-    mode_t orig = umask(0);
-    {
-        Umask m(S_IROTH);
-        EXPECT_EQ(S_IROTH, umask(S_IRWXO));
+/// @brief Test fixture class for testing operations on umask.
+struct UMaskUtilTest : ::testing::Test {
+    /// @brief Constructor.
+    ///
+    /// Cache the original umask value.
+    UMaskUtilTest() : orig_umask_(umask(S_IWGRP | S_IWOTH)) { }
+
+    /// @brief Destructor.
+    ///
+    /// Restore the original umask value.
+    virtual ~UMaskUtilTest() {
+        static_cast<void>(umask(orig_umask_));
     }
-    EXPECT_EQ(0, umask(orig));
+
+private:
+    /// @brief Original umask.
+    mode_t orig_umask_;
+};
+
+/// @brief Check setUmask from 0000.
+TEST_F(UMaskUtilTest, umask0) {
+    static_cast<void>(umask(0));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IWGRP | S_IRWXO, umask(0));
+}
+
+/// @brief Check setUmask from no group access.
+TEST_F(UMaskUtilTest, umask077) {
+    static_cast<void>(umask(S_IRWXG | S_IRWXO));
+    ASSERT_NO_THROW(setUmask());
+    EXPECT_EQ(S_IRWXG | S_IRWXO, umask(0));
 }
 
 /// @brief Check that the components are split correctly.

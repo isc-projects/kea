@@ -49,27 +49,11 @@ isDir(const std::string& path);
 bool
 isFile(const std::string& path);
 
-/// @brief RAII device to limit access of created files.
-struct Umask {
-    /// @brief Constructor
-    ///
-    /// Set wanted bits in umask.
-    Umask(mode_t mask);
+/// @brief Set umask (at least 0027 i.e. no group write and no other access).
+void
+setUmask();
 
-    /// @brief Destructor.
-    ///
-    /// Restore umask.
-    ~Umask();
-
-private:
-    /// @brief Original umask.
-    mode_t orig_umask_;
-};
-
-bool
-isSocket(const std::string& path);
-
-/// @brief Paths on a filesystem
+/// \brief Paths on a filesystem
 struct Path {
     /// @brief Constructor
     ///

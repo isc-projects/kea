@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
+#include <util/filesystem.h>
 #include <netconf/netconf_controller.h>
 
 #include <cstdlib>
@@ -18,6 +19,8 @@ using namespace isc::process;
 using namespace std;
 
 int main(int argc, char* argv[]) {
+    isc::util::file::setUmask();
+
     int ret = EXIT_SUCCESS;
 
     // Launch the controller passing in command line arguments.
