@@ -26,6 +26,7 @@ project(
         'b_lundef=false',  # required for clang++ when used with sanitizers and for BSD ld when linking with extern char **environ.
         'b_pch=false',
         'b_pie=true',
+        'install_umask=0027',
         'warning_level=2',
     ],
 )
