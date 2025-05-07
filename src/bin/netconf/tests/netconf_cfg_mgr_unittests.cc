@@ -10,6 +10,7 @@
 
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_parser.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
 #include <netconf/tests/test_libraries.h>
@@ -377,6 +378,26 @@ TEST(NetconfParser, badSocketType) {
 /// @brief Class used for testing CfgMgr
 class NetconfParserTest : public isc::process::ConfigParseTest {
 public:
+    virtual void SetUp() {
+        resetHooksPath();
+    }
+
+    virtual void TearDown() {
+        resetHooksPath();
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setHooksTestPath(const std::string explicit_path = "") {
+        HooksLibrariesParser::getHooksPath(true,
+                                           (!explicit_path.empty() ?
+                                            explicit_path : NETCONF_HOOKS_TEST_PATH));
+    }
+
+    /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
+    void resetHooksPath() {
+        HooksLibrariesParser::getHooksPath(true);
+    }
 
     /// @brief Tries to load input text as a configuration
     ///
@@ -677,6 +698,8 @@ TEST_F(NetconfParserTest, configParseInvalidSocketUrl) {
 // name. In particular, it checks if such a library exists. Therefore we
 // can't use NETCONF_CONFIGS[4] as is, but need to run it through path replacer.
 TEST_F(NetconfParserTest, configParseHooks) {
+    setHooksTestPath();
+
     // Create the configuration with proper lib path.
     string cfg = pathReplacer(NETCONF_CONFIGS[4], BASIC_CALLOUT_LIBRARY);
     // The configuration should be successful.
