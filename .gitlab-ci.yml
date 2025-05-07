@@ -17,7 +17,7 @@ variables:
   # Leave only bandit, flawfinder, semgrep.
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
-image: "${CI_REGISTRY_IMAGE}:latest"
+image: "${CI_REGISTRY_IMAGE}:v2_6"
 
 stages:
   - test
