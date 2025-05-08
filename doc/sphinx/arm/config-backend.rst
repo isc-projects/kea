@@ -1,4 +1,4 @@
-.. _config-backend:
+ .. _config-backend:
 
 Kea Configuration Backend
 =========================
@@ -56,8 +56,20 @@ brings other benefits, such as:
 
 .. _cb-limitations:
 
-CB Capabilities and Limitations
--------------------------------
+Limitations and Warnings
+------------------------
+
+Availability
+^^^^^^^^^^^^
+
+:ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with a
+paid support contract. For more information on subscription options, please
+complete the form at https://www.isc.org/contact.  While it is theoretically
+possible to use the CB without this hook, this is neither supported nor
+recommended.
+
+Implementation
+^^^^^^^^^^^^^^
 
 Currently, the Kea CB has the following limitations:
 
@@ -71,34 +83,21 @@ Currently, the Kea CB has the following limitations:
   classes, shared networks, and subnets. Other configuration parameters
   must be sourced from a JSON configuration file.
 
-Kea CB stores data in a schema that is public. It is possible to
-insert configuration data into the tables manually or automatically
-using SQL scripts, but this requires SQL and schema knowledge.
-The supported method for managing the data is through :ischooklib:`libdhcp_cb_cmds.so`,
-which provides management commands for config backends. It simplifies many
-typical operations, such as listing, adding, retrieving, and deleting global
-parameters, shared networks, subnets, pools, options, option definitions, and
-client classes. In addition, it provides essential business logic that ensures
-the logical integrity of the data. See commands starting with ``remote-`` in
-Appendix A of this manual for a complete list.
+Database Management
+^^^^^^^^^^^^^^^^^^^
 
-.. note::
+While it is possible to manage the configuration information in the database
+without :ischooklib:`libdhcp_cb_cmds.so` (using commonly available tools, such
+as MySQL Workbench or the command-line MySQL client), these avenues are
+neither recommended nor supported.  The supported method for managing the
+database contents is through :ischooklib:`libdhcp_cb_cmds.so`, which provides
+management commands for config backends.
 
-   :ischooklib:`libdhcp_cb_cmds.so` is available only to ISC customers with
-   a paid support contract. For more information on subscription options, please
-   complete the form at https://www.isc.org/contact.
-
-The schema creation scripts can be found at
-`dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
-and
-`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
-Other related design documents are stored in our GitLab:
-`CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
-and
-`Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
+Duplicate Definitions
+^^^^^^^^^^^^^^^^^^^^^
 
 We strongly recommend against duplication of configuration information
-in both the file and the database. For example, when specifying subnets
+in both the file and the database.  For example, when specifying subnets
 for the DHCP server, please store them in either the configuration backend
 or in the configuration file, not both. Storing some subnets in the database
 and others in the file may put users at risk of potential configuration
@@ -120,37 +119,39 @@ specified in an expected order with all inter-class dependencies fulfilled.
 It is impossible to guarantee consistency when client classes are specified
 in two independent configuration sources.
 
-.. note::
+Incompatible Software
+^^^^^^^^^^^^^^^^^^^^^
 
-   It is recommended that :ischooklib:`libdhcp_subnet_cmds.so` not be used to
-   manage subnets when the configuration backend is used as a source
-   of information about the subnets. :ischooklib:`libdhcp_subnet_cmds.so`
-   modifies the local subnets configuration in the server's memory,
-   not in the database. Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
-   subnets information in the database instead.
+It is recommended that :ischooklib:`libdhcp_subnet_cmds.so` not be used to
+manage subnets when the configuration backend is used as a source
+of information about the subnets. :ischooklib:`libdhcp_subnet_cmds.so`
+modifies the local subnets configuration in the server's memory,
+not in the database. Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
+subnets information in the database instead.
 
-.. note::
+Custom Options
+^^^^^^^^^^^^^^
 
-   Using custom option formats requires creating definitions for these options.
-   Suppose a user wishes to set option data in the configuration backend. In
-   that case, we recommend specifying the definition for that option in the
-   configuration backend as well. It is essential when multiple servers are
-   managed via the configuration backend, and may differ in their
-   configurations. The option data parser can search for an option definition
-   appropriate for the server for which the option data is specified.
+Using custom option formats requires creating definitions for these options.
+Suppose a user wishes to set option data in the configuration backend. In
+that case, we recommend specifying the definition for that option in the
+configuration backend as well. It is essential when multiple servers are
+managed via the configuration backend, and may differ in their
+configurations. The option data parser can search for an option definition
+appropriate for the server for which the option data is specified.
 
-   In a single-server deployment, or when all servers share the same
-   configuration file information, it is possible to specify option
-   definitions in the configuration files and option data in the configuration
-   backend. The server receiving a command to set option data must have a
-   valid definition in its configuration file, even when it sets option data
-   for another server.
+In a single-server deployment, or when all servers share the same
+configuration file information, it is possible to specify option
+definitions in the configuration files and option data in the configuration
+backend. The server receiving a command to set option data must have a
+valid definition in its configuration file, even when it sets option data
+for another server.
 
-   It is not supported to specify option definitions in the configuration
-   backend and the corresponding option data in the server configuration files.
+It is not supported to specify option definitions in the configuration
+backend and the corresponding option data in the server configuration files.
 
-CB Components
--------------
+Components
+----------
 
 In
 this documentation, the term "Configuration Backend" may also refer to
@@ -165,6 +166,33 @@ manage and fetch the configuration information from the PostgreSQL database.
 From here on, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
 
+:ischooklib:`libdhcp_cb_cmds.so` provides a complete set of commands to manage
+the servers' configuration information within the database.  This library can
+be attached to both DHCPv4 and DHCPv6 server instances.  It simplifies many
+typical operations, such as listing, adding, retrieving, and deleting global
+parameters, shared networks, subnets, pools, options, option definitions, and
+client classes. In addition, it provides essential business logic that ensures
+the logical integrity of the data.  See commands starting with ``remote-`` in
+Appendix A of this manual for a complete list.
+
+The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
+the list of supported configuration parameters, can be found in
+:ref:`dhcp4-cb` and :ref:`dhcp6-cb`, respectively.
+
+The schema creation scripts can be found at
+`dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
+and
+`dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
+Other related design documents are stored in our GitLab:
+`CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
+and
+`Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
+
+.. _cb-install:
+
+Installation
+------------
+
 To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql.so` must
 be compiled and the DHCP servers must be configured to load it. It is compiled
 when the ``-D mysql=enabled`` configuration switch is used during the Kea build.
@@ -177,23 +205,13 @@ when the ``-D postgresql=enabled`` configuration switch is used during the Kea b
 The PostgreSQL C client libraries must be installed, as explained in
 :ref:`dhcp-install-configure`.
 
+     
+
 .. note::
 
    An existing database schema must be upgraded to the latest schema
    required by the particular Kea version using the :iscman:`kea-admin` tool,
    as described in :ref:`kea-admin`.
-
-:ischooklib:`libdhcp_cb_cmds.so` provides a complete set of commands to manage the
-servers' configuration information within the database. This library can
-be attached to both DHCPv4 and DHCPv6 server instances. While it is
-possible to manage the configuration information without :ischooklib:`libdhcp_cb_cmds.so`
-using commonly available tools, such as MySQL Workbench or
-the command-line MySQL client, or by directly working with the database,
-these avenues are neither recommended nor supported.
-
-The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
-the list of supported configuration parameters, can be found in
-:ref:`dhcp4-cb` and :ref:`dhcp6-cb`, respectively.
 
 .. _cb-sharing:
 
