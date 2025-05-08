@@ -163,67 +163,70 @@ backend and the corresponding option data in the server configuration files.
 Components
 ----------
 
-In
-this documentation, the term "Configuration Backend" may also refer to
-the particular Kea module providing support to manage and fetch the
-configuration information from the particular database type. For
-example, the MySQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_mysql.so`, which provides a complete set of functions to
-manage and fetch the configuration information from the MySQL database.
-The PostgreSQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_pgsql.so`, which provides a complete set of functions to
-manage and fetch the configuration information from the PostgreSQL database.
-From here on, the term "database" is used to refer to either a MySQL or
+The Kea Configuration Backend solution consists of the CB modules (hook libraries), the CB commands API (its own hook library), the external database software (MySQL or PostgreSQL), the database schema, and the Kea configuration information stored in the database.
+
+In this documentation, the term "Configuration Backend" may also refer to the
+particular Kea module providing support for that database type.  For example,
+the MySQL Configuration Backend, :ischooklib:`libdhcp_mysql.so`, provides a
+complete set of functions to manage and fetch the configuration information
+from a MySQL database.  The PostgreSQL Configuration Backend,
+:ischooklib:`libdhcp_pgsql.so`, is the corresponding module for PostgreSQL.
+Similarly, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
 
-:ischooklib:`libdhcp_cb_cmds.so` provides a complete set of commands to manage
-the servers' configuration information within the database.  This library can
-be attached to both DHCPv4 and DHCPv6 server instances.  It simplifies many
-typical operations, such as listing, adding, retrieving, and deleting global
-parameters, shared networks, subnets, pools, options, option definitions, and
-client classes. In addition, it provides essential business logic that ensures
-the logical integrity of the data.  See commands starting with ``remote-`` in
-Appendix A of this manual for a complete list.
+The CB commands API provides a complete set of commands to manage Kea
+configuration information, as stored within the database.  This API is
+implemented in its own hook library, :ischooklib:`libdhcp_cb_cmds.so`.  This
+library can be attached to both DHCPv4 and DHCPv6 server instances.  It
+simplifies many typical operations, such as listing, adding, retrieving, and
+deleting global parameters, shared networks, subnets, pools, options, option
+definitions, and client classes. In addition, it provides essential business
+logic that ensures the logical integrity of the data.  All CB API commands
+start with ``remote-``.  See FIXME api.html#commands-cb-cmds for a complete
+list.
 
-The DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as
-the list of supported configuration parameters, can be found in
-:ref:`dhcp4-cb` and :ref:`dhcp6-cb`, respectively.
+Installation and maintenance of external database software is beyond the scope of this manual.
 
-The schema creation scripts can be found at
+The database schema is typically installed via the  tool.  See :ref:`cb-install` for more information.  The raw schema creation scripts are
 `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
 and
 `dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
-Other related design documents are stored in our GitLab:
-`CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
-and
-`Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__.
+
+Use the CB commands API to populate the database with Kea configuration information.
+
+Related design documents are available in our GitLab:
+
+-  `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
+-  `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__
 
 .. _cb-install:
 
 Installation
 ------------
 
-To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql.so` must
-be compiled and the DHCP servers must be configured to load it. It is compiled
-when the ``-D mysql=enabled`` configuration switch is used during the Kea build.
-The MySQL C client libraries must be installed, as explained in
-:ref:`dhcp-install-configure`.
+To use either Configuration Backend, the appropriate module library
+(:ischooklib:`libdhcp_mysql.so` or :ischooklib:`libdhcp_pgsql.so`) must be
+compiled during the Kea build.  The ``-D`` switch specifies which database
+module to build, if any: ``-D mysql`` or ``-D pgsql``.  The appropriate
+database client libraries and header files must be installed prior to build.
+See :ref:`dhcp-install-configure` for more information on building Kea with
+database support.  ISC's Kea packaging, as well as some distributions, provide
+separate packages for each database type.
 
-To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql.so` must
-be compiled and the DHCP servers must be configured to load it. It is compiled
-when the ``-D postgresql=enabled`` configuration switch is used during the Kea build.
-The PostgreSQL C client libraries must be installed, as explained in
-:ref:`dhcp-install-configure`.
+The database server hosting the CB tables must be prepared with the Kea
+schema.  When upgrading an existing Kea installation, the database schema may
+also need to be upgraded.  The :iscman:`kea-admin` tool can be used to more
+easily apply the schema, as described in :ref:`kea-admin`.
 
-     
+At runtime, the DHCP servers must be configured to load the module, in the
+``hooks-libraries`` section.  A ``config-databases`` directive must then be
+used to instruct Kea to load configuration using the database backend.  The
+DHCPv4 and DHCPv6 server-specific configurations of the CB, as well as the
+list of supported configuration parameters, can be found in :ref:`dhcp4-cb`
+and :ref:`dhcp6-cb`, respectively.
 
-.. note::
-
-   An existing database schema must be upgraded to the latest schema
-   required by the particular Kea version using the :iscman:`kea-admin` tool,
-   as described in :ref:`kea-admin`.
-
-.. _cb-sharing:
+Once installation is completed, the CB commands API can be used to populate
+the database with Kea configuration information.
 
 Configuration Sharing and Server Tags
 -------------------------------------
