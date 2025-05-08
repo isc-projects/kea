@@ -9,18 +9,7 @@ Applicability
 -------------
 
 Kea Configuration Backend (CB or config backend) gives Kea servers the ability
-to manage and fetch their configuration from one or more databases. In
-this documentation, the term "Configuration Backend" may also refer to
-the particular Kea module providing support to manage and fetch the
-configuration information from the particular database type. For
-example, the MySQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_mysql.so`, which provides a complete set of functions to
-manage and fetch the configuration information from the MySQL database.
-The PostgreSQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_pgsql.so`, which provides a complete set of functions to
-manage and fetch the configuration information from the PostgreSQL database.
-From here on, the term "database" is used to refer to either a MySQL or
-PostgreSQL database.
+to manage and fetch their configuration from one or more databases.
 
 In small deployments, e.g. those comprising a single DHCP server
 instance with limited and infrequently changing number of subnets, it
@@ -162,6 +151,19 @@ in two independent configuration sources.
 
 CB Components
 -------------
+
+In
+this documentation, the term "Configuration Backend" may also refer to
+the particular Kea module providing support to manage and fetch the
+configuration information from the particular database type. For
+example, the MySQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_mysql.so`, which provides a complete set of functions to
+manage and fetch the configuration information from the MySQL database.
+The PostgreSQL Configuration Backend is the logic implemented within
+:ischooklib:`libdhcp_pgsql.so`, which provides a complete set of functions to
+manage and fetch the configuration information from the PostgreSQL database.
+From here on, the term "database" is used to refer to either a MySQL or
+PostgreSQL database.
 
 To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql.so` must
 be compiled and the DHCP servers must be configured to load it. It is compiled
