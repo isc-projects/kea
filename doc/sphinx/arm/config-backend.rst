@@ -68,6 +68,16 @@ complete the form at https://www.isc.org/contact.  While it is theoretically
 possible to use the CB without this hook, this is neither supported nor
 recommended.
 
+Preparation is Required
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The Configuration Backend is not a "plug-and-play" solution.  Supported
+scenarios require use of the CB API commands.  Configuration information must
+be loaded into the CB database using the API for the CB to have any effect.
+The general intent is for the CB to be integrated with external software.
+Please do not define ``config-databases`` unless you have done the necessary
+preparation work.
+
 Implementation
 ^^^^^^^^^^^^^^
 
