@@ -278,9 +278,6 @@ in the first subnet defined in the DHCPv4 configuration as
 Dhcp4/subnet4[0]/pool.
 
 
-.. include:: config-backend.rst
-
-
 Configuration Files Inclusion
 -----------------------------
 
@@ -339,3 +336,8 @@ where the content of "subnets.json" may be:
    ],
    ...
    }
+
+
+.. END OF SECTION - put any in-section additions above the includes
+
+.. include:: config-backend.rst
