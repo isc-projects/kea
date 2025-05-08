@@ -611,7 +611,6 @@ werror_opt = get_option('werror')
 warnings = [
     '-Wnon-virtual-dtor',
     '-Wwrite-strings',
-    '-Woverloaded-virtual',
     '-Wno-missing-field-initializers',
     #   '-Wshadow',
 ]
