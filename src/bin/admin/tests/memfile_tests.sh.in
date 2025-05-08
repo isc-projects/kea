@@ -14,6 +14,8 @@ set -eu
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
+export KEA_DHCP_DATA_DIR="@abs_top_builddir@/src/bin/admin/tests"
+
 # Locations of memfile tools
 kea_admin="@abs_top_builddir@/src/bin/admin/kea-admin"
 kea_lfc="@abs_top_builddir@/src/bin/lfc/kea-lfc"

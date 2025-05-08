@@ -15,6 +15,7 @@ CFG_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test_config.json"
 # Path to the Kea log file.
 LOG_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test.log"
 # Path to the Kea lease file.
+export KEA_DHCP_DATA_DIR="@abs_top_builddir@/src/bin/dhcp4/tests"
 LEASE_FILE="@abs_top_builddir@/src/bin/dhcp4/tests/test_leases.csv"
 # Path to the Kea LFC application
 export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"

@@ -17,6 +17,7 @@
 #include <process/logging_info.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
+#include <testutils/env_var_wrapper.h>
 
 #include <gtest/gtest.h>
 
@@ -33,6 +34,7 @@ using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::stats;
 using namespace isc::process;
+using namespace isc::test;
 using namespace isc;
 
 namespace {
@@ -256,7 +258,7 @@ TEST(ValueStorageTest, StringTesting) {
 
 class CfgMgrTest : public ::testing::Test {
 public:
-    CfgMgrTest() {
+    CfgMgrTest() : data_dir_env_var_("KEA_DHCP_DATA_DIR") {
         // make sure we start with a clean configuration
         clear();
     }
@@ -312,6 +314,9 @@ public:
         }
         CfgMgr::instance().setFamily(family);
     }
+
+    /// @brief RAII wrapper for KEA_DHCP_DATA_DIR env variable.
+    EnvVarWrapper data_dir_env_var_;
 
     /// used in client classification (or just empty container for other tests)
     isc::dhcp::ClientClasses classify_;

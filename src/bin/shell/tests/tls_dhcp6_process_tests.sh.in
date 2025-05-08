@@ -21,6 +21,7 @@ test_suite="dhcp6"
 CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
 # Path to the Kea lease file.
+export KEA_DHCP_DATA_DIR="@abs_top_builddir@/src/bin/shell/tests"
 LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
 
 # Path to the Dhcp6 Server log file.

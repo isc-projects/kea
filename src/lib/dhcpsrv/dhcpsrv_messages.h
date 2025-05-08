@@ -101,6 +101,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR;
+extern const isc::log::MessageID DHCPSRV_MEMFILE_FAILED_TO_OPEN;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET4;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6_DUID;

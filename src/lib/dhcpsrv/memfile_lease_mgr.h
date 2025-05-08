@@ -992,7 +992,9 @@ public:
     /// @brief Returns default path to the lease file.
     ///
     /// @param u Universe (V4 or V6).
-    std::string getDefaultLeaseFilePath(Universe u) const;
+    /// @param filename optional filename to use.
+    std::string getDefaultLeaseFilePath(Universe u,
+                                        const std::string filename = "") const;
 
     /// @brief Returns an absolute path to the lease file.
     ///
