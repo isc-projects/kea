@@ -9,7 +9,7 @@ Applicability
 -------------
 
 Kea Configuration Backend (CB or config backend) gives Kea servers the ability
-to manage and fetch their configuration from one or more databases.
+to store almost all of their configuration in one or more databases.
 
 In small deployments, e.g. those comprising a single DHCP server
 instance with limited and infrequently changing number of subnets, it
@@ -132,12 +132,14 @@ in two independent configuration sources.
 Incompatible Software
 ^^^^^^^^^^^^^^^^^^^^^
 
-It is recommended that :ischooklib:`libdhcp_subnet_cmds.so` not be used to
-manage subnets when the configuration backend is used as a source
-of information about the subnets. :ischooklib:`libdhcp_subnet_cmds.so`
-modifies the local subnets configuration in the server's memory,
-not in the database. Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
+Use of the :ischooklib:`libdhcp_subnet_cmds.so` hook with the CB is
+contraindicated.  The API commands starting with ``subnet`` all modify the
+in-memory configuration of Kea.  The only way to save that config would be to
+write out a JSON config file.  That would conflict with any subnets defined by
+the CB.  Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
 subnets information in the database instead.
+
+The Stork management suite does not currently support the CB.  Stork operates by direct configuration modification, with accompanying ``config-write`` of the JSON config file.  That would create duplicate definitions vs the CB.  Support for the CB is planned for a future release of Stork.
 
 Custom Options
 ^^^^^^^^^^^^^^
