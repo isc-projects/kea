@@ -78,6 +78,23 @@ The general intent is for the CB to be integrated with external software.
 Please do not define ``config-databases`` unless you have done the necessary
 preparation work.
 
+Incompatibilities
+^^^^^^^^^^^^^^^^^
+
+Use of the :ischooklib:`libdhcp_subnet_cmds.so` hook with the CB is
+contraindicated.  The API commands starting with ``subnet`` all modify the
+in-memory configuration of Kea.  The only way to save that config would be to
+write out a JSON config file.  That would conflict with any subnets defined by
+the CB.  Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
+subnets information in the database instead.
+
+The Stork management suite does not currently support the CB.  Stork operates
+by direct configuration modification, with accompanying ``config-write`` of
+the JSON config file.  That would create duplicate definitions vs the CB.
+Support for the CB is planned for a future release of Stork.
+
+In certain carefully-controlled scenarios, it may be possible to use these tools with the CB.  Namely, if they are used in strictly "read-only" fashion, to retrieve Kea information, but never to modify it.  However, no protection against accidental modification is provided, so this is not recommended.
+
 Implementation
 ^^^^^^^^^^^^^^
 
@@ -125,23 +142,6 @@ use both.  For example, defining one subnet in a JSON file and a second
 structures are replaced entirely.  For example, if client classes are defined
 in the CB database, the DHCP server disregards any client classes defined in
 the JSON file.
-
-Incompatible Software
-^^^^^^^^^^^^^^^^^^^^^
-
-Use of the :ischooklib:`libdhcp_subnet_cmds.so` hook with the CB is
-contraindicated.  The API commands starting with ``subnet`` all modify the
-in-memory configuration of Kea.  The only way to save that config would be to
-write out a JSON config file.  That would conflict with any subnets defined by
-the CB.  Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
-subnets information in the database instead.
-
-The Stork management suite does not currently support the CB.  Stork operates
-by direct configuration modification, with accompanying ``config-write`` of
-the JSON config file.  That would create duplicate definitions vs the CB.
-Support for the CB is planned for a future release of Stork.
-
-In certain carefully-controlled scenarios, it may be possible to use these tools with the CB.  Namely, if they are used in strictly "read-only" fashion, to retrieve Kea information, but never to modify it.  However, no protection against accidental modification is provided, so this is not recommended.
 
 Custom Options
 ^^^^^^^^^^^^^^
