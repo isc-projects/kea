@@ -9,4 +9,5 @@ if test -n "${MESON_INSTALL_DESTDIR_PREFIX+x}"; then
     target_path="${MESON_INSTALL_DESTDIR_PREFIX}"
 fi
 
-cp -Tr @current_build_dir@/input "${target_path}/share/kea/fuzz"
+mkdir -p "${target_path}/share/kea/fuzz"
+cp -r '@current_build_dir@/input'/* "${target_path}/share/kea/fuzz"
