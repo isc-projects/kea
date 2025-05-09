@@ -10,6 +10,7 @@ kea_testutils_lib = static_library(
     'threaded_test.cc',
     'unix_control_client.cc',
     'user_context_utils.cc',
+    'env_var_wrapper.cc',
     dependencies: [GTEST_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
 )
