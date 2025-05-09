@@ -90,7 +90,7 @@ public:
     ///
     /// @return String containing the default data directory.
     std::string getDataDir(bool reset = false,
-                                  const std::string explicit_path = "");
+                           const std::string explicit_path = "");
 
     /// @brief Validates a file path against the supported directory for DHDP data.
     ///

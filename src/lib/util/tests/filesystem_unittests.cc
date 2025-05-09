@@ -276,6 +276,14 @@ TEST(PathChecker, validatePathEnforcePath) {
         "      ",
         "",
         string("path: '' has no filename")
+    },
+    {
+        // Invalid relative path.
+        __LINE__,
+        "../kea/mylib.so",
+        "",
+        string("invalid path specified: '../kea', supported path is '" +
+               def_path + "'")
     }
     };
 
