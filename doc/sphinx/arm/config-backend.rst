@@ -106,28 +106,25 @@ management commands for config backends.
 Duplicate Definitions
 ^^^^^^^^^^^^^^^^^^^^^
 
-We strongly recommend against duplication of configuration information
-in both the file and the database.  For example, when specifying subnets
-for the DHCP server, please store them in either the configuration backend
-or in the configuration file, not both. Storing some subnets in the database
-and others in the file may put users at risk of potential configuration
-conflicts. Note that the configuration instructions from the database take
-precedence over instructions from the file, so parts of the configuration
-specified in the file may be overridden if contradicted by information in
-the database.
+We strongly recommend against storing configuration information in both the
+config file and the CB database.  In other words, do not use both JSON config
+files (like ``kea-dhcp4.conf``) and CB to configure the same items.  Ideally,
+when using the CB, the Kea config files should contain the absolute bare
+minimum necessary, with everything else coming from the CB.
 
-Although it is not recommended, it is possible to specify certain parameter
-types both in a configuration file and the database. For example, a subnet
-can be specified in the configuration file and another subnet in the database;
-in this case, the server will use both subnets. DHCP client classes, however,
-must not be specified in both the configuration file and the database, even if
-they do not overlap. If any client classes are specified in the database
-for a particular DHCP server, this server will use these classes and ignore
-all classes present in its configuration file. This behavior was introduced
-to ensure that the server receives a consistent set of client classes
-specified in an expected order with all inter-class dependencies fulfilled.
-It is impossible to guarantee consistency when client classes are specified
-in two independent configuration sources.
+Using both CB and JSON as a source of configuration risks conflicting
+definitions, which is confusing at best, and usually leads to undesired
+behavior.
+
+In the event of a conflict, configuration instructions from the CB database
+generally take precedence over instructions from a JSON file.
+
+In certain carefully-controlled scenarios, it may be technically possible to
+use both.  For example, defining one subnet in a JSON file and a second
+(different) subnet in the CB database would not conflict.  However, other
+structures are replaced entirely.  For example, if client classes are defined
+in the CB database, the DHCP server disregards any client classes defined in
+the JSON file.
 
 Incompatible Software
 ^^^^^^^^^^^^^^^^^^^^^
