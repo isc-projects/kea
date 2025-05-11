@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,8 +147,7 @@ TEST_F(HttpListenerTest, addressInUse) {
     tcp::acceptor acceptor(io_service_->getInternalIOService());
     // Use other port than SERVER_PORT to make sure that this TCP connection
     // doesn't affect subsequent tests.
-    tcp::endpoint endpoint(address::from_string(SERVER_ADDRESS),
-                           SERVER_PORT + 1);
+    tcp::endpoint endpoint(make_address(SERVER_ADDRESS), SERVER_PORT + 1);
     acceptor.open(endpoint.protocol());
     acceptor.bind(endpoint);
 

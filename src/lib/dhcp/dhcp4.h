@@ -183,7 +183,7 @@ enum DHCPOptionType {
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
 //  DHO_SIP_SERVERS                  = 120, /* RFC3361 */
     DHO_CLASSLESS_STATIC_ROUTE       = 121, /* RFC3442 */
-//  DHO_CCC                          = 122, /* RFC3495 */
+    DHO_CCC                          = 122, /* RFC3495 */
 //  DHO_GEOCONF                      = 123, /* RFC6225 */
     DHO_VIVCO_SUBOPTIONS             = 124, /* RFC3925 */
     DHO_VIVSO_SUBOPTIONS             = 125, /* RFC3925 */
@@ -283,6 +283,20 @@ enum RAISubOptionType {
     RAI_OPTION_RELAY_PORT                 = 19,  // RFC8357
     RAI_OPTION_VIRTUAL_SUBNET_SELECT      = 151, // RFC6607
     RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152  // RFC6607
+};
+
+/// CableLabs client conf suboption types.
+enum CableLabsClientConfType {
+    TSP_PRIMARY_SERVER              = 1,  // RFC3495
+    TSP_SECONDARY_SERVER            = 2,  // RFC3495
+//  TSP_PROVISIONING_SERVER         = 3,  // RFC3495
+    TSP_AS_PARAMETERS               = 4,  // RFC3495
+    TSP_AP_PARAMETERS               = 5,  // RFC3495
+    TSP_REALM                       = 6,  // RFC3495 (and errata)
+    TSP_USE_TGT                     = 7,  // RFC3495
+    TSP_PROVISIONING_TIMER          = 8,  // RFC3495
+    TSP_SCT                         = 9,  // RFC3594
+    KDC_SERVER                      = 10  // RFC3634
 };
 
 // TODO: Following are leftovers from dhcp.h import from ISC DHCP

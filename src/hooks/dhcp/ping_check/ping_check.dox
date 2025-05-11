@@ -1,0 +1,44 @@
+// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Ping Check Hooks Library
+
+Welcome to Kea Ping Check Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section cbPingCheckOverview Overview
+The @c ping_check hooks library provides the ability for kea-dhcp4 to carry
+out an ICMP ECHO test of a candidate IP address prior to sending that address to
+a DHCPv4 client in a DHCPOFFER message.
+
+@section cbPingCheckInternals Library Internals
+
+In addition to the requisite @ref load() and @ref unload() functions, the library
+implements the following callouts:
+
+- @ref dhcp4_srv_configured() - schedules a (re)start of the ICMP IO layer
+- @ref lease4_offer() - handles requests from kea-dhcp4 core to initiate a ping check
+for a candidate lease
+
+The load() function instantiates an instance of @ref isc::ping_check::PingCheckMgr.
+This class is the top level object that provides configuration processing and supervises
+the execution of ping checks.
+
+@section cbPingCheckMTCompatibility Multi-Threading Compatibility
+
+The @c ping_check hooks library requires multi-threading.
+
+*/

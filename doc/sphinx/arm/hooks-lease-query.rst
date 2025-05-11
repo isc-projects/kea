@@ -10,9 +10,9 @@ Leasequery as described in (`RFC 5007 <https://tools.ietf.org/html/rfc5007>`__).
 
 .. note::
 
-    :ischooklib:`libdhcp_lease_query.so` is available only to ISC customers with
-    a paid support contract. For more information on subscription options,
-    please complete the form at https://www.isc.org/contact.
+    :ischooklib:`libdhcp_lease_query.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 
@@ -446,10 +446,6 @@ defined in RFC 6607.
    so the presence of option 221 in the query is considered a
    (NotAllowed) error.
 
-.. note::
-
-   The new query types are only supported with the memfile lease backend.
-
 .. _bulk-lease-query-dhcpv6:
 
 DHCPv6 Bulk Leasequery
@@ -475,10 +471,6 @@ not yet used by the hook library.
    subnet prefixes are returned. Currently, ``query-by-address`` does not
    support finding delegated prefixes by specifying an address that lies within
    the prefix.
-
-.. note::
-
-   The new query types are only supported with the memfile lease backend.
 
 .. _bulk-lease-query-dhcpv6-config:
 
@@ -657,7 +649,7 @@ and includes either the count of leases updated or the nature of the failure:
 
 This ``extended-info6-upgrade`` command must be called when:
 
-- the database schema was upgraded from 2.4.1 or older version. 
+- the database schema was upgraded from 2.4.1 or older version.
   ``extended-info4-upgrade`` can be used when upgrading from 2.3.8 or older version.
 
 - Bulk Leasequery was not enabled; tables are maintained only when v6 BLQ is

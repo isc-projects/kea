@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,14 +23,14 @@ namespace dhcp {
 class DuplicateHost : public Exception {
 public:
     DuplicateHost(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when a @c Host object is expected, but none are found.
 class HostNotFound : public Exception {
 public:
     HostNotFound(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when an address is already reserved by a @c Host
@@ -38,7 +38,7 @@ public:
 class ReservedAddress : public Exception {
 public:
     ReservedAddress(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when invalid IP address has been specified for
@@ -46,7 +46,7 @@ public:
 class BadHostAddress : public isc::BadValue {
 public:
     BadHostAddress(const char* file, size_t line, const char* what) :
-        isc::BadValue(file, line, what) { };
+        isc::BadValue(file, line, what) { }
 };
 
 /// @brief Wraps value holding size of the page with host reservations.
@@ -530,13 +530,13 @@ public:
     ///
     /// Commits all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
-    virtual void commit() {};
+    virtual void commit() {}
 
     /// @brief Rollback Transactions
     ///
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
-    virtual void rollback() {};
+    virtual void rollback() {}
 
     /// @brief Controls whether IP reservations are unique or non-unique.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -179,7 +179,7 @@ public:
 
     /// @brief Runs IO service with optional timeout.
     ///
-    /// We iterate over calls to asio::io_service.run(), until
+    /// We iterate over calls to asio::io_context.run(), until
     /// all the clients have completed their requests.  We do it this way
     /// because the test clients stop the io_service when they're
     /// through with a request.

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -318,9 +318,14 @@ PktFilterLPF::receive(Iface& iface, const SocketInfo& socket_info) {
     decodeEthernetHeader(buf, dummy_pkt);
     decodeIpUdpHeader(buf, dummy_pkt);
 
+    auto v4_len = buf.getLength() - buf.getPosition();
+    if (v4_len <= 0) {
+        isc_throw(SocketReadError, "Pkt4FilterLpf packet has no DHCPv4 data");
+    }
+
     // Read the DHCP data.
     std::vector<uint8_t> dhcp_buf;
-    buf.readVector(dhcp_buf, buf.getLength() - buf.getPosition());
+    buf.readVector(dhcp_buf, v4_len);
 
     // Decode DHCP data into the Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(&dhcp_buf[0], dhcp_buf.size()));

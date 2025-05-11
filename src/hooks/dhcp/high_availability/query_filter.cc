@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -363,9 +363,9 @@ bool
 QueryFilter::inScope(const dhcp::Pkt4Ptr& query4, std::string& scope_class) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return (inScopeInternal(query4, scope_class));
+        return (queryInScopeInternal(query4, scope_class));
     } else {
-        return (inScopeInternal(query4, scope_class));
+        return (queryInScopeInternal(query4, scope_class));
     }
 }
 
@@ -373,20 +373,19 @@ bool
 QueryFilter::inScope(const dhcp::Pkt6Ptr& query6, std::string& scope_class) const {
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
-        return (inScopeInternal(query6, scope_class));
+        return (queryInScopeInternal(query6, scope_class));
     } else {
-        return (inScopeInternal(query6, scope_class));
+        return (queryInScopeInternal(query6, scope_class));
     }
 }
 
 template<typename QueryPtrType>
 bool
-QueryFilter::inScopeInternal(const QueryPtrType& query,
+QueryFilter::queryInScopeInternal(const QueryPtrType& query,
                              std::string& scope_class) const {
     if (!query) {
         isc_throw(BadValue, "query must not be null");
     }
-
 
     // If it's not a type HA cares about, it's in scope for this peer.
     if (!isHaType(query)) {
@@ -410,6 +409,50 @@ QueryFilter::inScopeInternal(const QueryPtrType& query,
 
     auto scope = peers_[candidate_server]->getName();
     scope_class = makeScopeClass(scope);
+    return ((candidate_server >= 0) && amServingScopeInternal(scope));
+}
+
+bool
+QueryFilter::inScope(const Lease4Ptr& lease4) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (leaseInScopeInternal(lease4));
+    } else {
+        return (leaseInScopeInternal(lease4));
+    }
+}
+
+bool
+QueryFilter::inScope(const Lease6Ptr& lease6) const {
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        return (leaseInScopeInternal(lease6));
+    } else {
+        return (leaseInScopeInternal(lease6));
+    }
+}
+
+template<typename LeasePtrType>
+bool
+QueryFilter::leaseInScopeInternal(const LeasePtrType& lease) const {
+    if (!lease) {
+        isc_throw(BadValue, "lease must not be null");
+    }
+
+    int candidate_server = 0;
+
+    // If we're doing load balancing we have to check if this query
+    // belongs to us or the partner. If it belongs to a partner but
+    // we're configured to serve this scope, we should accept it.
+    if (config_->getHAMode() == HAConfig::LOAD_BALANCING) {
+        candidate_server = loadBalance(lease);
+        // Malformed query received.
+        if (candidate_server < 0) {
+            return (false);
+        }
+    }
+
+    auto scope = peers_[candidate_server]->getName();
     return ((candidate_server >= 0) && amServingScopeInternal(scope));
 }
 
@@ -462,6 +505,58 @@ QueryFilter::loadBalance(const dhcp::Pkt6Ptr& query6) const {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LOAD_BALANCING_DUID_MISSING)
             .arg(config_->getThisServerName())
             .arg(xid.str());
+        return (-1);
+    }
+
+    // The hash value modulo number of active servers gives an index
+    // of the server to process the packet.
+    return (active_servers_ > 0 ? static_cast<int>(lb_hash % active_servers_) : -1);
+}
+
+int
+QueryFilter::loadBalance(const dhcp::Lease4Ptr& lease4) const {
+    uint8_t lb_hash = 0;
+    // Try to compute the hash by client identifier if the client
+    // identifier has been specified.
+    if (lease4->client_id_ && !lease4->client_id_->getClientId().empty()) {
+        auto const& client_id_key = lease4->client_id_->getClientId();
+        lb_hash = loadBalanceHash(&client_id_key[0], client_id_key.size());
+
+    } else {
+        // No client identifier available. Use the HW address instead.
+        HWAddrPtr hwaddr = lease4->hwaddr_;
+        if (hwaddr && !hwaddr->hwaddr_.empty()) {
+            lb_hash = loadBalanceHash(&hwaddr->hwaddr_[0], hwaddr->hwaddr_.size());
+
+        } else {
+            // No client identifier and no HW address. Indicate an
+            // error.
+            LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LOAD_BALANCING_LEASE_IDENTIFIER_MISSING)
+                .arg(config_->getThisServerName())
+                .arg(lease4->addr_);
+            return (-1);
+        }
+    }
+
+    // The hash value modulo number of active servers gives an index
+    // of the server to process the packet.
+    return (active_servers_ > 0 ? static_cast<int>(lb_hash % active_servers_) : -1);
+}
+
+int
+QueryFilter::loadBalance(const dhcp::Lease6Ptr& lease6) const {
+    uint8_t lb_hash = 0;
+    // Compute the hash by DUID if the DUID.
+    auto duid = lease6->duid_;
+    if (duid && !duid->getDuid().empty()) {
+        auto const& duid_key = duid->getDuid();
+        lb_hash = loadBalanceHash(&duid_key[0], duid_key.size());
+
+    } else {
+        // No DUID. Indicate an error.
+        LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LOAD_BALANCING_LEASE_DUID_MISSING)
+            .arg(config_->getThisServerName())
+            .arg(lease6->addr_);
         return (-1);
     }
 

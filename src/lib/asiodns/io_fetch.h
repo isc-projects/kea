@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,21 +9,13 @@
 
 #include <config.h>
 
-// We want to use coroutine.hpp from the system's boost headers if possible.
-// However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
-// this header. So we can resort to our bundled version, but only if necessary.
-#ifdef HAVE_BOOST_ASIO_COROUTINE_HPP
-#include <boost/asio/coroutine.hpp>
-#else
-#include <ext/coroutine/coroutine.hpp>
-#endif
-
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <dns/message.h>
 #include <dns/question.h>
 #include <util/buffer.h>
 
+#include <boost/asio/coroutine.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>

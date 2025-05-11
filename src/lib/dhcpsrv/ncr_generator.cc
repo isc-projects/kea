@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/ncr_generator.h>
 #include <stdint.h>
 #include <vector>
+#include <util/str.h>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -38,7 +39,7 @@ namespace {
 template<typename LeasePtrType, typename IdentifierType>
 void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
                     const IdentifierType& identifier, const std::string& label,
-                    NetworkPtr subnet) {
+                    const ConstSubnetPtr subnet) {
     // Check if there is a need for update.
     if (lease->hostname_.empty() || (!lease->fqdn_fwd_ && !lease->fqdn_rev_)
         || !CfgMgr::instance().getD2ClientMgr().ddnsEnabled()) {
@@ -50,16 +51,26 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         return;
     }
 
-     ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
-     util::Optional<double> ddns_ttl_percent;
-     if (subnet) {
-         auto mode = subnet->getDdnsConflictResolutionMode();
-         if (!mode.empty()) {
-             conflict_resolution_mode = StringToConflictResolutionMode(mode);
-         }
+    ConflictResolutionMode conflict_resolution_mode = CHECK_WITH_DHCID;
+    util::Optional<double> ddns_ttl_percent;
+    util::Optional<uint32_t> ddns_ttl;
+    util::Optional<uint32_t> ddns_ttl_min;
+    util::Optional<uint32_t> ddns_ttl_max;
+    if (subnet) {
+        // Create a DdnsParams so we have access to pool scope values.
+        DdnsParams ddns_params(subnet, true);
+        static_cast<void>(ddns_params.setPoolFromAddress(lease->addr_));
 
-         ddns_ttl_percent = subnet->getDdnsTtlPercent();
-     }
+        auto mode = ddns_params.getConflictResolutionMode();
+        if (!mode.empty()) {
+            conflict_resolution_mode = StringToConflictResolutionMode(mode);
+        }
+
+        ddns_ttl_percent = ddns_params.getTtlPercent();
+        ddns_ttl = ddns_params.getTtl();
+        ddns_ttl_min = ddns_params.getTtlMin();
+        ddns_ttl_max = ddns_params.getTtlMax();
+    }
 
     try {
         // Create DHCID
@@ -68,7 +79,9 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         D2Dhcid dhcid = D2Dhcid(identifier, hostname_wire);
 
         // Calculate the TTL based on lease life time.
-        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_, ddns_ttl_percent);
+        uint32_t ttl = calculateDdnsTtl(lease->valid_lft_,
+                                        ddns_ttl_percent, ddns_ttl,
+                                        ddns_ttl_min, ddns_ttl_max);
 
         // Create name change request.
         NameChangeRequestPtr ncr
@@ -103,8 +116,8 @@ void queueNCR(const NameChangeType& chg_type, const Lease4Ptr& lease) {
     if (lease) {
         // Figure out from the lease's subnet if we should use conflict resolution.
         // If there's no subnet, something hinky is going on so we'll set it true.
-        Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
-                            ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
+        ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()
+                                 ->getCfgSubnets4()->getSubnet(lease->subnet_id_);
 
         // Client id takes precedence over HW address.
         if (lease->client_id_) {
@@ -124,34 +137,57 @@ void queueNCR(const NameChangeType& chg_type, const Lease6Ptr& lease) {
     if (lease && (lease->type_ != Lease::TYPE_PD) && lease->duid_) {
         // Figure out from the lease's subnet if we should use conflict resolution.
         // If there's no subnet, something hinky is going on so we'll set it true.
-        Subnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
+        ConstSubnet6Ptr subnet = CfgMgr::instance().getCurrentCfg()
                             ->getCfgSubnets6()->getSubnet(lease->subnet_id_);
         queueNCRCommon(chg_type, lease, *(lease->duid_),
                        Pkt6::makeLabel(lease->duid_, lease->hwaddr_), subnet);
     }
 }
 
-uint32_t calculateDdnsTtl(uint32_t lease_lft, const util::Optional<double>& ddns_ttl_percent) {
-    //  If we have a configured percentage use it to calculate TTL.
-    if (!ddns_ttl_percent.unspecified() && (ddns_ttl_percent.get() > 0.0)) {
-        uint32_t new_lft = static_cast<uint32_t>(round(ddns_ttl_percent.get() * lease_lft));
-        if (new_lft > 0) {
-            return (new_lft);
-        } else {
+uint32_t calculateDdnsTtl(uint32_t lease_lft,
+                          const util::Optional<double>& ddns_ttl_percent,
+                          const util::Optional<uint32_t>& ddns_ttl,
+                          const util::Optional<uint32_t>& ddns_ttl_min,
+                          const util::Optional<uint32_t>& ddns_ttl_max) {
+    //  If we have an explicit value use it.
+    if (!ddns_ttl.unspecified() && ddns_ttl.get() > 0) {
+        return (ddns_ttl.get());
+    }
+
+    // Use specified percentage (if one) or 1/3 as called for in RFC 4702.
+    double ttl_percent = (ddns_ttl_percent.get() > 0.0 ?
+                          ddns_ttl_percent.get() :  0.33333);
+
+    // Calculate the ttl.
+    uint32_t ttl = static_cast<uint32_t>(round(ttl_percent * lease_lft));
+
+    // Adjust for minimum and maximum.
+    // If we have a custom minimum enforce it, otherwise per RFC 4702 it
+    // should not less than 600.
+    uint32_t ttl_min = (ddns_ttl_min.get() > 0) ? ddns_ttl_min.get() : 600;
+    if (ttl < ttl_min) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
+                      DHCPSRV_DDNS_TTL_TOO_SMALL)
+                  .arg(util::str::dumpDouble(ttl_percent))
+                  .arg(lease_lft)
+                  .arg(ttl)
+                  .arg(ttl_min);
+        return (ttl_min);
+    }
+
+    // If we have a maximum enforce it.
+    uint32_t ttl_max = ddns_ttl_max.get();
+    if (ttl_max && ttl > ttl_max) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
-                      DHCPSRV_DDNS_TTL_PERCENT_TOO_SMALL)
-                .arg(ddns_ttl_percent.get())
-                .arg(lease_lft);
-        }
+                      DHCPSRV_DDNS_TTL_TOO_LARGE)
+                     .arg(util::str::dumpDouble(ttl_percent))
+                     .arg(lease_lft)
+                     .arg(ttl)
+                     .arg(ttl_max);
+        return (ttl_max);
     }
 
-    // Per RFC 4702 DDNS RR TTL should be given by:
-    // ((lease life time / 3) < 10 minutes) ? 10 minutes : (lease life time / 3)
-    if (lease_lft < 1800) {
-        return (600);
-    }
-
-    return (lease_lft / 3);
+    return (ttl);
 }
 
 }

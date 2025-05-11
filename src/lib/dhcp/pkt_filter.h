@@ -18,7 +18,7 @@ namespace dhcp {
 class InvalidPacketFilter : public Exception {
 public:
     InvalidPacketFilter(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// Forward declaration to the structure describing a socket.

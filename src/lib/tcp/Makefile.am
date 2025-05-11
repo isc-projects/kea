@@ -24,7 +24,7 @@ libkea_tcp_la_SOURCES += tcp_stream_msg.cc tcp_stream_msg.h
 libkea_tcp_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_tcp_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_tcp_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_tcp_la_LDFLAGS += -no-undefined -version-info 30:0:0
+libkea_tcp_la_LDFLAGS += -no-undefined -version-info 32:0:0
 
 libkea_tcp_la_LIBADD  = $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_tcp_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
@@ -58,7 +58,8 @@ messages: tcp_messages.h tcp_messages.cc
 	@echo Message files regenerated
 
 tcp_messages.h tcp_messages.cc: tcp_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/tcp/tcp_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/tcp/tcp_messages.mes)
 
 else
 

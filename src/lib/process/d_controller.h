@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ namespace process {
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception used to convey version info upwards.
@@ -41,21 +41,21 @@ public:
 class VersionMessage : public isc::Exception {
 public:
     VersionMessage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the controller launch fails.
 class LaunchError: public isc::Exception {
 public:
     LaunchError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the application process fails.
 class ProcessInitError: public isc::Exception {
 public:
     ProcessInitError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the application process encounters an
@@ -63,14 +63,14 @@ public:
 class ProcessRunError: public isc::Exception {
 public:
     ProcessRunError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown when the controller encounters an operational error.
 class DControllerBaseError : public isc::Exception {
 public:
     DControllerBaseError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Defines a shared pointer to DControllerBase.
@@ -243,8 +243,8 @@ public:
 
     /// @brief handler for 'build-report' command
     ///
-    /// This method handles build-report command. It returns the output printed
-    /// by configure script which contains most compilation parameters.
+    /// This method handles build-report command. It returns the config report
+    /// created by meson setup which contains the compilation parameters.
     ///
     /// @param command (ignored)
     /// @param args (ignored)

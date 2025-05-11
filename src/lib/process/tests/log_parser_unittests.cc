@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,6 +130,99 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
+}
+
+// This test checks that deprecated parameter output_options is accepted.
+TEST_F(LoggingTest, parsingDeprecatedOutputOptions) {
+
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output_options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"flush\": true"
+    "            }"
+    "        ],"
+    "        \"debuglevel\": 99,"
+    "        \"severity\": \"DEBUG\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    ASSERT_EQ(1, config->size());
+    ASSERT_TRUE(config->get(0)->get("output_options"));
+    ASSERT_FALSE(config->get(0)->get("output-options"));
+
+    EXPECT_NO_THROW(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(99, storage->getLoggingInfo()[0].debuglevel_);
+    EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
+
+    ASSERT_TRUE(config->get(0)->get("output-options"));
+    ASSERT_FALSE(config->get(0)->get("output_options"));
+}
+
+// This test checks that specifying both output-options and deprecated parameter
+// output_options is not accepted.
+TEST_F(LoggingTest, parsingErrorOutputOptions) {
+
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output_options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"flush\": true"
+    "            }"
+    "        ],"
+    "        \"output-options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"flush\": true"
+    "            }"
+    "        ],"
+    "        \"debuglevel\": 99,"
+    "        \"severity\": \"DEBUG\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    ASSERT_EQ(1, config->size());
+    ASSERT_TRUE(config->get(0)->get("output_options"));
+    ASSERT_TRUE(config->get(0)->get("output-options"));
+
+    ASSERT_THROW_MSG(parser.parseConfiguration(config), BadValue, "Only one of "
+                     "'output-options' and 'output_options' may be specified.");
+
+    ASSERT_EQ(0, storage->getLoggingInfo().size());
 }
 
 // Check that LogConfigParser can parse configuration that

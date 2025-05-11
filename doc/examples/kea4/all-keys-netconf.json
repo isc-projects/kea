@@ -340,6 +340,14 @@
 
                 // Hook library-specific configuration parameters.
                 "parameters": { }
+            },
+            {
+                // The MySQL host backend hook library required for host storage.
+                "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+            },
+            {
+                // The PostgreSQL host backend hook library required for host storage.
+                "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
             }
         ],
 
@@ -353,7 +361,7 @@
                 "host": "localhost",
 
                 // Database password.
-                "password": "keatest",
+                "password": "1234",
 
                 // Port on which the database is available.
                 "port": 3306,
@@ -416,7 +424,7 @@
                 "host": "localhost",
 
                 // Database password.
-                "password": "keatest",
+                "password": "1234",
 
                 // Port on which the database is available.
                 "port": 5432,

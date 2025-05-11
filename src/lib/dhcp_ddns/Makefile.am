@@ -21,7 +21,7 @@ libkea_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
 libkea_dhcp_ddns_la_LDFLAGS += $(CRYPTO_LDFLAGS)
-libkea_dhcp_ddns_la_LDFLAGS += -no-undefined -version-info 66:0:0
+libkea_dhcp_ddns_la_LDFLAGS += -no-undefined -version-info 67:0:0
 
 libkea_dhcp_ddns_la_LIBADD  = $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
@@ -59,7 +59,8 @@ messages: dhcp_ddns_messages.h dhcp_ddns_messages.cc
 	@echo Message files regenerated
 
 dhcp_ddns_messages.h dhcp_ddns_messages.cc: dhcp_ddns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/dhcp_ddns/dhcp_ddns_messages.mes)
 
 else
 

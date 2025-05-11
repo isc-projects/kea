@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Configuration Backend Manager for DHPCv6 servers.
+/// @brief Configuration Backend Manager for DHCPv6 servers.
 ///
 /// Implements the "manager" class which holds information about the
 /// supported and configured backends and provides access to those

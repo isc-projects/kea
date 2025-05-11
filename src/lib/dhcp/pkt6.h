@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -222,7 +222,7 @@ public:
     /// @brief Sets message type (e.g. 1 = SOLICIT).
     ///
     /// @param type message type to be set
-    virtual void setType(uint8_t type) { msg_type_=type; };
+    virtual void setType(uint8_t type) { msg_type_=type; }
 
     /// @brief Retrieves the DUID from the Client Identifier option.
     ///

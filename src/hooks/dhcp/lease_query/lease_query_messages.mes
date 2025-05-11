@@ -1,0 +1,214 @@
+# Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::lease_query
+
+% BULK_LEASE_QUERY4_UNSUPPORTED_MSG_TYPE Dropping packet with an unsupported DHCPv4 message type %1 received from: %2
+This error message is issued when a DHCPv4 packet type that the lease
+query hook does not support has been received. The first argument is
+the unsupported message type, the second the remote address of the
+connection which will be closed.
+
+% BULK_LEASE_QUERY6_UNSUPPORTED_MSG_TYPE Dropping packet with an unsupported DHCPv6 message type %1 received from: %2
+This error message is issued when a DHCPv6 packet type that the lease
+query hook does not support has been received. The first argument is
+the unsupported message type, the second the remote address of the
+connection which will be closed.
+
+% BULK_LEASE_QUERY_AT_MAX_CONCURRENT_QUERIES Queuing query from: %1, details: %2, connection already has %3 queries in progress
+Logged at debug log level 40.
+This debug message is issued when a requester sends a bulk lease query
+on a connection that already has the maximum number of queries allowed
+in progress. The first argument is the requester's address, the second
+details the query which has been queued, and the third is the value
+of max-concurrent-queries.
+
+% BULK_LEASE_QUERY_DEQUEUED A query from %1, details: %2, dequeued.
+Logged at debug log level 40.
+This debug message is issued when a query has been dequeued and will be
+processed. The first argument is the requester's address, the second
+details the query which has been dequeued.
+
+% BULK_LEASE_QUERY_DUPLICATE_XID Dropping query from: %1, transaction id %2 is a duplicate
+This warning message is issued when a requester sends a bulk lease query with
+the same transaction id while that requester already has a query with t
+the same transaction id in-progress. The first argument is the requester's
+address, the second the duplicated transaction id.
+
+% BULK_LEASE_QUERY_EMPTY_REQUEST A bulk lease query packet received from %1 is empty.
+This error message is issued when received bulk lease query packet with no
+payload. The argument contains the remote address of the connection which
+will be closed.
+
+% BULK_LEASE_QUERY_INVALID_REQUEST A bulk lease query packet received from %1 is invalid, query: %2, error: %3
+This error message is issued when received invalid bulk lease query packet.
+The first argument is the remote address of the connection which will be
+closed, the second is the query, the last one is the error message.
+
+% BULK_LEASE_QUERY_LISTENER_START_FAILED Bulk lease query listener thread pool could not be started, error %1
+This error message is emitted when the bulk lease query listener's could
+(re)started following a reconfiguration event. This most likely cause
+would be a runtime configuration error, such an IP address that is invalid
+or already in-use as the service address. The argument details the error.
+
+% BULK_LEASE_QUERY_PAUSE_CHECK_PERMISSIONS_FAILED An unexpected error occurred while checking pause permissions, error %1
+This error message is emitted when attempting to pause Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+% BULK_LEASE_QUERY_PAUSE_LISTENER_FAILED Listener could not be paused, error %1
+This error message is emitted when attempting to pause Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+% BULK_LEASE_QUERY_PAUSE_LISTENER_ILLEGAL Pausing multi-threaded processing failed: %1
+This error message is emitted when attempting to pause the bulk lease query
+listener's thread pool from a worker thread. This error indicates that an
+action attempted on listener thread is trying to use a critical section which
+would result in a dead-lock. This error is highly unlikely and indicates a
+programmatic issue that should be reported as a defect.
+
+% BULK_LEASE_QUERY_PROCESSING_UNEXPECTED_FAILURE A bulk lease query packet processing throws unexpected exception: %1
+This error message is issued when bulk lease query processing throws.
+The exception is displayed.
+
+% BULK_LEASE_QUERY_QUERY_RECEIVED A bulk lease query packet received from %1, details: %2
+Logged at debug log level 40.
+This debug message is issued when a bulk lease query query has
+been received. The first argument is the address that sent the packet,
+the second details the packet.
+
+% BULK_LEASE_QUERY_REJECTED_CONNECTION A new bulk lease query connection from %1 was rejected: %2
+This debug message is issued when a new bulk lease query connection was
+rejected. The client address and the error message are displayed.
+
+% BULK_LEASE_QUERY_RESPONSE_SEND_ERROR A bulk lease query response could not be sent to: %1, response: %2, error: %3
+This debug message is issued when the server when an attempt to send
+a query response failed. The first argument is there address to which
+the response was destined, the second contains the response details,
+the third is the error explanation.
+
+% BULK_LEASE_QUERY_RESPONSE_SENT A bulk lease query response sent to %1, details: %2
+Logged at debug log level 40.
+This debug message is issued when a bulk lease query response has been sent.
+The first argument is the address that the packet has been sent to,
+the second details the packet.
+
+% BULK_LEASE_QUERY_RESUME_LISTENER_FAILED Listener could not be resumed, error %1
+This error message is emitted when attempting to resume Bulk Lease Query's
+listener. This error is highly unlikely and indicates a programmatic
+issue that should be reported as a defect.
+
+% BULK_LEASE_QUERY_UNPACK_ERROR A bulk lease query packet received from %1, could not be unpacked, error: %2
+This error message is issued when received bulk lease query is malformed and
+could not be unpacked. The first argument is the remote address of the
+connection which will be closed, the second is the error explanation.
+
+% DHCP4_LEASE_QUERY_PACKET_PACK_FAILED preparing on-wire-format of the packet to be sent: %1, failed %2
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument provides packet details. the
+second the second explains the nature of the error.
+
+% DHCP4_LEASE_QUERY_PACKET_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+Logged at debug log level 40.
+This debug message is issued when received DHCPLEASEQUERY is malformed and
+can't be parsed by the buffer4_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+% DHCP4_LEASE_QUERY_PROCESS_FAILED processing failed for lease query: %1, reason: %2
+Logged at debug log level 40.
+This error message is issued when the server encountered an error processing
+a DHCPLEASEQUERY. The first argument provides query details, the second
+an explanation of the error.
+
+% DHCP4_LEASE_QUERY_RECEIVED received query: %1
+Logged at debug log level 40.
+This debug message is printed when a DHCPLEASEQUERY query has been
+received. The argument provides query details.
+
+% DHCP4_LEASE_QUERY_RESPONSE_SENT response: %1, sent to %2:%3
+Logged at debug log level 40.
+This debug message is printed when a response to a DHCPLEASEQUERY has
+been sent to a requester. The first argument provides response details,
+the second and third arguments are the IP address and port to which
+the response was sent.
+
+% DHCP4_LEASE_QUERY_SEND_FAILED unable to send response: %1, iface: %2, address %3:%4 error: %5
+This error message is issued when the server was unable to send a lease
+query response back to the requester. a DHCPLEASEQUERY. The first
+argument provides query details, followed by the output interface,
+IP address and port, and finally the error itself.
+
+% DHCP6_LEASE_QUERY_ERROR_GETTING_RELAY_INFO failed to get relay information for lease: %1, reason: %2
+This is warning message that indicates the server was unable to use the relay
+information stored in the lease's user-context to construct the lq-relay-data
+option for the DHCPV6_LEASEQUERY_REPLY. The server will still send the reply
+with to the requester but without the lq-relay-data option. The most likely
+cause for this would be either a corrupted lease file or a programmatic error
+and it should be reported. The first argument is the lease detail, the second
+argument is the specific error.
+
+% DHCP6_LEASE_QUERY_PACKET_PACK %1: preparing on-wire format of the packet to be sent
+This debug message is issued when the server starts preparing the on-wire
+format of the packet to be sent back to the client. The argument specifies
+the client and the transaction identification information.
+
+% DHCP6_LEASE_QUERY_PACKET_PACK_FAILED %1: preparing on-wire-format of the packet to be sent failed %2
+This error message is issued when preparing an on-wire format of the
+packet has failed. The first argument identifies the client and the
+
+% DHCP6_LEASE_QUERY_PACKET_UNPACK_FAILED failed to parse query from %1 to %2, received over interface %3, reason: %4
+Logged at debug log level 40.
+This debug message is issued when the received DHCPV6_LEASEQUERY is malformed and
+can't be parsed by the buffer6_receive callout. The query will be
+dropped by the server. The first three arguments specify source IP address,
+destination IP address and the interface. The last argument provides a
+reason for failure.
+
+% DHCP6_LEASE_QUERY_PREFIX_LENGTH_LIST the list of prefix lengths to use when searching will be: %1
+Logged at debug log level 40.
+This debug message is emitted after a (re)configuration event to display
+the list of delegated prefix lengths that will be used when searching for a
+delegated prefix to which the query address belongs.  The argument is the
+list of prefix lengths in the order they will be used during searches.
+
+% DHCP6_LEASE_QUERY_PROCESS_FAILED processing failed for lease query: %1, reason: %2
+Logged at debug log level 40.
+This error message is issued when the server encountered an error processing
+a DHCPV6_LEASEQUERY. The first argument provides query details, the second
+an explanation of the error.
+
+% DHCP6_LEASE_QUERY_RECEIVED received query: %1
+Logged at debug log level 40.
+This debug message is printed when the DHCPV6_LEASEQUERY query has been
+received.
+
+% DHCP6_LEASE_QUERY_REPLY_SEND_FAILED unable to send response: %1, iface: %2, address %3:%4 error: %5
+This error message is issued when the server was unable to send a lease
+query reply back to the requester. The first argument provides query details,
+followed by the output interface, IP address and port, and finally the error
+itself.
+
+% DHCP6_LEASE_QUERY_REPLY_SENT response: %1, sent to %2:%3
+Logged at debug log level 40.
+This debug message is printed when a response to a DHCPV6_LEASEQUERY has
+been sent to a requester. The first argument provides response details,
+the second and third arguments are the IP address and port to which
+the response was sent.
+
+% LEASE_QUERY_LOAD_FAILED Lease Query hooks library failed to load: %1
+This error message indicates that an error occurred attempting to
+load the Lease Query hooks library. The argument details the error.
+
+% LEASE_QUERY_LOAD_OK Lease Query hooks library loaded successfully.
+This info message indicates that the Lease Query hooks library has
+been loaded successfully.
+
+% LEASE_QUERY_UNLOAD_OK Lease Query hooks library unloaded successfully.
+This info message indicates that the Lease Query hooks library has
+been unloaded successfully.

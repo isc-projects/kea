@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <cc/cfg_to_element.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -18,6 +19,7 @@
 #include <vector>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::util;
 using namespace std;
 
@@ -59,6 +61,8 @@ DatabaseConnection::parse(const std::string& dbaccess) {
                 // at the position of ending apostrophe.
                 auto password = dba.substr(password_pos + password_prefix.length(),
                                            password_end_pos - password_pos - password_prefix.length());
+                // Refuse default passwords.
+                DefaultCredentials::check(password);
                 mapped_tokens.insert(make_pair("password", password));
 
                 // We need to erase the password from the access string because the generic
@@ -148,7 +152,7 @@ DatabaseConnection::configuredReadOnly() const {
 }
 
 void
-DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
+DatabaseConnection::makeReconnectCtl(const std::string& timer_name, unsigned int id) {
     string type = "unknown";
     unsigned int retries = 0;
     unsigned int interval = 0;
@@ -184,7 +188,7 @@ DatabaseConnection::makeReconnectCtl(const std::string& timer_name) {
     }
 
     reconnect_ctl_ = boost::make_shared<ReconnectCtl>(type, timer_name, retries,
-                                                      interval, action);
+                                                      interval, action, id);
 }
 
 bool
@@ -241,7 +245,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                     .arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
-                   (keyword == "readonly")) {
+                   (keyword == "readonly") ||
+                   (keyword == "retry-on-startup")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
@@ -256,7 +261,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "on-fail") ||
-                   (keyword == "retry-on-startup") ||
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||
                    (keyword == "key-file") ||
@@ -282,6 +286,8 @@ DbCallback DatabaseConnection::db_recovered_callback_ = 0;
 DbCallback DatabaseConnection::db_failed_callback_ = 0;
 bool DatabaseConnection::retry_ = false;
 IOServicePtr DatabaseConnection::io_service_ = IOServicePtr();
+
+bool DatabaseConnection::test_mode_ = false;
 
 }  // namespace db
 }  // namespace isc

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,9 +56,13 @@ using namespace std;
   CONTROL_AGENT "Control-agent"
   HTTP_HOST "http-host"
   HTTP_PORT "http-port"
+  HTTP_HEADERS "http-headers"
 
   USER_CONTEXT "user-context"
   COMMENT "comment"
+
+  NAME "name"
+  VALUE "value"
 
   AUTHENTICATION "authentication"
   TYPE "type"
@@ -89,7 +93,6 @@ using namespace std;
   PARAMETERS "parameters"
 
   LOGGERS "loggers"
-  NAME "name"
   OUTPUT_OPTIONS "output-options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
@@ -291,6 +294,7 @@ global_params: global_param
 // Dhcp6.
 global_param: http_host
             | http_port
+            | http_headers
             | trust_anchor
             | cert_file
             | key_file
@@ -401,6 +405,68 @@ comment: COMMENT {
 
     // Set the user context
     parent->set("user-context", user_context);
+    ctx.leave();
+};
+
+http_headers: HTTP_HEADERS {
+    ctx.unique("http-headers", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("http-headers", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.HTTP_HEADERS);
+} COLON LSQUARE_BRACKET http_header_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+http_header_list: %empty
+                | not_empty_http_header_list
+                ;
+
+not_empty_http_header_list: http_header
+                          | not_empty_http_header_list COMMA http_header
+                          | not_empty_http_header_list COMMA {
+                              ctx.warnAboutExtraCommas(@2);
+                              }
+                          ;
+
+http_header: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} http_header_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+http_header_params: http_header_param
+                  | http_header_params COMMA http_header_param
+                  | http_header_params COMMA {
+                      ctx.warnAboutExtraCommas(@2);
+                      }
+                  ;
+
+http_header_param: name
+                 | header_value
+                 | user_context
+                 | comment
+                 | unknown_map_entry
+                 ;
+
+name: NAME {
+    ctx.unique("name", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("name", name);
+    ctx.leave();
+};
+
+header_value: VALUE {
+    ctx.unique("value", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr value(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("value", value);
     ctx.leave();
 };
 
@@ -763,15 +829,6 @@ logger_param: name
             | comment
             | unknown_map_entry
             ;
-
-name: NAME {
-    ctx.unique("name", ctx.loc2pos(@1));
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON STRING {
-    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("name", name);
-    ctx.leave();
-};
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
     ctx.unique("debuglevel", ctx.loc2pos(@1));

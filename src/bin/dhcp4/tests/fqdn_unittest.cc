@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -325,7 +325,7 @@ const char* CONFIGS[] = {
     "}",
     // 12
     // D2 enabled
-    // ddns-ttl-percent specfied
+    // ddns-ttl-percent specified
     "{ \"interfaces-config\": {\n"
         "      \"interfaces\": [ \"*\" ]\n"
         "},\n"
@@ -348,9 +348,6 @@ class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
 public:
     // Reference to D2ClientMgr singleton
     D2ClientMgr& d2_mgr_;
-
-    /// @brief Pointer to the DHCP server instance.
-    boost::shared_ptr<NakedDhcpv4Srv> srv_;
 
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
@@ -377,9 +374,7 @@ public:
     NameDhcpv4SrvTest()
         : Dhcpv4SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
-          iface_mgr_test_config_(true)
-    {
-        srv_ = boost::make_shared<NakedDhcpv4Srv>(0);
+          iface_mgr_test_config_(true) {
         IfaceMgr::instance().openSockets4();
         // Config DDNS to be enabled, all controls off
         enableD2();
@@ -773,6 +768,100 @@ public:
 
     }
 
+    /// @brief Verifies that DDNS TTL parameters are used when specified.
+    ///
+    /// @param valid_flt lease life time
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
+    void testDdnsTtlParameters(uint32_t valid_lft,
+                               Optional<double> ddns_ttl_percent = Optional<double>(),
+                               Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+
+        std::string config_header = R"(
+        {
+            "interfaces-config": { "interfaces": [ "*" ] },
+            "subnet4": [ {
+                "subnet": "10.0.0.0/24",
+                "interface": "eth1",
+                "id": 1,
+                "pools": [ { "pool": "10.0.0.10-10.0.0.10" } ]
+        )";
+
+        std::string config_footer = R"(
+            }],
+            "ddns-qualifying-suffix": "example.com.",
+            "dhcp-ddns": { "enable-updates": true }
+        }
+        )";
+
+        std::stringstream oss;
+        oss << config_header;
+
+        oss << ",\n \"valid-lifetime\":" << valid_lft;
+
+        if (!ddns_ttl_percent.unspecified()) {
+            oss << ",\n, \"ddns-ttl-percent\" :" << util::str::dumpDouble(ddns_ttl_percent.get());
+        }
+
+        if (!ddns_ttl.unspecified()) {
+            oss << ",\n, \"ddns-ttl\" :" << ddns_ttl.get();
+        }
+
+        if (!ddns_ttl_min.unspecified()) {
+            oss << ",\n, \"ddns-ttl-min\" :" << ddns_ttl_min.get();
+        }
+
+        if (!ddns_ttl_max.unspecified()) {
+            oss << ",\n, \"ddns-ttl-max\" :" << ddns_ttl_max.get();
+        }
+
+        oss << "\n" << config_footer;
+
+        // Load a configuration with D2 enabled and ddns-ttl* parameters.
+        ASSERT_NO_FATAL_FAILURE(configure(oss.str(), *srv_));
+        ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+        // Create a client and get a lease.
+        Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
+        client1.setIfaceName("eth1");
+        client1.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client1.includeHostname("client1"));
+
+        // Do the DORA.
+        ASSERT_NO_THROW(client1.doDORA());
+        Pkt4Ptr resp = client1.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Obtain the Hostname option sent in the response and make sure that the server
+        // has used the hostname reserved for this client.
+        OptionStringPtr hostname;
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ("client1.example.com", hostname->getValue());
+
+        // Make sure the lease is in the database and hostname is correct.
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(IOAddress("10.0.0.10"));
+        ASSERT_TRUE(lease);
+        EXPECT_EQ("client1.example.com", lease->hostname_);
+
+        // Verify that an NCR was generated correctly.
+        ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                resp->getYiaddr().toText(),
+                                "client1.example.com.", "",
+                                time(NULL), lease->valid_lft_, true,
+                                CHECK_WITH_DHCID,
+                                ddns_ttl_percent,
+                                ddns_ttl,
+                                ddns_ttl_min,
+                                ddns_ttl_max);
+    }
+
     ///@brief Verify that NameChangeRequest holds valid values.
     ///
     /// Pulls the NCR from the top of the send queue and checks its content
@@ -795,6 +884,10 @@ public:
     /// lease expiration time is conducted as greater than or equal to rather
     /// equal to CLTT plus lease ttl .
     /// @param exp_conflict_resolution_mode expected value of conflict resolution mode
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -805,7 +898,10 @@ public:
                                  const bool not_strict_expire_check = false,
                                  const ConflictResolutionMode
                                  exp_conflict_resolution_mode = CHECK_WITH_DHCID,
-                                 Optional<double> ttl_percent = Optional<double>()) {
+                                 Optional<double> ddns_ttl_percent = Optional<double>(),
+                                 Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                                 Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                                 Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -826,7 +922,10 @@ public:
         // current time as cltt but the it may not check the lease expiration
         // time for equality but rather check that the lease expiration time
         // is not greater than the current time + lease lifetime.
-        uint32_t ttl = calculateDdnsTtl(valid_lft, ttl_percent);
+
+        uint32_t ttl = calculateDdnsTtl(valid_lft, ddns_ttl_percent,
+                                        ddns_ttl, ddns_ttl_min, ddns_ttl_max);
+
         if (not_strict_expire_check) {
             EXPECT_GE(cltt + ttl, ncr->getLeaseExpiresOn());
         } else {
@@ -853,7 +952,7 @@ public:
     /// @param client_flags Mask of client FQDN flags which are true
     /// @param response_flags Mask of expected FQDN flags in the response
     void flagVsConfigScenario(const uint8_t client_flags,
-                       const uint8_t response_flags) {
+                              const uint8_t response_flags) {
         // Create fake interfaces and open fake sockets.
         IfaceMgrTestConfig iface_config(true);
         IfaceMgr::instance().openSockets4();
@@ -890,7 +989,6 @@ public:
             }
         }
     }
-
 
     /// @brief Checks the value of an integer statistic for a given subnet.
     ///
@@ -1160,7 +1258,6 @@ TEST_F(NameDhcpv4SrvTest, noConflictResolution) {
                             lease->cltt_, 100, false, NO_CHECK_WITH_DHCID);
 }
 
-
 // Verifies that createNameChange request only generates requests
 // if the situation dictates that it should. It checks:
 //
@@ -1347,7 +1444,6 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
     EXPECT_EQ(hostname, fqdn->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
 }
-
 
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
@@ -1701,7 +1797,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestReleaseUpdatesDisabled) {
 // This test verifies that the server sends the FQDN option to the client
 // with the reserved hostname.
 TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -1816,7 +1912,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnReservation) {
 // This test verifies that the server sends the Hostname option to the client
 // with the reserved hostname.
 TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -1928,7 +2024,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservation) {
 // with hostname reservation and which included hostname option code in the
 // Parameter Request List.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -1968,7 +2064,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationPRL) {
 // This test verifies that the server sends the Hostname option to the client
 // with partial hostname reservation and with the global ddns-qualifying-suffix set.
 TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
@@ -2010,7 +2106,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameReservationNoDNSQualifyingSuffix) {
 // verifies that the lease is only in the database following a DHCPREQUEST and
 // that the lease contains the generated FQDN.
 TEST_F(NameDhcpv4SrvTest, emptyFqdn) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     isc::asiolink::IOAddress expected_address("10.0.0.10");
     std::string expected_fqdn("myhost-10-0-0-10.fake-suffix.isc.org.");
 
@@ -2120,7 +2216,7 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
 // Verifies that default hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[2], *client.getServer());
@@ -2184,11 +2280,10 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
     }
 }
 
-
 // Verifies that setting hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[6], *client.getServer());
@@ -2256,7 +2351,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
 // Verifies that setting global hostname-char-set sanitizes Hostname option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -2318,7 +2413,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostGlobal) {
 // Verifies that setting hostname-char-set sanitizes FQDN option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[6], *client.getServer());
@@ -2387,7 +2482,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
 // Verifies that setting global hostname-char-set sanitizes FQDN option
 // values received from clients.
 TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Configure DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -2462,7 +2557,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeFqdnGlobal) {
 // Specifically that D2 can be enabled with sending updates
 // disabled globally, and enabled at the subnet level.
 TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth0");
     client1.setIfaceIndex(ETH0_INDEX);
 
@@ -2492,7 +2587,7 @@ TEST_F(NameDhcpv4SrvTest, ddnsScopeTest) {
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
 
@@ -2745,15 +2840,15 @@ TEST_F(NameDhcpv4SrvTest, ddnsSharedNetworkTest) {
 // Verifies the basic behavior for a DORA cycle when offer-lifetime is greater
 // than zero.
 TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use HW address that matches the reservation entry in the configuration.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure DHCP server.
     configure(CONFIGS[11], *client.getServer());
 
     // Fetch the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-                        selectSubnet(IOAddress("10.0.0.10"));
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(IOAddress("10.0.0.10"));
     ASSERT_TRUE(subnet);
 
     // Make sure that DDNS is enabled.
@@ -2845,7 +2940,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
 }
 
 // Verifies the DNS TTL when ttl percent is specified
-// than zero.
+// greater than zero.
 TEST_F(NameDhcpv4SrvTest, withDdnsTtlPercent) {
     // Load a configuration with D2 enabled and ddns-ttl-percent
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[12], *srv_));
@@ -2961,6 +3056,151 @@ TEST_F(NameDhcpv4SrvTest, checkExistsDHCIDConflictResolutionMode) {
                             "00010132E91AA355CFBB753C0F0497A5A940436965"
                             "B68B6D438D98E680BF10B09F3BCF",
                             lease->cltt_, 100, false, CHECK_EXISTS_WITH_DHCID);
+}
+
+// Verify the ddns-ttl-percent is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlPercentTest) {
+    testDdnsTtlParameters(2100, 0.5);
+}
+
+// Verify the ddns-ttl is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          999,                      // ttl
+                          Optional<uint32_t>(),     // min
+                          Optional<uint32_t>());    // max
+}
+
+// Verify the ddns-ttl-min is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlMinTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl
+                          800,                      // ttl-min
+                          Optional<uint32_t>());    // ttl-max
+}
+
+// Verify the ddns-ttl-max is used when specified.
+TEST_F(NameDhcpv4SrvTest, ddnsTtlMaxTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl
+                          Optional<uint32_t>(),     // ttl-min
+                          500);                     // ttl-max
+}
+
+// Verifies that DDNS parameters specified at the pool level
+// are used when specified. We don't verify all of them, just enough
+// enough to ensure proper scoping of values.
+TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
+    // A configuration with following pools:
+    // 1. Specifies a qualifying suffix
+    // 2. Specifies no DDNS parameters
+    // 3. Disables DDNS updates
+    // 4. Specifies a qualifying suffix but disables DDNS updates
+    std::string config = R"(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "dhcp-ddns": { "enable-updates": true },
+        "subnet4": [{
+            "subnet": "10.0.0.0/24",
+            "interface": "eth1",
+            "id": 1,
+            "ddns-qualifying-suffix": "subfix.com",
+            "pools": [{
+                "pool": "10.0.0.10-10.0.0.10",
+                "ddns-qualifying-suffix": "poolfix.com",
+            },
+            {
+                "pool": "10.0.0.11-10.0.0.11"
+            },
+            {
+                "pool": "10.0.0.12-10.0.0.12",
+                "ddns-send-updates": false
+            },
+            {
+                "pool": "10.0.0.13-10.0.0.13",
+                "ddns-qualifying-suffix": "pool4fix.com",
+                "ddns-send-updates": false
+            }]
+        }],
+        "valid-lifetime": 400
+    })";
+
+    // Load theconfiguration with D2 enabled.
+    ASSERT_NO_FATAL_FAILURE(configure(config, *srv_));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    struct Scenario {
+        IOAddress expected_address_;
+        std::string client_hostname_;
+        std::string expected_hostname_;
+        bool expect_ncr_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        IOAddress("10.0.0.10"),
+        "myhost",
+        "myhost.poolfix.com",
+        true
+    },
+    {
+        IOAddress("10.0.0.11"),
+        "myhost",
+        "myhost.subfix.com",
+        true
+    },
+    {
+        IOAddress("10.0.0.12"),
+        "myhost",
+        "myhost.subfix.com",
+        false
+    },
+    {
+        IOAddress("10.0.0.13"),
+        "myhost",
+        "myhost.pool4fix.com",
+        false
+    }};
+
+    for (auto const& scenario : scenarios) {
+        // Create a client.
+        Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+        client.setIfaceName("eth1");
+        client.setIfaceIndex(ETH1_INDEX);
+        ASSERT_NO_THROW(client.includeHostname("myhost"));
+
+        // Do a DORA.
+        ASSERT_NO_THROW(client.doDORA());
+        Pkt4Ptr resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure the lease is in the database and hostname is correct.
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(scenario.expected_address_);
+        ASSERT_TRUE(lease) << "address: " << scenario.expected_address_;
+        EXPECT_EQ(lease->hostname_, scenario.expected_hostname_);
+
+        // Verify the hostname option sent in the response.
+        OptionStringPtr hostname;
+        hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+        ASSERT_TRUE(hostname);
+        EXPECT_EQ(hostname->getValue(), scenario.expected_hostname_);
+
+        // Verify the NCR if we expect one.
+        if (!scenario.expect_ncr_) {
+            ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+        } else {
+            ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
+            verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                    resp->getYiaddr().toText(),
+                                    (scenario.expected_hostname_ + "."), "",
+                                    time(NULL), lease->valid_lft_, true,
+                                    CHECK_WITH_DHCID);
+        }
+    }
 }
 
 } // end of anonymous namespace

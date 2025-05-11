@@ -1,0 +1,34 @@
+# Dependency-related options
+option(
+    'crypto',
+    type: 'combo',
+    choices: ['botan', 'openssl'],
+    value: 'openssl',
+    description: 'Backend for cryptographical operations. Mandatory.',
+)
+option(
+    'krb5',
+    type: 'feature',
+    description: 'Support for GSS-TSIG. Requires krb5 with gssapi.',
+)
+option('mysql', type: 'feature', description: 'Support for MySQL backends.')
+option('netconf', type: 'feature', description: 'Support for kea-netconf.')
+option(
+    'postgresql',
+    type: 'feature',
+    description: 'Support for PostgreSQL backends.',
+)
+
+# Options for enabling testing code (not real features).
+option(
+    'fuzz',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Support for fuzz testing.',
+)
+option(
+    'tests',
+    type: 'feature',
+    value: 'disabled',
+    description: 'Support for tests.',
+)

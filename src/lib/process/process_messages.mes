@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,6 +61,10 @@ the configuration database. The operation started a retry to connect procedure.
 The database access string with password redacted is logged, along with the
 error and details for the reconnect procedure.
 
+% DCTL_DEPRECATED_OUTPUT_OPTIONS The output_options parameter is deprecated. Use output-options parameter instead.
+This warning message is displayed when deprecated output_options is used instead
+of output-options.
+
 % DCTL_DEVELOPMENT_VERSION This software is a development branch of Kea. It is not recommended for production use.
 This warning message is displayed when the version is a development
 (vs stable) one: the second number of the version is odd.
@@ -94,9 +98,9 @@ This is an error message that occurs when the server is unable to create
 its PID file.  The log message should contain details sufficient to
 determine the underlying cause.  The most likely culprits are that
 some portion of the pathname does not exist or a permissions issue. The
-default path is determined by --localstatedir or --runstatedir configure
-parameters but may be overridden by setting environment variable,
-KEA_PIDFILE_DIR.  The first argument is the process name.
+default path is determined by --localstatedir and --prefix meson setup options
+but may be overridden by setting environment variable KEA_PIDFILE_DIR.
+The first argument is the process name.
 
 % DCTL_PROCESS_FAILED %1 application execution failed: %2
 The controller has encountered a fatal error while running the

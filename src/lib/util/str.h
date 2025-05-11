@@ -286,6 +286,13 @@ isPrintable(const std::vector<uint8_t>& content);
 std::string
 dumpAsHex(const uint8_t* data, size_t length);
 
+/// @brief Converts a double to a string with given precision
+///
+/// @param val double to convert
+/// @param precision number of maximum number decimal places to output
+/// @return string representation of val
+std::string dumpDouble(double val, size_t precision = 5);
+
 }  // namespace str
 }  // namespace util
 }  // namespace isc

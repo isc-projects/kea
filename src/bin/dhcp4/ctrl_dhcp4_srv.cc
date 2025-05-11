@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <cc/data.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
@@ -178,7 +179,7 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
     } catch (const std::exception& ex) {
         // If configuration failed at any stage, we drop the staging
         // configuration and continue to use the previous one.
-        CfgMgr::instance().rollback();
+        CfgMgr::instance().clearStagingConfiguration();
 
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL)
             .arg(file_name).arg(ex.what());
@@ -371,7 +372,7 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
-    CfgMgr::instance().rollback();
+    CfgMgr::instance().clearStagingConfiguration();
 
     // Parse the logger configuration explicitly into the staging config.
     // Note this does not alter the current loggers, they remain in
@@ -477,7 +478,7 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
-    CfgMgr::instance().rollback();
+    CfgMgr::instance().clearStagingConfiguration();
 
     // Now we check the server proper.
     return (checkConfig(dhcp4));
@@ -695,6 +696,362 @@ ControlledDhcpv4Srv::commandLeasesReclaimHandler(const string&,
 }
 
 ConstElementPtr
+ControlledDhcpv4Srv::commandSubnet4SelectTestHandler(const string&,
+                                                     ConstElementPtr args) {
+    if (!args) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
+    }
+    if (args->getType() != Element::map) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "arguments must be a map"));
+    }
+    bool ignore_link_sel =
+        CfgMgr::instance().getCurrentCfg()->getIgnoreRAILinkSelection();
+    SubnetSelector selector;
+    for (auto const& entry : args->mapValue()) {
+        ostringstream errmsg;
+        if (entry.first == "interface") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            selector.iface_name_ = entry.second->stringValue();
+            continue;
+        } else if (entry.first == "address") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'address' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'address' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.ciaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'address' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "relay") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'relay' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'relay' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.giaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'relay' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "local") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'local' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'local' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.local_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'local' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "remote") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'remote' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'remote' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.remote_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'remote' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "link") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'link' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'link' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                if (!ignore_link_sel) {
+                    selector.option_select_ = addr;
+                }
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'link' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "subnet") {
+            // RAI link-selection has precedence over subnet-selection.
+            if (args->contains("link") && !ignore_link_sel) {
+                continue;
+            }
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'subnet' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'subnet' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.option_select_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'subnet' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "classes") {
+            if (entry.second->getType() != Element::list) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "'classes' entry must be a list"));
+            }
+            for (auto const& item : entry.second->listValue()) {
+                if (!item || (item->getType() != Element::string)) {
+                    errmsg << "'classes' entry must be a list of strings";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                // Skip empty client classes.
+                if (!item->stringValue().empty()) {
+                    selector.client_classes_.insert(item->stringValue());
+                }
+            }
+            continue;
+        } else {
+            errmsg << "unknown entry '" << entry.first << "'";
+            return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+        }
+    }
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(selector);
+    if (!subnet) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no subnet selected"));
+    }
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    ostringstream msg;
+    if (network) {
+        msg << "selected shared network '" << network->getName()
+            << "' starting with subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    } else {
+        msg << "selected subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, msg.str()));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandSubnet4o6SelectTestHandler(const string&,
+                                                       ConstElementPtr args) {
+    if (!args) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "empty arguments"));
+    }
+    if (args->getType() != Element::map) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "arguments must be a map"));
+    }
+    SubnetSelector selector;
+    selector.dhcp4o6_ = true;
+    selector.local_address_ = IOAddress::IPV6_ZERO_ADDRESS();
+    selector.remote_address_ = IOAddress::IPV6_ZERO_ADDRESS();
+    for (auto const& entry : args->mapValue()) {
+        ostringstream errmsg;
+        if (entry.first == "interface") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            selector.iface_name_ = entry.second->stringValue();
+            continue;
+        } if (entry.first == "interface-id") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'interface-id' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                string str = entry.second->stringValue();
+                vector<uint8_t> id = util::str::quotedStringToBinary(str);
+                if (id.empty()) {
+                    util::str::decodeFormattedHexString(str, id);
+                }
+                if (id.empty()) {
+                    errmsg << "'interface-id' must be not empty";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.interface_id_ = OptionPtr(new Option(Option::V6,
+                                                              D6O_INTERFACE_ID,
+                                                              id));
+                continue;
+            } catch (...) {
+                errmsg << "value of 'interface-id' was not recognized";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "address") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'address' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'address' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.ciaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'address' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "relay") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'relay' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'relay' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.giaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'relay' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "local") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'local' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'local' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.local_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'local' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "remote") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'remote' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'remote' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.remote_address_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'remote' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "link") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'link' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV6()) {
+                    errmsg << "bad 'link' entry: not IPv6";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.first_relay_linkaddr_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'link' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "subnet") {
+            if (entry.second->getType() != Element::string) {
+                errmsg << "'subnet' entry must be a string";
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+            try {
+                IOAddress addr(entry.second->stringValue());
+                if (!addr.isV4()) {
+                    errmsg << "bad 'subnet' entry: not IPv4";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                selector.option_select_ = addr;
+                continue;
+            } catch (const exception& ex) {
+                errmsg << "bad 'subnet' entry: " << ex.what();
+                return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+            }
+        } else if (entry.first == "classes") {
+            if (entry.second->getType() != Element::list) {
+                return (createAnswer(CONTROL_RESULT_ERROR,
+                                     "'classes' entry must be a list"));
+            }
+            for (auto const& item : entry.second->listValue()) {
+                if (!item || (item->getType() != Element::string)) {
+                    errmsg << "'classes' entry must be a list of strings";
+                    return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+                }
+                // Skip empty client classes.
+                if (!item->stringValue().empty()) {
+                    selector.client_classes_.insert(item->stringValue());
+                }
+            }
+            continue;
+        } else {
+            errmsg << "unknown entry '" << entry.first << "'";
+            return (createAnswer(CONTROL_RESULT_ERROR, errmsg.str()));
+        }
+    }
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet4o6(selector);
+    if (!subnet) {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "no subnet selected"));
+    }
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    ostringstream msg;
+    if (network) {
+        msg << "selected shared network '" << network->getName()
+            << "' starting with subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    } else {
+        msg << "selected subnet '" << subnet->toText()
+            << "' id " << subnet->getID();
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, msg.str()));
+}
+
+ConstElementPtr
 ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
                                                 ConstElementPtr) {
     const std::string& tag =
@@ -849,6 +1206,12 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_RECEIVED)
         .arg(srv->redactConfig(config)->str());
 
+    // Destroy lease manager before hooks unload.
+    LeaseMgrFactory::destroy();
+
+    // Destroy host manager before hooks unload.
+    HostMgr::create();
+
     ConstElementPtr answer = configureDhcp4Server(*srv, config);
 
     // Check that configuration was successful. If not, do not reopen sockets
@@ -988,7 +1351,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (notify_libraries);
     }
 
-
     // Initialize the allocators. If the user selected a Free Lease Queue Allocator
     // for any of the subnets, the server will now populate free leases to the queue.
     // It may take a while!
@@ -1082,7 +1444,7 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     TimerMgr::instance()->setIOService(getIOService());
 
     // Command managers use IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
+    UnixCommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP authentication default realm.
@@ -1125,6 +1487,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
 
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("subnet4-select-test",
+        std::bind(&ControlledDhcpv4Srv::commandSubnet4SelectTestHandler, this, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("subnet4o6-select-test",
+        std::bind(&ControlledDhcpv4Srv::commandSubnet4o6SelectTestHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("server-tag-get",
         std::bind(&ControlledDhcpv4Srv::commandServerTagGetHandler, this, ph::_1, ph::_2));
@@ -1193,8 +1561,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         cleanup();
 
         // Close command sockets.
-        CommandMgr::instance().closeCommandSocket();
-        HttpCommandMgr::instance().close();
+        UnixCommandMgr::instance().closeCommandSockets();
+        HttpCommandMgr::instance().closeCommandSockets();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand("build-report");
@@ -1208,6 +1576,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
+        CommandMgr::instance().deregisterCommand("subnet4-select-test");
+        CommandMgr::instance().deregisterCommand("subnet4o6-select-test");
         CommandMgr::instance().deregisterCommand("server-tag-get");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
@@ -1240,9 +1610,15 @@ ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
                                           const bool remove_lease,
                                           const uint16_t max_unwarned_cycles) {
     try {
-        server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
-                                                      remove_lease,
-                                                      max_unwarned_cycles);
+        if (network_state_->isServiceEnabled()) {
+            server_->alloc_engine_->reclaimExpiredLeases4(max_leases, timeout,
+                                                          remove_lease,
+                                                          max_unwarned_cycles);
+        } else {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED)
+                .arg(CfgMgr::instance().getCurrentCfg()->
+                 getCfgExpiration()->getReclaimTimerWaitTime());
+        }
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_RECLAIM_EXPIRED_LEASES_FAIL)
             .arg(ex.what());
@@ -1253,7 +1629,10 @@ ControlledDhcpv4Srv::reclaimExpiredLeases(const size_t max_leases,
 
 void
 ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
-    server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
+    if (network_state_->isServiceEnabled()) {
+        server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
+    }
+
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
 }
@@ -1269,10 +1648,12 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
     // Disable service until the connection is recovered.
     if (db_reconnect_ctl->retriesLeft() == db_reconnect_ctl->maxRetries() &&
         db_reconnect_ctl->alterServiceState()) {
-        network_state_->disableService(NetworkState::DB_CONNECTION);
+        network_state_->disableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION);
+    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_LOST_CONNECTION)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());;
 
     // If reconnect isn't enabled log it, initiate a shutdown if needed and
     // return false.
@@ -1280,7 +1661,9 @@ ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
         !db_reconnect_ctl->retryInterval()) {
         LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
             .arg(db_reconnect_ctl->retriesLeft())
-            .arg(db_reconnect_ctl->retryInterval());
+            .arg(db_reconnect_ctl->retryInterval())
+            .arg(db_reconnect_ctl->id())
+            .arg(db_reconnect_ctl->timerName());
         if (db_reconnect_ctl->exitOnFailure()) {
             shutdownServer(EXIT_FAILURE);
         }
@@ -1299,11 +1682,14 @@ ControlledDhcpv4Srv::dbRecoveredCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     // Enable service after the connection is recovered.
-    if (db_reconnect_ctl->alterServiceState()) {
-        network_state_->enableService(NetworkState::DB_CONNECTION);
+    if (db_reconnect_ctl->retriesLeft() != db_reconnect_ctl->maxRetries() &&
+        db_reconnect_ctl->alterServiceState()) {
+        network_state_->enableService(NetworkState::DB_CONNECTION + db_reconnect_ctl->id());
     }
 
-    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED);
+    LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_SUCCEEDED)
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     db_reconnect_ctl->resetRetries();
 
@@ -1319,7 +1705,9 @@ ControlledDhcpv4Srv::dbFailedCallback(ReconnectCtlPtr db_reconnect_ctl) {
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_FAILED)
-            .arg(db_reconnect_ctl->maxRetries());
+        .arg(db_reconnect_ctl->maxRetries())
+        .arg(db_reconnect_ctl->id())
+        .arg(db_reconnect_ctl->timerName());
 
     if (db_reconnect_ctl->exitOnFailure()) {
         shutdownServer(EXIT_FAILURE);

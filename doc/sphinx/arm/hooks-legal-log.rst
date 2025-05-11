@@ -10,10 +10,10 @@ lease events into a set of log files.
 
 .. note::
 
-    :ischooklib:`libdhcp_legal_log.so` is available as a premium
-    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
-    the premium hook libraries, or contact us at https://www.isc.org/contact for
-    more information.
+    :ischooklib:`libdhcp_legal_log.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
+
 
 .. note::
 
@@ -86,7 +86,7 @@ can save logs to a text file or to a database (created using
 :iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
 ``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
-by the ``--prefix`` option of the configure script; it defaults to
+by the ``--prefix`` meson setup option which defaults to
 ``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
 :ischooklib:`libdhcp_legal_log.so` like this:
 
@@ -240,7 +240,7 @@ Additional parameters for the database connection can be specified, e.g:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name"
             }
@@ -478,7 +478,7 @@ Examples:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name",
               "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
@@ -803,7 +803,7 @@ Examples:
             "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
-              "password": "passwd",
+              "password": "1234",
               "type": "mysql",
               "user": "user-name",
               "request-parser-format": "'log entry' + 0x0a + 'same log entry'",
@@ -1053,16 +1053,15 @@ table is part of the Kea database schemas.
 
 Configuration parameters are extended by standard lease database
 parameters as defined in :ref:`database-configuration4`. The ``type``
-parameter should be ``mysql``, ``postgresql`` or ``logfile``; when
+parameter should be ``mysql``, ``postgresql``, ``logfile`` or ``syslog``; when
 it is absent or set to ``logfile``, files are used.
 
-This database feature is experimental. No specific tools are provided
-to operate the database, but standard tools may be used, for example,
-to dump the logs table from a MYSQL database:
+No specific tools are provided to operate the database, but standard
+tools may be used, for example, to dump the logs table from a MYSQL database:
 
 ::
 
-   $ mysql --user keatest --password keatest -e "select * from logs;"
+   $ mysql --user keatest --password 1234 -e "select * from logs;"
    +---------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+----+
    | timestamp           | address      | log                                                                                                                                                             | id |
    +---------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+----+
@@ -1092,3 +1091,19 @@ system allows nanny scripts to detect the problem.
 If ``retry-on-startup`` is set to ``true``, the server starts reconnection
 attempts even at server startup or on reconfigure events, and honors the
 action specified in the ``on-fail`` parameter.
+
+.. _forensic-log-syslog:
+
+Syslog Backend
+~~~~~~~~~~~~~~
+
+Log entries can be inserted into syslog by setting the ``type`` to ``syslog``.
+When syslog type is configured, the ``pattern`` parameter specifies the details that
+are used for logging. For more details see :ref:`logging`. If not configured, it defaults
+to:
+
+::
+
+    "%-5p [%c.%t] %m\n"
+
+The ``facility`` parameter specifies the syslog facility and it defaults to ``local0``.

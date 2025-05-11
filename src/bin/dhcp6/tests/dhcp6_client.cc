@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,7 @@ void getLeasesByPool(const Dhcp6Client::Configuration& config,
     }
 }
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -609,6 +609,20 @@ Dhcp6Client::doRelease() {
 }
 
 void
+Dhcp6Client::doAddrRegInform() {
+    context_.query_ = createMsg(DHCPV6_ADDR_REG_INFORM);
+
+    // Append requested IAs.
+    appendRequestedIAs(context_.query_);
+
+    // Add Client FQDN if configured.
+    appendFQDN();
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+}
+
+void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
                                   const bool include_address) {
     /// @todo: add support for IAPREFIX here.
@@ -1030,7 +1044,7 @@ Dhcp6Client::printConfiguration() const {
               << " got " << getLeaseNum() << " lease(s): ";
 
     // Print leases
-    for (int i = 0; i < getLeaseNum(); i++) {
+    for (unsigned i = 0; i < getLeaseNum(); i++) {
         Lease6 lease = getLease(i);
         std::cout << lease.addr_.toText() << " ";
     }

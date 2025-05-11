@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,8 @@
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
 #include <http/auth_config.h>
+#include <http/cfg_http_header.h>
+#include <http/listener.h>
 
 namespace isc {
 namespace config {
@@ -43,7 +45,7 @@ public:
 
     /// @brief Returns socket address.
     ///
-    /// @return IP address where the server's HTTP service is available.
+    /// @return IP address where the HTTP service is available.
     isc::asiolink::IOAddress getSocketAddress() const {
         return (socket_address_);
     }
@@ -56,6 +58,8 @@ public:
     }
 
     /// @brief Returns socket port.
+    ///
+    /// @return TCP port where the HTTP service is available.
     uint16_t getSocketPort() const {
         return (socket_port_);
     }
@@ -65,6 +69,20 @@ public:
     /// @param socket_port The new socket port.
     void setSocketPort(const uint16_t socket_port) {
         socket_port_ = socket_port;
+    }
+
+    /// @brief Returns http-headers configuration.
+    ///
+    /// @return Collection of config HTTP headers.
+    const isc::http::CfgHttpHeaders& getHttpHeaders() const {
+        return (http_headers_);
+    }
+
+    /// @brief Sets http-headers configuration.
+    ///
+    /// @param headers Collection of config HTTP headers.
+    void setHttpHeaders(const isc::http::CfgHttpHeaders& headers) {
+        http_headers_ = headers;
     }
 
     /// @brief Returns HTTP authentication configuration.
@@ -189,6 +207,9 @@ private:
     /// @brief Socket port.
     uint16_t socket_port_;
 
+    /// Config HTTP headers.
+    isc::http::CfgHttpHeaders http_headers_;
+
     /// @brief HTTP authentication configuration.
     isc::http::HttpAuthConfigPtr auth_config_;
 
@@ -210,6 +231,29 @@ private:
 
 /// @brief Pointer to a HttpCommandConfig object.
 typedef boost::shared_ptr<HttpCommandConfig> HttpCommandConfigPtr;
+
+/// @brief Structure used to store HTTP/HTTPS connection data.
+/// (configuration, listener, etc.)
+struct HttpSocketInfo {
+    /// @brief Flag which indicates if socket can be reused.
+    bool usable_;
+
+    /// @brief Pointer to the socket config.
+    HttpCommandConfigPtr config_;
+
+    /// @brief Pointer to HTTP/HTTPS listener.
+    isc::http::HttpListenerPtr listener_;
+
+    /// @brief Constructor.
+    HttpSocketInfo() : usable_(true) {
+    }
+
+    /// @brief Destructor.
+    ~HttpSocketInfo() = default;
+};
+
+/// @brief Pointer to a HttpSocketInfo object.
+typedef boost::shared_ptr<HttpSocketInfo> HttpSocketInfoPtr;
 
 } // end of isc::config namespace
 } // end of isc namespace

@@ -83,7 +83,7 @@
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
         "id": 1,
         "subnet": "192.0.2.0/24",
-        "client-class": "VoIP",
+        "client-classes": [ "VoIP" ],
         "interface": "eth0"
     },
 
@@ -113,7 +113,7 @@
            // This one is for VoIP devices only.
            {
               "pool":  "192.0.4.1 - 192.0.4.200",
-              "client-class": "VoIP"
+              "client-classes": [ "VoIP" ]
            },
 
            // This one doesn't have any client-class specified,

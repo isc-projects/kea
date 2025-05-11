@@ -55,15 +55,14 @@ Parser6Context::parseCommon() {
             isc_throw(Dhcp6ParseError, "Parser abort");
         }
         scanEnd();
-    }
-    catch (...) {
+    } catch (...) {
         scanEnd();
         throw;
     }
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(Dhcp6ParseError, "Expected exactly one terminal Element expected, found "
+        isc_throw(Dhcp6ParseError, "Expected exactly one terminal Element, found "
                   << stack_.size());
     }
 }
@@ -160,8 +159,6 @@ Parser6Context::contextName() {
         return ("lease-database");
     case HOSTS_DATABASE:
         return ("hosts-database");
-    case DATABASE_TYPE:
-        return ("database-type");
     case DATABASE_ON_FAIL:
         return ("database-on-fail");
     case MAC_SOURCES:
@@ -194,6 +191,8 @@ Parser6Context::contextName() {
         return ("auth-type");
     case CLIENTS:
         return ("clients");
+    case HTTP_HEADERS:
+        return ("http-headers");
     case DHCP_QUEUE_CONTROL:
         return ("dhcp-queue-control");
     case DHCP_MULTI_THREADING:

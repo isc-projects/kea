@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
+#include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
@@ -19,12 +21,14 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/cb_ctl_dhcp4.h>
 #include <dhcpsrv/cfg_multi_threading.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -38,13 +42,13 @@
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <process/config_ctl_parser.h>
 #include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -58,6 +62,7 @@
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
@@ -65,6 +70,9 @@ using namespace isc::util;
 using namespace isc;
 using namespace std;
 
+//
+// Register database backends
+//
 namespace {
 
 /// @brief Parser that takes care of global DHCPv4 parameters and utility
@@ -188,6 +196,9 @@ public:
         /// Global lifetime sanity checks
         cfg->sanityChecksLifetime("valid-lifetime");
 
+        /// Sanity check global ddns-ttl parameters
+        cfg->sanityChecksDdnsTtlParameters();
+
         /// Shared network sanity checks
         const SharedNetwork4Collection* networks = cfg->getCfgSharedNetworks4()->getAll();
         if (networks) {
@@ -289,44 +300,50 @@ namespace dhcp {
 /// In that case the user simply has to accept they'll be disconnected.
 ///
 void configureCommandChannel() {
-    // Get new socket configuration.
-    ConstElementPtr sock_cfg =
-        CfgMgr::instance().getStagingCfg()->getControlSocketInfo();
+    // Get new UNIX socket configuration.
+    ConstElementPtr unix_config =
+        CfgMgr::instance().getStagingCfg()->getUnixControlSocketInfo();
 
-    // Get current socket configuration.
-    ConstElementPtr current_sock_cfg =
-            CfgMgr::instance().getCurrentCfg()->getControlSocketInfo();
+    // Get current UNIX socket configuration.
+    ConstElementPtr current_unix_config =
+        CfgMgr::instance().getCurrentCfg()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (sock_cfg && current_sock_cfg &&
-                         !sock_cfg->equals(*current_sock_cfg));
+    bool sock_changed = (unix_config && current_unix_config &&
+                         !unix_config->equals(*current_unix_config));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the client will not
     // receive the configuration result.
-    if (!sock_cfg || !current_sock_cfg || sock_changed) {
-        // Close the existing socket (if any).
-        CommandMgr::instance().closeCommandSocket();
-
-        if (sock_cfg) {
+    if (!unix_config || !current_unix_config || sock_changed) {
+        if (unix_config) {
             // This will create a control socket and install the external
             // socket in IfaceMgr. That socket will be monitored when
             // Dhcp4Srv::receivePacket() calls IfaceMgr::receive4() and
             // callback in CommandMgr will be called, if necessary.
-            CommandMgr::instance().openCommandSocket(sock_cfg);
+            UnixCommandMgr::instance().openCommandSockets(unix_config);
+        } else if (current_unix_config) {
+            UnixCommandMgr::instance().closeCommandSockets();
         }
     }
 
-    // HTTP control socket is simpler: just (re)configure it.
-
-    // Get new config.
-    HttpCommandConfigPtr http_config =
+    // Get new HTTP/HTTPS socket configuration.
+    ConstElementPtr http_config =
         CfgMgr::instance().getStagingCfg()->getHttpControlSocketInfo();
-    HttpCommandMgr::instance().configure(http_config);
+
+    // Get current HTTP/HTTPS socket configuration.
+    ConstElementPtr current_http_config =
+        CfgMgr::instance().getCurrentCfg()->getHttpControlSocketInfo();
+
+    if (http_config) {
+        HttpCommandMgr::instance().openCommandSockets(http_config);
+    } else if (current_http_config) {
+        HttpCommandMgr::instance().closeCommandSockets();
+    }
 }
 
 /// @brief Process a DHCPv4 confguration and return an answer stating if the
@@ -340,9 +357,6 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
-
-    // Print the list of known backends.
-    HostDataSourceFactory::printRegistered();
 
     // Answer will hold the result.
     ConstElementPtr answer;
@@ -669,7 +683,10 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "parked-packet-limit") ||
                  (config_pair.first == "allocator") ||
                  (config_pair.first == "offer-lifetime") ||
-                 (config_pair.first == "stash-agent-options") ) {
+                 (config_pair.first == "ddns-ttl") ||
+                 (config_pair.first == "ddns-ttl-min") ||
+                 (config_pair.first == "ddns-ttl-max") ||
+                 (config_pair.first == "stash-agent-options")) {
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);
                 continue;
@@ -735,6 +752,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
+    if (check_only) {
+        MultiThreadingMgr::instance().setTestMode(true);
+    }
+
     auto answer = processDhcp4Config(config_set);
 
     int status_code = CONTROL_RESULT_SUCCESS;
@@ -745,37 +766,21 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (status_code == CONTROL_RESULT_SUCCESS) {
         if (check_only) {
             if (extra_checks) {
-                // Re-open lease and host database with new parameters.
+                std::ostringstream err;
+                // Configure DHCP packet queueing
                 try {
-                    // Get the staging configuration.
-                    srv_config = CfgMgr::instance().getStagingCfg();
-
-                    CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
-                    string params = "universe=4 persist=false";
-                    cfg_db->setAppendedParameters(params);
-                    cfg_db->createManagers();
-                } catch (const std::exception& ex) {
-                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
-                    status_code = CONTROL_RESULT_ERROR;
-                }
-
-                if (status_code == CONTROL_RESULT_SUCCESS) {
-                    std::ostringstream err;
-                    // Configure DHCP packet queueing
-                    try {
-                        data::ConstElementPtr qc;
-                        qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-                        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
-                            LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
-                                     .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
-                        }
-
-                    } catch (const std::exception& ex) {
-                        err << "Error setting packet queue controls after server reconfiguration: "
-                            << ex.what();
-                        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
-                        status_code = CONTROL_RESULT_ERROR;
+                    data::ConstElementPtr qc;
+                    qc = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+                    if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
+                        LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
+                                 .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
                     }
+
+                } catch (const std::exception& ex) {
+                    err << "Error setting packet queue controls after server reconfiguration: "
+                        << ex.what();
+                    answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str());
+                    status_code = CONTROL_RESULT_ERROR;
                 }
             }
         } else {
@@ -900,7 +905,35 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                                                " parsing error");
             status_code = CONTROL_RESULT_ERROR;
         }
+
+        if (extra_checks && status_code == CONTROL_RESULT_SUCCESS) {
+            // Re-open lease and host database with new parameters.
+            try {
+                // Get the staging configuration.
+                srv_config = CfgMgr::instance().getStagingCfg();
+
+                CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
+                string params = "universe=4 persist=false";
+                cfg_db->setAppendedParameters(params);
+                cfg_db->createManagers();
+            } catch (const std::exception& ex) {
+                answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
+                status_code = CONTROL_RESULT_ERROR;
+            }
+        }
     }
+
+    // Log the list of known backends.
+    LeaseMgrFactory::logRegistered();
+
+    // Log the list of known backends.
+    HostDataSourceFactory::logRegistered();
+
+    // Log the list of known backends.
+    LegalLogMgrFactory::logRegistered();
+
+    // Log the list of known backends.
+    ConfigBackendDHCPv4Mgr::instance().logRegistered();
 
     // Moved from the commit block to add the config backend indication.
     if (status_code == CONTROL_RESULT_SUCCESS && (!check_only || extra_checks)) {

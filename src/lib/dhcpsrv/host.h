@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/subnet_id.h>
 #include <boost/shared_ptr.hpp>
@@ -157,7 +158,8 @@ private:
 ///
 /// The class holds the address and prefix length, a value of 128
 /// for the latter implying that the reservation is for a single
-/// IPv6 address.
+/// IPv6 address. For prefix delegations it includes an optional
+/// Prefix Exclude option.
 class IPv6Resrv {
 public:
 
@@ -205,7 +207,16 @@ public:
         return (type_);
     }
 
+    /// @brief Returns the Prefix Exclude option.
+    ///
+    /// @return Prefix Exclude option.
+    Option6PDExcludePtr getPDExclude() const {
+        return (pd_exclude_option_);
+    }
+
     /// @brief Sets a new prefix and prefix length.
+    ///
+    /// @note This removes the Prefix Exclude option when it exists.
     ///
     /// @param type Reservation type: NA or PD.
     /// @param prefix New prefix.
@@ -216,10 +227,28 @@ public:
     void set(const Type& type, const asiolink::IOAddress& prefix,
              const uint8_t prefix_len);
 
+    /// @brief Sets the Prefix Exclude option.
+    ///
+    /// @note excluded_prefix_len == 0 means there's no excluded prefix at all.
+    ///
+    /// @param excluded_prefix specifies an excluded prefix as per RFC6603.
+    /// @param excluded_prefix_len specifies length of an excluded prefix.
+    void setPDExclude(const asiolink::IOAddress& excluded_prefix,
+                      const uint8_t excluded_prefix_len);
+
     /// @brief Returns information about the reservation in the textual format.
-    std::string toText() const;
+    ///
+    /// @param display_pd_exclude_option When true (default) add the Prefix
+    /// Exclude option if it exists.
+    std::string toText(bool display_pd_exclude_option = true) const;
+
+    /// @brief Returns information about the Prefix Exclude option of
+    /// the reservation the textual format.
+    std::string PDExcludetoText() const;
 
     /// @brief Equality operator.
+    ///
+    /// @note this compares only type, prefix and prefix length.
     ///
     /// @param other Reservation to compare to.
     bool operator==(const IPv6Resrv& other) const;
@@ -231,9 +260,10 @@ public:
 
 private:
 
-    Type type_;                  ///< Reservation type.
-    asiolink::IOAddress prefix_; ///< Prefix
-    uint8_t prefix_len_;         ///< Prefix length.
+    Type type_;                             ///< Reservation type.
+    asiolink::IOAddress prefix_;            ///< Prefix.
+    uint8_t prefix_len_;                    ///< Prefix length.
+    Option6PDExcludePtr pd_exclude_option_; ///< Prefix Exclude option.
 };
 
 /// @brief Collection of IPv6 reservations for the host.

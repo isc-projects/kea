@@ -1,10 +1,13 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
+#include <config/http_command_config.h>
+#include <config/unix_command_config.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
@@ -35,8 +38,10 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -81,8 +86,9 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                   "Specified control-sockets is expected to be a list");
     }
     bool seen_unix(false);
-    bool seen_http(false);
-    for (ConstElementPtr socket : value->listValue()) {
+    ElementPtr unix_config = Element::createList();
+    ElementPtr http_config = Element::createList();
+    for (ElementPtr socket : value->listValue()) {
         if (socket->getType() != Element::map) {
             // Sanity check: not supposed to fail.
             isc_throw(DhcpConfigError,
@@ -104,24 +110,24 @@ void ControlSocketsParser::parse(SrvConfig& srv_cfg, ConstElementPtr value) {
                 isc_throw(DhcpConfigError,
                           "control socket of type 'unix' already configured");
             }
+            UnixCommandConfig cmd_config(socket);
             seen_unix = true;
-            srv_cfg.setControlSocketInfo(socket);
+            unix_config->add(socket);
         } else if ((type == "http") || (type == "https")) {
-            if (seen_http) {
-                isc_throw(DhcpConfigError,
-                          "control socket of type 'http' or 'https'"
-                          " already configured");
-            }
-            seen_http = true;
-            using namespace isc::config;
-            HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
-            srv_cfg.setHttpControlSocketInfo(http_config);
+            HttpCommandConfig cmd_config(socket);
+            http_config->add(socket);
         } else {
             // Sanity check: not supposed to fail.
             isc_throw(DhcpConfigError,
                       "unsupported 'socket-type': '" << type
                       << "' not 'unix', 'http' or 'https'");
         }
+    }
+    if (unix_config->size()) {
+        srv_cfg.setUnixControlSocketInfo(unix_config);
+    }
+    if (http_config->size()) {
+        srv_cfg.setHttpControlSocketInfo(http_config);
     }
 }
 
@@ -522,19 +528,19 @@ PoolParser::parse(PoolStoragePtr pools,
         }
     }
 
-    // Try setting up required client classes.
-    ConstElementPtr class_list = pool_structure->get("require-client-classes");
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                 cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            pool->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup client class list.
+    BaseNetworkParser::getClientClassesElem(pool_structure,
+                                            std::bind(&Pool::allowClientClass,
+                                                      pool, ph::_1));
+
+    // Setup additional class list.
+    BaseNetworkParser::getAdditionalClassesElem(pool_structure,
+                                                std::bind(&Pool::addAdditionalClass,
+                                                          pool, ph::_1));
+
+    // Parse DDNS behavioral parameters.
+    BaseNetworkParser parser;
+    parser.parseDdnsParameters(pool_structure, pool);
 }
 
 boost::shared_ptr<OptionDataListParser>
@@ -898,19 +904,13 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    // Try setting up required client classes.
-    ConstElementPtr class_list = params->get("require-client-classes");
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            subnet4->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup client class list.
+    getClientClassesElem(params, std::bind(&Network::allowClientClass,
+                                           boost::dynamic_pointer_cast<Network>(subnet4), ph::_1));
+
+    // Setup additional class list.
+    getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
+                                               boost::dynamic_pointer_cast<Network>(subnet4), ph::_1));
 
     // 4o6 specific parameter: 4o6-interface.
     if (params->contains("4o6-interface")) {
@@ -1131,8 +1131,6 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         client_class_ = client_class;
     }
 
-    ConstElementPtr class_list = pd_pool->get("require-client-classes");
-
     // Check the pool parameters. It will throw an exception if any
     // of the required parameters are invalid.
     try {
@@ -1187,17 +1185,15 @@ PdPoolParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool,
         }
     }
 
-    if (class_list) {
-        const std::vector<data::ElementPtr>& classes = class_list->listValue();
-        for (auto const& cclass : classes) {
-            if ((cclass->getType() != Element::string) ||
-                cclass->stringValue().empty()) {
-                isc_throw(DhcpConfigError, "invalid class name ("
-                          << cclass->getPosition() << ")");
-            }
-            pool_->requireClientClass(cclass->stringValue());
-        }
-    }
+    // Setup client class list.
+    BaseNetworkParser::getClientClassesElem(pd_pool,
+                                            std::bind(&Pool::allowClientClass,
+                                                      boost::dynamic_pointer_cast<Pool>(pool_), ph::_1));
+
+    // Setup additional class list.
+    BaseNetworkParser::getAdditionalClassesElem(pd_pool,
+                                                std::bind(&Pool::addAdditionalClass,
+                                                          boost::dynamic_pointer_cast<Pool>(pool_), ph::_1));
 
     // Add the local pool to the external storage ptr.
     pools->push_back(pool_);
@@ -1426,21 +1422,13 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         }
     }
 
-    if (params->contains("require-client-classes")) {
-        // Try setting up required client classes.
-        ConstElementPtr class_list = params->get("require-client-classes");
-        if (class_list) {
-            const std::vector<data::ElementPtr>& classes = class_list->listValue();
-            for (auto const& cclass : classes) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                subnet6->requireClientClass(cclass->stringValue());
-            }
-        }
-    }
+    // Setup client class list.
+    getClientClassesElem(params, std::bind(&Network::allowClientClass,
+                                           boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
+
+    // Setup additional class list.
+    getAdditionalClassesElem(params, std::bind(&Network::addAdditionalClass,
+                                               boost::dynamic_pointer_cast<Network>(subnet6), ph::_1));
 
     /// client-class processing is now generic and handled in the common
     /// code (see isc::data::SubnetConfigParser::createSubnet)

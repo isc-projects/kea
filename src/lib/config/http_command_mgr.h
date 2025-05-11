@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,8 +9,6 @@
 
 #include <asiolink/io_service.h>
 #include <config/http_command_config.h>
-#include <config/hooked_command_mgr.h>
-#include <http/listener.h>
 #include <boost/noncopyable.hpp>
 
 namespace isc {
@@ -21,8 +19,8 @@ class HttpCommandMgrImpl;
 
 /// @brief HTTP Commands Manager implementation for the Kea servers.
 ///
-/// Similar to @c CommandMgr but using HTTP/HTTPS instead of UNIX sockets.
-class HttpCommandMgr : public HookedCommandMgr, public boost::noncopyable {
+/// Similar to @c UnixCommandMgr but using HTTP/HTTPS instead of UNIX sockets.
+class HttpCommandMgr : public boost::noncopyable {
 public:
 
     /// @brief HttpCommandMgr is a singleton class. This method
@@ -31,7 +29,7 @@ public:
     /// @return The only existing instance of the manager.
     static HttpCommandMgr& instance();
 
-    /// @brief Sets IO service to be used by the command manager.
+    /// @brief Sets IO service to be used by the http command manager.
     ///
     /// The server should use this method to provide the Command
     /// Manager with the common IO service used by the server.
@@ -56,34 +54,41 @@ public:
     /// @param use_external True (default) add external sockets.
     void addExternalSockets(bool use_external = true);
 
-    /// @brief Configure control socket from configuration.
+    /// @brief Open http control sockets using configuration.
     ///
-    /// @param config Configuration of the control socket.
-    void configure(HttpCommandConfigPtr config);
+    /// @param config Configuration information for the http control sockets.
+    void openCommandSockets(const isc::data::ConstElementPtr config);
 
-    /// @brief Close control socket.
+    /// @brief Open http control socket using configuration.
     ///
-    /// @note When remove is false @c garbageCollectListeners must
-    /// be called after.
+    /// Creates http/https listener, or reuses the existing one reapplying
+    /// changes.
     ///
+    /// @note This function in used internally by @ref openCommandSockets and it
+    /// should not be used directly, except for unit tests.
+    ///
+    /// @param config Configuration information for the http control socket.
+    void openCommandSocket(const isc::data::ConstElementPtr config);
+
+    /// @brief Close http control socket.
+    ///
+    /// @note This function in used internally by @ref closeCommandSockets and it
+    /// should not be used directly, except for unit tests.
+    ///
+    /// @param info Configuration information for the http control socket.
     /// @param remove When true remove the listeners immediately.
-    void close(bool remove = true);
+    void closeCommandSocket(HttpSocketInfoPtr info = HttpSocketInfoPtr(), bool remove = true);
 
-    /// @brief Removes listeners which are no longer in use.
-    ///
-    /// This method should be called after server reconfiguration to
-    /// remove listeners used previously (no longer used because the
-    /// listening address and port has changed as a result of the
-    /// reconfiguration). If there are no listeners additional to the
-    /// one that is currently in use, the method has no effect.
-    /// This method is reused to remove all listeners at shutdown time.
-    void garbageCollectListeners();
+    /// @brief Close http control sockets.
+    void closeCommandSockets();
 
     /// @brief Returns a const pointer to the HTTP listener.
     ///
+    /// @param info Configuration information for the http control socket.
+    ///
     /// @return Const pointer to the currently used listener or null pointer if
     /// there is no listener.
-    isc::http::ConstHttpListenerPtr getHttpListener() const;
+    isc::http::ConstHttpListenerPtr getHttpListener(HttpSocketInfoPtr info = HttpSocketInfoPtr()) const;
 
 private:
 

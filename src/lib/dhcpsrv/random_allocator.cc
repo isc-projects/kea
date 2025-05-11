@@ -36,7 +36,7 @@ RandomAllocator::pickAddressInternal(const ClientClasses& client_classes,
     // ones.
     std::vector<uint64_t> available;
     std::vector<uint64_t> exhausted;
-    for (auto i = 0; i < pools.size(); ++i) {
+    for (unsigned i = 0; i < pools.size(); ++i) {
         // Check if the pool is allowed for the client's classes.
         if (pools[i]->clientSupported(client_classes)) {
             // Get or create the pool state.
@@ -99,7 +99,7 @@ RandomAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     // ones.
     std::vector<uint64_t> available;
     std::vector<uint64_t> exhausted;
-    for (auto i = 0; i < pools.size(); ++i) {
+    for (unsigned i = 0; i < pools.size(); ++i) {
         // Check if the pool is allowed for the client's classes.
         if (pools[i]->clientSupported(client_classes)) {
             if (!Allocator::isValidPrefixPool(prefix_length_match, pools[i],

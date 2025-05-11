@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1193,6 +1193,7 @@ TEST(Element, isEquivalent) {
         ElementPtr l = Element::createList();
         l->add(l);
         EXPECT_THROW(isEquivalent(l, l), isc::BadValue);
+        l->remove(0);
     }
 }
 

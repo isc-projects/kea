@@ -1,0 +1,77 @@
+# Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% DDNS_TUNING4_CALCULATED_HOSTNAME Replacing host name: %1, with calculated host name: %2, for query: %3
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library has
+calculated a new host name for the given client query.  The original
+host name and the calculated host name are provided
+
+% DDNS_TUNING4_PROCESS_ERROR An error occurred processing query %1: %2
+This error message indicates an error during processing of a query
+by the DDNS Tuning hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+% DDNS_TUNING4_SKIPPING_DDNS Client is a member matches SKIP_DDNS class, skipping DDNS updates, query: %1
+Logged at debug log level 40.
+This debug message is emitted when during the ddns4-update callout, if the
+Client query matches the SKIP_DDNS class.  The kea-dhcp4 server will not send
+DDNS update requests to kea-dhcp-ddns for this query.  The query is shown
+in the log message.
+
+% DDNS_TUNING6_CALCULATED_HOSTNAME Replacing host name: %1, with calculated host name: %2, for query: %3
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library has
+calculated a new host name for the given client query.  The original
+host name and the calculated host name are provided
+
+% DDNS_TUNING6_PROCESS_ERROR An error occurred processing query %1: %2
+This error message indicates an error during processing of a query
+by the DDNS Tuning hooks library. The client identification information
+from the query and the details of the error are provided as arguments
+of the log message.
+
+% DDNS_TUNING6_SKIPPING_DDNS Client is a member matches SKIP_DDNS class, skipping DDNS updates, query: %1
+Logged at debug log level 40.
+This debug message is emitted when during the ddns6-update callout, if the
+Client query matches the SKIP_DDNS class.  The kea-dhcp6 server will not send
+DDNS update requests to kea-dhcp-ddns for this query.  The query is shown
+in the log message.
+
+% DDNS_TUNING_GLOBAL_EXPR_SET Global hostname expression set to: %1
+This message indicates that the global hostname expression has been set and
+will be used everywhere, unless overridden by subnet level parameters.
+
+% DDNS_TUNING_LOAD_ERROR loading DDNS Tuning hooks library failed: %1
+This error message indicates an error during loading the DDNS Tuning
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% DDNS_TUNING_LOAD_OK DDNS Tuning hooks library loaded successfully.
+This info message indicates that the DDNS Tuning hooks library has
+been loaded successfully.
+
+% DDNS_TUNING_SUBNET_EXPRESSION_PARSE Parsing subnet expression (%1) for for subnet %2
+Logged at debug log level 40.
+This debug message is emitted when the DDNS Tuning hooks library is attempting
+to parse the hostname expression for a subnet.  Parsing occurs after configuration
+events (e.g. reconfigure command, config back end updates, subnet command updates).
+
+% DDNS_TUNING_SUBNET_EXPRESSION_PARSE_ERROR An error occurred while parsing the hostname expression for subnet %1, %2
+This error indicates that the hostname expression assigned to a subnet
+is not a valid expression.  DHCP service will continue as though
+the subnet did not specify an expression.  The subnet and the parsing
+error are included in the log message.
+
+% DDNS_TUNING_SUBNET_EXPR_CACHED Using subnet expression stored in a cache for subnet %1
+Logged at debug log level 40.
+The expression for this subnet has previously been used and cached. Using the
+cached version.
+
+% DDNS_TUNING_UNLOAD DDNS Tuning hooks library has been unloaded
+This info message indicates that the DDNS Tuning hooks library has been
+unloaded.

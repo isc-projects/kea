@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-
 /// @brief Invalid type exception
 ///
 /// Thrown when the factory doesn't recognize the type of the backend.
@@ -99,7 +98,6 @@ public:
     SchemaInitializationFailed(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
-
 
 /// @brief Defines a callback prototype for propagating events upward
 typedef std::function<bool (util::ReconnectCtlPtr db_reconnect_ctl)> DbCallback;
@@ -149,13 +147,14 @@ public:
     }
 
     /// @brief Destructor
-    virtual ~DatabaseConnection(){};
+    virtual ~DatabaseConnection(){}
 
     /// @brief Instantiates a ReconnectCtl based on the connection's
     /// reconnect parameters
     ///
     /// @param timer_name of the timer used for the ReconnectCtl object.
-    virtual void makeReconnectCtl(const std::string& timer_name);
+    /// @param id the ID of the manager.
+    virtual void makeReconnectCtl(const std::string& timer_name, unsigned int id);
 
     /// @brief The reconnect settings.
     ///
@@ -277,6 +276,26 @@ public:
         return (unusable_);
     }
 
+    /// @brief Test mode flag (default false).
+    static bool test_mode_;
+
+    /// @brief RAII device to set the test mode.
+    class EnterTest {
+    public:
+
+        /// @brief Constructor.
+        /// Set the test mode to true.
+        EnterTest() {
+            DatabaseConnection::test_mode_ = true;
+        }
+
+        /// @brief Destructor.
+        /// Reset the test mode to false.
+        ~EnterTest() {
+            DatabaseConnection::test_mode_ = false;
+        }
+    };
+
 protected:
 
     /// @brief Sets the unusable flag to true.
@@ -309,7 +328,7 @@ private:
     /// @brief Reconnect settings.
     util::ReconnectCtlPtr reconnect_ctl_;
 
-    /// The IOService object, used for all ASIO operations.
+    /// @brief The IOService object, used for all ASIO operations.
     static isc::asiolink::IOServicePtr io_service_;
 };
 

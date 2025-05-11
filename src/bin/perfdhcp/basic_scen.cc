@@ -45,14 +45,14 @@ BasicScen::checkExitConditions() {
     // Check if we reached maximum number of DISCOVER/SOLICIT sent.
     if (options_.getNumRequests().size() > 0) {
         if (stats_mgr.getSentPacketsNum(stage1_xchg_) >=
-            options_.getNumRequests()[0]) {
+            static_cast<uint64_t>(options_.getNumRequests()[0])) {
             max_requests = true;
         }
     }
     // Check if we reached maximum number REQUEST packets.
     if (options_.getNumRequests().size() > 1) {
         if (stats_mgr.getSentPacketsNum(stage2_xchg_) >=
-            options_.getNumRequests()[1]) {
+            static_cast<uint64_t>(options_.getNumRequests()[1])) {
             max_requests = true;
         }
     }
@@ -69,14 +69,14 @@ BasicScen::checkExitConditions() {
     bool max_drops = false;
     if (options_.getMaxDrop().size() > 0) {
         if (stats_mgr.getDroppedPacketsNum(stage1_xchg_) >=
-            options_.getMaxDrop()[0]) {
+            static_cast<uint64_t>(options_.getMaxDrop()[0])) {
             max_drops = true;
         }
     }
     // Check if we reached maximum number of drops of ACK/REPLY packets.
     if (options_.getMaxDrop().size() > 1) {
         if (stats_mgr.getDroppedPacketsNum(stage2_xchg_) >=
-            options_.getMaxDrop()[1]) {
+            static_cast<uint64_t>(options_.getMaxDrop()[1])) {
             max_drops = true;
         }
     }

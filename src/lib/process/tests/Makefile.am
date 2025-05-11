@@ -3,7 +3,8 @@ dhcp_data_dir = @runstatedir@/@PACKAGE@
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/process/tests\"
-AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
+AM_CPPFLAGS += -DTEST_SCRIPT_SH=\"$(abs_top_builddir)/src/lib/process/tests/process_test.sh\"
+AM_CPPFLAGS += -DPIDFILE_DIR="\"$(dhcp_data_dir)\""
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)

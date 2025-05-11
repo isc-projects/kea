@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -60,6 +60,22 @@ namespace {
 ///   - address pool: 2001:db8:1::/64
 ///   - prefix pool: 3000::/72
 ///   - excluded prefix 3000::1000/120 in a prefix pool.
+///
+/// - Configuration 6:
+///   - addresses and prefixes
+///   - 1 subnet with one address pool and one prefix pool
+///   - address pool: 2001:db8:1::/64
+///   - prefix pool: 3000::/72
+///   - excluded prefix 3000::1000/120 in a prefix pool.
+///   - reservation for 3000::/80 (has precedence over the prefix pool).
+///
+/// - Configuration 7:
+///   - addresses and prefixes
+///   - 1 subnet with one address pool and one prefix pool
+///   - address pool: 2001:db8:1::/64
+///   - prefix pool: 3000::/72
+///   - excluded prefix 3000::1000/120 in a prefix pool.
+///   - reservation for 3000::/80 with 3000::2000/120 excluded prefix.
 ///
 const char* RENEW_CONFIGS[] = {
 // Configuration 0
@@ -224,7 +240,67 @@ const char* RENEW_CONFIGS[] = {
         "    \"interface-id\": \"\","
         "    \"interface\": \"eth0\""
         " } ],"
-        "\"valid-lifetime\": 4000 }"
+        "\"valid-lifetime\": 4000"
+    "}",
+
+// Configuration 6
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1, "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"3000::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80,"
+        "          \"excluded-prefix\": \"3000::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"prefixes\": [ \"3000::/80\" ]"
+        "    } ],"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
+    "}",
+
+// Configuration 7
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1, "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"3000::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80,"
+        "          \"excluded-prefix\": \"3000::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"prefixes\": [ \"3000::/80\" ],"
+        "        \"excluded-prefixes\": [ \"3000::2000/120\" ]"
+        "    } ],"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
+    "}"
 };
 
 /// @brief Test fixture class for testing Renew.
@@ -249,7 +325,7 @@ public:
 // This test verifies that the client can request the prefix delegation
 // while it is renewing an address lease.
 TEST_F(RenewTest, requestPrefixInRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -314,9 +390,9 @@ TEST_F(RenewTest, requestPrefixInRenew) {
 }
 
 // Test that it is possible to renew a prefix lease with a Prefix Exclude
-// option being included during renew.
-TEST_F(RenewTest, renewWithExcludedPrefix) {
-    Dhcp6Client client;
+// option from PD pool being included during renew.
+TEST_F(RenewTest, renewWithExcludedPrefixPool) {
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -325,7 +401,7 @@ TEST_F(RenewTest, renewWithExcludedPrefix) {
     // Request Prefix Exclude option.
     client.requestOption(D6O_PD_EXCLUDE);
 
-    // Configure the server with NA pools only.
+    // Configure the server with NA and PD pools but without excluded prefix.
     ASSERT_NO_THROW(configure(RENEW_CONFIGS[2], *client.getServer()));
 
     // Perform 4-way exchange.
@@ -399,10 +475,99 @@ TEST_F(RenewTest, renewWithExcludedPrefix) {
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
+// Test that it is possible to renew a prefix lease with a Prefix Exclude
+// option from host reservation being included during renew.
+TEST_F(RenewTest, renewWithExcludedPrefixHost) {
+    Dhcp6Client client(srv_);
+
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+
+    // Configure client to request IA_NA and IA_PD.
+    client.requestAddress(na_iaid_);
+    client.requestPrefix(pd_iaid_);
+
+    // Request Prefix Exclude option.
+    client.requestOption(D6O_PD_EXCLUDE);
+
+    // Configure the server with a reservation but without excluded prefix.
+    ASSERT_NO_THROW(configure(RENEW_CONFIGS[6], *client.getServer()));
+
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Simulate aging of leases.
+    client.fastFwdTime(1000);
+
+    // Make sure that the client has acquired NA lease.
+    std::vector<Lease6> leases_client_na = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    // The client should also acquire a PD lease.
+    std::vector<Lease6> leases_client_pd = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd.size());
+    ASSERT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
+
+    // Send Renew message to the server, including IA_NA and IA_PD.
+    ASSERT_NO_THROW(client.doRenew());
+
+    std::vector<Lease6> leases_client_na_renewed =
+        client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    std::vector<Lease6> leases_client_pd_renewed =
+        client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
+
+    // Make sure that Prefix Exclude option hasn't been included.
+    OptionPtr option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    option = option->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    option = option->getOption(D6O_PD_EXCLUDE);
+    ASSERT_FALSE(option);
+
+    // Reconfigure the server to use the reservation with excluded prefix.
+    configure(RENEW_CONFIGS[7], *client.getServer());
+
+    // Send Renew message to the server, including IA_NA and IA_PD.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Make sure that the client has acquired NA lease.
+    leases_client_na_renewed = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases_client_na_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(na_iaid_));
+
+    // Make sure that the client has acquired PD lease.
+    leases_client_pd_renewed = client.getLeasesByType(Lease::TYPE_PD);
+    ASSERT_EQ(1, leases_client_pd_renewed.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(pd_iaid_));
+
+    // The leases should have been renewed.
+    EXPECT_GE(leases_client_na_renewed[0].cltt_ - leases_client_na[0].cltt_, 1000);
+    EXPECT_GE(leases_client_pd_renewed[0].cltt_ - leases_client_pd[0].cltt_, 1000);
+
+    // This time, the Prefix Exclude option should be included.
+    option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    option = option->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    option = option->getOption(D6O_PD_EXCLUDE);
+    ASSERT_TRUE(option);
+    Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
+    ASSERT_TRUE(pd_exclude);
+    EXPECT_EQ("3000::2000", pd_exclude->getExcludedPrefix(IOAddress("3000::"),
+                                                          80).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+}
+
 // This test verifies that the client can request a prefix delegation
 // with a hint, while it is renewing an address lease.
 TEST_F(RenewTest, requestPrefixInRenewUseHint) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -475,7 +640,7 @@ TEST_F(RenewTest, requestPrefixInRenewUseHint) {
 // This test verifies that the client can request the prefix delegation
 // while it is renewing an address lease.
 TEST_F(RenewTest, requestAddressInRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -535,7 +700,7 @@ TEST_F(RenewTest, requestAddressInRenew) {
 // This test verifies that the client can request address assignment
 // while it is renewing an address lease, with a hint.
 TEST_F(RenewTest, requestAddressInRenewHint) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress(na_iaid_);
@@ -599,7 +764,7 @@ TEST_F(RenewTest, requestAddressInRenewHint) {
 
 // This test verifies that the client can request the DOCSIS sub-options.
 TEST_F(RenewTest, docsisORO) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA.
     client.requestAddress(na_iaid_);
@@ -675,7 +840,7 @@ TEST_F(RenewTest, docsisORO) {
 // level, subnet level and pool level. The options associated with pools
 // are used when the lease is handed out from these pools.
 TEST_F(RenewTest, optionsInheritance) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));

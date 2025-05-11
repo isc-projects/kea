@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <command_creator.h>
+#include <ha_service_states.h>
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
 #include <boost/pointer_cast.hpp>
@@ -259,10 +260,12 @@ CommandCreator::createLease6GetPage(const Lease6Ptr& last_lease6,
 ConstElementPtr
 CommandCreator::createMaintenanceNotify(const std::string& server_name,
                                         const bool cancel,
+                                        const int state,
                                         const HAServerType& server_type) {
     auto args = Element::createMap();
     args->set("server-name", Element::create(server_name));
     args->set("cancel", Element::create(cancel));
+    args->set("state", Element::create(stateToString(state)));
     auto command = config::createCommand("ha-maintenance-notify", args);
     insertService(command, server_type);
     return (command);

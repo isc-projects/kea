@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,8 +43,6 @@ namespace {
 
 // Checks if hooks are implemented properly.
 TEST_F(Dhcpv4SrvTest, Hooks) {
-    NakedDhcpv4Srv srv(0);
-
     // check if appropriate hooks are registered
     int hook_index_dhcp4_srv_configured = -1;
     int hook_index_buffer4_receive = -1;
@@ -139,9 +137,6 @@ public:
         if (!status) {
             cerr << "(fixture ctor) unloadLibraries failed" << endl;
         }
-
-        // Allocate new DHCPv4 Server
-        srv_.reset(new NakedDhcpv4Srv(0));
 
         // Clear static buffers
         resetCalloutBuffers();
@@ -623,7 +618,7 @@ public:
         subnet4_select_callout(callout_handle);
 
         const Subnet4Collection* subnets;
-        Subnet4Ptr subnet;
+        ConstSubnet4Ptr subnet;
         callout_handle.getArgument("subnet4", subnet);
         callout_handle.getArgument("subnet4collection", subnets);
 
@@ -1104,9 +1099,6 @@ public:
         return (stat->getInteger().first);
     }
 
-    /// Pointer to Dhcpv4Srv that is used in tests
-    boost::shared_ptr<NakedDhcpv4Srv> srv_;
-
     /// Pointer to the IO service used in the tests.
     static IOServicePtr io_service_;
 
@@ -1134,7 +1126,7 @@ public:
     static ClientIdPtr callback_clientid_;
 
     /// Pointer to a subnet received by callout
-    static Subnet4Ptr callback_subnet4_;
+    static ConstSubnet4Ptr callback_subnet4_;
 
     /// A list of all available subnets (received by callout)
     static const Subnet4Collection* callback_subnet4collection_;
@@ -1175,7 +1167,7 @@ IOServicePtr HooksDhcpv4SrvTest::io_service_;
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_qry_pkt4_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_resp_pkt4_;
-Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+ConstSubnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
 ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
@@ -2095,7 +2087,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDiscover) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDiscover());
@@ -2119,7 +2111,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedInform) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.useRelay();
     ASSERT_NO_THROW(client.doInform());
 
@@ -2143,7 +2135,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -2157,6 +2149,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRequest) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2255,7 +2248,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.useRelay();
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
@@ -2272,6 +2265,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2302,7 +2296,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                     "leases4_committed", leases4_committed_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -2320,6 +2314,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedRelease) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2353,7 +2348,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     // Modify the subnet to reuse leases.
     subnet_->setCacheThreshold(.25);
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -2367,6 +2362,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedCache) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2424,7 +2420,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
                     "leases4_committed", leases4_committed_park_callout));
 
     // Create first client and perform DORA.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -2439,6 +2435,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("deleted_leases4");
     expected_argument_names.push_back("leases4");
 
@@ -2463,7 +2460,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4CommittedParkRequests) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
@@ -3066,7 +3063,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineSimple) {
     HooksManager::setTestMode(true);
 
     // Conduct the actual DORA + Decline.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
@@ -3118,7 +3115,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineSkip) {
 
     // Conduct the actual DORA + Decline. The DECLINE should fail, as the
     // hook will set the status to SKIP.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_FAIL);
@@ -3168,7 +3165,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4DeclineDrop) {
 
     // Conduct the actual DORA + Decline. The DECLINE should fail, as the
     // hook will set the status to DROP.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_FAIL);
@@ -3354,7 +3351,6 @@ TEST_F(HooksDhcpv4SrvTest, host4IdentifierHWAddr) {
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.
 TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
-
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
 
     // Ensure no marker files to start with.
@@ -3393,7 +3389,6 @@ TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.
 TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
-
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv4Srv()));
 
     // Ensure no marker files to start with.
@@ -3442,7 +3437,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 
         reset();
 
-        boost::shared_ptr<ControlledDhcpv4Srv> srv(new ControlledDhcpv4Srv(0));
+        server_.reset(new NakedDhcpv4Srv(0));
 
         // Ensure no marker files to start with.
         ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
@@ -3481,7 +3476,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
 
         // Configure the server.
         ConstElementPtr answer;
-        ASSERT_NO_THROW(answer = srv->processConfig(config));
+        ASSERT_NO_THROW(answer = server_->processConfig(config));
 
         // Make sure there were no errors.
         int status_code;
@@ -3515,7 +3510,7 @@ TEST_F(LoadUnloadDhcpv4SrvTest, Dhcpv4SrvConfigured) {
                                     "3io_contextjson_confignetwork_stateserver_config"));
 
         // Destroy the server, instance which should unload the libraries.
-        srv.reset();
+        server_.reset();
 
         // The server was destroyed, so the unload() function should now
         // include the library number in its marker file.
@@ -3569,7 +3564,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -3591,7 +3586,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     // Create a second client and initiate a DORA for it.
     // Since the parking lot limit has been reached, the packet
     // should be dropped with no response.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
@@ -3663,7 +3658,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscover) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
         "lease4_offer", lease4_offer_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDiscover());
@@ -3677,6 +3672,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscover) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
@@ -3704,7 +3700,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferInform) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
         "lease4_offer", lease4_offer_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.useRelay();
     ASSERT_NO_THROW(client.doInform());
 
@@ -3727,7 +3723,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDecline) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
         "lease4_offer", lease4_offer_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.useRelay();
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
 
@@ -3754,7 +3750,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferRequest) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
         "lease4_offer", lease4_offer_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -3783,7 +3779,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferRelease) {
     ASSERT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
         "lease4_offer", lease4_offer_callout));
 
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -3815,7 +3811,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
         "lease4_offer", lease4_offer_park_callout));
 
     // Create first client and perform DORA.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client1.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -3830,6 +3826,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
@@ -3852,7 +3849,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
@@ -3929,7 +3926,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.100"))));
@@ -3951,7 +3948,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     // Create a second client and initiate a DORA for it.
     // Since the parking lot limit has been reached, the packet
     // should be dropped with no response.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client2.doDORA(boost::shared_ptr<IOAddress>(new IOAddress("192.0.2.101"))));
@@ -4035,7 +4032,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     ASSERT_FALSE(LeaseMgrFactory::instance().getLease4(expected_address));
 
     // Generate a DISCOVER.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     ASSERT_NO_THROW(client.doDiscover());
@@ -4046,6 +4043,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("response4");
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
@@ -4201,7 +4199,7 @@ TEST_F(HooksDhcpv4SrvTest, ddns4Update) {
                     "ddns4_update", ddns4_update_callout));
 
     // Carry out a DORA.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     client.includeFQDN(Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,

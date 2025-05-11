@@ -73,8 +73,8 @@ TEST_F(DNSSECTimeTest, fromText) {
 
     // On the other hand, the 64-bit version should return monotonically
     // increasing counters.
-    EXPECT_EQ(4294967296LL, timeFromText64("21060207062816"));
-    EXPECT_EQ(4294967306LL, timeFromText64("21060207062826"));
+    EXPECT_EQ(4294967296LLU, timeFromText64("21060207062816"));
+    EXPECT_EQ(4294967306LLU, timeFromText64("21060207062826"));
 }
 
 // This helper templated function tells timeToText32 a faked current time.

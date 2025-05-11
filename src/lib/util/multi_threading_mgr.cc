@@ -14,7 +14,8 @@ namespace isc {
 namespace util {
 
 MultiThreadingMgr::MultiThreadingMgr()
-    : enabled_(false), critical_section_count_(0), thread_pool_size_(0) {
+    : enabled_(false), test_mode_(false), critical_section_count_(0),
+      thread_pool_size_(0) {
 }
 
 MultiThreadingMgr::~MultiThreadingMgr() {

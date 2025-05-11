@@ -71,7 +71,7 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
 
     // Start reading opaque data.
     size_t offset = 0;
-    while (offset < std::distance(begin, end)) {
+    while (offset < static_cast<size_t>(std::distance(begin, end))) {
         // Parse a tuple.
         OpaqueDataTuple tuple(OptionDataTypeUtil::getTupleLenFieldType(getUniverse()),
                               begin + offset, end);
@@ -98,7 +98,7 @@ OptionVendorClass::unpack(OptionBufferConstIter begin,
             // If the offset already ran over the buffer length or there is
             // no space left for the empty tuple (thus we add 1), we have
             // to signal the option truncation.
-            if (offset + 1 >= std::distance(begin, end)) {
+            if (offset + 1 >= static_cast<size_t>(std::distance(begin, end))) {
                 isc_throw(isc::OutOfRange, "truncated DHCPv4 V-I Vendor Class"
                           " option - it should contain enterprise id followed"
                           " by opaque data field tuple");

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,13 @@
 #include <d2srv/d2_config.h>
 #include <d2srv/d2_simple_parser.h>
 #include <cc/data.h>
+#include <config/http_command_config.h>
+#include <config/unix_command_config.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::d2;
 using namespace isc;
@@ -277,8 +280,9 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                       "Specified control-sockets is expected to be a list");
         }
         bool seen_unix(false);
-        bool seen_http(false);
-        for (ConstElementPtr socket : control_sockets->listValue()) {
+        ElementPtr unix_config = Element::createList();
+        ElementPtr http_config = Element::createList();
+        for (ElementPtr socket : control_sockets->listValue()) {
             if (socket->getType() != Element::map) {
                 // Sanity check: not supposed to fail.
                 isc_throw(D2CfgError,
@@ -300,24 +304,24 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
                     isc_throw(D2CfgError,
                               "control socket of type 'unix' already configured");
                 }
+                UnixCommandConfig cmd_config(socket);
                 seen_unix = true;
-                ctx->setControlSocketInfo(socket);
+                unix_config->add(socket);
             } else if ((type == "http") || (type == "https")) {
-                if (seen_http) {
-                    isc_throw(D2CfgError,
-                              "control socket of type 'http' or 'https'"
-                              " already configured");
-                }
-                seen_http = true;
-                using namespace isc::config;
-                HttpCommandConfigPtr http_config(new HttpCommandConfig(socket));
-                ctx->setHttpControlSocketInfo(http_config);
+                HttpCommandConfig cmd_config(socket);
+                http_config->add(socket);
             } else {
                 // Sanity check: not supposed to fail.
                 isc_throw(D2CfgError,
                           "unsupported 'socket-type': '" << type
                           << "' not 'unix', 'http' or 'https'");
             }
+        }
+        if (unix_config->size()) {
+            ctx->setUnixControlSocketInfo(unix_config);
+        }
+        if (http_config->size()) {
+            ctx->setHttpControlSocketInfo(http_config);
         }
     }
 

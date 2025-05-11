@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,8 +96,11 @@ public:
     /// @brief Type of host data source factory
     ///
     /// A factory takes a parameter map and returns a pointer to a host
-    /// data source. In case of failure it must throw and not return NULL.
+    /// data source. In case of failure it must throw and not return null.
     typedef std::function<HostDataSourcePtr (const db::DatabaseConnection::ParameterMap&)> Factory;
+
+    /// @brief Type of host mgr version
+    typedef std::function<std::string ()> DBVersion;
 
     /// @brief Register a host data source factory
     ///
@@ -108,10 +111,13 @@ public:
     /// @param db_type database type
     /// @param factory host data source factory
     /// @param no_log do not log (default false)
+    /// @param db_version host mgr version
     /// @return true if the factory was successfully added to the map, false
     /// if it already exists.
     static bool registerFactory(const std::string& db_type,
-                                const Factory& factory, bool no_log = false);
+                                const Factory& factory,
+                                bool no_log = false,
+                                DBVersion db_version = DBVersion());
 
     /// @brief Deregister a host data source factory
     ///
@@ -131,16 +137,19 @@ public:
     /// @return true if a factory was registered for db_type, false if not.
     static bool registeredFactory(const std::string& db_type);
 
-    /// @brief Prints out all registered backends.
+    /// @brief Logs out all registered backends.
     ///
     /// We need a dedicated method for this, because we sometimes can't log
     /// the backend type when doing early initialization for backends
     /// initialized statically.
-    static void printRegistered();
+    static void logRegistered();
+
+    /// @brief Return extended version info for registered backends.
+    static std::list<std::string> getDBVersions();
 
 private:
     /// @brief Factory map
-    static std::map<std::string, Factory> map_;
+    static std::map<std::string, std::pair<Factory, DBVersion>> map_;
 };
 
 } // end of isc::dhcp namespace

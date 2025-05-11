@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define LEASE_CMDS_H
 
 #include <cc/data.h>
+#include <binding_variables.h>
 #include <hooks/hooks.h>
 
 #include <boost/shared_ptr.hpp>
@@ -605,6 +606,45 @@ public:
     int
     leaseWriteHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4_offer hookpoint handler.
+    ///
+    /// If the offer_lifetime callout argument is 0 the handler simply returns.
+    /// Otherwise it will evaluate the binding variables (if any) and update
+    /// the given lease's user-context accordingly.  This includes updating the
+    /// lease in the lease back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query4, response4,
+    /// leases4 arguments, and offer_lifetime.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void
+    lease4Offer(hooks::CalloutHandle& callout_handle,
+                BindingVariableMgrPtr mgr);
+
+    /// @brief leases4_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the active lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query4, response4,
+    /// and leases4 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void
+    leases4Committed(hooks::CalloutHandle& callout_handle,
+                     BindingVariableMgrPtr mgr);
+
+    /// @brief leases6_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the active leases'
+    /// user-context accordingly.  This includes updating the leases in the lease
+    /// back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query6, response6,
+    /// and leases6 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    void
+    leases6Committed(hooks::CalloutHandle& callout_handle,
+                     BindingVariableMgrPtr mgr);
 private:
     /// Pointer to the actual implementation
     boost::shared_ptr<LeaseCmdsImpl> impl_;

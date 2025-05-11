@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,7 +73,7 @@ enum DHCPv6OptionType {
    D6O_RELAY_ID                            = 53, /* RFC5460 */
 // D6O_IPV6_ADDRESS_MOS                    = 54, /* RFC5678 */
 // D6O_IPV6_FQDN_MOS                       = 55, /* RFC5678 */
-// D6O_NTP_SERVER                          = 56, /* RFC5908 */
+   D6O_NTP_SERVER                          = 56, /* RFC5908 */
    D6O_V6_ACCESS_DOMAIN                    = 57, /* RFC5986 */
    D6O_SIP_UA_CS_LIST                      = 58, /* RFC6011 */
    D6O_BOOTFILE_URL                        = 59, /* RFC5970 */
@@ -153,10 +153,20 @@ enum DHCPv6OptionType {
 // D6O_F_START_TIME_OF_STATE              = 133, /* RFC8156 */
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
-   D60_V6_SZTP_REDIRECT                   = 136, /* RFC8572 */
-   // Option codes 137-142 are unassigned.
+   D6O_V6_SZTP_REDIRECT                   = 136, /* RFC8572 */
+// D6O_S46_BIND_IPV6_PREFIX               = 137, /* RFC8539 */
+// D6O_IA_LL                              = 138, /* RFC8947 */
+// D6O_LLADDR                             = 139, /* RFC8947 */
+// D6O_SLAP_QUAD                          = 140, /* RFC8958 */
+// D6O_V6_DOTS_RI                         = 141, /* RFC8973 */
+// D6O_V6_DOTS_ADDRESS                    = 142, /* RFC8973 */
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
-   D6O_V6_DNR                             = 144 /* RFC9463 */
+   D6O_V6_DNR                             = 144, /* RFC9463 */
+// D6O_REGISTERED_DOMAIN                  = 145, /* RFC9527 */
+// D6O_FORWARD_DIST_MANAGER               = 146, /* RFC9527 */
+// D6O_REVERSE_DIST_MANAGER               = 147, /* RFC9527 */
+   D6O_ADDR_REG_ENABLE                    = 148 /* RFC3683 */
+// 149 and 150 temporary assigned.
 };
 
 /*
@@ -216,7 +226,7 @@ enum DHCPv6MessageType {
    DHCPV6_LEASEQUERY_DATA      = 17,
    /* RFC 6977 */
    DHCPV6_RECONFIGURE_REQUEST  = 18,
-    DHCPV6_RECONFIGURE_REPLY   = 19,
+   DHCPV6_RECONFIGURE_REPLY    = 19,
    /* RFC 7341 */
    DHCPV6_DHCPV4_QUERY         = 20,
    DHCPV6_DHCPV4_RESPONSE      = 21,
@@ -236,6 +246,8 @@ enum DHCPv6MessageType {
    DHCPV6_DISCONNECT           = 33,
    DHCPV6_STATE                = 34,
    DHCPV6_CONTACT              = 35,
+   DHCPV6_ADDR_REG_INFORM      = 36,
+   DHCPV6_ADDR_REG_REPLY       = 37,
    DHCPV6_TYPES_EOF
 };
 
@@ -258,6 +270,11 @@ static const uint32_t ENTERPRISE_ID_ISC = 2495;
 static const uint16_t ISC_V6_4O6_INTERFACE = 60000;
 static const uint16_t ISC_V6_4O6_SRC_ADDRESS = 60001;
 static const uint16_t ISC_V6_4O6_SRC_PORT = 60002;
+
+/* NTP server (RFC 5908) suboptions. */
+static const uint16_t NTP_SUBOPTION_SRV_ADDR = 1;
+static const uint16_t NTP_SUBOPTION_MC_ADDR = 2;
+static const uint16_t NTP_SUBOPTION_SRV_FQDN = 3;
 
 /* Offsets into IA_*'s where Option spaces commence.  */
 static const uint16_t IA_NA_OFFSET = 12; /* IAID, T1, T2, all 4 octets each */

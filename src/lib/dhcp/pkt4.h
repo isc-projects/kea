@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -140,12 +140,12 @@ public:
     /// @brief Sets hops field.
     ///
     /// @param hops value to be set
-    void setHops(uint8_t hops) { hops_ = hops; };
+    void setHops(uint8_t hops) { hops_ = hops; }
 
     /// @brief Returns hops field.
     ///
     /// @return hops field
-    uint8_t getHops() const { return (hops_); };
+    uint8_t getHops() const { return (hops_); }
 
     // Note: There's no need to manipulate OP field directly,
     // thus no setOp() method. See op_ comment.
@@ -153,75 +153,75 @@ public:
     /// @brief Returns op field.
     ///
     /// @return op field
-    uint8_t getOp() const { return (op_); };
+    uint8_t getOp() const { return (op_); }
 
     /// @brief Sets secs field.
     ///
     /// @param secs value to be set
-    void setSecs(uint16_t secs) { secs_ = secs; };
+    void setSecs(uint16_t secs) { secs_ = secs; }
 
     /// @brief Returns secs field.
     ///
     /// @return secs field
-    uint16_t getSecs() const { return (secs_); };
+    uint16_t getSecs() const { return (secs_); }
 
     /// @brief Sets flags field.
     ///
     /// @param flags value to be set
-    void setFlags(uint16_t flags) { flags_ = flags; };
+    void setFlags(uint16_t flags) { flags_ = flags; }
 
     /// @brief Returns flags field.
     ///
     /// @return flags field
-    uint16_t getFlags() const { return (flags_); };
+    uint16_t getFlags() const { return (flags_); }
 
     /// @brief Returns ciaddr field.
     ///
     /// @return ciaddr field
     const isc::asiolink::IOAddress&
-    getCiaddr() const { return (ciaddr_); };
+    getCiaddr() const { return (ciaddr_); }
 
     /// @brief Sets ciaddr field.
     ///
     /// @param ciaddr value to be set
     void
-    setCiaddr(const isc::asiolink::IOAddress& ciaddr) { ciaddr_ = ciaddr; };
+    setCiaddr(const isc::asiolink::IOAddress& ciaddr) { ciaddr_ = ciaddr; }
 
     /// @brief Returns siaddr field.
     ///
     /// @return siaddr field
     const isc::asiolink::IOAddress&
-    getSiaddr() const { return (siaddr_); };
+    getSiaddr() const { return (siaddr_); }
 
     /// @brief Sets siaddr field.
     ///
     /// @param siaddr value to be set
     void
-    setSiaddr(const isc::asiolink::IOAddress& siaddr) { siaddr_ = siaddr; };
+    setSiaddr(const isc::asiolink::IOAddress& siaddr) { siaddr_ = siaddr; }
 
     /// @brief Returns yiaddr field.
     ///
     /// @return yiaddr field
     const isc::asiolink::IOAddress&
-    getYiaddr() const { return (yiaddr_); };
+    getYiaddr() const { return (yiaddr_); }
 
     /// @brief Sets yiaddr field.
     ///
     /// @param yiaddr value to be set
     void
-    setYiaddr(const isc::asiolink::IOAddress& yiaddr) { yiaddr_ = yiaddr; };
+    setYiaddr(const isc::asiolink::IOAddress& yiaddr) { yiaddr_ = yiaddr; }
 
     /// @brief Returns giaddr field.
     ///
     /// @return giaddr field
     const isc::asiolink::IOAddress&
-    getGiaddr() const { return (giaddr_); };
+    getGiaddr() const { return (giaddr_); }
 
     /// @brief Sets giaddr field.
     ///
     /// @param giaddr value to be set
     void
-    setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
+    setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; }
 
     /// @brief Returns DHCP message type (e.g. 1 = DHCPDISCOVER).
     ///
@@ -262,7 +262,7 @@ public:
     ///
     /// @return sname field
     const OptionBuffer
-    getSname() const { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); };
+    getSname() const { return (std::vector<uint8_t>(sname_, &sname_[MAX_SNAME_LEN])); }
 
     /// @brief Sets sname field.
     ///
@@ -277,7 +277,7 @@ public:
     ///
     /// @return pointer to file field
     const OptionBuffer
-    getFile() const { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); };
+    getFile() const { return (std::vector<uint8_t>(file_, &file_[MAX_FILE_LEN])); }
 
     /// Sets file field
     ///
@@ -334,7 +334,7 @@ public:
     /// @brief Add an option.
     ///
     /// @note: to avoid throwing when adding multiple options
-    /// with the same type use @ref Pkt::addOption.
+    /// with the same type use @ref isc::dhcp::Pkt::addOption.
     ///
     /// @throw BadValue if option with that type is already present.
     ///

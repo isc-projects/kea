@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -96,8 +96,8 @@ protected:
     static void captureSetDefaultFields(const isc::dhcp::Pkt4Ptr& pkt);
 };
 
-}; // end of namespace isc::dhcp::test
-}; // end of namespace isc::dhcp
-}; // end of namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

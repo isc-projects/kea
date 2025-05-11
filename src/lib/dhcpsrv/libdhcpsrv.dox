@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,12 +86,6 @@ marks the staging object as "current configuration". The const pointer to the
 current configuration can be accessed by calling a
 \ref isc::dhcp::CfgMgr::getCurrentCfg.
 
-The staging configuration can be discarded at any time before it is committed
-by calling the \ref isc::dhcp::CfgMgr::rollback. This removes the
-\ref isc::dhcp::SrvConfig object from the Configuration Manager. When
-the \ref isc::dhcp::CfgMgr::getStagingCfg is called again a fresh/default
-\ref isc::dhcp::SrvConfig object is returned.
-
 The Configuration Manager stores previous configurations, i.e. configurations
 which occurred prior to the most current configuration. This is currently
 unused (except for unit tests) by the daemons, but in the future this
@@ -151,7 +145,7 @@ documentation.
 @subsection postgreSQLHostMgr PostgreSQL Host Reservation Management
 
 Storing and retrieving host reservations within a PostgreSQL schema is
-provided by the class, \ref isc::dhcp::PgSqlHostDataSource, a derivation of
+provided by the class, isc::dhcp::PgSqlHostDataSource, a derivation of
 \ref isc::dhcp::BaseHostDataSource and is depicted in the following
 class diagram:
 

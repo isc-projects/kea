@@ -86,7 +86,8 @@ AuthKey::operator!=(const AuthKey& other) const {
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
                      const uint8_t prefix_len)
-    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128) {
+    : type_(type), prefix_(asiolink::IOAddress("::")), prefix_len_(128),
+      pd_exclude_option_() {
     // Validate and set the actual values.
     set(type, prefix, prefix_len);
 }
@@ -112,17 +113,53 @@ IPv6Resrv::set(const Type& type, const asiolink::IOAddress& prefix,
     type_ = type;
     prefix_ = prefix;
     prefix_len_ = prefix_len;
+    pd_exclude_option_.reset();
+}
+
+void
+IPv6Resrv::setPDExclude(const asiolink::IOAddress& excluded_prefix,
+                        const uint8_t excluded_prefix_len) {
+    if (excluded_prefix_len == 0) {
+        pd_exclude_option_.reset();
+    } else {
+        pd_exclude_option_.reset(new Option6PDExclude(prefix_, prefix_len_,
+                                                      excluded_prefix,
+                                                      excluded_prefix_len));
+    }
 }
 
 std::string
-IPv6Resrv::toText() const {
+IPv6Resrv::toText(bool display_pd_exclude_option) const {
     std::ostringstream s;
     s << prefix_;
     // For PD, append prefix length.
-    if (getType() == TYPE_PD) {
+    if (type_ == TYPE_PD) {
         s << "/" << static_cast<int>(prefix_len_);
+        // If there is a Prefix Exclude option append it.
+        if (display_pd_exclude_option && pd_exclude_option_) {
+            s << " (excluded_prefix="
+              << pd_exclude_option_->getExcludedPrefix(prefix_,
+                                                       prefix_len_).toText()
+              << "/"
+              << static_cast<int>(pd_exclude_option_->getExcludedPrefixLength())
+              << ")";
+        }
     }
     return (s.str());
+}
+
+std::string
+IPv6Resrv::PDExcludetoText() const {
+    if (pd_exclude_option_) {
+        std::ostringstream s;
+        s << pd_exclude_option_->getExcludedPrefix(prefix_,
+                                                   prefix_len_).toText()
+          << "/"
+          << static_cast<int>(pd_exclude_option_->getExcludedPrefixLength());
+        return (s.str());
+    } else {
+        return ("");
+    }
 }
 
 bool
@@ -607,10 +644,22 @@ Host::toElement6() const {
     // Set reservations (prefixes)
     const IPv6ResrvRange& pd_resv = getIPv6Reservations(IPv6Resrv::TYPE_PD);
     resvs = Element::createList();
+    bool has_pd_exclude_option(false);
     BOOST_FOREACH(auto const& resv, pd_resv) {
-        resvs->add(Element::create(resv.second.toText()));
+        if (resv.second.getPDExclude()) {
+            has_pd_exclude_option = true;
+        }
+        resvs->add(Element::create(resv.second.toText(false)));
     }
     map->set("prefixes", resvs);
+    // Set Prefix Exclude options.
+    if (has_pd_exclude_option) {
+        ElementPtr options = Element::createList();
+        BOOST_FOREACH(auto const& resv, pd_resv) {
+            options->add(Element::create(resv.second.PDExcludetoText()));
+        }
+        map->set("excluded-prefixes", options);
+    }
     // Set the hostname
     const std::string& hostname = getHostname();
     map->set("hostname", Element::create(hostname));

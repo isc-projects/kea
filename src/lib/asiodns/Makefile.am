@@ -13,7 +13,7 @@ EXTRA_DIST += asiodns_messages.mes
 
 lib_LTLIBRARIES = libkea-asiodns.la
 
-libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 60:0:0
+libkea_asiodns_la_LDFLAGS = -no-undefined -version-info 61:0:0
 
 libkea_asiodns_la_SOURCES = io_fetch.cc io_fetch.h
 libkea_asiodns_la_SOURCES += logger.h logger.cc
@@ -55,7 +55,8 @@ messages: asiodns_messages.h asiodns_messages.cc
 	@echo Message files regenerated
 
 asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/asiodns/asiodns_messages.mes)
 
 else
 

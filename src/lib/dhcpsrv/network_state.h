@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,10 +58,7 @@ class NetworkStateImpl;
 ///
 /// The DHCP state can also be altered by the database recovery mechanism, which
 /// disables the service on connection loss and re-enables it after the connection
-/// is restored. Unlike in HA, this is implemented using an internal counter. In
-/// this case, there is one origin for all database connections. The requests for
-/// the @c NetworkState::DB_CONNECTION are counted, and the DHCP service is
-/// re-enabled when the counter reaches 0.
+/// is restored.
 ///
 /// @todo We should consider migrating the database recovery to the same mechanism
 ///  we use for the HA. The reference counting works because the database connection

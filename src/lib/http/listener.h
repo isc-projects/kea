@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ namespace http {
 class HttpListenerError : public Exception {
 public:
     HttpListenerError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief HttpListener implementation.
@@ -114,6 +114,12 @@ public:
 
     /// @brief Returns local port on which server is listening.
     uint16_t getLocalPort() const;
+
+    /// @brief Returns reference to the current TLS context.
+    const asiolink::TlsContextPtr& getTlsContext() const;
+
+    /// @brief Sets reference of the current TLS context.
+    void setTlsContext(const asiolink::TlsContextPtr& context);
 
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;

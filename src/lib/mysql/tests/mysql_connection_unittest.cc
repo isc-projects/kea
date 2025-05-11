@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_connection.h>
@@ -896,6 +897,50 @@ TEST_F(MySqlSecureConnectionTest, TlsInvalidPassword) {
             if (message.find(i) != string::npos) {
                 return;
             }
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection refuse default passwords.
+TEST_F(MySqlSecureConnectionTest, TlsDefaultPassword) {
+    SKIP_IF(!hasMySQLTls());
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            DEFAULT_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (isc::data::DefaultCredential const& exception) {
+        string const message(exception.what());
+        if (message == "illegal use of a default value as credential") {
+            return;
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection refuse default passwords.
+TEST_F(MySqlSecureConnectionTest, noTlsDefaultPassword) {
+    SKIP_IF(hasMySQLTls());
+    std::string conn_str = connectionString(MYSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            DEFAULT_PASSWORD);
+    MySqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (isc::data::DefaultCredential const& exception) {
+        string const message(exception.what());
+        if (message == "illegal use of a default value as credential") {
+            return;
         }
         ADD_FAILURE() << "Unexpected exception message '" << message << "'";
     } catch (exception const& exception) {

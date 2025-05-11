@@ -68,7 +68,8 @@ PerfMonMgr::configure(const ConstElementPtr& params) {
 }
 
 void
-PerfMonMgr::processPktEventStack(PktPtr query, PktPtr response, SubnetPtr subnet) {
+PerfMonMgr::processPktEventStack(PktPtr query, PktPtr response,
+				 ConstSubnetPtr subnet) {
     if (!query) {
         isc_throw(Unexpected, "PerfMonMgr::processPktEventStack - query is empty!");
     }

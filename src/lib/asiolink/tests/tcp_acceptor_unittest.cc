@@ -1,23 +1,28 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <asiolink/tcp_acceptor.h>
 #include <asiolink/tcp_endpoint.h>
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <gtest/gtest.h>
+#include <testutils/gtest_utils.h>
+
 #include <functional>
 #include <list>
-#include <netinet/in.h>
 #include <string>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <gtest/gtest.h>
+#include <netinet/in.h>
 
 using namespace isc::asiolink;
 namespace ph = std::placeholders;
@@ -82,7 +87,7 @@ public:
     /// connectHandler as a callback function.
     void connect() {
         boost::asio::ip::tcp::endpoint
-            endpoint(boost::asio::ip::address::from_string(SERVER_ADDRESS),
+            endpoint(boost::asio::ip::make_address(SERVER_ADDRESS),
                      SERVER_PORT);
         socket_.async_connect(endpoint,
                               std::bind(&TCPClient::connectHandler, this,
@@ -208,7 +213,7 @@ public:
     /// unsuccessful.
     TCPAcceptorTest()
         : io_service_(new IOService()), acceptor_(io_service_),
-          asio_endpoint_(boost::asio::ip::address::from_string(SERVER_ADDRESS),
+          asio_endpoint_(boost::asio::ip::make_address(SERVER_ADDRESS),
                          SERVER_PORT),
           endpoint_(asio_endpoint_), test_timer_(io_service_), connections_(),
           clients_(), connections_num_(0), aborted_connections_num_(0),
@@ -420,12 +425,13 @@ TEST_F(TCPAcceptorTest, getNative) {
     EXPECT_GE(acceptor_.getNative(), 0);
 }
 
-// macOS 10.12.3 has a bug which causes the connections to not enter
-// the TIME-WAIT state and they never get closed.
-#if !defined (OS_OSX)
-
 // Test that TCPAcceptor::close works properly.
 TEST_F(TCPAcceptorTest, close) {
+#if defined (OS_OSX)
+    // macOS 10.12.3 has a bug which causes the connections to not enter
+    // the TIME-WAIT state and they never get closed.
+    SKIP_IF(true);
+#endif
     // Initialize acceptor.
     acceptorOpen();
     acceptor_.bind(endpoint_);
@@ -450,7 +456,5 @@ TEST_F(TCPAcceptorTest, close) {
     EXPECT_EQ(1, aborted_connections_num_);
     EXPECT_EQ(1, connections_.size());
 }
-
-#endif
 
 }

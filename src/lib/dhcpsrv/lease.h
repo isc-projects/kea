@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -76,6 +76,9 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Released lease held in the database for lease affinity.
     static const uint32_t STATE_RELEASED;
+
+    /// @brief Registered self-generated lease.
+    static const uint32_t STATE_REGISTERED;
 
     /// @brief Returns name(s) of the basic lease state(s).
     ///
@@ -212,6 +215,11 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @return true if the lease is in the "declined" state, false otherwise.
     bool stateDeclined() const;
 
+    /// @brief Indicates if the lease is in the "registered" state.
+    ///
+    /// @return true if the lease is in the "registered" state, false otherwise.
+    bool stateRegistered() const;
+
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
     /// The comparison of the hostname is case insensitive.
@@ -274,6 +282,18 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     /// @ref cltt_ and @ref valid_lft_
     void updateCurrentExpirationTime();
 
+    /// Update the ISC entry in the lease's user-context
+    ///
+    /// Adds or updates the named element within the "ISC" map
+    /// with the lease's user context.  The update occurs only if
+    /// the new value(s) are different than the existing values for the
+    /// element.
+    ///
+    /// @param elem_name ISC element name to add/update.
+    /// @param new_values The new element values of the element.
+    /// @return True the user-context was modified.
+    bool updateUserContextISC(const std::string elem_name,
+                              data::ConstElementPtr new_values);
 protected:
 
     /// @brief Sets common (for v4 and v6) properties of the lease object.

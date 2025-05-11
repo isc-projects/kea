@@ -123,23 +123,30 @@ Pkt::inClass(const ClientClass& client_class) {
 }
 
 void
-Pkt::addClass(const ClientClass& client_class, bool required) {
-    ClientClasses& classes = !required ? classes_ : required_classes_;
-    if (!classes.contains(client_class)) {
-        classes.insert(client_class);
+Pkt::addClass(const ClientClass& client_class) {
+    if (!classes_.contains(client_class)) {
+        classes_.insert(client_class);
         static_cast<void>(subclasses_.push_back(SubClassRelation(client_class, client_class)));
     }
 }
 
 void
-Pkt::addSubClass(const ClientClass& class_def, const ClientClass& subclass) {
-    if (!classes_.contains(class_def)) {
-        classes_.insert(class_def);
-        static_cast<void>(subclasses_.push_back(SubClassRelation(class_def, subclass)));
+Pkt::addAdditionalClass(const ClientClass& client_class) {
+    if (!additional_classes_.contains(client_class)) {
+        additional_classes_.insert(client_class);
+        // Since this list is pre-evaluation, we do not add subclass relationship.
     }
+}
+
+void
+Pkt::addSubClass(const ClientClass& class_def, const ClientClass& subclass) {
     if (!classes_.contains(subclass)) {
         classes_.insert(subclass);
         static_cast<void>(subclasses_.push_back(SubClassRelation(subclass, subclass)));
+    }
+    if (!classes_.contains(class_def)) {
+        classes_.insert(class_def);
+        static_cast<void>(subclasses_.push_back(SubClassRelation(class_def, subclass)));
     }
 }
 

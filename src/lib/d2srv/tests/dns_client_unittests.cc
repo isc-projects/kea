@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -397,8 +397,7 @@ public:
         socket_.reset(new udp::socket(service_->getInternalIOService(),
                                       boost::asio::ip::udp::v4()));
         socket_->set_option(socket_base::reuse_address(true));
-        socket_->bind(udp::endpoint(address::from_string(TEST_ADDRESS),
-                                    TEST_PORT));
+        socket_->bind(udp::endpoint(make_address(TEST_ADDRESS), TEST_PORT));
         // Once socket is created, we can post an IO request to receive some
         // packet from this socket. This is asynchronous operation and
         // nothing is received until another IO request to send a query is
@@ -469,8 +468,7 @@ public:
         // Setup our "loopback" server.
         udp::socket udp_socket(service_->getInternalIOService(), boost::asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
-        udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
-                                      TEST_PORT));
+        udp_socket.bind(udp::endpoint(make_address(TEST_ADDRESS), TEST_PORT));
         udp::endpoint remote;
         udp_socket.async_receive_from(boost::asio::buffer(receive_buffer_,
                                                    sizeof(receive_buffer_)),

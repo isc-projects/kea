@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -164,6 +164,38 @@ TEST_F(HttpResponseTest, getDateHeaderValue) {
     time_duration parsed_to_current =
         microsec_clock::universal_time() - parsed_time.getPtime();
     EXPECT_LT(parsed_to_current.seconds(), 10);
+}
+
+// Test that an arbitrary header can be added.
+TEST_F(HttpResponseTest, addHeader) {
+    // Create a response.
+    TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
+    // Add a HSTS header.
+    response.context()->headers_.push_back(HttpHeaderContext("Strict-Transport-Security",
+                                                             "max-age=31536000"));
+    // From responseOK.
+    // Include HTML body.
+    const std::string sample_body =
+        "<html>"
+        "<head><title>Kea page title</title></head>"
+        "<body><h1>Some header</h1></body>"
+        "</html>";
+    response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    response.context()->headers_.push_back(HttpHeaderContext("Host", "kea.example.org"));
+    response.context()->body_ = sample_body;
+    ASSERT_NO_THROW(response.finalize());
+
+    // Expected value.
+    std::ostringstream response_string;
+    response_string <<
+        "HTTP/1.0 200 OK\r\n"
+        "Content-Length: " << sample_body.length() << "\r\n"
+        "Content-Type: text/html\r\n"
+        "Date: " << response.getDateHeaderValue() << "\r\n"
+        "Host: kea.example.org\r\n"
+        "Strict-Transport-Security: max-age=31536000\r\n\r\n" << sample_body;
+
+    EXPECT_EQ(response_string.str(), response.toString());
 }
 
 }

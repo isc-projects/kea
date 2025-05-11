@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 
 #include <lease_cmds.h>
 #include <lease_cmds_log.h>
+#include <binding_variables.h>
 #include <cc/command_interpreter.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
@@ -23,6 +24,16 @@ using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::lease_cmds;
+
+namespace isc {
+namespace lease_cmds {
+
+/// @brief Singleton that manages configured binding variables.
+BindingVariableMgrPtr binding_var_mgr;
+
+} // end of namespace lease_cmds
+} // end of namespace isc
+
 
 extern "C" {
 
@@ -339,6 +350,21 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease4-write", lease4_write);
     handle.registerCommandCallout("lease6-write", lease6_write);
 
+    // Instantiate the binding-variables manager singleton.
+    binding_var_mgr.reset(new BindingVariableMgr(family));
+
+    try {
+        // Configure binding variable manager using the hook library's parameters.
+        ConstElementPtr json = handle.getParameters();
+        if (json) {
+            binding_var_mgr->configure(json);
+        }
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LOAD_ERROR)
+            .arg(ex.what());
+        return (1);
+    }
+
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_INIT_OK);
     return (0);
 }
@@ -357,5 +383,72 @@ int unload() {
 int multi_threading_compatible() {
     return (1);
 }
+
+/// @brief lease4_offer callout implementation.
+///
+/// @param handle callout handle.
+int lease4_offer(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        LeaseCmds lease_cmds;
+        lease_cmds.lease4Offer(handle, binding_var_mgr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASE4_OFFER_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+/// @brief leases4_committed callout implementation.
+///
+/// @param handle callout handle.
+int leases4_committed(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        LeaseCmds lease_cmds;
+        lease_cmds.leases4Committed(handle, binding_var_mgr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES4_COMMITTED_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+/// @brief leases6_committed callout implementation.
+///
+/// @param handle callout handle.
+int leases6_committed(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        LeaseCmds lease_cmds;
+        lease_cmds.leases6Committed(handle, binding_var_mgr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
 
 } // end extern "C"

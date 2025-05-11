@@ -1,0 +1,8 @@
+/pgsql_cb_messages.cc            -diff merge=ours
+/pgsql_cb_messages.h             -diff merge=ours
+/pgsql_fb_messages.cc            -diff merge=ours
+/pgsql_fb_messages.h             -diff merge=ours
+/pgsql_hb_messages.cc            -diff merge=ours
+/pgsql_hb_messages.h             -diff merge=ours
+/pgsql_lb_messages.cc            -diff merge=ours
+/pgsql_lb_messages.h             -diff merge=ours

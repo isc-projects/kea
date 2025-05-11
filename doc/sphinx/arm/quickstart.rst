@@ -17,7 +17,7 @@ Quick Start Guide Using tarball
     :ref:`build-requirements` for details.
 
 2.  Download the Kea source tarball from
-    `the main isc.org downloads page <https://www.isc.org/download/>`__, 
+    `the main isc.org downloads page <https://www.isc.org/download/>`__,
     `the ISC downloads site <https://downloads.isc.org/isc/kea/>`__, or
     `the ISC Cloudsmith page <https://cloudsmith.io/~isc/packages/?q=format%3Araw>`__.
 
@@ -25,27 +25,27 @@ Quick Start Guide Using tarball
 
     .. parsed-literal::
 
-       $ tar -xvzf kea-|release|.tar.gz
+       $ tar -Jxvf kea-|release|.tar.xz
 
-4.  Go into the source directory and run the configure script:
+4.  Go into the source directory and set up the build:
 
     .. parsed-literal::
 
        $ cd kea-|release|
-       $ ./configure [your extra parameters]
+       $ meson setup build [your extra parameters]
 
 5.  Build it:
 
     .. code-block:: console
 
-       $ make
+       $ meson compile -C build
 
 6.  Install it (by default it will be placed in ``/usr/local/``, so
     root privileges are likely required for this step):
 
     .. code-block:: console
 
-       $ make install
+       $ meson install -C build
 
 .. _quick-start-repo:
 
@@ -58,10 +58,10 @@ easier to install Kea using native packages.
 
 1. Go to `Kea on cloudsmith.io <https://cloudsmith.io/~isc/repos/>`__.
 
-2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|. Or kea-2-4 for Kea 2.4.
+2. Choose the Cloudsmith repository e.g. |cloudsmith_repo| for Kea |version|.
 
 .. note::
-  All stable releases are stored in separate repositories, such as kea-2-4, kea-2-6, and so on.
+  All stable releases are stored in separate repositories, such as kea-2-6, kea-3-0, and so on.
   All development releases, which are not recommended for production use,
   are located in the kea-dev repository.
 
@@ -71,8 +71,8 @@ easier to install Kea using native packages.
 4. Follow the onscreen instructions.
 
 .. note::
-  For example, the Debian setup instructions for Kea 2.4 can be found here:
-  https://cloudsmith.io/~isc/repos/kea-2-4/setup/#formats-deb
+  For example, the Debian setup instructions for Kea 3.0 can be found here:
+  https://cloudsmith.io/~isc/repos/kea-3-0/setup/#formats-deb
 
   The dropdown near the top of the page offers instructions for
   other operating systems.
@@ -158,7 +158,7 @@ or specific packages:
             $ apk add isc-kea-dhcp6
 
 or ALL Kea-related packages, including development headers, debug
-symbols, and premium hooks (if available):
+symbols, and subscriber hooks (if available):
 
 .. list-table::
     :stub-columns: 1

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+// File created from src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 
 #ifndef DHCP_DDNS_MESSAGES_H
 #define DHCP_DDNS_MESSAGES_H

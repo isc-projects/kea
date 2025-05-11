@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -360,26 +360,24 @@ public:
 
 // Test that client-id is mandatory and server-id forbidden for Rebind messages
 TEST_F(RebindTest, sanityCheck) {
-    NakedDhcpv6Srv srv(0);
-
     // A message with no client-id should fail
     Pkt6Ptr rebind = Pkt6Ptr(new Pkt6(DHCPV6_REBIND, 1234));
-    EXPECT_FALSE(srv.sanityCheck(rebind));
+    EXPECT_FALSE(srv_->sanityCheck(rebind));
 
     // A message with a single client-id should succeed
     OptionPtr clientid = generateClientId();
     rebind->addOption(clientid);
-    EXPECT_TRUE(srv.sanityCheck(rebind));
+    EXPECT_TRUE(srv_->sanityCheck(rebind));
 
     // A message with server-id present should fail
-    rebind->addOption(srv.getServerID());
-    EXPECT_FALSE(srv.sanityCheck(rebind));
+    rebind->addOption(srv_->getServerID());
+    EXPECT_FALSE(srv_->sanityCheck(rebind));
 }
 
 // Test that directly connected client's Rebind message is processed and Reply
 // message is sent back.
 TEST_F(RebindTest, directClient) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -408,7 +406,7 @@ TEST_F(RebindTest, directClient) {
 // new subnet. The client should get the new lease and an old lease
 // with zero lifetimes in the Reply.
 TEST_F(RebindTest, directClientChangingSubnet) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -445,7 +443,7 @@ TEST_F(RebindTest, directClientChangingSubnet) {
 // Check that the server allocates a new lease when the client sends IA_NA
 // with a new IAID.
 TEST_F(RebindTest, directClientChangingIAID) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -479,7 +477,7 @@ TEST_F(RebindTest, directClientChangingIAID) {
 // Check that the server allocates a requested lease for the client when
 // this lease has been lost from the database.
 TEST_F(RebindTest, directClientLostLease) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -507,7 +505,7 @@ TEST_F(RebindTest, directClientLostLease) {
 
 // Check that the client can Rebind existing lease through a relay.
 TEST_F(RebindTest, relayedClient) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
@@ -540,7 +538,7 @@ TEST_F(RebindTest, relayedClient) {
 // configuration has changed such that the subnet that client is using
 // doesn't exist anymore.
 TEST_F(RebindTest, relayedClientChangingSubnet) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
@@ -571,7 +569,7 @@ TEST_F(RebindTest, relayedClientChangingSubnet) {
 // Check that the lease is not extended for the relayed client when the IAID in
 // the Rebind message doesn't match the one recorded for the client.
 TEST_F(RebindTest, relayedClientChangingIAID) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
@@ -610,7 +608,7 @@ TEST_F(RebindTest, relayedClientChangingIAID) {
 // Check that the server allocates a requested lease for the client when
 // this lease has been lost from the database.
 TEST_F(RebindTest, relayedClientLostLease) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
@@ -641,7 +639,7 @@ TEST_F(RebindTest, relayedClientLostLease) {
 // Check that relayed client receives the IA with lifetimes of 0, when
 // client is trying to Rebind using an address it doesn't have.
 TEST_F(RebindTest, relayedClientChangingAddress) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -697,7 +695,7 @@ TEST_F(RebindTest, relayedClientChangingAddress) {
 
 // Check that the server extends the lease for the client having a prefix.
 TEST_F(RebindTest, directClientPD) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     // Make 4-way exchange to get the lease.
@@ -724,7 +722,7 @@ TEST_F(RebindTest, directClientPD) {
 // new subnet. The client should get the new lease and an old lease
 // with zero lifetimes in the Reply.
 TEST_F(RebindTest, directClientPDChangingSubnet) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     // Make 4-way exchange to get the lease.
@@ -761,7 +759,7 @@ TEST_F(RebindTest, directClientPDChangingSubnet) {
 // Check that the server allocates a new lease when the client sends IA_PD
 // with a new IAID.
 TEST_F(RebindTest, directClientPDChangingIAID) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     // Make 4-way exchange to get the lease.
@@ -796,7 +794,7 @@ TEST_F(RebindTest, directClientPDChangingIAID) {
 // Check that the prefix lifetime is not extended for the client when the
 // prefix used in Rebind message doesn't match the one that client has.
 TEST_F(RebindTest, directClientPDChangingPrefix) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     // Make 4-way exchange to get the lease.
@@ -854,7 +852,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 // This test checks that the Rebind message is discarded by the server if it
 // has been sent to unicast address (RFC 8415, section 18.4).
 TEST_F(RebindTest, unicast) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Make 4-way exchange to get the lease.
@@ -883,7 +881,7 @@ TEST_F(RebindTest, unicast) {
 // This test checks that the relayed Rebind message is processed by the server
 // when sent to unicast address.
 TEST_F(RebindTest, relayedUnicast) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure DHCPv6 client to simulate sending the message through a relay
@@ -917,7 +915,7 @@ TEST_F(RebindTest, relayedUnicast) {
 // This test verifies that the client can request the prefix delegation
 // while it is rebinding an address lease.
 TEST_F(RebindTest, requestPrefixInRebind) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress();
@@ -972,7 +970,7 @@ TEST_F(RebindTest, requestPrefixInRebind) {
 // This test verifies that the client can request the prefix delegation
 // while it is rebinding an address lease.
 TEST_F(RebindTest, requestAddressInRebind) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure client to request IA_NA and IA_PD.
     client.requestAddress();
@@ -1026,7 +1024,7 @@ TEST_F(RebindTest, requestAddressInRebind) {
 
 // This test verifies that the client can request the DOCSIS sub-options.
 TEST_F(RebindTest, docsisORO) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
     client.requestAddress();
     // Configure the DOCSIS vendor ORO for 32, 33, 34, 37 and 38.
@@ -1101,7 +1099,7 @@ TEST_F(RebindTest, docsisORO) {
 // level, subnet level and pool level. The options associated with pools
 // are used when the lease is handed out from these pools.
 TEST_F(RebindTest, optionsInheritance) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));

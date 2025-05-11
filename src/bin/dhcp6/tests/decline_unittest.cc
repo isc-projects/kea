@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,11 +11,23 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/dhcp6_message_test.h>
 #include <dhcpsrv/lease.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql/pgsql_lease_mgr.h>
+#endif
+
 #include <stats/stats_mgr.h>
 
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -246,7 +258,7 @@ Dhcpv6SrvTest::acquireAndDecline(Dhcp6Client& client,
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMemfile) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS);
 }
@@ -254,7 +266,8 @@ TEST_F(DeclineTest, basicMemfile) {
 #ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, basicMySQL) {
-    Dhcp6Client client;
+    MySqlLeaseMgrInit init;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 1);
 }
@@ -262,7 +275,8 @@ TEST_F(DeclineTest, basicMySQL) {
 
 #ifdef HAVE_PGSQL
 TEST_F(DeclineTest, basicPgSQL) {
-    Dhcp6Client client;
+    PgSqlLeaseMgrInit init;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS, 2);
 }
@@ -279,7 +293,7 @@ namespace {
 // - Client sends the DECLINE with duid, iaid, but uses wrong address.
 // - The server rejects Decline due to address mismatch
 TEST_F(DeclineTest, addressMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, BOGUS_ADDR, SHOULD_FAIL);
 }
@@ -289,7 +303,7 @@ TEST_F(DeclineTest, addressMismatch) {
 // - Client sends the DECLINE with duid, iaid2
 // - The server rejects Decline due to IAID mismatch
 TEST_F(DeclineTest, iaidMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1235, VALID_ADDR, SHOULD_FAIL);
 }
@@ -299,7 +313,7 @@ TEST_F(DeclineTest, iaidMismatch) {
 // - Client sends the DECLINE using duid2, iaid
 // - The server rejects the Decline due to DUID mismatch
 TEST_F(DeclineTest, duidMismatch) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:07", 1234,
                       VALID_ADDR, SHOULD_FAIL);
@@ -311,7 +325,7 @@ TEST_F(DeclineTest, duidMismatch) {
 //   include the address in it
 // - The server rejects the Decline due to missing address
 TEST_F(DeclineTest, noAddrsSent) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_ADDR, SHOULD_FAIL);
@@ -323,10 +337,98 @@ TEST_F(DeclineTest, noAddrsSent) {
 //   include IA_NA at all
 // - The server rejects the Decline due to missing IA_NA
 TEST_F(DeclineTest, noIAs) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234,
                       "01:02:03:04:05:06", 1234,
                       NO_IA, SHOULD_FAIL);
 }
+
+// Test that the released lease cannot be declined.
+TEST_F(DeclineTest, declineAfterRelease) {
+    Dhcp6Client client(srv_);
+    uint32_t iaid = 1;
+    client.requestAddress(iaid);
+
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    client.doSARR();
+    auto leases = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
+
+    // Release the acquired lease.
+    auto lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, leases[0].addr_);
+    lease->state_ = Lease::STATE_RELEASED;
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Try to decline the released address.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // released state.
+    lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
+// Test that the released lease cannot be declined.
+TEST_F(DeclineTest, declineAfterExpire) {
+    Dhcp6Client client(srv_);
+    uint32_t iaid = 1;
+    client.requestAddress(iaid);
+
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    client.doSARR();
+    auto leases = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
+
+    // Release the acquired lease.
+    auto lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, leases[0].addr_);
+    lease->cltt_ -= 7200;
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Try to decline the expired lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // default state.
+    lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+}
+
+// Test that expired-reclaimed lease cannot be declined.
+TEST_F(DeclineTest, declineAfterReclamation) {
+    Dhcp6Client client(srv_);
+    uint32_t iaid = 1;
+    client.requestAddress(iaid);
+
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    client.doSARR();
+    auto leases = client.getLeasesByType(Lease::TYPE_NA);
+    ASSERT_EQ(1, leases.size());
+    EXPECT_EQ(STATUS_Success, client.getStatusCode(iaid));
+
+    // Release the acquired lease.
+    auto lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, leases[0].addr_);
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Try to decline the reclaimed lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // reclaimed state.
+    lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+}
+
 
 } // end of anonymous namespace

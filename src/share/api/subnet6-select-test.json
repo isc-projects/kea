@@ -1,0 +1,23 @@
+{
+    "access": "read",
+    "avail": "2.7.0",
+    "brief": [ "This command returns the result of DHCPv6 subnet selection" ],
+    "cmd-comment": [ "Possible parameters are the incoming interface name, remote address, relay link address, client classes, etc." ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"subnet6-select-test\",",
+        "    \"arguments\": {",
+        "        \"interface\": <string>,",
+        "        \"interface-id\": <string>,",
+        "        \"remote\": <string>,",
+        "        \"link\": <string>,",
+        "        \"classes\": [ <strings> ]",
+        "    }",
+        "}"
+    ],
+    "description": [ "See <xref linkend=\"command-subnet6-select-test\"/>" ],
+    "name": "subnet6-select-test",
+    "resp-comment": [ "3 forms for selected shared network, subnet or nothing.." ],
+    "resp-syntax": [ "{ \"result\": 1, \"text\": <localization result> }" ],
+    "support": [ "kea-dhcp6" ]
+}

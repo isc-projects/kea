@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
+SUBDIRS = tools . ext src fuzz doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -77,7 +77,7 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPOCPP_CONFIGURE_FLAG)
 
 dist_doc_DATA = AUTHORS COPYING ChangeLog README CONTRIBUTING.md SECURITY.md platforms.rst code_of_conduct.md
 
-.PHONY: check-valgrind check-valgrind-suppress
+.PHONY: add-changelog-entry check-valgrind check-valgrind-suppress
 
 check-valgrind:
 if HAVE_VALGRIND
@@ -128,7 +128,6 @@ endif
 if HAVE_BOTAN
 			botan/\* \
 endif
-			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			lib/\eval/\* \
@@ -173,18 +172,19 @@ cppcheck:
 docs:
 	$(MAKE) -C doc/sphinx
 
-
 # These steps are necessary during installation
 install-exec-hook:
 	mkdir -p $(DESTDIR)${localstatedir}/log/
 	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
 	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
-#### include external sources in the distributed tarball:
-EXTRA_DIST = ext/coroutine/coroutine.hpp
+add-changelog-entry:
+	@./changelog_unreleased/.add-entry.sh
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
 # config.h may be included by headers supplied for building user-written
 # hooks libraries, so we need to include it in the distribution.
 pkginclude_HEADERS = config.h kea_version.h
+
+.PHONY: clean-coverage coverage cppcheck docs report-coverage

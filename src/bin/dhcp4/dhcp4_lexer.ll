@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -174,7 +174,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 }
 <DIR_EXIT>"?>" BEGIN(INITIAL);
 
-
 <*>{blank}+   {
     /* Ok, we found a with space. Let's ignore it and update loc variable. */
     driver.loc_.step();
@@ -185,7 +184,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     driver.loc_.lines(yyleng);
     driver.loc_.step();
 }
-
 
 \"Dhcp4\" {
     switch(driver.ctx_) {
@@ -405,33 +403,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("type", driver.loc_);
-    }
-}
-
-\"memfile\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp4Parser::make_MEMFILE(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("memfile", driver.loc_);
-    }
-}
-
-\"mysql\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp4Parser::make_MYSQL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("mysql", driver.loc_);
-    }
-}
-
-\"postgresql\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DATABASE_TYPE:
-        return isc::dhcp::Dhcp4Parser::make_POSTGRESQL(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("postgresql", driver.loc_);
     }
 }
 
@@ -793,6 +764,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_SEND_UPDATES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-send-updates", driver.loc_);
@@ -804,6 +776,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_OVERRIDE_NO_UPDATE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-override-no-update", driver.loc_);
@@ -815,6 +788,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_OVERRIDE_CLIENT_UPDATE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-override-client-update", driver.loc_);
@@ -826,6 +800,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_REPLACE_CLIENT_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-replace-client-name", driver.loc_);
@@ -837,6 +812,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_GENERATED_PREFIX(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-generated-prefix", driver.loc_);
@@ -848,6 +824,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_QUALIFYING_SUFFIX(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-qualifying-suffix", driver.loc_);
@@ -859,6 +836,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_UPDATE_ON_RENEW(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-update-on-renew", driver.loc_);
@@ -881,6 +859,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_CONFLICT_RESOLUTION_MODE(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-conflict-resolution-mode", driver.loc_);
@@ -923,15 +902,51 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     return isc::dhcp::Dhcp4Parser::make_STRING(tmp, driver.loc_);
 }
 
-
 \"ddns-ttl-percent\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_PERCENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-percent", driver.loc_);
+    }
+}
+
+\"ddns-ttl\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl", driver.loc_);
+    }
+}
+
+\"ddns-ttl-min\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_MIN(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-min", driver.loc_);
+    }
+}
+
+\"ddns-ttl-max\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
+        return isc::dhcp::Dhcp4Parser::make_DDNS_TTL_MAX(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ddns-ttl-max", driver.loc_);
     }
 }
 
@@ -998,6 +1013,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::OPTION_DATA:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::HTTP_HEADERS:
     case isc::dhcp::Parser4Context::LOGGERS:
         return isc::dhcp::Dhcp4Parser::make_NAME(driver.loc_);
     default:
@@ -1073,6 +1089,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
     case isc::dhcp::Parser4Context::AUTHENTICATION:
     case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::dhcp::Parser4Context::HTTP_HEADERS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -1097,6 +1114,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
     case isc::dhcp::Parser4Context::AUTHENTICATION:
     case isc::dhcp::Parser4Context::CLIENTS:
+    case isc::dhcp::Parser4Context::HTTP_HEADERS:
     case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::DHCP_MULTI_THREADING:
     case isc::dhcp::Parser4Context::LOGGERS:
@@ -1242,7 +1260,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
-
 \"loggers\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1337,6 +1354,10 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::RESERVATIONS:
+    case isc::dhcp::Parser4Context::OPTION_DATA:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_CLIENT_CLASSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("client-classes", driver.loc_);
@@ -1351,6 +1372,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("require-client-classes", driver.loc_);
+    }
+}
+
+\"evaluate-additional-classes\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::POOLS:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_EVALUATE_ADDITIONAL_CLASSES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("evaluate-additional-classes", driver.loc_);
     }
 }
 
@@ -1390,6 +1422,15 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_ONLY_IF_REQUIRED(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("only-if-required", driver.loc_);
+    }
+}
+
+\"only-in-additional-list\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CLIENT_CLASSES:
+        return isc::dhcp::Dhcp4Parser::make_ONLY_IN_ADDITIONAL_LIST(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("only-in-additional-list", driver.loc_);
     }
 }
 
@@ -1544,7 +1585,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp4Parser::make_STRING("hooks-libraries", driver.loc_);
     }
 }
-
 
 \"parameters\" {
     switch(driver.ctx_) {
@@ -1825,6 +1865,24 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"http-headers\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_HTTP_HEADERS(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("http-headers", driver.loc_);
+    }
+}
+
+\"value\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::HTTP_HEADERS:
+        return isc::dhcp::Dhcp4Parser::make_VALUE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("value", driver.loc_);
+    }
+}
+
 \"dhcp-queue-control\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
@@ -1947,6 +2005,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_SET(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-set", driver.loc_);
@@ -1958,6 +2017,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
+    case isc::dhcp::Parser4Context::POOLS:
         return isc::dhcp::Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("hostname-char-replacement", driver.loc_);

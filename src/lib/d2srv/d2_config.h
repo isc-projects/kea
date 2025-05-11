@@ -136,7 +136,7 @@ namespace d2 {
 class D2CfgError : public isc::Exception {
 public:
     D2CfgError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Acts as a storage vault for D2 global scalar parameters

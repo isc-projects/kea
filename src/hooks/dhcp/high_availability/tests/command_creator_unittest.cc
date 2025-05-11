@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <ha_server_type.h>
+#include <ha_service_states.h>
 #include <lease_update_backlog.h>
 #include <command_creator.h>
 #include <asiolink/io_address.h>
@@ -562,7 +563,8 @@ TEST(CommandCreatorTest, createLease6GetPageZeroLimit) {
 // This test verifies that the ha-maintenance-notify command is correct
 // while being sent to the DHCPv4 server.
 TEST(CommandCreatorTest, createMaintenanceNotify4) {
-    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", true, HAServerType::DHCPv4);
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", true, HA_READY_ST,
+                                                                      HAServerType::DHCPv4);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp4",
                                               arguments));
@@ -571,12 +573,18 @@ TEST(CommandCreatorTest, createMaintenanceNotify4) {
     ASSERT_TRUE(cancel);
     ASSERT_EQ(Element::boolean, cancel->getType());
     EXPECT_TRUE(cancel->boolValue());
+
+    auto state = arguments->get("state");
+    ASSERT_TRUE(state);
+    ASSERT_EQ(Element::string, state->getType());
+    EXPECT_EQ("ready", state->stringValue());
 }
 
 // This test verifies that the ha-maintenance-notify command is correct
 // while being sent to the DHCPv6 server.
 TEST(CommandCreatorTest, createMaintenanceNotify6) {
-    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", false, HAServerType::DHCPv6);
+    ConstElementPtr command = CommandCreator::createMaintenanceNotify("server1", false, HA_SYNCING_ST,
+                                                                      HAServerType::DHCPv6);
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "ha-maintenance-notify", "dhcp6",
                                               arguments));
@@ -585,6 +593,11 @@ TEST(CommandCreatorTest, createMaintenanceNotify6) {
     ASSERT_TRUE(cancel);
     ASSERT_EQ(Element::boolean, cancel->getType());
     EXPECT_FALSE(cancel->boolValue());
+
+    auto state = arguments->get("state");
+    ASSERT_TRUE(state);
+    ASSERT_EQ(Element::string, state->getType());
+    EXPECT_EQ("syncing", state->stringValue());
 }
 
 // This test verifies that the ha-sync-complete-notify command sent to a

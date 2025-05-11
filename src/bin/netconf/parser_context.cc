@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,15 +57,14 @@ ParserContext::parseCommon() {
             isc_throw(ParseError, "Parser abort");
         }
         scanEnd();
-    }
-    catch (...) {
+    } catch (...) {
         scanEnd();
         throw;
     }
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(ParseError, "Expected exactly one terminal Element expected, found "
+        isc_throw(ParseError, "Expected exactly one terminal Element, found "
                   << stack_.size());
     }
 }

@@ -657,7 +657,7 @@ TEST_F(D2UpdateMessageTest, allValidTSIG) {
 
     dns::Name key_name("test_key");
     std::string secret("random text for secret");
-    for (int i = 0; i < algorithms.size(); ++i) {
+    for (unsigned i = 0; i < algorithms.size(); ++i) {
         D2TsigKey key(key_name,
                       TSIGKeyInfo::stringToAlgorithmName(algorithms[i]),
                       secret.c_str(), secret.size());

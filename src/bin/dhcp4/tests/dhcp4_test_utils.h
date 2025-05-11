@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,11 +23,12 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/parser_context.h>
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <list>
 
@@ -92,7 +93,7 @@ typedef boost::shared_ptr<PktFilterTest> PktFilterTestPtr;
 class Dhcp4Client;
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
-class NakedDhcpv4Srv: public Dhcpv4Srv {
+class NakedDhcpv4Srv: public ControlledDhcpv4Srv {
 public:
 
     /// @brief Constructor.
@@ -121,7 +122,7 @@ public:
     /// @param port port number to listen on; the default value 0 indicates
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, false, false) {
+        : ControlledDhcpv4Srv(port) {
         // Create a default lease database backend.
         std::string dbconfig = "type=memfile universe=4 persist=false";
         isc::dhcp::LeaseMgrFactory::create(dbconfig);
@@ -136,7 +137,7 @@ public:
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());
 
-        config::CommandMgr::instance().setIOService(getIOService());
+        config::UnixCommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief Returns fixed server identifier assigned to the naked server
@@ -721,6 +722,12 @@ public:
     /// are expected to occur in the stack.
     void checkPktEvents(const PktPtr& msg, std::list<std::string> expected_events);
 
+    /// @brief Checks the message for an expected value of DHO_DHCP_SERVER_IDENTIFIER
+    ///
+    /// @param msg pointer to the packet under test.
+    /// @param exp_address expected ip address as a string
+    void checkServerIdentifier(Pkt4Ptr msg, std::string exp_address);
+
     /// @brief A subnet used in most tests.
     Subnet4Ptr subnet_;
 
@@ -737,7 +744,7 @@ public:
     isc::data::ConstElementPtr comment_;
 
     /// @brief Server object under test.
-    NakedDhcpv4Srv srv_;
+    boost::shared_ptr<NakedDhcpv4Srv> srv_;
 
     /// @brief The multi-threading flag.
     bool multi_threading_;

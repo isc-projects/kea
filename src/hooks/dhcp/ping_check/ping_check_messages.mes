@@ -1,0 +1,229 @@
+# Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% PING_CHECK_CB4_UPDATE_FAILED A subnet ping-check parameters failed to parse after being updated %1
+This error message is emitted when an error occurs trying to parse a subnet
+ping-check parameters after the subnet was updated via configuration backend.
+This implies one or more of the parameters is invalid and must be corrected.
+
+% PING_CHECK_CHANNEL_ECHO_REPLY_RECEIVED from address %1, id %2, sequence %3
+Logged at debug log level 50.
+This debug message is issued when an ECHO REPLY has been received on
+the ping channel's ICMP socket.
+
+% PING_CHECK_CHANNEL_ECHO_REQUEST_SENT to address %1, id %2, sequence %3
+Logged at debug log level 50.
+This debug message is issued when an ECHO REQUEST has been written to the
+ping channel's ICMP socket.
+
+% PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED error occurred unpacking message %1, discarding it
+Logged at debug log level 40.
+This debug message is emitted when an ICMP packet has been received
+that could not be unpacked.
+
+% PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR occurred trying to ping %1, error %2
+This error message occurs when an asynchronous write on the ICMP socket
+failed trying to send on the ping target's network.  This may mean an interface
+is down or there is a configuration error. The lease address to ping and the
+type of the error are provided in the arguments.
+
+% PING_CHECK_CHANNEL_SOCKET_CLOSED ICMP socket has been closed.
+Logged at debug log level 40.
+This debug message is emitted when the ICMP socket for carrying out
+ping checks has been closed.
+
+% PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR an attempt to close the ICMP socket failed %1
+This error message is emitted when an unexpected error occurred
+while closing the ping check ICMP socket.  The error detail is
+provided as an argument of the log message.
+
+% PING_CHECK_CHANNEL_SOCKET_OPENED ICMP socket been opened successfully.
+Logged at debug log level 40.
+This debug message is emitted when the ICMP socket for carrying out
+ping checks has been successfully opened.
+
+% PING_CHECK_CHANNEL_SOCKET_READ_FAILED socket read completed with an error %1
+This error message occurs when an asynchronous read on the ICMP socket
+failed. The details of the error are provided as an argument of the log
+message.
+
+% PING_CHECK_CHANNEL_SOCKET_WRITE_FAILED socket write completed with an error %1
+This error message occurs when an asynchronous write on the ICMP socket
+failed. The details of the error are provided as an argument of the log
+message.
+
+% PING_CHECK_CHANNEL_STOP channel is stopping operations.
+Logged at debug log level 40.
+This debug message indicates that the channel is stopping operations and
+closing the ICMP socket. The reason for stopping should be apparent in
+preceding log messages.
+
+% PING_CHECK_CHANNEL_WATCH_SOCKET_CLEAR_ERROR an attempt to clear the WatchSocket associated with
+the single-threaded ping-channel failed %1
+This error message is emitted when an unexpected error occurred
+while clearing the ready marker of the WatchSocket associated with
+the ping check channel.  This can only occur when running in
+single-threaded mode.  The error detail is provided as an argument
+of the log message.
+
+% PING_CHECK_CHANNEL_WATCH_SOCKET_CLOSE_ERROR an attempt to close the WatchSocket associated with
+the single-threaded ping-channel failed %1
+This error message is emitted when an unexpected error occurred
+while closing the WatchSocket associated with the ping check channel.
+This can only occur when running in single-threaded mode.
+The error detail is provided as an argument of the log message.
+
+% PING_CHECK_DHCP4_SRV_CONFIGURED_FAILED dhcp4_srv_configured callout failed %1
+This error message indicates an error during the Ping Check hook
+library dhcp4_srv_configured callout.  The details of the error are
+provided as argument of the log message.
+
+% PING_CHECK_DUPLICATE_CHECK Ping check already in progress for %1, initiated by %2
+Logged at debug log level 40.
+This debug message is emitted when a duplicate request to test an address
+is received. When this occurs the duplicate test will be skipped and
+the associated DHCPOFFER will be dropped.
+
+% PING_CHECK_LEASE4_OFFER_FAILED lease4_offer callout failed for query %1, lease address %2, reason %3
+This error message indicates an error during the Ping Check hook
+library lease4_offer callout.  The details of the error are
+provided as argument of the log message.
+
+% PING_CHECK_LOAD_ERROR loading Ping Check hooks library failed %1
+This error message indicates an error during loading the Ping Check
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% PING_CHECK_LOAD_OK Ping Check hooks library loaded successfully.
+This info message indicates that the Ping Check hooks library has
+been loaded successfully.
+
+% PING_CHECK_MGR_CHANNEL_DOWN Ping Channel has shutdown, ping checking will be skipped
+This error message is emitted when the underlying ICMP channel
+has stopped due to an unrecoverable error. DHCP service may continue
+to function but without performing ping checks. Prior log messages should
+provide details.
+
+% PING_CHECK_MGR_LEASE_FREE_TO_USE address %1 is free to use for %2
+Logged at debug log level 40.
+This debug message is emitted when ping check has deemed an
+address is free to use. The log arguments detail the lease address
+checked and the query which initiated the check.
+
+% PING_CHECK_MGR_NEXT_ECHO_SCHEDULED for %1, scheduling ECHO_REQUEST %2 of %3
+Logged at debug log level 50.
+This debug message is emitted when the minimum number of ECHO REQUESTs
+is greater than 1 and the next ECHO REQUEST for a given lease address has
+been scheduled.
+
+% PING_CHECK_MGR_RECEIVED_ECHO_REPLY from %1, id %2, sequence %3
+Logged at debug log level 40.
+This debug message is emitted when an ECHO REPLY message has been received.
+The log argument details the source IP address, id, and sequence number of
+the ECHO REPLY.
+
+% PING_CHECK_MGR_RECEIVED_UNEXPECTED_ECHO_REPLY from %1, id %2, sequence %3 received after reply-timeout expired
+Logged at debug log level 50.
+This debug message is emitted when an ECHO REPLY has been received after the
+reply-timeout has expired and is no longer of interest.  This may be an errant
+ECHO REPLY or it may indicate that the reply-timeout value is too short.  The
+log argument details the source IP address, id, and sequence number of the reply.
+
+% PING_CHECK_MGR_RECEIVED_UNEXPECTED_UNREACHABLE_MSG for %1, id %2, sequence %3 received after reply-timeout expired
+Logged at debug log level 50.
+This debug message is emitted when an UNREACHABLE message has been received
+after the reply-timeout has expired and is no longer of interest.  This may
+be an errant message or it may indicate that the reply-timeout value is
+too short.
+
+% PING_CHECK_MGR_RECEIVED_UNREACHABLE_MSG for %1, id %2, sequence %3
+Logged at debug log level 50.
+This debug message is emitted when an UNREACHABLE message has been received.
+The log argument details the target IP address, id, and sequence number from
+the embedded ECHO REQUEST.
+
+% PING_CHECK_MGR_REPLY_RECEIVED_ERROR an error occurred processing an ICMP reply message %1
+This debug message is emitted when an error occurred while processing an inbound
+ICMP message. The log argument describes the specific error.
+
+% PING_CHECK_MGR_REPLY_TIMEOUT_EXPIRED for %1, ECHO REQUEST %2 of %3, reply-timeout %4
+Logged at debug log level 50.
+This debug message is emitted when no reply is received to an
+ECHO REQUEST before the configured timeout value, `reply-timeout`
+was reached.  The log arguments provides details.
+
+% PING_CHECK_MGR_SEND_COMPLETED_ERROR an error occurred in the send completion callback %1
+This error message is emitted when an unexpected error occurred after the completion of
+a successful write to the PingChannel socket.  The log argument describes the
+specific error.
+
+% PING_CHECK_MGR_STARTED ping channel operations are running, number of threads %1
+This message is emitted when the ping check channel has been opened
+and is ready to process requests.  The log argument includes the number of
+threads in the channel's thread pool.
+
+% PING_CHECK_MGR_STARTED_SINGLE_THREADED single-threaded ping channel operations are running
+This message is emitted when the ping check channel has been opened
+and is ready to process requests in single-threaded mode.
+
+% PING_CHECK_MGR_START_PING_CHECK for %1, initiated by %2
+Logged at debug log level 40.
+This debug message is emitted when a ping check for an address
+has been initiated.  The log arguments detail the lease address to
+ping and the query which initiated the check.
+
+% PING_CHECK_MGR_STOPPED channel operations have stopped
+This message is emitted when the ping check channel operations
+have been stopped.
+
+% PING_CHECK_MGR_STOPPING ping channel operations are stopping
+Logged at debug log level 40.
+This debug message is emitted when the ping check channel is stopping
+operations, typically due to configuration event or server shutdown.
+
+% PING_CHECK_MGR_SUBNET_CONFIG_FAILED user-context for subnet id %1, contains invalid ping-check %2
+This error message indicates that a subnet was updated via subnet commands
+and its 'user-context' contains invalid 'ping-check' configuration.  The
+server will log the error once and then use global ping-check parameters
+for the subnet until the configuration is corrected.
+
+% PING_CHECK_PAUSE_FAILED Pausing ping channel operations failed %1
+This error message is emitted when an unexpected error occurred while
+attempting to pause the ping channel's thread pool. This error is highly
+unlikely and indicates a programmatic issue that should be reported as
+defect.
+
+% PING_CHECK_PAUSE_ILLEGAL Pausing ping channel operations not allowed %1
+This error message is emitted when attempting to pause the ping channel's
+thread pool. This indicates that a channel thread attempted to use a critical
+section which would result in a dead-lock. This error is highly unlikely
+and indicates a programmatic issue that should be reported as a defect.
+
+% PING_CHECK_PAUSE_PERMISSIONS_FAILED Permissions check for ping-channel pause failed %1
+This error message is emitted when an unexpected error occurred while
+validating an attempt to pause the ping channel's thread pool. This error
+is highly unlikely and indicates a programmatic issue that should be
+reported as a defect.
+
+% PING_CHECK_RESUME_FAILED Resuming ping channel operations failed %1
+This error message is emitted when an unexpected error occurred while
+attempting to resume operation of the ping channel's thread pool. This
+error is highly unlikely and indicates a programmatic issue that should
+be reported as defect.
+
+% PING_CHECK_UNEXPECTED_READ_ERROR could not start next socket read %1
+This error message occurs when initiating an asynchronous read on the ICMP
+socket failed in an unexpected fashion. The details of the error are provided
+as an argument of the log message.
+
+% PING_CHECK_UNEXPECTED_WRITE_ERROR could not start next socket write %1
+This error message occurs when initiating an asynchronous write on the ICMP
+socket failed in an unexpected fashion. The details of the error are provided
+as an argument of the log message.
+
+% PING_CHECK_UNLOAD Ping Check hooks library has been unloaded
+This info message indicates that the Ping Check hooks library has been
+unloaded.

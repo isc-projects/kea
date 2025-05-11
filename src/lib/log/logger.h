@@ -157,6 +157,8 @@ public:
     /// loggers to be declared statically: the name is stored in a fixed-size
     /// array to avoid the need to allocate heap storage during program
     /// initialization (which causes problems on some operating systems).
+    /// e.g. of error: '<logger-name>' is not a valid name for a logger:
+    ///                valid names must be between 1 and 31 characters in length.
     ///
     /// \note Note also that there is no constructor taking a std::string. This
     /// minimizes the possibility of initializing a static logger with a

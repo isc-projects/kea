@@ -10,8 +10,9 @@
     "cmd-comment": [
         "This command includes a boolean argument which, if false, indicates",
         "that the server should transition to the in-maintenance state.",
-        "If the argument is set to true it instructs the server to revert from",
-        "the in-maintenance state to its previous state.",
+        "If the cancel argument is set to true it instructs the server to revert from",
+        "the in-maintenance state to its previous state. The state argument informs",
+        "the recipient about the state of the sending server.",
         "This command is not meant to be used by the administrator. It is",
         "merely used for internal communication between the HA partners."
     ],
@@ -19,7 +20,8 @@
         "{",
         "    \"command\": \"ha-maintenance-notify\",",
         "    \"arguments\": {",
-        "        \"cancel\": true",
+        "        \"cancel\": true,",
+        "        \"state\": \"ready\"",
         "    }",
         "}"
     ],

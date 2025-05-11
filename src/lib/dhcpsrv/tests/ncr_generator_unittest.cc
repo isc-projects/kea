@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -234,14 +234,18 @@ public:
     void testNCR(const NameChangeType chg_type, const bool fwd, const bool rev,
                  const std::string& fqdn, const std::string exp_dhcid,
                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
-                 const Optional<double> ttl_percent = Optional<double>()) {
+                 const Optional<double> ddns_ttl_percent = Optional<double>(),
+                 const Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                 const Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                 const Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
         ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
         // Calculate expected ttl.
-        uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_, ttl_percent);
+        uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_, ddns_ttl_percent,
+                                        ddns_ttl, ddns_ttl_min, ddns_ttl_max);
 
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
@@ -719,55 +723,83 @@ TEST_F(NCRGenerator4Test, conflictResolutionMode) {
     }
 }
 
-// Verify that calculateDdnsTtl() produces the expected values.
-TEST_F(NCRGenerator4Test, calculateDdnsTtl) {
+// Verify that calculateDdnsTtl(), called by queueNcr()
+// produces the expected values.  Note there is no v6
+// version of this test as v4 and v6 use the same code.
+TEST_F(NCRGenerator4Test, calculateDdnsTtlThroughQueueNcr) {
+    struct Scenario {
+        size_t line_no_;
+        uint32_t lease_lft_;
+        Optional<double> ddns_ttl_percent_;
+        Optional<uint32_t> ddns_ttl_;
+        Optional<uint32_t> ddns_ttl_min_;
+        Optional<uint32_t> ddns_ttl_max_;
+        uint32_t exp_ttl_;
+    };
 
-    // A life time less than or equal to 1800 should yield a TTL of 600 seconds.
-    EXPECT_EQ(600, calculateDdnsTtl(100));
+    Optional<double> no_percent;
+    Optional<uint32_t> no_ttl;
+    Optional<uint32_t> no_min;
+    Optional<uint32_t> no_max;
 
-    // A life time > 1800 should be 1/3 of the value.
-    EXPECT_EQ(601, calculateDdnsTtl(1803));
+    std::list<Scenario> scenarios = {
+        // No modifiers, should be RFC % (i.e lft / 3)
+        { __LINE__, 2100, no_percent, no_ttl, no_min, no_max, 700 },
 
-    // Now check permutations of values for ddns-ttl-percent.
-    util::Optional<double> ddns_ttl_percent;
+        // No modifiers, RFC % < RFC minimum 600
+        { __LINE__, 1500, no_percent, no_ttl, no_min, no_max, 600 },
 
-    // Unspecified percent should result in normal per RFC calculation.
-    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+        // RFC % < specified minimum
+        { __LINE__, 2100, no_percent, no_ttl, 800,    no_max, 800 },
 
-    // A percentage of zero should be ignored.
-    ddns_ttl_percent = 0.0;
-    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+        // RFC % > specified maximum
+        { __LINE__, 2100, no_percent, no_ttl, no_min, 500,    500 },
 
-    // A percentage that results in near zero should be ignored.
-    ddns_ttl_percent = 0.000005;
-    EXPECT_EQ(601, calculateDdnsTtl(1803, ddns_ttl_percent));
+        // Explicit ttl
+        { __LINE__, 2100, no_percent, 900,    no_min, no_max, 900 },
 
-    // A large enough percentage should be used.
-    ddns_ttl_percent = 0.01;
-    EXPECT_EQ(18, calculateDdnsTtl(1803, ddns_ttl_percent));
+        // Explicit ttl wins over specified percent
+        { __LINE__, 2100, 0.25,       900,    no_min, no_max, 900 },
 
-    // A large enough percentage should be used.
-    ddns_ttl_percent = 1.50;
-    EXPECT_EQ(2705, calculateDdnsTtl(1803, ddns_ttl_percent));
-}
+        // Explicit ttl wins over specified minimum
+        { __LINE__, 2100, no_percent, 900,    1000,   no_max, 900 },
 
-// Verify that ddns-ttl-percent is used correctly by v4 queueNCR()
-TEST_F(NCRGenerator4Test, withTtlPercent) {
-    {
-        SCOPED_TRACE("Ttl percent of 0");
-        Optional<double> ttl_percent(0);
-        subnet_->setDdnsTtlPercent(ttl_percent);
-        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
+        // Explicit ttl wins over specified maximum
+        { __LINE__, 2100, no_percent, 900,   no_min,  800,    900 },
+
+        // Specified percent > RFC minimum
+        { __LINE__, 2100, 0.5,        no_ttl, no_min, no_max, 1050 },
+
+        // Specified percent < RFC minimum
+        { __LINE__, 2100, 0.25,       no_ttl, no_min, no_max, 600 },
+
+        // Specified percent < specified minimum < RFC minimum
+        { __LINE__, 2100, 0.10,       no_ttl, 300   , no_max, 300 },
+
+        // Specified percent > specified maximum
+        { __LINE__, 2100, 0.50,       no_ttl, no_min, 800,    800 },
+
+        // Specified percent > lft
+        { __LINE__, 2100, 1.50,       no_ttl, no_min, no_max, 3150 },
+    };
+
+    for (const auto& scenario : scenarios) {
+        lease_->valid_lft_ = scenario.lease_lft_;
+        subnet_->setDdnsTtlPercent(scenario.ddns_ttl_percent_);
+        subnet_->setDdnsTtl(scenario.ddns_ttl_);
+        subnet_->setDdnsTtlMin(scenario.ddns_ttl_min_);
+        subnet_->setDdnsTtlMax(scenario.ddns_ttl_max_);
+
+        std::stringstream oss;
+        oss << "scenario at: " << scenario.line_no_;
+        SCOPED_TRACE(oss.str());
+        testNCR(CHG_ADD, true, true, "MYHOST.example.com.",
                 "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID, ttl_percent);
-    }
-    {
-        SCOPED_TRACE("Ttl percent of 1.5");
-        Optional<double> ttl_percent(1.5);
-        subnet_->setDdnsTtlPercent(ttl_percent);
-        testNCR(CHG_REMOVE, true, true, "MYHOST.example.com.",
-                "000001E356D43E5F0A496D65BCA24D982D646140813E3"
-                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID, ttl_percent);
+                "B03AB370BFF46BFA309AE7BFD", CHECK_WITH_DHCID,
+                scenario.ddns_ttl_percent_,
+                scenario.ddns_ttl_,
+                scenario.ddns_ttl_min_,
+                scenario.ddns_ttl_max_);
     }
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@ struct BaseCommandMgrHooks {
 // module is called.
 BaseCommandMgrHooks Hooks;
 
-}; // anonymous namespace
+}  // anonymous namespace
 
 namespace isc {
 namespace config {
@@ -143,7 +143,7 @@ BaseCommandMgr::processCommand(const isc::data::ConstElementPtr& cmd) {
 
             // Call callouts
             HooksManager::callCallouts(Hooks.hook_index_command_processed_,
-                                        *callout_handle);
+                                       *callout_handle);
 
             // Refresh the response from the callout context in case it was modified.
             // @todo Should we allow this?

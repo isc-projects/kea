@@ -1,0 +1,119 @@
+/* config.h inclusion marker */
+#define CONFIG_H_WAS_INCLUDED
+
+/* Whether system and steady clocks use the same duration type */
+#mesondefine CHRONO_SAME_DURATION
+
+/* Enable low-performing debugging facilities? */
+#mesondefine ENABLE_DEBUG
+
+/* Check logger messages? */
+#mesondefine ENABLE_LOGGER_CHECKS
+
+/* Fuzzing enabled. */
+#mesondefine FUZZING
+
+/* Fuzzing running in CI. */
+#mesondefine FUZZING_IN_CI
+
+/* AFL compiler enabled. */
+#mesondefine HAVE_AFL
+
+/* Whether you have the <botan/asio_stream.h> header file. */
+#mesondefine HAVE_BOTAN_ASIO_STREAM_H
+
+/* Whether gtest defines edit_distance::CreateUnifiedDiff */
+#mesondefine HAVE_CREATE_UNIFIED_DIFF
+
+/* gss_str_to_oid is available */
+#mesondefine HAVE_GSS_STR_TO_OID
+
+/* MySQL is present */
+#mesondefine HAVE_MYSQL
+
+/* MySQL has mysql_get_option defined. */
+#mesondefine HAVE_MYSQL_GET_OPTION
+
+/* MySQL uses my_bool */
+#mesondefine HAVE_MYSQL_MY_BOOL
+
+/* NETCONF capabilities enabled */
+#mesondefine HAVE_NETCONF
+
+/* Check for optreset? */
+#mesondefine HAVE_OPTRESET
+
+/* PostgreSQL is present */
+#mesondefine HAVE_PGSQL
+
+/* PostgreSQL was built with OpenSSL support */
+#mesondefine HAVE_PGSQL_SSL
+
+/* PostgreSQL connection parameter tcp_user_timeout supported */
+#mesondefine HAVE_PGSQL_TCP_USER_TIMEOUT
+
+/* Whether sockaddr has a sa_len member, and corresponding sin_len and sun_len */
+#mesondefine HAVE_SA_LEN
+
+/* Whether you have the <sys/filio.h> header file. */
+#mesondefine HAVE_SYS_FILIO_H
+
+/* Check valgrind headers */
+#mesondefine HAVE_VALGRIND_HEADERS
+
+/* Whether libc is musl */
+#mesondefine LIBC_MUSL
+
+/* Explicit initialization of log4cplus possible */
+#mesondefine LOG4CPLUS_INITIALIZER_H
+
+/* Running on BSD? */
+#mesondefine OS_BSD
+
+/* Running on FreeBSD? */
+#mesondefine OS_FREEBSD
+
+/* Running on Linux? */
+#mesondefine OS_LINUX
+
+/* Running on NetBSD? */
+#mesondefine OS_NETBSD
+
+/* Running on OpenBSD? */
+#mesondefine OS_OPENBSD
+
+/* Running on OSX? */
+#mesondefine OS_OSX
+
+/* Running on Solaris? */
+#mesondefine OS_SOLARIS
+
+/* Name of package */
+#mesondefine PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#mesondefine PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#mesondefine PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#mesondefine PACKAGE_STRING
+
+/* Define to the version of this package. */
+#mesondefine PACKAGE_VERSION
+
+/* Was Kea statically linked? */
+#mesondefine USE_STATIC_LINK
+
+/* Version number of package */
+#mesondefine VERSION
+
+/* Compile with Botan crypto */
+#mesondefine WITH_BOTAN
+
+/* Heimdal GSS-API implementation */
+#mesondefine WITH_HEIMDAL
+
+/* Compile with OpenSSL crypto */
+#mesondefine WITH_OPENSSL

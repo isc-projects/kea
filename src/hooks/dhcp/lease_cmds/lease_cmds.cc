@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,6 +43,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::log;
 using namespace std;
 
 namespace isc {
@@ -471,6 +472,50 @@ public:
         }
         return (isc->get("relay-info"));
     }
+
+    /// @brief lease4_offer hookpoint handler.
+    ///
+    /// If the offer_lifetime argument is zero, it simply returns. Otherwise
+    /// it evaluates the binding variables (if any), and updates the given lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query4,
+    /// response4, leases4, offer_lifetime arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw Unexpected if there is no active lease or a processing error
+    /// occurs. LeaseCmdsConflict if the update fails because the lease
+    /// no longer exists in the back end.
+    static void lease4Offer(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr);
+
+    /// @brief leases4_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the given lease's
+    /// user-context accordingly.  This includes updating the lease in the lease
+    /// back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query4,
+    /// response4, and leases4 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw Unexpected if a processing error occurs. LeaseCmdsConflict if the
+    /// update fails because the lease no longer exists in the back end.
+    static void leases4Committed(CalloutHandle& callout_handle,
+                                 BindingVariableMgrPtr mgr);
+
+    /// @brief leases6_committed hookpoint handler.
+    ///
+    /// Evaluates the binding variables (if any), and updates the leases'
+    /// user-context accordingly.  This includes updating the leases in the lease
+    /// back end.
+    ///
+    /// @param callout_handle Callout context - which is expected to contain the query6,
+    /// response6, and leases6 arguments.
+    /// @param mgr Pointer to the BindingVariableMgr singleton.
+    /// @throw Unexpected if there a processing error occurs. LeaseCmdsConflict
+    /// if the update fails because the lease no longer exists in the back end.
+    static void leases6Committed(CalloutHandle& callout_handle,
+                                 BindingVariableMgrPtr mgr);
 };
 
 void
@@ -515,7 +560,11 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
 
 void
 LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "registered-nas"),
+            static_cast<int64_t>(1));
+    } else if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -688,7 +737,19 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
 void
 LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
                                    const Lease6Ptr& lease) {
-    if (!existing->stateExpiredReclaimed()) {
+    // Does not cover registered <-> not registered transition.
+    if (existing->stateRegistered()) {
+        if (existing->subnet_id_ != lease->subnet_id_) {
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", existing->subnet_id_,
+                                       "registered-nas"),
+                static_cast<int64_t>(-1));
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "registered-nas"),
+                static_cast<int64_t>(1));
+        }
+    } else if (!existing->stateExpiredReclaimed()) {
         ConstSubnet6Ptr subnet;
         PoolPtr pool;
 
@@ -865,7 +926,12 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
 
 void
 LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "registered-nas"),
+            static_cast<int64_t>(-1));
+    } else if (!lease->stateExpiredReclaimed()) {
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -951,6 +1017,15 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
         return (true);
     }
     if (existing) {
+        // Refuse used <-> registered transitions.
+        if (existing->stateRegistered() && !lease->stateRegistered()) {
+            isc_throw(BadValue, "illegal reuse of registered address "
+                      << lease->addr_);
+        } else if (!existing->stateRegistered() && lease->stateRegistered()) {
+            isc_throw(BadValue, "address in use: " << lease->addr_
+                      << " can't be registered");
+        }
+
         // Update lease current expiration time with value received from the
         // database. Some database backends reject operations on the lease if
         // the current expiration time value does not match what is stored.
@@ -2365,6 +2440,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                 StatsMgr::generateName("subnet", id, "declined-addresses"),
                 static_cast<int64_t>(0));
 
+            StatsMgr::instance().setValue(
+                StatsMgr::generateName("subnet", id, "registered-nas"),
+                static_cast<int64_t>(0));
+
             auto const& sub = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(id);
             if (sub) {
                 for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {
@@ -2414,6 +2493,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
 
                 StatsMgr::instance().setValue(
                     StatsMgr::generateName("subnet", sub->getID(), "declined-addresses"),
+                    static_cast<int64_t>(0));
+
+                StatsMgr::instance().setValue(
+                    StatsMgr::generateName("subnet", sub->getID(), "registered-nas"),
                     static_cast<int64_t>(0));
 
                 for (auto const& pool : sub->getPools(Lease::TYPE_NA)) {
@@ -2698,6 +2781,149 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
     return (0);
 }
 
+void
+LeaseCmdsImpl::lease4Offer(CalloutHandle& callout_handle,
+                           BindingVariableMgrPtr mgr) {
+    uint32_t offer_lifetime;
+    callout_handle.getArgument("offer_lifetime", offer_lifetime);
+    if (!offer_lifetime) {
+        // Offers leases are not being persisted, nothing to do.
+        return;
+    }
+
+    // Get the remaining arguments we need.
+    Pkt4Ptr query;
+    Pkt4Ptr response;
+    Lease4CollectionPtr leases;
+
+    callout_handle.getArgument("query4", query);
+    callout_handle.getArgument("response4", response);
+    callout_handle.getArgument("leases4", leases);
+
+    if (!leases || leases->empty() || !((*leases)[0])) {
+        isc_throw(Unexpected, "lease4Offer - no lease!");
+    }
+
+    Lease4Ptr lease = (*leases)[0];
+    try {
+        if (mgr->evaluateVariables(query, response, lease)) {
+            LeaseMgrFactory::instance().updateLease4(lease);
+        }
+    } catch (const NoSuchLease&) {
+        isc_throw(LeaseCmdsConflict, "failed to update"
+                  " the lease with address " << lease->addr_ <<
+                  " either because the lease has been"
+                  " deleted or it has changed in the database");
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "evaluating binding variables failed for: "
+                  << query->getLabel() << ", :" << ex.what());
+    }
+}
+
+void
+LeaseCmdsImpl::leases4Committed(CalloutHandle& callout_handle,
+                                BindingVariableMgrPtr mgr) {
+    Pkt4Ptr query;
+    Pkt4Ptr response;
+    Lease4CollectionPtr leases;
+
+    // Get the necessary arguments.
+    callout_handle.getArgument("query4", query);
+    callout_handle.getArgument("response4", response);
+    callout_handle.getArgument("leases4", leases);
+
+    if (!leases) {
+        isc_throw(Unexpected, "leases4Committed - leases is null");
+    }
+
+    // In some cases we may have no lease, e.g. DHCPNAK,
+    // or no response e.g. DHCPRELEASE.
+    if (leases->empty() || !response || (response->getType() != DHCPACK)) {
+        return;
+    }
+
+    Lease4Ptr lease = (*leases)[0];
+    if (!lease) {
+        isc_throw(Unexpected, "leases4Committed - lease is null");
+    }
+
+    try {
+        if (mgr->evaluateVariables(query, response, lease)) {
+            LeaseMgrFactory::instance().updateLease4(lease);
+        }
+    } catch (const NoSuchLease&) {
+        isc_throw(LeaseCmdsConflict, "failed to update"
+                  " the lease with address " << lease->addr_ <<
+                  " either because the lease has been"
+                  " deleted or it has changed in the database");
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "evaluating binding variables failed for: "
+                  << query->getLabel() << ", :" << ex.what());
+    }
+}
+
+void
+LeaseCmdsImpl::leases6Committed(CalloutHandle& callout_handle,
+                                BindingVariableMgrPtr mgr) {
+    Pkt6Ptr query;
+    Pkt6Ptr response;
+    Lease6CollectionPtr leases;
+
+    // Get the necessary arguments.
+    callout_handle.getArgument("query6", query);
+    callout_handle.getArgument("response6", response);
+    callout_handle.getArgument("leases6", leases);
+
+    if (!leases) {
+        isc_throw(Unexpected, "leases6Committed - leases is null");
+    }
+
+    // In some cases we may have no active leases or no response.
+    if (leases->empty() || !response) {
+        return;
+    }
+
+    int attempted = 0;
+    int failed = 0;
+    for (auto lease : *leases) {
+        try {
+            if (!lease) {
+                isc_throw(Unexpected, "leases6Committed - lease is null");
+            }
+
+            /// @todo - Users might want to only update NA or PD leases.
+            /// This could be done via adding a lease type to the variable.
+            /// V4 would not use it, for V6 it would restrict a variable
+            /// to only that type of lease.  If unspecified (default) do
+            /// both NA and PD leases.
+            // Only update a lease if its active.
+            if (lease->valid_lft_) {
+                ++attempted;
+                if (mgr->evaluateVariables(query, response, lease)) {
+                    LeaseMgrFactory::instance().updateLease6(lease);
+                }
+            }
+        } catch (const NoSuchLease&) {
+            ++failed;
+            LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_CONFLICT)
+                .arg(lease->addr_.toText())
+                .arg(query->getLabel());
+        } catch (const std::exception& ex) {
+            ++failed;
+            LOG_ERROR(lease_cmds_logger, LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR)
+                .arg(query->getLabel())
+                .arg(lease->addr_.toText())
+                .arg(ex.what());
+        }
+    }
+
+    if (failed) {
+        isc_throw(Unexpected, failed << " out of " << attempted
+                              << " leases failed to update for "
+                              << query->getLabel());
+    }
+}
+
 int
 LeaseCmds::leaseAddHandler(CalloutHandle& handle) {
     return (impl_->leaseAddHandler(handle));
@@ -2791,6 +3017,25 @@ LeaseCmds::leaseWriteHandler(CalloutHandle& handle) {
 }
 
 LeaseCmds::LeaseCmds() : impl_(new LeaseCmdsImpl()) {
+}
+
+
+void
+LeaseCmds::lease4Offer(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->lease4Offer(callout_handle, mgr);
+}
+
+void
+LeaseCmds::leases4Committed(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->leases4Committed(callout_handle, mgr);
+}
+
+void
+LeaseCmds::leases6Committed(CalloutHandle& callout_handle,
+                            BindingVariableMgrPtr mgr) {
+    impl_->leases6Committed(callout_handle, mgr);
 }
 
 } // end of namespace lease_cmds

@@ -217,5 +217,5 @@ operator<<(std::ostream& os, const D2ClientConfig& config) {
     return (os);
 }
 
-};  // namespace dhcp
-};  // namespace isc
+}  // namespace dhcp
+}  // namespace isc

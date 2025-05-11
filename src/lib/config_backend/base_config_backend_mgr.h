@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,8 @@
 #include <config_backend/base_config_backend.h>
 #include <database/database_connection.h>
 #include <database/backend_selector.h>
+#include <database/db_log.h>
+#include <database/db_messages.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
@@ -162,6 +164,14 @@ public:
 
         // No match?
         if (index == factories_.end()) {
+            if ((db_type == "mysql") || (db_type == "postgresql")) {
+                std::string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
+                isc_throw(db::InvalidType, "The Kea server has not been compiled with "
+                          "support for configuration database type: " << db_type
+                          << ". Did you forget to use -D "
+                          << db_type << "=enabled during setup or to load libdhcp_"
+                          << libdhcp << " hook library?");
+            }
             isc_throw(db::InvalidType, "The type of the configuration backend: '" <<
                       db_type << "' is not supported");
         }
@@ -203,6 +213,25 @@ public:
     /// @brief Returns underlying config backend pool.
     ConfigBackendPoolPtr getPool() const {
         return (pool_);
+    }
+
+    /// @brief Logs out all registered backends.
+    ///
+    /// We need a dedicated method for this, because we sometimes can't log
+    /// the backend type when doing early initialization for backends
+    /// initialized statically.
+    void logRegistered() {
+        std::stringstream txt;
+
+        for (auto const& x : factories_) {
+            if (!txt.str().empty()) {
+                txt << " ";
+            }
+            txt << x.first;
+        }
+
+        LOG_INFO(isc::db::database_logger, isc::db::CONFIG_BACKENDS_REGISTERED)
+            .arg(txt.str());
     }
 
 protected:

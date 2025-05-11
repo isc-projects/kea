@@ -38,7 +38,7 @@ typedef std::stack<std::string> ValueStack;
 class EvalBadStack : public Exception {
 public:
     EvalBadStack(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief EvalTypeError is thrown when a value on the stack has a content
@@ -46,14 +46,14 @@ public:
 class EvalTypeError : public Exception {
 public:
     EvalTypeError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief EvalBadLabel is thrown when a label can't be found.
 class EvalBadLabel : public Exception {
 public:
     EvalBadLabel(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Base class for all tokens

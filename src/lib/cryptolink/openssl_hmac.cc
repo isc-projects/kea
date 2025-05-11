@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,6 @@
 #include <openssl/evp.h>
 
 #include <cryptolink/openssl_common.h>
-#define KEA_HASH
-#define KEA_HMAC
-#include <cryptolink/openssl_compat.h>
 
 #include <cstring>
 

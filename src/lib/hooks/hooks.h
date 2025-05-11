@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,8 +12,8 @@
 
 namespace {
 
-// Version 20702 of the hooks framework, set for Kea 2.7.2
-const int KEA_HOOKS_VERSION = 20702;
+// Version 20707 of the hooks framework, set for Kea 2.7.7
+const int KEA_HOOKS_VERSION = 20707;
 
 // Names of the framework functions.
 const char* const LOAD_FUNCTION_NAME = "load";

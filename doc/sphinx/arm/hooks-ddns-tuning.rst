@@ -10,10 +10,9 @@ performing DDNS updates for select clients.
 
 .. note::
 
-    :ischooklib:`libdhcp_ddns_tuning.so` is available as a premium
-    hook library from ISC. Please visit https://www.isc.org/shop/ to purchase
-    the premium hook libraries, or contact us at https://www.isc.org/contact for
-    more information.
+    :ischooklib:`libdhcp_ddns_tuning.so` is part of the open source code and is
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 The library, which was added in Kea 2.1.5, can be loaded by the :iscman:`kea-dhcp4`
 and :iscman:`kea-dhcp6` daemons by adding it to the ``hooks-libraries`` element of the
@@ -59,6 +58,23 @@ expression is shown below:
         ...
     }
 
+The default behavior of :iscman:`kea-dhcp4` is to prefer the FQDN option (code 81) over the
+host name option (code 12) when a client sends both.   The following example shows
+the ``hostname-expr`` one would use to reverse this rule:
+
+.. code-block:: javascript
+
+    {
+        "hooks-libraries": [
+            {
+                "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
+                "parameters": {
+                    "hostname-expr" : "ifelse(option[12].exists, option[host-name].text, option[81].text)"
+                }
+            }
+        ]
+    }
+
 It is also possible to define this parameter in a subnet, using the user-context mechanism.
 If defined at the subnet level, the expression applies to a specific subnet only. If the
 subnet expression is defined as empty, ``""``, it suppresses (or disables) the use of a
@@ -73,19 +89,13 @@ global expression for that subnet. An example subnet expression is shown below:
             "pool": "192.0.2.10 - 192.0.2.20"
         } ],
 
-        // This is a subnet-specific user context.
         "user-context": {
             "ddns-tuning": {
                 "hostname-expr": "'guest-'+int8totext(substring(pkt4.yiaddr, 0,1))+'-' \
                                           +int8totext(substring(pkt4.yiaddr, 1,2))+'-' \
                                           +int8totext(substring(pkt4.yiaddr, 2,3))+'-' \
                                           +int8totext(substring(pkt4.yiaddr, 3,4))"
-            },
-            "last-modified": "2017-09-04 13:32",
-            "description": "you can put anything you like here",
-            "phones": [ "x1234", "x2345" ],
-            "devices-registered": 42,
-            "billing": false
+            }
         }
     }],
     ...

@@ -109,6 +109,15 @@ GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
     EXPECT_EQ(ref_option.persistent_, tested_option.persistent_);
     EXPECT_EQ(ref_option.cancelled_, tested_option.cancelled_);
     EXPECT_EQ(ref_option.space_name_, tested_option.space_name_);
+    EXPECT_EQ(ref_option.client_classes_, tested_option.client_classes_);
+    auto ref_ctx = ref_option.getContext();
+    auto test_ctx = tested_option.getContext();
+    if (ref_ctx) {
+        ASSERT_TRUE(test_ctx);
+        EXPECT_EQ(*test_ctx, *ref_ctx);
+    } else {
+        EXPECT_FALSE(test_ctx);
+    }
 }
 
 void

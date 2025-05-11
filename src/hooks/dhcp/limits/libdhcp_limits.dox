@@ -1,0 +1,71 @@
+// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Limits Hook Library
+
+Welcome to Kea's limits hook library. This documentation is addressed at developers who are
+interested in the internal workings of the library. This file provides information needed to
+understand and perhaps extend this library.
+
+This documentation is stand-alone: you should have read and understood
+<a href="https://reports.kea.isc.org/dev_guide/">Kea Developer's Guide</a> and in particular its
+section about hooks: <a href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section limitsOverview Overview
+
+The limits hook library provides the ability to define limits on Kea's quantifiable features such
+as packet processing and lease allocation.
+The types of limiting currently implemented are:
+  - Lease limiting: a maximum of `n` leases are assigned at any one time.
+  - Rate limiting: a maximum of `n` packets per `time_unit` receive a response.
+
+The limits can be applied per client class or per subnet.
+
+@section limitsInternals Library Internals
+
+In addition to the requisite load() and unload() functions implemented in
+@c load_unload.cc:
+
+- load() - checks that there are no parameters in the hook library parameters in case the user
+got the wrong idea about how to configure limits
+- unload() - in an effort to free some memory, this callout clears the configuration,
+the packet counters and the class lease counters
+
+The library implements the following callouts in @c dhcpv4_callouts.cc and @c dhcpv6_callouts.cc:
+
+- cb4_updated() - updates any modified client classes
+- cb6_updated() - updates any modified client classes
+- dhcp4_srv_configured() - configures the library when loaded by kea-dhcp4
+- dhcp6_srv_configured() - configures the library when loaded by kea-dhcp6
+- lease4_select() - inserts the packet's client classes in the user context of v4 leases and
+checks lease limits
+- lease6_select() - inserts the packet's client classes in the user context of v6 leases and
+checks lease limits
+- pkt4_receive() - checks if v4 packets conform to the rate limits set for client classes
+- pkt6_receive() - checks if v6 packets conform to the rate limits set for client classes
+- subnet4_select() - checks if v6 packets conform to the rate limits set for subnets
+- subnet6_select() - checks if v6 packets conform to the rate limits set for subnets
+
+There is an abstract base class responsible for parsing Kea configuration in @c configuration.cc.
+In the same file, there are instantiable versions of that representing rate limiting, address
+limiting and prefix limiting configuration responsible for fetching the limits inside the user
+contexts of client classes and subnets.
+
+The main logic for rate limiting revolves around keeping a circular buffer of time points. Each
+packet follows two steps:
+1. Remove any expired time points in the buffer.
+2. Check if there is any room for more packets. If there is, add the current time point to the
+buffer. If there isn't, it means the limit has been reached, so drop the packet and prevent a
+response.
+
+@section libdhcp_limitsMTCompatibility Multi-Threading Compatibility
+
+The libdhcp_limits hook library is compatible with multi-threading.
+
+*/

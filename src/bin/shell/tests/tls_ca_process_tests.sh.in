@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,15 +10,18 @@
 # used.
 set -eu
 
+# Test suite for CA
+test_suite="ca"
+
 # Include common test library.
 # shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Path to the temporary configuration file.
-CFG_FILE="@abs_top_builddir@/src/bin/agent/tests/test_config.json"
+CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
 # Path to the Control Agent log file.
-LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
+LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
 # Path to the test certificate authority directory.
 TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"
@@ -100,7 +103,7 @@ ca_bin_path="@abs_top_builddir@/src/bin/agent"
 shell_bin="kea-shell"
 shell_bin_path="@abs_top_builddir@/src/bin/shell"
 
-tmpfile_path="@abs_top_builddir@/src/bin/agent/tests"
+tmpfile_path="@abs_top_builddir@/src/bin/shell/tests"
 
 list_commands_test() {
     local test_name="${1}"
@@ -111,7 +114,7 @@ list_commands_test() {
     # Setup phase: start CA.
 
     # Log the start of the test and print test name.
-    test_start "${test_name}"
+    test_start "${test_suite}-${test_name}"
 
     # Create correct configuration file.
     create_config "${config}"

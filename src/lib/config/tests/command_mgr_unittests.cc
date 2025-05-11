@@ -8,8 +8,6 @@
 
 #include <gtest/gtest.h>
 
-#include <testutils/sandbox.h>
-#include <asiolink/io_service.h>
 #include <config/base_command_mgr.h>
 #include <config/command_mgr.h>
 #include <config/hooked_command_mgr.h>
@@ -20,7 +18,6 @@
 #include <string>
 #include <vector>
 
-using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
@@ -29,14 +26,8 @@ using namespace std;
 // Test class for Command Manager
 class CommandMgrTest : public ::testing::Test {
 public:
-    isc::test::Sandbox sandbox;
-
     /// Default constructor
-    CommandMgrTest()
-        : io_service_(new IOService()) {
-
-        CommandMgr::instance().setIOService(io_service_);
-
+    CommandMgrTest() {
         handler_name_ = "";
         handler_params_ = ElementPtr();
         handler_called_ = false;
@@ -45,7 +36,6 @@ public:
         processed_log_ = "";
 
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().closeCommandSocket();
 
         resetCalloutIndicators();
     }
@@ -53,21 +43,7 @@ public:
     /// Default destructor
     virtual ~CommandMgrTest() {
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().closeCommandSocket();
         resetCalloutIndicators();
-    }
-
-    /// @brief Returns socket path (using either hardcoded path or env variable)
-    /// @return path to the unix socket
-    std::string getSocketPath() {
-        std::string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = std::string(env) + "/test-socket";
-        } else {
-            socket_path = sandbox.join("test-socket");
-        }
-        return (socket_path);
     }
 
     /// @brief Resets indicators related to callout invocation.
@@ -149,9 +125,6 @@ public:
 
         return (0);
     }
-
-    /// @brief IO service used by these tests.
-    IOServicePtr io_service_;
 
     /// @brief Name of the command (used in my_handler)
     static std::string handler_name_;
@@ -427,46 +400,6 @@ TEST_F(CommandMgrTest, delegateListCommands) {
     EXPECT_EQ("my-command-bis", command_names_list[2]);
 }
 
-// This test verifies that a Unix socket can be opened properly and that input
-// parameters (socket-type and socket-name) are verified.
-TEST_F(CommandMgrTest, unixCreate) {
-    // Null pointer is obviously a bad idea.
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(ConstElementPtr()),
-                 isc::config::BadSocketInfo);
-
-    // So is passing no parameters.
-    ElementPtr socket_info = Element::createMap();
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
-
-    // We don't support ipx sockets
-    socket_info->set("socket-type", Element::create("ipx"));
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
-
-    socket_info->set("socket-type", Element::create("unix"));
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::BadSocketInfo);
-
-    socket_info->set("socket-name", Element::create(getSocketPath()));
-    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
-    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
-
-    // It should be possible to close the socket.
-    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
-}
-
-// This test checks that when unix path is too long, the socket cannot be opened.
-TEST_F(CommandMgrTest, unixCreateTooLong) {
-    ElementPtr socket_info = Element::fromJSON("{ \"socket-type\": \"unix\","
-        "\"socket-name\": \"/tmp/toolongtoolongtoolongtoolongtoolongtoolong"
-        "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong"
-        "\" }");
-
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
-                 SocketError);
-}
-
 // This test verifies that a registered callout for the command_processed
 // hookpoint is invoked and passed the correct information.
 TEST_F(CommandMgrTest, commandProcessedHook) {
@@ -541,29 +474,4 @@ TEST_F(CommandMgrTest, commandProcessedHookReplaceResponse) {
     EXPECT_EQ("change-response:[ \"just\", \"some\", \"data\" ]:"
              "{ \"result\": 2, \"text\": \"'change-response' command not supported.\" }",
               processed_log_);
-}
-
-// Verifies that a socket cannot be concurrently opened more than once.
-TEST_F(CommandMgrTest, exclusiveOpen) {
-    // Pass in valid parameters.
-    ElementPtr socket_info = Element::createMap();
-    socket_info->set("socket-type", Element::create("unix"));
-    socket_info->set("socket-name", Element::create(getSocketPath()));
-
-    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
-    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
-
-    // Should not be able to open it twice.
-    EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info),
-                 isc::config::SocketError);
-
-    // Now let's close it.
-    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
-
-    // Should be able to re-open it now.
-    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
-    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
-
-    // Now let's close it.
-    EXPECT_NO_THROW(CommandMgr::instance().closeCommandSocket());
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,7 +52,7 @@ const int MLM_MYSQL_FETCH_FAILURE = 0;
 
 /// @name Current database schema version values.
 //@{
-const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 24;
+const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 29;
 const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 0;
 
 //@}

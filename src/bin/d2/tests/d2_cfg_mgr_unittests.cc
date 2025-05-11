@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -551,9 +551,12 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params->getNcrFormat());
 
-    // Verify that the control socket can be retrieved.
-    ConstElementPtr ctrl_sock = context->getControlSocketInfo();
+    // Verify that the UNIX control socket can be retrieved.
+    ConstElementPtr ctrl_sock = context->getUnixControlSocketInfo();
     ASSERT_TRUE(ctrl_sock);
+    ASSERT_EQ(Element::list, ctrl_sock->getType());
+    ASSERT_EQ(ctrl_sock->size(), 1);
+    ctrl_sock = ctrl_sock->get(0);
     ASSERT_EQ(Element::map, ctrl_sock->getType());
     EXPECT_EQ(2, ctrl_sock->size());
     ASSERT_TRUE(ctrl_sock->get("socket-type"));
@@ -990,7 +993,7 @@ TEST_F(D2CfgMgrTest, comments) {
                         "  \"clients\": [ {"
                         "   \"comment\": \"admin is authorized\","
                         "   \"user\": \"admin\","
-                        "   \"password\": \"1234\""
+                        "   \"password\": \"foobar\""
                         "  } ]"
                         " }"
                         "}"
@@ -1031,7 +1034,11 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
 
     // There is a UNIX control socket.
-    ConstElementPtr socket = d2_context->getControlSocketInfo();
+    ConstElementPtr socket = d2_context->getUnixControlSocketInfo();
+    ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
     ASSERT_TRUE(socket);
     ConstElementPtr ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
@@ -1040,12 +1047,13 @@ TEST_F(D2CfgMgrTest, comments) {
     EXPECT_EQ("\"Indirect comment\"", ctx_socket->get("comment")->str());
 
     // There is a HTTP control socket with authentication.
-    config::HttpCommandConfigPtr http_socket =
-        d2_context->getHttpControlSocketInfo();
-    ASSERT_TRUE(http_socket);
-    /// @todo use the configuration object.
-    socket = http_socket->toElement();
+    socket = d2_context->getHttpControlSocketInfo();
     ASSERT_TRUE(socket);
+    ASSERT_EQ(Element::list, socket->getType());
+    ASSERT_EQ(socket->size(), 1);
+    socket = socket->get(0);
+    ASSERT_TRUE(socket);
+    /// @todo use the configuration object.
     ctx_socket = socket->get("user-context");
     ASSERT_TRUE(ctx_socket);
     ASSERT_EQ(1, ctx_socket->size());

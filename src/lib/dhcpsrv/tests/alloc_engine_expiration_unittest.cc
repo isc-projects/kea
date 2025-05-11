@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp_ddns/ncr_msg.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
@@ -250,7 +250,7 @@ public:
     void expire(const uint16_t lease_index, const time_t secs) {
         ASSERT_GT(leases_.size(), lease_index);
         // We set the expiration time indirectly by modifying the cltt value.
-        leases_[lease_index]->cltt_ = time(NULL) - secs -
+        leases_[lease_index]->cltt_ = time(0) - secs -
             leases_[lease_index]->valid_lft_;
         ASSERT_NO_THROW(updateLease(lease_index));
     }
@@ -273,7 +273,7 @@ public:
     /// a value of 2 would set the lease expiration time to 2 seconds ago.
     void reclaim(const uint16_t lease_index, const time_t secs) {
         ASSERT_GT(leases_.size(), lease_index);
-        leases_[lease_index]->cltt_ = time(NULL) - secs -
+        leases_[lease_index]->cltt_ = time(0) - secs -
             leases_[lease_index]->valid_lft_;
         leases_[lease_index]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         ASSERT_NO_THROW(updateLease(lease_index));
@@ -288,6 +288,27 @@ public:
         ASSERT_GT(leases_.size(), lease_index);
         leases_[lease_index]->decline(probation_time);
         ASSERT_NO_THROW(updateLease(lease_index));
+    }
+
+    /// @brief Mark lease as registered.
+    ///
+    /// @param lease_index Lease index. Must be between 0 and
+    /// @c TEST_LEASES_NUM.
+    void registered(const uint16_t lease_index) {
+        ASSERT_GT(leases_.size(), lease_index);
+        ASSERT_EQ(Lease::TYPE_NA, leases_[lease_index]->type_);
+        leases_[lease_index]->state_ = Lease::STATE_REGISTERED;
+        ASSERT_NO_THROW(updateLease(lease_index));
+
+        // Update the stats.
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        auto subnet_id = leases_[lease_index]->subnet_id_;
+        stats_mgr.addValue(stats_mgr.generateName("subnet", subnet_id,
+                                                  "assigned-nas"),
+                           int64_t(-1));
+        stats_mgr.addValue(stats_mgr.generateName("subnet", subnet_id,
+                                                  "registered-nas"),
+                           int64_t(1));
     }
 
     /// @brief Updates lease in the lease database.
@@ -1244,6 +1265,66 @@ public:
     void
     testReclaimDeclinedHook(bool skip);
 
+    /// @brief Test that the registered leases may be reclaimed.
+    void testReclaimExpiredLeasesRegistered() {
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark all leases as registered.
+            registered(i);
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Run leases reclamation routine on all leases. This should result
+        // in removal of all leases with even indexes even if remove_lease
+        // flag is false.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Leases with odd indexes should be retained and their state
+        // shouldn't be "expired-reclaimed".
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+        // Leases with even indexes should have been removed.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+    }
+
+    /// @brief Test that the registered leases may be reclaimed and
+    /// DNS updates are generated.
+    void testReclaimExpiredLeasesRegisteredWithDDNS() {
+        // DNS must be started for the D2 client to accept NCRs.
+        ASSERT_NO_THROW(enableDDNS());
+
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+            // Mark all leases as registered.
+            registered(i);
+            // Mark leases with even indexes as expired.
+            if (evenLeaseIndex(i)) {
+                // The higher the index, the more expired the lease.
+                expire(i, 10 + i);
+            }
+        }
+
+        // Reclaim all expired leases.
+        ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, false));
+
+        // Leases with odd indexes should be retained and their state
+        // shouldn't be "expired-reclaimed".
+        EXPECT_TRUE(testLeases(&leaseNotReclaimed, &oddLeaseIndex));
+        // Leases with even indexes should have been removed.
+        EXPECT_TRUE(testLeases(&leaseDoesntExist, &evenLeaseIndex));
+
+        // Can't use testLeases on a deleted lease so do it the hard way.
+        for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+            bool ncr = dnsUpdateGeneratedForLease(leases_[i]);
+            EXPECT_EQ(ncr, evenLeaseIndex(i));
+        }
+    }
+
+    /// @brief Test that the registered leases may be reclaimed and
+    /// statistics is updated.
+    void testReclaimExpiredLeasesRegisteredStats();
+
     /// The following parameters will be written by a callout
     static std::string callout_name_; ///< Stores callout name
     static Lease6Ptr callout_lease_;  ///< Stores callout parameter
@@ -1496,6 +1577,46 @@ ExpirationAllocEngine6Test::testReclaimDeclinedHook(bool skip) {
     }
 };
 
+void
+ExpirationAllocEngine6Test::testReclaimExpiredLeasesRegisteredStats() {
+    // This test requires that the number of leases is an even number.
+    BOOST_STATIC_ASSERT(TEST_LEASES_NUM % 2 == 0);
+
+    for (unsigned int i = 0; i < TEST_LEASES_NUM; ++i) {
+        // Mark all leases as expired. The higher the index the less
+        // expired the lease.
+        expire(i, 1000 - i);
+        // Modify subnet ids some leases.
+        if (evenLeaseIndex(i)) {
+            setSubnetId(i, SubnetID(2));
+        }
+        // Mark all leases as registered.
+        registered(i);
+    }
+
+    // Leases will be reclaimed in groups of 8.
+    const size_t reclamation_group_size = 8;
+    for (unsigned int i = reclamation_group_size; i < TEST_LEASES_NUM;
+         i += reclamation_group_size) {
+
+        // Reclaim 8 most expired leases out of TEST_LEASES_NUM.
+        ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size,
+                                             0, false));
+
+        // Number of reclaimed leases should increase as we loop.
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i));
+        // Make sure that the number of reclaimed leases is also distributed
+        // across two subnets.
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
+        EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
+        // Number of registerer leases should decrease as we reclaim them.
+        EXPECT_TRUE(testStatistics("registered-nas",
+                                   (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("registered-nas",
+                                   (TEST_LEASES_NUM - i) / 2, 2));
+    }
+}
+
 // This test verifies that the leases can be reclaimed without being removed
 // from the database. In such case, the leases' state is set to
 // "expired-reclaimed".
@@ -1646,6 +1767,24 @@ TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedHook1) {
 // causes the recovery to not be conducted.
 TEST_F(ExpirationAllocEngine6Test, reclaimDeclinedHook2) {
     testReclaimDeclinedHook(true); // true = use skip callout
+}
+
+// This test verifies expired registered leases are deleted by the
+// reclamation routine.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesRegistered) {
+    testReclaimExpiredLeasesRegistered();
+}
+
+// This test verifies expired registered leases are deleted by the
+// reclamation routine and DNS updates generated.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesRegisteredWithDDNS) {
+    testReclaimExpiredLeasesRegisteredWithDDNS();
+}
+
+// This test verifies expired registered leases are deleted by the
+// reclamation routine and statistics updated.
+TEST_F(ExpirationAllocEngine6Test, reclaimExpiredLeasesRegisteredStats) {
+    testReclaimExpiredLeasesRegisteredStats();
 }
 
 // *******************************************************
@@ -1843,7 +1982,7 @@ ExpirationAllocEngine4Test::createLeases() {
 
         // Create lease.
         Lease4Ptr lease(new Lease4(address, hwaddr, ClientIdPtr(), 60,
-                                   time(NULL), SubnetID(1), true, true,
+                                   time(0), SubnetID(1), true, true,
                                    generateHostnameForLeaseIndex(i)));
         ElementPtr user_context = Element::createMap();
         user_context->set("index", Element::create(static_cast<int>(i)));

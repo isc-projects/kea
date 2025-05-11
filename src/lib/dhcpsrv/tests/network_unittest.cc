@@ -183,16 +183,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("allocator", Element::create("random"));
     globals_->set("offer-lifetime", Element::create(45));
     globals_->set("ddns-ttl-percent", Element::create(0.75));
+    globals_->set("ddns-ttl", Element::create(400));
+    globals_->set("ddns-ttl-min", Element::create(200));
+    globals_->set("ddns-ttl-max", Element::create(600));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
-
-    {
-        SCOPED_TRACE("client_class");
-        testNetworkInheritance<TestNetwork>(&Network::getClientClass,
-                                            &Network::allowClientClass,
-                                            "n", "g", false);
-    }
     {
         SCOPED_TRACE("valid-lifetime");
         testNetworkInheritance<TestNetwork>(&Network::getValid, &Network::setValid,
@@ -379,6 +375,24 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network::setDdnsTtlPercent,
                                              .33, .75);
     }
+    {
+        SCOPED_TRACE("ddns-ttl");
+        testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtl,
+                                             &Network::setDdnsTtl,
+                                             300, 400);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-min");
+        testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtlMin,
+                                             &Network::setDdnsTtlMin,
+                                             100, 200);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-max");
+        testNetworkInheritance<TestNetwork4>(&Network::getDdnsTtlMax,
+                                             &Network::setDdnsTtlMax,
+                                             500, 600);
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -401,6 +415,9 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("pd-allocator", Element::create("random"));
     globals_->set("ddns-ttl-percent", Element::create(0.55));
     globals_->set("ddns-conflict-resolution-mode", Element::create("check-with-dhcid"));
+    globals_->set("ddns-ttl", Element::create(400));
+    globals_->set("ddns-ttl-min", Element::create(200));
+    globals_->set("ddns-ttl-max", Element::create(600));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -508,6 +525,24 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlPercent,
                                              &Network::setDdnsTtlPercent,
                                              .22, .55);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl");
+        testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtl,
+                                             &Network::setDdnsTtl,
+                                             300, 400);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-min");
+        testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlMin,
+                                             &Network::setDdnsTtlMin,
+                                             100, 200);
+    }
+    {
+        SCOPED_TRACE("ddns-ttl-max");
+        testNetworkInheritance<TestNetwork6>(&Network::getDdnsTtlMax,
+                                             &Network::setDdnsTtlMax,
+                                             500, 600);
     }
 
     // Interface-id requires special type of test.

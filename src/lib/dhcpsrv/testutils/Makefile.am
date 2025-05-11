@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DDATABASE_SCRIPTS_DIR=\"$(abs_top_srcdir)/src/share/database/scripts\"
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -12,11 +12,13 @@ if HAVE_GTEST
 
 noinst_LTLIBRARIES = libdhcpsrvtest.la
 
-libdhcpsrvtest_la_SOURCES  = concrete_lease_mgr.cc concrete_lease_mgr.h
+libdhcpsrvtest_la_SOURCES  = alloc_engine_utils.cc alloc_engine_utils.h
+libdhcpsrvtest_la_SOURCES += concrete_lease_mgr.cc concrete_lease_mgr.h
 libdhcpsrvtest_la_SOURCES += config_result_check.cc config_result_check.h
 libdhcpsrvtest_la_SOURCES += dhcp4o6_test_ipc.cc dhcp4o6_test_ipc.h
 libdhcpsrvtest_la_SOURCES += host_data_source_utils.cc host_data_source_utils.h
 libdhcpsrvtest_la_SOURCES += lib_load_test_fixture.h
+libdhcpsrvtest_la_SOURCES += forensic_test_utils.h
 libdhcpsrvtest_la_SOURCES += memory_host_data_source.cc memory_host_data_source.h
 libdhcpsrvtest_la_SOURCES += test_utils.cc test_utils.h
 libdhcpsrvtest_la_SOURCES += generic_backend_unittest.cc generic_backend_unittest.h

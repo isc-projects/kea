@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
@@ -105,8 +106,8 @@ void
 D2Controller::deregisterCommands() {
     try {
         // Close command sockets.
-        CommandMgr::instance().closeCommandSocket();
-        HttpCommandMgr::instance().close();
+        UnixCommandMgr::instance().closeCommandSockets();
+        HttpCommandMgr::instance().closeCommandSockets();
 
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);

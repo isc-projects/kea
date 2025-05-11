@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -197,6 +197,12 @@ TEST_F(BufferTest, inputBufferRead) {
     ASSERT_EQ(sizeof(vdata), datav.size());
     ASSERT_EQ(0, memcmp(&vdata[0], testdata, sizeof(testdata)));
     ASSERT_EQ(sizeof(vdata), ibuffer.getPosition());
+
+    // Verify that read len of zero results in an empty
+    // vector without throwing.
+    datav.resize(8);
+    ASSERT_NO_THROW(ibuffer.readVector(datav, 0));
+    ASSERT_EQ(datav.size(), 0);
 }
 
 TEST_F(BufferTest, outputBufferReadAt) {

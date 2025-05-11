@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,13 +9,6 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
-#endif
-
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
@@ -31,9 +24,18 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-boost::scoped_ptr<TrackingLeaseMgr>&
+map<string, pair<LeaseMgrFactory::Factory, LeaseMgrFactory::DBVersion>> LeaseMgrFactory::map_;
+
+namespace {
+
+/// @brief Initializer.
+isc::dhcp::MemfileLeaseMgrInit memfile_init;
+
+}
+
+TrackingLeaseMgrPtr&
 LeaseMgrFactory::getLeaseMgrPtr() {
-    static boost::scoped_ptr<TrackingLeaseMgr> lease_mgr_ptr;
+    static TrackingLeaseMgrPtr lease_mgr_ptr;
     return (lease_mgr_ptr);
 }
 
@@ -45,47 +47,42 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     DatabaseConnection::ParameterMap parameters = DatabaseConnection::parse(dbaccess);
     std::string redacted = DatabaseConnection::redactedAccessString(parameters);
 
-    // Is "type" present?
-    if (parameters.find(type) == parameters.end()) {
+    // Get the database type and open the corresponding database.
+    DatabaseConnection::ParameterMap::iterator it = parameters.find(type);
+    if (it == parameters.end()) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_NOTYPE_DB).arg(dbaccess);
         isc_throw(InvalidParameter, "Database configuration parameters do not "
                   "contain the 'type' keyword");
     }
 
-    // Yes, check what it is.
-    if (parameters[type] == string("mysql")) {
-#ifdef HAVE_MYSQL
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
-        return;
-#else
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("mysql");
-        isc_throw(InvalidType, "The Kea server has not been compiled with "
-                  "support for database type: mysql");
-#endif
+    string db_type = it->second;
+    auto index = map_.find(db_type);
+
+    // No match?
+    if (index == map_.end()) {
+        if ((db_type == "mysql") || (db_type == "postgresql")) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(db_type);
+            string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
+            isc_throw(InvalidType, "The Kea server has not been compiled with "
+                      "support for lease database type: " << db_type
+                      << ". Did you forget to use -D "
+                      << db_type << "=enabled during setup or to load libdhcp_"
+                      << libdhcp << " hook library?");
+        }
+        // Get here on no match
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
+        isc_throw(InvalidType, "Database access parameter 'type' does "
+                  "not specify a supported database backend: " << parameters[type]);
     }
 
-    if (parameters[type] == string("postgresql")) {
-#ifdef HAVE_PGSQL
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
-        return;
-#else
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("postgresql");
-        isc_throw(InvalidType, "The Kea server has not been compiled with "
-                  "support for database type: postgresql");
-#endif
-    }
-    if (parameters[type] == string("memfile")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
-        return;
-    }
+    // Call the factory.
+    getLeaseMgrPtr() = index->second.first(parameters);
 
-    // Get here on no match
-    LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
-    isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend: " << parameters[type]);
+    // Check the factory did not return null.
+    if (!getLeaseMgrPtr()) {
+        isc_throw(Unexpected, "Lease database " << db_type <<
+                  " factory returned null");
+    }
 }
 
 void
@@ -95,8 +92,8 @@ LeaseMgrFactory::destroy() {
     if (getLeaseMgrPtr()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CLOSE_DB)
             .arg(getLeaseMgrPtr()->getType());
+        getLeaseMgrPtr().reset();
     }
-    getLeaseMgrPtr().reset();
 }
 
 void
@@ -120,16 +117,96 @@ LeaseMgrFactory::recreate(const std::string& dbaccess, bool preserve_callbacks) 
 
 bool
 LeaseMgrFactory::haveInstance() {
-    return (getLeaseMgrPtr().get());
+    return (!!getLeaseMgrPtr());
 }
 
 TrackingLeaseMgr&
 LeaseMgrFactory::instance() {
     TrackingLeaseMgr* lmptr = getLeaseMgrPtr().get();
-    if (lmptr == NULL) {
+    if (!lmptr) {
         isc_throw(NoLeaseManager, "no current lease manager is available");
     }
     return (*lmptr);
+}
+
+bool
+LeaseMgrFactory::registerFactory(const string& db_type,
+                                 const Factory& factory,
+                                 bool no_log,
+                                 DBVersion db_version) {
+    if (map_.count(db_type)) {
+        return (false);
+    }
+
+    static auto default_db_version = []() -> std::string {
+        return (std::string());
+    };
+
+    if (!db_version) {
+        db_version = default_db_version;
+    }
+
+    map_.insert(pair<string, pair<Factory, DBVersion>>(db_type, pair<Factory, DBVersion>(factory, db_version)));
+
+    // We are dealing here with static logger initialization fiasco.
+    // registerFactory may be called from constructors of static global
+    // objects for built in backends. The logging is not initialized yet,
+    // so the LOG_DEBUG would throw.
+    if (!no_log) {
+        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_LEASE_MGR_BACKEND_REGISTER)
+            .arg(db_type);
+    }
+    return (true);
+}
+
+bool
+LeaseMgrFactory::deregisterFactory(const string& db_type, bool no_log) {
+    auto index = map_.find(db_type);
+    if (index != map_.end()) {
+        map_.erase(index);
+        if (!no_log) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                    DHCPSRV_LEASE_MGR_BACKEND_DEREGISTER)
+                .arg(db_type);
+        }
+        return (true);
+    } else {
+        return (false);
+    }
+}
+
+bool
+LeaseMgrFactory::registeredFactory(const std::string& db_type) {
+    auto index = map_.find(db_type);
+    return (index != map_.end());
+}
+
+void
+LeaseMgrFactory::logRegistered() {
+    std::stringstream txt;
+
+    for (auto const& x : map_) {
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
+    }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_LEASE_MGR_BACKENDS_REGISTERED)
+        .arg(txt.str());
+}
+
+std::list<std::string>
+LeaseMgrFactory::getDBVersions() {
+    std::list<std::string> result;
+    for (auto const& x : map_) {
+        auto version = x.second.second();
+        if (!version.empty()) {
+            result.push_back(version);
+        }
+    }
+
+    return (result);
 }
 
 } // namespace dhcp

@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/log/logimpl_messages.mes
+// File created from src/lib/log/logimpl_messages.mes
 
 #ifndef LOGIMPL_MESSAGES_H
 #define LOGIMPL_MESSAGES_H

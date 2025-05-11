@@ -61,7 +61,7 @@
     "max-reconnect-tries": 3,
     "name": "keatest",
     "user": "keatest",
-    "password": "keatest",
+    "password": "1234",
     "host": "localhost",
     "port": 3306,
     "trust-anchor": "my-ca",
@@ -69,6 +69,15 @@
     "key-file": "my-key",
     "cipher-list": "AES"
   },
+// Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+// store host reservations in the MySQL Host Database Backend.
+// Specify the host backend hook library location.
+  "hooks-libraries": [
+    {
+        // the MySQL host backend hook library required for host storage.
+        "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+    }
+  ],
 
 // Define a subnet with a single pool of dynamic addresses. Addresses from
 // this pool will be assigned to clients which don't have reservations in the

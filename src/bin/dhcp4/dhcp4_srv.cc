@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,75 +7,114 @@
 #include <config.h>
 #include <kea_version.h>
 
+#include <asiolink/addr_utilities.h>
+#include <asiolink/io_address.h>
+#include <asiolink/io_service.h>
 #include <asiolink/io_service_mgr.h>
+#include <cc/data.h>
 #include <config/http_command_mgr.h>
+#include <cryptolink/cryptolink.h>
+#include <dhcp/classify.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_data_types.h>
+#include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/option_vendor_class.h>
-#include <dhcp/option_string.h>
+#include <dhcp/pkt.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt4o6.h>
-#include <dhcp/pkt6.h>
-#include <dhcp/docsis3_option_defs.h>
+#include <dhcp/socket_info.h>
+#include <dhcp/std_option_defs.h>
 #include <dhcp4/client_handler.h>
-#include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <asiolink/addr_utilities.h>
-#include <dhcpsrv/cfgmgr.h>
+#include <dhcp4/dhcp4to6_ipc.h>
+#include <dhcp_ddns/ncr_io.h>
+#include <dhcp_ddns/ncr_msg.h>
+#include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/legal_log_mgr_factory.h>
+#include <dhcpsrv/callout_handle_store.h>
+#include <dhcpsrv/cb_ctl_dhcp4.h>
+#include <dhcpsrv/cfg_expiration.h>
+#include <dhcpsrv/cfg_globals.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/d2_client_cfg.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
-#include <dhcpsrv/fuzz.h>
-#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/host.h>
+#include <dhcpsrv/host_data_source_factory.h>
+#include <dhcpsrv/host_mgr.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/ncr_generator.h>
+#include <dhcpsrv/network_state.h>
+#include <dhcpsrv/packet_fuzzer.h>
+#include <dhcpsrv/pool.h>
 #include <dhcpsrv/resource_handler.h>
 #include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
+#include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
 #include <eval/evaluate.h>
-#include <eval/eval_messages.h>
+#include <eval/token.h>
+#include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_log.h>
 #include <hooks/hooks_manager.h>
-#include <stats/stats_mgr.h>
-#include <util/encode/encode.h>
-#include <util/str.h>
+#include <hooks/parking_lots.h>
+#include <hooks/server_hooks.h>
+#include <log/interprocess/interprocess_sync_file.h>
+#include <log/log_dbglevels.h>
+#include <log/log_formatter.h>
 #include <log/logger.h>
-#include <cryptolink/cryptolink.h>
-#include <process/cfgrpt/config_report.h>
+#include <log/macros.h>
+#include <stats/stats_mgr.h>
+#include <util/multi_threading_mgr.h>
+#include <util/optional.h>
+#include <util/readwrite_mutex.h>
+#include <util/thread_pool.h>
+#include <util/triplet.h>
 
-
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
-#endif
-#include <dhcpsrv/memfile_lease_mgr.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
-#include <boost/range/adaptor/reversed.hpp>
-#include <boost/pointer_cast.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <functional>
-#include <iomanip>
-#include <set>
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <exception>
+#include <functional>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -85,6 +124,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
+using namespace isc::log::interprocess;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
@@ -166,7 +206,7 @@ namespace dhcp {
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query,
                                AllocEngine::ClientContext4Ptr& context,
-                               const Subnet4Ptr& subnet,
+                               const ConstSubnet4Ptr& subnet,
                                bool& drop)
     : alloc_engine_(alloc_engine), query_(query), resp_(),
       context_(context), ipv6_only_preferred_(false) {
@@ -606,8 +646,8 @@ void Dhcpv4Exchange::evaluateClasses(const Pkt4Ptr& pkt, bool depend_on_known) {
         if (!expr_ptr) {
             continue;
         }
-        // Not the right time if only when required
-        if (it->getRequired()) {
+        // Not the right time if only when additional
+        if (it->getAdditional()) {
             continue;
         }
         // Not the right pass.
@@ -662,12 +702,13 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp4_logger, DHCP4_SRV_CONSTRUCT_ERROR).arg(e.what());
-        shutdown_ = true;
         return;
     }
 
     // Initializing all observations with default value
     setPacketStatisticsDefaults();
+
+    // All done, so can proceed
     shutdown_ = false;
 }
 
@@ -705,6 +746,9 @@ Dhcpv4Srv::~Dhcpv4Srv() {
     // so we should clean up after ourselves.
     LeaseMgrFactory::destroy();
 
+    // Destroy the host manager before hooks unload.
+    HostMgr::create();
+
     // Explicitly unload hooks
     HooksManager::prepareUnloadLibraries();
     if (!HooksManager::unloadLibraries()) {
@@ -728,7 +772,7 @@ Dhcpv4Srv::shutdown() {
     shutdown_ = true;
 }
 
-isc::dhcp::Subnet4Ptr
+isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                         bool sanity_only, bool allow_answer_park) {
 
@@ -737,7 +781,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
         return (selectSubnet4o6(query, drop, sanity_only, allow_answer_park));
     }
 
-    Subnet4Ptr subnet;
+    ConstSubnet4Ptr subnet;
 
     const SubnetSelector& selector = CfgSubnets4::initSelector(query);
 
@@ -776,7 +820,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // We proactively park the packet.
@@ -813,7 +857,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARK)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         } else {
             HooksManager::drop("subnet4_select", query);
         }
@@ -825,7 +869,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Callouts decided to drop the packet. It is a superset of the
@@ -835,7 +879,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Use whatever subnet was specified by the callout
@@ -862,10 +906,10 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop,
     return (subnet);
 }
 
-isc::dhcp::Subnet4Ptr
+isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                            bool sanity_only, bool allow_answer_park) {
-    Subnet4Ptr subnet;
+    ConstSubnet4Ptr subnet;
 
     SubnetSelector selector;
     selector.ciaddr_ = query->getCiaddr();
@@ -944,7 +988,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // We proactively park the packet.
@@ -981,7 +1025,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_PARK)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         } else {
             HooksManager::drop("subnet4_select", query);
         }
@@ -993,7 +1037,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_SKIP)
                 .arg(query->getLabel());
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Callouts decided to drop the packet. It is a superset of the
@@ -1003,7 +1047,7 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_DHCP4O6_HOOK_SUBNET4_SELECT_DROP)
                 .arg(query->getLabel());
             drop = true;
-            return (Subnet4Ptr());
+            return (ConstSubnet4Ptr());
         }
 
         // Use whatever subnet was specified by the callout
@@ -1125,10 +1169,25 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
 
 int
 Dhcpv4Srv::run() {
-#ifdef ENABLE_AFL
+#ifdef HAVE_AFL
+    // Get the values of the environment variables used to control the
+    // fuzzing.
+
+    // Specfies the interface to be used to pass packets from AFL to Kea.
+    const char* interface = getenv("KEA_AFL_INTERFACE");
+    if (!interface) {
+        isc_throw(FuzzInitFail, "no fuzzing interface has been set");
+    }
+
+    // The address on the interface to be used.
+    const char* address = getenv("KEA_AFL_ADDRESS");
+    if (!address) {
+        isc_throw(FuzzInitFail, "no fuzzing address has been set");
+    }
+
     // Set up structures needed for fuzzing.
-    Fuzz fuzzer(4, server_port_);
-    //
+    PacketFuzzer fuzzer(server_port_, interface, address);
+
     // The next line is needed as a signature for AFL to recognize that we are
     // running persistent fuzzing.  This has to be in the main image file.
     while (__AFL_LOOP(fuzzer.maxLoopCount())) {
@@ -1137,16 +1196,15 @@ Dhcpv4Srv::run() {
         fuzzer.transfer();
 #else
     while (!shutdown_) {
-#endif // ENABLE_AFL
+#endif // HAVE_AFL
         try {
             runOne();
             // Handle events registered by hooks using external IOService objects.
             IOServiceMgr::instance().pollIOServices();
             getIOService()->poll();
-            config::HttpCommandMgr::instance().garbageCollectListeners();
         } catch (const std::exception& e) {
-            // General catch-all exception that are not caught by more specific
-            // catches. This one is for exceptions derived from std::exception.
+            // General catch-all standard exceptions that are not caught by more
+            // specific catches.
             LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION_MAIN)
                 .arg(e.what());
         } catch (...) {
@@ -1680,6 +1738,10 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             // Also pass the corresponding query packet as argument
             callout_handle->setArgument("query4", query);
 
+            // Also pass the corresponding response packet as argument
+            ScopedEnableOptionsCopy<Pkt4> response4_options_copy(rsp);
+            callout_handle->setArgument("response4", rsp);
+
             Lease4CollectionPtr new_leases(new Lease4Collection());
             // Filter out the new lease if it was reused so not committed.
             if (ctx->new_lease_ && (ctx->new_lease_->reuseable_valid_lft_ == 0)) {
@@ -1805,7 +1867,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
 
     // If we have a response prep it for shipment.
     if (rsp) {
-        Subnet4Ptr subnet = (ctx ? ctx->subnet_ : Subnet4Ptr());
+        ConstSubnet4Ptr subnet = (ctx ? ctx->subnet_ : ConstSubnet4Ptr());
         processPacketPktSend(callout_handle, query, rsp, subnet);
     }
     return (rsp);
@@ -1813,7 +1875,8 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
 
 void
 Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                               Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
+                               Pkt4Ptr& query, Pkt4Ptr& rsp,
+                               ConstSubnet4Ptr& subnet) {
     try {
             processPacketPktSend(callout_handle, query, rsp, subnet);
             processPacketBufferSend(callout_handle, rsp);
@@ -1828,7 +1891,8 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
 
 void
 Dhcpv4Srv::processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                                Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet) {
+                                Pkt4Ptr& query, Pkt4Ptr& rsp,
+                                ConstSubnet4Ptr& subnet) {
     query->addPktEvent("process_completed");
     if (!rsp) {
         return;
@@ -2008,8 +2072,9 @@ Dhcpv4Srv::appendServerID(Dhcpv4Exchange& ex) {
         local_addr = IfaceMgr::instance().getSocket(query).addr_;
     }
 
-    OptionPtr opt_srvid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                           local_addr));
+    static const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
+    OptionCustomPtr opt_srvid(new OptionCustom(server_id_def, Option::V4));
+    opt_srvid->writeAddress(local_addr);
     ex.getResponse()->addOption(opt_srvid);
 }
 
@@ -2018,7 +2083,7 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
     CfgOptionList& co_list = ex.getCfgOptionList();
 
     // Retrieve subnet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         // All methods using the CfgOptionList object return soon when
         // there is no subnet so do the same
@@ -2091,7 +2156,7 @@ void
 Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     // Get the subnet relevant for the client. We will need it
     // to get the options associated with it.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     // If we can't find the subnet for the client there is no way
     // to get the options to be sent to a client. We don't log an
     // error because it will be logged by the assignLease method
@@ -2123,6 +2188,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
     }
 
     std::set<uint8_t> cancelled_opts;
+    const auto& cclasses = query->getClasses();
 
     // Iterate on the configured option list to add persistent and
     // cancelled options.
@@ -2167,9 +2233,10 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         if (!resp->getOption(opt)) {
             // Iterate on the configured option list
             for (auto const& copts : co_list) {
-                OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, opt);
-                // Got it: add it and jump to the outer loop
+                OptionDescriptor desc = copts->allowedForClientClasses(DHCP4_OPTION_SPACE,
+                                                                       opt, cclasses);
                 if (desc.option_) {
+                    // Got it: add it and jump to the outer loop
                     resp->addOption(desc.option_);
                     break;
                 }
@@ -2197,7 +2264,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                         DHO_VIVCO_SUBOPTIONS)) {
-                if (!desc.option_) {
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorClassPtr vendor_opts =
@@ -2235,7 +2302,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
         for (auto const& copts : co_list) {
             for (auto const& desc : copts->getList(DHCP4_OPTION_SPACE,
                                                    DHO_VIVSO_SUBOPTIONS)) {
-                if (!desc.option_) {
+                if (!desc.option_ || !desc.allowedForClientClasses(cclasses)) {
                     continue;
                 }
                 OptionVendorPtr vendor_opts =
@@ -2261,7 +2328,7 @@ Dhcpv4Srv::appendRequestedOptions(Dhcpv4Exchange& ex) {
 void
 Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     // Get the configured subnet suitable for the incoming packet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
 
     const CfgOptionList& co_list = ex.getCfgOptionList();
 
@@ -2348,6 +2415,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         }
     }
 
+    const auto& cclasses = query->getClasses();
     for (uint32_t vendor_id : vendor_ids) {
 
         std::set<uint8_t> cancelled_opts;
@@ -2411,7 +2479,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             }
             if (!vendor_rsp->getOption(opt)) {
                 for (auto const& copts : co_list) {
-                    OptionDescriptor desc = copts->get(vendor_id, opt);
+                    OptionDescriptor desc = copts->allowedForClientClasses(vendor_id,
+                                                                           opt, cclasses);
                     if (desc.option_) {
                         vendor_rsp->addOption(desc.option_);
                         added = true;
@@ -2440,7 +2509,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         DHO_DHCP_SERVER_IDENTIFIER };
 
     // Get the subnet.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (!subnet) {
         return;
     }
@@ -2452,6 +2521,7 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
     }
 
     Pkt4Ptr resp = ex.getResponse();
+    const auto& cclasses = ex.getQuery()->getClasses();
 
     // Try to find all 'required' options in the outgoing
     // message. Those that are not present will be added.
@@ -2460,7 +2530,8 @@ Dhcpv4Srv::appendBasicOptions(Dhcpv4Exchange& ex) {
         if (!opt) {
             // Check whether option has been configured.
             for (auto const& copts : co_list) {
-                OptionDescriptor desc = copts->get(DHCP4_OPTION_SPACE, required);
+                OptionDescriptor desc = copts->allowedForClientClasses(DHCP4_OPTION_SPACE,
+                                                                       required, cclasses);
                 if (desc.option_) {
                     resp->addOption(desc.option_);
                     break;
@@ -2539,7 +2610,7 @@ Dhcpv4Srv::processClientName(Dhcpv4Exchange& ex) {
             ScopedCalloutHandleState callout_handle_state(callout_handle);
 
             // Setup the callout arguments.
-            Subnet4Ptr subnet = ex.getContext()->subnet_;
+            ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
             callout_handle->setArgument("query4", query);
             callout_handle->setArgument("response4", resp);
             callout_handle->setArgument("subnet4", subnet);
@@ -2829,7 +2900,9 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
         return;
     }
 
-    if (!old_lease || ddns_params.getUpdateOnRenew() || !lease->hasIdenticalFqdn(*old_lease)) {
+    if ((lease->reuseable_valid_lft_ == 0) &&
+        (!old_lease || ddns_params.getUpdateOnRenew() ||
+         !lease->hasIdenticalFqdn(*old_lease))) {
         if (old_lease) {
             // Queue's up a remove of the old lease's DNS (if needed)
             queueNCR(CHG_REMOVE, old_lease);
@@ -2843,8 +2916,9 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
 }
 
 bool
-Dhcpv4Srv::assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes) {
-    Subnet4Ptr current_subnet = subnet;
+Dhcpv4Srv::assignZero(ConstSubnet4Ptr& subnet,
+                      const ClientClasses& client_classes) {
+    ConstSubnet4Ptr current_subnet = subnet;
     // Try subnets.
     while (current_subnet) {
         const ConstCfgOptionPtr& co = current_subnet->getCfgOption();
@@ -2884,7 +2958,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
 
     // Subnet should have been already selected when the context was created.
-    Subnet4Ptr subnet = ctx->subnet_;
+    ConstSubnet4Ptr subnet = ctx->subnet_;
 
     // "Fake" allocation is processing of DISCOVER message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,
@@ -2987,7 +3061,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
     HWAddrPtr hwaddr = query->getHWAddr();
 
-    Subnet4Ptr original_subnet = subnet;
+    ConstSubnet4Ptr original_subnet = subnet;
 
     // Get client-id. It is not mandatory in DHCPv4.
     ClientIdPtr client_id = ex.getContext()->clientid_;
@@ -3012,7 +3086,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // Get all the leases for this client-id
             Lease4Collection leases_client_id = LeaseMgrFactory::instance().getLease4(*client_id);
             if (!leases_client_id.empty()) {
-                Subnet4Ptr s = original_subnet;
+                ConstSubnet4Ptr s = original_subnet;
 
                 // Among those returned try to find a lease that belongs to
                 // current shared network.
@@ -3041,7 +3115,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             // Get all leases for this particular hw-address.
             Lease4Collection leases_hwaddr = LeaseMgrFactory::instance().getLease4(*hwaddr);
             if (!leases_hwaddr.empty()) {
-                Subnet4Ptr s = original_subnet;
+                ConstSubnet4Ptr s = original_subnet;
 
                 // Pick one that belongs to a subnet in this shared network.
                 while (s) {
@@ -3111,13 +3185,27 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get a lease.
     Lease4Ptr lease = alloc_engine_->allocateLease4(*ctx);
 
-    // Tracks whether or not the client name (FQDN or host) has changed since
-    // the lease was allocated.
-    bool client_name_changed = false;
+    bool reprocess_client_name = false;
+    if (lease) {
+        // Since we have a lease check for pool-level DDNS parameters.
+        // If there are any we need to call processClientName() again.
+        auto ddns_params = ex.getContext()->getDdnsParams();
+        auto pool = ddns_params->setPoolFromAddress(lease->addr_);
+        if (pool) {
+            reprocess_client_name = pool->hasDdnsParameters();
+        }
+    }
 
     // Subnet may be modified by the allocation engine, if the initial subnet
     // belongs to a shared network.
     if (subnet && ctx->subnet_ && subnet->getID() != ctx->subnet_->getID()) {
+        // We changed subnets and that means DDNS parameters might be different
+        // so we need to rerun client name processing logic.  Arguably we could
+        // compare DDNS parameters for both subnets and then decide if we need
+        // to rerun the name logic, but that's not likely to be any faster than
+        // just re-running the name logic.  @todo When inherited parameter
+        // performance is improved this argument could be revisited.
+        // Another case is the new subnet has a reserved hostname.
         SharedNetwork4Ptr network;
         subnet->getSharedNetwork(network);
         LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC_DATA, DHCP4_SUBNET_DYNAMICALLY_CHANGED)
@@ -3127,37 +3215,36 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 .arg(network ? network->getName() : "<no network?>");
 
         subnet = ctx->subnet_;
-
         if (lease) {
-            // We changed subnets and that means DDNS parameters might be different
-            // so we need to rerun client name processing logic.  Arguably we could
-            // compare DDNS parameters for both subnets and then decide if we need
-            // to rerun the name logic, but that's not likely to be any faster than
-            // just re-running the name logic.  @todo When inherited parameter
-            // performance is improved this argument could be revisited.
-            // Another case is the new subnet has a reserved hostname.
+            reprocess_client_name = true;
+        }
+    }
 
-            // First, we need to remove the prior values from the response and reset
-            // those in context, to give processClientName a clean slate.
-            resp->delOption(DHO_FQDN);
-            resp->delOption(DHO_HOST_NAME);
-            ctx->hostname_ = "";
-            ctx->fwd_dns_update_  = false;
-            ctx->rev_dns_update_ = false;
+    // Tracks whether or not the client name (FQDN or host) has changed since
+    // the lease was allocated.
+    bool client_name_changed = false;
 
-            // Regenerate the name and dns flags.
-            processClientName(ex);
+    if (reprocess_client_name) {
+        // First, we need to remove the prior values from the response and reset
+        // those in context, to give processClientName a clean slate.
+        resp->delOption(DHO_FQDN);
+        resp->delOption(DHO_HOST_NAME);
+        ctx->hostname_ = "";
+        ctx->fwd_dns_update_  = false;
+        ctx->rev_dns_update_ = false;
 
-            // If the results are different from the values already on the
-            // lease, flag it so the lease gets updated down below.
-            if ((lease->hostname_ != ctx->hostname_) ||
-                (lease->fqdn_fwd_ != ctx->fwd_dns_update_) ||
-                (lease->fqdn_rev_ != ctx->rev_dns_update_)) {
-                lease->hostname_ = ctx->hostname_;
-                lease->fqdn_fwd_ = ctx->fwd_dns_update_;
-                lease->fqdn_rev_ = ctx->rev_dns_update_;
-                client_name_changed = true;
-            }
+        // Regenerate the name and dns flags.
+        processClientName(ex);
+
+        // If the results are different from the values already on the
+        // lease, flag it so the lease gets updated down below.
+        if ((lease->hostname_ != ctx->hostname_) ||
+            (lease->fqdn_fwd_ != ctx->fwd_dns_update_) ||
+            (lease->fqdn_rev_ != ctx->rev_dns_update_)) {
+            lease->hostname_ = ctx->hostname_;
+            lease->fqdn_fwd_ = ctx->fwd_dns_update_;
+            lease->fqdn_rev_ = ctx->rev_dns_update_;
+            client_name_changed = true;
         }
     }
 
@@ -3250,7 +3337,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure.
         if (ctx->unknown_requested_addr_) {
-            Subnet4Ptr s = original_subnet;
+            ConstSubnet4Ptr s = original_subnet;
             // Address might have been rejected via class guard (i.e. not
             // allowed for this client). We need to determine if we truly
             // do not know about the address or whether this client just
@@ -3362,7 +3449,7 @@ Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, con
 
 /// @todo This logic to be modified if we decide to support infinite lease times.
 void
-Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp) {
+Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const ConstSubnet4Ptr& subnet, Pkt4Ptr resp) {
 
     uint32_t t2_time = 0;
     // If T2 is explicitly configured we'll use try value.
@@ -3608,7 +3695,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
     Pkt4Ptr response = ex.getResponse();
 
     // Step 1: Start with fixed fields defined on subnet level.
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
     if (subnet) {
         IOAddress subnet_next_server = subnet->getSiaddr();
         if (!subnet_next_server.isV4Zero()) {
@@ -3640,7 +3727,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 
     // Step 2: Try to set the values based on classes.
     // Any values defined in classes will override those from subnet level.
-    const ClientClasses classes = query->getClasses();
+    const ClientClasses& classes = query->getClasses();
     if (!classes.empty()) {
 
         // Let's get class definitions
@@ -3714,7 +3801,7 @@ Dhcpv4Srv::setFixedFields(Dhcpv4Exchange& ex) {
 }
 
 OptionPtr
-Dhcpv4Srv::getNetmaskOption(const Subnet4Ptr& subnet) {
+Dhcpv4Srv::getNetmaskOption(const ConstSubnet4Ptr& subnet) {
     uint32_t netmask = getNetmask4(subnet->get().second).toUint32();
 
     OptionPtr opt(new OptionInt<uint32_t>(Option::V4,
@@ -3775,8 +3862,8 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Required classification
-        requiredClassify(ex);
+        // Evaluate additional classes.
+        evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(discover->getLabel())
@@ -3861,8 +3948,8 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
         // network we have already fetched it and evaluated the classes.
         ex.conditionallySetReservedClientClasses();
 
-        // Required classification
-        requiredClassify(ex);
+        // Evaluate additional classes.
+        evaluateAdditionalClasses(ex);
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
             .arg(request->getLabel())
@@ -4100,8 +4187,13 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& cont
         client_id.reset(new ClientId(opt_clientid->getData()));
     }
 
-    // Check if the client attempted to decline a lease it doesn't own.
-    if (!lease->belongsToClient(decline->getHWAddr(), client_id)) {
+    // Check if the client attempted to decline an expired lease or a lease
+    // it doesn't own. Declining expired leases is typically a client
+    // misbehavior and may lead to pool exhaustion in case of a storm of
+    // such declines. Only decline the lease if the lease has been recently
+    // allocated to the client.
+    if (lease->expired() || lease->state_ != Lease::STATE_DEFAULT ||
+        !lease->belongsToClient(decline->getHWAddr(), client_id)) {
 
         // Get printable hardware addresses
         string client_hw = decline->getHWAddr() ?
@@ -4369,7 +4461,8 @@ Dhcpv4Srv::processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& contex
     // network we have already fetched it and evaluated the classes.
     ex.conditionallySetReservedClientClasses();
 
-    requiredClassify(ex);
+    // Evaluate additional classes.
+    evaluateAdditionalClasses(ex);
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASSES_ASSIGNED)
         .arg(inform->getLabel())
@@ -4820,30 +4913,16 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     Dhcpv4Exchange::classifyPacket(pkt);
 }
 
-void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
+void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
     // First collect required classes
     Pkt4Ptr query = ex.getQuery();
-    ClientClasses classes = query->getClasses(true);
-    Subnet4Ptr subnet = ex.getContext()->subnet_;
+    ClientClasses classes = query->getAdditionalClasses();
+    ConstSubnet4Ptr subnet = ex.getContext()->subnet_;
 
     if (subnet) {
-        // Begin by the shared-network
-        SharedNetwork4Ptr network;
-        subnet->getSharedNetwork(network);
-        if (network) {
-            const ClientClasses& to_add = network->getRequiredClasses();
-            for (auto const& cclass : to_add) {
-                classes.insert(cclass);
-            }
-        }
+        // host reservation???
 
-        // Followed by the subnet
-        const ClientClasses& to_add = subnet->getRequiredClasses();
-        for (auto const& cclass : to_add) {
-            classes.insert(cclass);
-        }
-
-        // And finish by the pool
+        // Begin by the pool
         Pkt4Ptr resp = ex.getResponse();
         IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
         if (resp) {
@@ -4852,14 +4931,28 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
         if (!addr.isV4Zero()) {
             PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
             if (pool) {
-                const ClientClasses& pool_to_add = pool->getRequiredClasses();
+                const ClientClasses& pool_to_add = pool->getAdditionalClasses();
                 for (auto const& cclass : pool_to_add) {
                     classes.insert(cclass);
                 }
             }
         }
 
-        // host reservation???
+        // Followed by the subnet
+        const ClientClasses& to_add = subnet->getAdditionalClasses();
+        for (auto const& cclass : to_add) {
+            classes.insert(cclass);
+        }
+
+        // And finish by the shared-network
+        SharedNetwork4Ptr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            const ClientClasses& net_to_add = network->getAdditionalClasses();
+            for (auto const& cclass : net_to_add) {
+                classes.insert(cclass);
+            }
+        }
     }
 
     // Run match expressions
@@ -4869,22 +4962,26 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
     for (auto const& cclass : classes) {
         const ClientClassDefPtr class_def = dict->findClass(cclass);
         if (!class_def) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNDEFINED)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_ADDITIONAL_CLASS_UNDEFINED)
                 .arg(cclass);
+            // Ignore it as it can't have an attached action
             continue;
         }
         const ExpressionPtr& expr_ptr = class_def->getMatchExpr();
-        // Nothing to do without an expression to evaluate
+        // Add a class without an expression to evaluate
         if (!expr_ptr) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_UNTESTABLE)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                      DHCP4_ADDITIONAL_CLASS_NO_TEST)
                 .arg(cclass);
+            query->addClass(cclass);
             continue;
         }
         // Evaluate the expression which can return false (no match),
         // true (match) or raise an exception (error)
         try {
             bool status = evaluateBool(*expr_ptr, *query);
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUIRED_CLASS_EVAL_RESULT)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_ADDITIONAL_CLASS_EVAL_RESULT)
                 .arg(query->getLabel())
                 .arg(cclass)
                 .arg(status ? "true" : "false");
@@ -4893,7 +4990,7 @@ void Dhcpv4Srv::requiredClassify(Dhcpv4Exchange& ex) {
                 query->addClass(cclass);
             }
         } catch (const Exception& ex) {
-            LOG_ERROR(dhcp4_logger, DHCP4_REQUIRED_CLASS_EVAL_ERROR)
+            LOG_ERROR(dhcp4_logger, DHCP4_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
                 .arg(ex.what());
@@ -5019,16 +5116,28 @@ Dhcpv4Srv::getVersion(bool extended) {
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
-        tmp << "- " << CryptoLink::getVersion() << endl;
-        tmp << "backends:" << endl;
-#ifdef HAVE_MYSQL
-        tmp << "- " << MySqlLeaseMgr::getDBVersion() << endl;
-#endif
-#ifdef HAVE_PGSQL
-        tmp << "- " << PgSqlLeaseMgr::getDBVersion() << endl;
-#endif
-        tmp << "- " << Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
-
+        tmp << "- " << CryptoLink::getVersion();
+        auto info = LeaseMgrFactory::getDBVersions();
+        if (info.size()) {
+            tmp << endl << "lease backends:";
+            for (auto const& version : info) {
+                tmp << endl << "- " << version;
+            }
+        }
+        info = HostDataSourceFactory::getDBVersions();
+        if (info.size()) {
+            tmp << endl << "host backends:";
+            for (auto const& version : info) {
+                tmp << endl << "- " << version;
+            }
+        }
+        info = LegalLogMgrFactory::getDBVersions();
+        if (info.size()) {
+            tmp << endl << "forensic backends:";
+            for (auto const& version : info) {
+                tmp << endl << "- " << version;
+            }
+        }
         // @todo: more details about database runtime
     }
 
@@ -5141,6 +5250,41 @@ int Dhcpv4Srv::getHookIndexLease4Decline() {
 void Dhcpv4Srv::discardPackets() {
     // Dump all of our current packets, anything that is mid-stream
     HooksManager::clearParkingLots();
+}
+
+uint16_t Dhcpv4Srv::getServerPort() const {
+#ifdef FUZZING
+    char const* const rotate(getenv("KEA_DHCP4_FUZZING_ROTATE_PORT"));
+    if (rotate) {
+        InterprocessSyncFile file("kea-dhcp4-fuzzing-rotate-port");
+        InterprocessSyncLocker locker(file);
+        while (!locker.lock()) {
+            this_thread::sleep_for(1s);
+        }
+        fstream port_file;
+        port_file.open("/tmp/port4.txt", ios::in);
+        string line;
+        int port;
+        getline(port_file, line);
+        port_file.close();
+        if (line.empty()) {
+            port = 2000;
+        } else {
+            port = stoi(line);
+            if (port < 3000) {
+                ++port;
+            } else {
+                port = 2000;
+            }
+        }
+        port_file.open("/tmp/port4.txt", ios::out | ios::trunc);
+        port_file << to_string(port) << endl;
+        port_file.close();
+        locker.unlock();
+        return port;
+    }
+#endif  // FUZZING
+    return server_port_;
 }
 
 std::list<std::list<std::string>> Dhcpv4Srv::jsonPathsToRedact() const {

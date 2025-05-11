@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -301,6 +301,9 @@ protected:
     /// are no ongoing allocations.
     std::unordered_set<asiolink::IOAddress, asiolink::IOAddress::Hash> locked_leases_;
 };
+
+/// @brief TrackingLeaseMgr pointer
+typedef std::unique_ptr<TrackingLeaseMgr> TrackingLeaseMgrPtr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

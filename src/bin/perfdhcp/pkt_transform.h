@@ -108,7 +108,7 @@ public:
                         T val) {
         // @todo consider replacing the loop with switch statement
         // checking sizeof(T).
-        for (int i = 0; i < sizeof(T); ++i) {
+        for (size_t i = 0; i < sizeof(T); ++i) {
             in_buffer[dest_pos + i] = (val >> 8 * (sizeof(T) - i - 1)) & 0xFF;
         }
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <asiolink/io_service.h>
 #include <asiolink/process_spawn.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
@@ -24,6 +25,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace std;
 
 namespace isc {
@@ -95,6 +97,10 @@ MySqlConnection::openDatabase() {
         password = spassword.c_str();
     } catch (...) {
         // No password.  Fine, we'll use NULL
+    }
+    if (password) {
+        // Refuse default password.
+        DefaultCredentials::check(spassword);
     }
 
     const char* name = NULL;
@@ -276,10 +282,14 @@ MySqlConnection::openDatabase() {
     MYSQL* status = mysql_real_connect(mysql_, host, user, password, name,
                                        port, NULL, CLIENT_FOUND_ROWS);
     if (status != mysql_) {
+        // Mark this connection as no longer usable.
+        markUnusable();
+
         std::string error_message = mysql_error(mysql_);
 
         auto const& rec = reconnectCtl();
         if (rec && DatabaseConnection::retry_) {
+
             // Start the connection recovery.
             startRecoverDbConnection();
 
@@ -320,12 +330,13 @@ std::pair<uint32_t, uint32_t>
 MySqlConnection::getVersion(const ParameterMap& parameters,
                             const IOServiceAccessorPtr& ac,
                             const DbCallback& cb,
-                            const string& timer_name) {
+                            const string& timer_name,
+                            unsigned int id) {
     // Get a connection.
     MySqlConnection conn(parameters, ac, cb);
 
     if (!timer_name.empty()) {
-        conn.makeReconnectCtl(timer_name);
+        conn.makeReconnectCtl(timer_name, id);
     }
 
     // Open the database.
@@ -415,6 +426,10 @@ MySqlConnection::ensureSchemaVersion(const ParameterMap& parameters,
     } catch (DbOpenErrorWithRetry const& exception) {
         throw;
     } catch (exception const& exception) {
+        // Disable the recovery mechanism in test mode.
+        if (DatabaseConnection::test_mode_) {
+            throw;
+        }
         // This failure may occur for a variety of reasons. We are looking at
         // initializing schema as the only potential mitigation. We could narrow
         // down on the error that would suggest an uninitialized schema

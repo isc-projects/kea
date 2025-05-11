@@ -1,4 +1,4 @@
-// Copyright (C) 2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,16 +36,23 @@ public:
     /// @param max_retries maximum number of reconnect attempts to make.
     /// @param retry_interval amount of time to between reconnect attempts.
     /// @param action which should be taken on connection loss.
+    /// @param id the ID of the manager.
     ReconnectCtl(const std::string& backend_type, const std::string& timer_name,
                  unsigned int max_retries, unsigned int retry_interval,
-                 OnFailAction action) :
+                 OnFailAction action, unsigned int id) :
           backend_type_(backend_type), timer_name_(timer_name),
           max_retries_(max_retries), retries_left_(max_retries),
-          retry_interval_(retry_interval), action_(action) {}
+          retry_interval_(retry_interval), action_(action), id_(id) {
+    }
 
     /// @brief Returns the type of the caller backend.
     std::string backendType() const {
         return (backend_type_);
+    }
+
+    /// @brief Returns the ID of the manager.
+    unsigned int id() const {
+        return (id_);
     }
 
     /// @brief Returns the associated timer name.
@@ -132,6 +139,9 @@ private:
 
     /// @brief Action to take on connection loss.
     OnFailAction action_;
+
+    /// @brief The ID of the manager.
+    unsigned int id_;
 };
 
 /// @brief Pointer to an instance of ReconnectCtl

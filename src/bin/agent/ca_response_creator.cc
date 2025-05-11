@@ -63,6 +63,31 @@ createStockHttpResponse(const HttpRequestPtr& request,
     return (response);
 }
 
+namespace {
+
+/// Getting the config context.
+CtrlAgentCfgContextPtr getCtrlAgentCfgContext() {
+    // There is a hierarchy of the objects through which we need to pass to get
+    // the configuration context. We may simplify this at some point but since
+    // we're in the singleton we want to make sure that we're using most current
+    // configuration.
+    CtrlAgentCfgContextPtr ctx;
+    boost::shared_ptr<CtrlAgentController> controller =
+        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
+    if (controller) {
+        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
+        if (process) {
+            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
+            if (cfgmgr) {
+                ctx = cfgmgr->getCtrlAgentCfgContext();
+            }
+        }
+    }
+    return (ctx);
+}
+
+} // end of anonymous namespace.
+
 HttpResponsePtr
 CtrlAgentResponseCreator::
 createStockHttpResponseInternal(const HttpRequestPtr& request,
@@ -81,39 +106,38 @@ createStockHttpResponseInternal(const HttpRequestPtr& request,
     }
     // This will generate the response holding JSON content.
     HttpResponsePtr response(new HttpResponseJson(http_version, status_code));
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    if (ctx) {
+        copyHttpHeaders(ctx->getHttpHeaders(), *response);
+    }
     return (response);
 }
 
 HttpResponsePtr
 CtrlAgentResponseCreator::
 createDynamicHttpResponse(HttpRequestPtr request) {
+    // Extra headers.
+    CfgHttpHeaders headers;
+
     // First check authentication.
     HttpResponseJsonPtr http_response;
 
     // Context will hold the server configuration.
-    CtrlAgentCfgContextPtr ctx;
-
-    // There is a hierarchy of the objects through which we need to pass to get
-    // the configuration context. We may simplify this at some point but since
-    // we're in the singleton we want to make sure that we're using most current
-    // configuration.
-    boost::shared_ptr<CtrlAgentController> controller =
-        boost::dynamic_pointer_cast<CtrlAgentController>(CtrlAgentController::instance());
-    if (controller) {
-        CtrlAgentProcessPtr process = controller->getCtrlAgentProcess();
-        if (process) {
-            CtrlAgentCfgMgrPtr cfgmgr = process->getCtrlAgentCfgMgr();
-            if (cfgmgr) {
-                ctx = cfgmgr->getCtrlAgentCfgContext();
-                if (ctx) {
-                    const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
-                    if (auth) {
-                        // Check authentication.
-                        http_response = auth->checkAuth(*this, request);
-                    }
-                }
-            }
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    if (ctx) {
+        headers = ctx->getHttpHeaders();
+        const HttpAuthConfigPtr& auth = ctx->getAuthConfig();
+        if (auth) {
+            // Check authentication.
+            http_response = auth->checkAuth(*this, request);
         }
+    }
+
+    // Pass extra headers to the hook.
+    bool auth_failed = false;
+    if (http_response) {
+        auth_failed = true;
+        copyHttpHeaders(headers, *http_response);
     }
 
     // Callout point for "http_auth".
@@ -142,6 +166,15 @@ createDynamicHttpResponse(HttpRequestPtr request) {
     // The basic HTTP authentication check or a callout failed and
     // left a response.
     if (http_response) {
+        // Avoid to copy extra headers twice even this should not be required.
+        if (!auth_failed && !headers.empty()) {
+            copyHttpHeaders(headers, *http_response);
+            if (http_response->isFinalized()) {
+                // Argh! The response was already finalized.
+                http_response->reset();
+                http_response->finalize();
+            }
+        }
         return (http_response);
     }
 

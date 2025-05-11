@@ -1,7 +1,7 @@
 SUBDIRS = . libloadtests tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file and doxygen file is included in the distribution
@@ -81,7 +81,8 @@ messages: perfmon_messages.h perfmon_messages.cc
 	@echo Message files regenerated
 
 perfmon_messages.h perfmon_messages.cc: perfmon_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/perfmon/perfmon_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/perfmon/perfmon_messages.mes)
 
 else
 

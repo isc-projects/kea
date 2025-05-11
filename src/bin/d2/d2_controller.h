@@ -83,7 +83,7 @@ private:
     friend class NakedD2Controller;
 };
 
-}; // namespace isc::d2
-}; // namespace isc
+}  // namespace isc::d2
+}  // namespace isc
 
 #endif

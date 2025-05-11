@@ -1,6 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DDEFAULT_HOOKS_PATH=\"$(libdir)/kea/hooks\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
@@ -38,7 +39,7 @@ libkea_hooks_la_SOURCES += hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_hooks_la_LDFLAGS  = -no-undefined -version-info 110:0:0
+libkea_hooks_la_LDFLAGS  = -no-undefined -version-info 115:0:0
 libkea_hooks_la_LDFLAGS += $(AM_LDFLAGS)
 libkea_hooks_la_LIBADD  = $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -72,7 +73,8 @@ messages: hooks_messages.h hooks_messages.cc
 	@echo Message files regenerated
 
 hooks_messages.h hooks_messages.cc: hooks_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/hooks/hooks_messages.mes)
 
 else
 

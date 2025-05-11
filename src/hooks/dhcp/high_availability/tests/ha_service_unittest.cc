@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -5294,7 +5294,7 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
         // Process ha-maintenance-notify command that should transition the
         // state machine to the in-maintenance state.
         ConstElementPtr rsp;
-        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
+        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false, "unavailable"));
 
         // The server should have responded.
         ASSERT_TRUE(rsp);
@@ -5304,7 +5304,8 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
         EXPECT_EQ(HA_IN_MAINTENANCE_ST, service.getCurrState());
 
         // Try to cancel the maintenance.
-        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true));
+        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true, "unavailable"));
+        EXPECT_EQ(HA_UNAVAILABLE_ST, service.communication_state_->getPartnerState());
 
         // The server should have responded.
         ASSERT_TRUE(rsp);
@@ -5322,18 +5323,84 @@ TEST_F(HAServiceTest, processMaintenanceNotify) {
     };
 
     // Make sure that the transition from the other states is not allowed.
+    service.communication_state_->setPartnerState("waiting");
     for (auto const& state : invalid_states) {
         EXPECT_NO_THROW(service.transition(state, HAService::NOP_EVT));
         EXPECT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
         ConstElementPtr rsp;
-        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false));
+        ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false, "unavailable"));
 
         ASSERT_TRUE(rsp);
         checkAnswer(rsp, TestHAService::HA_CONTROL_RESULT_MAINTENANCE_NOT_ALLOWED,
                     "Unable to transition the server from the "
                     + stateToString(state) + " to in-maintenance state.");
     }
+}
+
+// This test verifies that the ha-maintenance-notify command is processed
+// and the partner state is set according to the partner's notion of state.
+TEST_F(HAServiceTest, processMaintenanceNotifyCancelSetPartnerState) {
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+
+    EXPECT_NO_THROW(service.transition(HA_WAITING_ST, HAService::NOP_EVT));
+
+    // Process ha-maintenance-notify command that should transition the
+    // state machine to the in-maintenance state.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false, ""));
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
+
+    // The state machine should have been transitioned to the in-maintenance state.
+    EXPECT_EQ(HA_IN_MAINTENANCE_ST, service.getCurrState());
+
+    // Try to cancel the maintenance with specifying the state.
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true, "ready"));
+    EXPECT_EQ(HA_READY_ST, service.communication_state_->getPartnerState());
+
+    // The state machine should have been transitioned to the state it was in
+    // prior to transitioning to the in-maintenance state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+}
+
+// This test verifies that the ha-maintenance-notify command is processed
+// and the server transitions to the waiting state when its prvious state
+// before the maintenance was in-maintenance.
+TEST_F(HAServiceTest, processMaintenanceNotifyCancelSetAvoidDeadlock) {
+    HAConfigPtr config_storage = createValidConfiguration();
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+
+    // Set the in-maintenance state. Normally the server returns to a previous
+    // state when the maintenance is canceled. In this case, it doesn't make much
+    // sense because it will cause a deadlock. In this exceptional case the server
+    // should rather transition to a waiting state instead.
+    EXPECT_NO_THROW(service.transition(HA_IN_MAINTENANCE_ST, HAService::NOP_EVT));
+
+    // Process ha-maintenance-notify command that should re-transition the
+    // state machine to the in-maintenance state.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(false, ""));
+
+    // The server should have responded.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
+
+    // The state machine should have been transitioned to the in-maintenance state.
+    EXPECT_EQ(HA_IN_MAINTENANCE_ST, service.getCurrState());
+
+    // Try to cancel the maintenance with specifying the state.
+    ASSERT_NO_THROW(rsp = service.processMaintenanceNotify(true, "ready"));
+    EXPECT_EQ(HA_READY_ST, service.communication_state_->getPartnerState());
+
+    // The state machine should have been transitioned to the waiting state
+    // given the partner didn't provide their state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
 }
 
 // This test verifies the case when the server receiving the ha-maintenance-start
@@ -5629,6 +5696,10 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
     HAConfigPtr config_storage = createValidConfiguration();
     setBasicAuth(config_storage);
 
+    auto response_arguments = Element::createMap();
+    response_arguments->set("state", Element::create("hot-standby"));
+    factory2_->getResponseCreator()->setArguments("ha-maintenance-notify", response_arguments);
+
     // Start the servers.
     ASSERT_NO_THROW({
         listener_->start();
@@ -5657,12 +5728,119 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccess) {
     }
 
     // The partner of our server is online and should have responded with
-    // the success status. Therefore, this server should have transitioned
-    // to the partner-in-maintenance state.
+    // the success status, and include its new state.
     ASSERT_TRUE(rsp);
     checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance successfully canceled.");
 
     EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+    EXPECT_EQ(HA_HOT_STANDBY_ST, service.communication_state_->getPartnerState());
+}
+
+// This test verifies the case when the server receiving the ha-maintenance-cancel
+// command does not receive a new state from its partner.
+TEST_F(HAServiceTest, processMaintenanceCancelSuccessPartnerNewStateUnknown) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    auto response_arguments = Element::createMap();
+    factory2_->getResponseCreator()->setArguments("ha-maintenance-notify", response_arguments);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+
+    // Initial transition to the non-default state. The server should return to
+    // it when the maintenance is canceled.
+    ASSERT_NO_THROW(service.verboseTransition(HA_READY_ST));
+    service.runModel(TestHAService::NOP_EVT);
+
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
+
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
+
+    // The partner of our server is online and should have responded with
+    // the success status, but not include its new state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance successfully canceled.");
+
+    EXPECT_EQ(HA_READY_ST, service.getCurrState());
+    EXPECT_EQ(HA_UNAVAILABLE_ST, service.communication_state_->getPartnerState());
+}
+
+// This test verifies the case when the server receiving the ha-maintenance-cancel
+// had been in the partner-in-maintenance state before the maintenance was started.
+// In this case the server should transition to the waiting state when the maintenance
+// is canceled.
+TEST_F(HAServiceTest, processMaintenanceCancelSuccessAvoidDeadlock) {
+    // Create HA configuration for 3 servers. This server is
+    // server 1.
+    HAConfigPtr config_storage = createValidConfiguration();
+    setBasicAuth(config_storage);
+
+    auto response_arguments = Element::createMap();
+    factory2_->getResponseCreator()->setArguments("ha-maintenance-notify", response_arguments);
+
+    // Start the servers.
+    ASSERT_NO_THROW({
+        listener_->start();
+        listener2_->start();
+    });
+
+    TestHAService service(1, io_service_, network_state_, config_storage);
+
+    // Initial transition to the partner-in-maintenance state. It will be remembered
+    // as the previous state.
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
+    service.runModel(TestHAService::NOP_EVT);
+
+    // Transition again and then cancel transition.
+    ASSERT_NO_THROW(service.verboseTransition(HA_PARTNER_IN_MAINTENANCE_ST));
+    // The tested function is synchronous, so we need to run server side IO service
+    // in background to not block the main thread.
+    auto thread = runIOServiceInThread();
+
+    // Process ha-maintenance-cancel command.
+    ConstElementPtr rsp;
+    ASSERT_NO_THROW(rsp = service.processMaintenanceCancel());
+
+    // Stop the IO service. This should cause the thread to terminate.
+    io_service_->stop();
+    thread->join();
+    io_service_->restart();
+    try {
+        io_service_->poll();
+    } catch (...) {
+    }
+
+    // The partner of our server is online and should have responded with
+    // the success status, but not include its new state.
+    ASSERT_TRUE(rsp);
+    checkAnswer(rsp, CONTROL_RESULT_SUCCESS, "Server maintenance successfully canceled.");
+
+    // The server should not get stuck in the partner-in-maintenance state.
+    EXPECT_EQ(HA_WAITING_ST, service.getCurrState());
+    EXPECT_EQ(HA_UNAVAILABLE_ST, service.communication_state_->getPartnerState());
 }
 
 // This test verifies the case when the server receiving the ha-maintenance-cancel
@@ -5677,6 +5855,9 @@ TEST_F(HAServiceTest, processMaintenanceCancelSuccessAuthorized) {
     // Instruct servers to require authentication.
     factory2_->getResponseCreator()->addBasicAuth("foo", "bar");
     factory3_->getResponseCreator()->addBasicAuth("test", "1234");
+
+    auto response_arguments = Element::createMap();
+    factory2_->getResponseCreator()->setArguments("ha-maintenance-notify", response_arguments);
 
     // Create HA configuration for 3 servers. This server is
     // server 1.
@@ -6121,7 +6302,7 @@ public:
     /// after receiving such response.
     ///
     /// @param event an event which should trigger IO service to stop.
-    void waitForEvent(const int event) {
+    void waitForEvent(const unsigned int event) {
         ASSERT_NE(event, HAService::NOP_EVT);
 
         service_->postNextEvent(HAService::NOP_EVT);
@@ -6201,7 +6382,7 @@ public:
         // let's make sure it performs this transition.
         service_->runModel(HAService::NOP_EVT);
         // Simulate the rejected lease updates.
-        for (auto i = 0; i < leases_num; ++i) {
+        for (unsigned i = 0; i < leases_num; ++i) {
             // Create query with random HW address.
             Pkt4Ptr query4 = createQuery4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
             static_cast<void>(state_->reportRejectedLeaseUpdate(query4, 100));
@@ -8954,6 +9135,106 @@ TEST_F(HAServiceStateMachineTest, doNotTerminateWhenPartnerUnavailable) {
     // not terminate.
     ASSERT_NO_FATAL_FAILURE(waitForEvent(HAService::HA_HEARTBEAT_COMPLETE_EVT));
     EXPECT_EQ(HA_COMMUNICATION_RECOVERY_ST, service_->getCurrState());
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// primary and it is in the terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisPrimary) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_TRUE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// primary and it is in the non-terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisPrimaryNotTerminated) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_READY_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_TRUE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service does not reclaim the leases while the server is
+// standby and it is in the terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisStandby) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_FALSE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// standby and it is in the non-terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease4HotStandbyThisStandbyNotTerminated) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_READY_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease4Ptr lease4 = createLease4(randomKey(HWAddr::ETHERNET_HWADDR_LEN));
+    EXPECT_TRUE(service_->shouldReclaim(lease4));
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// primary and it is in the terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisPrimary) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_TRUE(service_->shouldReclaim(lease6));
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// primary and it is in the non-terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisPrimaryNotTerminated) {
+    startService(createValidConfiguration(HAConfig::HOT_STANDBY));
+    service_->verboseTransition(HA_READY_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_TRUE(service_->shouldReclaim(lease6));
+}
+
+// This test verifies that the service does not reclaim the leases while the server is
+// standby and it is in the terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisStandby) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_TERMINATED_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_FALSE(service_->shouldReclaim(lease6));
+}
+
+// This test verifies that the service reclaims the leases while the server is
+// standby and it is in the non-terminated state.
+TEST_F(HAServiceStateMachineTest, shouldReclaimLease6HotStandbyThisStandbyNotTerminated) {
+    HAConfigPtr valid_config = createValidConfiguration(HAConfig::HOT_STANDBY);
+    valid_config->getPeerConfig("server2")->setRole("standby");
+    valid_config->setThisServerName("server2");
+    startService(valid_config);
+    service_->verboseTransition(HA_READY_ST);
+    service_->runModel(HAService::NOP_EVT);
+
+    Lease6Ptr lease6 = createLease6(randomKey(10));
+    EXPECT_TRUE(service_->shouldReclaim(lease6));
 }
 
 // Test scenario when a single lease4 update is sent successfully, parking is not

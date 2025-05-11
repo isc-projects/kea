@@ -2,32 +2,61 @@ variables:
   # Locale settings do not affect the build, but might affect tests.
   LC_ALL: C
 
-  CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/kea
+  # Fuzzing
+  CFL_ARTIFACTS_DIR: '/tmp/cfl-artifacts'
+  CFL_CACHE_DIR: '/ccache/cfl-cache'
+  CFL_IMAGE: 'gcr.io/oss-fuzz-base/clusterfuzzlite-run-fuzzers'
+  CFL_PLATFORM: gitlab
+  FUZZ_SECONDS: 600 # 10 min (ClusterFuzzLite defaults)
+  FUZZING_ARGS: '-rss_limit_mb=8192'
+  LD_LIBRARY_PATH: "/opt/kea/lib:/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/builds/isc-projects/kea"
+  PARALLEL_FUZZING: true
+  CCACHE_BASEDIR: "${CI_PROJECT_DIR}"
+  CCACHE_DIR: "${CI_PROJECT_DIR}/ccache"
 
-  # Setting this variable will affect all Security templates
-  # (SAST, Dependency Scanning, ...)
+  # SAST
   SECURE_ANALYZERS_PREFIX: "registry.gitlab.com/gitlab-org/security-products/analyzers"
-
   # Leave only bandit, flawfinder, semgrep.
   SAST_EXCLUDED_ANALYZERS: "eslint, spotbugs"
 
-image: "${CI_REGISTRY_IMAGE}:latest"
+default:
+  image: 'registry.gitlab.isc.org/isc-projects/kea:latest'
+  tags:
+    - linux
+    - aws
+    - runner-manager
+    - amd64
 
 stages:
   - test
+  - fuzz
+
+.base_rules_for_test_jobs: &rules_for_test_stage
+  rules:
+    # Do not run the test stage on pipeline schedule trigger.
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # On any other event, including push to MR branch and push to master.
+    - when: always
 
 are-database-scripts-in-sync:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
 check-for-json-errors-in-doc:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/check-for-json-errors-in-doc.sh
 
 danger:
   stage: test
+  <<: *rules_for_test_stage
   before_script:
     - export CI_MERGE_REQUEST_ID=$(git ls-remote -q origin merge-requests\*\head | grep $CI_COMMIT_SHA | sed 's/.*refs\/merge-requests\/\([0-9]*\)\/head/\1/g')
     - export CI_PROJECT_PATH=$CI_PROJECT_ID #some version of gitlab has problems with searching by project path
@@ -38,26 +67,31 @@ danger:
 
 duplicate-includes:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/check-for-duplicate-includes.sh
 
 duplicate-log-messages:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/check-messages.py
 
 uninstalled-headers:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/find-uninstalled-headers.py
 
 missing-api-commands:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/check-for-missing-api-commands.sh
 
 missing-config-h-include:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - FILES=$(./tools/add-config-h.sh -n)
     - printf '%s\n' "${FILES}"
@@ -65,6 +99,7 @@ missing-config-h-include:
 
 missing-git-attribute:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - git_diff=$(git diff)
     - if test -n "${git_diff}"; then printf '%s\n\ngit diff should be empty here under all circumstances. CI broken?\n' "${git_diff}"; exit 1; fi
@@ -74,6 +109,7 @@ missing-git-attribute:
 
 shellcheck:
   stage: test
+  <<: *rules_for_test_stage
   script:
     - ./tools/shellcheck-all.sh
 
@@ -87,11 +123,14 @@ shellcheck:
   - if test -z "${PYTHON_SCRIPTS}"; then echo "No python scripts to check. Exiting early."; exit 0; fi
 
 bandit:
+  stage: test
+  <<: *rules_for_test_stage
   script:
     - bandit -r ./src -x ./.git
 
 pycodestyle:
   stage: test
+  <<: *rules_for_test_stage
   script:
     # - *get_modified_files
     # - INPUT="${MODIFIED_FILES}"
@@ -100,6 +139,7 @@ pycodestyle:
 
 pylint:
   stage: test
+  <<: *rules_for_test_stage
   script:
     # - *get_modified_files
     # - INPUT="${MODIFIED_FILES}"
@@ -107,6 +147,152 @@ pylint:
     - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc ${PYTHON_SCRIPTS}
     # If we reached this point, it means pylint passed. Run again with all warnings enabled, but ignore the return code to show a list of improvements that the developer could do, even when CI is passing.
     - pylint --jobs "$(nproc || gnproc || echo 1)" --rcfile ./.gitlab/ci/pylint.rc --enable all ${PYTHON_SCRIPTS} || true
+
+
+############################## Fuzzing ##############################
+
+# Fuzz code changes. Fuzzes all merge requests.
+fuzz:
+  image:
+    name: "${CFL_IMAGE}"
+    entrypoint: ['']
+  stage: fuzz
+  tags:
+    - docker-fuzz
+  needs: []
+  parallel:
+    matrix:
+      - SANITIZER: [address, undefined]
+  rules:
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # On merge request.
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      variables:
+        MODE: "code-change"
+      when: manual
+      allow_failure: true
+    # Run on any other event, including push to MR branch and push to master.
+    - when: always
+  before_script:
+    # Get GitLab's container id.
+    - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
+  script:
+    # local cfl-cache to mounted volume
+    - if ! test -L cfl-cache; then ln -s /cfl-cache cfl-cache; fi
+    # Will build and run the fuzzers.
+    - python3 "/opt/oss-fuzz/infra/cifuzz/cifuzz_combined_entrypoint.py"
+  artifacts:
+    # Upload artifacts when a crash makes the job fail.
+    when: always
+    expire_in: 30 days
+    paths:
+      - "${CFL_ARTIFACTS_DIR}"
+
+# Batch fuzzing enables continuous, regular fuzzing on your latest HEAD
+# and allows a corpus of inputs to build up over time, which greatly improves
+# the effectiveness of fuzzing. Batch fuzzing should be run on a schedule.
+fuzz-batch:
+  image:
+    name: "${CFL_IMAGE}"
+    entrypoint: ['']
+  stage: fuzz
+  needs: []
+  tags:
+    - docker-fuzz
+  variables:
+    FUZZ_SECONDS: 86400 # 24 hours
+  rules:
+    - if: $MODE == "batch"
+  before_script:
+    - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
+  script:
+    - python3 "/opt/oss-fuzz/infra/cifuzz/cifuzz_combined_entrypoint.py"
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - "${CFL_ARTIFACTS_DIR}"
+
+# Corpus pruning is a helper function that minimizes the corpuses by
+# removing corpus files (testcases) that do not increase the fuzzer’s
+# code coverage.
+fuzz-prune:
+  image:
+    name: "${CFL_IMAGE}"
+    entrypoint: ['']
+  stage: fuzz
+  needs: []
+  tags:
+    - docker-fuzz
+  rules:
+    - if: $MODE == "prune"
+  before_script:
+    - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
+  script:
+    - python3 "/opt/oss-fuzz/infra/cifuzz/cifuzz_combined_entrypoint.py"
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - "${CFL_ARTIFACTS_DIR}"
+
+# Continuous builds are used when a crash is found during MR fuzzing to determine
+# whether the crash was newly introduced. If the crash was not newly introduced,
+# MR fuzzing will not report it. This means that there will be fewer unrelated
+# failures when running code change fuzzing.
+fuzz-build:
+  image:
+    name: "${CFL_IMAGE}"
+    entrypoint: ['']
+  stage: fuzz
+  needs: []
+  tags:
+    - docker-fuzz
+  rules:
+    # Use $CI_DEFAULT_BRANCH or $CFL_BRANCH.
+    - if: $CI_COMMIT_BRANCH == $CFL_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        MODE: "code-change"
+        UPLOAD_BUILD: "true"
+  before_script:
+    - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
+  script:
+    - python3 "/opt/oss-fuzz/infra/cifuzz/cifuzz_combined_entrypoint.py"
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - "${CFL_ARTIFACTS_DIR}"
+
+# scheduled job - generates periodic coverage reports
+fuzz-coverage:
+  image:
+    name: "${CFL_IMAGE}"
+    entrypoint: ['']
+  stage: fuzz
+  needs: []
+  tags:
+    - docker-fuzz
+  variables:
+    SANITIZER: "coverage"
+  rules:
+    - if: $MODE == "coverage"
+  before_script:
+    - export CFL_CONTAINER_ID=`cut -c9- < /proc/1/cpuset`
+  script:
+    - python3 "/opt/oss-fuzz/infra/cifuzz/cifuzz_combined_entrypoint.py"
+  after_script:
+    - shasum /opt/kea/sbin/*
+    - shasum /tmp/not-out/*/*
+    - shasum ${OUT}/*/*
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - "${CFL_ARTIFACTS_DIR}"
+
 
 ############################### SAST ################################
 # Read more about this feature here: https://docs.gitlab.com/ee/user/application_security/sast/
@@ -119,6 +305,7 @@ include:
 
 .sast-analyzer:
   extends: sast
+  stage: test
   allow_failure: true
   script:
     - /analyzer run
@@ -133,9 +320,25 @@ flawfinder-sast:
   rules:
     - if: $SAST_DISABLED
       when: never
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
     - if: $SAST_EXCLUDED_ANALYZERS =~ /flawfinder/
       when: never
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - '**/*.cc'
-        - '**/*.h'
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # Run on any other event, including push to master.
+    - when: always
+
+semgrep-sast:
+  extends: .sast-analyzer
+  rules:
+    - if: $SAST_DISABLED
+      when: never
+    - if: $CI_PIPELINE_SOURCE == 'schedule'
+      when: never
+    # Prevent duplicate pipelines.
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
+      when: never
+    # Run on any other event, including push to MR branch and push to master.
+    - when: always

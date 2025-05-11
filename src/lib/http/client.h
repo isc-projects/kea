@@ -26,7 +26,7 @@ namespace http {
 class HttpClientError : public Exception {
 public:
     HttpClientError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 class HttpClientImpl;

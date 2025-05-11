@@ -40,6 +40,9 @@ CmdHttpListener::~CmdHttpListener() {
 
 void
 CmdHttpListener::start() {
+    if (MultiThreadingMgr::instance().isTestMode()) {
+        return;
+    }
     // We must be in multi-threading mode.
     if (!MultiThreadingMgr::instance().getMode()) {
         isc_throw(InvalidOperation, "CmdHttpListener cannot be started"

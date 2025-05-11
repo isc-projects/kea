@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,11 +94,17 @@ public:
         ASSERT_NO_THROW_LOG(addLibrary(lib_so_name_, params));
 
         // Should be able to load and unload the library more than once.
-        ASSERT_NO_THROW_LOG(loadLibraries());
-        ASSERT_NO_THROW_LOG(unloadLibraries());
+        // We test the return to catch things like configuration errors.
+        bool ret;
+        ASSERT_NO_THROW_LOG(ret = loadLibraries());
+        ASSERT_TRUE(ret);
+        ASSERT_NO_THROW_LOG(ret = unloadLibraries());
+        ASSERT_TRUE(ret);
 
-        ASSERT_NO_THROW_LOG(loadLibraries());
-        ASSERT_NO_THROW_LOG(unloadLibraries());
+        ASSERT_NO_THROW_LOG(ret = loadLibraries());
+        ASSERT_TRUE(ret);
+        ASSERT_NO_THROW_LOG(ret = unloadLibraries());
+        ASSERT_TRUE(ret);
     }
 
     /// @brief Verifies that an invalid daemon cannot load the library.

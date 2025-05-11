@@ -626,11 +626,10 @@ TEST_F(StatCmdsTest, multipleLoads) {
     testMultipleLoads();
 }
 
-struct TestScenario {
+struct TestScenario0 {
     std::string description_;
     std::string command_txt_;
     std::string exp_response_;
-    std::string exp_result_json_;
 };
 
 // Verifies detection of invalid v4 input parameters.
@@ -640,7 +639,7 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
     // Initialize lease manager
     initLeaseMgr4();
 
-    std::vector<TestScenario> tests = {
+    std::vector<TestScenario0> tests = {
         {
         "arguments is not a map",
         "{\n"
@@ -797,6 +796,13 @@ TEST_F(StatCmdsTest, StatLease4GetBadParams) {
         testCommand(test.command_txt_, CONTROL_RESULT_ERROR, test.exp_response_);
     }
 }
+
+struct TestScenario {
+    std::string description_;
+    std::string command_txt_;
+    std::string exp_response_;
+    std::string exp_result_json_;
+};
 
 // Verifies result content for valid v4 statistic commands.
 // These test scenarios are all valid, and not expected to throw.
@@ -1061,7 +1067,7 @@ TEST_F(StatCmdsTest, StatLease6GetBadParams) {
     // Initialize lease manager
     initLeaseMgr6();
 
-    std::vector<TestScenario> tests = {
+    std::vector<TestScenario0> tests = {
         {
         "arguments not a map",
         "{\n"

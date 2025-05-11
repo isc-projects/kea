@@ -10,6 +10,7 @@
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/d2_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -301,12 +302,11 @@ TEST_F(Dhcp6SrvD2Test, simpleUDPSend) {
 // being suspended.  This indicates that Dhcp6Srv's error handler has been
 // invoked as expected.  Note that this unit test relies on an attempt to send
 // to a server address of 0.0.0.0 port 0 fails, which it does under all OSs
-// except Solaris 11.
-/// @todo Eventually we should find a way to test this under Solaris.
-#ifndef OS_SOLARIS
+// except Solaris 11 and macOS 15.0.
 TEST_F(Dhcp6SrvD2Test, forceUDPSendFailure) {
-#else
-TEST_F(Dhcp6SrvD2Test, DISABLED_forceUDPSendFailure) {
+#if (defined(OS_SOLARIS) || defined(OS_OSX))
+    /// @todo Eventually we should find a way to test this under Solaris.
+    SKIP_IF(true);
 #endif
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.

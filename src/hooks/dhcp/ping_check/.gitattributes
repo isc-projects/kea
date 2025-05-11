@@ -1,0 +1,2 @@
+/ping_check_messages.cc          -diff merge=ours
+/ping_check_messages.h           -diff merge=ours

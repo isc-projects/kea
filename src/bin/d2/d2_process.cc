@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2srv/d2_cfg_mgr.h>
@@ -21,6 +22,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -77,13 +79,14 @@ void
 D2Process::init() {
     using namespace isc::config;
     // Command managers use IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
+    UnixCommandMgr::instance().setIOService(getIOService());
     HttpCommandMgr::instance().setIOService(getIOService());
 
     // Set the HTTP authentication default realm.
     HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcp-ddns-server";
 
     // D2 server does not use the interface manager.
+    UnixCommandMgr::instance().addExternalSockets(false);
     HttpCommandMgr::instance().addExternalSockets(false);
 };
 
@@ -142,16 +145,7 @@ size_t
 D2Process::runIO() {
     // Handle events registered by hooks using external IOService objects.
     IOServiceMgr::instance().pollIOServices();
-    // We want to block until at least one handler is called.  We'll use
-    // boost::asio::io_service directly for two reasons. First off
-    // asiolink::IOService::runOne is a void and boost::asio::io_service::stopped
-    // is not present in older versions of boost.  We need to know if any
-    // handlers ran or if the io_service was stopped.  That latter represents
-    // some form of error and the application cannot proceed with a stopped
-    // service.  Secondly, asiolink::IOService does not provide the poll
-    // method.  This is a handy method which runs all ready handlers without
-    // blocking.
-
+    // We want to block until at least one handler is called.
     // Poll runs all that are ready. If none are ready it returns immediately
     // with a count of zero.
     size_t cnt = getIOService()->poll();
@@ -161,7 +155,6 @@ D2Process::runIO() {
         // service is stopped it will return immediately with a cnt of zero.
         cnt = getIOService()->runOne();
     }
-    config::HttpCommandMgr::instance().garbageCollectListeners();
     return (cnt);
 }
 
@@ -498,42 +491,46 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
 
 void
 D2Process::reconfigureCommandChannel() {
-    // Get new socket configuration.
-    isc::data::ConstElementPtr sock_cfg = getD2CfgMgr()->getControlSocketInfo();
+    // Get new Unix socket configuration.
+    ConstElementPtr unix_config =
+        getD2CfgMgr()->getUnixControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (sock_cfg && current_control_socket_ &&
-                         !sock_cfg->equals(*current_control_socket_));
+    bool sock_changed = (unix_config && current_unix_control_socket_ &&
+                         !unix_config->equals(*current_unix_control_socket_));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the client will not
     // receive the configuration result.
-    if (!sock_cfg || !current_control_socket_ || sock_changed) {
-        // Close the existing socket.
-        if (current_control_socket_) {
-            isc::config::CommandMgr::instance().closeCommandSocket();
-            current_control_socket_.reset();
-        }
-
-        // Open the new socket.
-        if (sock_cfg) {
-            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+    if (!unix_config || !current_unix_control_socket_ || sock_changed) {
+        // Open the new sockets and close old ones, keeping reused.
+        if (unix_config) {
+            UnixCommandMgr::instance().openCommandSockets(unix_config);
+        } else if (current_unix_control_socket_) {
+            UnixCommandMgr::instance().closeCommandSockets();
         }
     }
 
     // Commit the new socket configuration.
-    current_control_socket_ = sock_cfg;
+    current_unix_control_socket_ = unix_config;
 
-    // HTTP control socket is simpler: just (re)configure it.
-
-    // Get new config.
-    HttpCommandConfigPtr http_config =
+    // Get new HTTP/HTTPS socket configuration.
+    ConstElementPtr http_config =
         getD2CfgMgr()->getHttpControlSocketInfo();
-    HttpCommandMgr::instance().configure(http_config);
+
+    // Open the new sockets and close old ones, keeping reused.
+    if (http_config) {
+        HttpCommandMgr::instance().openCommandSockets(http_config);
+    } else if (current_http_control_socket_) {
+        HttpCommandMgr::instance().closeCommandSockets();
+    }
+
+    // Commit the new socket configuration.
+    current_http_control_socket_ = http_config;
 }
 
 } // namespace isc::d2

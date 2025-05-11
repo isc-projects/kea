@@ -124,60 +124,38 @@ Compiling With NETCONF
     $ git clone gitlab.isc.org/isc-projects/kea.git
     $ cd kea
 
-2. Configure the build.
+2. Set up the build.
 
 .. code-block:: console
 
-    $ autoreconf -i
-    $ ./configure --with-libyang --with-libyang-cpp --with-sysrepo --with-sysrepo-cpp
+    $ meson setup build -D netconf=enabled -D cpp_std=c++20
 
 .. note::
 
     If any of the libraries are installed in a custom location, the
-    ``--with`` flags accept the installations paths as values.
+    PKG_CONFIG_PATH can point to the .pc files.
 
-3. Check ``config.report`` to verify NETCONF support.
+.. code-block:: console
+
+    PKG_CONFIG_PATH=:/opt/libyang/lib/pkgconfig:/opt/libyang-cpp/lib/pkgconfig:/opt/sysrepo/lib/pkgconfig:/opt/sysrepo-cpp/lib/pkgconfig
+
+3. Check ``build/config.report`` to verify NETCONF support.
 
 ::
 
-    NETCONF:
-      yes
+      NETCONF:
+        YANG:               2.1.4
+        YANG_PREFIX:        /opt/libyang
+        YANGCPP:            1.1.0
+        YANGCPP_PREFIX:     /opt/libyang-cpp
+        SYSREPO:            2.2.12
+        SYSREPO_PREFIX:     /opt/sysrepo
+        SYSREPOCPP:         1.1.0
+        SYSREPOCPP_PREFIX:  /opt/sysrepo-cpp
 
-      libyang:
-        LIBYANG_CPPFLAGS:
-        LIBYANG_INCLUDEDIR:    -I/usr/local/include
-        LIBYANG_LIBS:          -L/usr/local/lib -lyang -Wl,-R/usr/local/lib -lyang
-        LIBYANG_PREFIX:        /usr/local
-        LIBYANG_VERSION:       2.1.4
+4. Compile as usual.
 
-      libyang-cpp:
-        LIBYANGCPP_CPPFLAGS:
-        LIBYANGCPP_INCLUDEDIR: -I/usr/local/include
-        LIBYANGCPP_LIBS:       -L/usr/local/lib -lyang-cpp -Wl,-R/usr/local/lib -lyang-cpp
-        LIBYANGCPP_PREFIX:     /usr/local
-        LIBYANGCPP_VERSION:    1.1.0
-
-      sysrepo:
-        SYSREPO_CPPFLAGS:
-        SYSREPO_INCLUDEDIR:    -I/usr/local/include
-        SYSREPO_LIBS:          -L/usr/local/lib -lsysrepo -Wl,-R/usr/local/lib -lsysrepo
-        SYSREPO_PREFIX:        /usr/local
-        SYSREPO_VERSION:       2.2.12
-
-        SR_REPO_PATH:          /etc/sysrepo
-        SR_PLUGINS_PATH:       /usr/local/lib/sysrepo/plugins
-        SRPD_PLUGINS_PATH:     /usr/local/lib/sysrepo-plugind/plugins
-
-      sysrepo-cpp:
-        SYSREPOCPP_CPPFLAGS:
-        SYSREPOCPP_INCLUDEDIR: -I/usr/local/include
-        SYSREPOCPP_LIBS:       -L/usr/local/lib -lsysrepo-cpp -Wl,-R/usr/local/lib -lsysrepo-cpp
-        SYSREPOCPP_PREFIX :    /usr/local
-        SYSREPOCPP_VERSION:    1.1.0
-
-4. Build as usual.
-
-    $ make
+    $ meson compile -C build
 
 .. _sysrepo-overview:
 
@@ -684,7 +662,7 @@ Starting and Stopping the NETCONF Agent
    dynamically linked to Kea.
 
 -  ``-W`` - displays the Kea configuration report and exits. The report
-   is a copy of the ``config.report`` file produced by ``./configure``;
+   is a copy of the ``config.report`` file produced by ``meson setup``;
    it is embedded in the executable binary.
 
    The contents of the ``config.report`` file may also be accessed by examining

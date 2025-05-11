@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,14 +106,15 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
                                   30, 40, 50, 60, 1024));
     subnet->allowClientClass("home");
+    subnet->allowClientClass("office");
     subnet->setIface("eth1");
     subnet->setInterfaceId(opt_interface_id);
     subnet->setT2(323212);
     subnet->addRelayAddress(IOAddress("2001:db8:1::2"));
     subnet->addRelayAddress(IOAddress("2001:db8:3::4"));
     subnet->setT1(1234);
-    subnet->requireClientClass("required-class1");
-    subnet->requireClientClass("required-class2");
+    subnet->addAdditionalClass("required-class1");
+    subnet->addAdditionalClass("required-class2");
     subnet->setReservationsGlobal(false);
     subnet->setReservationsInSubnet(false);
     subnet->setContext(user_context);
@@ -125,6 +126,7 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setDdnsSendUpdates(false);
     subnet->setAllocatorType("random");
     subnet->setPdAllocatorType("iterative");
+    subnet->setDdnsTtl(880);
 
     Pool6Ptr pool1(new Pool6(Lease::TYPE_NA,
                              IOAddress("2001:db8::10"),
@@ -143,21 +145,11 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     Pool6Ptr pdpool2(new Pool6(Lease::TYPE_PD,
                                IOAddress("2001:db8:b::"), 48, 64));
     subnet->addPool(pdpool2);
+
     // Add several options to the subnet.
-    subnet->getCfgOption()->add(test_options_[0]->option_,
-                                test_options_[0]->persistent_,
-                                test_options_[0]->cancelled_,
-                                test_options_[0]->space_name_);
-
-    subnet->getCfgOption()->add(test_options_[1]->option_,
-                                test_options_[1]->persistent_,
-                                test_options_[1]->cancelled_,
-                                test_options_[1]->space_name_);
-
-    subnet->getCfgOption()->add(test_options_[2]->option_,
-                                test_options_[2]->persistent_,
-                                test_options_[2]->cancelled_,
-                                test_options_[2]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
 
     test_subnets_.push_back(subnet);
 
@@ -172,15 +164,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
                           IOAddress("2001:db8:1::20")));
     subnet->addPool(pool1);
 
-    pool1->getCfgOption()->add(test_options_[3]->option_,
-                               test_options_[3]->persistent_,
-                               test_options_[3]->cancelled_,
-                               test_options_[3]->space_name_);
-
-    pool1->getCfgOption()->add(test_options_[4]->option_,
-                               test_options_[4]->persistent_,
-                               test_options_[4]->cancelled_,
-                               test_options_[4]->space_name_);
+    pool1->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
+    pool1->getCfgOption()->add(*test_options_[4], test_options_[4]->space_name_);
 
     pool2.reset(new Pool6(Lease::TYPE_NA,
                           IOAddress("2001:db8:1::50"),
@@ -188,8 +173,9 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pool2);
 
     pool2->allowClientClass("work");
-    pool2->requireClientClass("required-class3");
-    pool2->requireClientClass("required-class4");
+    pool2->allowClientClass("play");
+    pool2->addAdditionalClass("required-class3");
+    pool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();
     user_context->set("bar", Element::create("foo"));
     pool2->setContext(user_context);
@@ -197,15 +183,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
                             IOAddress("2001:db8:c::1"), 96));
     subnet->addPool(pdpool1);
 
-    pdpool1->getCfgOption()->add(test_options_[3]->option_,
-                                 test_options_[3]->persistent_,
-                                 test_options_[3]->cancelled_,
-                                 test_options_[3]->space_name_);
-
-    pdpool1->getCfgOption()->add(test_options_[4]->option_,
-                                 test_options_[4]->persistent_,
-                                 test_options_[4]->cancelled_,
-                                 test_options_[4]->space_name_);
+    pdpool1->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
+    pdpool1->getCfgOption()->add(*test_options_[4], test_options_[4]->space_name_);
 
     // Create the prefix delegation pool with an excluded prefix.
     pdpool2.reset(new Pool6(IOAddress("2001:db8:d::"), 48, 64,
@@ -214,8 +193,8 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->addPool(pdpool2);
 
     pdpool2->allowClientClass("work");
-    pdpool2->requireClientClass("required-class3");
-    pdpool2->requireClientClass("required-class4");
+    pdpool2->addAdditionalClass("required-class3");
+    pdpool2->addAdditionalClass("required-class4");
     user_context = Element::createMap();
     user_context->set("bar", Element::create("foo"));
     pdpool2->setContext(user_context);
@@ -235,11 +214,11 @@ GenericConfigBackendDHCPv6Test::initTestSubnets() {
     subnet->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     subnet->setDdnsGeneratedPrefix("myhost");
     subnet->setDdnsQualifyingSuffix("example.org");
+    subnet->setDdnsTtlPercent(0.50);
+    subnet->setDdnsTtlMin(300);
+    subnet->setDdnsTtlMax(700);
 
-    subnet->getCfgOption()->add(test_options_[0]->option_,
-                                test_options_[0]->persistent_,
-                                test_options_[0]->cancelled_,
-                                test_options_[0]->space_name_);
+    subnet->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
 
     test_subnets_.push_back(subnet);
 
@@ -268,8 +247,8 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->addRelayAddress(IOAddress("2001:db8:1::2"));
     shared_network->addRelayAddress(IOAddress("2001:db8:3::4"));
     shared_network->setT1(1234);
-    shared_network->requireClientClass("required-class1");
-    shared_network->requireClientClass("required-class2");
+    shared_network->addAdditionalClass("required-class1");
+    shared_network->addAdditionalClass("required-class2");
     shared_network->setReservationsGlobal(false);
     shared_network->setReservationsInSubnet(false);
     shared_network->setContext(user_context);
@@ -281,22 +260,14 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setDdnsSendUpdates(false);
     shared_network->setAllocatorType("iterative");
     shared_network->setPdAllocatorType("random");
+    shared_network->setDdnsTtlPercent(0.70);
+    shared_network->setDdnsTtlMin(200);
+    shared_network->setDdnsTtlMax(800);
 
     // Add several options to the shared network.
-    shared_network->getCfgOption()->add(test_options_[2]->option_,
-                                        test_options_[2]->persistent_,
-                                        test_options_[2]->cancelled_,
-                                        test_options_[2]->space_name_);
-
-    shared_network->getCfgOption()->add(test_options_[3]->option_,
-                                        test_options_[3]->persistent_,
-                                        test_options_[3]->cancelled_,
-                                        test_options_[3]->space_name_);
-
-    shared_network->getCfgOption()->add(test_options_[4]->option_,
-                                        test_options_[4]->persistent_,
-                                        test_options_[4]->cancelled_,
-                                        test_options_[4]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[3], test_options_[3]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[4], test_options_[4]->space_name_);
 
     test_networks_.push_back(shared_network);
 
@@ -320,11 +291,9 @@ GenericConfigBackendDHCPv6Test::initTestSharedNetworks() {
     shared_network->setDdnsReplaceClientNameMode(D2ClientConfig::ReplaceClientNameMode::RCM_WHEN_PRESENT);
     shared_network->setDdnsGeneratedPrefix("myhost");
     shared_network->setDdnsQualifyingSuffix("example.org");
+    shared_network->setDdnsTtl(9000);
 
-    shared_network->getCfgOption()->add(test_options_[0]->option_,
-                                        test_options_[0]->persistent_,
-                                        test_options_[0]->cancelled_,
-                                        test_options_[0]->space_name_);
+    shared_network->getCfgOption()->add(*test_options_[0], test_options_[0]->space_name_);
     test_networks_.push_back(shared_network);
 
     shared_network.reset(new SharedNetwork6("level3"));
@@ -372,6 +341,8 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
                                    true, false, false, "my-timezone");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
+    desc.addClientClass("class1");
+    desc.addClientClass("class2");
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     desc = createOption<OptionUint8>(Option::V6, D6O_PREFERENCE,
@@ -409,6 +380,8 @@ GenericConfigBackendDHCPv6Test::initTestOptions() {
                                       true, true, false, "my-timezone-3");
     desc.space_name_ = DHCP6_OPTION_SPACE;
     desc.setContext(user_context);
+    desc.addClientClass("class3");
+    desc.addClientClass("class4");
     test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
     // Add definitions for DHCPv6 non-standard options in case we need to
@@ -435,7 +408,7 @@ GenericConfigBackendDHCPv6Test::initTestClientClasses() {
     CfgOptionPtr cfg_option = boost::make_shared<CfgOption>();
     auto class1 = boost::make_shared<ClientClassDef>("foo", match_expr, cfg_option);
     class1->setCfgOptionDef(boost::make_shared<CfgOptionDef>());
-    class1->setRequired(true);
+    class1->setAdditional(true);
     class1->setValid(Triplet<uint32_t>(30, 60, 90));
     class1->setPreferred(Triplet<uint32_t>(25, 55, 85));
     test_client_classes_.push_back(class1);
@@ -571,7 +544,7 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteServerTest() {
 
 void
 GenericConfigBackendDHCPv6Test::getAndDeleteAllServersTest() {
-    for (auto i = 1; i < test_servers_.size(); ++i) {
+    for (unsigned i = 1; i < test_servers_.size(); ++i) {
         ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[i]));
     }
 
@@ -1208,8 +1181,7 @@ GenericConfigBackendDHCPv6Test::getSubnet6WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_subnet->getIface().unspecified());
     EXPECT_TRUE(returned_subnet->getIface().empty());
 
-    EXPECT_TRUE(returned_subnet->getClientClass().unspecified());
-    EXPECT_TRUE(returned_subnet->getClientClass().empty());
+    EXPECT_TRUE(returned_subnet->getClientClasses().empty());
 
     EXPECT_TRUE(returned_subnet->getValid().unspecified());
     EXPECT_EQ(0, returned_subnet->getValid().get());
@@ -1369,7 +1341,7 @@ GenericConfigBackendDHCPv6Test::getAllSubnets6Test() {
 
     // See if the subnets are returned ok.
     auto subnet_it = subnets.begin();
-    for (auto i = 0; i < subnets.size(); ++i, ++subnet_it) {
+    for (unsigned i = 0; i < subnets.size(); ++i, ++subnet_it) {
         ASSERT_EQ(1, (*subnet_it)->getServerTags().size());
         EXPECT_EQ("all", (*subnet_it)->getServerTags().begin()->get());
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
@@ -1802,7 +1774,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSubnets6Test() {
     test_subnets_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert subnets into the database.
-    for (int i = 1; i < test_subnets_.size(); ++i) {
+    for (unsigned i = 1; i < test_subnets_.size(); ++i) {
         cbptr_->createUpdateSubnet6(ServerSelector::ALL(),
                                     test_subnets_[i]);
     }
@@ -2214,8 +2186,7 @@ GenericConfigBackendDHCPv6Test::getSharedNetwork6WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_network->getIface().unspecified());
     EXPECT_TRUE(returned_network->getIface().empty());
 
-    EXPECT_TRUE(returned_network->getClientClass().unspecified());
-    EXPECT_TRUE(returned_network->getClientClass().empty());
+    EXPECT_TRUE(returned_network->getClientClasses().empty());
 
     EXPECT_TRUE(returned_network->getValid().unspecified());
     EXPECT_EQ(0, returned_network->getValid().get());
@@ -2322,7 +2293,7 @@ GenericConfigBackendDHCPv6Test::getAllSharedNetworks6Test() {
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
                   networks[i]->toElement()->str());
         ASSERT_EQ(1, networks[i]->getServerTags().size());
@@ -2534,7 +2505,7 @@ GenericConfigBackendDHCPv6Test::getModifiedSharedNetworks6Test() {
     test_networks_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert shared networks into the database.
-    for (int i = 1; i < test_networks_.size(); ++i) {
+    for (unsigned i = 1; i < test_networks_.size(); ++i) {
         cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(),
                                            test_networks_[i]);
     }
@@ -3240,7 +3211,7 @@ GenericConfigBackendDHCPv6Test::getAllOptionDefs6Test() {
         ASSERT_EQ(1, def->getServerTags().size());
         EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
-        for (auto i = 1; i < test_option_defs_.size(); ++i) {
+        for (unsigned i = 1; i < test_option_defs_.size(); ++i) {
             if (def->equals(*test_option_defs_[i])) {
                 success = true;
             }
@@ -3306,7 +3277,7 @@ GenericConfigBackendDHCPv6Test::getModifiedOptionDefs6Test() {
     test_option_defs_[3]->setModificationTime(timestamps_["today"]);
 
     // Insert option definitions into the database.
-    for (int i = 1; i < test_networks_.size(); ++i) {
+    for (unsigned i = 1; i < test_networks_.size(); ++i) {
         cbptr_->createUpdateOptionDef6(ServerSelector::ALL(),
                                        test_option_defs_[i]);
     }
@@ -4214,7 +4185,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     ASSERT_EQ(2, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         if (i == 0) {
             // level1_no_options
             EXPECT_EQ(level1_no_options->toElement()->str(),
@@ -4234,7 +4205,7 @@ GenericConfigBackendDHCPv6Test::sharedNetworkOptionIdOrderTest() {
     ASSERT_EQ(2, networks.size());
 
     // See if shared networks are returned ok.
-    for (auto i = 0; i < networks.size(); ++i) {
+    for (unsigned i = 0; i < networks.size(); ++i) {
         if (i == 0) {
             // level1_no_options
             EXPECT_EQ(level1_options->toElement()->str(),
@@ -4376,7 +4347,7 @@ GenericConfigBackendDHCPv6Test::getClientClass6Test() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
     EXPECT_EQ("foo", client_class->getName());
-    EXPECT_TRUE(client_class->getRequired());
+    EXPECT_TRUE(client_class->getAdditional());
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());
@@ -4450,7 +4421,7 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
 
-    // Verify lifetime values.  
+    // Verify lifetime values.
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());
@@ -4503,7 +4474,7 @@ GenericConfigBackendDHCPv6Test::createUpdateClientClass6OptionsTest() {
     ASSERT_NO_THROW_LOG(client_class = cbptr_->getClientClass6(ServerSelector::ALL(), class1->getName()));
     ASSERT_TRUE(client_class);
 
-    //  Re-check lifetime values. This ensure bindings line up. 
+    // Re-check lifetime values. This ensure bindings line up.
     EXPECT_EQ(30, client_class->getValid().getMin());
     EXPECT_EQ(60, client_class->getValid().get());
     EXPECT_EQ(90, client_class->getValid().getMax());

@@ -521,7 +521,7 @@ HAConfig::validate() {
 }
 
 std::string
-HAConfig::getSubnetServerName(const SubnetPtr& subnet) {
+HAConfig::getSubnetServerName(const ConstSubnetPtr& subnet) {
     const std::string parameter_name = "ha-server-name";
     auto context = subnet->getContext();
     if (!context || (context->getType() != Element::map) || !context->contains(parameter_name)) {

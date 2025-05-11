@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ public:
 
     /// @brief Constructor.
     KeyFromKeyExtractor()
-        : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { };
+        : key1_(KeyExtractor1()), key2_(KeyExtractor2()) { }
 
     /// @brief Extract key value from the object hierarchy.
     ///

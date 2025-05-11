@@ -64,12 +64,12 @@ to segregate BOOTP clients into separate pools. For example:
                {
                    // BOOTP clients will be handled here
                    "pool": "192.0.2.200 - 192.0.2.254",
-                   "client-class": "BOOTP"
+                   "client-classes": [ "BOOTP" ]
                },
                {
                    // Regular DHCP clients will be handled here
                    "pool": "192.0.2.1 - 192.0.2.199",
-                   "client-class": "DHCP"
+                   "client-classes": [ "DHCP" ]
                }],
                ...
            },

@@ -1,7 +1,7 @@
 SUBDIRS = . testutils tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -45,7 +45,7 @@ libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_d2srv_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_d2srv_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_d2srv_la_LDFLAGS  = -no-undefined -version-info 59:0:0
+libkea_d2srv_la_LDFLAGS  = -no-undefined -version-info 62:0:0
 libkea_d2srv_la_LDFLAGS += $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 
 # If we want to get rid of all generated messages files, we need to use
@@ -72,7 +72,8 @@ messages: d2_messages.h d2_messages.cc
 	@echo Message files regenerated
 
 d2_messages.h d2_messages.cc: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/d2srv/d2_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/d2srv/d2_messages.mes)
 
 else
 

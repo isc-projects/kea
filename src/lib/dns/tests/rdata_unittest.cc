@@ -258,7 +258,7 @@ Rdata_Unknown_Test::getLongestRdataTxt() {
     oss << "\\# " << MAX_RDLENGTH << " ";
     oss.fill('0');
     oss << right << hex;
-    for (int i = 0; i < MAX_RDLENGTH; i++) {
+    for (unsigned i = 0; i < MAX_RDLENGTH; i++) {
         oss << setw(2) << (i & 0xff);
     }
 
@@ -268,7 +268,7 @@ Rdata_Unknown_Test::getLongestRdataTxt() {
 void
 Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v) {
     unsigned char ch = 0;
-    for (int i = 0; i < MAX_RDLENGTH; ++i, ++ch) {
+    for (unsigned i = 0; i < MAX_RDLENGTH; ++i, ++ch) {
         v.push_back(ch);
     }
 }

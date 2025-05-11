@@ -48,7 +48,7 @@ public:
     ///
     /// @param subnet Pointer to the subnet being updated.
     /// @throw BadValue if the subnet to update does not exit.
-    /// @return Pointer to the replaced subnet or NULL if it failed.
+    /// @return Pointer to the replaced subnet or null if it failed.
     Subnet4Ptr replace(const Subnet4Ptr& subnet);
 
     /// @brief Removes subnet from the configuration.
@@ -216,10 +216,10 @@ public:
     /// various information extracted from the client's packet which are used
     /// to find appropriate subnet.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
+    /// @return Pointer to the selected subnet or null if no subnet found.
     /// @throw isc::BadValue if the values in the subnet selector are invalid
     /// or they are insufficient to select a subnet.
-    Subnet4Ptr selectSubnet(const SubnetSelector& selector) const;
+    ConstSubnet4Ptr selectSubnet(const SubnetSelector& selector) const;
 
     /// @brief Returns subnet with specified subnet-id value
     ///
@@ -247,10 +247,10 @@ public:
     /// @param client_classes Optional parameter specifying the classes that
     /// the client belongs to.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet4Ptr selectSubnet(const asiolink::IOAddress& address,
-                            const ClientClasses& client_classes
-                            = ClientClasses()) const;
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet4Ptr selectSubnet(const asiolink::IOAddress& address,
+                                 const ClientClasses& client_classes
+                                 = ClientClasses()) const;
 
     /// @brief Returns a pointer to a subnet if provided interface name matches.
     ///
@@ -272,9 +272,9 @@ public:
     /// @param client_classes Optional parameter specifying the classes that
     /// the client belongs to.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet4Ptr selectSubnet(const std::string& iface,
-                            const ClientClasses& client_classes) const;
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet4Ptr selectSubnet(const std::string& iface,
+                                 const ClientClasses& client_classes) const;
 
     /// @brief Attempts to do subnet selection based on DHCP4o6 information
     ///
@@ -294,8 +294,8 @@ public:
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used
     /// to find appropriate subnet.
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet4Ptr
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet4Ptr
     selectSubnet4o6(const SubnetSelector& selector) const;
 
     /// @brief Convert a link address into a link set.

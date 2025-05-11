@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes
+// File created from src/bin/dhcp6/dhcp6_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -8,6 +8,12 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL = "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDITIONAL_CLASS_UNDEFINED";
+extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
+extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL = "DHCP6_ADDR_REG_INFORM_FAIL";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA = "DHCP6_ADD_STATUS_CODE_FOR_IA";
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING = "DHCP6_ALREADY_RUNNING";
@@ -21,8 +27,6 @@ extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED = "DHCP6_CLASSES_ASSIGNE
 extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED = "DHCP6_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED = "DHCP6_CLASS_UNCONFIGURED";
-extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED = "DHCP6_CLASS_UNDEFINED";
-extern const isc::log::MessageID DHCP6_CLASS_UNTESTABLE = "DHCP6_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE = "DHCP6_CONFIG_COMPLETE";
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL = "DHCP6_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE = "DHCP6_CONFIG_PACKET_QUEUE";
@@ -61,6 +65,8 @@ extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION = "DHCP6_DYNAMIC_
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL = "DHCP6_DYNAMIC_RECONFIGURATION_FAIL";
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS = "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS";
 extern const isc::log::MessageID DHCP6_FLEX_ID = "DHCP6_FLEX_ID";
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_DROP = "DHCP6_HOOK_ADDR6_REGISTER_DROP";
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_SKIP = "DHCP6_HOOK_ADDR6_REGISTER_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP = "DHCP6_HOOK_BUFFER_RCVD_DROP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP = "DHCP6_HOOK_BUFFER_RCVD_SKIP";
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_SEND_SKIP = "DHCP6_HOOK_BUFFER_SEND_SKIP";
@@ -135,6 +141,9 @@ extern const isc::log::MessageID DHCP6_QUERY_DATA = "DHCP6_QUERY_DATA";
 extern const isc::log::MessageID DHCP6_QUERY_LABEL = "DHCP6_QUERY_LABEL";
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT = "DHCP6_RAPID_COMMIT";
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL";
+extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED = "DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED";
+extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_ADD_FAIL = "DHCP6_REGISTERED_LEASE_ADD_FAIL";
+extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_UPDATE_FAIL = "DHCP6_REGISTERED_LEASE_UPDATE_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_NA = "DHCP6_RELEASE_NA";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_DELETED = "DHCP6_RELEASE_NA_DELETED";
 extern const isc::log::MessageID DHCP6_RELEASE_NA_EXPIRED = "DHCP6_RELEASE_NA_EXPIRED";
@@ -147,8 +156,6 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED = "DHCP6_RELEASE_PD_EX
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL = "DHCP6_RELEASE_PD_FAIL";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID = "DHCP6_RELEASE_PD_FAIL_WRONG_DUID";
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEASE_PD_FAIL_WRONG_IAID";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR = "DHCP6_REQUIRED_CLASS_EVAL_ERROR";
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT = "DHCP6_REQUIRED_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL = "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL";
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA = "DHCP6_RESPONSE_DATA";
@@ -175,6 +182,12 @@ namespace {
 
 const char* values[] = {
     "DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
+    "DHCP6_ADDITIONAL_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
+    "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
+    "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE", "received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'",
+    "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1: %2",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",
@@ -188,8 +201,6 @@ const char* values[] = {
     "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP6_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP6_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
-    "DHCP6_CLASS_UNDEFINED", "required class %1 has no definition",
-    "DHCP6_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP6_CONFIG_COMPLETE", "DHCPv6 server has completed configuration: %1",
     "DHCP6_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
     "DHCP6_CONFIG_PACKET_QUEUE", "DHCPv6 packet queue info after configuration: %1",
@@ -198,11 +209,11 @@ const char* values[] = {
     "DHCP6_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP6_CONFIG_UNRECOVERABLE_ERROR", "DHCPv6 server new configuration failed with an error which cannot be recovered",
     "DHCP6_CONFIG_UNSUPPORTED_OBJECT", "DHCPv6 server configuration includes an unsupported object: %1",
-    "DHCP6_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
-    "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
-    "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
+    "DHCP6_DB_RECONNECT_DISABLED", "database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4",
+    "DHCP6_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3",
+    "DHCP6_DB_RECONNECT_LOST_CONNECTION", "database connection lost: manager ID: %1, timer: %2.",
     "DHCP6_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
-    "DHCP6_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
+    "DHCP6_DB_RECONNECT_SUCCEEDED", "database connection recovered: manager ID: %1, timer: %2.",
     "DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST", "%1: created name change request: %2",
     "DHCP6_DDNS_FQDN_GENERATED", "%1: generated FQDN for the client: %2",
     "DHCP6_DDNS_GENERATED_FQDN_UPDATE_FAIL", "%1: failed to update the lease using address %2, after generating FQDN for a client, reason: %3",
@@ -228,6 +239,8 @@ const char* values[] = {
     "DHCP6_DYNAMIC_RECONFIGURATION_FAIL", "dynamic server reconfiguration failed with file: %1",
     "DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS", "dynamic server reconfiguration succeeded with file: %1",
     "DHCP6_FLEX_ID", "%1: flexible identifier generated for incoming packet: %2",
+    "DHCP6_HOOK_ADDR6_REGISTER_DROP", "%1: ADDR-REG-INFORM for %2 is dropped, because a callout set the next step to DROP",
+    "DHCP6_HOOK_ADDR6_REGISTER_SKIP", "%1: lease %2 operation for %3 is skipped, because a callout set the next step to SKIP",
     "DHCP6_HOOK_BUFFER_RCVD_DROP", "received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag",
     "DHCP6_HOOK_BUFFER_RCVD_SKIP", "received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP",
     "DHCP6_HOOK_BUFFER_SEND_SKIP", "%1: prepared DHCPv6 response was dropped because a callout set the next step to SKIP",
@@ -302,6 +315,9 @@ const char* values[] = {
     "DHCP6_QUERY_LABEL", "received query: %1",
     "DHCP6_RAPID_COMMIT", "%1: Rapid Commit option received, following 2-way exchange",
     "DHCP6_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
+    "DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp6 service is currently disabled. Try again in %1 seconds.",
+    "DHCP6_REGISTERED_LEASE_ADD_FAIL", "error in registered lease add for %1",
+    "DHCP6_REGISTERED_LEASE_UPDATE_FAIL", "error in registered lease update for %1: %2",
     "DHCP6_RELEASE_NA", "%1: binding for address %2 and iaid=%3 was released properly",
     "DHCP6_RELEASE_NA_DELETED", "%1: binding for address %2 and iaid=%3 was deleted on release",
     "DHCP6_RELEASE_NA_EXPIRED", "%1: binding for address %2 and iaid=%3 expired on release",
@@ -314,8 +330,6 @@ const char* values[] = {
     "DHCP6_RELEASE_PD_FAIL", "%1: failed to release prefix %2/%3 for iaid=%4",
     "DHCP6_RELEASE_PD_FAIL_WRONG_DUID", "%1: client tried to release prefix %2/%3, but it belongs to another client (duid=%4)",
     "DHCP6_RELEASE_PD_FAIL_WRONG_IAID", "%1: client tried to release prefix %2/%3, but it used wrong IAID (expected %4, but got %5)",
-    "DHCP6_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
-    "DHCP6_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

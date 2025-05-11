@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -271,6 +271,7 @@ public:
     /// @param ac An IOServiceAccessor object.
     /// @param cb The dbReconnect callback.
     /// @param timer_name The DB reconnect timer name.
+    /// @param id the ID of the manager.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
@@ -281,7 +282,8 @@ public:
     getVersion(const ParameterMap& parameters,
                const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
                const DbCallback& cb = DbCallback(),
-               const std::string& timer_name = std::string());
+               const std::string& timer_name = std::string(),
+               unsigned int id = 0);
 
     /// @brief Retrieve schema version, validate it against the hardcoded
     ///     version, and attempt to initialize the schema if there is an

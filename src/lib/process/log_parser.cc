@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <process/d_log.h>
 #include <process/log_parser.h>
 #include <boost/lexical_cast.hpp>
 #include <log/logger_specification.h>
@@ -104,6 +105,19 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     }
 
     isc::data::ConstElementPtr output_options = entry->get("output-options");
+    isc::data::ConstElementPtr deprecated_output_options = entry->get("output_options");
+
+    if (output_options && deprecated_output_options) {
+        isc_throw(BadValue, "Only one of 'output-options' and 'output_options' may be specified.");
+    }
+
+    if (deprecated_output_options) {
+        LOG_WARN(dctl_logger, DCTL_DEPRECATED_OUTPUT_OPTIONS);
+        output_options = deprecated_output_options;
+        ElementPtr mutable_element = boost::const_pointer_cast<Element>(entry);
+        mutable_element->remove("output_options");
+        mutable_element->set("output-options", output_options);
+    }
 
     if (output_options) {
         parseOutputOptions(info.destinations_, output_options);

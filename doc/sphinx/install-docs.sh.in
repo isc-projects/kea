@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -eu
+
+if test '@SPHINXBUILD@' = 'false'; then
+    echo 'Warning: sphinx-build is missing. Not installing docs.' >&2
+    exit 0
+fi
+
+if test ! -d '@abs_sphinxbuilddir@'; then
+    echo 'Warning: docs are not built. Not installing docs.' >&2
+    exit 0
+fi
+
+# Destdir is set everytime the installation happens through meson or ninja even when --destdir is not passed.
+# Set target path to prefix in case someone wants to run this script directly.
+target_path='@PREFIX@'
+if test -n "${MESON_INSTALL_DESTDIR_PREFIX+x}"; then
+    target_path="${MESON_INSTALL_DESTDIR_PREFIX}"
+fi
+
+docdir="${target_path}/@docdir@"
+mandir8="${target_path}/@mandir8@"
+
+mkdir -p "${docdir}"
+cp -Tr @abs_sphinxbuilddir@/html "${docdir}/html"
+if test '@HAVE_PDFLATEX@' != 'no'; then
+    @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/latex/kea-arm.pdf "${docdir}"
+    @INSTALL@ -c -m 644 @abs_sphinxbuilddir@/latex/kea-messages.pdf "${docdir}"
+fi
+mkdir -p "${mandir8}"
+@INSTALL@ -c -m 644 @abs_sphinxbuilddir@/man/*.8 "${mandir8}"

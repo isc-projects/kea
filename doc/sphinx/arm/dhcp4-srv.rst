@@ -58,7 +58,7 @@ the following command-line switches:
    dynamically linked to Kea.
 
 -  ``-W`` - displays the Kea configuration report and exits. The report
-   is a copy of the ``config.report`` file produced by ``./configure``;
+   is a copy of the ``config.report`` file produced by ``meson setup``;
    it is embedded in the executable binary.
 
    The contents of the ``config.report`` file may also be accessed by examining
@@ -84,18 +84,20 @@ configuration file. Since the DHCPv4 server opens privileged ports, it
 requires root access; this daemon must be run as root.
 
 During startup, the server attempts to create a PID file of the
-form: ``[runstatedir]/kea/[conf name].kea-dhcp4.pid``, where:
+form: ``[pidfile_dir]/[conf name].kea-dhcp4.pid`` where:
 
--  ``runstatedir``: The value as passed into the build configure
-   script; it defaults to ``/usr/local/var/run``. Note that this value may be
-   overridden at runtime by setting the environment variable
-   ``KEA_PIDFILE_DIR``, although this is intended primarily for testing
-   purposes.
+- ``pidfile_dir`` - is ``[prefix]/[localstatedir]/run/kea`` where
+  ``prefix`` and ``localstatedir`` are the values passed into meson setup using
+  ``--prefix`` and ``--localstatedir`` which default to ``/usr/local`` and
+  ``var`` respectively. So the whole ``pidfile_dir`` defaults to
+  ``/usr/local/var``. Note that this value may be overridden at runtime by
+  setting the environment variable  ``KEA_PIDFILE_DIR`` intended primarily for
+  testing purposes.
 
--  ``conf name``: The configuration file name used to start the server,
-   minus all preceding paths and the file extension. For example, given
-   a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
-   be ``myconf``.
+- ``conf name``: The configuration file name used to start the server,
+  minus all preceding paths and the file extension. For example, given
+  a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
+  be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
 server issues a ``DHCP4_ALREADY_RUNNING`` log message and exits. It is
@@ -601,7 +603,7 @@ access the database should be set:
    "Dhcp4": {
        "lease-database": {
            "user": "user-name",
-           "password": "password",
+           "password": "1234",
            ...
        },
        ...
@@ -660,6 +662,30 @@ error.
     ``host`` parameter is ``localhost``, but establishes a TCP connection
     for ``127.0.0.1``.
 
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store leases in the MySQL Lease Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the MySQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store leases in the PostgreSQL Lease Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the PostgreSQL lease backend hook library required for lease storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
+
 
 .. _hosts4-storage:
 
@@ -684,7 +710,7 @@ connection to MySQL:
            "type": "mysql",
            "name": "kea",
            "user": "kea",
-           "password": "secret123",
+           "password": "1234",
            "host": "localhost",
            "port": 3306
        }
@@ -834,7 +860,7 @@ access the database should be set:
    "Dhcp4": {
        "hosts-database": {
            "user": "user-name",
-           "password": "password",
+           "password": "1234",
            ...
        },
        ...
@@ -892,6 +918,30 @@ the parameter is not specified.
 
    The ``readonly`` parameter is only supported for MySQL and
    PostgreSQL databases.
+
+Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+store host reservations in the MySQL Host Database Backend.
+Specify the lease backend hook library location:
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the MySQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+       }, ... ], ... }
+
+Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+store host reservations in the PostgreSQL Host Database Backend.
+Specify the lease backend hook library location.
+
+::
+
+   "Dhcp4": { "hooks-libraries": [
+       {
+           // the PostgreSQL host backend hook library required for host storage.
+           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+       }, ... ], ... }
 
 
 Tuning Database Timeouts for Hosts Storage
@@ -1609,6 +1659,11 @@ responses on subnet ``192.0.3.0/24``. ``never-send`` has precedence over
    Both ``always-send`` and ``never-send`` have no effect on options
    which cannot be requested, for instance from a custom space.
 
+.. note::
+
+    Beginning with Kea 2.7.4, option inclusion can also be controlled through
+    option class-tagging, see :ref:`option-class-tagging`
+
 The ``name`` parameter specifies the option name. For a list of
 currently supported names, see :ref:`dhcp4-std-options-list`
 below. The ``code`` parameter specifies the option code, which must
@@ -1998,6 +2053,8 @@ types are given in :ref:`dhcp-types`.
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | classless-static-route                 | 121  | internal                  | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
+   | cablelabs-client-conf                  | 122  | empty                     | false       | false       |
+   +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivco-suboptions                       | 124  | record (uint32, binary)   | false       | false       |
    +----------------------------------------+------+---------------------------+-------------+-------------+
    | vivso-suboptions                       | 125  | uint32                    | false       | false       |
@@ -2145,10 +2202,15 @@ what values are accepted for them.
    |                 | Section                                               |
    |                 | 2 <https://tools.ietf.org/html/rfc2132#section-2>`__. |
    +-----------------+-------------------------------------------------------+
-   | tuple           | A length encoded as an 8-bit (16-bit                  |
-   |                 | for DHCPv6) unsigned integer                          |
-   |                 | followed by a string of this                          |
-   |                 | length.                                               |
+   | tuple           | A length field encoded as an 8-bit                    |
+   |                 | or 16-bit unsigned integer followed by                |
+   |                 | a string of this length. Typically, for DHCPv4,       |
+   |                 | the length is 8-bit, and for DHCPv6, it is 16-bit.    |
+   |                 | However, there are exceptions to that rule.           |
+   |                 | E.g. for the DHCPv4 SZTP Redirect Option,             |
+   |                 | bootstrap-server-list is encoded as a list of         |
+   |                 | tuples where the URI-length in each tuple is          |
+   |                 | a 16-bit unsigned integer.                            |
    +-----------------+-------------------------------------------------------+
    | uint8           | An 8-bit unsigned integer with                        |
    |                 | allowed values 0 to 255.                              |
@@ -2222,6 +2284,55 @@ includes all packets with a specific ``remote-id`` value would look as follows:
 Classes may be used to segregate traffic into a relatively small number of groups, which then
 can be used to select specific subnets, pools and extra options, and more. If per-host behavior
 is necessary, using host reservations with flexible identifiers is strongly recommended.
+
+.. _cablelabs-client-conf-suboptions:
+
+CableLabs Client Conf Suboptions
+--------------------------------
+
+CableLabs client conf option ("cablelabs-client-conf" code 122) is a
+container of suboptions in the "cablelabs-client-conf" space listed in
+the table below.
+
+.. table:: List of CableLabs Client Conf sub-options that Kea can understand
+
+   +------------------------+------+-----------------------------+
+   | Name                   | Code | Format                      |
+   +========================+======+=============================+
+   | tsp-primary-server     | 1    | IPv4 address                |
+   +------------------------+------+-----------------------------+
+   | tsp-secondary-server   | 2    | IPv4 address                |
+   +------------------------+------+-----------------------------+
+   | tsp-as-parameters      | 4    | record of 3 uint32's        |
+   +------------------------+------+-----------------------------+
+   | tsp-ap-parameters      | 5    | record of 3 uint32's        |
+   +------------------------+------+-----------------------------+
+   | tsp-realm              | 6    | Fully Qualified Domain Name |
+   +------------------------+------+-----------------------------+
+   | tsp-use-tgt            | 7    | boolean                     |
+   +------------------------+------+-----------------------------+
+   | tsp-provisioning-timer | 8    | uint8                       |
+   +------------------------+------+-----------------------------+
+   | tsp-sct                | 9    | uint16                      |
+   +------------------------+------+-----------------------------+
+   | kdc-server             | 10   | array of IPv4 addresses     |
+   +------------------------+------+-----------------------------+
+
+These suboptions are defined in
+`RFC 3495 <https://tools.ietf.org/html/rfc3495>`_ including its errata
+which clarifies the realm format,
+`RFC 3594 <https://tools.ietf.org/html/rfc3594>`_ and
+`RFC 3634 <https://tools.ietf.org/html/rfc3634>`_.
+
+.. note::
+
+  The suboption 3 carries the TSP provisioning server address as an
+  either IPv4 address or a FQDN. This can't be defined in Kea so no
+  standard suboption is defined for the code 3 leaving the choice to
+  configure its content as a binary value, or if it is used only as an
+  IPv4 address or a FQDN to define it as a record of an ``uint8`` (set
+  to 0) and ``ipv4-address``, or a record of an ``uint8`` (set to 1)
+  and a ``fqdn``, allowing the use of CSV formatted data.
 
 .. _dhcp4-custom-options:
 
@@ -3270,7 +3381,7 @@ class are allowed to use that pool.
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "VENDOR_CLASS_docsis3.0"
+               "client-classes": [ "VENDOR_CLASS_docsis3.0" ]
            }
        ],
        ...
@@ -3310,32 +3421,32 @@ DNS servers set to 192.0.2.1 and 192.0.2.2.
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "Client_foo"
+               "client-classes": [ "Client_foo" ]
            },
            ...
        ],
        ...
    }
 
-.. _dhcp4-required-class:
+.. _dhcp4-additional-class:
 
-Required Classification
-~~~~~~~~~~~~~~~~~~~~~~~
+Additional Classification
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In some cases it is useful to limit the scope of a class to a
-shared network, subnet, or pool. There are two parameters which are used
+In some cases it is useful to limit the scope of a class to a pool,
+subnet, or shared network. There are two parameters which are used
 to limit the scope of the class by instructing the server to evaluate test
 expressions when required.
 
-The first one is the per-class ``only-if-required`` flag, which is ``false``
-by default. When it is set to ``true``, the test expression of the class
-is not evaluated at the reception of the incoming packet but later, and
-only if the class evaluation is required.
+The ``evaluate-additional-classes``, which takes a list of class
+names and is valid in pool, subnet, and shared network scope. Classes in
+these lists are marked as additional and evaluated after selection of this
+specific pool/subnet/shared network and before output-option processing.
 
-The second is ``require-client-classes``, which takes a list of class
-names and is valid in shared-network, subnet, and pool scope. Classes in
-these lists are marked as required and evaluated after selection of this
-specific shared network/subnet/pool and before output-option processing.
+The second one is the per-class ``only-in-additional-list`` flag, which is
+``false`` by default. When it is set to ``true``, the test expression of
+the class is not evaluated at the reception of the incoming packet but later,
+and only if the class is present in an ``evaluate-additional-classes`` list.
 
 In this example, a class is assigned to the incoming packet when the
 specified subnet is used:
@@ -3347,7 +3458,7 @@ specified subnet is used:
           {
               "name": "Client_foo",
               "test": "member('ALL')",
-              "only-if-required": true
+              "only-in-additional-list": true
           },
           ...
        ],
@@ -3355,7 +3466,7 @@ specified subnet is used:
            {
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "require-client-classes": [ "Client_foo" ],
+               "evaluate-additional-classes": [ "Client_foo" ],
                ...
            },
            ...
@@ -3363,17 +3474,34 @@ specified subnet is used:
        ...
    }
 
-Required evaluation can be used to express complex dependencies like
+Additional evaluation can be used to express complex dependencies like
 subnet membership. It can also be used to reverse the
 precedence; if ``option-data`` is set in a subnet, it takes precedence
 over ``option-data`` in a class. If ``option-data`` is moved to a
 required class and required in the subnet, a class evaluated earlier
 may take precedence.
 
-Required evaluation is also available at the shared-network and pool levels.
-The order in which required classes are considered is: shared-network,
-subnet, and pool, i.e. in the reverse order from the way in which
+Additional evaluation is also available at shared network and pool levels.
+The order in which additional classes are considered is: pool, subnet,
+and shared network, i.e. in the same order from the way in which
 ``option-data`` is processed.
+
+Since Kea version 2.7.4 additional classes configured without
+a test expression are unconditionally added, i.e. they are considered
+to always be evaluated to ``true``.
+
+.. note::
+   Because additional evaluation occurs after lease assignment, parameters
+   that would otherwise impact lease life times (e.g. ``valid-lifetime``,
+   ``offer-lifetime``) will have no effect when specified in a class that
+   also sets ``only-in-additional-list`` true.
+
+.. note::
+
+   As of Kea version 2.7.4, ``only-if-required`` and ``require-client-classes``
+   have been renamed to ``only-in-additional-list`` and ``evaluate-additional-classes``
+   respectivley.  The original names will still be accepted as input to allow
+   users to migrate but will eventually be rejected.
 
 .. note::
 
@@ -3449,10 +3577,10 @@ DDNS-related parameters are split into two groups:
     These parameters influence behavior such as how client host names and
     FQDN options are handled. They have been moved out of the ``dhcp-ddns``
     section so that they may be specified at the global, shared-network,
-    and/or subnet levels. Furthermore, they are inherited downward from global to
-    shared-network to subnet. In other words, if a parameter is not specified at
-    a given level, the value for that level comes from the level above it.
-    The behavioral parameters are as follows:
+    subnet, and/or pool levels. Furthermore, they are inherited downward
+    from global to shared-network to subnet to pool. In other words, if a
+    parameter is not specified at a given level, the value for that level
+    comes from the level above it. The behavioral parameters are as follows:
 
     -  ``ddns-send-updates``
     -  ``ddns-override-no-update``
@@ -3462,9 +3590,16 @@ DDNS-related parameters are split into two groups:
     -  ``ddns-qualifying-suffix``
     -  ``ddns-update-on-renew``
     -  ``ddns-conflict-resolution-mode``
+    -  ``ddns-ttl``
     -  ``ddns-ttl-percent``
+    -  ``ddns-ttl-min``
+    -  ``ddns-ttl-max``
     -  ``hostname-char-set``
     -  ``hostname-char-replacement``
+
+.. note::
+
+    Kea 2.7.6 added support for these parameters to the pool level.
 
 .. note::
 
@@ -3613,16 +3748,33 @@ offers four modes of conflict resolution-related behavior:
     to generate DNS removal requests to D2.
 
 The DNS entries Kea creates contain a value for TTL (time to live).
-The :iscman:`kea-dhcp4` server calculates that value based on
+By default, the :iscman:`kea-dhcp4` server calculates that value based on
 `RFC 4702, Section 5 <https://tools.ietf.org/html/rfc4702#section-5>`__,
 which suggests that the TTL value be 1/3 of the lease's lifetime, with
-a minimum value of 10 minutes.
+a minimum value of 10 minutes.  There are four optional parameters which
+may be used to influence the TTL calculation:
 
-The parameter ``ddns-ttl-percent``, when specified,
-causes the TTL to be calculated as a simple percentage of the lease's
-lifetime, using the parameter's value as the percentage. It is specified
-as a decimal percent (e.g. .25, .75, 1.00) and may be specified at the
-global, shared-network, and subnet levels. By default it is unspecified.
+
+    - ``ddns-ttl`` - If specified and greater than 0 use it as the value of TTL
+      unconditionally.  It is specified in seconds. By default it is unspecified.
+
+    - ``ddns-ttl-percent`` - If specified and greater than zero use it as the
+      percentage of the lease life time otherwise use 1/3 (per RFC 4702) of the
+      lease life time. It is specified as a decimal percentage (e.g. 0.75, 0.50)
+      and is unspecified by default.
+
+    - ``ddns-ttl-min`` - If specified and greater than 0 use it the minimum
+      otherwise use a minimum of 600 seconds (per RFC 4702). If the calculated TTL
+      is less than the minimum return the minimum.  It is specified in seconds. By
+      default it is unspecified.
+
+    - ``ddns-ttl-max`` - If specified and greater than zero limit the calculated TTL
+      to its value. It is specified in seconds. By default it is unspecified.
+
+.. note::
+
+    A value of zero for any of the TTL parameters can be used to suppress (i.e. "unspecify")
+    the value of that parameter inherited from a higher scope.
 
 .. _dhcpv4-d2-io-config:
 
@@ -3902,6 +4054,14 @@ qualifying suffix is "example.com", and the default value is used for
 ``ddns-generated-prefix``, the generated FQDN is:
 
 ``myhost-172-16-1-10.example.com.``
+
+.. note::
+
+    When the client sends the host name option, ``kea-dhcp4`` never adds
+    a dot to the host name in the returned option. It will only end with
+    a dot if the client sent it already qualified and ending with a dot.
+    When the client sends the FQDN option, the FQDN returned in the response
+    will always end with a dot.
 
 .. _dhcp4-host-name-sanitization:
 
@@ -4478,7 +4638,7 @@ Stash Agent Options
 -------------------
 
 This global parameter was added in version 2.5.8 to mirror a feature that was
-previously available in ISC DHCP. When the ``stash-agent-option`` parameter
+previously available in ISC DHCP. When the ``stash-agent-options`` parameter
 is ``true``, the server records the relay agent information options sent
 during the client's initial DHCPREQUEST message (when the client was in the
 SELECTING state) and behaves as if those options are included in all
@@ -5258,12 +5418,12 @@ For example:
             {
                 "name": "dependent-class",
                 "test": "member('KNOWN')",
-                "only-if-required": true
+                "only-in-additional-list": true
             }
         ]
     }
 
-The ``only-if-required`` parameter is needed here to force evaluation
+The ``only-in-additional-list`` parameter is needed here to force evaluation
 of the class after the lease has been allocated, and thus the reserved
 class has been also assigned.
 
@@ -5271,21 +5431,21 @@ class has been also assigned.
 
    The classes specified in non-global host reservations
    are assigned to the processed packet after all classes with the
-   ``only-if-required`` parameter set to ``false`` have been evaluated.
+   ``only-in-additional-list`` parameter set to ``false`` have been evaluated.
    This means that these classes must not depend on the
    statically assigned classes from the host reservations. If
-   such a dependency is needed, the ``only-if-required`` parameter must
+   such a dependency is needed, the ``only-in-additional-list`` parameter must
    be set to ``true`` for the dependent classes. Such classes are
    evaluated after the static classes have been assigned to the packet.
    This, however, imposes additional configuration overhead, because
-   all classes marked as ``only-if-required`` must be listed in the
-   ``require-client-classes`` list for every subnet where they are used.
+   all classes marked as ``only-in-additional-list`` must be listed in the
+   ``evaluate-additional-classes`` list for every subnet where they are used.
 
 .. note::
 
    Client classes specified within the Kea configuration file may
    depend on the classes specified within the global host reservations.
-   In such a case the ``only-if-required`` parameter is not needed.
+   In such a case the ``only-in-additional-list`` parameter is not needed.
    Refer to :ref:`pool-selection-with-class-reservations4` and
    :ref:`subnet-selection-with-class-reservations4`
    for specific use cases.
@@ -5786,7 +5946,7 @@ Pool Selection with Client Class Reservations
 Client classes can be specified in the Kea configuration file and/or via
 host reservations. The classes specified in the Kea configuration file are
 evaluated immediately after receiving the DHCP packet and therefore can be
-used to influence subnet selection using the ``client-class`` parameter
+used to influence subnet selection using the ``client-classes`` parameter
 specified in the subnet scope. The classes specified within the host
 reservations are fetched and assigned to the packet after the server has
 already selected a subnet for the client. This means that the client
@@ -5798,55 +5958,67 @@ If the subnet does not belong to a shared network, the subnet
 is not changed once selected.
 
 If the subnet does not belong to a shared network, it is possible to
-use host reservation-based client classification to select an address pool
+use host reservation-based client classification to select a pool
 within the subnet as follows:
 
-::
+.. code-block:: json
 
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "reserved_class"
-            },
-            {
-                "name": "unreserved_class",
-                "test": "not member('reserved_class')"
-            }
-        ],
-        "subnet4": [
-            {
-                "id": 1,
-                "subnet": "192.0.2.0/24",
-                "reservations": [
-                    {
-                        "hw-address": "aa:bb:cc:dd:ee:fe",
-                        "client-classes": [ "reserved_class" ]
-                    }
-                ],
-                "pools": [
-                    {
-                        "pool": "192.0.2.10-192.0.2.20",
-                        "client-class": "reserved_class"
-                    },
-                    {
-                        "pool": "192.0.2.30-192.0.2.40",
-                        "client-class": "unreserved_class"
-                    }
-                ]
-            }
-        ]
+    {
+        "Dhcp4": {
+            "client-classes": [
+                {
+                    "name": "reserved_class"
+                },
+                {
+                    "name": "unreserved_class",
+                    "test": "not member('reserved_class')"
+                }
+            ],
+            "subnet4": [
+                {
+                    "id": 1,
+                    "subnet": "192.0.2.0/24",
+                    "reservations": [
+                        {
+                            "hw-address": "aa:bb:cc:dd:ee:fe",
+                            "client-classes": [ "unreserved_class" ]
+                        }
+                    ],
+                    "pools": [
+                        {
+                            "pool": "192.0.2.10 - 192.0.2.20",
+                            "client-classes": [ "unreserved_class" ]
+                        },
+                        {
+                            "pool": "192.0.2.30 - 192.0.2.40",
+                            "client-classes": [ "reserved_class" ]
+                        },
+                        {
+                            "pool": "192.0.2.50 - 192.0.2.60"
+                        }
+                    ]
+                }
+            ]
+        }
     }
 
-The ``reserved_class`` is declared without the ``test`` parameter because
-it may only be assigned to the client via the host reservation mechanism. The
+``reserved_class`` is declared without the ``test`` parameter because
+it may only be assigned to a client via the host reservation mechanism. The
 second class, ``unreserved_class``, is assigned to clients which do not
-belong to the ``reserved_class``. The first pool within the subnet is only
-used for clients having a reservation for the ``reserved_class``. The
-second pool is used for clients not having such a reservation. The
-configuration snippet includes one host reservation which causes the client
-with the MAC address aa:bb:cc:dd:ee:fe to be assigned to the
-``reserved_class``. Thus, this client will be given an IP address from the
-first address pool.
+belong to ``reserved_class``.
+
+The first pool in the subnet is used for clients not having such a reservation.
+The second pool is only used for clients having a reservation for ``reserved_class``.
+The third pool is an unrestricted pool for any clients, comprising of both
+``reserved_class`` clients and ``unreserved_class``.
+
+The configuration snippet includes one host reservation which causes the client
+with the MAC address ``aa:bb:cc:dd:ee:fe`` to be assigned to ``reserved_class``.
+Thus, this client will be given an IP address from the second address pool.
+
+Reservations defined on a subnet that belongs to a shared network are not
+visible to an otherwise matching client, so they cannot be used to select pools,
+nor subnets for that matter.
 
 .. _subnet-selection-with-class-reservations4:
 
@@ -5859,76 +6031,104 @@ client belongs to a shared network. In such a case it is possible to use
 classification to select a subnet within this shared network. Consider the
 following example:
 
-::
+.. code-block:: json
 
-    "Dhcp4": {
-        "client-classes": [
-            {
-                "name": "reserved_class"
-            },
-            {
-                "name": "unreserved_class",
-                "test": "not member('reserved_class')"
-            }
-        ],
-        "reservations": [
-            {
-                "hw-address": "aa:bb:cc:dd:ee:fe",
-                "client-classes": [ "reserved_class" ]
-            }
-        ],
-        # It is replaced by the "reservations-global",
-        # "reservations-in-subnet", and "reservations-out-of-pool" parameters.
-        # Specify if the server should look up global reservations.
-        "reservations-global": true,
-        # Specify if the server should look up in-subnet reservations.
-        "reservations-in-subnet": false,
-        # Specify if the server can assume that all reserved addresses
-        # are out-of-pool. It can be ignored because "reservations-in-subnet"
-        # is false, but if specified, it is inherited by "shared-networks"
-        # and "subnet4" levels.
-        # "reservations-out-of-pool": false,
-        "shared-networks": [
-            {
-            "subnet4": [
+    {
+        "Dhcp4": {
+            "client-classes": [
                 {
-                    "id": 1,
-                    "subnet": "192.0.2.0/24",
-                    "pools": [
-                        {
-                            "pool": "192.0.2.10-192.0.2.20",
-                            "client-class": "reserved_class"
-                        }
-                    ]
+                    "name": "reserved_class"
                 },
                 {
-                    "id": 2,
-                    "subnet": "192.0.3.0/24",
-                    "pools": [
+                    "name": "unreserved_class",
+                    "test": "not member('reserved_class')"
+                }
+            ],
+            "reservations": [
+                {
+                    "hw-address": "aa:bb:cc:dd:ee:fe",
+                    "client-classes": [ "reserved_class" ]
+                }
+            ],
+            "reservations-global": true,
+            "reservations-in-subnet": false,
+            "shared-networks": [
+                {
+                    "name": "net",
+                    "subnet4": [
                         {
-                            "pool": "192.0.3.10-192.0.3.20",
-                            "client-class": "unreserved_class"
+                            "id": 1,
+                            "subnet": "192.0.2.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.2.10-192.0.2.20",
+                                    "client-classes": [ "unreserved_class" ]
+                                },
+                                {
+                                    "pool": "192.0.2.30-192.0.2.40",
+                                    "client-classes": [ "unreserved_class" ]
+                                }
+                            ]
+                        },
+                        {
+                            "id": 2,
+                            "subnet": "192.0.3.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.3.10-192.0.3.20",
+                                    "client-classes": [ "reserved_class" ]
+                                },
+                                {
+                                    "pool": "192.0.3.30-192.0.3.40",
+                                    "client-classes": [ "reserved_class" ]
+                                }
+                            ]
+                        },
+                        {
+                            "id": 3,
+                            "subnet": "192.0.4.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.0.4.10-192.0.4.20"
+                                },
+                                {
+                                    "pool": "192.0.4.30-192.0.4.40"
+                                }
+                            ]
                         }
                     ]
                 }
             ]
-            }
-        ]
+        }
     }
 
 This is similar to the example described in
 :ref:`pool-selection-with-class-reservations4`. This time, however, there
-are two subnets, each of which has a pool associated with a different
-class. The clients that do not have a reservation for the ``reserved_class``
-are assigned an address from the subnet 192.0.3.0/24. Clients with
-a reservation for the ``reserved_class`` are assigned an address from
-the subnet 192.0.2.0/24. The subnets must belong to the same shared network.
+are three subnets, of which the first two have a pool associated with a different
+class each.
+
+The clients that do not have a reservation for ``reserved_class``
+are assigned an address from the first subnet and when that is filled from
+the third subnet. Clients with a reservation for ``reserved_class`` are assigned
+an address from the second subnet and when that is filled from the third subnet.
+
+The subnets must belong to the same shared network.
+
+For a subnet to be restricted to a certain class, or skipped, all of the pools
+inside that subnet must be guarded by ``reserved_class`` or ``unreserved_class``
+respectively.
+
 In addition, the reservation for the client class must be specified at the
 global scope (global reservation) and ``reservations-global`` must be
 set to ``true``.
 
-In the example above, the ``client-class`` could also be specified at the
-subnet level rather than the pool level, and would yield the same effect.
+In the example above, the ``client-classes`` configuration parameter could also
+be specified at the subnet level rather than the pool level, and would yield the
+same effect.
+
+If the subnets were defined outside shared networks, and ``client-classes`` were
+specified at the subnet level, then ``early-global-reservations-lookup`` would
+also need to be enabled in order for subnet selection to work.
 
 .. _multiple-reservations-same-ip4:
 
@@ -6505,19 +6705,36 @@ Client Classification in Shared Networks
 
 Sometimes it is desirable to segregate clients into specific subnets
 based on certain properties. This mechanism is called client
-classification and is described in :ref:`classify`. Client
-classification can be applied to subnets belonging to shared networks in
+classification and is described in :ref:`classify`.
+
+Client classification can be applied to subnets belonging to shared networks in
 the same way as it is used for subnets specified outside of shared
 networks. It is important to understand how the server selects subnets
 for clients when client classification is in use, to ensure that the
 appropriate subnet is selected for a given client type.
 
-If a subnet is associated with a class, only the clients belonging to
-this class can use this subnet. If there are no classes specified for a
-subnet, any client connected to a given shared network can use this
-subnet. A common mistake is to assume that a subnet that includes a client
-class is preferred over subnets without client classes. Consider the
-following example:
+If a subnet is associated with one or more classes, only the clients belonging
+to at least one of these classes may use this subnet. If there are no classes
+specified for a subnet, any client connected to a given shared network can use
+this subnet. A common mistake is to assume that a subnet that includes a client
+class is preferred over subnets without client classes.
+
+The ``client-classes`` parameter may be specified at the shared network, subnet,
+and/or pool scopes. If specified for a shared network, clients must belong to at
+least one of the classes specified for that network to be considered for subnets
+within that network. If specified for a subnet, clients must belong to at least
+one of the classes specified for that subnet to be considered for any of that
+subnet's pools or host reservations. If specified for a pool, clients must
+belong to at least one of the classes specified for that pool to be given a lease from that pool.
+
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
+Consider the following example:
 
 ::
 
@@ -6542,7 +6759,7 @@ following example:
                        "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
-                       "client-class": "b-devices"
+                       "client-classes": [ "b-devices" ]
                    }
                ]
            }
@@ -6589,13 +6806,13 @@ on option 93 values.
                        "id": 1,
                        "subnet": "192.0.2.0/26",
                        "pools": [ { "pool": "192.0.2.1 - 192.0.2.63" } ],
-                       "client-class": "a-devices"
+                       "client-classes": [ "a-devices" ]
                    },
                    {
                        "id": 2,
                        "subnet": "10.0.0.0/24",
                        "pools": [ { "pool": "10.0.0.2 - 10.0.0.250" } ],
-                       "client-class": "b-devices"
+                       "client-classes": [ "b-devices" ]
                    }
                ]
            }
@@ -6698,10 +6915,10 @@ the ``dhcp-server-identifier`` option. This option configuration is only
 supported at the subnet, shared network, client class, and global levels. It
 must not be specified at the host-reservation level.
 When configuring the ``dhcp-server-identifier`` option at client-class level, the
-class must not set the ``only-if-required`` flag, because this class would not
+class must not set the ``only-in-additional-list`` flag, because this class would not
 be evaluated before the server determines if the received DHCP message should
 be accepted for processing. Such classes are evaluated after subnet selection.
-See :ref:`dhcp4-required-class` for details.
+See :ref:`dhcp4-additional-class` for details.
 
 The following example demonstrates how to override the server identifier
 for a subnet:
@@ -6865,8 +7082,8 @@ everything connected behind the modems should get addresses from the
            {
                "id": 1,
                "subnet": "10.1.1.0/24",
-               "pools":  [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
-               "client-class": "docsis3.0",
+               "pools": [ { "pool": "10.1.1.2 - 10.1.1.20" } ],
+               "client-classes": [ "docsis3.0" ],
                "relay": {
                    "ip-addresses": [ "10.1.1.1" ]
                }
@@ -7607,6 +7824,8 @@ operating system, i.e. the size of the ``sun_path`` field in the
 different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
+Kea supports only one ``unix`` control socket in the "control-sockets" list.
+
 Communication over the control channel is conducted using JSON
 structures. See the
 `Control Channel section in the Kea Developer's Guide
@@ -7656,6 +7875,9 @@ TLS is required). The ``socket-address`` (default ``127.0.0.1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
 
+Since Kea 2.7.5 the ``http-headers`` parameter specifies a list of
+extra HTTP headers to add to HTTP responses.
+
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
 are not specified, HTTP is used. The TLS/HTTPS support in Kea is
@@ -7700,6 +7922,16 @@ password, these values can be read from files. The syntax is extended by:
 -  The ``user-file`` client parameter, which, with the ``directory`` parameter,
    specifies the path of a file where the user ID can be read.
 
+Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections.
+Both IPv4 and IPv6 addresses can be used.
+The server will issue an error when changing the socket type from HTTP to HTTPS
+or from HTTPS to HTTP using the same address and port. This action is not
+allowed as it might introduce a security issue accidentally caused by a user
+mistake.
+A different address or port must be specified when using the "config-set"
+command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
+when modyfying the configuration file and then running "config-reload" command.
+
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
@@ -7711,6 +7943,12 @@ to detect configuration errors as soon as possible.
                "socket-type": "https",
                "socket-address": "10.20.30.40",
                "socket-port": 8004,
+               "http-headers": [
+                   {
+                       "name": "Strict-Transport-Security",
+                       "value": "max-age=31536000"
+                    }
+               ],
                "trust-anchor": "/path/to/the/ca-cert.pem",
                "cert-file": "/path/to/the/agent-cert.pem",
                "key-file": "/path/to/the/agent-key.pem",
@@ -7724,6 +7962,11 @@ to detect configuration errors as soon as possible.
                        "password": "1234"
                    } ]
                }
+           },
+           {
+               "socket-type": "http",
+               "socket-address": "2010:30:40::50",
+               "socket-port": 8004
            }
        ],
 
@@ -7893,9 +8136,25 @@ The following standards are currently supported in Kea:
    (DHCP) version 4*, `RFC 3442 <https://tools.ietf.org/html/rfc3442>`__:
    The option is supported.
 
+-  *Dynamic Host Configuration Protocol (DHCP) Option for CableLabs Client
+   Configuration*, `RFC 3495 <https://tools.ietf.org/html/rfc3495>`__:
+   The option and its suboptions 1, 2, 4, 5, 6, 7 and 8 are supported.
+   See :ref:`cablelabs-client-conf-suboptions` for details.
+
 -  *Link Selection sub-option for the Relay Agent Option*, `RFC 3527
    <https://tools.ietf.org/html/rfc3527>`__: The link selection sub-option
    is supported.
+
+-  *PacketCable Security Ticket Control Sub-Option for the DHCP CableLabs
+   Client Configuration (CCC) Option*, `RFC 3594
+   <https://tools.ietf.org/html/rfc3594>`__: The Security Ticket Control
+   sub-option is supported.
+
+-  *Key Distribution Center (KDC) Server Address Sub-option for the
+   Dynamic Host Configuration Protocol (DHCP) CableLabs Client
+   Configuration (CCC) Option*, `RFC 3634
+   <https://tools.ietf.org/html/rfc3634>`__: The Key Distribution Center
+   IP Address sub-option is supported.
 
 -  *Unused Dynamic Host Configuration Protocol (DHCP) Option Codes*, `RFC 3679
    <https://tools.ietf.org/html/rfc3679>`__: Kea does not support any of the
@@ -8180,6 +8439,8 @@ at which it is currently supported.
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | require-client-classes      | no                         | n/a          | yes         | yes         | yes         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
+   | evaluate-additional-classes | no                         | n/a          | yes         | yes         | yes         |
+   +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | reservations-global         | yes                        | n/a          | yes         | yes         | n/a         |
    +-----------------------------+----------------------------+--------------+-------------+-------------+-------------+
    | reservations-in-subnet      | yes                        | n/a          | yes         | yes         | n/a         |
@@ -8272,29 +8533,61 @@ database:
 .. code-block:: json
 
    {
-     "Dhcp4": {
-       "server-tag": "my DHCPv4 server",
-       "config-control": {
-           "config-databases": [
-           {
-               "type": "mysql",
-               "name": "kea",
-               "user": "kea",
-               "password": "kea",
-               "host": "192.0.2.1",
-               "port": 3302
-           }
-           ],
-           "config-fetch-wait-time": 20
-       },
-       "hooks-libraries": [
-       {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_mysql_cb.so"
-       }, {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+       "Dhcp4": {
+           "server-tag": "my DHCPv4 server",
+           "config-control": {
+               "config-databases": [
+                   {
+                       "type": "mysql",
+                       "name": "kea",
+                       "user": "kea",
+                       "password": "1234",
+                       "host": "192.0.2.1",
+                       "port": 3302
+                   }
+               ],
+               "config-fetch-wait-time": 20
+           },
+           "hooks-libraries": [
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql.so"
+               },
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+               }
+           ]
        }
-       ]
-     }
+   }
+
+The following snippet illustrates the use of a PostgreSQL database:
+
+.. code-block:: json
+
+   {
+       "Dhcp4": {
+           "server-tag": "my DHCPv4 server",
+           "config-control": {
+               "config-databases": [
+                   {
+                       "type": "postgresql",
+                       "name": "kea",
+                       "user": "kea",
+                       "password": "1234",
+                       "host": "192.0.2.1",
+                       "port": 3302
+                   }
+               ],
+               "config-fetch-wait-time": 20
+           },
+           "hooks-libraries": [
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql.so"
+               },
+               {
+                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+               }
+           ]
+       }
    }
 
 The ``config-control`` map contains two parameters. ``config-databases``
@@ -8307,36 +8600,6 @@ only one database connection can be specified on the
 during startup or reconfiguration, and fetches the configuration
 available for this server from the database. This configuration is
 merged into the configuration read from the configuration file.
-
-The following snippet illustrates the use of a PostgreSQL database:
-
-.. code-block:: json
-
-   {
-     "Dhcp4": {
-       "server-tag": "my DHCPv4 server",
-       "config-control": {
-           "config-databases": [
-           {
-               "type": "postgresql",
-               "name": "kea",
-               "user": "kea",
-               "password": "kea",
-               "host": "192.0.2.1",
-               "port": 5432
-           }
-           ],
-           "config-fetch-wait-time": 20
-       },
-       "hooks-libraries": [
-       {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql_cb.so"
-       }, {
-           "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
-       }
-       ]
-     }
-   }
 
 .. note::
 
@@ -8376,11 +8639,11 @@ waiting for the next fetch cycle.
 
 In the configuration examples above, two hook libraries are loaded. The first
 is a library which implements the configuration backend for a specific database
-type: :ischooklib:`libdhcp_mysql_cb.so` provides support for MySQL and :ischooklib:`libdhcp_pgsql_cb.so`
-provides support for PostgreSQL. The library loaded must match the database
-``type`` specified within the ``config-control`` parameter; otherwise an error
-is logged when the server attempts to load its configuration, and the load
-fails.
+type: :ischooklib:`libdhcp_mysql.so` provides support for MySQL and
+:ischooklib:`libdhcp_pgsql.so` provides support for PostgreSQL. The library
+loaded must match the database ``type`` specified within the ``config-control``
+parameter; otherwise an error is logged when the server attempts to load its
+configuration, and the load fails.
 
 The second hook library, :ischooklib:`libdhcp_cb_cmds.so`, is optional. It should
 be loaded when the Kea server instance is to be used to manage the
@@ -8656,5 +8919,12 @@ the FLQ allocator only for selected subnets. That way, when a new subnet is
 added without an allocator specification, the global setting is used, thus
 avoiding unnecessary impact on the server's startup time.
 
-Like the random allocator, the FLQ allocator offers leases in
-random order, which makes it suitable for use with a shared lease database.
+.. warning::
+
+   The FLQ allocator is not suitable for use with a shared lease database
+   (i.e., when multiple Kea servers store leases in the same database).
+   The servers are unaware of the expired leases reclaimed by the
+   sibling servers and never return them to their local free lease queues.
+   As a result, the servers will not be able to offer some of the available
+   leases to the clients. Only a server reclaiming a particular lease will
+   be able to offer it.

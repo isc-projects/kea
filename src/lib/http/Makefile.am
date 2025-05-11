@@ -43,11 +43,12 @@ libkea_http_la_SOURCES += auth_log.cc auth_log.h
 libkea_http_la_SOURCES += auth_messages.cc auth_messages.h
 libkea_http_la_SOURCES += basic_auth_config.cc basic_auth_config.h
 libkea_http_la_SOURCES += basic_auth.cc basic_auth.h
+libkea_http_la_SOURCES += cfg_http_header.h cfg_http_header.cc
 
 libkea_http_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_http_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_http_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_http_la_LDFLAGS += -no-undefined -version-info 82:0:0
+libkea_http_la_LDFLAGS += -no-undefined -version-info 86:0:0
 
 libkea_http_la_LIBADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libkea_http_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
@@ -83,10 +84,12 @@ messages: auth_messages.cc auth_messages.h http_messages.h http_messages.cc
 	@echo Message files regenerated
 
 auth_messages.cc auth_messages.h: auth_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/auth_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/http/auth_messages.mes)
 
 http_messages.h http_messages.cc: http_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/http/http_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/http/http_messages.mes)
 
 else
 
@@ -103,6 +106,7 @@ libkea_http_include_HEADERS = \
 	auth_messages.h \
 	basic_auth.h \
 	basic_auth_config.h \
+	cfg_http_header.h \
 	client.h \
 	connection.h \
 	connection_pool.h \

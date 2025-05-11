@@ -52,7 +52,7 @@ typedef boost::shared_ptr<OptionCollection> OptionCollectionPtr;
 class SkipRemainingOptionsError : public Exception {
 public:
     SkipRemainingOptionsError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exception thrown during option unpacking
@@ -67,7 +67,7 @@ public:
 class SkipThisOptionError : public Exception {
 public:
     SkipThisOptionError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Wrapper exception thrown by unpackOptionsX functions to
@@ -75,7 +75,7 @@ public:
 class OptionParseError : public Exception {
 public:
     OptionParseError (const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 class Option {

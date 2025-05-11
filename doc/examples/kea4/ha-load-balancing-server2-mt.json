@@ -197,19 +197,19 @@
             "pools": [
                 {
                     "pool": "192.0.3.100 - 192.0.3.125",
-                    "client-class": "phones_server1"
+                    "client-classes": [ "phones_server1" ]
                 },
                 {
                     "pool": "192.0.3.126 - 192.0.3.150",
-                    "client-class": "laptops_server1"
+                    "client-classes": [ "laptops_server1" ]
                 },
                 {
                     "pool": "192.0.3.200 - 192.0.3.225",
-                    "client-class": "phones_server2"
+                    "client-classes": [ "phones_server2" ]
                 },
                 {
                     "pool": "192.0.3.226 - 192.0.3.250",
-                    "client-class": "laptops_server2"
+                    "client-classes": [ "laptops_server2" ]
                 }
             ],
 

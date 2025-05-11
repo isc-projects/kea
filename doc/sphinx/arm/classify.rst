@@ -134,17 +134,41 @@ The classification process is conducted in several steps:
 
 .. note::
 
-    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``, and ``lease6_rebind``
-    callouts are called here.
+    The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``,
+    and ``lease6_rebind`` callouts are called here.
 
-12. Classes marked as "required" are evaluated in the order in which
-    they are listed: first the shared network, then the subnet, and
-    finally the pools that assigned resources belong to.
+12. The ``evaluate-additional-classes`` lists (if any) are evaluated first
+    for the pool, then the subnet, and the finally shared-network to which the
+    assigned resources belong. Classes are evaluated in the order they appear
+    within each list.
 
 13. Options are assigned, again possibly based on the class information
     in the order that classes were associated with the incoming packet.
-    For DHCPv4 private and code 43 options, this includes option
-    definitions specified within classes.
+    The first class matched to the packet which specifies a given
+    option wins. For DHCPv4 private and code 43 options, this includes
+    option definitions specified within classes.  The order of precedence
+    for options is as follows:
+
+    1. Host options
+    2. Pool options
+    3. Subnet options
+    4. Shared network options
+    5. Options from classes assigned during normal classification:
+
+        a. ``ALL`` class
+        b. Vendor classes
+        c. Host classes
+        d. Evaluated classes that do not depend on ``KNOWN`` class
+        e. ``KNOWN`` and ``UNKNOWN`` classes
+        f. Evaluated classes that depend on ``KNOWN`` class
+
+    6. Options from classes in ``evaluate-additional-classes`` from:
+
+        a. Pool
+        b. Subnet
+        c. Shared network
+
+    7. Global options
 
 .. note::
 
@@ -730,16 +754,20 @@ A client class definition can contain the following properties:
    The resulting spawned class has the following generated name format:
    ``SPAWN_<template-class-name>_<evaluated-value>``.
    After classes are evaluated and a spawned class is generated, the corresponding
-   template class name is also associated with the packet.
+   template class name is also associated with the packet. An Option specified in a
+   spawned class will take precedence over the same option if set in its template class.
  - The ``option-data`` list is not mandatory and contains options that should be
    assigned to members of this class. In the case of a template class, these
    options are assigned to the generated spawned class.
  - The ``option-def`` list is not mandatory and is used to define custom options.
- - The ``only-if-required`` flag is not mandatory; when its value is set to
+ - The ``only-if-required`` has been replaced with ``only-in-additional-list`` and
+   is now deprecated. It will still be accepted as input for a time to allow users
+   to migrate but will eventually be unsupported.
+ - The ``only-in-additional-list`` flag is not mandatory; when its value is set to
    ``false`` (the default), membership is determined during classification and is
    available for subnet selection, for instance. When the value is set to
-   ``true``, membership is evaluated only when required and is usable only for
-   option configuration.
+   ``true``, membership is evaluated only if the class appears in an
+   ``evaluate-additional-classes`` list and is usable only for option configuration.
  - The ``user-context`` is not mandatory and represents a map with user-defined data
    and possibly configuration options for hook libraries.
  - The ``next-server`` parameter is not mandatory and configures the ``siaddr`` field in
@@ -906,18 +934,20 @@ expression for example purposes.
 Usually the ``test`` and ``template-test`` expressions are evaluated before
 subnet selection, but in some cases it is useful to evaluate it later when the
 subnet, shared network, or pools are known but output-option processing has not
-yet been done. For this purpose, the ``only-if-required`` flag, which is
+yet been done. For this purpose, the ``only-in-additional-list`` flag, which is
 ``false`` by default, allows the evaluation of the ``test`` expression or the
-``template-test`` expression only when it is required, i.e. in a
-``require-client-classes`` list of the selected subnet, shared network, or pool.
+``template-test`` expression only when it is required by the class's presence
+in the ``evaluate-additional-classes`` list of the selected pool, subnet, or
+shared network.
 
-The ``require-client-classes`` list, which is valid for shared-network, subnet,
-and pool scope, specifies the classes which are evaluated in the second pass
-before output-option processing. The list is built in reverse-precedence
-order of the option data, i.e. an option data item in a subnet takes precedence over
-one in a shared network, but a required class in a subnet is added after one in a
-shared network. The mechanism is related to the ``only-if-required`` flag but it
-is not mandatory that the flag be set to ``true``.
+The ``evaluate-additional-classes`` list, which is valid for pool, subnet,
+and shared-network scope, specifies the classes which are evaluated in
+the second pass before output-option processing. The list is built in
+same precedence order as the option data, i.e. an option data item in
+a subnet takes precedence over one in a shared network. An
+additional class in a subnet is added before one in a shared
+network. The mechanism is related to the ``only-in-additional-list`` flag but
+it is not mandatory that the flag be set to ``true``.
 
 .. note ::
 
@@ -994,9 +1024,19 @@ Pool selection is performed after all host reservations lookups.
 Configuring Subnets With Class Information
 ==========================================
 
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be rejected.
+
 In certain cases it is beneficial to restrict access to certain subnets
-only to clients that belong to a given class, using the ``client-class``
-keyword when defining the subnet.
+only to clients that belong to a given class, using the ``client-classes``
+parameter when defining the subnet.  This parameter may be used to specify
+a list of one or more classes to which clients must belong in order to
+use the subnet. This can be referred to as a class guard for the subnet, or in
+other words the subnet is guarded by a client class.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that
@@ -1028,7 +1068,7 @@ this subnet. Such a configuration can be achieved in the following way:
                "id": 1,
                "subnet": "192.0.2.0/24",
                "pools": [ { "pool": "192.0.2.10 - 192.0.2.20" } ],
-               "client-class": "Client_foo"
+               "client-classes": [ "Client_foo" ]
            },
            ...
        ],
@@ -1063,7 +1103,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
                "id": 1,
                "subnet": "2001:db8:1::/64",
                "pools": [ { "pool": "2001:db8:1::-2001:db8:1::ffff" } ],
-               "client-class": "Client_enterprise"
+               "client-classes": "Client_enterprise"
            }
        ],
        ...
@@ -1074,9 +1114,18 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
 Configuring Pools With Class Information
 ========================================
 
+.. note:
+
+    As of Kea 2.7.5, ``client-class`` (a single class name) has been replaced
+    with ``client-classes`` (a list of one or more class names) and is now
+    deprecated. It will still be accepted as input for a time to allow users
+    to migrate but will eventually be unsupported.
+
 Similar to subnets, in certain cases access to certain address or prefix
-pools must be restricted to only clients that belong to a given class,
-using the ``client-class`` when defining the pool.
+pools must be restricted to only clients that belong to at least one of a
+list of one or more classes, using the ``client-classes`` when defining
+the pool. This can be referred to as a class guard for the pool, or in other
+words the pool is guarded by a client class.
 
 Let's assume that the server is connected to a network segment that uses the
 192.0.2.0/24 prefix. The administrator of that network has decided that
@@ -1110,7 +1159,7 @@ to use this pool. Such a configuration can be achieved in the following way:
                "pools": [
                    {
                        "pool": "192.0.2.10 - 192.0.2.20",
-                       "client-class": "Client_foo"
+                       "client-classes": [ "Client_foo" ]
                    }
                ]
            },
@@ -1151,7 +1200,7 @@ configuration restricts use of the addresses in the range 2001:db8:1::1 to
                "pools": [
                    {
                        "pool": "2001:db8:1::-2001:db8:1::ffff",
-                       "client-class": "Client_foo"
+                       "client-classes": [ "Client_foo" ]
                    }
                ]
            },
@@ -1164,8 +1213,9 @@ Class Priority
 ==============
 
 Client classes in Kea follow the order in which they are specified in the
-configuration (vs. alphabetical order). Required classes follow the order in
-which they are required.
+configuration (vs. alphabetical order). Additional classes are ordered by
+pool, subnet, and then shared-network and within each scope by the order in
+which they appear in ``evaluate-additional-classes``.
 
 When determining which client-class information (comprised of
 options, lease lifetimes, or DHCPv4 field values) is part of the class
@@ -1184,6 +1234,12 @@ On the other hand, lease lifetimes and DHCPv4 field values defined at class
 scope override any values defined globally, in a subnet scope, or in a
 shared-network scope.
 
+.. note::
+   Because additional evaluation occurs after lease assignment, parameters
+   that would otherwise impact lease life times (e.g. ``valid-lifetime``,
+   ``offer-lifetime``) will have no effect when specified in a class that
+   also sets ``only-in-additional-list`` true.
+
 As an example, imagine that an incoming packet matches two classes.
 Class ``foo`` defines values for an NTP server (option 42 in DHCPv4) and
 an SMTP server (option 69 in DHCPv4), while class ``bar`` defines values
@@ -1192,6 +1248,144 @@ examines the three options - NTP, SMTP, and POP3 - and returns any that
 the client requested. As the NTP server was defined twice, the server
 chooses only one of the values for the reply; the class from which the
 value is obtained is determined as explained in the previous paragraphs.
+
+.. _option-class-tagging:
+
+Option Class-Tagging
+====================
+
+Option class-tagging allows an option value to be conditionally applied
+to the response based on the client's class membership.  The effect is
+similar to using an if-block in ISC DHCP to conditionally include
+options at a given scope.  Class-tagging is done by specifying a list of
+one of more class names in the option's ``client-classes`` entry.
+
+Consider a case where members of a given class need the same value for
+one option but a subnet-specific value for another option.  The following
+example shows class-tagging used to give clients who belong to "GROUP1"
+a subnet-specific value for option "bar", while giving all members of "GROUP1"
+the same value for option "foo":
+
+.. code-block:: javascript
+
+    {
+        "client-classes": [
+        {
+            "name": "GROUP1",
+            "test":"substring(option[123].hex,0,4) == 'ONE'",
+            "option-data": [{
+                "name": "foo",
+                "data": "somefile.txt"
+            }]
+        }],
+        "subnet4": [
+        {
+            "id": 1,
+            "subnet": "178.16.1.0/24",
+            "option-data": [{
+                "client-classes": ["GROUP1"],
+                "name": "bar",
+                "data": 123
+            }]
+        },
+        {
+            "id": 2,
+            "subnet": "178.16.2.0/24",
+            "option-data": [
+            {
+                "client-classes": ["GROUP1"],
+                "name": "bar",
+                "data": 789
+            }]
+        }]
+    }
+
+The ``client-classes`` list is allowed in an option specification at
+any scope.  Option class-tagging is enforced at the time options are
+being added to the response which occurs after lease assignment just
+before the response is to be sent to the client.
+
+When ``never-send`` for an option is true at any scope, all
+``client-classes`` entries for that option are ignored. The
+option will not be included.
+
+When ``always-send`` is true at any scope, the option will be
+included unless, the option determined by scope specifies
+a ``client-classes`` list that does not contain any of the
+client's classes.
+
+Otherwise, an option requested by the client will be included in
+the response if  the option either does not specify ``client-classes``
+or the client belongs to at least one of the classes in ``client-classes``.
+
+When an option's class-tag does not match, it is as though
+the option was not specified at that scope.  In the following
+example the option "foo" is specified for both the subnet and
+the pool.  The pool specification includes a class-tag that limits
+the option to members of class "melon":
+
+.. code-block:: javascript
+
+    {
+        "id": 100,
+        "subnet": "178.16.1.0/24",
+        "option-data": [{
+            "name": "foo",
+            "data": 456
+        }],
+        "pools": [{
+            "pool": "178.16.1.100 - 178.16.1.200",
+            "option-data": [{
+                "name": "foo",
+                "data": 123,
+                "client-classes" : [ "melon" ]
+            }]
+        }]
+    }
+
+Clients that match class "melon" will have a value of 123 for option "foo",
+while clients that do not match "melon" will have a value of 456 for option
+"foo".
+
+It is possible to achieve an if-elseif-else effect but specifying an option
+more than once with different class tags and values. Consider the following
+configuration for a subnet which provides three possible values for the
+"server-str" option:
+
+.. code-block:: javascript
+
+    {
+        "id": 1,
+        "subnet": "192.0.1.0/24",
+        "pools": [{ "pool": "192.0.1.1 - 192.0.1.255" }],
+        "option-data": [{
+            "client-classes":  [ "class-one" ],
+            "name": "server-str",
+            "data": "string.one"
+        },{
+            "client-classes":  [ "class-two" ],
+            "name": "server-str",
+            "data": "string.two"
+        },{
+            "name": "server-str",
+            "data": "string.other"
+       }]
+    }
+
+Clients belonging to "class-one" will get a value of "string.one", clients
+belonging to "class-two" will get a value of "string.two", and clients that
+belong to neither "class-one" nor "class-two" will get a value of
+"string.other".
+
+.. note::
+
+    The order that the options are tested is not guaranteed other than an option
+    with an empty "client-classes" list is checked last.
+
+.. note::
+
+    Though examples above are for DHCPv4, class-tagging syntax and
+    behavior is the same for DHCPv6.
 
 Classes and Hooks
 =================

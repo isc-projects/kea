@@ -1,4 +1,4 @@
-// Copyright (C) 2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <http/header_context.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
-#include <vector>
 
 namespace isc {
 namespace http {
@@ -30,7 +29,7 @@ struct HttpRequestContext {
     /// @brief HTTP minor version number.
     unsigned int http_version_minor_;
     /// @brief Collection of HTTP headers.
-    std::vector<HttpHeaderContext> headers_;
+    HttpHeaderContexts headers_;
     /// @brief HTTP request body.
     std::string body_;
 };

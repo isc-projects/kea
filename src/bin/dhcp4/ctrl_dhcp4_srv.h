@@ -279,6 +279,32 @@ private:
     commandLeasesReclaimHandler(const std::string& command,
                                 isc::data::ConstElementPtr args);
 
+    /// @brief Handler for processing 'subnet4-select-test' command
+    ///
+    /// This handler processes subnet4-select-test command, which returns
+    /// the result of DHCPv4 subnet selected.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments map { <selector>: <value> }
+    ///
+    /// @return status of the command with the selection result
+    isc::data::ConstElementPtr
+    commandSubnet4SelectTestHandler(const std::string& command,
+                                    isc::data::ConstElementPtr args);
+
+    /// @brief Handler for processing 'subnet4o6-select-test' command
+    ///
+    /// This handler processes subnet4o6-select-test command, which returns
+    /// the result of DHCP4o6 subnet selected.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments map { <selector>: <value> }
+    ///
+    /// @return status of the command with the selection result
+    isc::data::ConstElementPtr
+    commandSubnet4o6SelectTestHandler(const std::string& command,
+                                      isc::data::ConstElementPtr args);
+
     /// @brief handler for server-tag-get command
     ///
     /// This method handles the server-tag-get command, which retrieves

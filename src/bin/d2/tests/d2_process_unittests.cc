@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,6 @@
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <sstream>
 
 using namespace std;
 using namespace isc;
@@ -69,10 +68,12 @@ public:
                   asiolink::IOServicePtr(new isc::asiolink::IOService())) {
         HooksManager::setTestMode(false);
         D2Controller::instance();
+        init();
     }
 
     /// @brief Destructor
     virtual ~D2ProcessTest() {
+        D2Controller::instance().reset();
     }
 
     /// @brief Callback that will invoke shutdown method.
@@ -316,7 +317,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // Manually enqueue max requests.
     dhcp_ddns::NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(test_msg));
-    for (int i = 0; i < max_queue_size; i++) {
+    for (size_t i = 0; i < max_queue_size; i++) {
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
         ASSERT_NO_THROW(queue_mgr->enqueue(ncr));
@@ -337,7 +338,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
     // dequeue, until we reach the resume threshold.  This simulates update
     // manager consuming jobs.  Queue manager should remain stopped during
     // this loop.
-    int resume_threshold = (max_queue_size * QUEUE_RESTART_PERCENT);
+    size_t resume_threshold = (max_queue_size * QUEUE_RESTART_PERCENT);
     while (queue_mgr->getQueueSize() > resume_threshold) {
         checkQueueStatus();
         ASSERT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr->getMgrState());

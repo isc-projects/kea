@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/tcp/tcp_messages.mes
+// File created from src/lib/tcp/tcp_messages.mes
 
 #ifndef TCP_MESSAGES_H
 #define TCP_MESSAGES_H

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,7 +74,7 @@ public:
 
     /// @brief Constructor
     FqdnDhcpv6SrvTest()
-        : Dhcpv6SrvTest(), srv_(new NakedDhcpv6Srv(0)),
+        : Dhcpv6SrvTest(),
           d2_mgr_(CfgMgr::instance().getD2ClientMgr()),
           iface_mgr_test_config_(true) {
         // generateClientId assigns DUID to duid_.
@@ -255,12 +255,17 @@ public:
     ///
     /// @param iaid IAID
     /// @param pkt A DHCPv6 message to which the IA option should be added.
-    void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt) {
+    /// @param cxt allocation engine context to which IA option should be
+    /// added.
+    void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt,
+               AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR, addr,
                                                       300, 500));
         opt_ia->addOption(opt_iaaddr);
         pkt->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
     }
 
     /// @brief Adds IA option to the message.
@@ -270,10 +275,15 @@ public:
     /// @param iaid IAID
     /// @param status_code Status code
     /// @param pkt A DHCPv6 message to which the option should be added.
-    void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt) {
+    /// @param cxt allocation engine context to which IA option should be
+    /// added.
+    void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt,
+               AllocEngine::ClientContext6& ctx) {
         Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         addStatusCode(status_code, "", opt_ia);
         pkt->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
     }
 
     /// @brief Creates status code with the specified code and message.
@@ -347,12 +357,12 @@ public:
                                                 ? DHCPV6_ADVERTISE :
                                                 DHCPV6_REPLY);
 
-        // Create three IAs, each having different address.
-        addIA(1234, IOAddress("2001:db8:1::1"), answer);
-
         AllocEngine::ClientContext6 ctx;
         // Set the selected subnet so ddns params get returned correctly.
         ctx.subnet_ = subnet_;
+
+        // Create three IAs, each having different address.
+        addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
         ASSERT_NO_THROW(srv_->processClientFqdn(question, answer, ctx));
         Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
@@ -510,9 +520,10 @@ public:
         // FQDN option.
         OptionPtr srvid = srv_->getServerID();
         // Set the appropriate FQDN type. It must be partial if hostname is
-        // empty.
-        Option6ClientFqdn::DomainNameType fqdn_type = (hostname.empty() ?
+        // empty or if it does not end with dot '.'.
+        Option6ClientFqdn::DomainNameType fqdn_type = ((hostname.empty() || hostname.back() != '.') ?
             Option6ClientFqdn::PARTIAL : Option6ClientFqdn::FULL);
+
         Pkt6Ptr req = generateMessage(msg_type, client_flags,
                                       hostname, fqdn_type, include_oro, srvid);
 
@@ -607,6 +618,9 @@ public:
     /// @param exp_cr_mode expected value of NCR::conflict_resolution_mode_
     /// @param ddns_ttl_percent expected value of ddns_ttl_percent used for
     /// the NCR
+    /// @param exp_ddns_ttl expected configured value for ddns-ttl
+    /// @param exp_ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param exp_ddns_ttl_max expected configured value for ddns-ttl-max
     void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
@@ -616,7 +630,10 @@ public:
                                  const std::string& fqdn = "",
                                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
                                  util::Optional<double> exp_ddns_ttl_percent
-                                 = util::Optional<double>()) {
+                                 = util::Optional<double>(),
+                                 Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
+                                 Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
+                                 Optional<uint32_t> exp_ddns_ttl_max = Optional<uint32_t>()) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
         ASSERT_TRUE(ncr);
@@ -629,7 +646,8 @@ public:
             EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
         }
 
-        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent);
+        uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent, exp_ddns_ttl,
+                                        exp_ddns_ttl_min, exp_ddns_ttl_max);
         if (expires != 0) {
             EXPECT_EQ(expires + ttl, ncr->getLeaseExpiresOn());
         }
@@ -651,7 +669,7 @@ public:
     /// @brief Updates inherited subnet and pool members
     ///
     /// Hack added to set subnet_ and pool_ members that are buried into lower
-    /// level tests such as checkLease(), so one can use "configure" functionality
+    /// level tests such as checkLease(), so one can use "meson setup" functionality
     /// rather than hand-building configured objects
     /// @param subnet_idx Element index of the desired subnet
     /// @param pool_idx Element index of the desired pool within the desired subnet
@@ -671,15 +689,72 @@ public:
         ASSERT_TRUE(subnet_);
 
         const PoolCollection& pool_col = subnet_->getPools(type);
-        ASSERT_EQ(pool_idx + 1, pool_col.size());
+        ASSERT_LE(pool_idx + 1, pool_col.size());
         PoolPtr pool = (subnet_->getPools(type)).at(pool_idx);
         ASSERT_TRUE(pool);
         pool_ = boost::dynamic_pointer_cast<Pool6>(pool);
         ASSERT_TRUE(pool);
     }
 
-    /// Pointer to Dhcpv6Srv that is used in tests
-    boost::scoped_ptr<NakedDhcpv6Srv> srv_;
+    /// @brief Verifies that DDNS TTL parameters are used when specified.
+    ///
+    /// @param valid_flt lease life time
+    /// @param ddns_ttl_percent expected configured value for ddns-ttl-percent
+    /// @param ddns_ttl expected configured value for ddns-ttl
+    /// @param ddns_ttl_min expected configured value for ddns-ttl-min
+    /// @param ddns_ttl_max expected configured value for ddns-ttl-max
+    void testDdnsTtlParameters(uint32_t valid_lft,
+                               Optional<double> ddns_ttl_percent = Optional<double>(),
+                               Optional<uint32_t> ddns_ttl = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_min = Optional<uint32_t>(),
+                               Optional<uint32_t> ddns_ttl_max = Optional<uint32_t>()) {
+
+        // Create Reply message with Client Id and Server id.
+        Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+
+        // Create NameChangeRequest for the first allocated address.
+        AllocEngine::ClientContext6 ctx;
+        subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+        subnet_->setDdnsTtlPercent(ddns_ttl_percent);
+        subnet_->setDdnsTtl(ddns_ttl);
+        subnet_->setDdnsTtlMin(ddns_ttl_min);
+        subnet_->setDdnsTtlMax(ddns_ttl_max);
+
+        ctx.subnet_ = subnet_;
+        ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
+        // Create an IA.
+        Option6IAPtr opt_ia = generateIA(D6O_IA_NA, 1234, 1500, 3000);
+        Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR,
+                                                      IOAddress("2001:db8:1::1"),
+                                                      valid_lft, valid_lft));
+        opt_ia->addOption(opt_iaaddr);
+        answer->addOption(opt_ia);
+        ctx.createIAContext();
+        ctx.currentIA().ia_rsp_ = opt_ia;
+
+        // Use domain name in upper case. It should be converted to lower-case
+        // before DHCID is calculated. So, we should get the same result as if
+        // we typed domain name in lower-case.
+        Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                     "MYHOST.EXAMPLE.COM",
+                                                     Option6ClientFqdn::FULL);
+        answer->addOption(fqdn);
+
+        ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
+        ASSERT_EQ(1, d2_mgr_.getQueueSize());
+
+        // Verify that NameChangeRequest is correct.
+        verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                "2001:db8:1::1",
+                                "000201415AA33D1187D148275136FA30300478"
+                                "FAAAA3EBD29826B5C907B2C9268A6F52",
+                                0, valid_lft, "", NO_CHECK_WITH_DHCID,
+                                ddns_ttl_percent,
+                                ddns_ttl,
+                                ddns_ttl_min,
+                                ddns_ttl_max);
+    }
 
     // Reference to D2ClientMgr singleton
     D2ClientMgr& d2_mgr_;
@@ -823,10 +898,15 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
-    addIA(2345, IOAddress("2001:db8:1::2"), answer);
-    addIA(3456, IOAddress("2001:db8:1::3"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
+    addIA(2345, IOAddress("2001:db8:1::2"), answer, ctx);
+    addIA(3456, IOAddress("2001:db8:1::3"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -836,10 +916,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -857,8 +934,14 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // Create NameChangeRequest for the first allocated address.
+    AllocEngine::ClientContext6 ctx;
+    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -868,11 +951,6 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
@@ -893,8 +971,13 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
+    // An attempt to send a NCR would throw.
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = subnet_;
+    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
+
     // Create three IAs, each having different address.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
 
     // Use domain name in upper case. It should be converted to lower-case
     // before DHCID is calculated. So, we should get the same result as if
@@ -904,10 +987,6 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // An attempt to send a NCR would throw.
-    AllocEngine::ClientContext6 ctx;
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
     ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
 }
 
@@ -1696,7 +1775,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
         " }\n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
 
     // Load a configuration with D2 enabled
@@ -1724,7 +1803,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     ASSERT_EQ(0, CfgMgr::instance().getD2ClientMgr().getQueueSize());
 
     // Now let's try with a client on subnet 2.
-    Dhcp6Client client2;
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestAddress();
 
@@ -1797,7 +1876,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
         " } \n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
     client1.requestAddress();
 
@@ -1837,7 +1916,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
 
     // Now let's try with a different client. Subnet 1 is full so we should get an
     // address from subnet 2.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth0");
     client2.requestAddress();
 
@@ -1954,7 +2033,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
         " } \n"
     "}";
 
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth0");
     client1.requestAddress();
 
@@ -1994,7 +2073,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
 
     // Now let's try with a different client. Subnet 1 is full so we should get an
     // address from subnet 2.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth0");
     client2.requestAddress();
 
@@ -2147,38 +2226,203 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     }
 }
 
-// Verify that when specified ddns-ttl-percent is used to calculate
-// the lease length in an NCR.
-TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercent) {
-    // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
+// Verify the ddns-ttl-percent is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlPercentTest) {
+    testDdnsTtlParameters(2100, 0.5);
+}
 
-    // Create an IA.
-    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+// Verify the ddns-ttl is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          999,                      // ttl
+                          Optional<uint32_t>(),     // min
+                          Optional<uint32_t>());    // max
+}
 
-    // Use domain name in upper case. It should be converted to lower-case
-    // before DHCID is calculated. So, we should get the same result as if
-    // we typed domain name in lower-case.
-    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
-                                                 "MYHOST.EXAMPLE.COM",
-                                                 Option6ClientFqdn::FULL);
-    answer->addOption(fqdn);
+// Verify the ddns-ttl-min is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMinTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl
+                          800,                      // ttl-min
+                          Optional<uint32_t>());    // ttl-max
+}
 
-    // Create NameChangeRequest for the first allocated address.
-    AllocEngine::ClientContext6 ctx;
-    subnet_->setDdnsConflictResolutionMode("no-check-with-dhcid");
-    subnet_->setDdnsTtlPercent(Optional<double>(0.10));
-    ctx.subnet_ = subnet_;
-    ctx.fwd_dns_update_ = ctx.rev_dns_update_ = true;
-    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer, ctx));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+// Verify the ddns-ttl-max is used when specified.
+TEST_F(FqdnDhcpv6SrvTest, ddnsTtlMaxTest) {
+    testDdnsTtlParameters(2100,                     // valid lft
+                          Optional<double>(),       // percent
+                          Optional<uint32_t>(),     // ttl
+                          Optional<uint32_t>(),     // ttl-min
+                          500);                     // ttl-max
+}
 
-    // Verify that NameChangeRequest is correct.
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::1",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", NO_CHECK_WITH_DHCID, subnet_->getDdnsTtlPercent());
+// Verify pool-level DDNS parameters are used.
+// We don't verify all of them, just enough
+// enough to ensure proper scoping of values.
+TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
+
+    // A configuration with following pools:
+    // 1. Specifies a qualifying suffix
+    // 2. Specifies no DDNS parameters
+    // 3. Disables DDNS updates
+    // 4. Specifies a qualifying suffix but disables DDNS updates
+    std::string config = R"(
+    {
+        "interfaces-config": { "interfaces": [ "*" ] },
+        "dhcp-ddns": { "enable-updates": true },
+        "valid-lifetime": 4000,
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "subnet6": [{
+            "subnet": "2001:db8::/64",
+            "interface": "eth0",
+            "id": 1,
+            "ddns-qualifying-suffix": "subfix.com",
+            "pools": [{
+                "pool": "2001:db8::1-2001:db8::1",
+                "ddns-qualifying-suffix": "poolfix.com",
+            },
+            {
+                "pool": "2001:db8::2-2001:db8::2",
+            },
+            {
+                "pool": "2001:db8::3-2001:db8::3",
+                "ddns-send-updates": false
+            },
+            {
+                "pool": "2001:db8::4-2001:db8::4",
+                "ddns-qualifying-suffix": "pool4fix.com",
+                "ddns-send-updates": false
+            }]
+          }]
+    })";
+
+    // Load the configuration with D2 enabled.
+    ASSERT_NO_FATAL_FAILURE(configure(config));
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(srv_->startD2());
+
+    struct Scenario {
+        std::vector<uint8_t> raw_duid_;
+        IOAddress expected_address_;
+        std::string client_fqdn_;
+        std::string expected_fqdn_;
+        bool expect_ncr_;
+        std::string expected_dhcid_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        { 0x01, 0x01, 0x01, 0x01 },
+        IOAddress("2001:db8::1"),
+        "myhost",
+        "myhost.poolfix.com.",
+        true,
+        "0002019572DE453862C45A48A5F8498C440BC8A3038B89CFA93E5E1ABACA7599EFDDE9"
+    },
+    {
+        { 0x02, 0x02, 0x02, 0x02 },
+        IOAddress("2001:db8::2"),
+        "myhost",
+        "myhost.subfix.com.",
+        true,
+        "000201EB88CE3092CF3F22758AD0AAA19CD5C10B3F45EC1883601F586A48E6E3768EE0"
+    },
+    {
+        { 0x03, 0x03, 0x03, 0x03 },
+        IOAddress("2001:db8::3"),
+        "myhost",
+        "myhost.subfix.com.",
+        false,
+        ""
+    },
+    {
+        { 0x04, 0x04, 0x04, 0x04 },
+        IOAddress("2001:db8::4"),
+        "myhost",
+        "myhost.pool4fix.com.",
+        false,
+        ""
+    }};
+
+    for (auto const& scenario : scenarios) {
+        // Build a REQUEST per the scenario.
+        Pkt6Ptr query = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+        query->setIface("eth0");
+        query->setIndex(ETH0_INDEX);
+
+        // Add the client id.
+        OptionPtr client_id(new Option(Option::V6, D6O_CLIENTID,
+                            scenario.raw_duid_));
+        query->addOption(client_id);
+        query->addOption(srv_->getServerID());
+
+        // Add an IA requesting the expected address.
+        Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
+        OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR,
+                                             scenario.expected_address_,
+                                             300, 500));
+        ia->addOption(hint_opt);
+        query->addOption(ia);
+
+        // Add an FQDN option. We set it to partial to ensure we qualify
+        // it with a suffix.
+        query->addOption(createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                          scenario.client_fqdn_,
+                                          Option6ClientFqdn::PARTIAL));
+
+        // Process the REQUEST.
+        Pkt6Ptr reply;
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !srv_->earlyGHRLookup(query, ctx);
+        ASSERT_FALSE(drop);
+        ctx.subnet_ = srv_->selectSubnet(query, drop);
+        ASSERT_FALSE(drop);
+        srv_->initContext(ctx, drop);
+        ASSERT_FALSE(drop);
+        ASSERT_NO_THROW(reply = srv_->processRequest(ctx));
+        checkResponse(reply, DHCPV6_REPLY, 1234);
+
+        // Fetch the IA_NA from response.
+        OptionPtr tmp = reply->getOption(D6O_IA_NA);
+        ASSERT_TRUE(tmp);
+        ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+        ASSERT_TRUE(ia);
+
+        // Check that we got the address we requested.
+        tmp = ia->getOption(D6O_IAADDR);
+        boost::shared_ptr<Option6IAAddr> addr
+            = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
+        ASSERT_TRUE(addr);
+        EXPECT_EQ(addr->getAddress(), scenario.expected_address_);
+
+        // Check that the lease exists with the correct FDQN.
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                addr->getAddress());
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(lease->hostname_, scenario.expected_fqdn_);
+
+        // Verify the FQDN in the response is correct.
+        Option6ClientFqdnPtr fqdn;
+        ASSERT_TRUE(fqdn = boost::dynamic_pointer_cast<
+                        Option6ClientFqdn>(reply->getOption(D6O_CLIENT_FQDN)));
+        EXPECT_EQ(fqdn->getDomainName(), scenario.expected_fqdn_);
+
+        // Verify the NCR if we expect one.
+        if (!scenario.expect_ncr_) {
+            ASSERT_EQ(0, d2_mgr_.getQueueSize());
+        } else {
+            ASSERT_EQ(1, d2_mgr_.getQueueSize());
+            verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                    scenario.expected_address_.toText(),
+                                    scenario.expected_dhcid_,
+                                    0, 4000,
+                                    scenario.expected_fqdn_);
+        }
+    }
 }
 
 } // end of anonymous namespace

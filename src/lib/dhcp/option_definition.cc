@@ -772,7 +772,7 @@ OptionPtr
 OptionDefinition::factoryIA6(uint16_t type,
                              OptionBufferConstIter begin,
                              OptionBufferConstIter end) {
-    if (std::distance(begin, end) < Option6IA::OPTION6_IA_LEN) {
+    if (static_cast<size_t>(std::distance(begin, end)) < Option6IA::OPTION6_IA_LEN) {
         isc_throw(isc::OutOfRange, "input option buffer has invalid size,"
                   << " expected at least " << Option6IA::OPTION6_IA_LEN
                   << " bytes");
@@ -785,7 +785,7 @@ OptionPtr
 OptionDefinition::factoryIAAddr6(uint16_t type,
                                  OptionBufferConstIter begin,
                                  OptionBufferConstIter end) {
-    if (std::distance(begin, end) < Option6IAAddr::OPTION6_IAADDR_LEN) {
+    if (static_cast<size_t>(std::distance(begin, end)) < Option6IAAddr::OPTION6_IAADDR_LEN) {
         isc_throw(isc::OutOfRange,
                   "input option buffer has invalid size, expected at least "
                   << Option6IAAddr::OPTION6_IAADDR_LEN << " bytes");
@@ -799,7 +799,7 @@ OptionPtr
 OptionDefinition::factoryIAPrefix6(uint16_t type,
                                  OptionBufferConstIter begin,
                                  OptionBufferConstIter end) {
-    if (std::distance(begin, end) < Option6IAPrefix::OPTION6_IAPREFIX_LEN) {
+    if (static_cast<size_t>(std::distance(begin, end)) < Option6IAPrefix::OPTION6_IAPREFIX_LEN) {
         isc_throw(isc::OutOfRange,
                   "input option buffer has invalid size, expected at least "
                   << Option6IAPrefix::OPTION6_IAPREFIX_LEN << " bytes");

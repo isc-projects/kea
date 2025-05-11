@@ -84,8 +84,8 @@ TEST(IPRangePermutationTest, ipv4) {
     // for two different permutations. It is ok if some of them are equal because it
     // is statistically probable. The threshold of 20% should guard against some
     // of them being equal without a risk of sporadic test failures.
-    int overlaps = 0;
-    for (auto i = 0; i < iterations[0].size(); ++i) {
+    size_t overlaps = 0;
+    for (size_t i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
             ++overlaps;
         }
@@ -146,8 +146,8 @@ TEST(IPRangePermutationTest, ipv6) {
     // for two different permutations. It is ok if some of them are equal because it
     // is statistically probable. The threshold of 20% should guard against some
     // of them being equal without a risk of sporadic test failures.
-    int overlaps = 0;
-    for (auto i = 0; i < iterations[0].size(); ++i) {
+    size_t overlaps = 0;
+    for (size_t i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
             ++overlaps;
         }
@@ -209,8 +209,8 @@ TEST(IPRangePermutationTest, pd) {
     // for two different permutations. It is ok if some of them are equal because it
     // is statistically probable. The threshold of 20% should guard against some
     // of them being equal without a risk of sporadic test failures.
-    int overlaps = 0;
-    for (auto i = 0; i < iterations[0].size(); ++i) {
+    size_t overlaps = 0;
+    for (size_t i = 0; i < iterations[0].size(); ++i) {
         if (iterations[0][i] == iterations[1][i]) {
             ++overlaps;
         }

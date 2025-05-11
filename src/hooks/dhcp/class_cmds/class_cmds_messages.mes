@@ -1,0 +1,92 @@
+# Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% CLASS_CMDS_CLASS_ADD class added: %1
+The class-add command has been successful. Definition of the added
+class is logged.
+
+% CLASS_CMDS_CLASS_ADD_FAILED failed to add a new class: %1
+The class-add command has failed. The reason for failure is provided
+within the error message.
+
+% CLASS_CMDS_CLASS_ADD_HANDLER_FAILED failed to run handler for 'class-add' command
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-add' command handler fails to execute.
+
+% CLASS_CMDS_CLASS_DEL class deleted: %1
+The class-del command has been successful. The name of the deleted class
+is logged.
+
+% CLASS_CMDS_CLASS_DEL_EMPTY class not deleted (not found): %1
+The class-del command found no matching class. The name of the to be
+deleted class is logged.
+
+% CLASS_CMDS_CLASS_DEL_FAILED failed to delete a class: %1
+The class-del command has failed. The reason for failure is provided
+within the error message.
+
+% CLASS_CMDS_CLASS_DEL_HANDLER_FAILED failed to run handler for 'class-del' command
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-del' command handler fails to execute.
+
+% CLASS_CMDS_CLASS_GET successfully retrieved a class: %1
+The class-get command has been successful. The name of the retrieved class
+is logged.
+
+% CLASS_CMDS_CLASS_GET_EMPTY specified class was not found: %1
+The class-get command found no matching class. The name of the searched
+class is logged.
+
+% CLASS_CMDS_CLASS_GET_FAILED failed to retrieve a class: %1
+The class-get command has failed. The reason for failure is provided
+within the error message.
+
+% CLASS_CMDS_CLASS_GET_HANDLER_FAILED failed to run handler for 'class-get' command
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-get' command handler fails to execute.
+
+% CLASS_CMDS_CLASS_LIST successfully retrieved classes names
+The class-list command has been successful.
+
+% CLASS_CMDS_CLASS_LIST_EMPTY no class was found
+The class-list command found no class.
+
+% CLASS_CMDS_CLASS_LIST_FAILED failed to retrieve classes names: %1
+The class-list command has failed. The reason for failure is provided
+within the error message.
+
+% CLASS_CMDS_CLASS_LIST_HANDLER_FAILED failed to run handler for 'class-list' command
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-list' command handler fails to execute.
+
+% CLASS_CMDS_CLASS_UPDATE class updated: %1
+The class-update command has been successful. Parameters of the updated
+class are logged.
+
+% CLASS_CMDS_CLASS_UPDATE_EMPTY class not updated (not found): %1
+The class-update command found no matching class. The name of the to be
+updated class is logged.
+
+% CLASS_CMDS_CLASS_UPDATE_FAILED failed to update a class: %1
+The class-update command has failed. The reason for failure is provided
+within the error message.
+
+% CLASS_CMDS_CLASS_UPDATE_HANDLER_FAILED failed to run handler for 'class-update' command
+This error message is logged when the class_cmds hooks library experiences
+an unexpected error when 'class-update' command handler fails to execute.
+
+% CLASS_CMDS_DEINIT_OK unloading Class Commands hooks library successful
+This info message indicates that the Class Commands hooks library has been
+removed successfully.
+
+% CLASS_CMDS_INIT_FAILED loading Class Commands hooks library failed: %1
+This error message indicates an error during loading the Class Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% CLASS_CMDS_INIT_OK loading Class Commands hooks library successful
+This info message indicates that the Class Commands hooks library has been
+loaded successfully. Enjoy!

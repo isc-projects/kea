@@ -1,0 +1,163 @@
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Flexible Identifier Hooks Library
+
+Welcome to Kea Flexible Identifier Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+flex-id library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section libdhcp_flex_idUser How To Use Libdhcp_flex_id
+## Introduction
+libdhcp_flex_id is a hooks library which customizes the host reservation
+mechanism by introducing new, fully configurable identifier. Instead of
+relying on any specific property, e.g. hardware address, it allows user to
+define an expression and use value of that expression computed for each
+incoming packet to be used as identifier.
+
+## Configuring the DHCP Modules
+
+It must be configured as a hook library for the desired DHCP server
+modules.  Note that the flex_id library is installed alongside the
+Kea libraries in "<install-dir>/lib" where <install-dir> is determined
+by the --prefix meson setup option.  It defaults to
+"/usr/local". Assuming the default value then, configuring kea-dhcp4
+to load the flex_id library could be done with the following Kea4
+configuration:
+
+@code
+"Dhcp4": {
+    "hooks-libraries": [
+        {   "library": "/usr/local/lib/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "relay4[2].hex",
+                "replace-client-id": true
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+To configure it for kea-dhcp6, the commands are simply as shown below:
+
+@code
+"Dhcp6": {
+    "hooks-libraries": [
+        {   "library": "/usr/local/lib/libdhcp_flex_id.so",
+            "parameters": {
+                "identifier-expression": "relay6[0].option[37].hex",
+                "replace-client-id": true,
+                "ignore-iaid": false
+            }
+        },
+        ...
+    ]
+}
+@endcode
+
+Three parameters are supported:
+ - @b identifier-expression - Specifies the expression used to generate
+   an identifier. This expression uses the same syntax as client classification,
+   except it doesn't accept bool expressions, only strings.
+ - @b replace-client-id - Boolean value indicating if evaluated flexible
+   identifier should be used for lease identifiction in the lease database.
+   If set to true the flex-id library will replace client identifier (or DUID)
+   within client's packet with an identifier derived from flexible identifier.
+   This value will be stored in the database in place of client identifier
+   (or DUID).
+ - @b ignore-iaid - Boolean flag indicating if the IAID value should be ignored
+   by the Kea DHCPv6 server. It has no effect for the Kea DHCPv4 server.
+
+## Internal operation
+
+The first function called in @ref load() located in load_unload.cc. It checks
+if the necessary parameter is passed and then stores the expression as
+string.
+
+Kea engine checks if the library has functions that match known hook point
+names. This library has six such functions: @ref host4_identifier, @ref pkt4_receive,
+@ref pkt4_send, @ref host6_identifier, @ref pkt6_receive and @ref pkt6_send, all
+located in callouts.cc.
+
+In the typical scenario, the @ref pkt4_receive or @ref pkt6_receive callout is
+executed first, when the server receives a packet to be processed. It checks
+if the string expression is non-empty and then if the parsed expression is not
+empty. If parsed expression is empty, it parses the text expression. The parsed
+expression will be used throughout the lifetime of the hooks library instance
+and evaluated against each incoming packet to produce unique values (flexible
+identifiers). This evaluation is conducted using isc::eval::evaluateString (see
+Kea Developer's Guide) method. If the evaluated string is empty, the callout
+does nothing and simply returns.
+
+In the pkt6_receive callout, if the "ignore-iaid" parameter is enabled:
+ - if the packet contains only one IA_NA the IAID value will be changed to 0 and
+   stored as such in the lease storage.
+ - if the packet contains only one IA_PD the IAID value will be changed to 0 and
+   stored as such in the lease storage.
+ - if the incoming packet contains more than one IA_NA, the IAID value will not
+   be changed on any of the IA_NAs.
+ - if the incoming packet contains more than one IA_PD, the IAID value will not
+   be changed on any of the IA_PDs.
+
+If the evaluated string is non empty, it is used to replace existing or insert
+new client identifier option (depending if client identifier option exists)
+in the client's packet. The new client identifier option is created by inserting
+0 (client identifier type) followed by evaluated flexible identifier. This identifier
+will be used by the server throughout packet processing instead of the client
+supplied client identifier. The client supplied client identifier (if present)
+is stored in the hooks library context and will be put into the server's
+response in the @ref pkt4_send or @ref pkt6_send callout. In addition, the
+value of the flexible identifier value is stored in the library context and
+can be later used by other callouts.
+
+The @ref host4_identifier and @ref host6_identifier callouts are used to return
+flexible identifier to the server when the server is about to search for
+static host reservations. This identifier should be present in the hook library
+context after invocation of @ref pkt4_receive or @ref pkt6_receive callout.
+If it is not present for any reason, it is computed as described above for
+the @ref pkt4_receive and @ref pkt6_receive callouts.
+
+Finally, the @ref pkt4_send and @ref pkt6_send are used to restore original
+client identifier in a response to the client. If the original client identifier
+is not present in the hook library context it indicates that the client hasn't
+provided client identifier, in which case the client identifier is not put
+into the server's response. Any existing client identifiers are removed from
+the response in this case.
+
+If the "ignore-iaid" parameter is enabled, the initial IAID values for the IA_NA
+and IA_PD options are restored (if changed).
+
+In case any other library sets the SKIP flag before pkt4_send or pkt6_send, an
+exception with the message "the packet pack already handled" will be thrown, to
+indicate that the action can not be properly performed.
+To fix this, all other libraries which might set the SKIP flag must appear in the
+server configuration after this library.
+
+When "replace-client-id" parameter is set to false the operation of the
+library is simplified, i.e. the @ref pkt4_receive, @ref pkt6_receive,
+@ref pkt4_send and @ref pkt6_send are no-op. In this case, the flexible
+identifier is only used for identification of host reservations (not leases).
+The client identifier (or DUID) value supplied by the client is stored in the
+lease database. The default value of "replace-client-id" is false.
+
+The default value for "ignore-iaid" is false.
+
+@section libdhcp_flex_idMTCompatibility Multi-Threading Compatibility
+
+The libdhcp_flex_id hooks library is compatible with multi-threading.
+(it uses the callout context mechanism).
+
+*/

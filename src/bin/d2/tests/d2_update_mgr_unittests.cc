@@ -108,7 +108,7 @@ public:
 
         const char* dhcids[] = { "111111", "222222", "333333", "444444" };
         canned_count_ = 4;
-        for (int i = 0; i < canned_count_; i++) {
+        for (size_t i = 0; i < canned_count_; i++) {
             dhcp_ddns::NameChangeRequestPtr ncr = NameChangeRequest::
                                                   fromJSON(msg_str);
             ncr->setDhcid(dhcids[i]);
@@ -455,7 +455,7 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
     ASSERT_TRUE(canned_count_ >= 4);
 
     // Create a transaction for each canned request.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->makeTransaction(canned_ncrs_[i]));
     }
     // Verify we have that the transaction count is correct.
@@ -511,13 +511,13 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     ASSERT_TRUE(canned_count_ >= 4);
 
     // Put each transaction on the queue.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
     }
 
     // Invoke pickNextJob canned_count_ times which should create a
     // transaction for each canned ncr.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->pickNextJob());
         EXPECT_EQ(i + 1, update_mgr_->getTransactionCount());
         EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]->getDhcid()));
@@ -602,7 +602,7 @@ TEST_F(D2UpdateMgrTest, pickNextJobSkips) {
     ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
 
     // Put the valid transactions on the queue.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
     }
 
@@ -647,13 +647,13 @@ TEST_F(D2UpdateMgrTest, sweep) {
     EXPECT_EQ(canned_count_, update_mgr_->getMaxTransactions());
 
     // Put each transaction on the queue.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i]));
     }
 
     // Invoke sweep canned_count_ times which should create a
     // transaction for each canned ncr.
-    for (int i = 0; i < canned_count_; i++) {
+    for (size_t i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->sweep());
         EXPECT_EQ(i + 1, update_mgr_->getTransactionCount());
         EXPECT_TRUE(update_mgr_->hasTransaction(canned_ncrs_[i]->getDhcid()));

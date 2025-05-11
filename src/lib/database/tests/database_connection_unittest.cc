@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/default_credentials.h>
 #include <database/database_connection.h>
 #include <database/dbaccess_parser.h>
 #include <exceptions/exceptions.h>
@@ -108,7 +109,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbLostCallback(datasrc.reconnectCtl()));
@@ -126,7 +127,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbRecoveredCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbRecoveredCallback(datasrc.reconnectCtl()));
@@ -144,7 +145,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbFailedCallback) {
     pmap[std::string("max-reconnect-tries")] = std::string("3");
     pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
 
     bool ret = false;
     ASSERT_NO_THROW(ret = DatabaseConnection::invokeDbFailedCallback(datasrc.reconnectCtl()));
@@ -170,7 +171,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbLostCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get
@@ -218,7 +219,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbRecoveredCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbRecoveredCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get
@@ -281,7 +282,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbFailedCallback) {
         std::bind(&DatabaseConnectionCallbackTest::dbFailedCallback, this, ph::_1);
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
-    datasrc.makeReconnectCtl("timer");
+    datasrc.makeReconnectCtl("timer", 0);
     bool ret = false;
 
     /// We should be able to invoke the callback and get
@@ -425,6 +426,13 @@ TEST(DatabaseConnectionTest, parseInvalid) {
     EXPECT_EQ("", parameters[""]);
 }
 
+// This test checks that quoted default password is refused.
+TEST(DatabaseConnectionTest, parseQuotedDefaultPassword) {
+
+    std::string bad = "user=me password='1234' name=kea type=mysql";
+    EXPECT_THROW(DatabaseConnection::parse(bad), DefaultCredential);
+}
+
 /// @brief redactedAccessString test
 ///
 /// Checks that the redacted configuration string includes the password only
@@ -536,6 +544,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"port\" : 300, \n"
         "\"readonly\" : false, \n"
         "\"reconnect-wait-time\": 99, \n"
+        "\"retry-on-startup\" : true, \n"
         "\"type\": \"memfile\", \n"
         "\"user\": \"user_str\", \n"
         "\"max-row-errors\": 50, \n"
@@ -640,4 +649,14 @@ TEST(DatabaseConnection, toElementDbAccessStringEmpty) {
     ASSERT_NO_THROW(elements = DatabaseConnection::toElementDbAccessString(""));
     ASSERT_TRUE(elements);
     ASSERT_EQ(0, elements->size());
+}
+
+// Check that the test mode works as expected.
+TEST(DatabaseConnection, testMode) {
+    ASSERT_FALSE(DatabaseConnection::test_mode_);
+    {
+        DatabaseConnection::EnterTest et;
+        EXPECT_TRUE(DatabaseConnection::test_mode_);
+    }
+    EXPECT_FALSE(DatabaseConnection::test_mode_);
 }

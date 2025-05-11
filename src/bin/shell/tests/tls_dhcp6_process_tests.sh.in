@@ -1,0 +1,326 @@
+#!/bin/sh
+
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# Test suite for Dhcp6
+test_suite="dhcp6"
+
+# Include common test library.
+# shellcheck source=src/lib/testutils/dhcp_test_lib.sh.in
+. "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
+
+# Path to the temporary configuration file.
+CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
+
+# Path to the Kea lease file.
+LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
+
+# Path to the Dhcp6 Server log file.
+LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
+
+# Path to the test certificate authority directory.
+TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"
+
+# Configuration without TLS.
+CONFIG_NONE="{
+    \"Dhcp6\":
+    {
+        \"control-sockets\": [
+        {
+            \"socket-type\": \"http\",
+            \"socket-address\": \"127.0.0.1\",
+            \"socket-port\": 8443
+        }
+        ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output-options\": [
+                {
+                    \"output\": \"${LOG_FILE}\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# Configuration without mutual authentication i.e. only channel protection.
+CONFIG_NOCR="{
+    \"Dhcp6\":
+    {
+        \"control-sockets\": [
+        {
+            \"socket-type\": \"http\",
+            \"socket-address\": \"127.0.0.1\",
+            \"socket-port\": 8443,
+            \"trust-anchor\": \"${TEST_CA_DIR}/kea-ca.crt\",
+            \"cert-file\": \"${TEST_CA_DIR}/kea-server-addr.crt\",
+            \"key-file\": \"${TEST_CA_DIR}/kea-server.key\",
+            \"cert-required\": false
+        }
+        ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output-options\": [
+                {
+                    \"output\": \"${LOG_FILE}\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# Configuration with mutual authentication.
+CONFIG="{
+    \"Dhcp6\":
+    {
+        \"control-sockets\": [
+        {
+            \"socket-type\": \"http\",
+            \"socket-address\": \"127.0.0.1\",
+            \"socket-port\": 8443,
+            \"trust-anchor\": \"${TEST_CA_DIR}/kea-ca.crt\",
+            \"cert-file\": \"${TEST_CA_DIR}/kea-server-addr.crt\",
+            \"key-file\": \"${TEST_CA_DIR}/kea-server.key\",
+            \"cert-required\": true
+        }
+        ],
+        \"interfaces-config\": {
+           \"interfaces\": [ ]
+        },
+        \"server-id\": {
+          \"type\": \"LLT\",
+          \"persist\": false
+        },
+        \"preferred-lifetime\": 3000,
+        \"valid-lifetime\": 4000,
+        \"renew-timer\": 1000,
+        \"rebind-timer\": 2000,
+        \"lease-database\":
+        {
+            \"type\": \"memfile\",
+            \"name\": \"$LEASE_FILE\",
+            \"persist\": true,
+            \"lfc-interval\": 0
+        },
+        \"subnet6\": [
+        {
+            \"id\": 1,
+            \"subnet\": \"2001:db8:1::/64\",
+            \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
+        } ],
+        \"ddns-qualifying-suffix\": \"\",
+        \"dhcp-ddns\": {
+            \"enable-updates\": true
+        },
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp6\",
+            \"output-options\": [
+                {
+                    \"output\": \"${LOG_FILE}\"
+                }
+            ],
+            \"severity\": \"DEBUG\"
+        }
+        ]
+    }
+}"
+
+# In these tests we need to use two binaries: Dhcp6 Server and Kea shell.
+# Using bin and bin_path would be confusing, so we omit defining bin
+# and bin_path on purpose.
+dhcp6_bin="kea-dhcp6"
+dhcp6_bin_path="@abs_top_builddir@/src/bin/dhcp6"
+
+shell_bin="kea-shell"
+shell_bin_path="@abs_top_builddir@/src/bin/shell"
+
+tmpfile_path="@abs_top_builddir@/src/bin/shell/tests"
+
+list_commands_test() {
+    local test_name="${1}"
+    local config="${2}"
+    local arguments="${3}"
+    local expected_response="${4}"
+
+    # Setup phase: start Dhcp6.
+
+    # Log the start of the test and print test name.
+    test_start "${test_suite}-${test_name}"
+
+    # Create correct configuration file.
+    create_config "${config}"
+
+    # Instruct Dhcp6 Server to log to the specific file.
+    set_logger
+
+    # Start Dhcp6 Server
+    start_kea ${dhcp6_bin_path}/${dhcp6_bin}
+
+    # Wait up to 20s for Dhcp6 Server to start.
+    wait_for_kea 20
+    if [ "${_WAIT_FOR_KEA}" -eq 0 ]; then
+        printf "ERROR: timeout waiting for Dhcp6 Server to start.\n"
+        clean_exit 1
+    fi
+
+    # Check if it is still running. It could have terminated (e.g. as a result
+    # of configuration failure).
+    get_pid ${dhcp6_bin}
+    if [ "${_GET_PIDS_NUM}" -ne 1 ]; then
+        printf "ERROR: expected one Dhcp6 Server process to be started. \
+ Found %d processes started.\n" "${_GET_PIDS_NUM}"
+        clean_exit 1
+    fi
+
+    # Check in the log file, how many times server has been configured.
+    # It should be just once on startup.
+    get_reconfigs
+    if [ "${_GET_RECONFIGS}" -ne 1 ]; then
+        printf 'ERROR: server been configured %s time(s), but exactly 1 was expected.\n' "${_GET_RECONFIGS}"
+        clean_exit 1
+    else
+        printf "Server successfully configured.\n"
+    fi
+
+    # Main test phase: send command, check response.
+
+    # shellcheck disable=SC2086
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
+    tmp="echo | ${shell_bin_path}/${shell_bin} --port 8443 \
+    ${arguments} > ${tmpfile_path}/shell-stdout.txt"
+    echo "Executing kea-shell ($tmp)"
+
+    # shellcheck disable=SC2086
+    # SC2086: Double quote to prevent globbing and word splitting.
+    # Reason: we specifically want ${arguments} to split because there may be multiple words in it.
+    echo | ${shell_bin_path}/${shell_bin} --port 8443 \
+    ${arguments} > ${tmpfile_path}/shell-stdout.txt
+    EXIT_CODE=$?
+
+    # Check the exit code
+    if [ "${EXIT_CODE}" -ne 0 ]; then
+        echo "ERROR: kea-shell returned ${EXIT_CODE} exit code, expected 0."
+    else
+        echo "kea-shell returned ${EXIT_CODE} exit code as expected."
+    fi
+
+    # Now check the response
+    rm -f ${tmpfile_path}/shell-expected.txt
+    printf '%s\n' "${expected_response}" > ${tmpfile_path}/shell-expected.txt
+    diff ${tmpfile_path}/shell-stdout.txt ${tmpfile_path}/shell-expected.txt
+    diff_code=$?
+    if [ "${diff_code}" -ne 0 ]; then
+        echo "ERROR:" \
+        "content returned is different than expected." \
+        "See ${tmpfile_path}/shell-*.txt"
+        echo "EXPECTED:"
+        cat ${tmpfile_path}/shell-expected.txt
+        echo "ACTUAL RESULT:"
+        cat ${tmpfile_path}/shell-stdout.txt
+        clean_exit 1
+    else
+        echo "Content returned by kea-shell meets expectation."
+        rm ${tmpfile_path}/shell-*.txt
+    fi
+    # Main test phase ends.
+
+    # Cleanup phase: shutdown Dhcp6 Server
+
+    # Send SIGTERM signal to Dhcp6 Server
+    send_signal 15 ${dhcp6_bin}
+
+    # Now wait for process to log that it is exiting.
+    wait_for_message 10 "DHCP6_SHUTDOWN" 1
+    if [ "${_WAIT_FOR_MESSAGE}" -eq 0 ]; then
+        printf "ERROR: Dhcp6 Server did not log shutdown.\n"
+        clean_exit 1
+    fi
+
+    # Make sure the server is down.
+    wait_for_server_down 5 ${dhcp6_bin}
+    assert_eq 1 "${_WAIT_FOR_SERVER_DOWN}" \
+        "Expected wait_for_server_down return %d, returned %d"
+
+    test_finish 0
+}
+
+list_commands_test "NoTLS" "${CONFIG_NONE}" "" \
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet6-select-test\", \"version-get\" ], \"result\": 0 } ]"
+list_commands_test "Encrypted" "${CONFIG_NOCR}" \
+"--ca ${TEST_CA_DIR}/kea-ca.crt" \
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet6-select-test\", \"version-get\" ], \"result\": 0 } ]"
+list_commands_test "Authenticated" "${CONFIG}" \
+"--ca ${TEST_CA_DIR}/kea-ca.crt --cert ${TEST_CA_DIR}/kea-client.crt --key ${TEST_CA_DIR}/kea-client.key" \
+"[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet6-select-test\", \"version-get\" ], \"result\": 0 } ]"

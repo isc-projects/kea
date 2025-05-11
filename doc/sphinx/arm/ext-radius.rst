@@ -242,7 +242,7 @@ At the service level, three sections can be configured:
   The value ``0`` means no limit; ``64`` is a recommended setting.
 
 For example, to specify a single access server available on localhost
-that uses ``"xyz123"`` as a secret, and tell Kea to send three additional
+that uses ``"1234"`` as a secret, and tell Kea to send three additional
 attributes (``User-Password``, ``Connect-Info``, and ``Configuration-Token``),
 the following snippet could be used:
 
@@ -261,7 +261,7 @@ the following snippet could be used:
               // These are parameters for the first (and only) access server
               "name": "127.0.0.1",
               "port": 1812,
-              "secret": "xyz123"
+              "secret": "1234"
             }
           // Additional access servers could be specified here.
           ],
@@ -303,7 +303,7 @@ the following snippet could be used:
               // These are parameters for the first (and only) accounting server
               "name": "127.0.0.1",
               "port": 1813,
-              "secret": "sekret"
+              "secret": "1234"
             }
             // Additional accounting servers could be specified here.
           ]

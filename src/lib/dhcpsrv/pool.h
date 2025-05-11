@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,11 @@
 #include <dhcp/option6_pdexclude.h>
 #include <dhcpsrv/allocation_state.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/ip_range_permutation.h>
 #include <util/bigints.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -114,39 +116,38 @@ public:
     /// @brief Checks whether this pool supports client that belongs to
     /// specified classes.
     ///
-    /// @todo: currently doing the same as network which needs improving.
-    ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     bool clientSupported(const ClientClasses& client_classes) const;
 
-    /// @brief Sets the supported class to  class class_name
+    /// @brief Adds class clas_name to the allowed client classes list.
     ///
-    /// @param class_name client class to be supported by this pool
-    void allowClientClass(const ClientClass& class_name);
+    /// @param class_name client class to be supported by this network
+    void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief returns the client class
-    ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned is valid.
-    ///
-    /// @return client class @ref client_class_
-    const ClientClass& getClientClass() const {
-        return (client_class_);
+    /// @brief Returns the list of allowed client classes.
+    const ClientClasses& getClientClasses() const {
+        return (client_classes_);
     }
 
-    /// @brief Adds class class_name to classes required to be evaluated
-    ///
-    /// @param class_name client class required to be evaluated
-    void requireClientClass(const ClientClass& class_name) {
-        if (!required_classes_.contains(class_name)) {
-            required_classes_.insert(class_name);
-        }
+    /// @brief Returns the mutable list of allowed client classes.
+    ClientClasses& getMutableClientClasses() {
+        return (client_classes_);
     }
 
-    /// @brief Returns classes which are required to be evaluated
-    const ClientClasses& getRequiredClasses() const {
-        return (required_classes_);
+    /// @brief Adds class class_name to the additional classes list.
+    ///
+    /// @param class_name client class to add
+    void addAdditionalClass(const ClientClass& class_name);
+
+    /// @brief Returns the additional classes list.
+    const ClientClasses& getAdditionalClasses() const {
+        return (additional_classes_);
+    }
+
+    /// @brief Returns the mutable additional classes list.
+    ClientClasses& getMutableAdditionalClasses() {
+        return (additional_classes_);
     }
 
     /// @brief Returns pool-specific allocation state.
@@ -169,6 +170,199 @@ public:
     ///
     /// @return A pointer to unparsed pool configuration.
     virtual data::ElementPtr toElement() const;
+
+
+    /// @brief Returns ddns-send-updates
+    util::Optional<bool>
+    getDdnsSendUpdates() const {
+        return (ddns_send_updates_);
+    }
+
+    /// @brief Sets new ddns-send-updates
+    ///
+    /// @param ddns_send_updates New value to use.
+    void setDdnsSendUpdates(const util::Optional<bool>& ddns_send_updates) {
+        ddns_send_updates_ = ddns_send_updates;
+    }
+
+    /// @brief Returns ddns-override-no-update
+    util::Optional<bool>
+    getDdnsOverrideNoUpdate() const {
+        return (ddns_override_no_update_);
+    }
+
+    /// @brief Sets new ddns-override-no-update
+    ///
+    /// @param ddns_override_no_update New value to use.
+    void setDdnsOverrideNoUpdate(const util::Optional<bool>& ddns_override_no_update) {
+        ddns_override_no_update_ = ddns_override_no_update;
+    }
+
+    /// @brief Returns ddns-override-client-update
+    util::Optional<bool>
+    getDdnsOverrideClientUpdate() const {
+        return (ddns_override_client_update_);
+    }
+
+    /// @brief Sets new ddns-override-client-update
+    ///
+    /// @param ddns_override_client_update New value to use.
+    void setDdnsOverrideClientUpdate(const util::Optional<bool>&
+                                     ddns_override_client_update) {
+        ddns_override_client_update_ = ddns_override_client_update;
+    }
+
+    /// @brief Returns ddns-replace-client-name-mode
+    util::Optional<D2ClientConfig::ReplaceClientNameMode>
+    getDdnsReplaceClientNameMode() const {
+        return (ddns_replace_client_name_mode_);
+    }
+
+    /// @brief Sets new ddns-replace-client-name-mode
+    ///
+    /// @param ddns_replace_client_name_mode New value to use.
+    void
+    setDdnsReplaceClientNameMode(const util::Optional<D2ClientConfig::ReplaceClientNameMode>&
+                                 ddns_replace_client_name_mode) {
+        ddns_replace_client_name_mode_ = ddns_replace_client_name_mode;
+    }
+
+    /// @brief Returns ddns-generated-prefix
+    util::Optional<std::string>
+    getDdnsGeneratedPrefix() const {
+        return (ddns_generated_prefix_);
+    }
+
+    /// @brief Sets new ddns-generated-prefix
+    ///
+    /// @param ddns_generated_prefix New value to use.
+    void setDdnsGeneratedPrefix(const util::Optional<std::string>& ddns_generated_prefix) {
+        ddns_generated_prefix_ = ddns_generated_prefix;
+    }
+
+    /// @brief Returns ddns-qualifying-suffix
+    util::Optional<std::string>
+    getDdnsQualifyingSuffix() const {
+        return (ddns_qualifying_suffix_);
+    }
+
+    /// @brief Sets new ddns-qualifying-suffix
+    ///
+    /// @param ddns_qualifying_suffix New value to use.
+    void setDdnsQualifyingSuffix(const util::Optional<std::string>& ddns_qualifying_suffix) {
+        ddns_qualifying_suffix_ = ddns_qualifying_suffix;
+    }
+
+    /// @brief Returns ddns-update-on-renew
+    util::Optional<bool>
+    getDdnsUpdateOnRenew() const {
+        return (ddns_update_on_renew_);
+    }
+
+    /// @brief Sets new ddns-update-on-renew
+    ///
+    /// @param ddns_update_on_renew New value to use.
+    void setDdnsUpdateOnRenew(const util::Optional<bool>& ddns_update_on_renew) {
+        ddns_update_on_renew_ = ddns_update_on_renew;
+    }
+
+    /// @brief Returns ddns-conflict-resolution-mode
+    util::Optional<std::string>
+    getDdnsConflictResolutionMode() const {
+        return (ddns_conflict_resolution_mode_);
+    }
+
+    /// @brief Sets new ddns-conflict-resolution-mode
+    ///
+    /// @param ddns_conflict_resolution_mode New value to use.
+    void setDdnsConflictResolutionMode(const util::Optional<std::string>& ddns_conflict_resolution_mode) {
+        ddns_conflict_resolution_mode_ = ddns_conflict_resolution_mode;
+    }
+
+
+    /// @brief Returns ddns-ttl-percent
+    util::Optional<double>
+    getDdnsTtlPercent() const {
+        return (ddns_ttl_percent_);
+    }
+
+    /// @brief Sets new ddns-ttl-percent
+    ///
+    /// @param ddns_ttl_percent New value to use.
+    void setDdnsTtlPercent(const util::Optional<double>& ddns_ttl_percent) {
+        ddns_ttl_percent_ = ddns_ttl_percent;
+    }
+
+    /// @brief Returns ddns-ttl
+    util::Optional<uint32_t>
+    getDdnsTtl() const {
+        return (ddns_ttl_);
+    }
+
+    /// @brief Sets new ddns-ttl
+    ///
+    /// @param ddns_ttl New value to use.
+    void setDdnsTtl(const util::Optional<uint32_t>& ddns_ttl) {
+        ddns_ttl_ = ddns_ttl;
+    }
+
+    /// @brief Returns ddns-ttl-min
+    util::Optional<uint32_t>
+    getDdnsTtlMin() const {
+        return (ddns_ttl_min_);
+    }
+
+    /// @brief Sets new ddns-ttl-min
+    ///
+    /// @param ddns_ttl_min New value to use.
+    void setDdnsTtlMin(const util::Optional<uint32_t>& ddns_ttl_min) {
+        ddns_ttl_min_ = ddns_ttl_min;
+    }
+
+    /// @brief Returns ddns-ttl-max
+    util::Optional<uint32_t>
+    getDdnsTtlMax() const {
+        return (ddns_ttl_max_);
+    }
+
+    /// @brief Sets new ddns-ttl-max
+    ///
+    /// @param ddns_ttl_max New value to use.
+    void setDdnsTtlMax(const util::Optional<uint32_t>& ddns_ttl_max) {
+        ddns_ttl_max_ = ddns_ttl_max;
+    }
+
+    /// @brief Return the char set regexp used to sanitize client hostnames.
+    util::Optional<std::string>
+    getHostnameCharSet() const {
+        return (hostname_char_set_);
+    }
+
+    /// @brief Sets new hostname-char-set
+    ///
+    /// @param hostname_char_set New value to use.
+    void setHostnameCharSet(const util::Optional<std::string>& hostname_char_set) {
+        hostname_char_set_ = hostname_char_set;
+    }
+
+    /// @brief Return the invalid char replacement used to sanitize client hostnames.
+    util::Optional<std::string>
+    getHostnameCharReplacement() const {
+        return (hostname_char_replacement_);
+    }
+
+    /// @brief Sets new hostname-char-replacement
+    ///
+    /// @param hostname_char_replacement New value to use.
+    void setHostnameCharReplacement(const util::Optional<std::string>&
+                                    hostname_char_replacement) {
+        hostname_char_replacement_ = hostname_char_replacement;
+    }
+
+    /// @brief Checks if any of the DDNS parameters has a value.
+    ///
+    /// @return True if any of the DDNS parameters are specified.
+    bool hasDdnsParameters() const;
 
 protected:
 
@@ -211,21 +405,70 @@ protected:
     /// @brief Pointer to the option data configuration for this pool.
     CfgOptionPtr cfg_option_;
 
-    /// @brief Optional definition of a client class
+    /// @brief List of client classes allowed to use this pool.
     ///
-    /// @ref Network::client_class_
-    ClientClass client_class_;
+    /// If not empty, only clients belonging to at least one of the classes
+    /// in this list will be allowed to use this particular pool.  By default
+    /// the list is empty which means that any client is allowed, regardless
+    /// of its class membership.
+    ClientClasses client_classes_;
 
-    /// @brief Required classes
+    /// @brief Additional classes
     ///
-    /// @ref isc::dhcp::Network::required_classes_
-    ClientClasses required_classes_;
+    /// @ref isc::dhcp::Network::additional_classes_
+    ClientClasses additional_classes_;
 
     /// @brief Pointer to the user context (may be NULL)
     data::ConstElementPtr user_context_;
 
     /// @brief Holds pool-specific allocation state.
     AllocationStatePtr allocation_state_;
+
+    /// @brief Should Kea perform DNS updates. Used to provide scoped enabling
+    /// and disabling of updates.
+    util::Optional<bool> ddns_send_updates_;
+
+    /// @brief Should Kea perform updates, even if client requested no updates.
+    /// Overrides the client request for no updates via the N flag.
+    util::Optional<bool> ddns_override_no_update_;
+
+    /// @brief Should Kea perform updates, even if client requested delegation.
+    util::Optional<bool> ddns_override_client_update_;
+
+    /// @brief How Kea should handle the domain-name supplied by the client.
+    util::Optional<D2ClientConfig::ReplaceClientNameMode> ddns_replace_client_name_mode_;
+
+    /// @brief Prefix Kea should use when generating domain-names.
+    util::Optional<std::string> ddns_generated_prefix_;
+
+    /// @brief Suffix Kea should use when to qualify partial domain-names.
+    util::Optional<std::string> ddns_qualifying_suffix_;
+
+    /// @brief Should Kea perform updates when leases are extended
+    util::Optional<bool> ddns_update_on_renew_;
+
+    /// @brief DDNS conflict resolution mode
+    util::Optional<std::string> ddns_conflict_resolution_mode_;
+
+    /// @brief Percentage of the lease lifetime to use for DNS TTL.
+    util::Optional<double> ddns_ttl_percent_;
+
+    /// @brief Explicit value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_;
+
+    /// @brief Minimum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_min_;
+
+    /// @brief Maximum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_max_;
+
+    /// @brief Regular expression describing invalid characters for client
+    /// hostnames.
+    util::Optional<std::string> hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    util::Optional<std::string> hostname_char_replacement_;
 };
 
 class Pool4;

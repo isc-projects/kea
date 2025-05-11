@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,13 +13,14 @@
 #include <http/connection.h>
 #include <http/connection_pool.h>
 #include <http/response_creator_factory.h>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace http {
 
 /// @brief Implementation of the @ref HttpListener.
-class HttpListenerImpl {
+class HttpListenerImpl : public boost::enable_shared_from_this<HttpListenerImpl> {
 public:
 
     /// @brief Constructor.
@@ -58,6 +59,12 @@ public:
 
     /// @brief Returns reference to the current listener endpoint.
     const asiolink::TCPEndpoint& getEndpoint() const;
+
+    /// @brief Returns reference to the current TLS context.
+    const asiolink::TlsContextPtr& getTlsContext() const;
+
+    /// @brief Sets reference of the current TLS context.
+    void setTlsContext(const asiolink::TlsContextPtr& context);
 
     /// @brief file descriptor of the underlying acceptor socket.
     int getNative() const;
@@ -127,7 +134,7 @@ protected:
     boost::scoped_ptr<asiolink::TCPEndpoint> endpoint_;
 
     /// @brief Pool of active connections.
-    HttpConnectionPool connections_;
+    HttpConnectionPoolPtr connections_;
 
     /// @brief Pointer to the @ref HttpResponseCreatorFactory.
     HttpResponseCreatorFactoryPtr creator_factory_;
@@ -142,7 +149,6 @@ protected:
     /// @brief Use external sockets flag.
     bool use_external_;
 };
-
 
 } // end of namespace isc::http
 } // end of namespace isc

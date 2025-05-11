@@ -418,7 +418,7 @@ TEST_F(PgSqlBasicsTest, boolTest) {
 
     // Verify the fetched bool values are what we expect.
     bool fetched_bool;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < 2; ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, BOOL_COL));
@@ -478,12 +478,12 @@ TEST_F(PgSqlBasicsTest, byteaTest) {
     RUN_PREP(r,statement[0], bind_array, PGRES_COMMAND_OK);
 
     // Fetch the newly inserted rows.
-    int num_rows = 2;
+    size_t num_rows = 2;
     FETCH_ROWS(r, num_rows);
 
     uint8_t fetched_bytes[sizeof(bytes)];
     size_t byte_count;
-    int row = 0;
+    size_t row = 0;
     for ( ; row < num_rows; ++row) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, BYTEA_COL));
@@ -497,7 +497,7 @@ TEST_F(PgSqlBasicsTest, byteaTest) {
 
         // Verify the data is correct
         ASSERT_EQ(byte_count, sizeof(bytes));
-        for (int i = 0; i < sizeof(bytes); i++) {
+        for (size_t i = 0; i < sizeof(bytes); i++) {
             ASSERT_EQ(bytes[i], fetched_bytes[i]);
         }
     }
@@ -557,7 +557,7 @@ TEST_F(PgSqlBasicsTest, bigIntTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < ints.size(); ++i) {
+    for (size_t i = 0; i < ints.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(ints[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -568,7 +568,7 @@ TEST_F(PgSqlBasicsTest, bigIntTest) {
 
     // Iterate over the rows, verifying each value against its reference
     int64_t fetched_int;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < ints.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, BIGINT_COL));
@@ -620,7 +620,7 @@ TEST_F(PgSqlBasicsTest, smallIntTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < ints.size(); ++i) {
+    for (size_t i = 0; i < ints.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(ints[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -631,7 +631,7 @@ TEST_F(PgSqlBasicsTest, smallIntTest) {
 
     // Iterate over the rows, verifying each value against its reference
     int16_t fetched_int;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < ints.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, SMALLINT_COL));
@@ -684,7 +684,7 @@ TEST_F(PgSqlBasicsTest, intTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < ints.size(); ++i) {
+    for (size_t i = 0; i < ints.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(ints[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -695,7 +695,7 @@ TEST_F(PgSqlBasicsTest, intTest) {
 
     // Iterate over the rows, verifying each value against its reference
     int32_t fetched_int;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < ints.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, INT_COL));
@@ -783,7 +783,7 @@ TEST_F(PgSqlBasicsTest, textTest) {
 
     // Iterate over the rows, verifying the value against the reference
     std::string fetched_str;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < 2; ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, TEXT_COL));
@@ -844,7 +844,7 @@ TEST_F(PgSqlBasicsTest, varcharTest) {
 
     // Iterate over the rows, verifying the value against the reference
     std::string fetched_str;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < 2; ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, VARCHAR_COL));
@@ -899,7 +899,7 @@ TEST_F(PgSqlBasicsTest, timeStampTest) {
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
     std::string time_str;
-    for (int i = 0; i < times.size(); ++i) {
+    for (size_t i = 0; i < times.size(); ++i) {
         // Timestamps are inserted as strings so convert them first
         ASSERT_NO_THROW(time_str =
                         PgSqlExchange::convertToDatabaseTime(times[i]));
@@ -924,7 +924,7 @@ TEST_F(PgSqlBasicsTest, timeStampTest) {
 
     // Iterate over the rows, verifying the value against its reference
     std::string fetched_str;
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < times.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, TIMESTAMP_COL));
@@ -1117,7 +1117,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < inets.size(); ++i) {
+    for (size_t i = 0; i < inets.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->addInet4(inets[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -1127,7 +1127,7 @@ TEST_F(PgSqlBasicsTest, inetTest4) {
     FETCH_ROWS(r, inets.size());
 
     // Iterate over the rows, verifying each value against its reference
-    int row = 0;
+    size_t row = 0;
     asiolink::IOAddress fetched_inet("0.0.0.0");
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
@@ -1185,7 +1185,7 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < inets.size(); ++i) {
+    for (size_t i = 0; i < inets.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->addInet6(inets[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -1195,7 +1195,7 @@ TEST_F(PgSqlBasicsTest, inetTest6) {
     FETCH_ROWS(r, inets.size());
 
     // Iterate over the rows, verifying each value against its reference
-    int row = 0;
+    size_t row = 0;
     asiolink::IOAddress fetched_inet("::");
     for ( ; row  < inets.size(); ++row ) {
         // Verify the column is not null.
@@ -1249,7 +1249,7 @@ TEST_F(PgSqlBasicsTest, floatTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < floats.size(); ++i) {
+    for (size_t i = 0; i < floats.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(floats[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -1259,7 +1259,7 @@ TEST_F(PgSqlBasicsTest, floatTest) {
     FETCH_ROWS(r, floats.size());
 
     // Iterate over the rows, verifying each value against its reference
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < floats.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, FLOAT_COL));
@@ -1304,7 +1304,7 @@ TEST_F(PgSqlBasicsTest, jsonTest) {
     // Insert a row for each reference value
     PsqlBindArrayPtr bind_array;
     PgSqlResultPtr r;
-    for (int i = 0; i < elem_ptrs.size(); ++i) {
+    for (size_t i = 0; i < elem_ptrs.size(); ++i) {
         bind_array.reset(new PsqlBindArray());
         bind_array->add(elem_ptrs[i]);
         RUN_PREP(r, statement[0], bind_array, PGRES_COMMAND_OK);
@@ -1314,7 +1314,7 @@ TEST_F(PgSqlBasicsTest, jsonTest) {
     FETCH_ROWS(r, elem_ptrs.size());
 
     // Iterate over the rows, verifying each value against its reference
-    int row = 0;
+    size_t row = 0;
     for ( ; row  < elem_ptrs.size(); ++row ) {
         // Verify the column is not null.
         ASSERT_FALSE(PgSqlExchange::isColumnNull(*r, row, JSON_COL));
@@ -1374,7 +1374,7 @@ TEST_F(PgSqlBasicsTest, tripleTest) {
     FETCH_ROWS(r, triplets.size());
 
     // Iterate over the rows, verifying each value against its reference
-    int row = 0;
+    size_t row = 0;
     for (auto const& expected : triplets) {
         Triplet<uint32_t> fetched;
         // First we test making a triplet only with default value column.

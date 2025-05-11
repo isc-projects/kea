@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -89,7 +89,7 @@ TEST_F(DaemonTest, constructor) {
     // Check only instance values.
     Daemon instance2;
     EXPECT_TRUE(instance2.getConfigFile().empty());
-    EXPECT_EQ(std::string(DATA_DIR), instance2.getPIDFileDir());
+    EXPECT_EQ(std::string(PIDFILE_DIR), instance2.getPIDFileDir());
     EXPECT_TRUE(instance2.getPIDFileName().empty());
 }
 
@@ -221,8 +221,11 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
     ASSERT_GE(pid, 0);
 
     if (pid == 0) {
-        // This is the child, die right away. Tragic, no?
-        _exit (0);
+        char name[] = TEST_SCRIPT_SH;
+        char* argv[] = { name, 0 };
+        char* envp[] = { 0 };
+        execve(name, argv, envp);
+        _exit(0);
     }
 
     // Back in the parent test, we need to wait for the child to die

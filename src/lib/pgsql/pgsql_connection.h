@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace isc {
 namespace db {
 
 /// @brief Define the PostgreSQL backend version.
-const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 24;
+const uint32_t PGSQL_SCHEMA_VERSION_MAJOR = 29;
 const uint32_t PGSQL_SCHEMA_VERSION_MINOR = 0;
 
 // Maximum number of parameters that can be used a statement
@@ -242,6 +242,7 @@ public:
     /// @param ac An IOServiceAccessor object.
     /// @param cb The dbReconnect callback.
     /// @param timer_name The DB reconnect timer name.
+    /// @param id the ID of the manager.
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
@@ -252,7 +253,8 @@ public:
     getVersion(const ParameterMap& parameters,
                const IOServiceAccessorPtr& ac = IOServiceAccessorPtr(),
                const DbCallback& cb = DbCallback(),
-               const std::string& timer_name = std::string());
+               const std::string& timer_name = std::string(),
+               unsigned int id = 0);
 
     /// @brief Retrieve schema version, validate it against the hardcoded
     ///     version, and attempt to initialize the schema if there is an

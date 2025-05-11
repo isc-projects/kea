@@ -31,19 +31,26 @@
 // parameters are type and name. If other parameters are not specified,
 // Kea will assume the database is available on localhost, that user and
 // password is not necessary to connect and that timeout is 5 seconds.
-// Kea must be compiled with --with-mysql option to use this backend.
+// Kea must be compiled with the "-D mysql" option to use this backend.
 //  "lease-database": {
 //      "type": "mysql",
 //      "name": "keatest",
 //      "host": "localhost",
 //      "port": 3306,
 //      "user": "keatest",
-//      "password": "secret1",
+//      "password": "1234",
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
 //      "on-fail": "stop-retry-exit",
 //      "retry-on-startup": false,
 //      "connect-timeout": 3
+//  },
+// Since Kea.2.7.4, the libdhcp_mysql.so hook library must be loaded in order to
+// store leases in the MySQL Lease Database Backend.
+// Specify the lease backend hook library location.
+//  {
+//      // the MySQL lease backend hook library required for lease storage.
+//      "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
 //  },
 
 // 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
@@ -52,19 +59,26 @@
 // parameters are type and name. If other parameters are not specified,
 // Kea will assume the database is available on localhost, that user and
 // password is not necessary to connect and that timeout is 5 seconds.
-// Kea must be compiled with --with-pgsql option to use this backend.
+// Kea must be compiled with the "-D postgresql" option to use this backend.
 //  "lease-database": {
 //      "type": "postgresql",
 //      "name": "keatest",
 //      "host": "localhost",
 //      "port": 5432,
 //      "user": "keatest",
-//      "password": "secret1",
+//      "password": "1234",
 //      "reconnect-wait-time": 3000, // expressed in ms
 //      "max-reconnect-tries": 3,
 //      "on-fail": "stop-retry-exit",
 //      "retry-on-startup": false,
 //      "connect-timeout": 3
+//  },
+// Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+// store leases in the PostgreSQL Lease Database Backend.
+// Specify the lease backend hook library location.
+//  {
+//      // the PostgreSQL lease backend hook library required for lease storage.
+//      "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
 //  },
 
 // Addresses will be assigned with a lifetime of 4000 seconds.

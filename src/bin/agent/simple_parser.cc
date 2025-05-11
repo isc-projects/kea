@@ -153,13 +153,20 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         }
     }
 
-    // Basic HTTP authentications are forth.
+    // Basic HTTP authentications are fourth.
     ConstElementPtr auth_config = config->get("authentication");
     if (auth_config) {
         using namespace isc::http;
         BasicHttpAuthConfigPtr auth(new BasicHttpAuthConfig());
         auth->parse(auth_config);
         ctx->setAuthConfig(auth);
+    }
+
+    // HTTP headers are fifth.
+    ConstElementPtr headers_config = config->get("http-headers");
+    if (headers_config) {
+        using namespace isc::http;
+        ctx->setHttpHeaders(parseCfgHttpHeaders(headers_config));
     }
 
     // User context can be done at anytime.

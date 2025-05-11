@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -491,6 +491,45 @@ private:
     /// false otherwise.
     template<typename QueryPtrType>
     bool inScopeInternal(QueryPtrType& query);
+
+public:
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @param lease4 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv4 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    bool shouldReclaim(const dhcp::Lease4Ptr& lease4) const;
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @param lease6 pointer to the DHCPv4 lease being reclaimed.
+    /// @return true if the DHCPv6 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    bool shouldReclaim(const dhcp::Lease6Ptr& lease6) const;
+
+private:
+
+    /// @brief Checks if the lease should be reclaimed by this server.
+    ///
+    /// The lease must not be reclaimed by the server when the server is in the
+    /// terminated state and the lease belongs to another server (per load balancing
+    /// algorithm or when it is a standby server).
+    ///
+    /// @tparam LeasePtrType type of the pointer to the DHCP lease.
+    /// @param lease pointer to the DHCP lease being reclaimed.
+    /// @return true if the DHCP lease should be reclaimed by this server instance,
+    /// false otherwise.
+    template<typename LeaseTypePtr>
+    bool shouldReclaimInternal(const LeaseTypePtr& lease) const;
 
 public:
 
@@ -1048,9 +1087,12 @@ public:
     /// @param cancel boolean value indicating if the maintenance is being
     /// canceled with this operation. If it is set to false the maintenance
     /// is being started.
+    /// @param state partner's state as string. It should be set to "unavailable"
+    /// if the state was not explicitly provided by the partner.
     ///
     /// @return Pointer to the response to the ha-maintenance-notify.
-    data::ConstElementPtr processMaintenanceNotify(const bool cancel);
+    data::ConstElementPtr processMaintenanceNotify(const bool cancel,
+                                                   const std::string& state);
 
     /// @brief Processes ha-maintenance-start command and returns a response.
     ///

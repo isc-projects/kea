@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2215,7 +2215,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
 
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
@@ -2261,7 +2261,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     }
 
     // Mark every other expired lease as reclaimed.
-    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+    for (unsigned i = 0; i < saved_expired_leases.size(); ++i) {
         if (i % 2 != 0) {
             saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
@@ -2336,7 +2336,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
 
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
         // Update the time of expired leases with even indexes.
         if (i % 2 == 0) {
             leases[i]->cltt_ = current_time - leases[i]->valid_lft_ - 1000 + i;
@@ -2381,7 +2381,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     }
 
     // Mark every other expired lease as reclaimed.
-    for (int i = 0; i < saved_expired_leases.size(); ++i) {
+    for (unsigned i = 0; i < saved_expired_leases.size(); ++i) {
         if (i % 2 != 0) {
             saved_expired_leases[i]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         }
@@ -2729,7 +2729,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
     leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
 
         // Mark the second half of the leases as DECLINED
         if (i >= leases.size()/2) {
@@ -2879,7 +2879,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     // This time let's reverse the expiration time and see if they will be returned
     // in the correct order.
     leases = createLeases6();
-    for (int i = 0; i < leases.size(); ++i) {
+    for (unsigned i = 0; i < leases.size(); ++i) {
 
         // Mark the second half of the leases as DECLINED
         if (i >= leases.size()/2) {
@@ -2948,7 +2948,7 @@ GenericLeaseMgrTest::checkLeaseStats(const StatValMapList& expectedStats) {
     int64_t reclaimed_declined_addresses = 0;
 
     // Iterate over all stats for each subnet
-    for (int subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
+    for (unsigned subnet_idx = 0; subnet_idx < expectedStats.size(); ++subnet_idx) {
         for (auto const& expectedStat : expectedStats[subnet_idx]) {
             // Verify the per subnet value.
             checkStat(stats::StatsMgr::generateName("subnet", subnet_idx + 1,
@@ -3232,6 +3232,8 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
         expectedStats[i]["reclaimed-leases"] = 0;
         expectedStats[i]["assigned-pds"] = 0;
         expectedStats[i]["cumulative-assigned-pds"] = 0;
+        expectedStats[i]["registered-nas"] = SubnetPoolVal(0, false);
+        expectedStats[i]["cumulative-registered-nas"] = SubnetPoolVal(0, false);
     }
 
     // Stats should not be present because the subnet has no PD pool.
@@ -3256,6 +3258,7 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     // Check that cumulative global stats always exist.
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-nas"));
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-pds"));
+    EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-registered-nas"));
 
     // Now let's insert some leases into subnet 1.
     subnet_id = 1;
@@ -3288,6 +3291,13 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
     makeLease6(Lease::TYPE_PD, "3001:1:2:0400::", 112, subnet_id,
                Lease::STATE_EXPIRED_RECLAIMED);
 
+    // Insert two registered NAs.
+    makeLease6(Lease::TYPE_NA, "3001:1::7", 128, subnet_id,
+               Lease::STATE_REGISTERED);
+    Lease6Ptr leaser = makeLease6(Lease::TYPE_NA, "3001:1::8", 128, subnet_id,
+                                  Lease::STATE_REGISTERED);
+    expectedStats[subnet_id - 1]["registered-nas"] = SubnetPoolVal(2, false);
+
     // Now let's add leases to subnet 2.
     subnet_id = 2;
 
@@ -3314,7 +3324,9 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Delete some leases and update the expected stats.
     EXPECT_TRUE(lmptr_->deleteLease(lease2));
+    EXPECT_TRUE(lmptr_->deleteLease(leaser));
     expectedStats[0]["assigned-nas"] = 4;
+    expectedStats[0]["registered-nas"] = SubnetPoolVal(1, false);
 
     EXPECT_TRUE(lmptr_->deleteLease(lease3));
     expectedStats[1]["assigned-nas"] = 2;
@@ -3647,12 +3659,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     std::string access = validConnectString();
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3693,12 +3712,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
     std::string access = validConnectString();
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3746,12 +3772,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.
@@ -3822,12 +3855,19 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     access += extra;
     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->setLeaseDbAccessString(access);
 
+    // Find the most recently opened socket. Our SQL client's socket should
+    // be the next one.
+    int last_open_socket = findLastSocketFd();
+
+    // Fill holes.
+    FillFdHoles holes(last_open_socket);
+
     // Connect to the lease backend.
     ASSERT_NO_THROW(LeaseMgrFactory::create(access));
 
-    // The most recently opened socket should be for our SQL client.
-    int sql_socket = test::findLastSocketFd();
-    ASSERT_TRUE(sql_socket > -1);
+    // Find the SQL client socket.
+    int sql_socket = findLastSocketFd();
+    ASSERT_TRUE(sql_socket > last_open_socket);
 
     // Verify we can execute a query.  We do not care if
     // we find a lease or not.

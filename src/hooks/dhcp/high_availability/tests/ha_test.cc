@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -424,6 +424,27 @@ HATest::createQuery6(const std::vector<uint8_t>& duid) const {
     OptionPtr opt_duid(new Option(Option::V6, D6O_CLIENTID, duid));
     query6->addOption(opt_duid);
     return (query6);
+}
+
+Lease4Ptr
+HATest::createLease4(const std::vector<uint8_t>& hw_address_vec,
+                     const std::vector<uint8_t>& client_id_vec) const {
+    HWAddrPtr hwaddr(new HWAddr(hw_address_vec, HTYPE_ETHER));
+    Lease4Ptr lease4(new Lease4(IOAddress("192.1.2.3"), hwaddr,
+                                static_cast<const uint8_t*>(0), 0,
+                                60, 0, 1));
+    if (!client_id_vec.empty()) {
+        lease4->client_id_ = ClientIdPtr(new ClientId(client_id_vec));
+    }
+    return (lease4);
+}
+
+Lease6Ptr
+HATest::createLease6(const std::vector<uint8_t>& duid_vec) const {
+    DuidPtr duid(new DUID(duid_vec));
+    Lease6Ptr lease6(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::cafe"),
+                                duid, 1234, 50, 60, 1));
+    return (lease6);
 }
 
 Pkt6Ptr

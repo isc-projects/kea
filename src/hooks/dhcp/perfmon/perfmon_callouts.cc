@@ -69,7 +69,7 @@ int pkt4_send(CalloutHandle& handle) {
     Pkt4Ptr response;
     handle.getArgument("response4", response);
 
-    Subnet4Ptr subnet;
+    ConstSubnet4Ptr subnet;
     handle.getArgument("subnet4", subnet);
 
     try {
@@ -101,7 +101,7 @@ int pkt6_send(CalloutHandle& handle) {
     Pkt6Ptr response;
     handle.getArgument("response6", response);
 
-    Subnet6Ptr subnet;
+    ConstSubnet6Ptr subnet;
     handle.getArgument("subnet6", subnet);
 
     try {

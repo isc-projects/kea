@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -120,9 +120,7 @@ public:
         DatabaseConnection::setIOService(io_service_);
         ProcessSpawn::setIOService(io_service_);
 
-        std::ostringstream s;
-        s << KEA_LFC_BUILD_DIR << "/kea-lfc";
-        setenv("KEA_LFC_EXECUTABLE", s.str().c_str(), 1);
+        setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
 
         // Remove lease files and products of Lease File Cleanup.
         removeFiles(getLeaseFilePath("leasefile4_0.csv"));
@@ -2378,7 +2376,7 @@ TEST_F(MemfileLeaseMgrTest, checkVersion4) {
 
     // DBVersion too.
     EXPECT_EQ("Memfile backend " + s.str(),
-              lease_mgr->getDBVersion(Memfile_LeaseMgr::V4));
+              lease_mgr->getDBVersionInternal(Memfile_LeaseMgr::V4));
 }
 
 TEST_F(MemfileLeaseMgrTest, checkVersion6) {
@@ -2403,7 +2401,7 @@ TEST_F(MemfileLeaseMgrTest, checkVersion6) {
 
     // DBVersion too.
     EXPECT_EQ("Memfile backend " + s.str(),
-              lease_mgr->getDBVersion(Memfile_LeaseMgr::V6));
+              lease_mgr->getDBVersionInternal(Memfile_LeaseMgr::V6));
 }
 
 /// @brief Checks that complex user context can be read in v4.

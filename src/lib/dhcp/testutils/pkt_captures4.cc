@@ -384,6 +384,6 @@ Pkt4Ptr PktCaptures::discoverGenexis() {
     return (packetFromCapture(hex_string));
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // end of isc::dhcp::test namespace
+}  // end of isc::dhcp namespace
+}  // end of isc namespace

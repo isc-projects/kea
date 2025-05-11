@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,7 +19,7 @@ using namespace isc::util;
 namespace {
 
 struct OptionVendorClassLenientParsing : ::testing::Test {
-    void SetUp() final override {
+    void SetUp() override {
         // Retain the current setting for future restoration.
         previous_ = Option::lenient_parsing_;
 
@@ -27,7 +27,7 @@ struct OptionVendorClassLenientParsing : ::testing::Test {
         Option::lenient_parsing_ = true;
     }
 
-    void TearDown() final override {
+    void TearDown() override {
         // Restore.
         Option::lenient_parsing_ = previous_;
     }

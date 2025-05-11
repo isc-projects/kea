@@ -1,1 +1,1 @@
-SUBDIRS = dhcp
+SUBDIRS = dhcp d2

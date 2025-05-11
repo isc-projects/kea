@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,7 @@ envisioned are: reconfiguration, statistics retrieval and manipulation,
 and shutdown.
 
 Communication over Control Channel is conducted using JSON structures.
-As of Kea 0.9.2, the only supported communication channel is UNIX stream
-socket, but additional types may be added in the future.
+The supported communication channel is UNIX stream and HTTP/HTTPS sockets.
 
 If configured, Kea will open a socket and will listen for any incoming
 connections. A process connecting to this socket is expected to send JSON
@@ -62,9 +61,9 @@ encountered.
 - arguments - is a map of additional data values returned by the server, specific to the
 command issue. The map is always present, even if it contains no data values.
 
-@section ctrlSocketClient Using Control Channel
+@section ctrlSocketClient Using UNIX Control Channel
 
-Here are two examples of how to access the Control Channel:
+Here are two examples of how to access the UNIX Control Channel:
 
 1. Use socat tool, which is available in many Linux and BSD distributions.
 See http://www.dest-unreach.org/socat/ for details. To use it:
@@ -75,7 +74,7 @@ You then can type JSON commands and get responses (also in JSON format).
 
 2. Here's an example C code that connects and gets a list of supported commands:
 @code
-// Copyright (C) 2015-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -147,30 +146,33 @@ There are 3 main methods that are expected to be used by developers:
 - @ref isc::config::CommandMgr::processCommand, which allows handling specified
   command.
 
-There are also two methods for managing control sockets. They are not expected
-to be used directly, unless someone implements a new Control Channel (e.g. TCP
-or HTTPS connection):
-
-- @ref isc::config::CommandMgr::openCommandSocket that passes structure defined
-  in the configuration file. Currently only two parameters are supported: socket-type
-  (which must contain value 'unix') and socket-name (which contains unix path for
-  the named socket to be created).
-- @ref isc::config::CommandMgr::closeCommandSocket() - it is used to close the
-  socket.
-
 Kea servers use @c CommandMgr to register handlers for various commands they
 support natively. However, it is possible extend a set of supported commands
 using hooks framework. See @ref hooksdgCommandHandlers how to implement support
 for your own control commands in Kea.
 
+@section unixCtrlSocketImpl UNIX Control Channel Implementation
+
+UNIX Control Channel is implemented in @ref isc::config::UnixCommandMgr.
+It is a singleton class providing two methods for managing control sockets.
+They are not expected to be used directly.
+
+- @ref isc::config::UnixCommandMgr::openCommandSocket that passes
+  structure defined in the configuration file. Currently only two
+  parameters are supported: socket-type (which must contain value
+  'unix') and socket-name (which contains unix path for the named
+  socket to be created).
+- @ref isc::config::UnixCommandMgr::closeCommandSocket() - it is used
+  to close the socket.
+
 @section ctrlSocketConnections Accepting connections
 
-The @ref isc::config::CommandMgr is implemented using boost ASIO and uses
+The @ref isc::config::UnixCommandMgr is implemented using boost ASIO and uses
 asynchronous calls to accept new connections and receive commands from the
 controlling clients. ASIO uses IO service object to run asynchronous calls.
-Thus, before the server can use the @ref isc::config::CommandMgr it must
+Thus, before the server can use the @ref isc::config::UnixCommandMgr it must
 provide it with a common instance of the @ref isc::asiolink::IOService
-object using @ref isc::config::CommandMgr::setIOService. The server's
+object using @ref isc::config::UnixCommandMgr::setIOService. The server's
 main loop must contain calls to @ref isc::asiolink::IOService::run or
 @ref isc::asiolink::IOService::poll or their variants to invoke Command
 Manager's handlers as required for processing control requests.

@@ -141,7 +141,7 @@ typedef boost::shared_ptr<TcpResponse> TcpResponsePtr;
 class TcpConnectionError : public Exception {
 public:
     TcpConnectionError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Forward declaration to the @ref TcpConnectionPool.

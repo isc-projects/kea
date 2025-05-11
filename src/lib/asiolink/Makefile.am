@@ -11,14 +11,12 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 81:0:0
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 84:0:0
 libkea_asiolink_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += asio_wrapper.h
 libkea_asiolink_la_SOURCES += addr_utilities.cc addr_utilities.h
-libkea_asiolink_la_SOURCES += botan_boost_tls.h botan_boost_wrapper.h
-libkea_asiolink_la_SOURCES += botan_tls.h
 libkea_asiolink_la_SOURCES += common_tls.cc common_tls.h
 libkea_asiolink_la_SOURCES += crypto_tls.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
@@ -33,7 +31,6 @@ libkea_asiolink_la_SOURCES += io_service_mgr.h io_service_mgr.cc
 libkea_asiolink_la_SOURCES += io_service_signal.cc io_service_signal.h
 libkea_asiolink_la_SOURCES += io_service_thread_pool.cc io_service_thread_pool.h
 libkea_asiolink_la_SOURCES += io_socket.h io_socket.cc
-libkea_asiolink_la_SOURCES += openssl_tls.h
 libkea_asiolink_la_SOURCES += process_spawn.h process_spawn.cc
 libkea_asiolink_la_SOURCES += tcp_acceptor.h
 libkea_asiolink_la_SOURCES += tcp_endpoint.h
@@ -47,14 +44,10 @@ libkea_asiolink_la_SOURCES += unix_domain_socket_acceptor.h
 libkea_asiolink_la_SOURCES += unix_domain_socket_endpoint.h
 
 if HAVE_BOTAN
-if HAVE_BOTAN_BOOST
-libkea_asiolink_la_SOURCES += botan_boost_tls.cc
-else
-libkea_asiolink_la_SOURCES += botan_tls.cc
-endif
+libkea_asiolink_la_SOURCES += botan_tls.cc botan_tls.h botan_wrapper.h
 endif
 if HAVE_OPENSSL
-libkea_asiolink_la_SOURCES += openssl_tls.cc
+libkea_asiolink_la_SOURCES += openssl_tls.cc openssl_tls.h
 endif
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in KEA_CXXFLAGS)
@@ -70,9 +63,8 @@ libkea_asiolink_include_HEADERS = \
 	addr_utilities.h \
 	asio_wrapper.h \
 	asiolink.h \
-	botan_boost_tls.h \
-	botan_boost_wrapper.h \
 	botan_tls.h \
+	botan_wrapper.h \
 	common_tls.h \
 	crypto_tls.h \
 	dummy_io_cb.h \

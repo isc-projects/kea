@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,15 +52,17 @@ public:
     /// @brief Uses select to poll the Control Channel for data waiting
     ///
     /// @param timeout_sec Select timeout in seconds
+    /// @param read_check flag to check socket for read ready state
+    /// @param write_check flag to check socket for write ready state
     /// @return -1 on error, 0 if no data is available,  1 if data is ready
-    int selectCheck(const unsigned int timeout_sec);
+    int selectCheck(const unsigned int timeout_sec, bool read_check, bool write_check);
 
     /// @brief Retains the fd of the open socket
     int socket_fd_;
 };
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+} // end of isc::dhcp::test namespace
+} // end of isc::dhcp namespace
+} // end of isc namespace
 
 #endif // UNIX_CONTROL_CLIENT_H

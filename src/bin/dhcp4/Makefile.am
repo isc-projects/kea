@@ -4,12 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -53,15 +47,6 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -73,12 +58,6 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp4_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_dhcp4_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_dhcp4_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_dhcp4_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 kea_dhcp4dir = $(pkgdatadir)
 
@@ -106,7 +85,8 @@ messages: dhcp4_messages.h dhcp4_messages.cc
 	@echo Message files regenerated
 
 dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/dhcp4/dhcp4_messages.mes)
 
 else
 

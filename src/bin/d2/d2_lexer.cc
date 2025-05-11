@@ -1151,15 +1151,15 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[90] =
     {   0,
-      137,  139,  141,  146,  147,  152,  153,  154,  166,  169,
-      174,  180,  189,  200,  211,  220,  229,  238,  248,  258,
-      268,  287,  306,  315,  324,  334,  346,  356,  367,  376,
-      386,  396,  406,  416,  425,  434,  443,  452,  461,  470,
-      479,  488,  497,  506,  515,  524,  533,  542,  551,  560,
-      569,  578,  587,  596,  605,  614,  623,  632,  641,  650,
-      659,  668,  677,  686,  695,  704,  713,  722,  735,  744,
-      753,  854,  870,  919,  927,  942,  943,  944,  945,  946,
-      947,  949,  967,  980,  985,  989,  991,  993,  995
+      139,  141,  143,  148,  149,  154,  155,  156,  168,  171,
+      176,  182,  191,  202,  213,  222,  231,  240,  250,  260,
+      270,  289,  308,  317,  326,  336,  348,  358,  369,  378,
+      388,  398,  408,  418,  427,  436,  445,  454,  463,  472,
+      481,  490,  499,  508,  517,  526,  535,  544,  553,  562,
+      571,  580,  589,  598,  607,  616,  625,  634,  643,  652,
+      661,  670,  679,  688,  697,  706,  715,  724,  737,  746,
+      755,  856,  872,  921,  929,  944,  945,  946,  947,  948,
+      949,  951,  969,  982,  987,  991,  993,  995,  997
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1171,7 +1171,7 @@ static const flex_int16_t yy_rule_linenum[90] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "d2_lexer.ll"
-/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1180,6 +1180,8 @@ char *yytext;
 
 /* Generated files do not make clang static analyser so happy */
 #ifndef __clang_analyzer__
+
+#include <config.h>
 
 #include <cctype>
 #include <cerrno>
@@ -1212,7 +1214,7 @@ unsigned int comment_start_line = 0;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::d2::D2ParserContext::fatal(msg)
-#line 1215 "d2_lexer.cc"
+#line 1217 "d2_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -1233,13 +1235,13 @@ unsigned int comment_start_line = 0;
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
 /* for errors */
-#line 94 "d2_lexer.ll"
+#line 96 "d2_lexer.ll"
 /* This code run each time a pattern is matched. It updates the location
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
-#line 1241 "d2_lexer.cc"
-#line 1242 "d2_lexer.cc"
+#line 1243 "d2_lexer.cc"
+#line 1244 "d2_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -1521,11 +1523,11 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 100 "d2_lexer.ll"
+#line 102 "d2_lexer.ll"
 
 
 
-#line 104 "d2_lexer.ll"
+#line 106 "d2_lexer.ll"
     /* This part of the code is copied over to the verbatim to the top
        of the generated yylex function. Explanation:
        http://www.gnu.org/software/bison/manual/html_node/Multiple-start_002dsymbols.html */
@@ -1559,7 +1561,7 @@ YY_DECL
     }
 
 
-#line 1562 "d2_lexer.cc"
+#line 1564 "d2_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1637,17 +1639,17 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 137 "d2_lexer.ll"
+#line 139 "d2_lexer.ll"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 139 "d2_lexer.ll"
+#line 141 "d2_lexer.ll"
 ;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 141 "d2_lexer.ll"
+#line 143 "d2_lexer.ll"
 {
   BEGIN(COMMENT);
   comment_start_line = driver.loc_.end.line;;
@@ -1655,33 +1657,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 146 "d2_lexer.ll"
+#line 148 "d2_lexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 147 "d2_lexer.ll"
+#line 149 "d2_lexer.ll"
 ;
 	YY_BREAK
 case YY_STATE_EOF(COMMENT):
-#line 148 "d2_lexer.ll"
+#line 150 "d2_lexer.ll"
 {
     isc_throw(D2ParseError, "Comment not closed. (/* in line " << comment_start_line);
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 152 "d2_lexer.ll"
+#line 154 "d2_lexer.ll"
 BEGIN(DIR_ENTER);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 153 "d2_lexer.ll"
+#line 155 "d2_lexer.ll"
 BEGIN(DIR_INCLUDE);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 154 "d2_lexer.ll"
+#line 156 "d2_lexer.ll"
 {
     /* Include directive. */
 
@@ -1695,19 +1697,19 @@ YY_RULE_SETUP
 case YY_STATE_EOF(DIR_ENTER):
 case YY_STATE_EOF(DIR_INCLUDE):
 case YY_STATE_EOF(DIR_EXIT):
-#line 163 "d2_lexer.ll"
+#line 165 "d2_lexer.ll"
 {
     isc_throw(D2ParseError, "Directive not closed.");
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 166 "d2_lexer.ll"
+#line 168 "d2_lexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 169 "d2_lexer.ll"
+#line 171 "d2_lexer.ll"
 {
     /* Ok, we found a with space. Let's ignore it and update loc variable. */
     driver.loc_.step();
@@ -1716,7 +1718,7 @@ YY_RULE_SETUP
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 174 "d2_lexer.ll"
+#line 176 "d2_lexer.ll"
 {
     /* Newline found. Let's update the location and continue. */
     driver.loc_.lines(yyleng);
@@ -1725,7 +1727,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 180 "d2_lexer.ll"
+#line 182 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONFIG:
@@ -1737,7 +1739,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 189 "d2_lexer.ll"
+#line 191 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1751,7 +1753,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 200 "d2_lexer.ll"
+#line 202 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1765,7 +1767,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 211 "d2_lexer.ll"
+#line 213 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1777,7 +1779,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 220 "d2_lexer.ll"
+#line 222 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1789,7 +1791,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 229 "d2_lexer.ll"
+#line 231 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1801,7 +1803,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 238 "d2_lexer.ll"
+#line 240 "d2_lexer.ll"
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::d2::D2ParserContext::NCR_PROTOCOL) {
@@ -1814,7 +1816,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 248 "d2_lexer.ll"
+#line 250 "d2_lexer.ll"
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::d2::D2ParserContext::NCR_PROTOCOL) {
@@ -1827,7 +1829,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 258 "d2_lexer.ll"
+#line 260 "d2_lexer.ll"
 {
     /* dhcp-ddns value keywords are case insensitive */
     if (driver.ctx_ == isc::d2::D2ParserContext::NCR_FORMAT) {
@@ -1840,7 +1842,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 268 "d2_lexer.ll"
+#line 270 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1862,7 +1864,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 287 "d2_lexer.ll"
+#line 289 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1884,7 +1886,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 306 "d2_lexer.ll"
+#line 308 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1896,7 +1898,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 315 "d2_lexer.ll"
+#line 317 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1908,7 +1910,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 324 "d2_lexer.ll"
+#line 326 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::FORWARD_DDNS:
@@ -1921,7 +1923,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 334 "d2_lexer.ll"
+#line 336 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DDNS_DOMAIN:
@@ -1936,7 +1938,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 346 "d2_lexer.ll"
+#line 348 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DDNS_DOMAIN:
@@ -1949,7 +1951,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 356 "d2_lexer.ll"
+#line 358 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DNS_SERVER:
@@ -1962,7 +1964,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 367 "d2_lexer.ll"
+#line 369 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -1974,7 +1976,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 376 "d2_lexer.ll"
+#line 378 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::TSIG_KEY:
@@ -1987,7 +1989,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 386 "d2_lexer.ll"
+#line 388 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::TSIG_KEY:
@@ -2000,7 +2002,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 396 "d2_lexer.ll"
+#line 398 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::TSIG_KEY:
@@ -2013,7 +2015,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 406 "d2_lexer.ll"
+#line 408 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::TSIG_KEY:
@@ -2026,7 +2028,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 416 "d2_lexer.ll"
+#line 418 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -2038,7 +2040,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 425 "d2_lexer.ll"
+#line 427 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -2050,7 +2052,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 434 "d2_lexer.ll"
+#line 436 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2062,7 +2064,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 443 "d2_lexer.ll"
+#line 445 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
@@ -2074,7 +2076,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 452 "d2_lexer.ll"
+#line 454 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
@@ -2086,7 +2088,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 461 "d2_lexer.ll"
+#line 463 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET_TYPE:
@@ -2098,7 +2100,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 470 "d2_lexer.ll"
+#line 472 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2110,7 +2112,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 479 "d2_lexer.ll"
+#line 481 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2122,7 +2124,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 488 "d2_lexer.ll"
+#line 490 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2134,7 +2136,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 497 "d2_lexer.ll"
+#line 499 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2146,7 +2148,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 506 "d2_lexer.ll"
+#line 508 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::AUTHENTICATION:
@@ -2158,7 +2160,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 515 "d2_lexer.ll"
+#line 517 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::AUTH_TYPE:
@@ -2170,7 +2172,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 524 "d2_lexer.ll"
+#line 526 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::AUTHENTICATION:
@@ -2182,7 +2184,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 533 "d2_lexer.ll"
+#line 535 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::AUTHENTICATION:
@@ -2194,7 +2196,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 542 "d2_lexer.ll"
+#line 544 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::AUTHENTICATION:
@@ -2206,7 +2208,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 551 "d2_lexer.ll"
+#line 553 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CLIENTS:
@@ -2218,7 +2220,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 560 "d2_lexer.ll"
+#line 562 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CLIENTS:
@@ -2230,7 +2232,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 569 "d2_lexer.ll"
+#line 571 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CLIENTS:
@@ -2242,7 +2244,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 578 "d2_lexer.ll"
+#line 580 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CLIENTS:
@@ -2254,7 +2256,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 587 "d2_lexer.ll"
+#line 589 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2266,7 +2268,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 596 "d2_lexer.ll"
+#line 598 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2278,7 +2280,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 605 "d2_lexer.ll"
+#line 607 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2290,7 +2292,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 614 "d2_lexer.ll"
+#line 616 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::CONTROL_SOCKET:
@@ -2302,7 +2304,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 623 "d2_lexer.ll"
+#line 625 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -2314,7 +2316,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 632 "d2_lexer.ll"
+#line 634 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::HOOKS_LIBRARIES:
@@ -2326,7 +2328,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 641 "d2_lexer.ll"
+#line 643 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::HOOKS_LIBRARIES:
@@ -2338,7 +2340,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 650 "d2_lexer.ll"
+#line 652 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::DHCPDDNS:
@@ -2350,7 +2352,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 659 "d2_lexer.ll"
+#line 661 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
@@ -2362,7 +2364,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 668 "d2_lexer.ll"
+#line 670 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
@@ -2374,7 +2376,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 677 "d2_lexer.ll"
+#line 679 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
@@ -2386,7 +2388,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 686 "d2_lexer.ll"
+#line 688 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
@@ -2398,7 +2400,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 695 "d2_lexer.ll"
+#line 697 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
@@ -2410,7 +2412,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 704 "d2_lexer.ll"
+#line 706 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
@@ -2422,7 +2424,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 713 "d2_lexer.ll"
+#line 715 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::OUTPUT_OPTIONS:
@@ -2434,7 +2436,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 722 "d2_lexer.ll"
+#line 724 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
@@ -2450,7 +2452,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 735 "d2_lexer.ll"
+#line 737 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
@@ -2462,7 +2464,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 744 "d2_lexer.ll"
+#line 746 "d2_lexer.ll"
 {
     switch(driver.ctx_) {
     case isc::d2::D2ParserContext::LOGGERS:
@@ -2474,7 +2476,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 753 "d2_lexer.ll"
+#line 755 "d2_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -2579,7 +2581,7 @@ YY_RULE_SETUP
 case 72:
 /* rule 72 can match eol */
 YY_RULE_SETUP
-#line 854 "d2_lexer.ll"
+#line 856 "d2_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     std::string raw(yytext+1);
@@ -2599,7 +2601,7 @@ YY_RULE_SETUP
 case 73:
 /* rule 73 can match eol */
 YY_RULE_SETUP
-#line 870 "d2_lexer.ll"
+#line 872 "d2_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     std::string raw(yytext+1);
@@ -2651,7 +2653,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 919 "d2_lexer.ll"
+#line 921 "d2_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     std::string raw(yytext+1);
@@ -2662,7 +2664,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 927 "d2_lexer.ll"
+#line 929 "d2_lexer.ll"
 {
     /* Bad string with an open unicode escape at the end */
     std::string raw(yytext+1);
@@ -2680,37 +2682,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 942 "d2_lexer.ll"
+#line 944 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 943 "d2_lexer.ll"
+#line 945 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 944 "d2_lexer.ll"
+#line 946 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 945 "d2_lexer.ll"
+#line 947 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 946 "d2_lexer.ll"
+#line 948 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 947 "d2_lexer.ll"
+#line 949 "d2_lexer.ll"
 { return isc::d2::D2Parser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 949 "d2_lexer.ll"
+#line 951 "d2_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2731,7 +2733,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 967 "d2_lexer.ll"
+#line 969 "d2_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2747,7 +2749,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 980 "d2_lexer.ll"
+#line 982 "d2_lexer.ll"
 {
     string tmp(yytext);
     return isc::d2::D2Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2755,33 +2757,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 985 "d2_lexer.ll"
+#line 987 "d2_lexer.ll"
 {
    return isc::d2::D2Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 989 "d2_lexer.ll"
+#line 991 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 991 "d2_lexer.ll"
+#line 993 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 993 "d2_lexer.ll"
+#line 995 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 995 "d2_lexer.ll"
+#line 997 "d2_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 997 "d2_lexer.ll"
+#line 999 "d2_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::d2::D2Parser::make_END(driver.loc_);
@@ -2807,10 +2809,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 1020 "d2_lexer.ll"
+#line 1022 "d2_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2813 "d2_lexer.cc"
+#line 2815 "d2_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3915,7 +3917,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 1020 "d2_lexer.ll"
+#line 1022 "d2_lexer.ll"
 
 
 using namespace isc::dhcp;

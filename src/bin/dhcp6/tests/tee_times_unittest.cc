@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -116,7 +116,7 @@ public:
 // This test verifies that explicit values for renew-timer and
 // rebind-timer are used when given.
 TEST_F(TeeTest, explicitTimers) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     uint32_t na_iaid = 2222;
     client.requestAddress(na_iaid);
@@ -159,7 +159,7 @@ TEST_F(TeeTest, explicitTimers) {
 // default when explicit values for renew-timer
 // and rebind-timer are not present.
 TEST_F(TeeTest, defaultTimers) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     uint32_t na_iaid = 2222;
     client.requestAddress(na_iaid);
@@ -201,7 +201,7 @@ TEST_F(TeeTest, defaultTimers) {
 // This test verifies that custom percentages for T1 and T2
 // can be used for calculation.
 TEST_F(TeeTest, calculateTimers) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     uint32_t na_iaid = 2222;
     client.requestAddress(na_iaid);

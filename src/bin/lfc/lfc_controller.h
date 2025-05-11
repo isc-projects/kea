@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@ namespace lfc {
 class InvalidUsage : public isc::Exception {
 public:
     InvalidUsage(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Exceptions thrown when a method is unable to manipulate
@@ -25,7 +25,7 @@ public:
 class RunTimeFail : public isc::Exception {
 public:
     RunTimeFail(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Process controller for LFC process
@@ -197,7 +197,7 @@ private:
     void startLogger(const bool test_mode) const;
 };
 
-}; // namespace isc::lfc
-}; // namespace isc
+}  // namespace isc::lfc
+}  // namespace isc
 
 #endif // LFC_CONTROLLER_H

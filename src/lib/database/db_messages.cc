@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/database/db_messages.mes
+// File created from src/lib/database/db_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -7,6 +7,7 @@
 namespace isc {
 namespace db {
 
+extern const isc::log::MessageID CONFIG_BACKENDS_REGISTERED = "CONFIG_BACKENDS_REGISTERED";
 extern const isc::log::MessageID DATABASE_INVALID_ACCESS = "DATABASE_INVALID_ACCESS";
 extern const isc::log::MessageID DATABASE_MYSQL_COMMIT = "DATABASE_MYSQL_COMMIT";
 extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR = "DATABASE_MYSQL_FATAL_ERROR";
@@ -32,6 +33,7 @@ extern const isc::log::MessageID DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR = "DATABASE
 namespace {
 
 const char* values[] = {
+    "CONFIG_BACKENDS_REGISTERED", "the following config backend types are available: %1",
     "DATABASE_INVALID_ACCESS", "invalid database access string: %1",
     "DATABASE_MYSQL_COMMIT", "committing to MySQL database",
     "DATABASE_MYSQL_FATAL_ERROR", "Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).",

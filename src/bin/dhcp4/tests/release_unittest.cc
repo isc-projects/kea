@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,7 +129,7 @@ ReleaseTest::acquireAndRelease(const std::string& hw_address_1,
                                ExpectedResult expected_result,
                                const LeaseAffinity lease_affinity) {
     CfgMgr::instance().clear();
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, lease_affinity);
     // Explicitly set the client id.
@@ -321,7 +321,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNonMatchingHWAddress) {
 // - Server determines that the client is trying to release a
 //   wrong address and will refuse to release.
 TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
@@ -348,7 +348,7 @@ TEST_F(ReleaseTest, releaseNonMatchingIPAddress) {
 // - Server determines that the client is trying to release a
 //   wrong address and will refuse to release.
 TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
@@ -371,7 +371,7 @@ TEST_F(ReleaseTest, releaseNoDeleteNonMatchingIPAddress) {
 // This test verifies that an incoming RELEASE for an address within
 // a subnet that has been removed can still be released.
 TEST_F(ReleaseTest, releaseNoSubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
@@ -394,7 +394,7 @@ TEST_F(ReleaseTest, releaseNoSubnet) {
 // This test verifies that an incoming RELEASE for an address within
 // a subnet that has been removed can still be released.
 TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(RELEASE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
     // Perform 4-way exchange to obtain a new lease.
@@ -415,6 +415,98 @@ TEST_F(ReleaseTest, releaseNoDeleteNoSubnet) {
 
     // Check That the lease has been expired
     EXPECT_EQ(lease->valid_lft_, 0);
+}
+
+// This test verifies that an incoming RELEASE for an address within
+// a subnet can be reclaimed and does not cause counters to decrease below 0.
+TEST_F(ReleaseTest, releaseAndReclaim) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    const char* RELEASE_CONFIG = {
+    // Configuration 0
+        "{ \"interfaces-config\": {"
+            "      \"interfaces\": [ \"*\" ]"
+            "},"
+            "\"valid-lifetime\": 1,"
+            "\"subnet4\": [ { "
+            "    \"subnet\": \"10.0.0.0/24\", "
+            "    \"id\": 1,"
+            "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+            "    \"option-data\": [ {"
+            "        \"name\": \"routers\","
+            "        \"data\": \"10.0.0.200,10.0.0.201\""
+            "    } ]"
+            " } ],"
+            " \"expired-leases-processing\": {"
+            "    \"flush-reclaimed-timer-wait-time\": 3,"
+            "    \"hold-reclaimed-time\": 1,"
+            "    \"max-reclaim-leases\": 100,"
+            "    \"max-reclaim-time\": 250,"
+            "    \"reclaim-timer-wait-time\": 1,"
+            "    \"unwarned-reclaim-cycles\": 5"
+            "},"
+            "\"multi-threading\": { \"enable-multi-threading\": false }"
+        "}"
+    };
+
+    setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
+    ConstElementPtr json;
+    try {
+        json = parseJSON(RELEASE_CONFIG);
+    } catch (const std::exception& ex) {
+        // Fatal failure on parsing error
+        FAIL() << "parsing failure:"
+               << "config:" << RELEASE_CONFIG << std::endl
+               << "error: " << ex.what();
+    }
+
+    disableIfacesReDetect(json);
+
+    client.getServer()->processConfig(json);
+
+    CfgMgr::instance().commit();
+
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    std::stringstream name;
+
+    // Let's get the subnet-id and generate statistics name out of it
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    name << "subnet[" << (*subnets->begin())->getID() << "].assigned-addresses";
+
+    ObservationPtr assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t before = assigned_cnt->getInteger().first;
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Release is as it was relayed
+    client.useRelay(true);
+
+    // Send the release
+    ASSERT_NO_THROW(client.doRelease());
+
+    // Check that the lease was not removed
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    ASSERT_TRUE(lease);
+
+    // Check That the lease has been expired
+    EXPECT_EQ(lease->valid_lft_, 0);
+
+    assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t after = assigned_cnt->getInteger().first;
+    ASSERT_EQ(after, before - 1);
+    sleep(1);
+    client.getServer()->getIOService()->poll();
+    assigned_cnt = StatsMgr::instance().getObservation(name.str());
+    ASSERT_TRUE(assigned_cnt);
+    uint64_t count = assigned_cnt->getInteger().first;
+    ASSERT_EQ(count, after);
 }
 
 } // end of anonymous namespace

@@ -2,6 +2,7 @@ SUBDIRS = .
 
 # Define the flags used in each set of tests.
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DTEMP_DIR=\"$(builddir)\"
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -147,7 +148,8 @@ messages: log_test_messages.h log_test_messages.cc
 	@echo Message files regenerated
 
 log_test_messages.h log_test_messages.cc: log_test_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/log/tests/log_test_messages.mes)
 
 else
 

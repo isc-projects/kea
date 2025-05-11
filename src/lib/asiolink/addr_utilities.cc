@@ -76,7 +76,7 @@ IOAddress firstAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     }
 
     // Clear out the remaining bits.
-    for (int i = len / 8; i < sizeof(packed); ++i) {
+    for (unsigned i = len / 8; i < sizeof(packed); ++i) {
         packed[i] = 0x0;
     }
 
@@ -156,7 +156,7 @@ IOAddress lastAddrInPrefix6(const IOAddress& prefix, uint8_t len) {
     }
 
     // Finally set remaining bits to 1.
-    for (int i = len / 8; i < sizeof(packed); ++i) {
+    for (unsigned i = len / 8; i < sizeof(packed); ++i) {
         packed[i] = 0xff;
     }
 

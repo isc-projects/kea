@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ class CalloutManager;
 /// Typedef for a callout pointer.  (Callouts must have "C" linkage.)
 extern "C" {
     typedef int (*CalloutPtr)(CalloutHandle&);
-};
+}
 
 /// @brief Library handle
 ///
@@ -207,6 +207,29 @@ public:
     /// @note: kept for backward compatibility.
     /// @return a vector with parameter entry names.
     std::vector<std::string> getParameterNames();
+
+    /// @brief Get library index
+    ///
+    /// @return Current library index.
+    int getLibraryIndex() const {
+        return (index_);
+    }
+
+    /// @brief Set library index
+    ///
+    /// Sets the current library index.  This has the following valid values:
+    ///
+    /// - -1: invalidate current index.
+    /// - 0: pre-user library callout.
+    /// - 1 - numlib: user-library callout (where "numlib" is the number of
+    ///   libraries loaded in the system, this figure being passed to this
+    ///   object at construction time).
+    /// - INT_MAX: post-user library callout.
+    ///
+    /// @param library_index New library index.
+    void setLibraryIndex(int library_index) {
+        index_ = library_index;
+    }
 
 private:
     /// @brief Copy constructor

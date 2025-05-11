@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,8 +10,8 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/testutils/test_tls.h>
 #include <cc/command_interpreter.h>
-#include <config/http_command_mgr.h>
 #include <config/command_mgr.h>
+#include <config/http_command_mgr.h>
 #include <dhcp/iface_mgr.h>
 #include <http/response.h>
 #include <http/response_parser.h>
@@ -82,6 +82,7 @@ public:
         test_timer_.cancel();
         resetState();
         IfaceMgr::instance().deleteAllExternalSockets();
+        io_service_->stopAndPoll();
     }
 
     /// @brief Resets state.
@@ -92,7 +93,7 @@ public:
         config::CommandMgr::instance().deregisterAll();
 
         if (HttpCommandMgr::instance().getHttpListener()) {
-            HttpCommandMgr::instance().close();
+            HttpCommandMgr::instance().closeCommandSockets();
         }
         if (io_service) {
             HttpCommandMgr::instance().setIOService(io_service);
@@ -130,8 +131,10 @@ public:
         std::string request_str = buildPostStr(request_body);
 
         // Instantiate the client.
-        client_.reset(new TestHttpClient(io_service_, SERVER_ADDRESS,
-                                         SERVER_PORT));
+        if (!client_) {
+            client_.reset(new TestHttpClient(io_service_, SERVER_ADDRESS,
+                                             SERVER_PORT));
+        }
 
         // Start the request.  Note, nothing happens until the IOService runs.
         client_->startRequest(request_str);
@@ -180,7 +183,7 @@ public:
     /// @brief "foo" command handler.
     ///
     /// The command needs no arguments and returns a response
-    ///  with a body containing:
+    /// with a body containing:
     ///
     /// "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]"
     ///
@@ -191,14 +194,14 @@ public:
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
     }
 
-    /// @brief IO service used in drive the test and test clients.
+    /// @brief IO service used to drive the test and test clients.
     IOServicePtr io_service_;
 
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimer test_timer_;
 
     /// @brief Client connection.
-    TestHttpClientPtr client_;
+    boost::shared_ptr<BaseTestHttpClient> client_;
 
     /// @brief HTTP control socket config.
     HttpCommandConfigPtr http_config_;
@@ -206,8 +209,8 @@ public:
 
 /// Verifies the configure and close of HttpCommandMgr.
 TEST_F(HttpCommandMgrTest, basic) {
-    // Make sure we can configure one.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    // Make sure we can create one.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
 
@@ -216,40 +219,40 @@ TEST_F(HttpCommandMgrTest, basic) {
     EXPECT_EQ(SERVER_PORT, listener->getLocalPort());
 
     // Stop it and verify we're no longer listening.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // Make sure we can call stop again without problems.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
 
     // We should be able to restart it.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Close it with postponed garbage collection.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close(false));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSocket(HttpSocketInfoPtr(), false));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 }
 
 /// Verifies the use external socket flag of HttpCommandMgr.
 TEST_F(HttpCommandMgrTest, useExternal) {
     // Default is to use external sockets.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
     int fd = listener->getNative();
     EXPECT_NE(-1, fd);
     EXPECT_TRUE(IfaceMgr::instance().isExternalSocket(fd));
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
 
     // Change to no external sockets.
     HttpCommandMgr::instance().addExternalSockets(false);
 
     // Retry: now the listener is not added as an external socket
     // to the interface manager.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
     fd = listener->getNative();
@@ -259,15 +262,15 @@ TEST_F(HttpCommandMgrTest, useExternal) {
 
 /// Verifies the configure and close of HttpCommandMgr with TLS.
 TEST_F(HttpCommandMgrTest, basicTls) {
-    string ca_dir(string(TEST_CA_DIR));
     // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
     http_config_->setSocketType("https");
     http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
     http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
     http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
 
     // Make sure we can create one.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
 
@@ -276,20 +279,20 @@ TEST_F(HttpCommandMgrTest, basicTls) {
     EXPECT_EQ(SERVER_PORT, listener->getLocalPort());
 
     // Stop it and verify we're no longer listening.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 
     // Make sure we can call stop again without problems.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
 
     // We should be able to restart it.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Close it with postponed garbage collection.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close(false));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSocket(HttpSocketInfoPtr(), false));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().garbageCollectListeners());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
     EXPECT_FALSE(HttpCommandMgr::instance().getHttpListener());
 }
 
@@ -303,20 +306,20 @@ TEST_F(HttpCommandMgrTest, useExternalTls) {
     http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
 
     // Default is to use external sockets.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     auto listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
     int fd = listener->getNative();
     EXPECT_NE(-1, fd);
     EXPECT_TRUE(IfaceMgr::instance().isExternalSocket(fd));
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().close());
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().closeCommandSockets());
 
     // Change to no external sockets.
     HttpCommandMgr::instance().addExternalSockets(false);
 
     // Retry: now the listener is not added as an external socket
     // to the interface manager.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     listener = HttpCommandMgr::instance().getHttpListener();
     ASSERT_TRUE(listener);
     fd = listener->getNative();
@@ -328,7 +331,7 @@ TEST_F(HttpCommandMgrTest, useExternalTls) {
 // transmit an HTTP request and receive the response.
 TEST_F(HttpCommandMgrTest, command) {
     // Configure.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Now let's send a "foo" command.  This should create a client, connect
@@ -353,8 +356,81 @@ TEST_F(HttpCommandMgrTest, commandNoExternal) {
     HttpCommandMgr::instance().addExternalSockets(false);
 
     // Configure.
-    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().configure(http_config_));
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
     EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Now let's send a "foo" command.  This should create a client, connect
+    // to our listener, post our request and retrieve our reply.
+    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ASSERT_TRUE(client_);
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_TRUE(client_);
+
+    // Parse the response into an HttpResponse.
+    HttpResponsePtr hr;
+    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
+
+    // We should have a response from our command handler.
+    EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
+}
+
+// This test verifies that an HTTPS connection can be established and used to
+// transmit an HTTPS request and receive the response.
+TEST_F(HttpCommandMgrTest, commandTls) {
+    // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Create a HTTPS test client.
+    TlsContextPtr client_tls_context;
+    configClient(client_tls_context);
+    client_.reset(new TestHttpsClient(io_service_, client_tls_context,
+                                      SERVER_ADDRESS, SERVER_PORT));
+
+    // Now let's send a "foo" command.  This should create a client, connect
+    // to our listener, post our request and retrieve our reply.
+    ASSERT_NO_THROW(startRequest("{\"command\": \"foo\"}"));
+    ASSERT_TRUE(client_);
+    ASSERT_NO_THROW(runIOService());
+    ASSERT_TRUE(client_);
+
+    // Parse the response into an HttpResponse.
+    HttpResponsePtr hr;
+    ASSERT_NO_THROW_LOG(hr = parseResponse(client_->getResponse()));
+
+    // We should have a response from our command handler.
+    EXPECT_EQ(hr->getBody(), "[ { \"arguments\": [ \"bar\" ], \"result\": 0 } ]");
+}
+
+// This test verifies that an HTTPS connection can be established and used to
+// transmit an HTTPS request and receive the response (no external sockets).
+TEST_F(HttpCommandMgrTest, commandNoExternalTls) {
+    // Change to no external sockets.
+    HttpCommandMgr::instance().addExternalSockets(false);
+
+    // Setup TLS for the manager.
+    string ca_dir(string(TEST_CA_DIR));
+    http_config_->setSocketType("https");
+    http_config_->setTrustAnchor(ca_dir + string("/kea-ca.crt"));
+    http_config_->setCertFile(ca_dir + string("/kea-server.crt"));
+    http_config_->setKeyFile(ca_dir + string("/kea-server.key"));
+
+    // Configure.
+    ASSERT_NO_THROW_LOG(HttpCommandMgr::instance().openCommandSocket(http_config_->toElement()));
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Create a HTTPS test client.
+    TlsContextPtr client_tls_context;
+    configClient(client_tls_context);
+    client_.reset(new TestHttpsClient(io_service_, client_tls_context,
+                                      SERVER_ADDRESS, SERVER_PORT));
 
     // Now let's send a "foo" command.  This should create a client, connect
     // to our listener, post our request and retrieve our reply.

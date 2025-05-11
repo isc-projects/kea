@@ -3,7 +3,7 @@
         "authentication": {
             "clients": [
                 {
-                    "password": "1234",
+                    "password": "-----",
                     "user": "admin",
                     "user-context": {
                         "comment": "admin is authorized"
@@ -47,6 +47,15 @@
                 "parameters": {
                     "param1": "foo"
                 }
+            }
+        ],
+        "http-headers": [
+            {
+                "name": "Strict-Transport-Security",
+                "user-context": {
+                    "comment": "HSTS header"
+                },
+                "value": "max-age=31536000"
             }
         ],
         "http-host": "127.0.0.1",

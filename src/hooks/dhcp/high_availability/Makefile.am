@@ -85,7 +85,8 @@ messages: ha_messages.h ha_messages.cc
 	@echo Message files regenerated
 
 ha_messages.h ha_messages.cc: ha_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/high_availability/ha_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/high_availability/ha_messages.mes)
 
 else
 

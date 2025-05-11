@@ -28,7 +28,7 @@ namespace d2 {
 class D2ParseError : public isc::Exception {
 public:
     D2ParseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Evaluation context, an interface to the expression evaluation.

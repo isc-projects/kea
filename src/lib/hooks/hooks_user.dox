@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -892,7 +892,7 @@ g++ -I <install-dir>/include/kea -L <install-dir>/lib -fpic -shared -o example.s
 
 Notes:
 - Replace "<install-dir>" with the location in which you installed Kea. Unless
-you specified the "--prefix" switch on the "configure" command line when
+you specified the "--prefix" switch on the "meson setup" command line when
 building Kea, it will be installed in the default location, usually /usr/local.
 - The compilation command and switches required may vary depending on
 your operating system and compiler - consult the relevant documentation
@@ -1358,8 +1358,8 @@ a name will conflict with any existing or future Kea argument names.
 
 @subsection hooksdgStaticallyLinkedKea Running Against a Statically-Linked Kea
 
-If Kea is built with the --enable-static-link switch (set when
-running the "configure" script), no shared Kea libraries are built;
+If Kea is built with the "-D default_library=static" switch (set when
+running the "meson setup" script), no shared Kea libraries are built;
 instead, archive libraries are created and Kea is linked to them.
 If you create a hooks library also linked against these archive libraries,
 when the library is loaded you end up with two copies of the library code,

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,13 +23,17 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in Kea DHCP by default:
-  the \--with-mysql switch must be supplied to "configure" for support
-  to be compiled into the software.
+  the "-D mysql=enabled" switch must be supplied to "meson setup" for support to be
+  compiled into the software. This will also compile the "libdhcp_mysql.so" hook
+  library which must be loaded by adding it to the "hooks-libraries"
+  configuration parameter.
 
   - The PostgreSQL lease manager uses the freely available PostgreSQL as its
   backend database.  This is not included in Kea DHCP by default:
-  the \--with-pgsql switch must be supplied to "configure" for
-  support to be compiled into the software.
+  the "-D postgresql=enabled" switch must be supplied to "meson setup" for support to be
+  compiled into the software. This will also compile the "libdhcp_pgsql.so" hook
+  library which must be loaded by adding it to the "hooks-libraries"
+  configuration parameter.
 
   @section dhcpdb-instantiation Instantiation of Lease Managers
 
@@ -48,7 +52,7 @@
   (no embedded spaces), each pair separated by a space from the others, e.g.
 
   \code
-  type=mysql user=keatest password=keatest name=keatest host=localhost
+  type=mysql user=keatest password=1234 name=keatest host=localhost
   \endcode
 
   The following keywords are used for all backends:
@@ -89,7 +93,7 @@
 
   For details, see @ref isc::db::PgSqlConnection::openDatabase().
 
-  @subsection infinite-valid-lifetime Infinite Valid Lifetime
+  @subsubsection infinite-valid-lifetime Infinite Valid Lifetime
 
   The @c isc::dhcp::Lease class uses cltt (client last transmission time)
   and valid lifetime, backend lease uses expire and valid lifetime.
@@ -105,6 +109,158 @@
         expire = cltt + valid_lifetime if valid_lifetime != 0xffffffff
         expire = cltt if valid_lifetime == 0xffffffff
   @endcode
+
+  @subsection memfile-description Memfile Lease Back-End
+
+  The memfile backend does not use any database, but stores leases in
+  plain CSV file instead: kea-keases4.csv for DHCPv4 and kea-leases6.csv
+  for DHCPv6. These are effectively journal files, so changes are
+  appended at the end. For example, if a single device obtains a lease,
+  renews it 3 times and then it is released, there would be 5
+  entries. Periodically, the lease file is cleaned by LFC (Lease File
+  Cleanup) process. That process does move the file to the side, then
+  creates a new file and writes cleaned entries there. Depending on the
+  situation, there may be other files, such as kea-leases4.csv.2 with .1
+  (used during LFC taking place) or .2 extensions (left over after LFC
+  is complete as "backup", i.e.  old file before clean-up).
+
+  @subsubsection lease4-csv DHCPv4 lease entry format in CSV files
+
+  - <b>address</b> - IPv4 address \n
+    type: string \n
+    example: 192.0.2.1
+
+  - <b>hwaddr</b> - hardware address (without the hardware type) \n
+    type: string \n
+    example: 00:01:02:03:04:05
+
+  - <b>client_id</b> - client identifier \n
+    type: string \n
+    example: 01:02:03:03:04:aa:bb:cc
+
+  - <b>valid_lifetime</b> - valid lifetime \n
+    type: uint32_t \n
+    example: 200
+
+  - <b>expire</b> - expiration date \n
+    type: uint64_t (cltt + valid lifetime) \n
+    example: 1733517739
+
+  - <b>subnet_id</b> - DHCPv4 subnet identifier \n
+    type: int32_t (0 and max excluded) \n
+    example: 1
+
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag \n
+    type: bool (0 or 1) \n
+    example: 0
+
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag \n
+    type: bool (0 or 1)	\n
+    example: 1
+
+  - <b>hostname</b> - hostname \n
+    type: string (separators are escaped) \n
+    example: foo.bar
+
+  - <b>state</b> - lease state \n
+    type: int32_t (0 = assigned, 1 = declined, 2 = expired-reclaimed, 3 = released) \n
+    example: 0
+
+  - <b>user_context</b> - user context \n
+    type: string (separators are escaped) \n
+    example: <tt>{ \"foo\": true }</tt>
+
+  - <b>pool_id</b> - pool identifier \n
+    type: uint32_t \n
+    example: 0
+
+  for instance:
+\verbatim
+192.0.2.2,02:02:02:02:02:02,,200,200,8,1,1,,1,{ \"foo\": true },0\n
+\endverbatim
+
+  More examples can be found in unit tests.
+
+  @subsection lease6-csv DHCPv6 lease entry format in CSV files
+
+  - <b>address</b> - IPv6 address \n
+    type: string \n
+    example: 2001:db8:1::1
+
+  - <b>DUID</b> - client DUID \n
+    type: string \n
+    example: 01:02:03:04:05:aa:bb:cc
+
+  - <b>valid_lifetime</b> - valid lifetime \n
+    type: uint32_t \n
+    example: 200
+
+  - <b>expire</b> - expiration date \n
+    type: uint64_t (cltt + valid lifetime) \n
+    example: 1733517739
+
+  - <b>subnet_id</b> - DHCPv6 subnet identifier \n
+    type: int32_t (0 and max excluded) \n
+    example: 1
+
+  - <b>pref_lifetime</b> - preferred lifetime \n
+    type: uint32_t \n
+    example: 100
+
+  - <b>lease_type</b> - lease type \n
+    type: Lease::Type enum (0 for NA, 2 for PD) \n
+    example: 0
+
+  - <b>iaid</b> - IA identifier \n
+    type: uint32_t
+    example: 1
+
+  - <b>prefix_len</b> - prefix length \n
+    type: uint8_t (0 to 128)
+    example: 64
+
+  - <b>fqdn_fwd</b> - FQDN forward DNS RR update flag \n
+    type: bool (0 or 1) \n
+    example: 0
+
+  - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag \n
+    type: bool (0 or 1) \n
+    example: 1
+
+  - <b>hostname</b> - hostname \n
+    type: string (separators are escaped) \n
+    example: foo.bar
+
+  - <b>hwaddr</b> - hardware address (hardware type is in hwtype column) \n
+    type: string \n
+    example: 00:01:02:03:04:05
+
+  - <b>state</b> - lease state \n
+    type: int32_t (0 = assigned, 1 = declined, 2 = expired-reclaimed, 3 = released) \n
+    example: 0
+
+  - <b>user_context</b> - user context \n
+    type: string (separators are escaped) \n
+    example: <tt>{ \"foo\": true }</tt>
+
+  - <b>hwtype</b> - hardware type \n
+    type: uint16_t (can be empty/omitted) \n
+    example: 1
+
+  - <b>hwaddr_source</b> - source of hardware address and type \n
+    tyoe: uint32_t (one bit from an 8 bit mask, can be empty/omitted) \n
+    example: 0
+
+  - <b>pool_id</b> - pool identifier \n
+    type: uint32_t \n
+    example: 0
+
+  For instance:
+\verbatim
+2001:db8::1,00:01:02:03:04:05:06:0f,200,800,8,100,0,7,128,1,1,,,1,{ \"foo\": true },,,0\n
+\endverbatim
+
+  More examples can be found in unit tests.
 
   @section dhcpdb-host Host Backends
 

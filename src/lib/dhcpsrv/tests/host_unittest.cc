@@ -119,6 +119,48 @@ TEST(IPv6ResrvTest, setPrefix) {
                      isc::BadValue, expected);
 }
 
+// This test verifies that it is possible to manage prefix exclude option.
+TEST(IPv6ResrvTest, setPrefixExcludeOption) {
+    // Create a reservation using a prefix having a length of 48.
+    IPv6Resrv resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48);
+
+    // Add a Prefix Exclude option.
+    ASSERT_NO_THROW(resrv.setPDExclude(IOAddress("2001:db8:0:1::"), 64));
+    Option6PDExcludePtr opt = resrv.getPDExclude();
+    EXPECT_TRUE(opt);
+    EXPECT_EQ("2001:db8:0:1::",
+              opt->getExcludedPrefix(resrv.getPrefix(),
+                                     resrv.getPrefixLen()).toText());
+    EXPECT_EQ(64, opt->getExcludedPrefixLength());
+    string expected = "2001:db8::/48 (excluded_prefix=2001:db8:0:1::/64)";
+    EXPECT_EQ(expected, resrv.toText());
+
+    // Length 0 means remove.
+    EXPECT_NO_THROW(resrv.setPDExclude(IOAddress("1.2.3.4"), 0));
+    EXPECT_FALSE(resrv.getPDExclude());
+
+    // Set also removes the option.
+    EXPECT_NO_THROW(resrv.setPDExclude(IOAddress("2001:db8:0:1::"), 64));
+    EXPECT_TRUE(resrv.getPDExclude());
+    ASSERT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
+    EXPECT_FALSE(resrv.getPDExclude());
+
+    // Error case: the excluded prefix not in the (delegated) prefix.
+    expected = "excluded prefix 2001:db8:1::/64 must have the same common";
+    expected += " prefix part of 48 as the delegated prefix";
+    expected += " 2001:db8::/48";
+    EXPECT_THROW_MSG(resrv.setPDExclude(IOAddress("2001:db8:1::"), 64),
+                     BadValue, expected);
+
+    // Error case: the excluded prefix length must be less than the
+    // (delegated) prefix.
+    expected = "length of the excluded prefix 2001:db8::/48";
+    expected += " must be greater than the length of the delegated prefix";
+    expected += " 2001:db8::/48";
+    EXPECT_THROW_MSG(resrv.setPDExclude(IOAddress("2001:db8::"), 48),
+                     BadValue, expected);
+}
+
 // This test checks that the equality operators work fine.
 TEST(IPv6ResrvTest, equal) {
     EXPECT_TRUE(IPv6Resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 64) ==
@@ -1104,8 +1146,9 @@ TEST_F(HostTest, toText) {
                                        IOAddress("2001:db8:1::cafe")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1:1::"), 64));
-        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                       IOAddress("2001:db8:1:2::"), 64));
+        IPv6Resrv res(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1:2::"), 64);
+        res.setPDExclude(IOAddress("2001:db8:1:2:3::"), 80);
+        host->addReservation(IPv6Resrv(res));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        IOAddress("2001:db8:1::1")));
     );
@@ -1125,7 +1168,8 @@ TEST_F(HostTest, toText) {
               " ipv6_reservation0=2001:db8:1::cafe"
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
-              " ipv6_reservation3=2001:db8:1:2::/64",
+              " ipv6_reservation3=2001:db8:1:2::/64"
+              " (excluded_prefix=2001:db8:1:2:3::/80)",
               host->toText());
 
     // Reset some of the data and make sure that the output is affected.
@@ -1144,6 +1188,7 @@ TEST_F(HostTest, toText) {
               " ipv6_reservation1=2001:db8:1::1"
               " ipv6_reservation2=2001:db8:1:1::/64"
               " ipv6_reservation3=2001:db8:1:2::/64"
+              " (excluded_prefix=2001:db8:1:2:3::/80)"
               " negative cached",
               host->toText());
 
@@ -1212,14 +1257,12 @@ TEST_F(HostTest, unparse) {
                                         IOAddress("192.0.2.3"),
                                         "myhost.example.com")));
 
-    // Add 4 reservations: 2 for NAs, 2 for PDs.
+    // Add 3 reservations: 2 for NAs, 1 for PDs.
     ASSERT_NO_THROW(
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        IOAddress("2001:db8:1::cafe")));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
                                        IOAddress("2001:db8:1:1::"), 64));
-        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_PD,
-                                       IOAddress("2001:db8:1:2::"), 64));
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                        IOAddress("2001:db8:1::1")));
     );
@@ -1248,10 +1291,17 @@ TEST_F(HostTest, unparse) {
               "\"hw-address\": \"01:02:03:04:05:06\", "
               "\"ip-addresses\": [ \"2001:db8:1::cafe\", \"2001:db8:1::1\" ], "
               "\"option-data\": [  ], "
-              "\"prefixes\": [ \"2001:db8:1:1::/64\", \"2001:db8:1:2::/64\" ], "
+              "\"prefixes\": [ \"2001:db8:1:1::/64\" ], "
               "\"user-context\": { \"comment\": \"a host reservation\" } "
               "}",
               host->toElement6()->str());
+
+    // Add a Prefix Exclude option.
+    ASSERT_NO_THROW(
+        IPv6Resrv res(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1:2::"), 64);
+        res.setPDExclude(IOAddress("2001:db8:1:2:3::"), 80);
+        host->addReservation(res);
+    );
 
     // Reset some of the data and make sure that the output is affected.
     host->setHostname("");
@@ -1272,6 +1322,7 @@ TEST_F(HostTest, unparse) {
 
     EXPECT_EQ("{ "
               "\"client-classes\": [  ], "
+              "\"excluded-prefixes\": [ \"\", \"2001:db8:1:2:3::/80\" ], "
               "\"hostname\": \"\", "
               "\"hw-address\": \"01:02:03:04:05:06\", "
               "\"ip-addresses\": [ \"2001:db8:1::cafe\", \"2001:db8:1::1\" ], "

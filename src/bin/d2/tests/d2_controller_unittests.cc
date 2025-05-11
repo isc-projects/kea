@@ -300,5 +300,5 @@ TEST_F(D2ControllerTest, sigtermShutdown) {
     /// @todo add a way to trap log file and search it
 }
 
-}; // end of isc::d2 namespace
-}; // end of isc namespace
+}  // end of isc::d2 namespace
+}  // end of isc namespace

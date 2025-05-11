@@ -308,7 +308,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
 
             // Our data field requires that there is a certain chunk of
             // data left in the buffer. If not, option is truncated.
-            if (std::distance(data, data_buf.end()) < data_size) {
+            if (static_cast<size_t>(std::distance(data, data_buf.end())) < data_size) {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
 
@@ -325,7 +325,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 size_t data_size = bufferLength(fields.back(), true,
                                                 data, data_buf.end());
                 isc_throw_assert(data_size > 0);
-                if (std::distance(data, data_buf.end()) < data_size) {
+                if (static_cast<size_t>(std::distance(data, data_buf.end())) < data_size) {
                     break;
                 }
                 buffers.push_back(OptionBuffer(data, data + data_size));
@@ -350,7 +350,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
         // Note that data_size returned by getDataTypeLen may be zero
         // if variable length data is being held by the option but
         // this will not cause this check to throw exception.
-        if (std::distance(data, data_buf.end()) < data_size) {
+        if (static_cast<size_t>(std::distance(data, data_buf.end())) < data_size) {
             isc_throw(OutOfRange, "option buffer truncated");
         }
         // For an array of values we are taking different path because
@@ -369,7 +369,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
                 // data_size. Note that it is ok to truncate the data if and only
                 // if the data buffer is long enough to keep at least one value.
                 // This has been checked above already.
-                if (std::distance(data, data_buf.end()) < data_size) {
+                if (static_cast<size_t>(std::distance(data, data_buf.end())) < data_size) {
                     break;
                 }
                 buffers.push_back(OptionBuffer(data, data + data_size));
@@ -380,7 +380,8 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             // getDataTypeLen returns zero for variable size data types
             // such as strings. Simply take whole buffer.
             data_size = bufferLength(data_type, false, data, data_buf.end());
-            if ((data_size > 0) && (std::distance(data, data_buf.end()) >= data_size)) {
+            if ((data_size > 0) &&
+                (static_cast<size_t>(std::distance(data, data_buf.end())) >= data_size)) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
                 data += data_size;
             } else {

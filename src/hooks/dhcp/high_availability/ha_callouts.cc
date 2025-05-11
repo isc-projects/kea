@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -152,6 +152,25 @@ int lease4_server_decline(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief lease4_expire callout implementation.
+///
+/// @param handle callout handle.
+int lease4_expire(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        impl->lease4Expire(handle);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_LEASE4_EXPIRE_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
 
 /// @brief dhcp6_srv_configured callout implementation.
 ///
@@ -234,6 +253,26 @@ int leases6_committed(CalloutHandle& handle) {
 
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_LEASES6_COMMITTED_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    return (0);
+}
+
+/// @brief lease6_expire callout implementation.
+///
+/// @param handle callout handle.
+int lease6_expire(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+
+    try {
+        impl->lease6Expire(handle);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(ha_logger, HA_LEASE6_EXPIRE_FAILED)
             .arg(ex.what());
         return (1);
     }

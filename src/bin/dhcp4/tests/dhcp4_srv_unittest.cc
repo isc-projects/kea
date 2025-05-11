@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
-#include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <config_backend/base_config_backend.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
@@ -32,16 +32,19 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/host_mgr.h>
+#include <process/redact_config.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <util/encode/encode.h>
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_host_data_source.h>
 #endif
 
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql/pgsql_host_data_source.h>
 #endif
 
 #include <boost/scoped_ptr.hpp>
@@ -60,6 +63,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::process;
 using namespace isc::util;
 using namespace std;
 
@@ -234,7 +238,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -261,19 +265,19 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     // Set the client and server ports.
-    srv_.client_port_ = 1234;
-    srv_.server_port_ = 2345;
+    srv_->client_port_ = 1234;
+    srv_->server_port_ = 2345;
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
 
     // Remote port was enforced to the client port.
-    EXPECT_EQ(srv_.client_port_, resp->getRemotePort());
+    EXPECT_EQ(srv_->client_port_, resp->getRemotePort());
 
     // Local port was enforced to the server port.
-    EXPECT_EQ(srv_.server_port_, resp->getLocalPort());
+    EXPECT_EQ(srv_->server_port_, resp->getLocalPort());
 }
 
 // This test verifies that the remote port is adjusted when
@@ -326,7 +330,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     resp->setRemotePort(67);
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -391,7 +395,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -419,7 +423,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
     CfgMgr::instance().commit();
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     EXPECT_EQ("eth1", resp->getIface());
@@ -466,10 +470,10 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelaySendToSourceTestingModeEnabled) {
     resp->setHops(req->getHops());
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
     // This function never throws.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Now the destination address should be source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -523,7 +527,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     // Copy hops value from the query.
     resp->setHops(req->getHops());
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to ciaddr
     EXPECT_EQ("192.0.1.15", resp->getRemoteAddr().toText());
@@ -590,9 +594,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewSendToSourceTestingModeEnabled) {
     resp->setHops(req->getHops());
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -653,7 +657,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // are zero and client has just got new lease, the assigned address is
     // carried in yiaddr. In order to send this address to the client,
     // server must broadcast its response.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that the response is sent to broadcast address as the
     // server doesn't have capability to respond directly.
@@ -682,7 +686,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.1.13", resp->getRemoteAddr().toText());
 }
@@ -731,9 +735,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
     test_config.setDirectResponse(false);
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -744,7 +748,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelectSendToSourceTestingModeEnabled) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server still responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -787,7 +791,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Server must respond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
@@ -845,9 +849,9 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcastSendToSourceTestingModeEnabled
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     // Set the testing mode.
-    srv_.setSendResponsesToSource(true);
+    srv_->setSendResponsesToSource(true);
 
-    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_->adjustIfaceData(ex));
 
     // Check that server responds to source address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
@@ -975,57 +979,55 @@ TEST_F(Dhcpv4SrvTest, appendServerID) {
     // Make sure that the option has been added.
     OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     ASSERT_TRUE(opt);
-    Option4AddrLstPtr opt_server_id =
-        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
-    ASSERT_TRUE(opt_server_id);
-
-    // The option is represented as a list of IPv4 addresses but with
-    // only one address added.
-    Option4AddrLst::AddressContainer addrs = opt_server_id->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-    // This address should match the local address of the packet.
-    EXPECT_EQ("192.0.3.1", addrs[0].toText());
+    OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(opt_serverid);
+    EXPECT_EQ("192.0.3.1", opt_serverid->readAddress().toText());
 }
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
 // class NakedDhcpv4Srv can be instantiated and destroyed.
 TEST_F(Dhcpv4SrvTest, basic) {
-
+    boost::shared_ptr<Dhcpv4Srv> srv;
     // Check that the base class can be instantiated
-    boost::scoped_ptr<Dhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, false,
                                             false)));
-    srv.reset();
+
     // We have to close open sockets because further in this test we will
     // call the Dhcpv4Srv constructor again. This constructor will try to
     // set the appropriate packet filter class for IfaceMgr. This requires
     // that all sockets are closed.
     IfaceMgr::instance().closeSockets();
 
+    srv_.reset();
+
     // Check that the derived class can be instantiated
-    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
     ASSERT_NO_THROW(
-        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+        srv_.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
     // Close sockets again for the next test.
     IfaceMgr::instance().closeSockets();
 
-    ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
+    srv_.reset();
+
+    ASSERT_NO_THROW(srv_.reset(new NakedDhcpv4Srv(0)));
 }
 
 // This test verifies the test_send_responses_to_source_ is false by default
 // and sets by the KEA_TEST_SEND_RESPONSES_TO_SOURCE environment variable.
 TEST_F(Dhcpv4SrvTest, testSendResponsesToSource) {
+    srv_.reset();
 
     ASSERT_FALSE(std::getenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE"));
-    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
     ASSERT_NO_THROW(
-        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
-    EXPECT_FALSE(naked_srv->getSendResponsesToSource());
+        srv_.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    EXPECT_FALSE(srv_->getSendResponsesToSource());
     ::setenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE", "ENABLED", 1);
+
+    srv_.reset();
+
     // Do not use ASSERT as we want unsetenv to be always called.
     EXPECT_NO_THROW(
-        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
-    EXPECT_TRUE(naked_srv->getSendResponsesToSource());
+        srv_.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    EXPECT_TRUE(srv_->getSendResponsesToSource());
     ::unsetenv("KEA_TEST_SEND_RESPONSES_TO_SOURCE");
 }
 
@@ -1057,11 +1059,10 @@ TEST_F(Dhcpv4SrvTest, processRequest) {
 // 1. They must have either hardware address or client id
 // 2. They must not have server id
 TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
-    NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
 
     // Should throw, no hardware address or client id
-    ASSERT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processDiscover(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPDISCOVER");
 
@@ -1069,12 +1070,12 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
-    ASSERT_NO_THROW(srv.processDiscover(pkt));
+    ASSERT_NO_THROW(srv_->processDiscover(pkt));
 
     // Now let's make a new pkt with client-id only, it should not throw.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1234));
     pkt->addOption(generateClientId());
-    ASSERT_NO_THROW(srv.processDiscover(pkt));
+    ASSERT_NO_THROW(srv_->processDiscover(pkt));
 
     // Now let's add a server-id. This should throw.
     const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
@@ -1082,7 +1083,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
-    EXPECT_THROW_MSG(srv.processDiscover(pkt), RFCViolation,
+    EXPECT_THROW_MSG(srv_->processDiscover(pkt), RFCViolation,
                      "Server-id option was not expected,"
                      " but received in message DHCPDISCOVER");
 }
@@ -1092,11 +1093,10 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
 // 2. They must have a requested address
 // 3. They may or may not have a server id
 TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
-    NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
 
     // Should throw, no hardware address or client id
-    ASSERT_THROW_MSG(srv.processRequest(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processRequest(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPREQUEST");
 
@@ -1104,20 +1104,20 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
-    EXPECT_NO_THROW(srv.processRequest(pkt));
+    EXPECT_NO_THROW(srv_->processRequest(pkt));
 
     // Now let's add a requested address. This should not throw.
     const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
     OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processRequest(pkt));
+    ASSERT_NO_THROW(srv_->processRequest(pkt));
 
     // Now let's make a new pkt with client-id only and an address, it should not throw.
     pkt.reset(new Pkt4(DHCPREQUEST, 1234));
     pkt->addOption(generateClientId());
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processRequest(pkt));
+    ASSERT_NO_THROW(srv_->processRequest(pkt));
 
     // Now let's add a server-id. This should not throw.
     const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
@@ -1125,7 +1125,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
-    EXPECT_NO_THROW(srv.processRequest(pkt));
+    EXPECT_NO_THROW(srv_->processRequest(pkt));
 }
 
 // Verifies that DHCPDECLINEs are sanity checked correctly.
@@ -1133,11 +1133,10 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
 // 2. They must have a requested address
 // 3. They may or may not have a server id
 TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
-    NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
     // Should throw, no hardware address or client id
-    ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processDecline(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPDECLINE");
 
@@ -1145,7 +1144,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
-    ASSERT_THROW_MSG(srv.processDecline(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processDecline(pkt), RFCViolation,
                     "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
                     " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
 
@@ -1154,13 +1153,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processDecline(pkt));
+    ASSERT_NO_THROW(srv_->processDecline(pkt));
 
     // Now let's make a new pkt with client-id only and an address, it should not throw.
     pkt.reset(new Pkt4(DHCPDECLINE, 1234));
     pkt->addOption(generateClientId());
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processDecline(pkt));
+    ASSERT_NO_THROW(srv_->processDecline(pkt));
 
     // Now let's add a server-id. This should not throw.
     const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
@@ -1168,18 +1167,17 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
     OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
-    EXPECT_NO_THROW(srv.processDecline(pkt));
+    EXPECT_NO_THROW(srv_->processDecline(pkt));
 }
 
 // Verifies that DHCPRELEASEs are sanity checked correctly.
 // 1. They must have either hardware address or client id
 // 2. They may or may not have a server id
 TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
-    NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
     // Should throw, no hardware address or client id
-    ASSERT_THROW_MSG(srv.processRelease(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processRelease(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPRELEASE");
 
@@ -1187,12 +1185,12 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
-    EXPECT_NO_THROW(srv.processRelease(pkt));
+    EXPECT_NO_THROW(srv_->processRelease(pkt));
 
     // Make a new pkt with client-id only.  Should not throw.
     pkt.reset(new Pkt4(DHCPRELEASE, 1234));
     pkt->addOption(generateClientId());
-    ASSERT_NO_THROW(srv.processRelease(pkt));
+    ASSERT_NO_THROW(srv_->processRelease(pkt));
 
     // Now let's add a server-id. This should not throw.
     const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
@@ -1200,7 +1198,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
     OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
-    EXPECT_NO_THROW(srv.processRelease(pkt));
+    EXPECT_NO_THROW(srv_->processRelease(pkt));
 }
 
 // Verifies that DHCPINFORMs are sanity checked correctly.
@@ -1208,11 +1206,10 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
 // 2. They may or may not have requested address
 // 3. They may or may not have a server id
 TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
-    NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
     // Should throw, no hardware address or client id
-    ASSERT_THROW_MSG(srv.processInform(pkt), RFCViolation,
+    ASSERT_THROW_MSG(srv_->processInform(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPINFORM");
 
@@ -1220,20 +1217,20 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
     pkt->setHWAddr(hwaddr);
-    ASSERT_NO_THROW(srv.processInform(pkt));
+    ASSERT_NO_THROW(srv_->processInform(pkt));
 
     // Now let's add a requested address. This should not throw.
     const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
     OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
     req_addr->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processInform(pkt));
+    ASSERT_NO_THROW(srv_->processInform(pkt));
 
     // Now let's make a new pkt with client-id only and an address, it should not throw.
     pkt.reset(new Pkt4(DHCPINFORM, 1234));
     pkt->addOption(generateClientId());
     pkt->addOption(req_addr);
-    ASSERT_NO_THROW(srv.processInform(pkt));
+    ASSERT_NO_THROW(srv_->processInform(pkt));
 
     // Now let's add a server-id. This should not throw.
     const OptionDefinition& server_id_def = LibDHCP::DHO_DHCP_SERVER_IDENTIFIER_DEF();
@@ -1241,7 +1238,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     OptionCustomPtr server_id(new OptionCustom(server_id_def, Option::V4));
     server_id->writeAddress(IOAddress("192.0.2.3"));
     pkt->addOption(server_id);
-    EXPECT_NO_THROW(srv.processInform(pkt));
+    EXPECT_NO_THROW(srv_->processInform(pkt));
 }
 
 // This test verifies that incoming DISCOVER can be handled properly, that an
@@ -1259,9 +1256,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
-
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
@@ -1270,7 +1264,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1280,7 +1274,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     checkAddressParams(offer, subnet_, true, true);
 
     // Check identifiers
-    checkServerId(offer, srv->getServerID());
+    checkServerId(offer, srv_->getServerID());
     checkClientId(offer, clientid);
 }
 
@@ -1288,9 +1282,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
 TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     // Recreate subnet
     Triplet<uint32_t> unspecified;
@@ -1347,7 +1338,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
         }
 
         // Pass it to the server and get an offer
-        Pkt4Ptr offer = srv->processDiscover(dis);
+        Pkt4Ptr offer = srv_->processDiscover(dis);
 
         // Check if we get response at all
         checkResponse(offer, DHCPOFFER, 1234);
@@ -1357,7 +1348,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
         checkAddressParams(offer, subnet_, false, false, test.expected);
 
         // Check identifiers
-        checkServerId(offer, srv->getServerID());
+        checkServerId(offer, srv_->getServerID());
         checkClientId(offer, clientid);
     }
 }
@@ -1369,9 +1360,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverValidLifetime) {
 TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     // Recreate subnet
     Triplet<uint32_t> unspecified;
@@ -1501,7 +1489,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
             subnet_->setT2(test.cfg_t2_);
 
             // Discover/Offer exchange with the server
-            Pkt4Ptr offer = srv->processDiscover(dis);
+            Pkt4Ptr offer = srv_->processDiscover(dis);
 
             // Verify we have an offer
             checkResponse(offer, DHCPOFFER, 1234);
@@ -1521,9 +1509,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
 TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     // Recreate subnet
     Triplet<uint32_t> unspecified;
@@ -1621,7 +1606,7 @@ TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
             subnet_->setT2Percent(test.t2_percent_);
 
             // Discover/Offer exchange with the server
-            Pkt4Ptr offer = srv->processDiscover(dis);
+            Pkt4Ptr offer = srv_->processDiscover(dis);
 
             // Verify we have an offer
             checkResponse(offer, DHCPOFFER, 1234);
@@ -1669,8 +1654,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("10.1.2.3");
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -1682,7 +1665,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1694,7 +1677,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     EXPECT_NE(offer->getYiaddr(), hint);
 
     // Check identifiers
-    checkServerId(offer, srv->getServerID());
+    checkServerId(offer, srv_->getServerID());
     checkClientId(offer, clientid);
 }
 
@@ -1711,9 +1694,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
 TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr dis1 = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     Pkt4Ptr dis2 = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 2345));
@@ -1741,9 +1721,9 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     dis3->addOption(clientid3);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer1 = srv->processDiscover(dis1);
-    Pkt4Ptr offer2 = srv->processDiscover(dis2);
-    Pkt4Ptr offer3 = srv->processDiscover(dis3);
+    Pkt4Ptr offer1 = srv_->processDiscover(dis1);
+    Pkt4Ptr offer2 = srv_->processDiscover(dis2);
+    Pkt4Ptr offer3 = srv_->processDiscover(dis3);
 
     // Check if we get response at all
     checkResponse(offer1, DHCPOFFER, 1234);
@@ -1760,9 +1740,9 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     checkAddressParams(offer3, subnet_, true, true);
 
     // Check server-ids
-    checkServerId(offer1, srv->getServerID());
-    checkServerId(offer2, srv->getServerID());
-    checkServerId(offer3, srv->getServerID());
+    checkServerId(offer1, srv_->getServerID());
+    checkServerId(offer2, srv_->getServerID());
+    checkServerId(offer3, srv_->getServerID());
     checkClientId(offer1, clientid1);
     checkClientId(offer2, clientid2);
     checkClientId(offer3, clientid3);
@@ -1783,8 +1763,6 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
@@ -1793,7 +1771,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1807,7 +1785,7 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
     CfgMgr::instance().commit();
 
-    offer = srv.processDiscover(dis);
+    offer = srv_->processDiscover(dis);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1818,9 +1796,6 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
 TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     // Enable lease reuse.
     subnet_->setCacheThreshold(.1);
@@ -1862,7 +1837,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     dis->setHWAddr(hwaddr2);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1889,7 +1864,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
     EXPECT_EQ(opt->getValue(), subnet_->getT2());
 
     // Check identifiers
-    checkServerId(offer, srv->getServerID());
+    checkServerId(offer, srv_->getServerID());
     checkClientId(offer, clientid);
 }
 
@@ -1897,9 +1872,6 @@ TEST_F(Dhcpv4SrvTest, DiscoverCache) {
 TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
     req->setRemoteAddr(IOAddress("192.0.2.1"));
@@ -1922,7 +1894,7 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     CfgMgr::instance().commit();
 
     // Pass it to the server and get an ACK.
-    Pkt4Ptr ack = srv->processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
@@ -1931,7 +1903,7 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
     checkAddressParams(ack, subnet_, false, false);
 
     // Check identifiers
-    checkServerId(ack, srv->getServerID());
+    checkServerId(ack, srv_->getServerID());
     checkClientId(ack, clientid);
 }
 
@@ -1939,8 +1911,6 @@ TEST_F(Dhcpv4SrvTest, RequestNoTimers) {
 TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
@@ -1950,7 +1920,7 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get ACK
-    Pkt4Ptr ack = srv.processRequest(dis);
+    Pkt4Ptr ack = srv_->processRequest(dis);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
@@ -1964,7 +1934,7 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     CfgMgr::instance().getStagingCfg()->setEchoClientId(false);
     CfgMgr::instance().commit();
 
-    ack = srv.processRequest(dis);
+    ack = srv_->processRequest(dis);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
@@ -1983,9 +1953,6 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
 TEST_F(Dhcpv4SrvTest, RenewBasic) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_valid = 100;
@@ -2024,10 +1991,10 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     req->setHWAddr(hwaddr2);
 
     req->addOption(clientid);
-    req->addOption(srv->getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
@@ -2038,7 +2005,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     checkAddressParams(ack, subnet_, true, true);
 
     // Check identifiers
-    checkServerId(ack, srv->getServerID());
+    checkServerId(ack, srv_->getServerID());
     checkClientId(ack, clientid);
 
     // Check that the lease is really in the database
@@ -2141,12 +2108,10 @@ void prepare(struct ctx& c) {
 // This test verifies that renewal returns the default valid lifetime
 // when the client does not specify a value.
 TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     struct ctx c = {
         this,                           // test
-        srv.get(),                      // srv
+        srv_.get(),                     // srv
         IOAddress("192.0.2.106"),       // addr
         100,                            // temp_valid
         time(NULL) - 10,                // temp_timestamp
@@ -2184,12 +2149,10 @@ TEST_F(Dhcpv4SrvTest, RenewDefaultLifetime) {
 // This test verifies that renewal returns the specified valid lifetime
 // when the client adds an in-bound hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     struct ctx c = {
         this,                           // test
-        srv.get(),                      // srv
+        srv_.get(),                     // srv
         IOAddress("192.0.2.106"),       // addr
         100,                            // temp_valid
         time(NULL) - 10,                // temp_timestamp
@@ -2230,12 +2193,10 @@ TEST_F(Dhcpv4SrvTest, RenewHintLifetime) {
 // This test verifies that renewal returns the min valid lifetime
 // when the client adds a too small hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     struct ctx c = {
         this,                           // test
-        srv.get(),                      // srv
+        srv_.get(),                     // srv
         IOAddress("192.0.2.106"),       // addr
         100,                            // temp_valid
         time(NULL) - 10,                // temp_timestamp
@@ -2276,12 +2237,10 @@ TEST_F(Dhcpv4SrvTest, RenewMinLifetime) {
 // This test verifies that renewal returns the max valid lifetime
 // when the client adds a too large hint in the DISCOVER.
 TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     struct ctx c = {
         this,                           // test
-        srv.get(),                      // srv
+        srv_.get(),                     // srv
         IOAddress("192.0.2.106"),       // addr
         100,                            // temp_valid
         time(NULL) - 10,                // temp_timestamp
@@ -2324,9 +2283,6 @@ TEST_F(Dhcpv4SrvTest, RenewMaxLifetime) {
 TEST_F(Dhcpv4SrvTest, RenewCache) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     // Enable lease reuse.
     subnet_->setCacheThreshold(.1);
@@ -2371,7 +2327,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     req->setHWAddr(hwaddr2);
 
     // Pass it to the server and hope for a REPLY
-    Pkt4Ptr ack = srv->processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
@@ -2398,7 +2354,7 @@ TEST_F(Dhcpv4SrvTest, RenewCache) {
     EXPECT_EQ(opt->getValue(), subnet_->getT2());
 
     // Check identifiers
-    checkServerId(ack, srv->getServerID());
+    checkServerId(ack, srv_->getServerID());
     checkClientId(ack, clientid);
 
     // Check that the lease is really in the database
@@ -2507,12 +2463,10 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
     // If no server identifier option is present, the message is always
     // accepted.
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Create definition of the server identifier option.
     OptionDefinition def("server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
@@ -2525,16 +2479,16 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr other_serverid(new OptionCustom(def, Option::V4));
     other_serverid->writeAddress(IOAddress("10.1.2.3"));
     pkt->addOption(other_serverid);
-    EXPECT_FALSE(srv.acceptServerId(pkt));
+    EXPECT_FALSE(srv_->acceptServerId(pkt));
 
     // Configure the DHCP Server Identifier to be ignored.
     ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->getIgnoreServerIdentifier());
     CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(true);
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Restore the ignore-dhcp-server-identifier compatibility flag.
     CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(false);
-    EXPECT_FALSE(srv.acceptServerId(pkt));
+    EXPECT_FALSE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2544,7 +2498,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V4));
     eth1_serverid->writeAddress(IOAddress("192.0.2.3"));
     ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2554,7 +2508,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V4));
     eth0_serverid->writeAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2564,7 +2518,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr subnet_serverid(new OptionCustom(def, Option::V4));
     subnet_serverid->writeAddress(IOAddress("192.0.3.254"));
     ASSERT_NO_THROW(pkt->addOption(subnet_serverid));
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2574,7 +2528,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     OptionCustomPtr network_serverid(new OptionCustom(def, Option::V4));
     network_serverid->writeAddress(IOAddress("192.0.4.254"));
     ASSERT_NO_THROW(pkt->addOption(network_serverid));
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2586,7 +2540,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     class_serverid->writeAddress(IOAddress("192.0.5.254"));
     ASSERT_NO_THROW(pkt_with_classes->addOption(class_serverid));
     pkt_with_classes->addClass("foo");
-    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes));
+    EXPECT_TRUE(srv_->acceptServerId(pkt_with_classes));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt_with_classes->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2599,7 +2553,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     global_serverid->writeAddress(IOAddress("10.0.0.254"));
     ASSERT_NO_THROW(pkt_with_classes_option_not_defined->addOption(global_serverid));
     pkt_with_classes_option_not_defined->addClass("bar");
-    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes_option_not_defined));
+    EXPECT_TRUE(srv_->acceptServerId(pkt_with_classes_option_not_defined));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt_with_classes_option_not_defined->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2610,7 +2564,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     Pkt4Ptr pkt_with_classes_no_options(new Pkt4(DHCPREQUEST, 1234));
     ASSERT_NO_THROW(pkt_with_classes_no_options->addOption(global_serverid));
     pkt_with_classes_no_options->addClass("xyz");
-    EXPECT_TRUE(srv.acceptServerId(pkt_with_classes_no_options));
+    EXPECT_TRUE(srv_->acceptServerId(pkt_with_classes_no_options));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt_with_classes_no_options->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2618,7 +2572,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     // Add a server id being an IPv4 address configured on global level.
     // A DHCPv4 message holding this server identifier should be accepted.
     ASSERT_NO_THROW(pkt->addOption(global_serverid));
-    EXPECT_TRUE(srv.acceptServerId(pkt));
+    EXPECT_TRUE(srv_->acceptServerId(pkt));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2642,7 +2596,7 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
     ASSERT_NO_THROW(pkt_with_override_server_id->addOption(override_serverid));
     ASSERT_NO_THROW(pkt_with_override_server_id->addOption(rai));
-    EXPECT_TRUE(srv.acceptServerId(pkt_with_override_server_id));
+    EXPECT_TRUE(srv_->acceptServerId(pkt_with_override_server_id));
 
     // Remove the server identifier.
     ASSERT_NO_THROW(pkt_with_override_server_id->delOption(DHO_DHCP_SERVER_IDENTIFIER));
@@ -2652,8 +2606,6 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
 
 // This test verifies if the sanityCheck() really checks options presence.
 TEST_F(Dhcpv4SrvTest, sanityCheck) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     pkt->setHWAddr(generateHWAddr(6));
@@ -2665,7 +2617,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
                  RFCViolation);
 
-    pkt->addOption(srv->getServerID());
+    pkt->addOption(srv_->getServerID());
 
     // Server-id is mandatory and present = no exception
     EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
@@ -2690,7 +2642,6 @@ namespace test {
 void
 Dhcpv4SrvTest::relayAgentInfoEcho() {
     IfaceMgrTestConfig test_config(true);
-    NakedDhcpv4Srv srv(0);
 
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
@@ -2705,19 +2656,19 @@ Dhcpv4SrvTest::relayAgentInfoEcho() {
     ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 
     // Get Relay Agent Info from query...
@@ -2734,8 +2685,6 @@ Dhcpv4SrvTest::relayAgentInfoEcho() {
 void
 Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     IfaceMgrTestConfig test_config(true);
-    NakedDhcpv4Srv srv(0);
-
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
@@ -2750,19 +2699,19 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
     ASSERT_NO_THROW(dis = PktCaptures::captureBadRelayedDiscover());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 
     // Get Relay Agent Info from query...
@@ -2778,17 +2727,16 @@ Dhcpv4SrvTest::badRelayAgentInfoEcho() {
 void
 Dhcpv4SrvTest::portsClientPort() {
     IfaceMgrTestConfig test_config(true);
-    NakedDhcpv4Srv srv(0);
 
     // By default te client port is supposed to be zero.
-    EXPECT_EQ(0, srv.client_port_);
+    EXPECT_EQ(0, srv_->client_port_);
 
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
     // this giaddr is used to select the subnet
     configure(CONFIGS[0]);
-    srv.client_port_ = 1234;
+    srv_->client_port_ = 1234;
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
@@ -2797,23 +2745,23 @@ Dhcpv4SrvTest::portsClientPort() {
     ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 
     // Get Relay Agent Info from query...
-    EXPECT_EQ(srv.client_port_, offer->getRemotePort());
+    EXPECT_EQ(srv_->client_port_, offer->getRemotePort());
 }
 
 void
@@ -2821,15 +2769,14 @@ Dhcpv4SrvTest::portsServerPort() {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
-    NakedDhcpv4Srv srv(0);
-    EXPECT_EQ(0, srv.server_port_);
+    EXPECT_EQ(0, srv_->server_port_);
 
     // Use of the captured DHCPDISCOVER packet requires that
     // subnet 10.254.226.0/24 is in use, because this packet
     // contains the giaddr which belongs to this subnet and
     // this giaddr is used to select the subnet
     configure(CONFIGS[0]);
-    srv.server_port_ = 1234;
+    srv_->server_port_ = 1234;
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
@@ -2838,23 +2785,23 @@ Dhcpv4SrvTest::portsServerPort() {
     ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 
     // Get Relay Agent Info from query...
-    EXPECT_EQ(srv.server_port_, offer->getLocalPort());
+    EXPECT_EQ(srv_->server_port_, offer->getLocalPort());
 }
 
 /// @brief Remove TLS parameters from configuration element.
@@ -2873,7 +2820,7 @@ void removeTlsParameters(ConstElementPtr elem) {
     }
 }
 
-/// @brief Remove authentication filess
+/// @brief Remove authentication files.
 void removeAuthFiles(ConstElementPtr elem) {
     if (!elem) {
         return;
@@ -2889,7 +2836,7 @@ void removeAuthFiles(ConstElementPtr elem) {
     ElementPtr mutable_clients = boost::const_pointer_cast<Element>(clients);
     for (;;) {
         bool found = false;
-        for (int i = 0; i < clients->size(); ++i) {
+        for (unsigned i = 0; i < clients->size(); ++i) {
             ConstElementPtr client = clients->get(i);
             if (client->contains("user-file") ||
                 client->contains("password-file")) {
@@ -2913,8 +2860,7 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     IfaceMgrTestConfig test_config(true);
 
     // Do not use DHCP4_SERVER_PORT here as 0 means don't open sockets.
-    NakedDhcpv4Srv srv(0);
-    EXPECT_EQ(0, srv.server_port_);
+    EXPECT_EQ(0, srv_->server_port_);
 
     ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
             [](const db::DatabaseConnection::ParameterMap&) -> ConfigBackendDHCPv4Ptr {
@@ -2938,23 +2884,33 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     mutable_config->set(string("hooks-libraries"), Element::createList());
     // Remove TLS parameters
     ConstElementPtr hosts = dhcp4->get("hosts-database");
-    removeTlsParameters(hosts);
+    if (hosts) {
+        removeTlsParameters(hosts);
+        hosts = redactConfig(hosts, { "*" }, "keatest");
+        mutable_config->set("hosts-database", hosts);
+    }
     hosts = dhcp4->get("hosts-databases");
     if (hosts) {
         for (auto const& host : hosts->listValue()) {
             removeTlsParameters(host);
         }
+        hosts = redactConfig(hosts, { "*" }, "keatest");
+        mutable_config->set("hosts-databases", hosts);
     }
     // Remove authentication clients using files.
     ConstElementPtr control_sockets = dhcp4->get("control-socket");
     if (control_sockets) {
         removeAuthFiles(control_sockets);
+        control_sockets = redactConfig(control_sockets, { "*" }, "-----");
+        mutable_config->set("control-socket", control_sockets);
     }
     control_sockets = dhcp4->get("control-sockets");
     if (control_sockets) {
-        for (int i = 0; i < control_sockets->size(); ++i) {
+        for (unsigned i = 0; i < control_sockets->size(); ++i) {
             removeAuthFiles(control_sockets->get(i));
         }
+        control_sockets = redactConfig(control_sockets, { "*" }, "-----");
+        mutable_config->set("control-sockets", control_sockets);
     }
 
     ASSERT_NO_THROW(Dhcpv4SrvTest::configure(dhcp4->str(), true, true, true, true));
@@ -2965,10 +2921,10 @@ Dhcpv4SrvTest::loadConfigFile(const string& path) {
     TimerMgr::instance()->unregisterTimers();
 
     // Close the command socket (if it exists).
-    CommandMgr::instance().closeCommandSocket();
+    UnixCommandMgr::instance().closeCommandSocket();
 
     // Reset CommandMgr IO service.
-    CommandMgr::instance().setIOService(IOServicePtr());
+    UnixCommandMgr::instance().setIOService(IOServicePtr());
 
     // Reset DatabaseConnection IO service.
     DatabaseConnection::setIOService(IOServicePtr());
@@ -3008,6 +2964,12 @@ class DBInitializer {
 
 void
 Dhcpv4SrvTest::checkConfigFiles() {
+#if defined (HAVE_MYSQL)
+    MySqlHostDataSourceInit mysql_init;
+#endif
+#if defined (HAVE_PGSQL)
+    PgSqlHostDataSourceInit pgsql_init;
+#endif
     DBInitializer dbi;
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;
@@ -3124,8 +3086,6 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -3137,7 +3097,7 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
     dis->setIndex(ETH1_INDEX);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
 
     // Check if we get response at all
@@ -3152,8 +3112,6 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    boost::scoped_ptr<NakedDhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     subnet_->setSiaddr(IOAddress("192.0.2.123"));
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
@@ -3164,7 +3122,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
     dis->addOption(clientid);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv->processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
 
     // Check if we get response at all
@@ -3181,8 +3139,6 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     ConstElementPtr status;
 
@@ -3206,7 +3162,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     CfgMgr::instance().commit();
 
@@ -3223,7 +3179,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
     dis->addOption(clientid);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
@@ -3248,8 +3204,6 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     ConstElementPtr status;
 
     string config = "{ \"interfaces-config\": {"
@@ -3269,7 +3223,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     CfgMgr::instance().commit();
 
@@ -3286,7 +3240,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
     dis->addOption(clientid);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     EXPECT_EQ(DHCPOFFER, offer->getType());
 
@@ -3307,8 +3261,6 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
 TEST_F(Dhcpv4SrvTest, matchClassification) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // The router class matches incoming packets with foo in a host-name
     // option (code 12) and sets an ip-forwarding option in the response.
@@ -3338,7 +3290,7 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3378,9 +3330,9 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     query3->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query1);
-    srv.classifyPacket(query2);
-    srv.classifyPacket(query3);
+    srv_->classifyPacket(query1);
+    srv_->classifyPacket(query2);
+    srv_->classifyPacket(query3);
 
     EXPECT_EQ(query1->classes_.size(), 6);
     EXPECT_EQ(query2->classes_.size(), 3);
@@ -3412,9 +3364,9 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
     EXPECT_TRUE(query3->inClass("SPAWN_template-client-id_def"));
 
     // Process queries
-    Pkt4Ptr response1 = srv.processDiscover(query1);
-    Pkt4Ptr response2 = srv.processDiscover(query2);
-    Pkt4Ptr response3 = srv.processDiscover(query3);
+    Pkt4Ptr response1 = srv_->processDiscover(query1);
+    Pkt4Ptr response2 = srv_->processDiscover(query2);
+    Pkt4Ptr response3 = srv_->processDiscover(query3);
 
     // Classification processing should add an ip-forwarding option
     OptionPtr opt1 = response1->getOption(DHO_IP_FORWARDING);
@@ -3432,7 +3384,6 @@ TEST_F(Dhcpv4SrvTest, matchClassification) {
 // Checks if client packets are classified properly using match expressions
 // using option names
 TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
-    NakedDhcpv4Srv srv(0);
 
     // The router class matches incoming packets with foo in a host-name
     string config = "{ \"interfaces-config\": {"
@@ -3453,7 +3404,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3470,7 +3421,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
     query->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
@@ -3479,7 +3430,6 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionName) {
 // Checks if client packets are classified properly using match expressions
 // using option names and definitions
 TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
-    NakedDhcpv4Srv srv(0);
 
     // The router class matches incoming packets with foo in a defined
     // option
@@ -3505,7 +3455,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3522,7 +3472,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     query->addOption(hostname);
 
     // Classify packets
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The query should be in the router class
     EXPECT_TRUE(query->inClass("router"));
@@ -3532,8 +3482,6 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
 TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Subnet sets an ip-forwarding option in the response.
     // The router class matches incoming packets with foo in a host-name
@@ -3562,7 +3510,7 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3591,13 +3539,13 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     query->addOption(hostname);
 
     // Classify the packet
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The packet should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 
     // Process the query
-    Pkt4Ptr response = srv.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
@@ -3612,8 +3560,6 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
 TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Subnet and global set an ip-forwarding option in the response.
     string config = "{ \"interfaces-config\": {"
@@ -3637,7 +3583,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3666,7 +3612,7 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
     query->addOption(hostname);
 
     // Process the query
-    Pkt4Ptr response = srv.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
@@ -3681,8 +3627,6 @@ TEST_F(Dhcpv4SrvTest, subnetGlobalPriority) {
 TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // A global ip-forwarding option is set in the response.
     // The router class matches incoming packets with foo in a host-name
@@ -3711,7 +3655,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3740,13 +3684,13 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
     query->addOption(hostname);
 
     // Classify the packet
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The packet should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 
     // Process the query
-    Pkt4Ptr response = srv.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
@@ -3761,8 +3705,6 @@ TEST_F(Dhcpv4SrvTest, classGlobalPriority) {
 TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // A global ip-forwarding option is set in the response.
     // The router class matches incoming packets with foo in a host-name
@@ -3795,7 +3737,7 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -3821,13 +3763,13 @@ TEST_F(Dhcpv4SrvTest, classGlobalPersistency) {
     query->addOption(hostname);
 
     // Classify the packet
-    srv.classifyPacket(query);
+    srv_->classifyPacket(query);
 
     // The packet should be in the router class
     EXPECT_TRUE(query->inClass("router"));
 
     // Process the query
-    Pkt4Ptr response = srv.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     OptionPtr opt = response->getOption(DHO_IP_FORWARDING);
@@ -3883,21 +3825,21 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
     // This discover does not belong to foo class, so it will not
     // be serviced
     bool drop = false;
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Let's add the packet to bar class and try again.
     dis->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Let's add it to matching class.
     dis->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -3905,8 +3847,6 @@ TEST_F(Dhcpv4SrvTest, clientClassify) {
 TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // This test configures 2 pools.
     // The second pool does not play any role here. The client's
@@ -3932,7 +3872,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     CfgMgr::instance().commit();
 
@@ -3952,21 +3892,21 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     EXPECT_FALSE(offer);
 
     // Let's add the packet to bar class and try again.
     dis->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    offer = srv.processDiscover(dis);
+    offer = srv_->processDiscover(dis);
     EXPECT_FALSE(offer);
 
     // Let's add it to matching class.
     dis->addClass("foo");
 
     // This time it should work
-    offer = srv.processDiscover(dis);
+    offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     EXPECT_EQ(DHCPOFFER, offer->getType());
     EXPECT_FALSE(offer->getYiaddr().isV4Zero());
@@ -3976,8 +3916,6 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassify) {
 TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // This test configures 2 pools.
     // The first one requires reservation, the second does the opposite.
@@ -4001,7 +3939,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     CfgMgr::instance().commit();
 
@@ -4020,7 +3958,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
     dis->addOption(clientid);
 
     // First pool requires reservation so the second will be used
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     EXPECT_EQ(DHCPOFFER, offer->getType());
     EXPECT_EQ("192.0.3.1", offer->getYiaddr().toText());
@@ -4030,8 +3968,6 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyKnown) {
 TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // This test configures 2 pools.
     // The first one requires no reservation, the second does the opposite.
@@ -4058,7 +3994,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     ASSERT_NO_THROW(json = parseDHCP4(config, true));
 
     ConstElementPtr status;
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
 
     CfgMgr::instance().commit();
 
@@ -4082,7 +4018,7 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
     dis->setHWAddr(hw_addr);
 
     // First pool requires no reservation so the second will be used
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     EXPECT_EQ(DHCPOFFER, offer->getType());
     EXPECT_EQ("192.0.3.1", offer->getYiaddr().toText());
@@ -4092,8 +4028,6 @@ TEST_F(Dhcpv4SrvTest, clientPoolClassifyUnknown) {
 TEST_F(Dhcpv4SrvTest, privateOption) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Same than option43Class but with private options
     string config = "{ \"interfaces-config\": {"
@@ -4123,7 +4057,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -4164,8 +4098,8 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     prl->addValue(245);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option 245 was re-unpacked
     opt2 = query->getOption(245);
@@ -4173,7 +4107,7 @@ TEST_F(Dhcpv4SrvTest, privateOption) {
     EXPECT_TRUE(opt32);
 
     // Pass it to the server and get an offer
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -4219,7 +4153,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     query->addOption(hostname);
 
     // Let the server process it.
-    Pkt4Ptr response = srv_.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
@@ -4234,7 +4168,7 @@ TEST_F(Dhcpv4SrvTest, prlPersistency) {
     query->addOption(prl);
 
     // Let the server process it again.
-    response = srv_.processDiscover(query);
+    response = srv_->processDiscover(query);
 
     // Processing should add an ip-forwarding option
     ASSERT_TRUE(response->getOption(DHO_IP_FORWARDING));
@@ -4272,7 +4206,7 @@ TEST_F(Dhcpv4SrvTest, neverSend) {
     query->addOption(hostname);
 
     // Let the server process it.
-    Pkt4Ptr response = srv_.processDiscover(query);
+    Pkt4Ptr response = srv_->processDiscover(query);
 
     // Processing should not add an ip-forwarding option
     ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
@@ -4287,7 +4221,7 @@ TEST_F(Dhcpv4SrvTest, neverSend) {
     query->addOption(prl);
 
     // Let the server process it again.
-    response = srv_.processDiscover(query);
+    response = srv_->processDiscover(query);
 
     // Processing should not add an ip-forwarding option
     ASSERT_FALSE(response->getOption(DHO_IP_FORWARDING));
@@ -4353,28 +4287,28 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // belongs to the first subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.2.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Relay belongs to the second subnet, so it should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Now let's check if the relay override for the first subnets works
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // The same check for the second subnet...
     dis->setGiaddr(IOAddress("192.0.5.2"));
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // And finally, let's check if mis-matched relay address will end up
     // in not selecting a subnet at all
     dis->setGiaddr(IOAddress("192.0.5.3"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Finally, check that the relay override works only with relay address
@@ -4382,7 +4316,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     dis->setGiaddr(IOAddress("0.0.0.0"));
     dis->setHops(0);
     dis->setCiaddr(IOAddress("192.0.5.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4443,13 +4377,13 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // subnet[1], because the subnet matches and there are no class
     // requirements.
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     dis->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4522,18 +4456,18 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a RAI to select back the second subnet as it has
     // the highest precedence
     dis->addOption(rai);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence
@@ -4542,7 +4476,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // But, when RAI exists without the link selection option, we should
@@ -4551,7 +4485,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     dis->addOption(rai);
     dis->setGiaddr(IOAddress("192.0.4.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
@@ -4564,11 +4498,11 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->addOption(rai);
 
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
@@ -4579,7 +4513,7 @@ TEST_F(Dhcpv4SrvTest, relayLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4653,19 +4587,19 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a RAI to select back the second subnet as it has
     // the highest precedence, but it should be ignored due
     // to the ignore-rai-link-selection compatibility config
     dis->addOption(rai);
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Subnet select option has a lower precedence, but will succeed
@@ -4675,7 +4609,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     ASSERT_TRUE(sbnsel);
     sbnsel->writeAddress(IOAddress("192.0.2.3"));
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // But, when RAI exists without the link selection option, we should
@@ -4684,7 +4618,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     dis->addOption(rai);
     dis->setGiaddr(IOAddress("192.0.4.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
@@ -4697,11 +4631,11 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->addOption(rai);
 
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it succeeds even with a bad address in the sub-option
@@ -4712,7 +4646,7 @@ TEST_F(Dhcpv4SrvTest, relayIgnoreLinkSelect) {
     dis->delOption(DHO_DHCP_AGENT_OPTIONS);
     rai->addOption(ols);
     dis->addOption(rai);
-    EXPECT_TRUE(srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4780,33 +4714,33 @@ TEST_F(Dhcpv4SrvTest, subnetSelect) {
     // belongs to the second subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.3.1"));
     bool drop = false;
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Setup a relay override for the first subnet as it has a high precedence
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet1 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Put a subnet select option to select back the second subnet as
     // it has the second highest precedence
     dis->addOption(sbnsel);
-    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet2 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check client-classification still applies
     sbnsel->writeAddress(IOAddress("192.0.4.2"));
     // Note it shall fail (vs. try the next criterion).
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
     // Add the packet to the class and check again: now it shall succeed
     dis->addClass("foo");
-    EXPECT_TRUE(subnet3 == srv_.selectSubnet(dis, drop));
+    EXPECT_TRUE(subnet3 == srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 
     // Check it fails with a bad address in the sub-option
     sbnsel->writeAddress(IOAddress("10.0.0.1"));
-    EXPECT_FALSE(srv_.selectSubnet(dis, drop));
+    EXPECT_FALSE(srv_->selectSubnet(dis, drop));
     EXPECT_FALSE(drop);
 }
 
@@ -4818,8 +4752,6 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
     // Set Giaddr and local server's unicast address, but don't set hops.
     // Hops value should not matter. The server will treat the message
@@ -4829,12 +4761,12 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     pkt->setLocalAddr(IOAddress("192.0.2.3"));
     pkt->setIface("eth1");
     pkt->setIndex(ETH1_INDEX);
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // Let's set hops and check that the message is still accepted as
     // a relayed message.
     pkt->setHops(1);
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // Make it a direct message but keep unicast server's address. The
     // messages sent to unicast address should be accepted as they are
@@ -4842,48 +4774,46 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     // to renews so they have to be accepted and processed.
     pkt->setHops(0);
     pkt->setGiaddr(IOAddress("0.0.0.0"));
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // Direct message is now sent to a broadcast address. The server
     // should accept this message because it has been received via
     // eth1 for which there is a subnet configured (see test fixture
     // class constructor).
     pkt->setLocalAddr(IOAddress("255.255.255.255"));
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // For eth0, there is no subnet configured. Such message is expected
     // to be silently dropped.
     pkt->setIface("eth0");
     pkt->setIndex(ETH0_INDEX);
-    EXPECT_FALSE(srv.accept(pkt));
+    EXPECT_FALSE(srv_->accept(pkt));
 
     // But, if the message is unicast it should be accepted, even though
     // it has been received via eth0.
     pkt->setLocalAddr(IOAddress("10.0.0.1"));
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // For the DHCPINFORM the ciaddr should be set or at least the source
     // address.
     pkt->setType(DHCPINFORM);
     pkt->setRemoteAddr(IOAddress("10.0.0.101"));
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
     // When neither ciaddr nor source address is present, the packet should
     // be dropped.
     pkt->setRemoteAddr(IOAddress("0.0.0.0"));
-    EXPECT_FALSE(srv.accept(pkt));
+    EXPECT_FALSE(srv_->accept(pkt));
 
     // When ciaddr is set, the packet should be accepted.
     pkt->setCiaddr(IOAddress("10.0.0.1"));
-    EXPECT_TRUE(srv.accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 }
 
 // This test checks that the server rejects a message with invalid type.
 TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Specify messages to be accepted by the server.
     int allowed[] = {
@@ -4896,7 +4826,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     size_t allowed_size = sizeof(allowed) / sizeof(allowed[0]);
     // Check that the server actually accepts these message types.
     for (size_t i = 0; i < allowed_size; ++i) {
-        EXPECT_TRUE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(allowed[i], 1234))))
+        EXPECT_TRUE(srv_->acceptMessageType(Pkt4Ptr(new Pkt4(allowed[i], 1234))))
             << "Test failed for message type " << i;
     }
     // Specify messages which server is supposed to drop.
@@ -4914,7 +4844,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     size_t not_allowed_size = sizeof(not_allowed) / sizeof(not_allowed[0]);
     // Actually check that the server will drop these messages.
     for (size_t i = 0; i < not_allowed_size; ++i) {
-        EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(not_allowed[i],
+        EXPECT_FALSE(srv_->acceptMessageType(Pkt4Ptr(new Pkt4(not_allowed[i],
                                                             1234))))
             << "Test failed for message type " << i;
     }
@@ -4937,7 +4867,7 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     Pkt4Ptr pkt(new Pkt4(&bin[0], bin.size()));
     pkt->unpack();
     ASSERT_EQ(DHCP_NOTYPE, pkt->getType());
-    EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(&bin[0], bin.size()))));
+    EXPECT_FALSE(srv_->acceptMessageType(Pkt4Ptr(new Pkt4(&bin[0], bin.size()))));
 
     // Verify that we drop packets with types >= DHCP_TYPES_EOF
     // Make Discover with type changed to 0xff
@@ -4965,55 +4895,43 @@ TEST_F(Dhcpv4SrvTest, acceptMessageType) {
     pkt.reset(new Pkt4(&bin[0], bin.size()));
     pkt->unpack();
     ASSERT_EQ(0xff, pkt->getType());
-    EXPECT_FALSE(srv.acceptMessageType(pkt));
+    EXPECT_FALSE(srv_->acceptMessageType(pkt));
 }
 
 // Test checks whether statistic is bumped up appropriately when Decline
 // message is received.
 TEST_F(Dhcpv4SrvTest, statisticsDecline) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], DHCPDECLINE, "pkt4-decline-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], DHCPDECLINE, "pkt4-decline-received");
 }
 
 // Test checks whether statistic is bumped up appropriately when Offer
 // message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsOfferRcvd) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], DHCPOFFER, "pkt4-offer-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], DHCPOFFER, "pkt4-offer-received");
 }
 
 // Test checks whether statistic is bumped up appropriately when Ack
 // message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsAckRcvd) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], DHCPACK, "pkt4-ack-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], DHCPACK, "pkt4-ack-received");
 }
 
 // Test checks whether statistic is bumped up appropriately when Nak
 // message is received (this should never happen in a sane network).
 TEST_F(Dhcpv4SrvTest, statisticsNakRcvd) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], DHCPNAK, "pkt4-nak-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], DHCPNAK, "pkt4-nak-received");
 }
 
 // Test checks whether statistic is bumped up appropriately when Release
 // message is received.
 TEST_F(Dhcpv4SrvTest, statisticsReleaseRcvd) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], DHCPRELEASE, "pkt4-release-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], DHCPRELEASE, "pkt4-release-received");
 }
 
 // Test checks whether statistic is bumped up appropriately when unknown
 // message is received.
 TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
-    NakedDhcpv4Srv srv(0);
-
-    pretendReceivingPkt(srv, CONFIGS[0], 200, "pkt4-unknown-received");
+    pretendReceivingPkt(*srv_, CONFIGS[0], 200, "pkt4-unknown-received");
 
     // There should also be pkt4-receive-drop stat bumped up
     using namespace isc::stats;
@@ -5029,7 +4947,7 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
 // in incoming client message.
 TEST_F(Dhcpv4SrvTest, emptyClientId) {
     IfaceMgrTestConfig test_config(true);
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
 
@@ -5052,7 +4970,7 @@ TEST_F(Dhcpv4SrvTest, emptyClientId) {
 // in incoming client message.
 TEST_F(Dhcpv4SrvTest, tooLongClientId) {
     IfaceMgrTestConfig test_config(true);
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     EXPECT_NO_THROW(configure(CONFIGS[0], *client.getServer()));
 
@@ -5077,8 +4995,6 @@ TEST_F(Dhcpv4SrvTest, tooLongClientId) {
 TEST_F(Dhcpv4SrvTest, userContext) {
 
     IfaceMgrTestConfig test_config(true);
-
-    NakedDhcpv4Srv srv(0);
 
     // This config has one subnet with user-context with one
     // pool (also with context). Make sure the configuration could be accepted.
@@ -5109,8 +5025,6 @@ TEST_F(Dhcpv4SrvTest, userContext) {
 TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     std::string config = R"(
     {
@@ -5178,7 +5092,7 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -5231,10 +5145,10 @@ TEST_F(Dhcpv4SrvTest, fixedFieldsInClassOrder) {
             HWAddrPtr hw_addr(new HWAddr(HWAddr::fromText(scenario.hw_str_, 10)));
             query->setHWAddr(hw_addr);
 
-            srv.classifyPacket(query);
+            srv_->classifyPacket(query);
 
             // Process it.
-            Pkt4Ptr response = srv.processDiscover(query);
+            Pkt4Ptr response = srv_->processDiscover(query);
 
             // Make sure class list is as expected.
             ASSERT_EQ(scenario.exp_classes_, query->getClasses().toText());
@@ -5264,8 +5178,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscover) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
@@ -5281,7 +5193,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscover) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -5298,8 +5210,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
     req->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
@@ -5315,7 +5225,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequest) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -5331,8 +5241,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequest) {
 TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscover) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
@@ -5367,7 +5275,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscover) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -5389,8 +5297,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequest) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -5424,7 +5330,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequest) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -5445,8 +5351,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequest) {
 TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverAnother) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
@@ -5499,7 +5403,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverAnother) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -5529,8 +5433,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestAnother) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -5582,7 +5484,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestAnother) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -5614,8 +5516,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverGuarded) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -5669,11 +5569,11 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverGuarded) {
     dis->addOption(prl);
 
     // Put into the "guard" class.
-    srv.classifyPacket(dis);
+    srv_->classifyPacket(dis);
     dis->addClass("guard");
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -5705,8 +5605,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestGuarded) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -5760,11 +5658,11 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestGuarded) {
     req->addOption(prl);
 
     // Put into the "guard" class.
-    srv.classifyPacket(req);
+    srv_->classifyPacket(req);
     req->addClass("guard");
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -5795,8 +5693,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGuarded) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet with a pool.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -5849,11 +5745,11 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGuarded) {
     dis->addOption(prl);
 
     // Not in the "guard" class.
-    srv.classifyPacket(dis);
+    srv_->classifyPacket(dis);
     EXPECT_FALSE(dis->inClass("guard"));
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -5870,8 +5766,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGuarded) {
 TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGuarded) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet with a pool.
     Triplet<uint32_t> unspecified;
@@ -5925,11 +5819,11 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGuarded) {
     req->addOption(prl);
 
     // Not in the "guard" class.
-    srv.classifyPacket(req);
+    srv_->classifyPacket(req);
     EXPECT_FALSE(req->inClass("guard"));
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -5945,8 +5839,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGuarded) {
 TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverSharedNetwork) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
@@ -5986,7 +5878,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverSharedNetwork) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -6008,8 +5900,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestSharedNetwork) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -6048,7 +5938,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestSharedNetwork) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -6071,8 +5961,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverPool) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet with a pool.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -6112,7 +6000,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverPool) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -6135,8 +6023,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestPool) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    NakedDhcpv4Srv srv(0);
-
     // Recreate subnet with a pool.
     Triplet<uint32_t> unspecified;
     Triplet<uint32_t> valid_lft(500, 1000, 1500);
@@ -6176,7 +6062,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestPool) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -6197,8 +6083,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestPool) {
 TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGlobal) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Add the v6-only-preferred option data.
     const uint32_t v6only_wait(3600);
@@ -6226,7 +6110,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGlobal) {
     dis->addOption(prl);
 
     // Get the DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
     checkResponse(offer, DHCPOFFER, 1234);
 
@@ -6247,8 +6131,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredDiscoverGlobal) {
 TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Add the v6-only-preferred option data.
     const uint32_t v6only_wait(3600);
@@ -6276,7 +6158,7 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
     req->addOption(prl);
 
     // Get the DHCPACK.
-    Pkt4Ptr ack = srv.processRequest(req);
+    Pkt4Ptr ack = srv_->processRequest(req);
     ASSERT_TRUE(ack);
     checkResponse(ack, DHCPACK, 1234);
 
@@ -6297,8 +6179,6 @@ TEST_F(Dhcpv4SrvTest, noV6OnlyPreferredRequestGlobal) {
 TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverError) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
@@ -6336,7 +6216,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverError) {
     dis->addOption(prl);
 
     // No DHCPOFFER is returned.
-    EXPECT_FALSE(srv.processDiscover(dis));
+    EXPECT_FALSE(srv_->processDiscover(dis));
 }
 
 // Verify that when request requesting v6-only-preferred 0.0.0.0 is offered
@@ -6344,8 +6224,6 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredDiscoverError) {
 TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestError) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
 
     // Recreate subnet.
     Triplet<uint32_t> unspecified;
@@ -6383,7 +6261,7 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestError) {
     req->addOption(prl);
 
     // No DHCPACK is returned.
-    EXPECT_FALSE(srv.processRequest(req));
+    EXPECT_FALSE(srv_->processRequest(req));
 }
 
 /// @brief Test fixture for recoverStashedAgentOption.
@@ -6463,7 +6341,7 @@ TEST_F(StashAgentOptionTest, basic) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6481,7 +6359,7 @@ TEST_F(StashAgentOptionTest, clientId) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6498,7 +6376,7 @@ TEST_F(StashAgentOptionTest, hardwareAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6513,7 +6391,7 @@ TEST_F(StashAgentOptionTest, oldExtendedInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_EQ(rai_query->toHexString(true), rai_->toHexString(true));
@@ -6530,7 +6408,7 @@ TEST_F(StashAgentOptionTest, emptyRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     ASSERT_TRUE(rai_query);
     EXPECT_FALSE(rai_query->getOptions().empty());
@@ -6546,7 +6424,7 @@ TEST_F(StashAgentOptionTest, clientAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6560,14 +6438,14 @@ TEST_F(StashAgentOptionTest, gatewayAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 
     // Even broadcast is not accepted.
     query_->setGiaddr(IOAddress::IPV4_BCAST_ADDRESS());
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6579,7 +6457,7 @@ TEST_F(StashAgentOptionTest, stashAgentOption) {
 
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6597,7 +6475,7 @@ TEST_F(StashAgentOptionTest, request) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6611,7 +6489,7 @@ TEST_F(StashAgentOptionTest, notEmptyRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6623,7 +6501,7 @@ TEST_F(StashAgentOptionTest, inClass) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_TRUE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6634,7 +6512,7 @@ TEST_F(StashAgentOptionTest, lease) {
     CfgMgr::instance().commit();
     // Not add the lease.
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6650,7 +6528,7 @@ TEST_F(StashAgentOptionTest, expired) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6664,7 +6542,7 @@ TEST_F(StashAgentOptionTest, userContext) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6683,7 +6561,7 @@ TEST_F(StashAgentOptionTest, iscEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6702,7 +6580,7 @@ TEST_F(StashAgentOptionTest, relayAgentInfoEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6717,7 +6595,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfoEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6733,7 +6611,7 @@ TEST_F(StashAgentOptionTest, subOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6748,7 +6626,7 @@ TEST_F(StashAgentOptionTest, badSubOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6763,7 +6641,7 @@ TEST_F(StashAgentOptionTest, emptySubOptionsEntry) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6778,7 +6656,7 @@ TEST_F(StashAgentOptionTest, hexString) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), BadValue);
+    EXPECT_THROW(srv_->recoverStashedAgentOption(query_), BadValue);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6794,7 +6672,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6808,7 +6686,7 @@ TEST_F(StashAgentOptionTest, badRelayAgentInfo) {
     sub_options_ = Element::create(content);
     relay_agent_info_->set("sub-options", sub_options_);
 
-    EXPECT_THROW(srv_.recoverStashedAgentOption(query_), OptionParseError);
+    EXPECT_THROW(srv_->recoverStashedAgentOption(query_), OptionParseError);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
 }
 
@@ -6821,7 +6699,7 @@ TEST_F(StashAgentOptionTest, badClientId) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));
@@ -6842,7 +6720,7 @@ TEST_F(StashAgentOptionTest, badHwareAddress) {
     CfgMgr::instance().commit();
     EXPECT_NO_THROW(LeaseMgrFactory::instance().addLease(lease_));
 
-    EXPECT_NO_THROW(srv_.recoverStashedAgentOption(query_));
+    EXPECT_NO_THROW(srv_->recoverStashedAgentOption(query_));
     OptionPtr rai_query = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
     EXPECT_FALSE(rai_query);
     EXPECT_FALSE(query_->inClass("STASH_AGENT_OPTIONS"));

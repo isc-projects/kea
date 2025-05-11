@@ -10,6 +10,8 @@ libkea_cfgclient_la_SOURCES  = cmds_impl.h
 libkea_cfgclient_la_SOURCES += base_command_mgr.cc base_command_mgr.h
 libkea_cfgclient_la_SOURCES += client_connection.cc client_connection.h
 libkea_cfgclient_la_SOURCES += command_mgr.cc command_mgr.h
+libkea_cfgclient_la_SOURCES += unix_command_mgr.cc unix_command_mgr.h
+libkea_cfgclient_la_SOURCES += unix_command_config.cc unix_command_config.h
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 libkea_cfgclient_la_SOURCES += config_messages.h config_messages.cc
 libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
@@ -35,7 +37,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 76:0:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 81:0:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 # The message file should be in the distribution.
@@ -67,7 +69,8 @@ messages: config_messages.h config_messages.cc
 	@echo Message files regenerated
 
 config_messages.h config_messages.cc: config_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/config/config_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/config/config_messages.mes)
 
 else
 
@@ -93,5 +96,6 @@ libkea_cfgclient_include_HEADERS = \
 	http_command_mgr.h \
 	http_command_response_creator.h \
 	http_command_response_creator_factory.h \
-	timeouts.h
-
+	timeouts.h \
+	unix_command_mgr.h \
+	unix_command_config.h

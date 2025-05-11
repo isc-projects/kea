@@ -15,8 +15,8 @@ import os
 from kea_conn import CAResponse  # CARequest
 
 
-def send_to_control_agent(params):
-    """ Sends a request to Control Agent, receives a response and returns it."""
+def send_to_kea(params):
+    """ Sends a request to Kea, receives a response and returns it."""
 
     # First, create the URL
     url = params.scheme + "://" + params.http_host + ":"

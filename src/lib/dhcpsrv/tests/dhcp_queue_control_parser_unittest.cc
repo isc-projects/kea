@@ -208,4 +208,4 @@ TEST_F(DHCPQueueControlParserTest, multiThreading) {
     EXPECT_EQ("false", queue_control->get("enable-queue")->str());
 }
 
-}; // anonymous namespace
+}  // anonymous namespace

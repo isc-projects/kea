@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,8 +55,6 @@ namespace {
 
 // Checks if hooks are implemented properly.
 TEST_F(Dhcpv6SrvTest, Hooks) {
-    NakedDhcpv6Srv srv(0);
-
     // check if appropriate hooks are registered
     int hook_index_dhcp6_srv_configured = -1;
     int hook_index_buffer6_receive = -1;
@@ -71,6 +69,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_leases6_committed = -1;
     int hook_index_host6_identifier = -1;
     int hook_index_ddns6_update = -1;
+    int hook_index_addr6_register = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_dhcp6_srv_configured = ServerHooks::getServerHooks()
@@ -99,6 +98,8 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
                     .getIndex("host6_identifier"));
     EXPECT_NO_THROW(hook_index_ddns6_update = ServerHooks::getServerHooks()
                     .getIndex("ddns6_update"));
+    EXPECT_NO_THROW(hook_index_addr6_register = ServerHooks::getServerHooks()
+                    .getIndex("addr6_register"));
 
     EXPECT_TRUE(hook_index_dhcp6_srv_configured > 0);
     EXPECT_TRUE(hook_index_buffer6_receive > 0);
@@ -113,6 +114,7 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_leases6_committed > 0);
     EXPECT_TRUE(hook_index_host6_identifier > 0);
     EXPECT_TRUE(hook_index_ddns6_update > 0);
+    EXPECT_TRUE(hook_index_addr6_register > 0);
 }
 
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
@@ -134,9 +136,6 @@ public:
         if (!status) {
             cerr << "(fixture ctor) unloadLibraries failed" << endl;
         }
-
-        // Allocate new DHCPv6 Server
-        srv_.reset(new NakedDhcpv6Srv(0));
 
         // Clear static buffers
         resetCalloutBuffers();
@@ -168,6 +167,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease6_decline");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("host6_identifier");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("ddns6_update");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("addr6_register");
 
         HooksManager::setTestMode(false);
         bool status = HooksManager::unloadLibraries();
@@ -568,7 +568,7 @@ public:
         subnet6_select_callout(callout_handle);
 
         const Subnet6Collection* subnets;
-        Subnet6Ptr subnet;
+        ConstSubnet6Ptr subnet;
         callout_handle.getArgument("subnet6", subnet);
         callout_handle.getArgument("subnet6collection", subnets);
 
@@ -1006,9 +1006,6 @@ public:
         return (stat->getInteger().first);
     }
 
-    /// Pointer to Dhcpv6Srv that is used in tests
-    boost::shared_ptr<NakedDhcpv6Srv> srv_;
-
     /// Pointer to the IO service used in the tests.
     static IOServicePtr io_service_;
 
@@ -1036,7 +1033,7 @@ public:
     static boost::shared_ptr<Option6IA> callback_ia_na_;
 
     /// Pointer to a subnet received by callout
-    static Subnet6Ptr callback_subnet6_;
+    static ConstSubnet6Ptr callback_subnet6_;
 
     /// A list of all available subnets (received by callout)
     static const Subnet6Collection* callback_subnet6collection_;
@@ -1077,7 +1074,7 @@ IOServicePtr HooksDhcpv6SrvTest::io_service_;
 string HooksDhcpv6SrvTest::callback_name_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_qry_pkt6_;
 Pkt6Ptr HooksDhcpv6SrvTest::callback_resp_pkt6_;
-Subnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
+ConstSubnet6Ptr HooksDhcpv6SrvTest::callback_subnet6_;
 const Subnet6Collection* HooksDhcpv6SrvTest::callback_subnet6collection_;
 Lease6Ptr HooksDhcpv6SrvTest::callback_lease6_;
 Lease6CollectionPtr HooksDhcpv6SrvTest::callback_new_leases6_;
@@ -1092,12 +1089,12 @@ bool HooksDhcpv6SrvTest::callback_rev_update_;
 DdnsParamsPtr HooksDhcpv6SrvTest::callback_ddns_params_;
 
 /// @brief Fixture class used to do basic library load/unload tests
-class LoadUnloadDhcpv6SrvTest : public Dhcpv6SrvTest {
+class LoadUnloadDhcpv6SrvTest : public ::testing::Test {
 public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedDhcpv6Srv> server_;
 
-    LoadUnloadDhcpv6SrvTest() : Dhcpv6SrvTest() {
+    LoadUnloadDhcpv6SrvTest() {
         reset();
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -1132,7 +1129,6 @@ public:
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "buffer6_receive".
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSimple) {
-
     // Install buffer6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_callout));
@@ -1171,7 +1167,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSimple) {
 // Checks if callouts installed on buffer6_receive is able to change
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
-
     // Install buffer6_receive_change_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_change_clientid_callout));
@@ -1211,7 +1206,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveValueChange) {
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
-
     // Install buffer6_receive_delete_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_delete_clientid_callout));
@@ -1238,7 +1232,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDeleteClientId) {
 // Checks if callouts installed on buffer6_receive is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
-
     // Install buffer6_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_skip_callout));
@@ -1265,7 +1258,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveSkip) {
 // Checks if callouts installed on buffer6_receive is able to set drop flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
-
     // Install buffer6_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_receive", buffer6_receive_drop_callout));
@@ -1298,7 +1290,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6ReceiveDrop) {
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "pkt6_receive".
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSimple) {
-
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_callout));
@@ -1337,7 +1328,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSimple) {
 // Checks if callouts installed on pkt6_received is able to change
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
-
     // Install pkt6_receive_change_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_change_clientid_callout));
@@ -1376,7 +1366,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveValueChange) {
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
-
     // Install pkt6_receive_delete_clientid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_delete_clientid_callout));
@@ -1403,7 +1392,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDeleteClientId) {
 // Checks if callouts installed on pkt6_received is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
-
     // Install pkt6_receive_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_skip_callout));
@@ -1430,7 +1418,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveSkip) {
 // Checks if callouts installed on pkt6_received is able to set drop flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
-
     // Install pkt6_receive_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_receive", pkt6_receive_drop_callout));
@@ -1460,7 +1447,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6ReceiveDrop) {
 // Checks if callouts installed on pkt6_send are indeed called and the
 // all necessary parameters are passed.
 TEST_F(HooksDhcpv6SrvTest, pkt6SendSimple) {
-
     // Install pkt6_send_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_callout));
@@ -1517,7 +1503,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSimple) {
 // Checks if callouts installed on pkt6_send is able to change
 // the values and the packet sent contains those changes
 TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
-
     // Install pkt6_send_change_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_change_serverid_callout));
@@ -1557,7 +1542,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendValueChange) {
 // we are trying to send a packet without server-id. The packet should
 // be sent
 TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
-
     // Install pkt6_send_delete_serverid_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_delete_serverid_callout));
@@ -1591,7 +1575,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDeleteServerId) {
 // Checks if callouts installed on pkt6_skip is able to set skip flag that
 // will cause the server to send an empty response.
 TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
-
     // Install pkt6_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_skip_callout));
@@ -1625,7 +1608,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendSkip) {
 // Checks if callouts installed on pkt6_drop is able to set drop flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv6SrvTest, pkt6SendDrop) {
-
     // Install pkt6_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "pkt6_send", pkt6_send_drop_callout));
@@ -1652,7 +1634,6 @@ TEST_F(HooksDhcpv6SrvTest, pkt6SendDrop) {
 // Checks if callouts installed on buffer6_send are indeed called and the
 // all necessary parameters are passed.
 TEST_F(HooksDhcpv6SrvTest, buffer6SendSimple) {
-
     // Install buffer6_send_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_send", buffer6_send_callout));
@@ -1694,7 +1675,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSimple) {
 // Checks if callouts installed on buffer6_send can set skip flag and that flag
 // causes the packet to not be sent
 TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
-
     // Install buffer6_send_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_send", buffer6_send_skip_callout));
@@ -1724,7 +1704,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendSkip) {
 // Checks if callouts installed on buffer6_send can set drop flag and that flag
 // causes the packet to not be sent
 TEST_F(HooksDhcpv6SrvTest, buffer6SendDrop) {
-
     // Install buffer6_send_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer6_send", buffer6_send_drop_callout));
@@ -1754,7 +1733,6 @@ TEST_F(HooksDhcpv6SrvTest, buffer6SendDrop) {
 // This test checks if subnet6_select callout is triggered and reports
 // valid parameters
 TEST_F(HooksDhcpv6SrvTest, subnet6SelectSimple) {
-
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interfaces-config\": {"
@@ -1846,7 +1824,6 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectSimple) {
 // This test checks if callout installed on subnet6_select hook point can pick
 // a different subnet.
 TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
-
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interfaces-config\": {"
@@ -1934,7 +1911,6 @@ TEST_F(HooksDhcpv6SrvTest, subnet6SelectChange) {
 
 // Checks that subnet6_select is able to drop the packet.
 TEST_F(HooksDhcpv6SrvTest, subnet6SelectDrop) {
-
     // Install subnet6_select_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet6_select", subnet6_select_drop_callout));
@@ -1980,7 +1956,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedSolicit) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
 
     ASSERT_NO_THROW(configure(config, *client.getServer()));
@@ -2020,7 +1996,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedConfirm) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -2064,7 +2040,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedInfRequest) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.useRelay();
 
     ASSERT_NO_THROW(configure(config, *client.getServer()));
@@ -2105,7 +2081,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.useRapidCommit(true);
@@ -2126,6 +2102,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRapidCommit) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2175,7 +2152,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
         "\"valid-lifetime\": 4000 }";
 
     // Create first client and perform SARR.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
     client1.useRapidCommit(true);
@@ -2200,6 +2177,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2229,7 +2207,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRapidCommitPrefixes) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
     client2.useRapidCommit(true);
@@ -2284,7 +2262,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -2304,6 +2282,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequest) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2462,7 +2441,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -2482,6 +2461,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRequestPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2641,7 +2621,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -2661,6 +2641,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenew) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2816,7 +2797,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -2836,6 +2817,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRenewPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -2992,7 +2974,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -3012,6 +2994,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebind) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3170,7 +3153,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -3190,6 +3173,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRebindPrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3349,7 +3333,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -3371,6 +3355,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDecline) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3414,7 +3399,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.requestAddress(0x2233, IOAddress("2001:db8:1::29"));
@@ -3436,6 +3421,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedDeclineTwoNAs) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3482,7 +3468,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -3504,6 +3490,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedRelease) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3550,7 +3537,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleasePrefix) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -3572,6 +3559,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleasePrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3621,7 +3609,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleaseMultiple) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     // In theory we can reuse the IAID but copyIAsFromLeases() copies
     // only one lease...
@@ -3647,6 +3635,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedReleaseMultiple) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3689,7 +3678,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCache) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -3709,6 +3698,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCache) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3782,7 +3772,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCachePrefix) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -3802,6 +3792,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedCachePrefix) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3872,7 +3863,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
         "\"valid-lifetime\": 4000 }";
 
     // Create first client and perform SARR.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
 
@@ -3896,6 +3887,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -3924,7 +3916,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequests) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestAddress(0xabca, IOAddress("2001:db8:1::29"));
     ASSERT_NO_THROW(client2.doSARR());
@@ -3981,7 +3973,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
         "\"valid-lifetime\": 4000 }";
 
     // Create first client and perform SARR.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setInterface("eth1");
     client1.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:28::"));
 
@@ -4005,6 +3997,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
     // Check if all expected parameters were really received
     vector<string> expected_argument_names;
     expected_argument_names.push_back("query6");
+    expected_argument_names.push_back("response6");
     expected_argument_names.push_back("deleted_leases6");
     expected_argument_names.push_back("leases6");
 
@@ -4034,7 +4027,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
 
     // Create the second client to test that it may communicate with the
     // server while the previous packet is parked.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setInterface("eth1");
     client2.requestPrefix(0xabca, 64, IOAddress("2001:db8:1:29::"));
     ASSERT_NO_THROW(client2.doSARR());
@@ -4071,8 +4064,6 @@ TEST_F(HooksDhcpv6SrvTest, leases6CommittedParkRequestsPrefixes) {
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are triggered.
 TEST_F(HooksDhcpv6SrvTest, lease6RenewSimple) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_renew_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_renew", lease6_renew_callout));
@@ -4115,10 +4106,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSimple) {
     req->addOption(ia);
     req->addOption(clientid);
     // Server-id is mandatory in RENEW
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv_->processRenew(req);
     ASSERT_TRUE(reply);
 
     // Check that the callback called is indeed the one we installed
@@ -4173,8 +4164,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSimple) {
 // This test verifies that incoming (positive) RENEW can be handled properly,
 // and the lease6_renew callouts are able to change the lease being updated.
 TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_renew_update_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_renew", lease6_renew_update_callout));
@@ -4218,7 +4207,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RENEW
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Turn on tee time calculation so we can see the effect of overriding
     // the lease life time.
@@ -4230,7 +4219,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
     subnet_->setT2Percent(0.80);
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv_->processRenew(req);
     ASSERT_TRUE(reply);
 
     // Check if we get response at all
@@ -4275,8 +4264,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewLeaseUpdate) {
 // and the lease6_renew callouts are able to set the skip flag that will
 // reject the renewal
 TEST_F(HooksDhcpv6SrvTest, lease6RenewSkip) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_renew_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_renew", lease6_renew_skip_callout));
@@ -4320,10 +4307,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSkip) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RENEW
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRenew(req);
+    Pkt6Ptr reply = srv_->processRenew(req);
     ASSERT_TRUE(reply);
 
     // Check that our callback was called
@@ -4344,8 +4331,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RenewSkip) {
 // This test verifies that incoming (positive) REBIND can be handled properly,
 // and the lease6_rebind callouts are triggered.
 TEST_F(HooksDhcpv6SrvTest, lease6RebindSimple) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_rebind_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_rebind", lease6_rebind_callout));
@@ -4389,7 +4374,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSimple) {
     req->addOption(clientid);
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRebind(req);
+    Pkt6Ptr reply = srv_->processRebind(req);
     ASSERT_TRUE(reply);
 
     // Check that the callback called is indeed the one we installed
@@ -4441,8 +4426,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSimple) {
 // This test verifies that incoming (positive) REBIND can be handled properly,
 // and the lease6_rebind callouts are able to change the lease being updated.
 TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_rebind_update_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_rebind", lease6_rebind_update_callout));
@@ -4495,7 +4478,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
     subnet_->setT2Percent(0.80);
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRebind(req);
+    Pkt6Ptr reply = srv_->processRebind(req);
     ASSERT_TRUE(reply);
 
     // Check if we get response at all
@@ -4541,8 +4524,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindLeaseUpdate) {
 // and the lease6_rebind callouts are able to set the skip flag that will
 // reject the rebinding
 TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_rebind_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_rebind", lease6_rebind_skip_callout));
@@ -4586,7 +4567,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
     req->addOption(clientid);
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRebind(req);
+    Pkt6Ptr reply = srv_->processRebind(req);
     ASSERT_TRUE(reply);
 
     // Check that our callback was called
@@ -4614,7 +4595,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6RebindSkip) {
 // - returned REPLY message has IA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimple) {
-    NakedDhcpv6Srv srv(0);
     CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
     CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
 
@@ -4653,10 +4633,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimple) {
     rel->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    rel->addOption(srv.getServerID());
+    rel->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(rel);
+    Pkt6Ptr reply = srv_->processRelease(rel);
 
     ASSERT_TRUE(reply);
 
@@ -4703,8 +4683,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimple) {
 // - returned REPLY message has IA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleInfiniteLease) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_callout));
@@ -4742,10 +4720,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleInfiniteLease) {
     rel->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    rel->addOption(srv.getServerID());
+    rel->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(rel);
+    Pkt6Ptr reply = srv_->processRelease(rel);
 
     ASSERT_TRUE(reply);
 
@@ -4791,8 +4769,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleInfiniteLease) {
 // - returned REPLY message has IA that does not include an IAADDR
 // - lease is actually removed from LeaseMgr
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_callout));
@@ -4828,10 +4804,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv_->processRelease(req);
 
     ASSERT_TRUE(reply);
 
@@ -4876,7 +4852,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSimpleNoDelete) {
 // This is a variant of the previous test that tests that callouts are
 // properly invoked for the prefix release case.
 TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimple) {
-    NakedDhcpv6Srv srv(0);
     CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setFlushReclaimedTimerWaitTime(0);
     CfgMgr::instance().getCurrentCfg()->getCfgExpiration()->setHoldReclaimedTime(0);
 
@@ -4916,10 +4891,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimple) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv_->processRelease(req);
 
     ASSERT_TRUE(reply);
 
@@ -4959,8 +4934,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimple) {
 // properly invoked for the prefix release case.
 // This test is using infinite lease with lease affinity enabled.
 TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleInfiniteLease) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_callout));
@@ -4999,10 +4972,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleInfiniteLease) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv_->processRelease(req);
 
     ASSERT_TRUE(reply);
 
@@ -5041,8 +5014,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleInfiniteLease) {
 // This is a variant of the previous test that tests that callouts are
 // properly invoked for the prefix release case.
 TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_callout));
@@ -5079,10 +5050,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
     req->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    req->addOption(srv.getServerID());
+    req->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(req);
+    Pkt6Ptr reply = srv_->processRelease(req);
 
     ASSERT_TRUE(reply);
 
@@ -5127,8 +5098,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleasePrefixSimpleNoDelete) {
 // This test verifies that skip flag returned by a callout installed on the
 // lease6_release hook point will keep the lease.
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_skip_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_skip_callout));
@@ -5164,10 +5133,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
     rel->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    rel->addOption(srv.getServerID());
+    rel->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(rel);
+    Pkt6Ptr reply = srv_->processRelease(rel);
 
     ASSERT_TRUE(reply);
 
@@ -5191,8 +5160,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseSkip) {
 // This test verifies that drop flag returned by a callout installed on the
 // lease6_release hook point will keep the lease.
 TEST_F(HooksDhcpv6SrvTest, lease6ReleaseDrop) {
-    NakedDhcpv6Srv srv(0);
-
     // Install lease6_release_drop_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_release", lease6_release_drop_callout));
@@ -5228,10 +5195,10 @@ TEST_F(HooksDhcpv6SrvTest, lease6ReleaseDrop) {
     rel->addOption(clientid);
 
     // Server-id is mandatory in RELEASE
-    rel->addOption(srv.getServerID());
+    rel->addOption(srv_->getServerID());
 
     // Pass it to the server and hope for a response
-    Pkt6Ptr reply = srv.processRelease(rel);
+    Pkt6Ptr reply = srv_->processRelease(rel);
 
     ASSERT_TRUE(reply);
 
@@ -5265,7 +5232,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSimple) {
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_PASS);
 
@@ -5317,7 +5284,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineSkip) {
 
     // Get an address and decline it. DUIDs, IAID match and we send valid
     // address, so the decline procedure should be successful.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_FAIL);
 
@@ -5368,7 +5335,7 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
     // address, so it would work, but the callout sets status to DROP, so
     // the server should not update the lease and should not send back any
     // packets.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     acquireAndDecline(client, "01:02:03:04:05:06", 1234, "01:02:03:04:05:06",
                       1234, VALID_ADDR, SHOULD_FAIL);
 
@@ -5405,7 +5372,6 @@ TEST_F(HooksDhcpv6SrvTest, lease6DeclineDrop) {
 // Checks if callout installed on host6_identifier can generate an
 // identifier and whether that identifier is actually used.
 TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
-
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interfaces-config\": {\n"
@@ -5491,7 +5457,6 @@ TEST_F(HooksDhcpv6SrvTest, host6Identifier) {
 // Checks if callout installed on host6_identifier can generate an identifier of
 // other type. This particular callout always returns hwaddr.
 TEST_F(HooksDhcpv6SrvTest, host6IdentifierHWAddr) {
-
     // Configure 2 subnets, both directly reachable over local interface
     // (let's not complicate the matter with relays)
     string config = "{ \"interfaces-config\": {\n"
@@ -5579,7 +5544,6 @@ TEST_F(HooksDhcpv6SrvTest, host6IdentifierHWAddr) {
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.
 TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
-
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv6Srv(0)));
 
     // Ensure no marker files to start with.
@@ -5602,7 +5566,6 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
-    // Destroy the server, instance which should unload the libraries.
     server_.reset();
 
     // Check that the libraries were unloaded. The libraries are
@@ -5618,7 +5581,6 @@ TEST_F(LoadUnloadDhcpv6SrvTest, unloadLibraries) {
 // file upon load and unload, making it simple to test whether or not
 // the load and unload callouts have been invoked.
 TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
-
     ASSERT_NO_THROW(server_.reset(new NakedDhcpv6Srv(0)));
 
     // Ensure no marker files to start with.
@@ -5647,7 +5609,6 @@ TEST_F(LoadUnloadDhcpv6SrvTest, failLoadIncompatibleLibraries) {
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
-    // Destroy the server, instance which should unload the libraries.
     server_.reset();
 
     // Check that the libraries were unloaded. The libraries are
@@ -5667,7 +5628,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
         reset();
 
-        boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
+        server_.reset(new NakedDhcpv6Srv(0));
 
         // Ensure no marker files to start with.
         ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
@@ -5708,7 +5669,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
 
         // Configure the server.
         ConstElementPtr answer;
-        ASSERT_NO_THROW(answer = srv->processConfig(config));
+        ASSERT_NO_THROW(answer = server_->processConfig(config));
 
         // Make sure there were no errors.
         int status_code;
@@ -5742,7 +5703,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
                                     "3io_contextjson_confignetwork_stateserver_config"));
 
         // Destroy the server, instance which should unload the libraries.
-        srv.reset();
+        server_.reset();
 
         // The server was destroyed, so the unload() function should now
         // include the library number in its marker file.
@@ -5886,7 +5847,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
 // Checks that postponed hook start service can fail.
 TEST_F(LoadUnloadDhcpv6SrvTest, startServiceFail) {
-    boost::shared_ptr<ControlledDhcpv6Srv> srv(new ControlledDhcpv6Srv(0));
+    ASSERT_NO_THROW(server_.reset(new NakedDhcpv6Srv(0)));
 
     // Ensure no marker files to start with.
     ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
@@ -5939,7 +5900,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, startServiceFail) {
                                 "4io_contextjson_confignetwork_stateserver_config"));
 
     // Destroy the server, instance which should unload the libraries.
-    srv.reset();
+    server_.reset();
 
     // The server was destroyed, so the unload() function should now
     // include the library number in its marker file.
@@ -5996,7 +5957,7 @@ TEST_F(HooksDhcpv6SrvTest, ddns6Update) {
                     "ddns6_update", ddns6_update_callout));
 
     // Carry out a SARR.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setInterface("eth1");
     client.requestAddress(0xabca, IOAddress("2001:db8:1::28"));
     client.useFQDN(Option6ClientFqdn::FLAG_S, "client-name", Option6ClientFqdn::PARTIAL);

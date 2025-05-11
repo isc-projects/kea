@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,7 @@ extern int lease6_recover(CalloutHandle& handle);
 extern int leases6_committed(CalloutHandle& handle);
 extern int lease6_release(CalloutHandle& handle);
 extern int lease6_decline(CalloutHandle& handle);
+extern int addr6_register(CalloutHandle& handle);
 }
 
 namespace isc {
@@ -841,7 +842,7 @@ public:
     void checkScriptResult() {
         ifstream test_log;
         vector<string> extracted_lines;
-        time_t now(time(NULL));
+        time_t now(time(0));
         while (true) {
             test_log.open(TEST_LOG_FILE);
             if (!test_log.fail()) {
@@ -852,7 +853,7 @@ public:
                 test_log.close();
                 break;
             }
-            ASSERT_LT(time(NULL), now + 3) << "timeout";
+            ASSERT_LT(time(0), now + 3) << "timeout";
             usleep(100000);
         }
         ASSERT_EQ(join(extracted_lines), "SUCCESS\n");
@@ -877,7 +878,7 @@ TEST_F(RunScriptTest, lease4Renew) {
     CalloutHandle handle(getCalloutManager());
     Pkt4Ptr pkt4 = generatePkt4();
     handle.setArgument("query4", pkt4);
-    Subnet4Ptr subnet4 = generateSubnet4();
+    ConstSubnet4Ptr subnet4 = generateSubnet4();
     handle.setArgument("subnet4", subnet4);
     ClientIdPtr clientid = generateClientId();
     handle.setArgument("clientid", clientid);
@@ -1071,6 +1072,25 @@ TEST_F(RunScriptTest, lease6Decline) {
     handle.setArgument("lease6", lease6);
     int ret;
     ASSERT_NO_THROW(ret = lease6_decline(handle));
+    EXPECT_EQ(0, ret);
+    checkScriptResult();
+}
+
+// Check the addr6_register callout.
+TEST_F(RunScriptTest, add6Register) {
+    impl.reset(new RunScriptImpl());
+    impl->setName(RUN_SCRIPT_TEST_SH);
+    CalloutHandle handle(getCalloutManager());
+    Pkt6Ptr pkt6 = generatePkt6();
+    handle.setArgument("query6", pkt6);
+    Lease6Ptr lease6;
+    handle.setArgument("old_lease6", lease6);
+    lease6 = generateLease6();
+    handle.setArgument("new_lease6", lease6);
+    IOAddress addr = lease6->addr_;
+    handle.setArgument("address6", addr);
+    int ret;
+    ASSERT_NO_THROW(ret = addr6_register(handle));
     EXPECT_EQ(0, ret);
     checkScriptResult();
 }

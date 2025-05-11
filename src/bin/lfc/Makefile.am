@@ -36,15 +36,6 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-kea_lfc_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-kea_lfc_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 kea_lfc_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_lfc_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -56,12 +47,6 @@ kea_lfc_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_lfc_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_lfc_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_lfc_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_lfc_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 kea_lfcdir = $(pkgdatadir)
 
@@ -89,7 +74,8 @@ messages: lfc_messages.h lfc_messages.cc
 	@echo Message files regenerated
 
 lfc_messages.h lfc_messages.cc: lfc_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/lfc/lfc_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/lfc/lfc_messages.mes)
 
 else
 

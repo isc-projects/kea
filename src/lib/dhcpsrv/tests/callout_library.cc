@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 /// @file
 /// @brief Callout Library
 ///
-/// This is the source of a test library for the basic DHCP parser 
+/// This is the source of a test library for the basic DHCP parser
 /// tests.  It just has to load - nothing else.
 
 #include <config.h>

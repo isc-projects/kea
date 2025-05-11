@@ -126,6 +126,46 @@ HostDataSourceUtils::initializeHost6(std::string address,
     return (host);
 }
 
+HostPtr
+HostDataSourceUtils::initializeHost6(std::string prefix,
+                                     std::string exclude,
+                                     Host::IdentifierType identifier,
+                                     bool new_identifier,
+                                     const std::string auth_key) {
+    std::vector<uint8_t> ident;
+    switch (identifier) {
+    case Host::IDENT_HWADDR:
+        ident = generateHWAddr(new_identifier);
+        break;
+    case Host::IDENT_DUID:
+        ident = generateIdentifier(new_identifier);
+        break;
+    default:
+        ADD_FAILURE() << "Unknown IdType: " << identifier;
+        return HostPtr();
+    }
+
+    // Let's create ever increasing subnet-ids. Let's keep those different,
+    // so subnet4 != subnet6. Useful for catching cases if the code confuses
+    // subnet4 with subnet6.
+    static SubnetID subnet4 = 0;
+    static SubnetID subnet6 = 100;
+    ++subnet4;
+    ++subnet6;
+
+    HostPtr host(new Host(&ident[0], ident.size(), identifier, subnet4, subnet6,
+                          IOAddress("0.0.0.0")));
+
+    host->setKey(AuthKey(auth_key));
+
+    // Create IPv6 reservation for a /48 prefix
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress(prefix), 48);
+    resv.setPDExclude(IOAddress(exclude), 64);
+    host->addReservation(resv);
+
+    return (host);
+}
+
 bool
 HostDataSourceUtils::reservationExists(const IPv6Resrv& resrv,
                                        const IPv6ResrvRange& range) {
@@ -277,36 +317,54 @@ HostDataSourceUtils::compareReservations6(IPv6ResrvRange resrv1,
         for (; r2 != resrv2.second; ++r2) {
             // IPv6Resrv object implements equality operator.
             if (r1->second == r2->second) {
-                break;
+                // but this operator does not check Prefix Exclude options.
+                auto const& p1 = r1->second.getPDExclude();
+                auto const& p2 = r2->second.getPDExclude();
+                if (!p1 && !p2) {
+                    break;
+                } else if (p1 && p2 &&
+                           (p1->getExcludedPrefixLength() ==
+                            p2->getExcludedPrefixLength()) &&
+                           (p1->getExcludedPrefixSubnetID() ==
+                            p2->getExcludedPrefixSubnetID())) {
+                    break;
+                }
             }
         }
         // If r2 iterator reached the end of the range it means that there
         // is no match.
         if (r2 == resrv2.second) {
             ADD_FAILURE() << "No match found for reservation: "
-                          << resrv1.first->second.getPrefix().toText();
+                          << r1->second.getPrefix().toText();
+            return;
         }
     }
-
-    if (std::distance(resrv1.first, resrv1.second) > 0) {
-        for (; resrv1.first != resrv1.second; resrv1.first++) {
-            IPv6ResrvIterator iter = resrv2.first;
-            while (iter != resrv2.second) {
-                if ((resrv1.first->second.getType() ==
-                     iter->second.getType()) &&
-                    (resrv1.first->second.getPrefixLen() ==
-                     iter->second.getPrefixLen()) &&
-                    (resrv1.first->second.getPrefix() ==
-                     iter->second.getPrefix())) {
+    // Same with 1 and 2 swapped role.
+    for (IPv6ResrvIterator r2 = resrv2.first; r2 != resrv2.second; ++r2) {
+        IPv6ResrvIterator r1 = resrv1.first;
+        for (; r1 != resrv1.second; ++r1) {
+            // IPv6Resrv object implements equality operator.
+            if (r1->second == r2->second) {
+                // but this operator does not check Prefix Exclude options.
+                auto const& p1 = r1->second.getPDExclude();
+                auto const& p2 = r2->second.getPDExclude();
+                if (!p1 && !p1) {
+                    break;
+                } else if (p1 && p2 &&
+                           (p1->getExcludedPrefixLength() ==
+                            p2->getExcludedPrefixLength()) &&
+                           (p1->getExcludedPrefixSubnetID() ==
+                            p2->getExcludedPrefixSubnetID())) {
                     break;
                 }
-                iter++;
-                if (iter == resrv2.second) {
-                    ADD_FAILURE() << "Reservation comparison failed, "
-                                     "no match for reservation: "
-                                  << resrv1.first->second.getPrefix().toText();
-                }
             }
+        }
+        // If r1 iterator reached the end of the range it means that there
+        // is no match.
+        if (r1 == resrv1.second) {
+            ADD_FAILURE() << "No match found for reservation: "
+                          << r2->second.getPrefix().toText();
+            return;
         }
     }
 }
@@ -405,4 +463,3 @@ HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
 }
 }
 }
-

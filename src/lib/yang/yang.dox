@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -174,7 +174,7 @@ category of adaptors are divided into:
 To run YANG/NETCONF/Sysrepo tests you need to compile Kea with Sysrepo support:
 
 @verbatim
-./configure --with-libyang --with-sysrepo --with-libyang-cpp --with-sysrepo-cpp
+meson setup build -D netconf=enabled
 @endverbatim
 
 For details, see Section "YANG/NETCONF support" in the Kea Administrator
@@ -192,7 +192,7 @@ non-root.
 To install all the modules, run the following script:
 
 @verbatim
-./src/share/yang/modules/utils/reinstall.sh
+./build/src/share/yang/modules/utils/reinstall.sh
 @endverbatim
 
 If the YANG modules are already installed, they will be upgraded.
@@ -200,7 +200,7 @@ To avoid any upgrade hastle, the -u flag may be passed to uninstall the modules
 before installing again.
 
 @verbatim
-./src/share/yang/modules/utils/reinstall.sh -u
+./build/src/share/yang/modules/utils/reinstall.sh -u
 @endverbatim
 
 Alternatively to install each module, issue the following command:

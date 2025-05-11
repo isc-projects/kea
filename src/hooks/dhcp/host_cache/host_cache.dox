@@ -1,0 +1,83 @@
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Host Cache Hooks Library
+
+Welcome to Kea Host Cache Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section host_cache_library_overview Overview
+## Introduction
+
+This library implements a cache for host reservations, i.e. when a host
+reservation is looked for a second time the cache answers directly without
+involving a potentially slow backend.
+
+## Interface
+
+The host cache is a host data source: it implements the interface of
+the @c isc::dhcp::BaseHostDataSource abstract class extended to
+@c isc::dhcp::CacheHostDataSource with a few methods:
+ - insert which inserts a new @c isc::dhcp::Host in the cache.
+ - remove which removes a host cache entry from the cache.
+ - flush which removes oldest entries.
+ - size returns the number of entries.
+ - capacity returns the maximum number of entries, or 0 if there is none.
+
+## Callouts
+
+The host cache can be controlled using callouts:
+ - cache-size returns the number of entries.
+ - cache-clear fully flush the cache.
+ - cache-flush partially flush the cache.
+ - cache-get exports (using toElement) the cache content.
+ - cache-write exports the cache content to a file.
+ - cache-insert imports an entry or a list of entries.
+ - cache-load imports a cache dump done by cache-write to the cache.
+ - cache-get-by-id exports (using toElement) the cache entry(ies) matching
+   an identifier.
+ - cache-remove removes a cache entry.
+
+## Internal structure
+
+The host cache is copied from @c isc::dhcp::CfgHosts class. The container
+is a similar Boost multi index with two new indexes:
+ - a sequenced access index which organizes entries in the last use order.
+ - a hashed access index which allows to retrieve an iterator from a given
+  entry, i.e. a shared pointer to a @c isc::dhcp::Host instance.
+
+The cache is implemented by two classes: @c isc::host_cache::HostCache and
+its implementation @c isc::host_cache::HostCacheImpl where access methods
+are not declared constant.
+
+Control variables are:
+ - maximum_ (impl) is the maximum number of entries, 0 means there is none.
+
+The extended host data source interface is supported with some specific points:
+ - all getAll methods return an empty vector.
+ - insert takes an extra parameter to handle conflicts: if false it does
+  nothing in case of conflicts, if true it removes conflicting entry.
+  The number of conflicts is returned (overwrite false returns at the
+  first conflict so the count can be either 0 or 1).
+
+@section host_cacheMTCompatibility Multi-Threading Compatibility
+
+The Host Cache Hooks Library reports it is compatible with multi-threading.
+The cache-flush, cache-clear, cache-get, cache-write and cache-load
+commands are executed in a critical section so with multi-threading
+temporarily disabled.
+
+*/

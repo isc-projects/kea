@@ -1,4 +1,4 @@
-// File created from ../../../../src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+// File created from src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
 
 #ifndef LEASE_CMDS_MESSAGES_H
 #define LEASE_CMDS_MESSAGES_H
@@ -21,6 +21,12 @@ extern const isc::log::MessageID LEASE_CMDS_DEL6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_GET4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_GET6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_INIT_OK;
+extern const isc::log::MessageID LEASE_CMDS_LEASE4_OFFER_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_LEASES4_COMMITTED_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_CONFLICT;
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_FAILED;
+extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR;
+extern const isc::log::MessageID LEASE_CMDS_LOAD_ERROR;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6;

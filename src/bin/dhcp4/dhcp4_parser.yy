@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -90,9 +90,6 @@ using namespace std;
   HOSTS_DATABASE "hosts-database"
   HOSTS_DATABASES "hosts-databases"
   TYPE "type"
-  MEMFILE "memfile"
-  MYSQL "mysql"
-  POSTGRESQL "postgresql"
   USER "user"
   PASSWORD "password"
   HOST "host"
@@ -140,6 +137,9 @@ using namespace std;
   DDNS_UPDATE_ON_RENEW "ddns-update-on-renew"
   DDNS_USE_CONFLICT_RESOLUTION "ddns-use-conflict-resolution"
   DDNS_TTL_PERCENT "ddns-ttl-percent"
+  DDNS_TTL "ddns-ttl"
+  DDNS_TTL_MIN "ddns-ttl-min"
+  DDNS_TTL_MAX "ddns-ttl-mix"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
@@ -183,9 +183,11 @@ using namespace std;
 
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
+  EVALUATE_ADDITIONAL_CLASSES "evaluate-additional-classes"
   TEST "test"
   TEMPLATE_TEST "template-test"
   ONLY_IF_REQUIRED "only-if-required"
+  ONLY_IN_ADDITIONAL_LIST "only-in-additional-list"
   CLIENT_CLASS "client-class"
   POOL_ID "pool-id"
 
@@ -237,6 +239,8 @@ using namespace std;
   USER_FILE "user-file"
   PASSWORD_FILE "password-file"
   CERT_REQUIRED "cert-required"
+  HTTP_HEADERS "http-headers"
+  VALUE "value"
 
   DHCP_QUEUE_CONTROL "dhcp-queue-control"
   ENABLE_QUEUE "enable-queue"
@@ -306,7 +310,6 @@ using namespace std;
 %type <ElementPtr> map_value
 %type <ElementPtr> socket_type
 %type <ElementPtr> outbound_interface_value
-%type <ElementPtr> db_type
 %type <ElementPtr> on_fail_mode
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
@@ -566,6 +569,9 @@ global_param: valid_lifetime
             | ddns_use_conflict_resolution
             | ddns_conflict_resolution_mode
             | ddns_ttl_percent
+            | ddns_ttl
+            | ddns_ttl_min
+            | ddns_ttl_max
             | store_extended_info
             | statistic_default_sample_count
             | statistic_default_sample_age
@@ -798,6 +804,24 @@ ddns_ttl_percent: DDNS_TTL_PERCENT COLON FLOAT {
     ctx.unique("ddns-ttl-percent", ctx.loc2pos(@1));
     ElementPtr ttl(new DoubleElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("ddns-ttl-percent", ttl);
+};
+
+ddns_ttl: DDNS_TTL COLON INTEGER {
+    ctx.unique("ddns-ttl", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl", ttl);
+};
+
+ddns_ttl_min: DDNS_TTL_MIN COLON INTEGER {
+    ctx.unique("ddns-ttl-min", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-min", ttl);
+};
+
+ddns_ttl_max: DDNS_TTL_MAX COLON INTEGER {
+    ctx.unique("ddns-ttl-max", ctx.loc2pos(@1));
+    ElementPtr ttl(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("ddns-ttl-max", ttl);
 };
 
 hostname_char_set: HOSTNAME_CHAR_SET {
@@ -1118,16 +1142,12 @@ database_map_param: database_type
 
 database_type: TYPE {
     ctx.unique("type", ctx.loc2pos(@1));
-    ctx.enter(ctx.DATABASE_TYPE);
-} COLON db_type {
-    ctx.stack_.back()->set("type", $4);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr db_type(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("type", db_type);
     ctx.leave();
 };
-
-db_type: MEMFILE { $$ = ElementPtr(new StringElement("memfile", ctx.loc2pos(@1))); }
-       | MYSQL { $$ = ElementPtr(new StringElement("mysql", ctx.loc2pos(@1))); }
-       | POSTGRESQL { $$ = ElementPtr(new StringElement("postgresql", ctx.loc2pos(@1))); }
-       ;
 
 user: USER {
     ctx.unique("user", ctx.loc2pos(@1));
@@ -1607,7 +1627,9 @@ subnet4_param: valid_lifetime
              | interface
              | id
              | client_class
+             | network_client_classes
              | require_client_classes
+             | evaluate_additional_classes
              | reservations
              | reservations_global
              | reservations_in_subnet
@@ -1638,6 +1660,9 @@ subnet4_param: valid_lifetime
              | ddns_use_conflict_resolution
              | ddns_conflict_resolution_mode
              | ddns_ttl_percent
+             | ddns_ttl
+             | ddns_ttl_min
+             | ddns_ttl_max
              | hostname_char_set
              | hostname_char_replacement
              | store_extended_info
@@ -1700,10 +1725,34 @@ client_class: CLIENT_CLASS {
     ctx.leave();
 };
 
+// Used by shared-network,subnet, and pool
+network_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+// Deprecated.
 require_client_classes: REQUIRE_CLIENT_CLASSES {
     ctx.unique("require-client-classes", ctx.loc2pos(@1));
     ElementPtr c(new ListElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("require-client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+evaluate_additional_classes: EVALUATE_ADDITIONAL_CLASSES {
+    ctx.unique("evaluate-additional-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("evaluate-additional-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 } COLON list_strings {
@@ -1792,7 +1841,9 @@ shared_network_param: name
                     | reservations_in_subnet
                     | reservations_out_of_pool
                     | client_class
+                    | network_client_classes
                     | require_client_classes
+                    | evaluate_additional_classes
                     | valid_lifetime
                     | min_valid_lifetime
                     | max_valid_lifetime
@@ -1813,6 +1864,9 @@ shared_network_param: name
                     | ddns_use_conflict_resolution
                     | ddns_conflict_resolution_mode
                     | ddns_ttl_percent
+                    | ddns_ttl
+                    | ddns_ttl_min
+                    | ddns_ttl_max
                     | hostname_char_set
                     | hostname_char_replacement
                     | store_extended_info
@@ -2047,6 +2101,7 @@ option_data_param: option_data_name
                  | option_data_never_send
                  | user_context
                  | comment
+                 | option_data_client_classes
                  | unknown_map_entry
                  ;
 
@@ -2081,6 +2136,17 @@ option_data_never_send: NEVER_SEND COLON BOOLEAN {
     ctx.unique("never-send", ctx.loc2pos(@1));
     ElementPtr cancel(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("never-send", cancel);
+};
+
+option_data_client_classes: CLIENT_CLASSES {
+    ctx.unique("client-classes", ctx.loc2pos(@1));
+    ElementPtr c(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("client-classes", c);
+    ctx.stack_.push_back(c);
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON list_strings {
+    ctx.stack_.pop_back();
+    ctx.leave();
 };
 
 // ---- pools ------------------------------------
@@ -2141,7 +2207,23 @@ pool_param: pool_entry
           | pool_id
           | option_data_list
           | client_class
+          | network_client_classes
           | require_client_classes
+          | evaluate_additional_classes
+          | ddns_send_updates
+          | ddns_override_no_update
+          | ddns_override_client_update
+          | ddns_replace_client_name
+          | ddns_generated_prefix
+          | ddns_qualifying_suffix
+          | ddns_update_on_renew
+          | ddns_conflict_resolution_mode
+          | ddns_ttl_percent
+          | ddns_ttl
+          | ddns_ttl_min
+          | ddns_ttl_max
+          | hostname_char_set
+          | hostname_char_replacement
           | user_context
           | comment
           | unknown_map_entry
@@ -2461,6 +2543,7 @@ client_class_param: client_class_name
                   | client_class_test
                   | client_class_template_test
                   | only_if_required
+                  | only_in_additional_list
                   | option_def_list
                   | option_data_list
                   | next_server
@@ -2495,10 +2578,17 @@ client_class_template_test: TEMPLATE_TEST {
     ctx.leave();
 };
 
+// Deprecated.
 only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
     ctx.unique("only-if-required", ctx.loc2pos(@1));
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("only-if-required", b);
+};
+
+only_in_additional_list: ONLY_IN_ADDITIONAL_LIST COLON BOOLEAN {
+    ctx.unique("only-in-additional-list", ctx.loc2pos(@1));
+    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("only-in-additional-list", b);
 };
 
 // --- end of client classes ---------------------------------
@@ -2570,6 +2660,7 @@ control_socket_param: control_socket_type
                     | cert_file
                     | key_file
                     | cert_required
+                    | http_headers
                     | user_context
                     | comment
                     | unknown_map_entry
@@ -2619,6 +2710,59 @@ cert_required: CERT_REQUIRED COLON BOOLEAN {
     ctx.unique("cert-required", ctx.loc2pos(@1));
     ElementPtr req(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("cert-required", req);
+};
+
+http_headers: HTTP_HEADERS {
+    ctx.unique("http-headers", ctx.loc2pos(@1));
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("http-headers", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.HTTP_HEADERS);
+} COLON LSQUARE_BRACKET http_header_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+http_header_list: %empty
+                | not_empty_http_header_list
+                ;
+
+not_empty_http_header_list: http_header
+                          | not_empty_http_header_list COMMA http_header
+                          | not_empty_http_header_list COMMA {
+                              ctx.warnAboutExtraCommas(@2);
+                              }
+                          ;
+
+http_header: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} http_header_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+http_header_params: http_header_param
+                  | http_header_params COMMA http_header_param
+                  | http_header_params COMMA {
+                      ctx.warnAboutExtraCommas(@2);
+                      }
+                  ;
+
+http_header_param: name
+                 | header_value
+                 | user_context
+                 | comment
+                 | unknown_map_entry
+                 ;
+
+header_value: VALUE {
+    ctx.unique("value", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr value(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("value", value);
+    ctx.leave();
 };
 
 // --- authentication ---------------------------------------------

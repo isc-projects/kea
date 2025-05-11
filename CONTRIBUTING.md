@@ -12,12 +12,28 @@ Here's a quick list of how to contribute a patch:
    or basically anyone from the Kea dev team)
 4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new).
    If you can't, you didn't complete step 3.
-5. **Implement your fix or feature, push code** to your repo. Make sure it compiles, has unit-tests,
+5. **Give ISC access to the forked project**. This is required to see pipeline status and to merge code.
+   From the sidebar on the project page, go to `Manage` -> `Members` -> `Invite members`.
+     - `Username, name or email address`: `@andrei, @fdupont, @marcin, @mgodzina, @piotrek, @razvan, @slawek, @tmark, @tomek, @wlodek`
+     - `Select a role`: `Developer`
+     - Click `Invite`.
+6. **Configure Danger**. From the sidebar on the project page, go to `Settings` -> `Access Tokens` -> `Add new token`:
+     - `Token name`: `danger`
+     - `Select a role`: `Developer`
+     - `Select scopes`: `[api]`
+     - Click `Create project access token`.
+     - Copy the token's value.
+   Then, go to `Settings` -> `CI/CD` -> `Variables` -> `Add variable`:
+     - `Visibility`: `Masked`
+     - `Key`: `DANGER_GITLAB_API_TOKEN`
+     - `Value`: copied token value
+     - Click `Add variable`.
+7. **Implement your fix or feature, push code** to your repo. Make sure it compiles, has unit-tests,
    is documented and does what it's supposed to do.
-6. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests),
+8. **Open Merge Request**: go to Kea project [merge requests page](https://gitlab.isc.org/isc-projects/kea/merge_requests),
    click [New merge request](https://gitlab.isc.org/isc-projects/kea/merge_requests/new). If you
    don't see the button, you didn't complete step 3.
-7. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get
+9. **Participate in the code review**: Once you submit the MR, someone from ISC will eventually get
    to the issue and will review your code. Please make sure you respond to comments. It's likely
    you'll be asked to update the code.
 
@@ -175,29 +191,20 @@ such long periods, code tends to be refactored several times. The change you mad
 some other change or by the code that hasn't been written yet.
 
 See Building Kea with Unit Tests for instructions on how to run unit-tests. If you happen to touch
-any database related code, make sure you compile your code with –with-mysql and/or –with-pgsql as
+any database related code, make sure you compile your code with `–D mysql=enabled` and/or `–D postgresql=enabled` as
 needed. For example, if you change something substantial, make sure the other compilation options
 still work.
 
-If you happen to add new files or have modified any Makefile.am files, it is also a good idea to
-check if you haven't broken the distribution process:
+Enabling tests automatically enables logger checks (sanity checks on logger parameters), enable debug symbols and
+various additional consistency checks that reduce performance but help during development.
 
-```bash
-make distcheck
-```
-
-There are other useful switches which can be passed to configure. It is always a good idea to use
-`–enable-logger-checks`, which does sanity checks on logger parameters. Use `–-enable-debug` to
-enable debug symbols and various additional consistency checks that reduce performance but help
-during development.
-If you happen to modify anything in the documentation, use `–-enable-generate-docs`. If you are
-modifying DHCP code, you are likely to be interested in enabling a non-default database backends for
-DHCP. Note that if the backend is not enabled, the database-specific unit-tests are skipped.  To
-enable the MySQL backend, use the switch `–with-mysql`; for PostgreSQL, use `–with-pgsql`.
+If you are modifying DHCP code, you are likely to be interested in enabling a non-default database backends for DHCP.
+Note that if the backend is not enabled, the database-specific unit-tests are skipped.  To
+enable the MySQL backend, use the switch `-D mysql=enabled`; for PostgreSQL, use `–D postgresql=enabled`.
 A complete list of all switches can be obtained with the command:
 
 ```bash
-./configure --help
+meson configure
 ```
 
 ## Submitting Merge Request (also known as sending your patch the right way)

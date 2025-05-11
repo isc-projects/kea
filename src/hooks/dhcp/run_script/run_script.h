@@ -131,7 +131,7 @@ public:
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractSubnet4(isc::asiolink::ProcessEnvVars& vars,
-                               const isc::dhcp::Subnet4Ptr subnet4,
+                               const isc::dhcp::ConstSubnet4Ptr subnet4,
                                const std::string& prefix = "",
                                const std::string& suffix = "");
 
@@ -141,7 +141,7 @@ public:
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
     static void extractSubnet6(isc::asiolink::ProcessEnvVars& vars,
-                               const isc::dhcp::Subnet6Ptr subnet6,
+                               const isc::dhcp::ConstSubnet6Ptr subnet6,
                                const std::string& prefix = "",
                                const std::string& suffix = "");
 

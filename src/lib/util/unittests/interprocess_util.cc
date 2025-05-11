@@ -31,7 +31,7 @@ parentReadState(int fd) {
   if (nfds == 1) {
       // Read status
       const ssize_t bytes_read = read(fd, &result, sizeof(result));
-      EXPECT_EQ(sizeof(result), bytes_read);
+      EXPECT_EQ(static_cast<ssize_t>(sizeof(result)), bytes_read);
   }
 
   return (result);

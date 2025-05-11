@@ -49,7 +49,7 @@ public:
     ///
     /// @param subnet Pointer to the subnet being updated.
     /// @throw BadValue if the subnet to update does not exit.
-    /// @return Pointer to the replaced subnet or NULL if it failed.
+    /// @return Pointer to the replaced subnet or null if it failed.
     Subnet6Ptr replace(const Subnet6Ptr& subnet);
 
     /// @brief Removes subnet from the configuration.
@@ -200,8 +200,8 @@ public:
     /// various information extracted from the client's packet which are used
     /// to find appropriate subnet.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet6Ptr selectSubnet(const SubnetSelector& selector) const;
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet6Ptr selectSubnet(const SubnetSelector& selector) const;
 
     /// @brief Returns subnet with specified subnet-id value
     ///
@@ -242,8 +242,8 @@ public:
     /// @param is_relay_address Specifies if the provided address is an
     /// address of the relay agent (true) or not (false).
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet6Ptr
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet6Ptr
     selectSubnet(const asiolink::IOAddress& address,
                  const ClientClasses& client_classes = ClientClasses(),
                  const bool is_relay_address = false) const;
@@ -307,8 +307,8 @@ private:
     /// @param client_classes Optional parameter specifying the classes that
     /// the client belongs to.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet6Ptr
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet6Ptr
     selectSubnet(const std::string& iface_name,
                  const ClientClasses& client_classes) const;
 
@@ -332,8 +332,8 @@ private:
     /// @param client_classes Optional parameter specifying the classes that
     /// the client belongs to.
     ///
-    /// @return Pointer to the selected subnet or NULL if no subnet found.
-    Subnet6Ptr
+    /// @return Pointer to the selected subnet or null if no subnet found.
+    ConstSubnet6Ptr
     selectSubnet(const OptionPtr& interface_id,
                  const ClientClasses& client_classes) const;
 

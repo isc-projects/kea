@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@ namespace process {
 class DProcessBaseError : public isc::Exception {
 public:
     DProcessBaseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief String value for the version-get command.
@@ -83,7 +83,7 @@ public:
     /// @param cfg_mgr the configuration manager instance that handles
     /// configuration parsing.
     ///
-    /// @throw DProcessBaseError is io_service is NULL.
+    /// @throw DProcessBaseError if io_service is null.
     DProcessBase(const char* app_name, asiolink::IOServicePtr io_service,
                  DCfgMgrBasePtr cfg_mgr)
         : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
@@ -95,7 +95,7 @@ public:
         if (!cfg_mgr_) {
             isc_throw (DProcessBaseError, "CfgMgr cannot be null");
         }
-    };
+    }
 
     /// @brief May be used after instantiation to perform initialization unique
     /// to application. It must be invoked prior to invoking run. This would

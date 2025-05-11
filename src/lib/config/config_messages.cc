@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/config/config_messages.mes
+// File created from src/lib/config/config_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -34,7 +34,10 @@ extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL = "COMMAND_SOCKET_WRI
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR = "COMMAND_WATCH_SOCKET_CLEAR_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR = "COMMAND_WATCH_SOCKET_CLOSE_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR = "COMMAND_WATCH_SOCKET_MARK_READY_ERROR";
-extern const isc::log::MessageID HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES = "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED = "HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED = "HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED = "HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED";
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED = "HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED";
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED = "HTTP_COMMAND_MGR_SERVICE_STARTED";
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING = "HTTP_COMMAND_MGR_SERVICE_STOPPING";
 
@@ -48,9 +51,9 @@ const char* values[] = {
     "COMMAND_DEREGISTERED", "Command %1 deregistered",
     "COMMAND_EXTENDED_REGISTERED", "Command %1 registered",
     "COMMAND_HTTP_LISTENER_COMMAND_REJECTED", "Command HTTP listener rejected command '%1' from '%2'",
-    "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4",
-    "COMMAND_HTTP_LISTENER_STOPPED", "Command HTTP listener for %1:%2 stopped.",
-    "COMMAND_HTTP_LISTENER_STOPPING", "Stopping Command HTTP listener for %1:%2",
+    "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on address: %2 port: %3, use TLS: %4",
+    "COMMAND_HTTP_LISTENER_STOPPED", "Command HTTP listener for address: %1 port: %2 stopped.",
+    "COMMAND_HTTP_LISTENER_STOPPING", "Stopping Command HTTP listener for address: %1 port: %2",
     "COMMAND_PROCESS_ERROR1", "Error while processing command: %1",
     "COMMAND_PROCESS_ERROR2", "Error while processing command: %1",
     "COMMAND_RECEIVED", "Received command '%1'",
@@ -71,9 +74,12 @@ const char* values[] = {
     "COMMAND_WATCH_SOCKET_CLEAR_ERROR", "watch socket failed to clear: %1",
     "COMMAND_WATCH_SOCKET_CLOSE_ERROR", "watch socket failed to close: %1",
     "COMMAND_WATCH_SOCKET_MARK_READY_ERROR", "watch socket failed to mark ready: %1",
-    "HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES", "ignore a change in TLS setup of the http control socket",
-    "HTTP_COMMAND_MGR_SERVICE_STARTED", "started %1 service bound to address %2 port %3",
-    "HTTP_COMMAND_MGR_SERVICE_STOPPING", "stopping %1 service %2",
+    "HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED", "failed to reused HTTPS service bound to address: %1 port: %2",
+    "HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED", "reused HTTPS service bound to address: %1 port: %2 and updated TLS settings",
+    "HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED", "failed to reused HTTP service bound to address: %1 port: %2",
+    "HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED", "reused HTTP service bound to address: %1 port: %2",
+    "HTTP_COMMAND_MGR_SERVICE_STARTED", "started %1 service bound to address: %2 port: %3",
+    "HTTP_COMMAND_MGR_SERVICE_STOPPING", "Server is stopping %1 service %2",
     NULL
 };
 

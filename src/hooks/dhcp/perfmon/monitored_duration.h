@@ -43,7 +43,7 @@ public:
     /// Given a duration value:
     /// -# Increment the number of occurrences
     /// -# Add the duration to the total duration
-    /// -# Update the minimum and/or maxium duration accordingly
+    /// -# Update the minimum and/or maximum duration accordingly
     ///
     /// @param duration Duration to add.
     void addDuration(const Duration& duration);

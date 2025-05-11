@@ -21,6 +21,7 @@ run_unittests_SOURCES = config_report_unittests.cc run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD  = $(top_builddir)/src/lib/process/cfgrpt/libcfgrpt.la
+run_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la

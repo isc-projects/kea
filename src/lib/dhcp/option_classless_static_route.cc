@@ -152,7 +152,8 @@ OptionClasslessStaticRoute::parseWireData(OptionBufferConstIter begin, OptionBuf
         ++begin;
 
         // once we know haw many significant octets there are, check for truncated data again
-        if (distance(begin, end) < (significant_octets + V4ADDRESS_LEN)) {
+        if (static_cast<size_t>(distance(begin, end)) <
+            (significant_octets + V4ADDRESS_LEN)) {
             isc_throw(OutOfRange,
                       "DHCPv4 OptionClasslessStaticRoute " << type_ << " is truncated.");
         }

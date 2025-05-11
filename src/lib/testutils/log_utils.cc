@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,11 +45,24 @@ LogContentTest:: ~LogContentTest() {
     remFile();
 }
 
+void LogContentTest::reset() {
+    // Reset to default (INFO) with output to stdout.
+    // To be used to avoid spurious error messages
+    // "log4cplus:ERROR file is not open: logtest.log".
+    LoggerSpecification spec(getRootLoggerName());
+    OutputOption option;
+    // Change the default to stdout.
+    option.stream = OutputOption::STR_STDOUT;
+    spec.addOutputOption(option);
+    LoggerManager manager;
+    manager.process(spec);
+}
+
 bool LogContentTest::checkFile() {
     ifstream file(LOG_FILE);
     EXPECT_TRUE(file.is_open());
     string line, exp_line;
-    int i = 0;
+    unsigned i = 0;
     bool found = true;
 
     using namespace std;

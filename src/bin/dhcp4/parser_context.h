@@ -28,7 +28,7 @@ namespace dhcp {
 class Dhcp4ParseError : public isc::Exception {
 public:
     Dhcp4ParseError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Evaluation context, an interface to the expression evaluation.
@@ -255,9 +255,6 @@ public:
         /// Used while parsing Dhcp4/hosts-database[s] structures.
         HOSTS_DATABASE,
 
-        /// Used while parsing Dhcp4/*-database/type.
-        DATABASE_TYPE,
-
         /// Used while parsing Dhcp4/*-database/on-fail.
         DATABASE_ON_FAIL,
 
@@ -306,6 +303,9 @@ public:
         /// Used while parsing Dhcp4/control-socket/authentication/clients
         /// structures.
         CLIENTS,
+
+        ///< Used while parsing Dhcp4/control-socket/http-headers structures.
+        HTTP_HEADERS,
 
         /// Used while parsing Dhcp4/dhcp-queue-control structures.
         DHCP_QUEUE_CONTROL,
@@ -424,7 +424,7 @@ public:
     isc::data::ElementPtr parseCommon();
 };
 
-}; // end of isc::eval namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

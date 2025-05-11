@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
 #include <hooks/hooks.h>
@@ -100,7 +101,7 @@ int lease4_renew(CalloutHandle& handle) {
     Pkt4Ptr pkt4;
     handle.getArgument("query4", pkt4);
     RunScriptImpl::extractPkt4(vars, pkt4, "QUERY4");
-    Subnet4Ptr subnet4;
+    ConstSubnet4Ptr subnet4;
     handle.getArgument("subnet4", subnet4);
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4");
     ClientIdPtr clientid;
@@ -404,6 +405,36 @@ int lease6_decline(CalloutHandle& handle) {
     RunScriptImpl::extractLease6(vars, lease6, "LEASE6");
     ProcessArgs args;
     args.push_back("lease6_decline");
+    impl->runScript(args, vars);
+    return (0);
+}
+
+/// @brief handle @ref addr6_register hook and set environment parameters for
+/// the script.
+/// IN: query6 address6 old_lease6 new_lease6
+/// OUT: next_step
+int addr6_register(CalloutHandle& handle) {
+    CalloutHandle::CalloutNextStep status = handle.getStatus();
+    if (status == CalloutHandle::NEXT_STEP_DROP ||
+        status == CalloutHandle::NEXT_STEP_SKIP) {
+        return (0);
+    }
+    ProcessEnvVars vars;
+    Pkt6Ptr pkt6;
+    handle.getArgument("query6", pkt6);
+    RunScriptImpl::extractPkt6(vars, pkt6, "QUERY6");
+    IOAddress addr = IOAddress::IPV6_ZERO_ADDRESS();
+    handle.getArgument("address6", addr);
+    RunScriptImpl::extractString(vars, addr.toText(), "ADDRESS6");
+    Lease6Ptr lease6;
+    handle.getArgument("old_lease6", lease6);
+    if (lease6) {
+        RunScriptImpl::extractLease6(vars, lease6, "OLD_LEASE6");
+    }
+    handle.getArgument("new_lease6", lease6);
+    RunScriptImpl::extractLease6(vars, lease6, "NEW_LEASE6");
+    ProcessArgs args;
+    args.push_back("addr6_register");
     impl->runScript(args, vars);
     return (0);
 }

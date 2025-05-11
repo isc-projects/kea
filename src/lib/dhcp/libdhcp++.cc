@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor_class.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/std_option_defs.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <exceptions/exceptions.h>
@@ -46,19 +47,22 @@ namespace {
 ///
 /// used for easier initialization of option definitions by space name
 const OptionDefParamsEncapsulation OPTION_DEF_PARAMS[] = {
-    { STANDARD_V4_OPTION_DEFINITIONS,       STANDARD_V4_OPTION_DEFINITIONS_SIZE,     DHCP4_OPTION_SPACE          },
-    { STANDARD_V6_OPTION_DEFINITIONS,       STANDARD_V6_OPTION_DEFINITIONS_SIZE,     DHCP6_OPTION_SPACE          },
-    { DOCSIS3_V4_OPTION_DEFINITIONS,        DOCSIS3_V4_OPTION_DEFINITIONS_SIZE,      DOCSIS3_V4_OPTION_SPACE     },
-    { DOCSIS3_V6_OPTION_DEFINITIONS,        DOCSIS3_V6_OPTION_DEFINITIONS_SIZE,      DOCSIS3_V6_OPTION_SPACE     },
-    { ISC_V6_OPTION_DEFINITIONS,            ISC_V6_OPTION_DEFINITIONS_SIZE,          ISC_V6_OPTION_SPACE         },
-    { MAPE_V6_OPTION_DEFINITIONS,           MAPE_V6_OPTION_DEFINITIONS_SIZE,         MAPE_V6_OPTION_SPACE        },
-    { MAPT_V6_OPTION_DEFINITIONS,           MAPT_V6_OPTION_DEFINITIONS_SIZE,         MAPT_V6_OPTION_SPACE        },
-    { LW_V6_OPTION_DEFINITIONS,             LW_V6_OPTION_DEFINITIONS_SIZE,           LW_V6_OPTION_SPACE          },
-    { V4V6_RULE_OPTION_DEFINITIONS,         V4V6_RULE_OPTION_DEFINITIONS_SIZE,       V4V6_RULE_OPTION_SPACE      },
-    { V4V6_BIND_OPTION_DEFINITIONS,         V4V6_BIND_OPTION_DEFINITIONS_SIZE,       V4V6_BIND_OPTION_SPACE      },
-    { DHCP_AGENT_OPTION_DEFINITIONS,        DHCP_AGENT_OPTION_DEFINITIONS_SIZE,      DHCP_AGENT_OPTION_SPACE     },
-    { LAST_RESORT_V4_OPTION_DEFINITIONS,    LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE,  LAST_RESORT_V4_OPTION_SPACE },
-    { NULL,                                 0,                                       ""                          }
+    { STANDARD_V4_OPTION_DEFINITIONS,       STANDARD_V4_OPTION_DEFINITIONS_SIZE,     DHCP4_OPTION_SPACE           },
+    { STANDARD_V6_OPTION_DEFINITIONS,       STANDARD_V6_OPTION_DEFINITIONS_SIZE,     DHCP6_OPTION_SPACE           },
+    { DOCSIS3_V4_OPTION_DEFINITIONS,        DOCSIS3_V4_OPTION_DEFINITIONS_SIZE,      DOCSIS3_V4_OPTION_SPACE      },
+    { DOCSIS3_V6_OPTION_DEFINITIONS,        DOCSIS3_V6_OPTION_DEFINITIONS_SIZE,      DOCSIS3_V6_OPTION_SPACE      },
+    { ISC_V6_OPTION_DEFINITIONS,            ISC_V6_OPTION_DEFINITIONS_SIZE,          ISC_V6_OPTION_SPACE          },
+    { MAPE_V6_OPTION_DEFINITIONS,           MAPE_V6_OPTION_DEFINITIONS_SIZE,         MAPE_V6_OPTION_SPACE         },
+    { MAPT_V6_OPTION_DEFINITIONS,           MAPT_V6_OPTION_DEFINITIONS_SIZE,         MAPT_V6_OPTION_SPACE         },
+    { LW_V6_OPTION_DEFINITIONS,             LW_V6_OPTION_DEFINITIONS_SIZE,           LW_V6_OPTION_SPACE           },
+    { V4V6_RULE_OPTION_DEFINITIONS,         V4V6_RULE_OPTION_DEFINITIONS_SIZE,       V4V6_RULE_OPTION_SPACE       },
+    { V4V6_BIND_OPTION_DEFINITIONS,         V4V6_BIND_OPTION_DEFINITIONS_SIZE,       V4V6_BIND_OPTION_SPACE       },
+    { V6_NTP_SERVER_DEFINITIONS,            V6_NTP_SERVER_DEFINITIONS_SIZE,          V6_NTP_SERVER_SPACE          },
+    { CABLELABS_CLIENT_CONF_DEFINITIONS,    CABLELABS_CLIENT_CONF_DEFINITIONS_SIZE,
+      CABLELABS_CLIENT_CONF_SPACE },
+    { LAST_RESORT_V4_OPTION_DEFINITIONS,    LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE,  LAST_RESORT_V4_OPTION_SPACE  },
+    { DHCP_AGENT_OPTION_DEFINITIONS,        DHCP_AGENT_OPTION_DEFINITIONS_SIZE,      DHCP_AGENT_OPTION_SPACE      },
+    { NULL,                                 0,                                       ""                           }
 };
 
 }  // namespace
@@ -1251,6 +1255,25 @@ LibDHCP::packOptions6(OutputBuffer& buf, const OptionCollection& options) {
 }
 
 void
+LibDHCP::splitNtpServerOptions6(OptionCollection& options) {
+    pair<OptionCollection::const_iterator, OptionCollection::const_iterator>
+        range = options.equal_range(D6O_NTP_SERVER);
+    if (range.first == range.second) {
+        return;
+    }
+    auto const& ntp_servers = OptionCollection(range.first, range.second);
+    static_cast<void>(options.erase(range.first, range.second));
+    auto const& def = D6O_NTP_SERVER_DEF();
+    for (auto const& opt : ntp_servers) {
+        for (auto const& sub : opt.second->getOptions()) {
+            auto new_option(new OptionCustom(def, Option::V6));
+            new_option->addOption(sub.second);
+            options.insert(make_pair(D6O_NTP_SERVER, new_option));
+        }
+    }
+}
+
+void
 LibDHCP::OptionFactoryRegister(Option::Universe u, uint16_t opt_type,
                                Option::Factory* factory) {
     switch (u) {
@@ -1310,8 +1333,10 @@ LibDHCP::initOptionDefs() {
     static_cast<void>(LibDHCP::D6O_LQ_QUERY_DEF());
     static_cast<void>(LibDHCP::D6O_CLIENT_DATA_DEF());
     static_cast<void>(LibDHCP::D6O_LQ_RELAY_DATA_DEF());
+    static_cast<void>(LibDHCP::D6O_NTP_SERVER_DEF());
     static_cast<void>(LibDHCP::D6O_BOOTFILE_URL_DEF());
     static_cast<void>(LibDHCP::D6O_RSOO_DEF());
+    static_cast<void>(LibDHCP::D6O_IAADDR_DEF());
 
     return (true);
 }
@@ -1587,6 +1612,24 @@ LibDHCP::D6O_LQ_RELAY_DATA_DEF() {
 }
 
 const OptionDefinition&
+LibDHCP::D6O_NTP_SERVER_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_NTP_SERVER);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "ntp-server");
+        isc_throw_assert(def->getCode() == D6O_NTP_SERVER);
+        isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace() == V6_NTP_SERVER_SPACE);
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
 LibDHCP::D6O_BOOTFILE_URL_DEF() {
     static OptionDefinitionPtr def =
         LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_BOOTFILE_URL);
@@ -1616,6 +1659,24 @@ LibDHCP::D6O_RSOO_DEF() {
         isc_throw_assert(def->getType() == OPT_EMPTY_TYPE);
         isc_throw_assert(!def->getArrayType());
         isc_throw_assert(def->getEncapsulatedSpace() == "rsoo-opts");
+        isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
+        check_once = false;
+    }
+    return (*def);
+}
+
+const OptionDefinition&
+LibDHCP::D6O_IAADDR_DEF() {
+    static OptionDefinitionPtr def =
+        LibDHCP::getOptionDef(DHCP6_OPTION_SPACE, D6O_IAADDR);
+    static bool check_once(true);
+    if (check_once) {
+        isc_throw_assert(def);
+        isc_throw_assert(def->getName() == "iaaddr");
+        isc_throw_assert(def->getCode() == D6O_IAADDR);
+        isc_throw_assert(def->getType() == OPT_RECORD_TYPE);
+        isc_throw_assert(!def->getArrayType());
+        isc_throw_assert(def->getEncapsulatedSpace().empty());
         isc_throw_assert(def->getOptionSpaceName() == DHCP6_OPTION_SPACE);
         check_once = false;
     }

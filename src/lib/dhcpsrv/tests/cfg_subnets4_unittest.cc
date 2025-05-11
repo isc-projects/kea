@@ -497,7 +497,7 @@ TEST(CfgSubnets4Test, selectSubnetByIface) {
     // Now select an interface name that matches. Selection should succeed
     // and return subnet3.
     selector.iface_name_ = "eth1";
-    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr selected = cfg.selectSubnet(selector);
     ASSERT_TRUE(selected);
     EXPECT_EQ(subnet3, selected);
 }
@@ -540,7 +540,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByIface) {
     // Now select an interface name that matches. Selection should succeed
     // and return subnet3.
     selector.iface_name_ = "eth1";
-    Subnet4Ptr selected = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr selected = cfg.selectSubnet(selector);
     ASSERT_TRUE(selected);
     SharedNetwork4Ptr network_returned;
     selected->getSharedNetwork(network_returned);
@@ -704,7 +704,7 @@ TEST(CfgSubnets4Test, selectSharedNetworkByClasses) {
     client_classes.insert("device-type1");
     selector.client_classes_ = client_classes;
 
-    Subnet4Ptr subnet = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet);
     SharedNetwork4Ptr network;
     subnet->getSharedNetwork(network);
@@ -943,7 +943,7 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
 
     // The address on eth0 should match the existing subnet.
     selector.iface_name_ = "eth0";
-    Subnet4Ptr subnet1_ret = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet1_ret = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet1_ret);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     // There should still be no match for eth1.
@@ -962,7 +962,7 @@ TEST(CfgSubnets4Test, selectSubnetInterface) {
     ASSERT_TRUE(subnet1_ret);
     EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
     selector.iface_name_ = "eth1";
-    Subnet4Ptr subnet2_ret = cfg.selectSubnet(selector);
+    ConstSubnet4Ptr subnet2_ret = cfg.selectSubnet(selector);
     ASSERT_TRUE(subnet2_ret);
     EXPECT_EQ(subnet2->get().first, subnet2_ret->get().first);
 
@@ -1082,6 +1082,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
 
     subnet1->allowClientClass("foo");
+    subnet1->allowClientClass("bar");
 
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
@@ -1095,8 +1096,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet2->setOfferLft(99);
 
     subnet3->setIface("eth1");
-    subnet3->requireClientClass("foo");
-    subnet3->requireClientClass("bar");
+    subnet3->addAdditionalClass("foo");
+    subnet3->addAdditionalClass("bar");
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
@@ -1141,7 +1142,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"valid-lifetime\": 3,\n"
         "    \"min-valid-lifetime\": 3,\n"
         "    \"max-valid-lifetime\": 3,\n"
-        "    \"client-class\": \"foo\",\n"
+        "    \"client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
@@ -1190,7 +1191,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"reservations-out-of-pool\": false,\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
         "    \"t2-percent\": 0.65,\n"
@@ -1222,7 +1223,7 @@ TEST(CfgSubnets4Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
-    pool2->requireClientClass("foo");
+    pool2->addAdditionalClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -1253,8 +1254,8 @@ TEST(CfgSubnets4Test, unparsePool) {
         "            \"option-data\": [ ],\n"
         "            \"pool\": \"192.0.2.64/26\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
-        "            \"client-class\": \"bar\",\n"
-        "            \"require-client-classes\": [ \"foo\" ]\n"
+        "            \"client-classes\": [ \"bar\" ],\n"
+        "            \"evaluate-additional-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ]\n"
         "} ]\n";
@@ -1426,8 +1427,8 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [] , \n"
+        "            \"evaluate-additional-classes\": [] \n,"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1495,8 +1496,8 @@ TEST(CfgSubnets4Test, validLifetimeValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1757,8 +1758,8 @@ TEST(CfgSubnets4Test, hostnameSanitizierValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"
@@ -1837,8 +1838,8 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         "            \"next-server\": \"\", \n"
         "            \"server-hostname\": \"\", \n"
         "            \"boot-file-name\": \"\", \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false, \n"

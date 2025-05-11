@@ -36,6 +36,13 @@ protection possible:
    the two security mechanisms, and therefore no proof that the TLS client and server
    are the same as the HTTP authentication client and server.
 
+.. note::
+
+   On reconfiguration a new listener HTTP socket is opened only when the
+   address or the port was changed so to apply a TLS setup change, e.g.
+   a certificate update, Kea must be restarted (i.e. stopped and started
+   vs reloaded).
+
 .. _tls_config:
 
 Building Kea with TLS/HTTPS Support
@@ -59,8 +66,7 @@ that must be used:
 - LibreSSL 3.2.4 has been tested. LibreSSL shares the OpenSSL 1.0.2 API, so
   it should work, but is not supported.
 
-- Botan 1.x versions are obsolete and should not be used.
-  Kea TLS support has not been tested and is not supported with these versions.
+- Botan 1.x versions are obsolete and must not be used.
 
 - Botan versions 2.14.0 and later have been tested and are supported. Kea TLS
   support requires the four Asio header files which are included in Botan
@@ -76,8 +82,8 @@ that must be used:
   directory, but this should be a last-resort procedure.
 
   Without these header files, or with a Botan version prior
-  to 2.14.0, Kea can still build, but the TLS/HTTPS support is disabled;
-  any attempt to use it will fail with a fatal error.
+  to 2.14.0, Kea cannot build as the TLS/HTTPS support is considered
+  essential for security.
 
 - Very old Boost versions provide SSL support (based on OpenSSL)
   without offering a choice of the TLS version; Kea can still use them,

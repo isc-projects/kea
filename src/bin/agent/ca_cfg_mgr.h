@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
 #include <http/auth_config.h>
+#include <http/cfg_http_header.h>
 #include <process/d_cfg_mgr.h>
 #include <boost/pointer_cast.hpp>
 #include <map>
@@ -50,7 +51,7 @@ public:
     /// This method returns Element tree structure that describes the control
     /// socket (or null pointer if the socket is not defined for a particular
     /// server type). This information is expected to be compatible with
-    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
+    /// data passed to @ref isc::config::UnixCommandMgr::openCommandSocket.
     ///
     /// @param service server being controlled
     /// @return pointer to the Element that holds control-socket map (or NULL)
@@ -61,7 +62,7 @@ public:
     ///
     /// This method stores Element tree structure that describes the control
     /// socket. This information is expected to be compatible with
-    /// data passed to @ref isc::config::CommandMgr::openCommandSocket.
+    /// data passed to @ref isc::config::UnixCommandMgr::openCommandSocket.
     ///
     /// @param control_socket Element that holds control-socket map
     /// @param service server being controlled
@@ -97,6 +98,20 @@ public:
     /// @brief Returns the TCP post the HTTP server will listen on
     uint16_t getHttpPort() const {
         return (http_port_);
+    }
+
+    /// @brief Sets http-headers parameter
+    ///
+    /// @param headers Collection of config HTTP headers.
+    void setHttpHeaders(const isc::http::CfgHttpHeaders& headers) {
+        http_headers_ = headers;
+    }
+
+    /// @brief Returns http-headers parameter
+    ///
+    /// @return Collection of config HTTP headers.
+    const isc::http::CfgHttpHeaders& getHttpHeaders() const {
+        return (http_headers_);
     }
 
     /// @brief Sets HTTP authentication configuration.
@@ -224,6 +239,9 @@ private:
 
     /// TCP port the CA should listen on.
     uint16_t http_port_;
+
+    /// Config HTTP headers.
+    isc::http::CfgHttpHeaders http_headers_;
 
     /// Trust anchor aka Certificate Authority (can be a file name or
     /// a directory path).

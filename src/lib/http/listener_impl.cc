@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,7 +26,7 @@ HttpListenerImpl::HttpListenerImpl(const IOServicePtr& io_service,
                                    const long request_timeout,
                                    const long idle_timeout)
     : io_service_(io_service), tls_context_(tls_context), acceptor_(),
-      endpoint_(), connections_(),
+      endpoint_(), connections_(new HttpConnectionPool()),
       creator_factory_(creator_factory),
       request_timeout_(request_timeout), idle_timeout_(idle_timeout),
       use_external_(false) {
@@ -70,6 +70,16 @@ HttpListenerImpl::getEndpoint() const {
     return (*endpoint_);
 }
 
+const TlsContextPtr&
+HttpListenerImpl::getTlsContext() const {
+    return (tls_context_);
+}
+
+void
+HttpListenerImpl::setTlsContext(const TlsContextPtr& context) {
+    tls_context_ = context;
+}
+
 int
 HttpListenerImpl::getNative() const {
     return (acceptor_ ? acceptor_->getNative() : -1);
@@ -102,7 +112,7 @@ HttpListenerImpl::start() {
 
 void
 HttpListenerImpl::stop() {
-    connections_.stopAll();
+    connections_->stopAll();
     if (use_external_) {
         IfaceMgr::instance().deleteExternalSocket(acceptor_->getNative());
     }
@@ -116,7 +126,7 @@ HttpListenerImpl::accept() {
     // depends on the use case.
     HttpResponseCreatorPtr response_creator = creator_factory_->create();
     HttpAcceptorCallback acceptor_callback =
-        std::bind(&HttpListenerImpl::acceptHandler, this, ph::_1);
+        std::bind(&HttpListenerImpl::acceptHandler, shared_from_this(), ph::_1);
     HttpConnectionPtr conn = createConnection(response_creator,
                                               acceptor_callback);
     // Transmit the use external sockets flag.
@@ -124,7 +134,7 @@ HttpListenerImpl::accept() {
         conn->addExternalSockets(true);
     }
     // Add this new connection to the pool.
-    connections_.start(conn);
+    connections_->start(conn);
 }
 
 void

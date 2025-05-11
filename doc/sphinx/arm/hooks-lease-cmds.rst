@@ -17,6 +17,10 @@ of the subnet to which it is supposed to belong. The library also
 provides a non-programmatic way to manage user contexts associated with
 leases.
 
+As of Kea 2.7.7, the library also provides support for ``binding-variables``. Binding
+variables allow the user to store custom values for each lease. They are discussed here:
+:ref:`binding-variables`.
+
 .. note::
 
     :ischooklib:`libdhcp_lease_cmds.so` is part of the open source code and is
@@ -1094,3 +1098,95 @@ to the previous filename: for example, ``.bak14326``.
    These commands do not replace the LFC mechanism; they should be used
    only in exceptional circumstances, such as when recovering after
    running out of disk space.
+
+.. _binding-variables:
+
+Binding Variables
+~~~~~~~~~~~~~~~~~
+
+Binding variables allow users to store custom values with each lease. The
+values are calculated using expressions and stored in the lease's
+``user-context``.  The feature is similar to ISC DHCP's ``set`` statement.
+
+They are configured as parameters for the lease-cmds hook library.  Each
+variable has the following parameters:
+
+* name
+    The name of the variable that will appear in the ``user-context``. The
+    name must be unique within the list of binding variables..
+* expression
+    The expression used to calculate the variable's value (see :ref:
+    `classification-using-expressions`).
+* source
+    The packet to use as input for the  expression. It is either ``query``
+    (the packet sent by the client) or ``response`` (the packet the server
+    is sending in response).
+
+The following example would store a user-defined option sent by the
+client along with the domain-name sent by the server for each DCHPv4
+lease:
+
+.. code-block:: javascript
+
+    {
+        "hooks-libraries": [{
+            "library": "/path/libdhcp_lease_cmds.so",
+            "parameters": {
+                "binding-variables": [{
+                    "name": "opt-222",
+                    "expression": "hexstring(option[222].hex, ':')",
+                    "source": "query"
+                },{
+                    "name": "domain-name",
+                    "expression": "option[15].text",
+                    "source": "response"
+                }]
+            }
+        }]
+    }
+
+The values are stored as name-value pairs in the ``ISC`` map in the lease's ``user-context``
+contents would look similar to the following:
+
+.. code-block:: javascript
+
+    {
+        "ISC": {
+            "binding-variables": [{
+                "domain-name": "example.org",
+                "opt-222": "01:02:03:04"
+            }
+        ]}
+    }
+
+When stored in database back ends, the user-context will not contain line breaks
+as shown above and would appear as follows:
+
+.. code-block:: text
+
+    { "ISC": { "binding-variables": { "domain-name": "example.org", "opt-222": "01:02:03:04" } } }
+
+When using memfile lease storage, the ``user-context`` is output with commas replaced by
+the escape sequence "&#x2c".  This is necessary to prevent interference with the lease file
+parsing.  The example output above would appear as follows in a memfile lease file:
+
+.. code-block:: text
+
+    { "ISC": { "binding-variables": { "domain-name": "example.org"&#x2c "opt-222": "01:02:03:04" } } }
+
+
+Binding variable values are evaluated whenever a lease is assigned or renewed.
+For :iscman:`kea-dhcp4`, they are also added if ``offer-lifetime`` is greater than zero.
+The lease is only updated in the back end if the values have changed.
+
+.. note::
+
+    When used in conjunction with the Ping Check hook library, the
+    the lease-cmds hook library should be listed after Ping Check in
+    the server's ``hooks-libraries`` section of the configuration.
+
+    When used in conjunction with the HA hook library, the lease-cmds
+    hook library must be listed before HA in the server's ``hooks-libraries``
+    section of the configuration.  This ensures that the binding variables
+    are evaluated before HA sends lease updates to its peer(s).
+

@@ -40,9 +40,9 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
             CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
             #AC_MSG_RESULT([found])
             AC_LINK_IFELSE(
-                [AC_LANG_PROGRAM([#include <botan/lookup.h>],
+                [AC_LANG_PROGRAM([#include <botan/hash.h>],
                                  [using namespace Botan;
-                                  HashFunction *h = HashFunction::create("MD5").release();
+                                  auto h = HashFunction::create("MD5");
                                  ])],
                 [ AC_MSG_RESULT([ok])
                   $3
@@ -89,58 +89,40 @@ AC_ARG_WITH([openssl],
             [use_openssl="$withval"],
             [use_openssl="auto"])
 
-botan_config="yes"
+use_botan="yes"
 if test "${use_openssl}" != "auto" -a "${use_openssl}" != "no" ; then
-   botan_config="no"
+   use_botan="no"
 fi
-AC_ARG_WITH([botan-config],
-  [AS_HELP_STRING([--with-botan-config=PATH],
-    [specify the path to the botan-config script])],
-  [botan_config="$withval"])
-distcheck_botan="--with-botan-config=$botan_config"
-if test "${botan_config}" = "no" ; then
+AC_ARG_WITH([botan],
+  [AS_HELP_STRING([--with-botan[[=PATH]]],
+  [Enables Botan, name to the pkg-config library can be specified optionally])],
+  [use_botan="$withval"])
+if test "${use_botan}" = ""; then
+    use_botan="yes"
+fi
+distcheck_botan="--with-botan=${use_botan}"
+if test "${use_botan}" = "no" ; then
     if test "${use_openssl}" = "no" ; then
        AC_MSG_ERROR([Need Botan or OpenSSL for libcryptolink])
     fi
-elif test "${botan_config}" != "yes" ; then
-    if test -x "${botan_config}" ; then
-        if test -d "${botan_config}" ; then
-            AC_MSG_ERROR([${botan_config} is a directory])
-        fi
-    else
-        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
-    fi
+elif test "${use_botan}" != "yes" ; then
+    BOTAN_VERSIONS="${use_botan}"
 else
-    BOTAN_CONFIG=""
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-    if test "$PKG_CONFIG" != "" ; then
-        BOTAN_VERSIONS="botan-2"
-        for version in $BOTAN_VERSIONS; do
-            ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
-                               [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
-                              )
-            if test "$BOTAN_CONFIG" != "" ; then
-                break
-            fi
-        done
-    fi
+    BOTAN_VERSIONS="botan-2"
 fi
 
-if test "$BOTAN_CONFIG" != ""
-then
-    CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
-    CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
-    # this is not always the case.  As a heuristics workaround we add
-    # -L`botan-config --prefix/lib` in this case (if not present already).
-    # Same for CRYPTO_INCLUDES (but using include instead of lib) below.
-    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
-        echo ${CRYPTO_LIBS} | grep -- -L > /dev/null || \
-            CRYPTO_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${CRYPTO_LIBS}"
-        echo ${CRYPTO_INCLUDES} | grep -- -I > /dev/null || \
-            CRYPTO_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${CRYPTO_INCLUDES}"
-    fi
+BOTAN_CONFIG=""
+AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+if test "$PKG_CONFIG" != "" ; then
+    for version in $BOTAN_VERSIONS; do
+        ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
+                           [BOTAN_CONFIG="$PKG_CONFIG $version"])
+        if test "$BOTAN_CONFIG" != "" ; then
+            CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
+            CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
+            break
+        fi
+    done
 fi
 
 if test "x${CRYPTO_LIBS}" != "x"
@@ -158,14 +140,6 @@ EOF
    fi
    $RM -f conftest.cpp
    AC_MSG_RESULT([$CRYPTO_VERSION])
-
-   # botan-config script (and the way we call pkg-config) returns -L and -l
-   # as one string, but we need them in separate values
-   CRYPTO_LDFLAGS=
-   for flag in ${CRYPTO_LIBS}; do
-       CRYPTO_LDFLAGS="${CRYPTO_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
-       CRYPTO_LIBS="${CRYPTO_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
-   done
 
    # # check -R, "-Wl,-R" or -rpath
    AX_ISC_RPATH
@@ -199,13 +173,13 @@ EOF
    # failure handler we can detect the difference between a header not existing
    # (or not even passing the pre-processor phase) and a header file resulting
    # in compilation failures.
-   AC_CHECK_HEADERS([botan/botan.h],,[
+   AC_CHECK_HEADERS([botan/build.h],,[
         CRYPTO_INCLUDES=""
         CRYPTO_LIBS=""
         CRYPTO_LDFLAGS=""
         CRYPTO_RPATH=""
         if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([botan/botan.h
+                AC_MSG_RESULT([botan/build.h
 was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
@@ -226,10 +200,9 @@ then
    LIBS_SAVED="$LIBS"
    LIBS="$LIBS $CRYPTO_LIBS"
    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/lookup.h>],
+        [AC_LANG_PROGRAM([#include <botan/hash.h>],
                          [using namespace Botan;
-                          HashFunction *h = HashFunction::create("MD5")
-.release();
+                          auto h = HashFunction::create("MD5");
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
@@ -391,24 +364,17 @@ then
     dnl Check Botan boost ASIO TLS
     CPPFLAGS_SAVED=$CPPFLAGS
     CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS $BOOST_INCLUDES"
-    BOTAN_BOOST=""
     AC_CHECK_HEADERS([botan/asio_stream.h],
-        [BOTAN_BOOST="maybe"
-         AC_MSG_CHECKING([Botan boost TLS support])
+        [AC_MSG_CHECKING([Botan boost TLS support])
          AC_COMPILE_IFELSE(
              [AC_LANG_PROGRAM([#include <botan/asio_stream.h>],
                               [#ifndef BOTAN_TLS_SERVER_H_
                                #error botan/tls_server.h is not included by botan/asio_stream.h
                                #endif])],
-              [AC_MSG_RESULT(yes)
-               BOTAN_BOOST="yes"
-               AC_DEFINE([WITH_BOTAN_BOOST], [1],
-               [Define to 1 if Botan boost TLS is available])],
+              [AC_MSG_RESULT(yes)],
               [AC_MSG_RESULT(no)
-               BOTAN_BOOST="no"
-               AC_MSG_WARN([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS support.])])],
-        [BOTAN_BOOST="no"
-         AC_MSG_WARN([Botan cannot be used for TLS support, because it was compiled without boost support, so required headers are missing.])])
+               AC_MSG_ERROR([Botan is configured with boost support but is too old: only Botan >= 2.14.0 can be used for TLS support.])])],
+        [AC_MSG_ERROR([Botan cannot be used for TLS support, because it was installed without boost support, so required headers are missing.])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
 if test "x${CRYPTO_NAME}" = "xOpenSSL"
@@ -423,38 +389,19 @@ then
     AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
                          [auto ctx(boost::asio::ssl::context::tls);])],
-        [AC_MSG_RESULT(yes)
-         AC_DEFINE([HAVE_GENERIC_TLS_METHOD], [1],
-         [Define to 1 if boost::asio::ssl::context::tls is available])],
+        [AC_MSG_RESULT(yes)],
         [AC_MSG_RESULT(no)
-         AC_MSG_CHECKING([Verifying TLS 1.2 fallback])
-         AC_COMPILE_IFELSE(
-             [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
-                              [auto ctx(boost::asio::ssl::context::tlsv12);])],
-             [AC_MSG_RESULT(yes)
-              AC_DEFINE([HAVE_TLS_1_2_METHOD], [1],
-              [Define to 1 if boost::asio::ssl::context::tlsv12 is available])],
-             [AC_MSG_RESULT(no)
-              AC_MSG_WARN([The boost version is very old: TLS support can use insecure features])])])
+         AC_MSG_ERROR([Boost version >= 1.66 is required])])
     dnl Check if the stream_truncated (SSL short read) error is available
     AC_MSG_CHECKING([stream_truncated (SSL short read) error])
     AC_COMPILE_IFELSE(
         [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
                          [const int ec =
                           boost::asio::ssl::error::stream_truncated;])],
-        [AC_MSG_RESULT(yes)
-         AC_DEFINE([HAVE_STREAM_TRUNCATED_ERROR], [1],
-         [Define to 1 if boost::asio::ssl::error::stream_truncated is available])],
+        [AC_MSG_RESULT(yes)],
         [AC_MSG_RESULT(no)
-         AC_COMPILE_IFELSE(
-             [AC_LANG_PROGRAM([#include <boost/asio/ssl.hpp>],
-                              [const int ec =
-                               ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ);])],
-             [],
-             [AC_MSG_ERROR([Can not find a definition for stream_truncated (SSL short read) error: sorry, your boost library is too old])])])
+         AC_MSG_ERROR([Boost version >= 1.66 is required])])
     CPPFLAGS=${CPPFLAGS_SAVED}
 fi
-AM_CONDITIONAL(HAVE_BOTAN_BOOST,
-    test "$CRYPTO_NAME" = "Botan" && test "$BOTAN_BOOST" = "yes")
 ])
 # End of AX_TLS

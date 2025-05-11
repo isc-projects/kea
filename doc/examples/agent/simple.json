@@ -15,6 +15,21 @@
         // is specifically for HA updates only.
         "http-port": 8000,
 
+        // Extra HTTP headers to add in responses.
+        "http-headers":
+        [
+            {
+                // Optional user context.
+                "user-context": { "comment": "HSTS header" },
+
+                // Required HTTP header name.
+                "name": "Strict-Transport-Security",
+
+                // Required HTTP header value.
+                "value": "max-age=31536000"
+            }
+        ],
+
         // Optional authentication.
         "authentication":
         {

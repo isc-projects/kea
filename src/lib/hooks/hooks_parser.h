@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,9 +57,13 @@ public:
     /// @param libraries parsed libraries information will be stored here
     /// @param value pointer to the content to be parsed
     void parse(HooksConfig& libraries, isc::data::ConstElementPtr value);
+
+    /// @brief The default installation path for hook libraries, used to generate
+    /// full path if only the hook library binary name is provided.
+    static std::string default_hooks_path_;
 };
 
-}; // namespace isc::hooks
-}; // namespace isc
+}  // namespace isc::hooks
+}  // namespace isc
 
 #endif

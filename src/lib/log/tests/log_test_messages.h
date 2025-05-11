@@ -1,4 +1,4 @@
-// File created from ../../../../src/lib/log/tests/log_test_messages.mes
+// File created from src/lib/log/tests/log_test_messages.mes
 
 #ifndef LOG_TEST_MESSAGES_H
 #define LOG_TEST_MESSAGES_H

@@ -1504,6 +1504,36 @@ GenericHostDataSourceTest::testUserContext(ConstElementPtr user_context) {
 }
 
 void
+GenericHostDataSourceTest::testPrefixExclude(std::string prefix,
+                                             std::string exclude) {
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Create a host reservation.
+    HostPtr host = HostDataSourceUtils::initializeHost6(prefix,
+                                                        exclude,
+                                                        Host::IDENT_DUID,
+                                                        false);
+    ASSERT_TRUE(host);
+    auto const& resvs = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(1, std::distance(resvs.first, resvs.second));
+    EXPECT_TRUE(resvs.first->second.getPDExclude());
+    SubnetID subnet = host->getIPv6SubnetID();
+
+    // Try to add it to the host data source.
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // Retrieve it.
+    ConstHostPtr from_hds = hdsptr_->get6(subnet, Host::IDENT_DUID,
+                                          &host->getIdentifier()[0],
+                                          host->getIdentifier().size());
+    ASSERT_TRUE(from_hds);
+
+    HostDataSourceUtils::compareHosts(host, from_hds);
+}
+
+void
 GenericHostDataSourceTest::testMultipleSubnets(int subnets,
                                                const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.

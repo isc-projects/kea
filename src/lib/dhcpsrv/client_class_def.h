@@ -88,13 +88,13 @@ public:
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
 
-    /// @brief Fetches the only if required flag
-    bool getRequired() const;
+    /// @brief Fetches the only if additional flag
+    bool getAdditional() const;
 
-    /// @brief Sets the only if required flag
+    /// @brief Sets the only if additional flag
     ///
-    /// @param required the value of the only if required flag
-    void setRequired(bool required);
+    /// @param additional the value of the only if additional flag
+    void setAdditional(bool additional);
 
     /// @brief Fetches the depend on known flag aka use host flag
     bool getDependOnKnown() const;
@@ -261,14 +261,14 @@ private:
     /// this class.
     std::string test_;
 
-    /// @brief The only-if-required flag: when false (the default) membership
+    /// @brief The only-in-additional-list flag: when false (the default) membership
     /// is determined during classification so is available for instance for
-    /// subnet selection. When true, membership is evaluated only when required
+    /// subnet selection. When true, membership is evaluated only when additional
     /// and is usable only for option configuration.
-    bool required_;
+    bool additional_;
 
     /// @brief The depend on known aka use host flag: when false (the default),
-    /// the required flag is false and the class has a match expression
+    /// the additional flag is false and the class has a match expression
     /// the expression is evaluated in the first pass. When true and the
     /// two other conditions stand the expression is evaluated later when
     /// the host reservation membership was determined.
@@ -375,7 +375,7 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
-    /// @param required Original value of the only if required flag
+    /// @param additional Original value of the only if additional flag
     /// @param depend_on_known Using host so will be evaluated later
     /// @param options Collection of options members should be given
     /// @param defs Option definitions (optional)
@@ -392,7 +392,7 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, bool required, bool depend_on_known,
+                  const std::string& test, bool additional, bool depend_on_known,
                   const CfgOptionPtr& options,
                   CfgOptionDefPtr defs = CfgOptionDefPtr(),
                   isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),

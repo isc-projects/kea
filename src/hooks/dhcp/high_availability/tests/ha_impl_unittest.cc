@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/shared_network.h>
@@ -76,6 +77,33 @@ public:
 
     using HAImpl::config_;
     using HAImpl::services_;
+
+    /// @brief Constructor.
+    TestHAImpl() :
+        HAImpl(), should_reclaim_dhcpv4_lease_(true),
+        should_reclaim_dhcpv6_lease_(true) { }
+
+    /// @brief Mock function checking if the lease should be reclaimed by this server.
+    ///
+    /// @return true if the DHCPv4 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    virtual bool shouldReclaim(const HAServicePtr& /*service*/, const Lease4Ptr& /*lease4*/) const {
+        return (should_reclaim_dhcpv4_lease_);
+    }
+
+    /// @brief Mock function checking if the lease should be reclaimed by this server.
+    ///
+    /// @return true if the DHCPv6 lease should be reclaimed by this server instance,
+    /// false otherwise.
+    virtual bool shouldReclaim(const HAServicePtr& /*service*/, const Lease6Ptr& /*lease6*/) const {
+        return (should_reclaim_dhcpv6_lease_);
+    }
+
+    /// @brief Custom value to be returned by the @c TestHAImpl::shouldReclaim function.
+    bool should_reclaim_dhcpv4_lease_;
+
+    /// @brief Custom value to be returned by the @c TestHAImpl::shouldReclaim function.
+    bool should_reclaim_dhcpv6_lease_;
 };
 
 /// @brief Test fixture class for @c HAImpl.
@@ -85,6 +113,8 @@ public:
     HAImplTest() {
         // Clear statistics.
         StatsMgr::instance().removeAll();
+        // Clear configuration.
+        CfgMgr::instance().clear();
     }
 
     /// @brief Destructor.
@@ -95,6 +125,8 @@ public:
         io_service_->stopAndPoll();
         // Clear statistics.
         StatsMgr::instance().removeAll();
+        // Clear configuration.
+        CfgMgr::instance().clear();
     }
 
     /// @brief Fetches the current value of the given statistic.
@@ -345,8 +377,9 @@ TEST_F(HAImplTest, subnet4Select) {
     // Create the subnet and include the server name in the context.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -404,10 +437,11 @@ TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
     // the shared network level.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     auto shared_network4 = SharedNetwork4::create("foo");
     shared_network4->setContext(context);
-    shared_network4->add(subnet4);
+    shared_network4->add(s);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -457,7 +491,8 @@ TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
 
     // Create the subnet. Don't bother specifying server name. The callout should
     // return immediately regardless.
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    ConstSubnet4Ptr subnet4 =
+        Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -504,7 +539,8 @@ TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
     callout_handle->setArgument("query4", query4);
 
     // Create the subnet without a server name setting.
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    ConstSubnet4Ptr subnet4 =
+        Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -553,8 +589,9 @@ TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
     // be a string, though.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create(25));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -602,8 +639,9 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     // relationship.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
-    subnet4->setContext(context);
+    auto s = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 1);
+    s->setContext(context);
+    ConstSubnet4Ptr subnet4 = s;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -650,7 +688,7 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
     callout_handle->setArgument("query4", query4);
 
     // Create null subnet.
-    Subnet4Ptr subnet4;
+    ConstSubnet4Ptr subnet4;
     callout_handle->setArgument("subnet4", subnet4);
 
     // Invoke the subnet4_select callout.
@@ -793,8 +831,9 @@ TEST_F(HAImplTest, subnet6Select) {
     // Create the subnet and include the server name in the context.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -849,10 +888,11 @@ TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
     // the shared network level.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     auto shared_network6 = SharedNetwork6::create("foo");
     shared_network6->setContext(context);
-    shared_network6->add(subnet6);
+    shared_network6->add(s);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -902,7 +942,8 @@ TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
 
     // Create the subnet. Don't bother specifying server name. The callout should
     // return immediately regardless.
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    ConstSubnet6Ptr subnet6 =
+        Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -949,7 +990,8 @@ TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
     callout_handle->setArgument("query6", query6);
 
     // Create the subnet without a server name setting.
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    ConstSubnet6Ptr subnet6 =
+        Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -998,8 +1040,9 @@ TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
     // be a string, though.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create(25));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -1047,8 +1090,9 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     // relationship.
     auto context = Element::createMap();
     context->set("ha-server-name", Element::create("server3"));
-    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
-    subnet6->setContext(context);
+    auto s = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 1);
+    s->setContext(context);
+    ConstSubnet6Ptr subnet6 = s;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -1095,7 +1139,7 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
     callout_handle->setArgument("query6", query6);
 
     // Create null subnet.
-    Subnet6Ptr subnet6;
+    ConstSubnet6Ptr subnet6;
     callout_handle->setArgument("subnet6", subnet6);
 
     // Invoke the subnet6_select callout.
@@ -1610,6 +1654,420 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsInvalidServerName) {
     // The relationship was not found so the packet should be dropped.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// with multiple relationships.
+TEST_F(HAImplTest, lease4ExpireHub) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease4 = createLease4(std::vector<uint8_t>(6, 1));
+    lease4->addr_ = IOAddress("192.0.2.1");
+    lease4->subnet_id_ = 7;
+    callout_handle->setArgument("lease4", lease4);
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 7);
+    subnet4->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet4);
+    CfgMgr::instance().commit();
+
+    // Invoke the lease4_expire callout and expect that the lease reclamation
+    // will continue because the server is responsible for the lease.
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Mark the server not responsible for the lease. This time the reclamation
+    // should be skipped.
+    test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// with multiple relationships and no matching subnet has been configured.
+TEST_F(HAImplTest, lease4ExpireHubNoSubnet) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease4 = createLease4(std::vector<uint8_t>(6, 1));
+    lease4->addr_ = IOAddress("192.0.2.1");
+    lease4->subnet_id_ = 7;
+    callout_handle->setArgument("lease4", lease4);
+
+    // Reclamation should continue because this server's jurisdiction is
+    // indeterminate.
+    test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// but the server name is empty.
+TEST_F(HAImplTest, lease4ExpireHubEmptyServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease4 = createLease4(std::vector<uint8_t>(6, 1));
+    lease4->addr_ = IOAddress("192.0.2.1");
+    lease4->subnet_id_ = 7;
+    callout_handle->setArgument("lease4", lease4);
+
+    // Create the subnet and include empty server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(""));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 7);
+    subnet4->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet4);
+    CfgMgr::instance().commit();
+
+    // Even though we intruct the server to skip the reclamation, the returned
+    // status should indicate otherwise because the callout returns early after
+    // checking that the server name is empty.
+    test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// but the server name has invalid type.
+TEST_F(HAImplTest, lease4ExpireHubInvalidServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease4 = createLease4(std::vector<uint8_t>(6, 1));
+    lease4->addr_ = IOAddress("192.0.2.1");
+    lease4->subnet_id_ = 7;
+    callout_handle->setArgument("lease4", lease4);
+
+    // Create the subnet and include the server name argument. It has an
+    // invalid type.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(123));
+    auto subnet4 = Subnet4::create(IOAddress("192.0.2.0"), 24, 30, 40, 50, 7);
+    subnet4->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet4);
+    CfgMgr::instance().commit();
+
+    // Even though we intruct the server to skip the reclamation, the returned
+    // status should indicate otherwise because the callout returns early after
+    // checking that the server name has invalid type.
+    test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// with multiple relationships.
+TEST_F(HAImplTest, lease4ExpireSingleService) {
+    ConstElementPtr ha_config = createValidJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease4 = createLease4(std::vector<uint8_t>(6, 1));
+    lease4->subnet_id_ = 7;
+    lease4->addr_ = IOAddress("192.0.2.1");
+    callout_handle->setArgument("lease4", lease4);
+
+    // Invoke the lease4_expire callout and expect that the lease reclamation
+    // will continue because the server is responsible for the lease.
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Mark the server not responsible for the lease. This time the reclamation
+    // should be skipped.
+    test_ha_impl_->should_reclaim_dhcpv4_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease4Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// with multiple relationships.
+TEST_F(HAImplTest, lease6ExpireHub) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv6));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease6 = createLease6(std::vector<uint8_t>(8, 1));
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+    lease6->subnet_id_ = 7;
+    callout_handle->setArgument("lease6", lease6);
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create("server3"));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 7);
+    subnet6->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet6);
+    CfgMgr::instance().commit();
+
+    // Invoke the lease6_expire callout and expect that the lease reclamation
+    // will continue because the server is responsible for the lease.
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Mark the server not responsible for the lease. This time the reclamation
+    // should be skipped.
+    test_ha_impl_->should_reclaim_dhcpv6_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, callout_handle->getStatus());
+}
+
+// Tests lease6_expire callout implementation when the server is a hub
+// with multiple relationships and no matching subnet has been configured.
+TEST_F(HAImplTest, lease6ExpireHubNoSubnet) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv6));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease6 = createLease6(std::vector<uint8_t>(8, 1));
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+    lease6->subnet_id_ = 7;
+    callout_handle->setArgument("lease6", lease6);
+
+    test_ha_impl_->should_reclaim_dhcpv6_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease6_expire callout implementation when the server is a hub
+// but the server name is empty.
+TEST_F(HAImplTest, lease6ExpireHubEmptyServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv6));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease6 = createLease6(std::vector<uint8_t>(8, 1));
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+    lease6->subnet_id_ = 7;
+    callout_handle->setArgument("lease6", lease6);
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(""));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 7);
+    subnet6->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet6);
+    CfgMgr::instance().commit();
+
+    // Even though we intruct the server to skip the reclamation, the returned
+    // status should indicate otherwise because the callout returns early after
+    // checking that the server name is empty.
+    test_ha_impl_->should_reclaim_dhcpv6_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// but the server name has invalid type.
+TEST_F(HAImplTest, lease6ExpireHubInvalidServerName) {
+    ConstElementPtr ha_config = createValidHubJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease6 = createLease6(std::vector<uint8_t>(8, 1));
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+    lease6->subnet_id_ = 7;
+    callout_handle->setArgument("lease6", lease6);
+
+    // Create the subnet and include the server name argument. It has an
+    // invalid type.
+
+    // Create the subnet and include the server name in the context.
+    auto context = Element::createMap();
+    context->set("ha-server-name", Element::create(123));
+    auto subnet6 = Subnet6::create(IOAddress("2001:db8:1::"), 64, 30, 40, 50, 60, 7);
+    subnet6->setContext(context);
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet6);
+    CfgMgr::instance().commit();
+
+    // Even though we intruct the server to skip the reclamation, the returned
+    // status should indicate otherwise because the callout returns early after
+    // checking that the server name has invalid type.
+    test_ha_impl_->should_reclaim_dhcpv6_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+}
+
+// Tests lease4_expire callout implementation when the server is a hub
+// with multiple relationships.
+TEST_F(HAImplTest, lease6ExpireSingleService) {
+    ConstElementPtr ha_config = createValidJsonConfiguration();
+
+    // Create implementation object and configure it.
+    test_ha_impl_.reset(new TestHAImpl());
+    test_ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(test_ha_impl_->configure(ha_config));
+
+    // Starting the service is required before any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(test_ha_impl_->startServices(network_state,
+                                                 HAServerType::DHCPv4));
+
+    // Create callout handle to be used for passing arguments to the
+    // callout.
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    ASSERT_TRUE(callout_handle);
+    ASSERT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Create the lease
+    auto lease6 = createLease6(std::vector<uint8_t>(8, 1));
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+    lease6->subnet_id_ = 7;
+    callout_handle->setArgument("lease6", lease6);
+
+    // Invoke the lease6_expire callout and expect that the lease reclamation
+    // will continue because the server is responsible for the lease.
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+
+    // Mark the server not responsible for the lease. This time the reclamation
+    // should be skipped.
+    test_ha_impl_->should_reclaim_dhcpv6_lease_ = false;
+    ASSERT_NO_THROW(test_ha_impl_->lease6Expire(*callout_handle));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, callout_handle->getStatus());
 }
 
 // Tests ha-sync command handler with correct and incorrect arguments.
@@ -2162,6 +2620,60 @@ TEST_F(HAImplTest, maintenanceNotifyBadServerName) {
     ASSERT_TRUE(response);
 
     checkAnswer(response, CONTROL_RESULT_ERROR, "server5 matches no configured 'server-name'");
+}
+
+// Test ha-maintenance-notify command handler with partner state.
+TEST_F(HAImplTest, maintenanceNotifyPartnerState) {
+    ha_impl_.reset(new HAImpl());
+    ha_impl_->setIOService(io_service_);
+    ASSERT_NO_THROW(ha_impl_->configure(createValidJsonConfiguration()));
+
+    // Starting the service is required prior to running any callouts.
+    NetworkStatePtr network_state(new NetworkState());
+    ASSERT_NO_THROW(ha_impl_->startServices(network_state,
+                                            HAServerType::DHCPv4));
+
+    // Start the maintenance.
+    ConstElementPtr command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": false"
+        "    }"
+         "}"
+    );
+
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl_->maintenanceNotifyHandler(*callout_handle));
+
+    ConstElementPtr response;
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server is in-maintenance state.");
+
+    // Cancel the maintenance.
+    command = Element::fromJSON(
+        "{"
+        "    \"command\": \"ha-maintenance-notify\","
+        "    \"arguments\": {"
+        "        \"cancel\": true,"
+        "        \"server-name\": \"server1\","
+        "        \"state\": \"waiting\""
+        "    }"
+         "}"
+    );
+
+    callout_handle->setArgument("command", command);
+
+    ASSERT_NO_THROW(ha_impl_->maintenanceNotifyHandler(*callout_handle));
+
+    callout_handle->getArgument("response", response);
+    ASSERT_TRUE(response);
+
+    checkAnswer(response, CONTROL_RESULT_SUCCESS, "Server maintenance canceled.");
 }
 
 // Test ha-reset command handler with a specified server name.

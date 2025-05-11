@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2020-2023 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ These diagrams are focused on those aspects of Kea processing that will be most 
 Main Loop
 ^^^^^^^^^
 
-The main loop is common to both DHCPv4 and DHPCv6 servers.
+The main loop is common to both DHCPv4 and DHCPv6 servers.
 
 .. figure:: uml/main-loop.*
 

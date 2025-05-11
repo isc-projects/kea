@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes
+// File created from src/bin/dhcp4/dhcp4_messages.mes
 
 #ifndef DHCP4_MESSAGES_H
 #define DHCP4_MESSAGES_H
@@ -8,6 +8,10 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_ERROR;
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_RESULT;
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_NO_TEST;
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_UNDEFINED;
 extern const isc::log::MessageID DHCP4_ALREADY_RUNNING;
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVED;
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL;
@@ -20,8 +24,6 @@ extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED;
 extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION;
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED;
-extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED;
-extern const isc::log::MessageID DHCP4_CLASS_UNTESTABLE;
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA;
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS;
@@ -140,6 +142,7 @@ extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL;
 extern const isc::log::MessageID DHCP4_QUERY_DATA;
 extern const isc::log::MessageID DHCP4_QUERY_LABEL;
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL;
+extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED;
 extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO;
 extern const isc::log::MessageID DHCP4_RELEASE;
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED;
@@ -149,8 +152,6 @@ extern const isc::log::MessageID DHCP4_RELEASE_FAIL;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NO_LEASE;
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT;
 extern const isc::log::MessageID DHCP4_REQUEST;
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_ERROR;
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_RESULT;
 extern const isc::log::MessageID DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED;
 extern const isc::log::MessageID DHCP4_RESERVED_HOSTNAME_ASSIGNED;
 extern const isc::log::MessageID DHCP4_RESPONSE_DATA;

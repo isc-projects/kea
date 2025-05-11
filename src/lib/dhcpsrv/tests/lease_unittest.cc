@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,7 +122,7 @@ TEST_F(Lease4Test, constructor) {
         0x00000000, 0x01020304, 0x7fffffff, 0x80000000, 0x80000001, 0xffffffff
     };
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
 
         // Create the lease
         Lease4 lease(ADDRESS[i], hwaddr_, clientid_, VALID_LIFETIME,
@@ -509,6 +509,32 @@ TEST_F(Lease4Test, fromElement) {
     EXPECT_EQ("{ \"foo\": \"bar\" }", lease->getContext()->str());
 }
 
+// Verify that a released Lease4 can be created from JSON.
+TEST_F(Lease4Test, fromElementReleased) {
+    // Same as fromElement test at the exception of the state.
+    std::string json = "{"
+        "\"client-id\": \"17:34:e2:ff:09:92:54\","
+        "\"cltt\": 12345678,"
+        "\"fqdn-fwd\": true,"
+        "\"fqdn-rev\": true,"
+        "\"hostname\": \"urania.example.ORG\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"ip-address\": \"192.0.2.3\","
+        "\"state\": 3,"
+        "\"subnet-id\": 789,"
+        "\"pool-id\": 5,"
+        "\"user-context\": { \"foo\": \"bar\" },"
+        "\"valid-lft\": 3600 "
+        "}";
+
+    Lease4Ptr lease;
+    ASSERT_NO_THROW(lease = Lease4::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
 // Test that specifying invalid values for a lease or not specifying
 // mandatory lease parameters causes an error while parsing the lease.
 TEST_F(Lease4Test, fromElementInvalidValues) {
@@ -567,6 +593,9 @@ TEST_F(Lease4Test, decline) {
     lease.fqdn_rev_ = true;
 
     time_t now = time(0);
+    ElementPtr context = Element::createMap();
+    context->set("bogus", Element::create("true"));
+    lease.setContext(context);
 
     // Move lease to declined state and set its valid-lifetime to 123 seconds
     lease.decline(123);
@@ -590,6 +619,8 @@ TEST_F(Lease4Test, stateToText) {
     EXPECT_EQ("declined", Lease4::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease4::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease4::statesToText(Lease::STATE_RELEASED));
+    EXPECT_EQ("registered", Lease4::statesToText(Lease::STATE_REGISTERED));
+    EXPECT_EQ("unknown (5)", Lease4::statesToText(5));
 }
 
 /// @brief Creates an instance of the lease with certain FQDN data.
@@ -626,7 +657,7 @@ TEST(Lease6Test, constructorDefault) {
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                duid, iaid, 100, 200,
@@ -700,7 +731,7 @@ TEST(Lease6Test, constructorWithFQDN) {
     uint32_t iaid = IAID;   // Just a number
     SubnetID subnet_id = 8; // Just another number
 
-    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+    for (unsigned i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
         Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                    duid, iaid, 100, 200, subnet_id,
@@ -1299,6 +1330,35 @@ TEST(Lease6Test, fromElementPD) {
     EXPECT_EQ(400, lease->preferred_lft_);
 }
 
+  // Verify that a registered Lease6 can be created from JSON.
+TEST(Lease6Test, fromElementRegistered) {
+    // Same as fromElementNA test at the exception of the state.
+    std::string json = "{"
+        "\"cltt\": 12345678,"
+        "\"duid\": \"00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f\","
+        "\"fqdn-fwd\": false,"
+        "\"fqdn-rev\": false,"
+        "\"hostname\": \"urania.EXAMPLE.org\","
+        "\"hw-address\": \"08:00:2b:02:3f:4e\","
+        "\"iaid\": 123456,"
+        "\"ip-address\": \"2001:db8::1\","
+        "\"preferred-lft\": 400,"
+        "\"state\": 4,"
+        "\"subnet-id\": 5678,"
+        "\"pool-id\": 5,"
+        "\"type\": \"IA_NA\","
+        "\"user-context\": { \"foobar\": 1234 },"
+        "\"valid-lft\": 800"
+        "}";
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = Lease6::fromElement(Element::fromJSON(json)));
+
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ(Lease::STATE_REGISTERED, lease->state_);
+}
+
 // Test that specifying invalid values for a lease or not specifying
 // mandatory lease parameters causes an error while parsing the lease.
 TEST(Lease6Test, fromElementInvalidValues) {
@@ -1365,6 +1425,8 @@ TEST(Lease6Test, stateToText) {
     EXPECT_EQ("declined", Lease6::statesToText(Lease::STATE_DECLINED));
     EXPECT_EQ("expired-reclaimed", Lease6::statesToText(Lease::STATE_EXPIRED_RECLAIMED));
     EXPECT_EQ("released", Lease6::statesToText(Lease::STATE_RELEASED));
+    EXPECT_EQ("registered", Lease6::statesToText(Lease::STATE_REGISTERED));
+    EXPECT_EQ("unknown (5)", Lease6::statesToText(5));
 }
 
 } // end of anonymous namespace

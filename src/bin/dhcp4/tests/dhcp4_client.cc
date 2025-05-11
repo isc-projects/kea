@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,6 +59,8 @@ Dhcp4Client::Dhcp4Client(const Dhcp4Client::State& state) :
     state_(state),
     use_relay_(false),
     circuit_id_() {
+    std::string memfile = "type=memfile universe=4 persist=false";
+    isc::dhcp::LeaseMgrFactory::create(memfile);
 }
 
 Dhcp4Client::Dhcp4Client(boost::shared_ptr<NakedDhcpv4Srv> srv,

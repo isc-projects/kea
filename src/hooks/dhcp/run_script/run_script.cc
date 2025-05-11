@@ -175,7 +175,7 @@ RunScriptImpl::extractOptionIA(ProcessEnvVars& vars,
 
 void
 RunScriptImpl::extractSubnet4(ProcessEnvVars& vars,
-                              const Subnet4Ptr subnet4,
+                              const ConstSubnet4Ptr subnet4,
                               const string& prefix,
                               const string& suffix) {
     if (subnet4) {
@@ -198,7 +198,7 @@ RunScriptImpl::extractSubnet4(ProcessEnvVars& vars,
 
 void
 RunScriptImpl::extractSubnet6(ProcessEnvVars& vars,
-                              const Subnet6Ptr subnet6,
+                              const ConstSubnet6Ptr subnet6,
                               const string& prefix,
                               const string& suffix) {
     if (subnet6) {

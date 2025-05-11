@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1133,7 +1133,7 @@ kea_dhcp_config() {
     },
     "hooks-libraries": [
       {
-        "library": "@abs_top_builddir@/src/bin/dhcp%s/tests/.libs/libco1.so",
+        "library": "@abs_top_builddir@/src/bin/dhcp%s/tests/@dotlibs@libco1.so",
         "parameters": {
           "password": "sensitive",
           "user": "keatest",

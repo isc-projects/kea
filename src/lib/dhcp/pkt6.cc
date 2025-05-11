@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -488,6 +488,8 @@ Pkt6::unpackUDP() {
     case DHCPV6_INFORMATION_REQUEST:
     case DHCPV6_DHCPV4_QUERY:
     case DHCPV6_DHCPV4_RESPONSE:
+    case DHCPV6_ADDR_REG_INFORM:
+    case DHCPV6_ADDR_REG_REPLY:
     default: // assume that unknown messages are not using relay format
         {
             return (unpackMsg(data_.begin(), data_.end()));
@@ -799,6 +801,8 @@ Pkt6::getName(const uint8_t type) {
     static const char* SOLICIT = "SOLICIT";
     static const char* DHCPV4_QUERY = "DHCPV4_QUERY";
     static const char* DHCPV4_RESPONSE = "DHCPV4_RESPONSE";
+    static const char* ADDR_REG_INFORM = "ADDR_REG_INFORM";
+    static const char* ADDR_REG_REPLY = "ADDR_REG_REPLY";
     static const char* UNKNOWN = "UNKNOWN";
 
     switch (type) {
@@ -858,6 +862,12 @@ Pkt6::getName(const uint8_t type) {
 
     case DHCPV6_DHCPV4_RESPONSE:
         return (DHCPV4_RESPONSE);
+
+    case DHCPV6_ADDR_REG_INFORM:
+        return (ADDR_REG_INFORM);
+
+    case DHCPV6_ADDR_REG_REPLY:
+        return (ADDR_REG_REPLY);
 
     default:
         ;

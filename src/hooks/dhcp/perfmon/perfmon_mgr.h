@@ -64,7 +64,7 @@ public:
     /// subnet id.
     void processPktEventStack(isc::dhcp::PktPtr query,
                               isc::dhcp::PktPtr response,
-                              const isc::dhcp::SubnetPtr subnet);
+                              const isc::dhcp::ConstSubnetPtr subnet);
 
     /// @brief Adds a duration sample to a MonitoredDuration.
     ///

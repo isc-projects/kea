@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -682,6 +682,14 @@ TEST_F(Pkt6Test, getName) {
             EXPECT_STREQ("SOLICIT", Pkt6::getName(type));
             break;
 
+        case DHCPV6_ADDR_REG_INFORM:
+            EXPECT_STREQ("ADDR_REG_INFORM", Pkt6::getName(type));
+            break;
+
+        case DHCPV6_ADDR_REG_REPLY:
+            EXPECT_STREQ("ADDR_REG_REPLY", Pkt6::getName(type));
+            break;
+
         default:
             EXPECT_STREQ("UNKNOWN", Pkt6::getName(type));
         }
@@ -1337,32 +1345,31 @@ TEST_F(Pkt6Test, clientClasses) {
     EXPECT_TRUE(pkt.inClass("foo"));
 }
 
-// Tests whether a packet can be marked to evaluate later a class and
-// after check if a given class is in the collection
-TEST_F(Pkt6Test, deferredClientClasses) {
+// Tests operations on additional classes list.
+TEST_F(Pkt6Test, additionalClientClasses) {
     Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
 
     // Default values (do not belong to any class)
-    EXPECT_TRUE(pkt.getClasses(true).empty());
+    EXPECT_TRUE(pkt.getAdditionalClasses().empty());
 
     // Add to the first class
-    pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
-    EXPECT_EQ(1, pkt.getClasses(true).size());
+    pkt.addAdditionalClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_EQ(1, pkt.getAdditionalClasses().size());
 
     // Add to a second class
-    pkt.addClass(DOCSIS3_CLASS_MODEM, true);
-    EXPECT_EQ(2, pkt.getClasses(true).size());
-    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
-    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
-    EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
+    pkt.addAdditionalClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_EQ(2, pkt.getAdditionalClasses().size());
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_MODEM));
+    EXPECT_FALSE(pkt.getAdditionalClasses().contains("foo"));
 
     // Check that it's ok to add to the same class repeatedly
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
 
     // Check that the packet belongs to 'foo'
-    EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains("foo"));
 }
 
 // Tests whether a packet can be assigned to a subclass and later
@@ -1385,6 +1392,21 @@ TEST_F(Pkt6Test, templateClasses) {
     pkt.addSubClass("template-interface-id", "SPAWN_template-interface-id_interface-id0");
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
+
+    // Verify the order is as expected.
+    const ClientClasses& classes = pkt.getClasses();
+    auto cclass = classes.cbegin();
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-name_eth0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-name", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-id_interface-id0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-id", (*cclass));
 
     // Check that it's ok to add to the same subclass repeatedly
     EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));

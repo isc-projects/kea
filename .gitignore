@@ -46,3 +46,5 @@ config.h.in~
 /logger_lockfile
 /report.info
 /hammer
+
+/build

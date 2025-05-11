@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -240,26 +240,26 @@ DirectClientTest::twoSubnets() {
     ASSERT_NO_FATAL_FAILURE(configureTwoSubnets("192.0.2.0", "10.0.0.0"));
     // Create Discover and simulate reception of this message through eth0.
     Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0", ETH0_INDEX);
-    srv_.fakeReceive(dis);
+    srv_->fakeReceive(dis);
     // Create Request and simulate reception of this message through eth1.
     Pkt4Ptr req = createClientMessage(DHCPREQUEST, "eth1", ETH1_INDEX);
-    srv_.fakeReceive(req);
+    srv_->fakeReceive(req);
 
     // Process clients' messages.
-    srv_.run();
+    srv_->run();
 
     // Check that the server did send responses.
-    ASSERT_EQ(2, srv_.fake_sent_.size());
+    ASSERT_EQ(2, srv_->fake_sent_.size());
 
     // In multi-threading responses can be received out of order.
     Pkt4Ptr offer;
     Pkt4Ptr ack;
 
-    while (srv_.fake_sent_.size()) {
+    while (srv_->fake_sent_.size()) {
         // Make sure that we received a response.
-        Pkt4Ptr response = srv_.fake_sent_.front();
+        Pkt4Ptr response = srv_->fake_sent_.front();
         ASSERT_TRUE(response);
-        srv_.fake_sent_.pop_front();
+        srv_->fake_sent_.pop_front();
 
         if (response->getType() == DHCPOFFER) {
             offer = response;
@@ -275,7 +275,7 @@ DirectClientTest::twoSubnets() {
     ASSERT_TRUE(ack);
 
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(offer->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
@@ -310,30 +310,30 @@ DirectClientTest::oneSubnet() {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
     // Create Discover and simulate reception of this message through eth0.
     Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0", ETH0_INDEX);
-    srv_.fakeReceive(dis);
+    srv_->fakeReceive(dis);
     // Create Request and simulate reception of this message through eth1.
     Pkt4Ptr req = createClientMessage(DHCPDISCOVER, "eth1", ETH1_INDEX);
-    srv_.fakeReceive(req);
+    srv_->fakeReceive(req);
 
     // Process clients' messages.
-    srv_.run();
+    srv_->run();
 
     // Check that the server sent one response for the message received
     // through eth0. The other client's message should be discarded.
-    ASSERT_EQ(1, srv_.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Check the response. The first Discover was sent via eth0 for which
     // the subnet has been configured.
-    Pkt4Ptr response = srv_.fake_sent_.front();
+    Pkt4Ptr response = srv_->fake_sent_.front();
     ASSERT_TRUE(response);
-    srv_.fake_sent_.pop_front();
+    srv_->fake_sent_.pop_front();
 
     // Since Discover has been received through the interface for which
     // the subnet has been configured, the server should respond with
     // an Offer message.
     ASSERT_EQ(DHCPOFFER, response->getType());
     // Check that the offered address belongs to the suitable subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
         getCfgSubnets4()->selectSubnet(response->getYiaddr());
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
@@ -360,7 +360,7 @@ DirectClientTest::renew() {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
 
     // Create the DHCPv4 client.
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     client.useRelay(false);
 
     // Obtain the lease using the 4-way exchange.
@@ -398,7 +398,7 @@ DirectClientTest::rebind() {
     ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
 
     // Create the DHCPv4 client.
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     client.useRelay(false);
 
     // Obtain the lease using the 4-way exchange.

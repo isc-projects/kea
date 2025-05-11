@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -486,7 +486,7 @@ public:
     void testGlobalClassSubnetPoolSelection(const int config_idx,
                                             const std::string& first_address = "10.0.0.10",
                                             const std::string& second_address = "192.0.3.10") {
-        Dhcp4Client client_resrv(Dhcp4Client::SELECTING);
+        Dhcp4Client client_resrv(srv_, Dhcp4Client::SELECTING);
 
         // Use HW address for which we have host reservation including
         // client class.
@@ -509,7 +509,7 @@ public:
         // This client has no reservation and therefore should be
         // assigned to the unreserved_class and be given an address
         // from the other pool.
-        Dhcp4Client client_no_resrv(client_resrv.getServer(), Dhcp4Client::SELECTING);
+        Dhcp4Client client_no_resrv(srv_, Dhcp4Client::SELECTING);
         client_no_resrv.setHWAddress("aa:bb:cc:dd:ee:ff");
         client_no_resrv.setIfaceName("eth0");
         client_no_resrv.setIfaceIndex(ETH0_INDEX);
@@ -545,7 +545,7 @@ public:
     void testMultipleClientsRace(const std::string& hw_address1,
                                  const std::string& hw_address2) {
         // Create first client having the reservation.
-        Dhcp4Client client1(Dhcp4Client::SELECTING);
+        Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
         client1.setHWAddress(hw_address1);
 
         // Configure the server.
@@ -561,7 +561,7 @@ public:
 
         // Create the second client matching the second reservation for
         // the given IP address.
-        Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+        Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
         client2.setHWAddress(hw_address2);
 
         // Make sure that the second client gets the reserved lease.
@@ -577,7 +577,7 @@ public:
 // reservation, still gets a dynamic address when subnet reservations
 // flags are global only.
 TEST_F(HostTest, globalHardwareNoMatch) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("99:99:99:99:99:99");
     runDoraTest(CONFIGS[0], client, "", "10.0.0.10");
@@ -587,7 +587,7 @@ TEST_F(HostTest, globalHardwareNoMatch) {
 // reservation, gets both the hostname and a dynamic address,
 // when the subnet reservations flags are global only.
 TEST_F(HostTest, globalHardwareDynamicAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     runDoraTest(CONFIGS[0], client, "hw-host-dynamic", "10.0.0.10");
@@ -597,7 +597,7 @@ TEST_F(HostTest, globalHardwareDynamicAddress) {
 // gets both the hostname and the reserved address when the subnet reservations
 // flags are global only.
 TEST_F(HostTest, globalHardwareFixedAddressInRange) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("02:02:03:04:05:06");
     runDoraTest(CONFIGS[0], client, "hw-host-fixed-in-range", "10.0.0.77");
@@ -607,7 +607,7 @@ TEST_F(HostTest, globalHardwareFixedAddressInRange) {
 // gets the hostname and a dynamic address when the subnet reservations
 // flags are global only.
 TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("01:02:03:04:05:06");
     runDoraTest(CONFIGS[0], client, "hw-host-fixed-out-of-range", "10.0.0.10");
@@ -615,7 +615,7 @@ TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
 
 // Verifies that a client can be matched to a global reservation by DUID
 TEST_F(HostTest, globalDuid) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Set hw address to a none-matching value
     client.setHWAddress("99:99:99:99:99:99");
@@ -630,7 +630,7 @@ TEST_F(HostTest, globalDuid) {
 
 // Verifies that a client can be matched to a global reservation by circuit-id
 TEST_F(HostTest, globalCircuitId) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Set hw address to a none-matching value
     client.setHWAddress("99:99:99:99:99:99");
@@ -646,7 +646,7 @@ TEST_F(HostTest, globalCircuitId) {
 
 // Verifies that a client can be matched to a global reservation by client-id
 TEST_F(HostTest, globalClientID) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Set hw address to a none-matching value
     client.setHWAddress("99:99:99:99:99:99");
@@ -662,7 +662,7 @@ TEST_F(HostTest, globalClientID) {
 // client will get a subnet scoped reservation, when subnet
 // reservations flags are default
 TEST_F(HostTest, defaultOverGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -677,7 +677,7 @@ TEST_F(HostTest, defaultOverGlobal) {
 // to the global reservation, when subnet reservations flags
 // are global only.
 TEST_F(HostTest, globalOverSubnet) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -696,7 +696,7 @@ TEST_F(HostTest, globalOverSubnet) {
 // to the subnet reservation, when subnet reservations flags
 // are in-subnet and out-of-pool.
 TEST_F(HostTest, outOfPoolOverGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -711,7 +711,7 @@ TEST_F(HostTest, outOfPoolOverGlobal) {
 // to the subnet reservation, when subnet reservations flags
 // are in-subnet only.
 TEST_F(HostTest, allOverGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -726,7 +726,7 @@ TEST_F(HostTest, allOverGlobal) {
 // to the subnet reservation, when subnet reservations flags
 // are global and in-subnet, i.e. the subnet has the preference.
 TEST_F(HostTest, subnetOverGlobal) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     // Hardware address matches all reservations
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -764,14 +764,14 @@ TEST_F(HostTest, clientClassPoolSelection) {
 // client will be given a different lease.
 TEST_F(HostTest, firstClientGetsReservedAddress) {
     // Create a client which has MAC address matching the reservation.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setHWAddress("aa:bb:cc:dd:ee:fe");
     // Do 4-way exchange for this client to get the reserved address.
     runDoraTest(CONFIGS[7], client1, "", "10.0.0.123");
 
     // Create another client that has a reservation for the same
     // IP address.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Do 4-way exchange with client2.
     ASSERT_NO_THROW(client2.doDORA());

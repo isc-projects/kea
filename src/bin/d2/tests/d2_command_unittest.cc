@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
+#include <config/unix_command_mgr.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
 #include <d2/d2_controller.h>
@@ -144,7 +145,7 @@ public:
 
         // Reset command manager.
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
     }
 
     /// @brief Returns pointer to the server's IO service.
@@ -216,7 +217,7 @@ public:
         ASSERT_EQ(0, status) << txt->str();
 
         // Now check that the socket was indeed open.
-        ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+        ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
     }
 
     /// @brief Conducts a command/response exchange via UnixCommandSocket.
@@ -370,7 +371,7 @@ public:
         // let's parse expected_command back to JSON to guarantee that
         // both structures are built using the same order.
         EXPECT_EQ(Element::fromJSON(expected_command)->str(),
-                 entire_command->str());
+                  entire_command->str());
         return (createAnswer(CONTROL_RESULT_SUCCESS, "long command received ok"));
     }
 
@@ -456,7 +457,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("'socket-type' parameter is mandatory in control-sockets items",
               txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
+    EXPECT_EQ(-1, UnixCommandMgr::instance().getControlSocketFD());
 
     // no name.
     string bad3 =
@@ -482,7 +483,7 @@ TEST_F(CtrlChannelD2Test, configure) {
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("Mandatory 'socket-name' parameter missing",
               txt->stringValue());
-    EXPECT_EQ(-1, CommandMgr::instance().getControlSocketFD());
+    EXPECT_EQ(-1, UnixCommandMgr::instance().getControlSocketFD());
 }
 
 // This test checks which commands are registered by the D2 server.
@@ -582,12 +583,12 @@ TEST_F(CtrlChannelD2Test, getversion) {
     sendUnixCommand("{ \"command\": \"version-get\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
     EXPECT_TRUE(response.find("log4cplus") != string::npos);
-    EXPECT_FALSE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_FALSE(response.find("Hooks directory: ") != string::npos);
 
     // Send the build-report command.
     sendUnixCommand("{ \"command\": \"build-report\" }", response);
     EXPECT_TRUE(response.find("\"result\": 0") != string::npos);
-    EXPECT_TRUE(response.find("GTEST_VERSION") != string::npos);
+    EXPECT_TRUE(response.find("Hooks directory: ") != string::npos);
 }
 
 // Tests that the server properly responds to list-commands command.
@@ -787,7 +788,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
     // Create a config with invalid content that should fail to parse.
     os.str("");
@@ -926,7 +927,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
 
-    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+    ASSERT_GT(UnixCommandMgr::instance().getControlSocketFD(), -1);
 
     // Create a config with invalid content that should fail to parse.
     os.str("");
@@ -1163,7 +1164,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
     // The actual size sent will be slightly greater than that.
     const size_t command_size = 1024 * 1000;
 
-    while (command.tellp() < command_size) {
+    while (command.tellp() < static_cast<std::streampos>(command_size)) {
 
         // We're sending command 'foo' with arguments being a list of
         // strings. If this is the first transmission, send command name
@@ -1182,7 +1183,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
 
             // If we have hit the limit of the command size, close braces to
             // get appropriate JSON.
-            if (command.tellp() > command_size) {
+            if (command.tellp() > static_cast<std::streampos>(command_size)) {
                 command << "] }";
             }
         }
@@ -1286,7 +1287,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
         ASSERT_TRUE(client->sendCommand(command));
 
         // Keep receiving response data until we have received the full answer.
-        while (response.tellp() < long_response_size) {
+        while (response.tellp() < static_cast<std::streampos>(long_response_size)) {
             std::string partial;
             const unsigned int timeout = 5;
             ASSERT_TRUE(client->getResponse(partial, timeout));
@@ -1316,7 +1317,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     string response;
@@ -1369,7 +1370,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
     const unsigned short timeout = 2000;
-    CommandMgr::instance().setConnectionTimeout(timeout);
+    UnixCommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
     string response;

@@ -20,7 +20,7 @@ namespace asiolink {
 class UnixDomainSocketError : public Exception {
 public:
     UnixDomainSocketError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 class UnixDomainSocketImpl;

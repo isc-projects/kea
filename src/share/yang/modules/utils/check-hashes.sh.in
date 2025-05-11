@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,7 +43,10 @@ else
     exit "${exit_code}"
 fi
 
-for m in *.yang; do
+# shellcheck disable=SC2044
+# SC2044 (warning): For loops over find output are fragile. Use find -exec or a while read loop.
+# reason: Involving IFS, and read, and input redirection is not less fragile.
+for m in $(find . -type f -name '*.yang'); do
     hash1=$("${yanglint}" -f yin "${m}" | openssl dgst -sha256 | sed 's/(stdin)= //' | sed 's/SHA2-256//')
     h="hashes/$(basename "${m}" .yang).hash"
     if test -f "${h}"; then

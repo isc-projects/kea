@@ -1,7 +1,7 @@
 SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file and doxygen file is included in the distribution
@@ -76,7 +76,8 @@ messages: stat_cmds_messages.h stat_cmds_messages.cc
 	@echo Message files regenerated
 
 stat_cmds_messages.h stat_cmds_messages.cc: stat_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes)
 
 else
 

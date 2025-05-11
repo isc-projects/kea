@@ -1,5 +1,5 @@
 ..
-   Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+   Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,7 @@ Arguments
    If only ``-p`` or ``--password`` is given, the user is prompted for a password.
    If not specified at all, the ``KEA_ADMIN_DB_PASSWORD`` environment variable
    is checked for a value and used if it exists.
-   Otherwise the default value of ``keatest`` is used.
+   Otherwise the default value of ``1234`` is used.
 
 ``-n|--name database-name``
    Specifies the name of the database to connect to. The

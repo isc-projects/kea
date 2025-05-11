@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,6 +43,22 @@ public:
     /// @return generated Host object
     static HostPtr initializeHost6(std::string address, Host::IdentifierType id,
                                    bool prefix, bool new_identifier = true,
+                                   const std::string key = "");
+
+    /// @brief Creates a host reservation for specified IPv6 prefix and
+    /// excluded prefix.
+    ///
+    /// @param prefix IPv6 prefix to be reserved
+    /// @param exclude IPv6 prefix to be excluded
+    /// @param id type of identifier (IDENT_DUID or IDENT_HWADDR are supported)
+    /// @param new_identifier Boolean value indicating if new host
+    /// identifier should be generated or the same as previously.
+    ///
+    /// @return generated Host object
+    static HostPtr initializeHost6(std::string prefix,
+                                   std::string exclude,
+                                   Host::IdentifierType id,
+                                   bool new_identifier = true,
                                    const std::string key = "");
 
     /// @brief Generates a hardware address in text version.
@@ -130,5 +146,4 @@ public:
 }
 }
 }
-
 #endif

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -106,8 +106,155 @@ public:
     /// @param test_config JSON configuration text to parse
     /// @return A reference to the Network created if parsing is successful
     virtual Network& parseIntoNetwork(ConstElementPtr test_config) = 0;
-};
 
+    // Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
+    // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
+    template<typename NetworkTypePtr, typename ParserType>
+    void validDdnsTtlParmatersTest() {
+        struct Scenario {
+            size_t line_no_;
+            std::string json_;
+            double ddns_ttl_percent_;
+            uint32_t ddns_ttl_;
+            uint32_t ddns_ttl_min_;
+            uint32_t ddns_ttl_max_;
+        };
+
+        std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100
+            })^",
+            0.0, 100, 0, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0
+            })^",
+            5.0, 0, 0, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 25
+            })^",
+            0.0, 0, 25, 0
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-max": 150
+            })^",
+            0.0, 0, 0, 150
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 25,
+                "ddns-ttl-max": 150
+            })^",
+            0.0, 0, 25, 150
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0,
+                "ddns-ttl-min": 25,
+                "ddns-ttl-max": 150
+            })^",
+            5.0, 0, 25, 150
+        }};
+
+        for (const auto& scenario : scenarios) {
+            std::stringstream oss;
+            oss << "scenario at " << scenario.line_no_;
+            SCOPED_TRACE(oss.str());
+
+            // Parse configuration specified above.
+            ElementPtr config_element;
+            ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+
+            ParserType parser;
+            NetworkTypePtr network;
+
+            ASSERT_NO_THROW_LOG(network = parser.parse(config_element));
+            ASSERT_TRUE(network);
+
+            EXPECT_EQ(network->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0));
+            EXPECT_EQ(network->getDdnsTtlPercent(), scenario.ddns_ttl_percent_);
+
+            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0));
+            EXPECT_EQ(network->getDdnsTtl(), scenario.ddns_ttl_);
+
+            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMin(), scenario.ddns_ttl_min_);
+
+            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMax(), scenario.ddns_ttl_max_);
+        }
+    }
+
+    // Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
+    // ddns-ttl-min, and ddns-ttl-max values for SharedNetwork.
+    template<typename ParserType>
+    void invalidDdnsTtlParmatersTest() {
+        struct Scenario {
+            size_t line_no_;
+            std::string json_;
+            std::string exp_message_;
+            };
+
+        std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-percent": 5.0,
+                "ddns-ttl": 100
+            })^",
+            "cannot specify both ddns-ttl-percent and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100,
+                "ddns-ttl-min": 25
+            })^",
+            "cannot specify both ddns-ttl-min and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl": 100,
+                "ddns-ttl-max": 150
+            })^",
+            "cannot specify both ddns-ttl-max and ddns-ttl (<string>:1:2)"
+        },{
+            __LINE__,
+            R"^({
+                "name": "one",
+                "ddns-ttl-min": 150,
+                "ddns-ttl-max": 25
+            })^",
+            "ddns-ttl-max: 25 must be greater than ddns-ttl-min: 150 (<string>:1:2)"
+        }};
+
+        for (const auto& scenario : scenarios) {
+            std::stringstream oss;
+            oss << "scenario at " << scenario.line_no_;
+            SCOPED_TRACE(oss.str());
+
+            // Parse configuration specified above.
+            ElementPtr config_element;
+            ASSERT_NO_THROW_LOG(config_element = Element::fromJSON(scenario.json_));
+            ParserType parser;
+            ASSERT_THROW_MSG(parser.parse(config_element), DhcpConfigError, scenario.exp_message_);
+        }
+    }
+};
 
 /// @brief Test fixture class for SharedNetwork4Parser class.
 class SharedNetwork4ParserTest : public SharedNetworkParserTest {
@@ -133,7 +280,7 @@ public:
                 "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
                 "    \"server-hostname\": \"example.org\","
-                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"evaluate-additional-classes\": [ \"runner\" ],"
                 "    \"user-context\": { \"comment\": \"example\" },"
                 "    \"valid-lifetime\": 399,"
                 "    \"min-valid-lifetime\": 299,"
@@ -176,7 +323,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -204,7 +351,7 @@ public:
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -254,7 +401,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
 
     // Check basic parameters.
     EXPECT_TRUE(network->getAuthoritative());
-    EXPECT_EQ("srv1", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(99, network->getT1().get());
@@ -291,10 +438,10 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(1, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("10.1.1.1")));
 
-    // Required client classes.
-    auto required = network->getRequiredClasses();
-    ASSERT_EQ(1, required.size());
-    EXPECT_EQ("runner", *required.cbegin());
+    // Additional client classes.
+    auto additional = network->getAdditionalClasses();
+    ASSERT_EQ(1, additional.size());
+    EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -369,7 +516,7 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("alpha"));
 
     EXPECT_FALSE(network->getMatchClientId());
 
@@ -558,7 +705,7 @@ public:
                 "    \"rebind-timer\": 199,"
                 "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\" ] },"
                 "    \"renew-timer\": 99,"
-                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"evaluate-additional-classes\": [ \"runner\" ],"
                 "    \"reservations-global\": false,"
                 "    \"reservations-in-subnet\": true,"
                 "    \"reservations-out-of-pool\": true,"
@@ -604,7 +751,7 @@ public:
                 "            \"min-valid-lifetime\": 300,"
                 "            \"max-valid-lifetime\": 500,"
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -623,7 +770,7 @@ public:
                 "            \"preferred-lifetime\": 30,"
                 "            \"valid-lifetime\": 40,"
                 "            \"client-class\": \"\","
-                "            \"require-client-classes\": []\n,"
+                "            \"evaluate-additional-classes\": []\n,"
                 "            \"reservations-global\": false,"
                 "            \"reservations-in-subnet\": true,"
                 "            \"reservations-out-of-pool\": false,"
@@ -669,7 +816,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     ASSERT_TRUE(network);
 
     // Check basic parameters.
-    EXPECT_EQ("srv1", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
     EXPECT_EQ(211, network->getPreferred().get());
@@ -704,10 +851,10 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ(1, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("2001:db8:1::1")));
 
-    // Required client classes.
-    auto required = network->getRequiredClasses();
-    ASSERT_EQ(1, required.size());
-    EXPECT_EQ("runner", *required.cbegin());
+    // Additional client classes.
+    auto additional = network->getAdditionalClasses();
+    ASSERT_EQ(1, additional.size());
+    EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -867,10 +1014,10 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass().get());
+    EXPECT_TRUE(network->getClientClasses().contains("alpha"));
 }
 
-// This test verifies that it's possible to specify require-client-classes
+// This test verifies that it's possible to specify evaluate-additional-classes
 // on shared-network level.
 TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     IfaceMgrTestConfig ifmgr(true);
@@ -881,7 +1028,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create("beta"));
-    config_element->set("require-client-classes", class_list);
+    config_element->set("evaluate-additional-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -889,12 +1036,12 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    const ClientClasses& classes = network->getRequiredClasses();
+    const ClientClasses& classes = network->getAdditionalClasses();
     EXPECT_EQ(2, classes.size());
     EXPECT_EQ("alpha, beta", classes.toText());
 }
 
-// This test verifies that bad require-client-classes configs raise
+// This test verifies that bad evaluate-additional-classes configs raise
 // expected errors.
 TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     IfaceMgrTestConfig ifmgr(true);
@@ -906,7 +1053,7 @@ TEST_F(SharedNetwork6ParserTest, badEvalClientClasses) {
     ElementPtr class_list = Element::createList();
     class_list->add(Element::create("alpha"));
     class_list->add(Element::create(1234));
-    config_element->set("require-client-classes", class_list);
+    config_element->set("evaluate-additional-classes", class_list);
 
     // Parse configuration specified above.
     SharedNetwork6Parser parser;
@@ -1043,5 +1190,200 @@ TEST_F(SharedNetwork6ParserTest, parseFLQAllocatorPD) {
     EXPECT_EQ("flq", network->getPdAllocatorType().get());
 }
 
+// Verify that deprecated require-client-classes is handled properly
+// by v4 parser.
+TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ]
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getAdditionalClasses();
+    EXPECT_EQ(cclasses.size(), 2);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+    ++cclass;
+    EXPECT_EQ(*cclass, "two");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ],
+            "evaluate-additional-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'require-client-classes' and"
+                     " 'evaluate-additional-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
+// Verify that deprecated require-client-classes is handled properly
+// by v6 parser.
+TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ]
+       })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getAdditionalClasses();
+    EXPECT_EQ(cclasses.size(), 2);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+    ++cclass;
+    EXPECT_EQ(*cclass, "two");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "require-client-classes": [ "one", "two" ],
+            "evaluate-additional-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'require-client-classes' and"
+                     " 'evaluate-additional-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
+// Verify that deprecated client-class is handled properly
+// by v4 parser.
+TEST_F(SharedNetwork4ParserTest, deprecatedClientClass) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork4Parser parser;
+    SharedNetwork4Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
+// Verify that deprecated client-class is handled properly
+// by v6 parser.
+TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
+    // Valid entry.
+    std::string config =
+       R"^({
+            "name": "foo",
+            "client-class": "one"
+        })^";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration specified above.
+    SharedNetwork6Parser parser;
+    SharedNetwork6Ptr network;
+
+    ASSERT_NO_THROW(network = parser.parse(config_element));
+    ASSERT_TRUE(network);
+
+    const auto cclasses = network->getClientClasses();
+    EXPECT_EQ(cclasses.size(), 1);
+    auto cclass = cclasses.begin();
+    EXPECT_EQ(*cclass, "one");
+
+    // Invalid entry specifies both parameters.
+    config =
+       R"^({
+            "name": "foo",
+            "client-class": "one",
+            "client-classes": [ "one", "two" ]
+        })^";
+
+    config_element = Element::fromJSON(config);
+
+    // Should throw a complaint.
+    ASSERT_THROW_MSG(parser.parse(config_element),
+                     DhcpConfigError,
+                     "cannot specify both 'client-class' and"
+                     " 'client-classes'. Use only the latter."
+                     " (<string>:1:2)");
+}
+
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for SharedNetwork4.
+TEST_F(SharedNetwork4ParserTest, validDdnsTtlParmaters4) {
+    validDdnsTtlParmatersTest<SharedNetwork4Ptr, SharedNetwork4Parser>();
+}
+
+// Verifies valid permutations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for SharedNetwork6.
+TEST_F(SharedNetwork6ParserTest, validDdnsTtlParmaters6) {
+    validDdnsTtlParmatersTest<SharedNetwork6Ptr, SharedNetwork6Parser>();
+}
+
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet4.
+TEST_F(SharedNetwork4ParserTest, invalidDdnsTtlParmaters4) {
+    invalidDdnsTtlParmatersTest<SharedNetwork4Parser>();
+}
+
+// Verifies invalid permutations of ddns-ttl-percent, ddns-ttl,
+// ddns-ttl-min, and ddns-ttl-max values for Subnet6.
+TEST_F(SharedNetwork6ParserTest, invalidDdnsTtlParmaters6) {
+    invalidDdnsTtlParmatersTest<SharedNetwork6Parser>();
+}
 
 } // end of anonymous namespace

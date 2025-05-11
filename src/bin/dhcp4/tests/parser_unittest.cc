@@ -319,7 +319,7 @@ TEST(ParserTest, file) {
                                "vivso.json",
                                "with-ddns.json" };
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (unsigned i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
@@ -1047,7 +1047,7 @@ TEST(ParserTest, duplicateControlSocket) {
      }
 })");
 
-    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    ASSERT_NO_THROW(Element::fromJSON(bad2, true));
     Parser4Context ctx2;
     EXPECT_THROW(ctx2.parseString(bad2, Parser4Context::PARSER_DHCP4),
                  Dhcp4ParseError);

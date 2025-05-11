@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,9 +19,6 @@
 #include <string>
 
 #include <gtest/gtest.h>
-
-#include "test_data_files_config.h"
-#include "test_libraries.h"
 
 using namespace isc::netconf;
 using namespace isc::config;
@@ -235,8 +232,7 @@ TEST_F(NetconfGetCfgTest, simple) {
     ASSERT_NO_THROW_LOG(config = readFile(simple_file));
 
     // get the expected configuration
-    string expected_file =
-        string(NETCONF_TEST_DATA_DIR) + "/" + "get_config.json";
+    string const expected_file(string(TEST_DATA_SOURCEDIR) + "/testdata/get_config.json");
     string expected;
     ASSERT_NO_THROW_LOG(expected = readFile(expected_file));
 

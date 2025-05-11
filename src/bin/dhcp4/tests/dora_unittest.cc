@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,10 +17,12 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
 #endif
 
 #ifdef HAVE_PGSQL
 #include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql/pgsql_lease_mgr.h>
 #endif
 
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -34,6 +36,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -630,6 +633,11 @@ const char* DORA_CONFIGS[] = {
         "interfaces-config": {
             "interfaces": [ "*" ]
         },
+        "dhcp-ddns": {
+            "enable-updates": true
+        },
+        "ddns-send-updates": true,
+        "ddns-update-on-renew": true,
         "subnet4": [
             {
                 "id": 1,
@@ -919,7 +927,9 @@ public:
     ///     allocating the address reserved for the Client B.
     /// 21. Client B uses 4-way exchange to obtain a new lease.
     /// 22. The server finally allocates a reserved address to the Client B.
-    void reservationsWithConflicts();
+    /// @param offer_lifetime value to use as the global value of offer-lifetime
+    /// throughout the test.
+    void reservationsWithConflicts(int offer_lifetime = 0);
 
     /// @brief This test verifies that the allocation engine ignores
     /// reservations when reservations flags are set to "disabled".
@@ -1003,7 +1013,7 @@ public:
 
 void
 DORATest::selectingDoNotRequestAddress() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
 
@@ -1036,7 +1046,7 @@ TEST_F(DORATest, selectingDoNotRequestAddressMultiThreading) {
 
 void
 DORATest::selectingMultipleClients() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
 
@@ -1088,7 +1098,7 @@ TEST_F(DORATest, selectingMultipleClientsMultiThreading) {
 
 void
 DORATest::selectingRequestAddress() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
 
@@ -1140,7 +1150,7 @@ TEST_F(DORATest, selectingRequestAddressMultiThreading) {
 
 void
 DORATest::selectingRequestNonMatchingAddress() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
 
@@ -1190,7 +1200,7 @@ TEST_F(DORATest, selectingRequestNonMatchingAddressMultiThreading) {
 
 void
 DORATest::initRebootRequest() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
     client.includeClientId("11:22");
@@ -1276,7 +1286,7 @@ TEST_F(DORATest, initRebootRequestMultiThreading) {
 
 void
 DORATest::authoritative() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[14], *client.getServer());
     client.includeClientId("11:22");
@@ -1390,7 +1400,7 @@ TEST_F(DORATest, authoritativeMultiThreading) {
 
 void
 DORATest::notAuthoritative() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[15], *client.getServer());
     client.includeClientId("11:22");
@@ -1502,7 +1512,7 @@ TEST_F(DORATest, notAuthoritativeMultiThreading) {
 
 void
 DORATest::authoritativeSubnetSelectionFail() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[15], *client.getServer());
     client.includeClientId("11:22");
@@ -1540,7 +1550,7 @@ TEST_F(DORATest, authoritativeSubnetSelectionFailMultiThreading) {
 
 void
 DORATest::notAuthoritativeSubnetSelectionFail() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[15], *client.getServer());
     client.includeClientId("11:22");
@@ -1577,7 +1587,7 @@ TEST_F(DORATest, notAuthoritativeSubnetSelectionFailMultiThreading) {
 
 void
 DORATest::ciaddr() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
     // Force ciaddr of Discover message to be non-zero.
@@ -1641,7 +1651,7 @@ void
 DORATest::oneAllocationOverlapTest(const std::string& clientid_a,
                                    const std::string& clientid_b) {
     // Allocate a lease by client using the 4-way exchange.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.includeClientId(clientid_a);
     client.setHWAddress("01:02:03:04:05:06");
     configure(DORA_CONFIGS[0], *client.getServer());
@@ -1680,7 +1690,7 @@ DORATest::oneAllocationOverlapTest(const std::string& clientid_a,
 void
 DORATest::twoAllocationsOverlap() {
     // Allocate a lease by client A using the 4-way exchange.
-    Dhcp4Client client_a(Dhcp4Client::SELECTING);
+    Dhcp4Client client_a(srv_, Dhcp4Client::SELECTING);
     client_a.includeClientId("12:34");
     client_a.setHWAddress("01:02:03:04:05:06");
     configure(DORA_CONFIGS[0], *client_a.getServer());
@@ -1696,7 +1706,7 @@ DORATest::twoAllocationsOverlap() {
     ASSERT_TRUE(lease_a);
 
     // Create client B.
-    Dhcp4Client client_b(client_a.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client_b(srv_, Dhcp4Client::SELECTING);
     client_b.setHWAddress("01:02:03:04:05:06");
     client_b.includeClientId("45:67");
     // Send DHCPDISCOVER and expect the response.
@@ -1816,7 +1826,7 @@ TEST_F(DORATest, oneAllocationOverlap2MultiThreading) {
 void
 DORATest::reservation() {
     // Client A is a one which will have a reservation.
-    Dhcp4Client clientA(Dhcp4Client::SELECTING);
+    Dhcp4Client clientA(srv_, Dhcp4Client::SELECTING);
     // Set explicit HW address so as it matches the reservation in the
     // configuration used below.
     clientA.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -1835,7 +1845,7 @@ DORATest::reservation() {
     ASSERT_EQ("10.0.0.7", clientA.config_.lease_.addr_.toText());
 
     // Client B uses the same server as Client A.
-    Dhcp4Client clientB(clientA.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client clientB(srv_, Dhcp4Client::SELECTING);
     // Client B has no reservation so it should get the lease from
     // the dynamic pool.
     ASSERT_NO_THROW(clientB.doDORA(boost::shared_ptr<
@@ -1846,8 +1856,8 @@ DORATest::reservation() {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(clientB.config_.lease_.addr_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(clientB.config_.lease_.addr_);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, clientB.config_.lease_.addr_));
@@ -1865,7 +1875,7 @@ TEST_F(DORATest, reservationMultiThreading) {
 
 void
 DORATest:: reservationByDUID() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
     // Modify HW address so as the server doesn't assign reserved
@@ -1906,7 +1916,7 @@ TEST_F(DORATest, reservationByDUIDMultiThreading) {
 
 void
 DORATest::reservationByCircuitId() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent so as the circuit-id can be inserted.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
     // Specify circuit-id.
@@ -1939,7 +1949,7 @@ TEST_F(DORATest, reservationByCircuitIdMultiThreading) {
 
 void
 DORATest::reservationByClientId() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
@@ -1973,7 +1983,7 @@ TEST_F(DORATest, reservationByClientIdMultiThreading) {
 
 void
 DORATest::hostIdentifiersOrder() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Use relay agent so as the circuit-id can be inserted.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
@@ -2060,7 +2070,7 @@ TEST_F(DORATest, hostIdentifiersOrderMultiThreading) {
 
 void
 DORATest::ignoreChangingClientId() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[3], *client.getServer());
     client.includeClientId("12:12");
@@ -2107,7 +2117,7 @@ TEST_F(DORATest, ignoreChangingClientIdMultiThreading) {
 
 void
 DORATest::changingHWAddress() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[3], *client.getServer());
     client.includeClientId("12:12");
@@ -2157,7 +2167,7 @@ TEST_F(DORATest, changingHWAddressMultiThreading) {
 void
 DORATest::messageFieldsReservations() {
     // Client has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Set explicit HW address so as it matches the reservation in the
     // configuration used below.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -2190,10 +2200,13 @@ TEST_F(DORATest, messageFieldsReservationsMultiThreading) {
 }
 
 void
-DORATest::reservationsWithConflicts() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+DORATest::reservationsWithConflicts(int offer_lifetime /* = 0 */) {
+    ElementPtr offer_lft(Element::create(offer_lifetime));
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
+
     // Client A performs 4-way exchange and obtains a lease from the
     // dynamic pool.
     ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
@@ -2214,6 +2227,7 @@ DORATest::reservationsWithConflicts() {
                           Host::IDENT_HWADDR, SubnetID(1),
                           SUBNET_ID_UNUSED, IOAddress("10.0.0.9")));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
     CfgMgr::instance().commit();
 
     // Let's transition the client to Renewing state.
@@ -2252,6 +2266,7 @@ DORATest::reservationsWithConflicts() {
 
     // By reconfiguring the server, we remove the existing reservations.
     configure(DORA_CONFIGS[0]);
+    CfgMgr::instance().getCurrentCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
 
     // Try to renew the existing lease again.
     ASSERT_NO_THROW(client.doRequest());
@@ -2273,8 +2288,8 @@ DORATest::reservationsWithConflicts() {
     // Make sure that the server has responded with DHCPACK.
     ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
     // Obtain the subnet to which the returned address belongs.
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(client.config_.lease_.addr_);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(client.config_.lease_.addr_);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, client.config_.lease_.addr_));
@@ -2283,7 +2298,7 @@ DORATest::reservationsWithConflicts() {
     IOAddress in_pool_addr = client.config_.lease_.addr_;
 
     // Create Client B.
-    Dhcp4Client clientB(client.getServer());
+    Dhcp4Client clientB(srv_);
     clientB.modifyHWAddr();
 
     // Create reservation for the Client B, for the address that the
@@ -2294,6 +2309,7 @@ DORATest::reservationsWithConflicts() {
                         Host::IDENT_HWADDR, SubnetID(1),
                         SUBNET_ID_UNUSED, in_pool_addr));
     CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().getStagingCfg()->addConfiguredGlobal("offer-lifetime", offer_lft);
     CfgMgr::instance().commit();
 
     // Client B performs a DHCPDISCOVER.
@@ -2406,10 +2422,20 @@ TEST_F(DORATest, reservationsWithConflictsMultiThreading) {
     reservationsWithConflicts();
 }
 
+TEST_F(DORATest, reservationsWithConflictsOfferLft) {
+    Dhcpv4SrvMTTestGuard guard(*this, false);
+    reservationsWithConflicts(120);
+}
+
+TEST_F(DORATest, reservationsWithConflictsOfferLftMultiThreading) {
+    Dhcpv4SrvMTTestGuard guard(*this, true);
+    reservationsWithConflicts(120);
+}
+
 void
 DORATest::reservationModeDisabled() {
     // Client has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Set explicit HW address so as it matches the reservation in the
     // configuration used below.
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -2454,7 +2480,7 @@ TEST_F(DORATest, reservationModeDisabledMultiThreading) {
 void
 DORATest::reservationIgnoredInDisabledMode() {
     // Client has a reservation.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Set MAC address which doesn't match the reservation configured.
     client.setHWAddress("11:22:33:44:55:66");
     // Configure DHCP server. In this configuration the reservations flags are
@@ -2487,7 +2513,7 @@ void
 DORATest::reservationModeOutOfPool() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp4Client clientA(Dhcp4Client::SELECTING);
+    Dhcp4Client clientA(srv_, Dhcp4Client::SELECTING);
     clientA.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Configure the server to respect out of the pool reservations.
     configure(DORA_CONFIGS[13], *clientA.getServer());
@@ -2506,7 +2532,7 @@ DORATest::reservationModeOutOfPool() {
 
     // Create another client which has a reservation within the pool.
     // The server should ignore this reservation in the current mode.
-    Dhcp4Client clientB(clientA.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client clientB(srv_, Dhcp4Client::SELECTING);
     clientB.setHWAddress("11:22:33:44:55:66");
     // This client is requesting a different address than reserved. The
     // server should allocate this address to the client.
@@ -2535,7 +2561,7 @@ void
 DORATest::reservationIgnoredInOutOfPoolMode() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("12:34:56:78:9A:BC");
     // Configure the server to respect out of the pool reservations only.
     configure(DORA_CONFIGS[14], *client.getServer());
@@ -2564,7 +2590,7 @@ TEST_F(DORATest, reservationIgnoredInOutOfPoolModeMultiThreading) {
 
 void
 DORATest::statisticsDORA() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
 
@@ -2632,7 +2658,7 @@ TEST_F(DORATest, statisticsDORAMultiThreading) {
 
 void
 DORATest::statisticsNAK() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
     // Obtain a lease from the server using the 4-way exchange.
@@ -2685,7 +2711,7 @@ TEST_F(DORATest, statisticsNAKMultiThreading) {
 
 void
 DORATest::testMultiStageBoot(const unsigned int config_index) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     ASSERT_NO_THROW(configure(DORA_CONFIGS[config_index],
                               *client.getServer()));
@@ -2707,8 +2733,8 @@ DORATest::testMultiStageBoot(const unsigned int config_index) {
     // Make sure that the client has got the lease which belongs
     // to a pool.
     IOAddress leased_address1 = client.config_.lease_.addr_;
-    Subnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->
-        selectSubnet(leased_address1);
+    ConstSubnet4Ptr subnet = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets4()->selectSubnet(leased_address1);
     ASSERT_TRUE(subnet);
     // Make sure that the address has been allocated from the dynamic pool.
     ASSERT_TRUE(subnet->inPool(Lease::TYPE_V4, leased_address1));
@@ -2779,7 +2805,7 @@ TEST_F(DORATest, multiStageBootMultiThreading) {
 
 void
 DORATest::customServerIdentifier() {
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     ASSERT_NO_THROW(configure(DORA_CONFIGS[7], *client1.getServer()));
 
@@ -2794,7 +2820,7 @@ DORATest::customServerIdentifier() {
     EXPECT_EQ("1.2.3.4", client1.config_.serverid_.toText());
 
     // Repeat the test for different subnet.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
 
@@ -2807,7 +2833,7 @@ DORATest::customServerIdentifier() {
     // Create relayed client which will be assigned a lease from the third
     // subnet. This subnet inherits server identifier value from the global
     // scope.
-    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
     client3.useRelay(true, IOAddress("10.2.3.4"));
 
     ASSERT_NO_THROW(client3.doDORA());
@@ -2829,7 +2855,7 @@ TEST_F(DORATest, customServerIdentifierMultiThreading) {
 
 void
 DORATest::changingCircuitId() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
     // Use relay agent so as the circuit-id can be inserted.
     client.useRelay(true, IOAddress("10.0.0.1"), IOAddress("10.0.0.2"));
@@ -2898,7 +2924,7 @@ TEST_F(DORATest, changingCircuitIdMultiThreading) {
 
 void
 DORATest::storeExtendedInfoEnabled() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
@@ -2947,7 +2973,7 @@ TEST_F(DORATest, storeExtendedInfoEnabledMultiThreading) {
 
 void
 DORATest::storeExtendedInfoDisabled() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("192.0.2.20"), IOAddress("192.0.2.21"));
@@ -2989,7 +3015,7 @@ TEST_F(DORATest, storeExtendedInfoDisabledMultiThreading) {
 void
 DORATest::randomAllocation() {
     // Create the base client and server configuration.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     configure(DORA_CONFIGS[17], *client.getServer());
 
     // Record what addresses have been allocated and in what order.
@@ -2999,7 +3025,7 @@ DORATest::randomAllocation() {
     // Simulate allocations from different clients.
     for (auto i = 0; i < 30; ++i) {
         // Create a client from the base client.
-        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+        Dhcp4Client next_client(srv_, Dhcp4Client::SELECTING);
         // Run 4-way exchange.
         ASSERT_NO_THROW(next_client.doDORA());
         // Make sure that the server responded.
@@ -3016,8 +3042,8 @@ DORATest::randomAllocation() {
     ASSERT_EQ(30, allocated_list.size());
 
     // Make sure that the addresses are not allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_list.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_list.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation). Some cases like this are
         // possible even with the random allocation but they should be
@@ -3043,12 +3069,21 @@ TEST_F(DORATest, randomAllocationMultiThreading) {
 
 void
 DORATest::leaseCaching() {
+    StatsMgr::instance().setValue("v4-lease-reuses", int64_t(0));
     // Configure a DHCP client.
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
     client.includeClientId("11:22");
-
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN((Option4ClientFqdn::FLAG_S
+                                       | Option4ClientFqdn::FLAG_E),
+                                       "first.example.com.",
+                                       Option4ClientFqdn::FULL));
     // Configure a DHCP server.
     configure(DORA_CONFIGS[18], *client.getServer());
+
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDORA());
@@ -3074,6 +3109,12 @@ DORATest::leaseCaching() {
 
     // There should only be the default statistic point in the other subnet.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
+
+    // There should be a single NCR.
+    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    // Clear the NCR queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 
     // Assume the client enters init-reboot and does a request.
     client.setState(Dhcp4Client::INIT_REBOOT);
@@ -3101,6 +3142,9 @@ DORATest::leaseCaching() {
     // Statistics for the other subnet should not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Let's say the client suddenly decides to do a full DORA.
     ASSERT_NO_THROW(client.doDORA());
 
@@ -3126,6 +3170,9 @@ DORATest::leaseCaching() {
     // Statistics for the other subnet should not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Try to request a different address than the client has. The server
     // should respond with DHCPNAK.
     client.config_.lease_.addr_ = IOAddress("10.0.0.30");
@@ -3150,6 +3197,9 @@ DORATest::leaseCaching() {
 
     // Statistics for the other subnet should certainly not be affected.
     checkStat("subnet[2].v4-lease-reuses", 1, 0);
+
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 }
 
 TEST_F(DORATest, leaseCaching) {
@@ -3164,7 +3214,7 @@ TEST_F(DORATest, leaseCachingMultiThreading) {
 
 void
 DORATest::stashAgentOptions() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
@@ -3211,7 +3261,7 @@ TEST_F(DORATest, stashAgentOptionsMultiThreading) {
 
 void
 DORATest::stashAgentOptionsReservation() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
@@ -3257,7 +3307,7 @@ TEST_F(DORATest, stashAgentOptionsReservationMultiThreading) {
 
 void
 DORATest::noStashAgentOptionsReservation() {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Use relay agent to make sure that the desired subnet is
     // selected for our client.
     client.useRelay(true, IOAddress("10.0.0.20"), IOAddress("10.0.0.21"));
@@ -3320,8 +3370,7 @@ void DORATest::checkStat(string const& name,
 }
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-mysql.
+// will not be executed if Kea has been compiled without MySQL support.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the test utilizing MySQL database backend.
@@ -3342,6 +3391,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema.
         db::test::destroyMySQLSchema();
     }
+
+    /// @brief Initializer.
+    MySqlLeaseMgrInit init_;
 };
 
 // Test that the client using the same hardware address but multiple
@@ -3363,8 +3415,7 @@ TEST_F(DORAMySQLTest, multiStageBootMultiThreading) {
 #endif
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-pgsql.
+// will not be executed if Kea has been compiled without PostgreSQL support.
 #ifdef HAVE_PGSQL
 
 /// @brief Test fixture class for the test utilizing PostgreSQL database backend.
@@ -3385,6 +3436,9 @@ public:
         // If data wipe enabled, delete transient data otherwise destroy the schema
         db::test::destroyPgSQLSchema();
     }
+
+    /// @brief Initializer.
+    PgSqlLeaseMgrInit init_;
 };
 
 // Test that the client using the same hardware address but multiple

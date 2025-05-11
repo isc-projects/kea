@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/config/config_messages.mes
+// File created from src/lib/config/config_messages.mes
 
 #ifndef CONFIG_MESSAGES_H
 #define CONFIG_MESSAGES_H
@@ -35,7 +35,10 @@ extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR;
-extern const isc::log::MessageID HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED;
+extern const isc::log::MessageID HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STARTED;
 extern const isc::log::MessageID HTTP_COMMAND_MGR_SERVICE_STOPPING;
 

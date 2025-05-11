@@ -13,6 +13,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/csv_lease_file4.h>
 #include <dhcpsrv/csv_lease_file6.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_limits.h>
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/tracking_lease_mgr.h>
@@ -114,7 +115,6 @@ public:
     static const int MINOR_VERSION_V6 = 0;
     /// @}
 
-
     /// @brief Specifies universe (V4, V6)
     ///
     /// This enumeration is used by various functions in Memfile %Lease Manager,
@@ -156,8 +156,11 @@ public:
     /// @brief Destructor (closes file)
     virtual ~Memfile_LeaseMgr();
 
+    /// @brief Return extended version info
+    static std::string getDBVersion();
+
     /// @brief Local version of getDBVersion() class method
-    static std::string getDBVersion(Universe const& u);
+    static std::string getDBVersionInternal(Universe const& u);
 
     /// @brief Adds an IPv4 lease.
     ///
@@ -981,7 +984,6 @@ public:
                                     const LFCFileType& file_type);
     //@}
 
-
     /// @name Miscellaneous public convenience methods.
     ///       The following methods allow for retrieving useful information
     ///       about the state of the backend.
@@ -1527,7 +1529,6 @@ protected:
 
     /// Extended information / Bulk Lease Query shared interface.
 
-
     /// @brief Build extended info v6 tables.
     void buildExtendedInfoTables6();
 
@@ -1562,6 +1563,32 @@ private:
     /// @param filename File name to write leases.
     /// Must be called from a thread-safe context.
     virtual void writeLeases6Internal(const std::string& filename);
+
+public:
+    /// @brief Factory class method.
+    ///
+    /// @param parameters A data structure relating keywords and values
+    ///        concerned with the database.
+    ///
+    /// @return The Memfile Lease Manager.
+    static TrackingLeaseMgrPtr
+    factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+};
+
+/// @brief Initialization structure used to register and deregister Memfile Lease Mgr.
+struct MemfileLeaseMgrInit {
+    // Constructor registers
+    MemfileLeaseMgrInit() {
+        LeaseMgrFactory::registerFactory("memfile",
+                                         Memfile_LeaseMgr::factory,
+                                         true,
+                                         Memfile_LeaseMgr::getDBVersion);
+    }
+
+    // Destructor deregisters
+    ~MemfileLeaseMgrInit() {
+        LeaseMgrFactory::deregisterFactory("memfile", true);
+    }
 };
 
 }  // namespace dhcp

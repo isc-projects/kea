@@ -77,7 +77,7 @@ public:
     /// @param drop if it is true the packet will be dropped.
     Dhcpv4Exchange(const AllocEnginePtr& alloc_engine, const Pkt4Ptr& query,
                    AllocEngine::ClientContext4Ptr& context,
-                   const Subnet4Ptr& subnet, bool& drop);
+                   const ConstSubnet4Ptr& subnet, bool& drop);
 
     /// @brief Initializes the instance of the response message.
     ///
@@ -376,7 +376,8 @@ public:
     /// @param rsp A pointer to the response.
     /// @param subnet A pointer to selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
+                             Pkt4Ptr& query, Pkt4Ptr& rsp,
+                             ConstSubnet4Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv4 packet.
     ///
@@ -454,9 +455,7 @@ public:
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getServerPort() const {
-        return (server_port_);
-    }
+    uint16_t getServerPort() const;
 
     /// @brief Return bool value indicating that broadcast flags should be set
     /// on sockets.
@@ -744,7 +743,8 @@ protected:
     /// the option is found in another subnet of the shared network.
     /// @param client_classes Client classes.
     /// @return true if an IPv6-Only Preferred option was found, false otherwise.
-    bool assignZero(Subnet4Ptr& subnet, const ClientClasses& client_classes);
+    bool assignZero(ConstSubnet4Ptr& subnet,
+                    const ClientClasses& client_classes);
 
     /// @brief Assigns a lease and appends corresponding options
     ///
@@ -808,7 +808,9 @@ protected:
     /// @param lease lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound response for the client to which timers are added.
-    void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
+    void setTeeTimes(const Lease4Ptr& lease,
+                     const ConstSubnet4Ptr& subnet,
+                     Pkt4Ptr resp);
 
     /// @brief Append basic options if they are not present.
     ///
@@ -1122,10 +1124,10 @@ protected:
     /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or null if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& query,
-                                       bool& drop,
-                                       bool sanity_only = false,
-                                       bool allow_answer_park = true);
+    isc::dhcp::ConstSubnet4Ptr selectSubnet(const Pkt4Ptr& query,
+                                            bool& drop,
+                                            bool sanity_only = false,
+                                            bool allow_answer_park = true);
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
@@ -1139,10 +1141,10 @@ protected:
     /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or null if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
-                                          bool& drop,
-                                          bool sanity_only = false,
-                                          bool allow_answer_park = true);
+    isc::dhcp::ConstSubnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
+                                               bool& drop,
+                                               bool sanity_only = false,
+                                               bool allow_answer_park = true);
 
     /// @brief dummy wrapper around IfaceMgr::receive4
     ///
@@ -1189,17 +1191,23 @@ protected:
 
 protected:
 
-    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    /// @brief Evaluates classes in the additional classes lists
     ///
-    /// @note This required classification evaluates all classes which
-    /// were marked for required evaluation. Classes are collected so
-    /// evaluated in the reversed order than output option processing.
+    /// The evaluation takes place after all other classification and
+    /// lease assignment. It evaluates all classes in the packet's
+    /// additional classes list plus any contributed via
+    /// evaluate-additional-classes lists.
     ///
-    /// @note The only-if-required flag is related because it avoids
+    /// @note Evaluates all classes which were marked for the additional
+    /// evaluation stage. Classes are collected and evaluated in the following
+    /// order: pool, subnet, shared-network to produce option precedence
+    /// pool over subnet over shared-network.
+    ///
+    /// @note The only-in-additional-list flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
     /// @param ex The exchange holding needed information.
-    void requiredClassify(Dhcpv4Exchange& ex);
+    void evaluateAdditionalClasses(Dhcpv4Exchange& ex);
 
     /// @brief Perform deferred option unpacking.
     ///
@@ -1219,7 +1227,8 @@ protected:
     /// @param rsp Pointer to a response.
     /// @param subnet A pointer to selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt4Ptr& query, Pkt4Ptr& rsp, Subnet4Ptr& subnet);
+                              Pkt4Ptr& query, Pkt4Ptr& rsp,
+                              ConstSubnet4Ptr& subnet);
 
     /// @brief Executes buffer4_send callout and sends the response.
     ///
@@ -1241,7 +1250,7 @@ private:
     /// @param subnet subnet for which the netmask will be calculated
     ///
     /// @return Option that contains netmask information
-    static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
+    static OptionPtr getNetmaskOption(const ConstSubnet4Ptr& subnet);
 
     /// @brief Check if the parking limit has been exceeded for given hook label.
     ///

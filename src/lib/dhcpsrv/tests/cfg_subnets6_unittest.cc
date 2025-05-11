@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -357,7 +357,9 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
     EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
 
     // Modify the client classes associated with the first two subnets.
+    subnet1->getMutableClientClasses().clear();
     subnet1->allowClientClass("subnet1");
+    subnet2->getMutableClientClasses().clear();
     subnet2->allowClientClass("subnet2");
 
     // This time the non-matching classes should prevent selection.
@@ -677,6 +679,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     OptionPtr ifaceid = generateInterfaceId("relay.eth0");
     subnet1->setInterfaceId(ifaceid);
     subnet1->allowClientClass("foo");
+    subnet1->allowClientClass("bar");
 
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
@@ -690,8 +693,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet2->setCacheMaxAge(80);
 
     subnet3->setIface("eth1");
-    subnet3->requireClientClass("foo");
-    subnet3->requireClientClass("bar");
+    subnet3->addAdditionalClass("foo");
+    subnet3->addAdditionalClass("bar");
     subnet3->setReservationsGlobal(false);
     subnet3->setReservationsInSubnet(true);
     subnet3->setReservationsOutOfPool(false);
@@ -737,7 +740,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"valid-lifetime\": 4,\n"
         "    \"min-valid-lifetime\": 4,\n"
         "    \"max-valid-lifetime\": 4,\n"
-        "    \"client-class\": \"foo\",\n"
+        "    \"client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
@@ -781,7 +784,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
         "    \"option-data\": [ ],\n"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"evaluate-additional-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"t1-percent\": 0.50,\n"
         "    \"t2-percent\": 0.65,\n"
@@ -816,7 +819,7 @@ TEST(CfgSubnets6Test, unparsePool) {
     pool1->setContext(ctx1);
     data::ElementPtr ctx2 = data::Element::fromJSON("{ \"foo\": \"bar\" }");
     pool2->setContext(ctx2);
-    pool2->requireClientClass("foo");
+    pool2->addAdditionalClass("foo");
 
     subnet->addPool(pool1);
     subnet->addPool(pool2);
@@ -846,8 +849,8 @@ TEST(CfgSubnets6Test, unparsePool) {
         "            \"pool\": \"2001:db8:1:1::/64\",\n"
         "            \"user-context\": { \"foo\": \"bar\" },\n"
         "            \"option-data\": [ ],\n"
-        "            \"client-class\": \"bar\",\n"
-        "            \"require-client-classes\": [ \"foo\" ]\n"
+        "            \"client-classes\": [ \"bar\" ],\n"
+        "            \"evaluate-additional-classes\": [ \"foo\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -872,7 +875,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"foo\": [ \"bar\" ] }");
     pdpool1->setContext(ctx1);
-    pdpool1->requireClientClass("bar");
+    pdpool1->addAdditionalClass("bar");
     pdpool2->allowClientClass("bar");
 
     subnet->addPool(pdpool1);
@@ -901,7 +904,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"delegated-len\": 64,\n"
         "            \"user-context\": { \"foo\": [ \"bar\" ] },\n"
         "            \"option-data\": [ ],\n"
-        "            \"require-client-classes\": [ \"bar\" ]\n"
+        "            \"evaluate-additional-classes\": [ \"bar\" ]\n"
         "        },{\n"
         "            \"prefix\": \"2001:db8:3::\",\n"
         "            \"prefix-len\": 48,\n"
@@ -909,7 +912,7 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "            \"excluded-prefix\": \"2001:db8:3::\",\n"
         "            \"excluded-prefix-len\": 64,\n"
         "            \"option-data\": [ ],\n"
-        "            \"client-class\": \"bar\"\n"
+        "            \"client-classes\": [ \"bar\" ]\n"
         "        }\n"
         "    ],\n"
         "    \"option-data\": [ ]\n"
@@ -1227,8 +1230,8 @@ TEST(CfgSubnets6Test, teeTimePercentValidation) {
         "            \"renew-timer\": 100, \n"
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1292,8 +1295,8 @@ TEST(CfgSubnets6Test, preferredLifetimeValidation) {
         "            \"renew-timer\": 100, \n"
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1547,8 +1550,8 @@ TEST(CfgSubnets6Test, hostnameSanitizierValidation) {
         "            \"renew-timer\": 100, \n"
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1619,8 +1622,8 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         "            \"renew-timer\": 100, \n"
         "            \"rebind-timer\": 200, \n"
         "            \"valid-lifetime\": 300, \n"
-        "            \"client-class\": \"\", \n"
-        "            \"require-client-classes\": [] \n,"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
         "            \"reservations-global\": false, \n"
         "            \"reservations-in-subnet\": true, \n"
         "            \"reservations-out-of-pool\": false \n"
@@ -1737,6 +1740,10 @@ TEST(CfgSubnets6Test, updateStatistics) {
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
+        "cumulative-registered-nas");
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
         "declined-addresses");
     ASSERT_FALSE(observation);
 
@@ -1790,6 +1797,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
     ASSERT_FALSE(observation);
 
@@ -1806,6 +1818,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1856,6 +1873,11 @@ TEST(CfgSubnets6Test, updateStatistics) {
     ASSERT_EQ(0, observation->getInteger().first);
 
     observation = StatsMgr::instance().getObservation(
+        "cumulative-registered-nas");
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
         "declined-addresses");
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
@@ -1920,6 +1942,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
@@ -1939,6 +1967,12 @@ TEST(CfgSubnets6Test, updateStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pd-pool", 0, "cumulative-assigned-pds")));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -2063,6 +2097,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     StatsMgr::instance().setValue(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pool", 0, "assigned-nas")),
         int64_t(0));
 
@@ -2102,6 +2147,17 @@ TEST(CfgSubnets6Test, removeStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    StatsMgr::instance().setValue(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"),
+        int64_t(0));
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 
@@ -2245,6 +2301,11 @@ TEST(CfgSubnets6Test, removeStatistics) {
 
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
+                               "registered-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
                                StatsMgr::generateName("pool", 0, "assigned-nas")));
     ASSERT_FALSE(observation);
 
@@ -2261,6 +2322,11 @@ TEST(CfgSubnets6Test, removeStatistics) {
     observation = StatsMgr::instance().getObservation(
         StatsMgr::generateName("subnet", subnet_id,
                                "cumulative-assigned-nas"));
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        StatsMgr::generateName("subnet", subnet_id,
+                               "cumulative-registered-nas"));
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(

@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,7 +114,7 @@ public:
     /// Upon successful connection, carry out the TLS handshake. If the handshake
     /// completes successful start sending requests.
     void start() {
-        isc::asiolink::TCPEndpoint endpoint(boost::asio::ip::address::from_string(server_address_), server_port_);
+        isc::asiolink::TCPEndpoint endpoint(boost::asio::ip::make_address(server_address_), server_port_);
         SocketCallback socket_cb(
             [this](boost::system::error_code ec, size_t /*length */) {
                 receive_done_ = false;

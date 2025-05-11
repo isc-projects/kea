@@ -22,7 +22,7 @@ namespace asiolink {
 class ProcessSpawnError : public Exception {
 public:
     ProcessSpawnError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Forward declaration to the implementation of the @c ProcessSpawn

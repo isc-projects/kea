@@ -404,7 +404,7 @@ public:
         // Create durations in the store, none of them will have intervals.
         size_t num_subnets = 4;
         std::vector<DurationKeyPtr> keys;
-        for (int s = 0; s < num_subnets; ++s) {
+        for (size_t s = 0; s < num_subnets; ++s) {
             auto key = makeKey(family, s);
             store.addDuration(key);
             keys.push_back(key);
@@ -496,7 +496,7 @@ public:
         size_t num_subnets = 100;
         std::vector<DurationKeyPtr> keys;
 
-        for (int s = 0; s < num_subnets; ++s) {
+        for (size_t s = 0; s < num_subnets; ++s) {
             keys.push_back(makeKey(family, s));
         }
 
@@ -511,7 +511,7 @@ public:
         size_t num_passes = 100;
         size_t report_count = 0;
         Duration two_us(microseconds(2));
-        for (int p = 0; p < num_passes; ++p) {
+        for (size_t p = 0; p < num_passes; ++p) {
             for (auto k : keys) {
                 if (store.addDurationSample(k, two_us)) {
                     ++report_count;

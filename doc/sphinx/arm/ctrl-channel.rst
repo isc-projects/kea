@@ -207,6 +207,26 @@ depends on the specific command.
        }
    }
 
+.. note::
+
+   Since Kea 2.7.5 it is possible to specify extra HTTP headers which
+   are added to HTTP responses. Each header is specified by its name
+   and value with optionally a user context. For instance:
+
+::
+
+   {
+       "http-headers": [
+           {
+               "name": "Strict-Transport-Security",
+               "value": "max-age=31536000"
+           }
+        ],
+    ...
+    }
+
+adds a HSTS header declaring that HTTPS (vs HTTP) must be used for one year.
+
 .. _ctrl-channel-control-agent-command-response-format:
 
 Control Agent Command Response Format
@@ -864,6 +884,95 @@ command-line argument. This command does not take any parameters.
        "command": "version-get"
    }
 
+Commands Supported by the DHCPv4 Server
+=======================================
+
+.. isccmd:: subnet4-select-test
+.. _command-subnet4-select-test:
+
+The ``subnet4-select-test`` Command
+-----------------------------------
+
+The :isccmd:`subnet4-select-test` provides a way to test DHCPv4 subnet selection based
+on a set of input parameters typically supplied in a client packet.
+Recognized parameters take strings and are:
+
+ -  ``interface`` - the incoming interface name
+ -  ``address`` - the client address
+ -  ``relay`` - the relay/gateway address
+ -  ``local`` - the local/destination address
+ -  ``remote`` - the remote/source address
+ -  ``link`` - the RAI link-selection address
+ -  ``subnet`` - the subnet-selection address
+ -  ``classes`` - (list of strings) client classes (allowing to select a guarded subnet)
+
+The RAI link-selection is ignored when the ``ignore-rai-link-selection``
+compatibility flag is ``true``. When it is not ignored it has precedence
+over the subnet-selection.
+
+Outside of errors possible results are:
+
+ -  (empty) "no selected subnet"
+ -  "selected shared network '<name>' starting with subnet '<subnet>' id <id>"
+ -  "selected subnet '<subnet>' id <id>"
+
+.. isccmd:: subnet4o6-select-test
+.. _command-subnet4o6-select-test:
+
+The ``subnet4o6-select-test`` Command
+-------------------------------------
+
+The :isccmd:`subnet4o6-select-test` provides a way to test DHCPv4-over-DHCPv6 subnet
+selection based on a set of input parameters typically supplied in a client
+packet. Recognized parameters take strings and are:
+
+ -  ``interface`` - the incoming interface name of the DHCPv6 server
+ -  ``interface-id`` - the binary content of the interface-id relay option
+ -  ``address`` - the client address
+ -  ``relay`` - the relay/gateway address
+ -  ``local`` - the local/destination address
+ -  ``remote`` - the remote/source IPv6 address of the DHCPv6 server
+ -  ``link`` - the first relay link IPv6 address
+ -  ``subnet`` - the subnet-selection address
+ -  ``classes`` - (list of strings) client classes (allowing to select a guarded subnet)
+
+According to the code only ``remote``, ``interface-id`` and ``interface``
+selectors are used. In DHCPv4-over-DHCPv6 implementation ``interface`` and
+``remote`` values are transmitted from the DHCPv6 server, ``interface-id``
+and ``link`` are carried in the relay info part of the DHCPv6 packet so
+are the same as for the DHCPv6 server.
+
+Outside of errors possible results are:
+
+ -  (empty) "no selected subnet"
+ -  "selected shared network '<name>' starting with subnet '<subnet>' id <id>"
+ -  "selected subnet '<subnet>' id <id>"
+
+Commands Supported by the DHCPv6 Server
+=======================================
+
+.. isccmd:: subnet6-select-test
+.. _command-subnet6-select-test:
+
+The ``subnet6-select-test`` Command
+-----------------------------------
+
+The :isccmd:`subnet6-select-test` provides a way to test DHCPv6 subnet selection based
+on a set of input parameters typically supplied in a client packet.
+Recognized parameters take strings and are:
+
+ -  ``interface`` - the incoming interface name
+ -  ``interface-id`` - the binary content of the interface-id relay option
+ -  ``remote`` - the remote/source address
+ -  ``link`` - the first relay link address
+ -  ``classes`` - (list of strings) client classes (allowing to select a guarded subnet)
+
+Outside of errors possible results are:
+
+ -  (empty) "no selected subnet"
+ -  "selected shared network '<name>' starting with subnet '<subnet>' id <id>"
+ -  "selected subnet '<subnet>' id <id>"
+
 Commands Supported by the D2 Server
 ===================================
 
@@ -889,7 +998,7 @@ The D2 server supports only a subset of the DHCPv4/DHCPv6 server commands:
 
 -  :isccmd:`status-get`
 
-- :isccmd:`version-get`
+-  :isccmd:`version-get`
 
 .. _agent-commands:
 

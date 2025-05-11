@@ -70,7 +70,8 @@ messages: user_chk_messages.h user_chk_messages.cc
 	@echo Message files regenerated
 
 user_chk_messages.h user_chk_messages.cc: user_chk_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/user_chk/user_chk_messages.mes)
 
 else
 

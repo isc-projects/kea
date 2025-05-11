@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -151,7 +151,7 @@ typedef std::function<ConstCfgGlobalsPtr()> FetchNetworkGlobalsFn;
 /// in a well known form, so as the @c Network accessors can use them.
 class Network : public virtual isc::data::StampedElement,
                 public virtual isc::data::UserContext,
-                public isc::data::CfgToElement {
+                public virtual isc::data::CfgToElement {
 public:
     /// @brief Holds optional information about relay.
     ///
@@ -211,7 +211,7 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), client_class_(), t1_(), t2_(), valid_(),
+        : iface_name_(), client_classes_(), t1_(), t2_(), valid_(),
           reservations_global_(false, true), reservations_in_subnet_(true, true),
           reservations_out_of_pool_(false, true), cfg_option_(new CfgOption()),
           calculate_tee_times_(), t1_percent_(), t2_percent_(),
@@ -219,14 +219,15 @@ public:
           ddns_replace_client_name_mode_(), ddns_generated_prefix_(), ddns_qualifying_suffix_(),
           hostname_char_set_(), hostname_char_replacement_(), store_extended_info_(),
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
-          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(), allocator_type_(),
-          default_allocator_type_() {
+          ddns_conflict_resolution_mode_(), ddns_ttl_percent_(),
+          ddns_ttl_(), ddns_ttl_min_(), ddns_ttl_max_(),
+          allocator_type_(), default_allocator_type_() {
     }
 
     /// @brief Virtual destructor.
     ///
     /// Does nothing at the moment.
-    virtual ~Network() { };
+    virtual ~Network() { }
 
     /// @brief Sets the optional callback function used to fetch globally
     /// configured parameters.
@@ -270,7 +271,7 @@ public:
     getIface(const Inheritance& inheritance = Inheritance::ALL) const {
         return (getProperty<Network>(&Network::getIface, iface_name_,
                                      inheritance));
-    };
+    }
 
     /// @brief Sets information about relay
     ///
@@ -327,8 +328,8 @@ public:
     /// @return True if a relay with the given address is found, false otherwise
     bool hasRelayAddress(const asiolink::IOAddress& address) const;
 
-    /// @brief Checks whether this network supports client that belongs to
-    /// specified classes.
+    /// @brief Checks whether this network supports a client that belongs to
+    /// the specified classes.
     ///
     /// This method checks whether a client that belongs to given classes can
     /// use this network. For example, if this class is reserved for client
@@ -336,38 +337,39 @@ public:
     /// it is supported. On the other hand, client belonging to classes
     /// "foobar" and "zyxxy" is not supported.
     ///
-    /// @note: changed the planned white and black lists idea to a simple
-    /// client class name.
-    ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
-    /// @brief Sets the supported class to class class_name
+    /// @brief Adds class clas_name to the allowed client classes list.
     ///
     /// @param class_name client class to be supported by this network
     void allowClientClass(const isc::dhcp::ClientClass& class_name);
 
-    /// @brief Adds class class_name to classes required to be evaluated.
-    ///
-    /// @param class_name client class required to be evaluated
-    void requireClientClass(const isc::dhcp::ClientClass& class_name);
+    /// @brief Returns the list of allowed client classes.
+    const ClientClasses& getClientClasses() const {
+        return (client_classes_);
+    }
 
-    /// @brief Returns classes which are required to be evaluated
-    const ClientClasses& getRequiredClasses() const;
+    /// @brief Returns the mutable list of allowed client classes.
+    ClientClasses& getMutableClientClasses() {
+        return (client_classes_);
+    }
 
-    /// @brief returns the client class
+    /// @brief Adds class class_name to the additional classes list.
     ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned it is valid.
-    ///
-    /// @param inheritance inheritance mode to be used.
-    /// @return client class @ref client_class_
-    util::Optional<ClientClass>
-    getClientClass(const Inheritance& inheritance = Inheritance::ALL) const {
-        return (getProperty<Network>(&Network::getClientClass, client_class_,
-                                     inheritance));
+    /// @param class_name client class to add
+    void addAdditionalClass(const isc::dhcp::ClientClass& class_name);
+
+    /// @brief Returns the additional classes list.
+    const ClientClasses& getAdditionalClasses() const {
+        return (additional_classes_);
+    }
+
+    /// @brief Returns the mutable additional classes list.
+    ClientClasses& getMutableAdditionalClasses() {
+        return (additional_classes_);
     }
 
     /// @brief Return valid-lifetime for addresses in that prefix
@@ -681,6 +683,59 @@ public:
         ddns_ttl_percent_ = ddns_ttl_percent;
     }
 
+
+    /// @brief Returns ddns-ttl
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtl(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtl,
+                                     ddns_ttl_, inheritance,
+                                     CfgGlobals::DDNS_TTL));
+    }
+
+    /// @brief Sets new ddns-ttl
+    ///
+    /// @param ddns_ttl New value to use.
+    void setDdnsTtl(const util::Optional<uint32_t>& ddns_ttl) {
+        ddns_ttl_ = ddns_ttl;
+    }
+
+
+    /// @brief Returns ddns-ttl-min
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtlMin(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtlMin,
+                                     ddns_ttl_min_, inheritance,
+                                     CfgGlobals::DDNS_TTL_MIN));
+    }
+
+    /// @brief Sets new ddns-ttl-min
+    ///
+    /// @param ddns_ttl_min New value to use.
+    void setDdnsTtlMin(const util::Optional<uint32_t>& ddns_ttl_min) {
+        ddns_ttl_min_ = ddns_ttl_min;
+    }
+
+    /// @brief Returns ddns-ttl-max
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<uint32_t>
+    getDdnsTtlMax(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getDdnsTtlMax,
+                                     ddns_ttl_max_, inheritance,
+                                     CfgGlobals::DDNS_TTL_MAX));
+    }
+
+    /// @brief Sets new ddns-ttl-max
+    ///
+    /// @param ddns_ttl_max New value to use.
+    void setDdnsTtlMax(const util::Optional<uint32_t>& ddns_ttl_max) {
+        ddns_ttl_max_ = ddns_ttl_max;
+    }
+
     /// @brief Return the char set regexp used to sanitize client hostnames.
     util::Optional<std::string>
     getHostnameCharSet(const Inheritance& inheritance = Inheritance::ALL) const {
@@ -779,8 +834,7 @@ public:
         ddns_update_on_renew_ = ddns_update_on_renew;
     }
 
-
-    /// @brief Returns ib-ddns-conflict-resolution-mode
+    /// @brief Returns ddns-conflict-resolution-mode
     ///
     /// @param inheritance inheritance mode to be used.
     util::Optional<std::string>
@@ -791,7 +845,7 @@ public:
                                      CfgGlobals::DDNS_CONFLICT_RESOLUTION_MODE));
     }
 
-    /// @brief Sets new ib-ddns-conflict-resolution-mode
+    /// @brief Sets new ddns-conflict-resolution-mode
     ///
     /// @param ddns_conflict_resolution_mode New value to use.
     void setDdnsConflictResolutionMode(const util::Optional<std::string>& ddns_conflict_resolution_mode) {
@@ -1140,18 +1194,20 @@ protected:
     /// See @ref RelayInfo for detailed description.
     RelayInfo relay_;
 
-    /// @brief Optional definition of a client class
+    /// @brief List of client classes allowed to use this network.
     ///
-    /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular network. The default value for this is an empty string,
-    /// which means that any client is allowed, regardless of its class.
-    util::Optional<ClientClass> client_class_;
+    /// If not empty, only clients belonging to at least one of the classes
+    /// in this list will be allowed to use this particular network.  By default
+    /// the list is empty which means that any client is allowed, regardless
+    /// of its class membership.
+    ClientClasses client_classes_;
 
-    /// @brief Required classes
+    /// @brief Additional classes
     ///
-    /// If the network is selected these classes will be added to the
-    /// incoming packet and their evaluation will be required.
-    ClientClasses required_classes_;
+    /// If the network is selected these classes will be evaluated against
+    /// incoming packet after all other classification and the lease has
+    /// been assigned.
+    ClientClasses additional_classes_;
 
     /// @brief a isc::util::Triplet (min/default/max) holding allowed renew timer values
     isc::util::Triplet<uint32_t> t1_;
@@ -1233,6 +1289,15 @@ protected:
 
     /// @brief Percentage of the lease lifetime to use for DNS TTL.
     util::Optional<double> ddns_ttl_percent_;
+
+    /// @brief Explicit value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_;
+
+    /// @brief Minimum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_min_;
+
+    /// @brief Maximum value to use for DNS TTL.
+    util::Optional<uint32_t> ddns_ttl_max_;
 
     /// @brief Allocator used for IP address allocations.
     util::Optional<std::string> allocator_type_;
@@ -1483,7 +1548,7 @@ public:
     /// option support is enabled (if true), or disabled (if false).
     void setRapidCommit(const util::Optional<bool>& rapid_commit) {
         rapid_commit_ = rapid_commit;
-    };
+    }
 
     /// @brief Returns allocator type for prefix delegation.
     ///

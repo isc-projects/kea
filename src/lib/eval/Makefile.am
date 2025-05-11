@@ -36,7 +36,7 @@ libkea_eval_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_eval_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_eval_la_LDFLAGS  = -no-undefined -version-info 81:0:0
+libkea_eval_la_LDFLAGS  = -no-undefined -version-info 82:0:0
 libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
@@ -61,7 +61,8 @@ messages: eval_messages.h eval_messages.cc
 	@echo Message files regenerated
 
 eval_messages.h eval_messages.cc: eval_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/eval/eval_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/eval/eval_messages.mes)
 
 else
 

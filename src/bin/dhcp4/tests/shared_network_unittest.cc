@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1339,7 +1339,7 @@ public:
     /// @param ns_address expected name server address.
     void testPrecedence(const std::string& config, const std::string& ns_address) {
         // Create client and set MAC address to the one that has a reservation.
-        Dhcp4Client client(Dhcp4Client::SELECTING);
+        Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
         client.setIfaceName("eth1");
         client.setIfaceIndex(ETH1_INDEX);
         client.setHWAddress("aa:bb:cc:dd:ee:ff");
@@ -1448,7 +1448,7 @@ public:
     /// two subnets. Each subnet should contain an address pool with 10 addresses.
     void testDifferentAllocatorsInNetwork(const std::string& config) {
         // Create the base client and server configuration.
-        Dhcp4Client client(Dhcp4Client::SELECTING);
+        Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
         configure(config, *client.getServer());
 
         // Record what addresses have been allocated.
@@ -1457,7 +1457,7 @@ public:
         // Simulate allocations from different clients.
         for (auto i = 0; i < 20; ++i) {
             // Create a client from the base client.
-            Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+            Dhcp4Client next_client(srv_, Dhcp4Client::SELECTING);
             next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
             // Run 4-way exchange.
             ASSERT_NO_THROW(next_client.doDORA());
@@ -1475,7 +1475,7 @@ public:
 
         // Try one more time. This time no leases should be allocated because
         // the pools are exhausted.
-        Dhcp4Client next_client(client.getServer(), Dhcp4Client::SELECTING);
+        Dhcp4Client next_client(srv_, Dhcp4Client::SELECTING);
         next_client.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
         ASSERT_NO_THROW(next_client.doDiscover());
         EXPECT_FALSE(next_client.getContext().response_);
@@ -1493,7 +1493,7 @@ public:
 // Check user-context parsing
 TEST_F(Dhcpv4SharedNetworkTest, parse) {
     // Create client
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
 
     // Don't use configure from utils
     Parser4Context ctx;
@@ -1501,7 +1501,7 @@ TEST_F(Dhcpv4SharedNetworkTest, parse) {
     ASSERT_NO_THROW(json = parseDHCP4(NETWORKS_CONFIG[0], true));
     ConstElementPtr status;
     disableIfacesReDetect(json);
-    EXPECT_NO_THROW(status = configureDhcp4Server(*client1.getServer(), json));
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
@@ -1525,7 +1525,7 @@ TEST_F(Dhcpv4SharedNetworkTest, parse) {
 // Running out of addresses within a subnet in a shared network.
 TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
     // Create client #1
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -1541,7 +1541,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
 
     // Client #2 The second client will request a lease and should be assigned
     // an address from the second subnet.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     testAssigned([this, &client2]() {
@@ -1550,7 +1550,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
 
     // Client #3. It sends DHCPDISCOVER which should be dropped by the server because
     // the server has no more addresses to assign.
-    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
     client3.setIfaceName("eth1");
     client3.setIfaceIndex(ETH1_INDEX);
     testAssigned([&client3]() {
@@ -1582,7 +1582,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkShortage) {
 // Returning client sends 4-way exchange.
 TEST_F(Dhcpv4SharedNetworkTest, returningClientStartsOver) {
     // Create client.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     client.includeClientId("01:02:03:04");
@@ -1610,7 +1610,7 @@ TEST_F(Dhcpv4SharedNetworkTest, returningClientStartsOver) {
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
     // Create client #1. This is a relayed client which is using relay
     // address matching configured shared network.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.3.5.6"), IOAddress("10.0.0.2"));
 
     // Configure the server with one shared network and one subnet outside of the
@@ -1624,7 +1624,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("10.0.0.3"));
     testAssigned([this, &client2] {
         doDORA(client2, "192.0.2.65", "192.0.2.63");
@@ -1638,7 +1638,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay1) {
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
     // Create client #1. This is a relayed client which is using relay
     // address matching configured subnet 1 in shared network.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.1.1.1"), IOAddress("10.0.0.2"));
 
     // Configure the server with one shared network and one subnet outside of the
@@ -1652,7 +1652,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
 
     // Create client #2. This is a relayed client which is using relay
     // address that is used for subnet 2 in the shared network.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.2.2.2"), IOAddress("10.0.0.3"));
     testAssigned([this, &client2] {
         doDORA(client2, "10.0.0.16");
@@ -1660,7 +1660,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
 
     // Create client #3. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
-    Dhcp4Client client3(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
     client3.useRelay(true, IOAddress("192.3.3.3"), IOAddress("10.0.0.4"));
     testAssigned([this, &client3] {
         doDORA(client3, "192.0.2.65");
@@ -1670,7 +1670,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByRelay2) {
 // Providing a hint for any address belonging to a shared network.
 TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
     // Create client.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
 
@@ -1711,7 +1711,7 @@ TEST_F(Dhcpv4SharedNetworkTest, hintWithinSharedNetwork) {
 // classification.
 TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     // Create client #1
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.3.5.6"));
 
     // Configure the server with one shared network including two subnets in
@@ -1740,7 +1740,7 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
     });
 
     // Client 2 should be assigned an address from the unrestricted subnet.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.3.5.6"));
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
@@ -1775,7 +1775,7 @@ TEST_F(Dhcpv4SharedNetworkTest, subnetInSharedNetworkSelectedByClass) {
 TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     // Create client #1. Explicitly set client's MAC address to the one that
     // has a reservation in the first subnet within shared network.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.3.5.6"));
     client1.setHWAddress("11:22:33:44:55:66");
 
@@ -1789,7 +1789,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
     });
 
     // Create client #2
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.3.5.6"));
     client2.setHWAddress("aa:bb:cc:dd:ee:ff");
 
@@ -1858,7 +1858,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetwork) {
 // matching the address from the dynamic pool).
 TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifier) {
     // Create client #1 which uses a circuit ID as a host identifier.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("192.3.5.6"));
     client1.includeClientId("01:02:03:04");
     client1.setCircuitId("charter950");
@@ -1874,7 +1874,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifi
     });
 
     // Create client #2 with the same circuit ID.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.3.5.6"));
     client2.includeClientId("02:03:04:05");
     client2.setCircuitId("charter950");
@@ -1914,7 +1914,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationInSharedNetworkTwoClientsSameIdentifi
 TEST_F(Dhcpv4SharedNetworkTest, reservationAccessRestrictedByClass) {
     // Create a client and set explicit MAC address for which there is a reservation
     // in first subnet belonging to a shared network.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.useRelay(true, IOAddress("192.3.5.6"));
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
 
@@ -1950,7 +1950,7 @@ TEST_F(Dhcpv4SharedNetworkTest, reservationAccessRestrictedByClass) {
 // subnets level.
 TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     // Client #1.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
     client1.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS, DHO_DOMAIN_NAME_SERVERS);
@@ -1980,7 +1980,7 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     EXPECT_EQ("10.1.2.3", client1.config_.dns_servers_[0].toText());
 
     // Client #2.
-    Dhcp4Client client2(Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     client2.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS, DHO_DOMAIN_NAME_SERVERS);
@@ -2003,7 +2003,7 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
     EXPECT_EQ("10.1.2.3", client2.config_.dns_servers_[0].toText());
 
     // Client #3.
-    Dhcp4Client client3(Dhcp4Client::SELECTING);
+    Dhcp4Client client3(srv_, Dhcp4Client::SELECTING);
     client3.setIfaceName("eth0");
     client3.setIfaceIndex(ETH0_INDEX);
     client3.requestOptions(DHO_LOG_SERVERS, DHO_COOKIE_SERVERS, DHO_DOMAIN_NAME_SERVERS);
@@ -2028,7 +2028,7 @@ TEST_F(Dhcpv4SharedNetworkTest, optionsDerivation) {
 // Client has a lease in a subnet within shared network.
 TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     // Create client #1.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2051,7 +2051,7 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
     });
 
     // Create client #2.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
 
@@ -2075,7 +2075,7 @@ TEST_F(Dhcpv4SharedNetworkTest, initReboot) {
 // Host reservations include hostname, next server and client class.
 TEST_F(Dhcpv4SharedNetworkTest, variousFieldsInReservation) {
     // Create client.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
     client.setHWAddress("11:22:33:44:55:66");
@@ -2127,7 +2127,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByInterface) {
     // Create client #1. The server receives requests from this client
     // via interface eth1 and should assign shared network "frog" for
     // this client.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2147,7 +2147,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByInterface) {
     EXPECT_EQ("192.0.2", resp1->getYiaddr().toText().substr(0, 7));
 
     // Create client #2 which requests are received on eth0.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth0");
     client2.setIfaceIndex(ETH0_INDEX);
 
@@ -2166,7 +2166,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByInterface) {
 // Different shared network is selected for different relay address.
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
     // Create relayed client #1.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.useRelay(true, IOAddress("10.1.2.3"));
 
     // Create server configuration with two shared networks selected
@@ -2185,7 +2185,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
     EXPECT_EQ("192.0.2", resp1->getYiaddr().toText().substr(0, 7));
 
     // Create relayed client #2.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"));
 
     // Perform 4-way exchange.
@@ -2203,7 +2203,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectionByRelay) {
 // Client id matching gets disabled on the shared network level.
 TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
     // Create client using client identifier besides MAC address.
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     client.includeClientId("01:02:03:04");
     client.setIfaceName("eth1");
     client.setIfaceIndex(ETH1_INDEX);
@@ -2245,7 +2245,7 @@ TEST_F(Dhcpv4SharedNetworkTest, matchClientId) {
 // Shared network is selected based on the client class specified.
 TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     // Create client #1.
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2269,7 +2269,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
     EXPECT_EQ("10.0.0.63", resp1->getYiaddr().toText());
 
     // Create another client which will belong to a different class.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
 
@@ -2287,7 +2287,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSelectedByClass) {
 // This test verifies that custom server identifier can be specified for a
 // shared network.
 TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2308,7 +2308,7 @@ TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
     EXPECT_EQ("1.2.3.4", client1.config_.serverid_.toText());
 
     // Create another client using different interface.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth0");
     client2.setIfaceIndex(ETH0_INDEX);
 
@@ -2330,7 +2330,7 @@ TEST_F(Dhcpv4SharedNetworkTest, customServerIdentifier) {
 // classification.
 TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     // Create client #1
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2361,7 +2361,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
     });
 
     // Client 2 should be assigned an address from the unrestricted pool.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     testAssigned([this, &client2] {
@@ -2392,7 +2392,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSharedNetworkSelectedByClass) {
 // Access to a pool within plain subnet is restricted by client classification.
 TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
     // Create client #1
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     client1.setIfaceName("eth1");
     client1.setIfaceIndex(ETH1_INDEX);
 
@@ -2422,7 +2422,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
     });
 
     // Client 2 should be assigned an address from the unrestricted pool.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.setIfaceName("eth1");
     client2.setIfaceIndex(ETH1_INDEX);
     testAssigned([this, &client2] {
@@ -2457,7 +2457,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
     // address matching configured shared network.
     // Source address is set to unrelated to configuration.
 
-    Dhcp4Client client1(Dhcp4Client::SELECTING);
+    Dhcp4Client client1(srv_, Dhcp4Client::SELECTING);
     // Put Kea into testing mode.
     client1.getServer()->setSendResponsesToSource(true);
     client1.useRelay(true, IOAddress("192.3.5.6"), IOAddress("1.1.1.2"));
@@ -2477,7 +2477,7 @@ TEST_F(Dhcpv4SharedNetworkTest, sharedNetworkSendToSourceTestingModeEnabled) {
 
     // Create client #2. This is a relayed client which is using relay
     // address matching subnet outside of the shared network.
-    Dhcp4Client client2(client1.getServer(), Dhcp4Client::SELECTING);
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
     client2.useRelay(true, IOAddress("192.1.2.3"), IOAddress("2.2.2.3"));
     testAssigned([this, &client2] {
         doDORA(client2, "192.0.2.65", "192.0.2.63");
@@ -2980,7 +2980,7 @@ TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
         string cfg = generateAuthConfig(s.global, s.subnet1, s.subnet2);
 
         // Create client and set MAC address to the one that has a reservation.
-        Dhcp4Client client(Dhcp4Client::SELECTING);
+        Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
         stringstream tmp;
         tmp << "Testing scenario " << cnt;

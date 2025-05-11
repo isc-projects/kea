@@ -1,0 +1,80 @@
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% LEGAL_LOG_COMMAND_NO_LEGAL_STORE LegalStore instance is null
+This is an error message issued when the Legal Log library attempted to
+write a control command entry to the legal store and the store instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_LOG_COMMAND_WRITE_ERROR Could not write command entry to the legal store: %1
+This is an error message issued when the Legal Log library attempted to
+write a control command entry to the legal store and the write failed.
+The message content should provide an detailed explanation.
+error.
+
+% LEGAL_LOG_DB_OPEN_CONNECTION_WITH_RETRY_FAILED Failed to connect to database: %1 with error: %2
+This is an informational message issued when the the server failed to connect to
+the store database. The operation started a retry to connect procedure.
+The database access string with password redacted is logged, along with the
+error and details for the reconnect procedure.
+
+% LEGAL_LOG_LEASE4_NO_LEGAL_STORE LegalStore instance is null
+This is an error message issued when the Legal Log library attempted to
+write a IPv4 lease entry to the legal store and the store instance
+has not been created.  This is a programmatic error and should not occur.
+
+% LEGAL_LOG_LEASE4_WRITE_ERROR Could not write to the legal store: %1
+This is an error message issued when the Legal Log library attempted to
+write a IPv4 lease entry to the legal store and the write failed.
+The message content should include the physical store name and the nature of the
+error.
+
+% LEGAL_LOG_LEASE6_NO_LEGAL_STORE LegalStore instance is null
+This is an error message issued when the Legal Log library attempted to
+write a IPv6 lease entry to the legal store and the store instance has not been
+created.  This is a programmatic error and should not occur.
+
+% LEGAL_LOG_LEASE6_WRITE_ERROR Could not write to the legal store: %1
+This is an error message issued when the Legal Log library attempted to
+write a IPv6 lease entry to the legal store and the write failed.
+The message content should include the physical store name and the nature of the
+error.
+
+% LEGAL_LOG_LOAD_ERROR LEGAL LOGGING DISABLED! An error occurred loading the library: %1
+This is an error message issued when the DHCP Legal Log library could not
+be loaded.  The exact cause should be explained in the log message. No existing
+stores will be altered, nor any legal logging entries emitted.
+
+% LEGAL_LOG_STORE_CLOSED Legal store closed: %1
+This is an informational message issued when the Legal Log library
+has successfully closed the legal store.
+
+% LEGAL_LOG_STORE_CLOSE_ERROR An error occurred closing the store: %1, error: %2
+This is an error message issued when the legal log library experienced an
+error attempting to close a legal store.  This is highly unlikely to occur and
+should not affect the store content or subsequent legal store operations.
+
+% LEGAL_LOG_STORE_OPEN opening Legal Log file: %1
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a legal log file. The parameters of
+the backend are logged.
+
+% LEGAL_LOG_SYSLOG_STORE_OPEN opening Legal Syslog: %1
+This informational message is logged when a DHCP server (either V4 or
+V6) is about to open a legal syslog store. The parameters of
+the backend are logged.
+
+% LEGAL_LOG_SYSLOG %1
+This informational message contains the message being logged to syslog.
+
+% LEGAL_LOG_STORE_OPENED Legal store opened: %1
+This is an informational message issued when the Legal Log library
+has successfully opened the legal store.
+
+% LEGAL_LOG_UNLOAD_ERROR An error occurred unloading the library: %1
+This is an error message issued when an error occurs while unloading the
+Legal Log library.  This is unlikely to occur and normal operations of the
+library will likely resume when it is next loaded.

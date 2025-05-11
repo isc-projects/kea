@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -215,7 +215,7 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
     auto reconnect_ctl = boost::make_shared<ReconnectCtl>("Socket", timer_name,
                                                           CfgIface::getServiceSocketsMaxRetries(),
                                                           CfgIface::getServiceSocketsRetryWaitTime(),
-                                                          on_fail_action);
+                                                          on_fail_action, 0);
 
     return (reconnect_ctl);
 }

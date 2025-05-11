@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,16 +10,16 @@
 
  There are several types of documentation for Kea. The primary one, intended to
  be read by users, is User's Guide. It comes in HTML, PDF and txt format. All
- of them generated from the same sources. To generate this doc, you need to
- run configure script with --enable-generate-docs option. sphinx has to be
- enabled in the system.
+ of them generated from the same sources. To generate the documentation, sphinx and
+ sphinx_rtd_theme have to be available on the system. texlive is also required
+ if you want to create documentation in HTML format.
  You can generate this by doing:
 @code
-$ ./configure --enable-generate-docs
-$ make -C ./doc
+$ meson setup build
+$ meson compile -C build doc
 @endcode
 
-The output files will be generated in the ./doc/sphinx/_build directory.
+The output files will be generated in the ./build/doc/sphinx/_build directory.
 
 The ARM has an appendix that lists all Kea commands. The commands are integrated
 into RST using the tool located at doc/sphinx/api2doc.py. The basic principle
@@ -30,19 +30,16 @@ Those JSON files are loaded by the api2doc.py tool that will generate api.txt
 that will be used by sphinx. There is no need to call this tool explicitly.
 It is called automatically when building the ARM.
 
-Since Kea 1.9.9, the ARM has an appendix with the grammar. If there were new
-parameters added, you can regenerate the grammars and the appendix with the
-following procedure:
+The ARM has an appendix with the grammar. If there were new parameters added,
+you can regenerate the grammars and the appendix with the following procedure:
 
 @code
-$ autoreconf -i
-$ ./configure --enable-generate-docs --enable-generate-parser
-$ cd doc
-$ make grammar
-$ make -C sphinx html
+$ meson setup build
+$ meson compile -C build grammar
+$ meson compile -C build doc
 @endcode
 
-After that, inspect the html output and make sure it's ok, review changes in
+After that, inspect the HTML output and make sure it's ok, review changes in
 \c doc/sphinx/grammar/ and then check in those that are something more than a date
 update. The date is there, so we (and users) can determine if the grammar
 is or isn't out of date.
@@ -51,12 +48,12 @@ is or isn't out of date.
 
 There are several steps needed to document a new API command:
 
- 1. Configure sources with ./configure --enable-generate-docs
- 1. Copy src/share/api/_template.json to appropriate name.
- 2. Remove comments from it and fill in the actual content.
- 3. Update api_files.mk file in src/share/api/Makefile.am
- 4. make html will generate multi-page html.
- 5. make singlehtml will generate a single page html.
+ 1. Set up the build with "meson setup build".
+ 2. Copy src/share/api/_template.json to appropriate name.
+ 3. Remove comments from it and fill in the actual content.
+ 4. Update api_files.mk file in src/share/api.
+ 5. "meson compile -C build doc" will generate both multi-page and single-page
+    HTML sites.
 
 A word of caution regaring editing JSON files. The files themselves need to be
 valid JSON files. They also often contain fields, such as command syntax or
@@ -78,9 +75,8 @@ doxygen installed in your system. If you also have graphviz installed, it will
 generate nice diagrams. To generate developer's guide, do the following commands:
 
 @code
-$ ./configure
-$ cd doc/devel
-$ make devel
+$ meson setup build
+$ meson compile -C build devel
 @endcode
 
 */

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -222,7 +222,7 @@ public:
 
         // Create an endpoint pointed at the listener.
         boost::asio::ip::udp::endpoint
-            listener_endpoint(boost::asio::ip::address::from_string(TEST_ADDRESS),
+            listener_endpoint(boost::asio::ip::make_address(TEST_ADDRESS),
                               LISTENER_PORT);
 
         // A response message is now ready to send. Send it!
@@ -1072,7 +1072,7 @@ public:
         // Verify that what we sent matches what we received.
         // WRONG ASSUMPTION HERE: UDP does not guarantee ordered delivery.
         bool ok = true;
-        for (int i = 0; i < num_msgs; i++) {
+        for (size_t i = 0; i < num_msgs; i++) {
             if (!checkSendVsReceived(sent[i], rcvd[i])) {
                 // Ok, the data was not received in order.
                 ok = false;
@@ -1084,9 +1084,9 @@ public:
                       << std::endl;
             // We need to double iterate through the messages to check every one
             // against one another.
-            for (int i = 0; i < num_msgs; i++) {
+            for (size_t i = 0; i < num_msgs; i++) {
                 ok = false;
-                for (int j = 0; j < num_msgs; j++) {
+                for (size_t j = 0; j < num_msgs; j++) {
                     if (checkSendVsReceived(sent[i], rcvd[j])) {
                         std::cout << "Found UDP packet " << i << ", received as " << j << "th"
                                   << std::endl;
@@ -1111,13 +1111,13 @@ TEST_F(NameChangeUDPTest, roundTripTest) {
     EXPECT_TRUE(listener_->amListening());
 
     // Get the number of messages in the list of test messages.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Place the sender into sending state.
     ASSERT_NO_THROW(sender_->startSending(io_service_));
     EXPECT_TRUE(sender_->amSending());
 
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; i++) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);
@@ -1165,13 +1165,13 @@ TEST_F(NameChangeUDPTest, roundTripTestMultiThreading) {
     EXPECT_TRUE(listener_->amListening());
 
     // Get the number of messages in the list of test messages.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    size_t num_msgs = sizeof(valid_msgs)/sizeof(char*);
 
     // Place the sender into sending state.
     ASSERT_NO_THROW(sender_->startSending(io_service_));
     EXPECT_TRUE(sender_->amSending());
 
-    for (int i = 0; i < num_msgs; i++) {
+    for (size_t i = 0; i < num_msgs; i++) {
         NameChangeRequestPtr ncr;
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         sender_->sendRequest(ncr);

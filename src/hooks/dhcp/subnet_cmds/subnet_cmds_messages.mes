@@ -1,0 +1,279 @@
+# Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::subnet_cmds
+
+% SUBNET_CMDS_DEINIT_OK unloading Subnet Commands hooks library successful
+This informational message indicates that the Host Commands hooks library has
+been unloaded successfully.
+
+% SUBNET_CMDS_INIT_FAILED loading Subnet Commands hooks library failed: %1
+This error message indicates an error during loading the Subnet Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% SUBNET_CMDS_INIT_OK loading Subnet Commands hooks library successful
+This informational message indicates that the Host Commands hooks library has
+been loaded successfully. Enjoy!
+
+% SUBNET_CMDS_NETWORK4_ADD_FAILED failed to add new IPv4 network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv4 network to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK4_DEL_FAILED failed to delete IPv4 network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv4 network. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+% SUBNET_CMDS_NETWORK4_GET_FAILED failed to return an IPv4 network: %1
+This error message is issued when the server fails to return an IPv4
+network in response to 'network4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no network was found.
+
+% SUBNET_CMDS_NETWORK4_LIST_FAILED failed to return a list of IPv4 networks: %1
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 networks requested with 'network4-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK4_SUBNET_ADD_FAILED failed to add existing IPv4 subnet to a shared network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add existing IPv4 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK4_SUBNET_DEL_FAILED failed to remove a IPv4 subnet from a shared network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to remove existing IPv4 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK6_ADD_FAILED failed to add new IPv6 network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv6 network to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK6_DEL_FAILED failed to delete IPv6 network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv6 network. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+% SUBNET_CMDS_NETWORK6_GET_FAILED failed to return an IPv6 network: %1
+This error message is issued when the server fails to return an IPv6
+network in response to 'network4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no network was found.
+
+% SUBNET_CMDS_NETWORK6_LIST_FAILED failed to return a list of IPv6 networks: %1
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 networks requested with 'network6-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK6_SUBNET_ADD_FAILED failed to add existing IPv6 subnet to a shared network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add existing IPv6 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK6_SUBNET_DEL_FAILED failed to remove a IPv6 subnet from a shared network: %1
+This error message is issued when the Subnet Commands hooks library fails
+to remove existing IPv6 subnet to existing shared network. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_NETWORK_ADD successfully added shared network %1
+This informational message is issued when the Subnet Commands hooks library
+successfully adds a shared network as a result of receiving a 'network4-add'
+or 'network6-add' command'. The argument represents the name of added shared
+network.
+
+% SUBNET_CMDS_NETWORK_DEL successfully deleted shared network %1
+This informational message is issued when the Subnet Commands hooks library
+successfully deletes a shared network as a result of receiving a 'network4-del'
+or 'network6-del' command'. The argument represents the name of deleted shared
+network.
+
+% SUBNET_CMDS_NETWORK_GET successfully retrieved shared network %1
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a shared network as a result of receiving a 'network4-get'
+or 'network6-get' command'. The argument represents the name of retrieved shared
+network.
+
+% SUBNET_CMDS_NETWORK_GET_EMPTY specified shared network is not found: %1
+This informational message is issued when the Subnet Commands hooks library
+found no matching shared network as a result of receiving a 'network4-get' or
+'network6-get' command'.
+
+% SUBNET_CMDS_NETWORK_LIST successfully retrieved list of %1 %2 shared networks
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a list of shared networks as a result of receiving 'network4-list'
+or 'network6-list' command. The first argument specifies a number of networks
+retrieved. The second parameter specifies a protocol type: 'IPv4' or 'IPv6'.
+
+% SUBNET_CMDS_NETWORK_LIST_EMPTY no %1 shared networks listed
+This informational message is issued when the Subnet Commands hooks library
+successfully processes the 'network4-list' or 'network6-list' command but
+no shared network has been found. This indicates that the server configuration
+contains no shared networks of the specific type. The argument specifies a protocol
+type: 'IPv4' or 'IPv6'.
+
+% SUBNET_CMDS_NETWORK_SUBNET_ADD %1 subnet %2 (id %3) added to shared network %4
+This informational message indicates that specified subnet (address family
+given in parameter 1, details in parameters 2 and 3) is now part of a shared
+network. This is a successful result of either network4-subnet-add or
+network6-subnet-add commands.
+
+% SUBNET_CMDS_NETWORK_SUBNET_DEL %1 subnet %2 (id %3) removed from shared network %4
+This informational message indicates that specified subnets (address family
+given in parameter 1, details in parameters 2 and 3) is no longer part of a shared
+network. The subnet remains in configuration, but is a stand alone subnet.
+This is a successful result of either network4-subnet-del or network6-subnet-del commands.
+
+% SUBNET_CMDS_SUBNET4_ADD_FAILED failed to add new IPv4 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv4 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET4_DELTA_ADD_FAILED failed to update IPv4 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update by adding a delta in a IPv4 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET4_DELTA_DEL_FAILED failed to update IPv4 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update by removing a delta in a IPv4 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET4_DEL_FAILED failed to delete IPv4 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv4 subnet. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+% SUBNET_CMDS_SUBNET4_GET_FAILED failed to return an IPv4 subnet: %1
+This error message is issued when the server fails to return an IPv4
+subnet in response to 'subnet4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no subnet was found.
+
+% SUBNET_CMDS_SUBNET4_LIST_FAILED failed to return a list of IPv4 subnets: %1
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 subnets requested with 'subnet4-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET4_UPDATE_FAILED failed to update IPv4 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update a IPv4 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_ADD_FAILED failed to add new IPv6 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to add a new IPv6 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_DELTA_ADD_FAILED failed to update IPv6 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update by adding a delta in a IPv6 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_DELTA_DEL_FAILED failed to update IPv6 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update by removing a delta in a IPv6 subnet to the server configuration. The
+reason for failure is provided within the error message. The error message will
+be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_DEL_FAILED failed to delete IPv6 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to delete an IPv6 subnet. The reason for failure is provided within the
+error message. The error message will be returned to the controlling
+client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_GET_FAILED failed to return an IPv6 subnet: %1
+This error message is issued when the server fails to return an IPv6
+subnet in response to 'subnet4-get' command. The argument details the
+reason for failure. The error message will be returned to the controlling
+client with the error status code. This error may occur when the received
+command has invalid structure, has not allowed parameters or lacks required
+parameters. It will also be returned when the command syntax is correct
+but no subnet was found.
+
+% SUBNET_CMDS_SUBNET6_LIST_FAILED failed to return a list of IPv6 subnets: %1
+This error message is issued when the Subnet Commands hooks library fails
+to return a list of IPv4 subnets requested with 'subnet6-list' command. The
+reason for failure is provided within the error message. The error message
+will be returned to the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET6_UPDATE_FAILED failed to update IPv6 subnet: %1
+This error message is issued when the Subnet Commands hooks library fails
+to update a IPv6 subnet to the server configuration. The reason for failure
+is provided within the error message. The error message will be returned to
+the controlling client with the error status code.
+
+% SUBNET_CMDS_SUBNET_ADD successfully added subnet %1 having id %2
+This informational message is issued when the Subnet Commands hooks library
+successfully adds a subnet as a result of receiving a 'subnet4-add'
+or 'subnet6-add' command'. The first parameter specifies an added subnet
+prefix. The second parameter specifies a subnet identifier.
+
+% SUBNET_CMDS_SUBNET_DEL successfully deleted subnet %1 having id %2
+This informational message is issued when the Subnet Commands hooks library
+successfully deletes a subnet as a result of receiving a 'subnet4-del'
+or 'subnet6-del' command'. The first parameter specifies a deleted subnet
+prefix. The second parameter specifies a subnet identifier.
+
+% SUBNET_CMDS_SUBNET_GET successfully retrieved subnet %1 having id %2
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a subnet as a result of receiving a 'subnet4-get'
+or 'subnet6-get' command'. The first parameter specifies a retrieved subnet
+prefix. The second parameter specifies a subnet identifier.
+
+% SUBNET_CMDS_SUBNET_GET_EMPTY specified subnet is not found: %1
+This informational message is issued when the Subnet Commands hooks library
+found no a matching subnet as a result of receiving a 'subnet4-get' or
+'subnet6-get' command'.
+
+% SUBNET_CMDS_SUBNET_LIST successfully retrieved list of %1 %2 subnets
+This informational message is issued when the Subnet Commands hooks library
+successfully retrieves a list of subnets as a result of receiving 'subnet4-list'
+or 'subnet6-list' command. The first argument specifies a number of subnets
+retrieved. The second parameter specifies a protocol type: 'IPv4' or 'IPv6'.
+
+% SUBNET_CMDS_SUBNET_LIST_EMPTY no %1 subnets listed
+This informational message is issued when the Subnet Commands hooks library
+successfully processes the 'subnet4-list' or 'subnet6-list' command but
+no subnets have been found. This indicates that the server configuration
+contains no subnets of the specific type. This is not an error condition
+but it is unusual case for the DHCP service. The argument specifies a type
+of the subnets being listed, i.e. 'IPv4' or 'IPv6'.
+
+% SUBNET_CMDS_SUBNET_UPDATE successfully updated subnet %1 having id %2
+This informational message is issued when the Subnet Commands hooks library
+successfully updates a subnet as a result of receiving a 'subnet4-update'
+or 'subnet6-update' command'. The first parameter specifies an updated subnet
+prefix. The second parameter specifies a subnet identifier.

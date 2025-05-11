@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 
 #ifdef HAVE_MYSQL
 #include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
 #endif
 
 #include <log/logger_support.h>
@@ -44,6 +45,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 
 #ifdef HAVE_MYSQL
 using namespace isc::db::test;
@@ -173,7 +175,7 @@ typedef boost::shared_ptr<TestCBControlDHCPv6> TestCBControlDHCPv6Ptr;
 ///
 /// Exposes internal fields and installs stub implementation of the
 /// @c CBControlDHCPv6 object.
-class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
+class NakedControlledDhcpv6Srv : public ControlledDhcpv6Srv {
 public:
 
     /// @brief Constructor.
@@ -183,9 +185,25 @@ public:
         // stub implementation used in tests.
         cb_control_.reset(new TestCBControlDHCPv6());
     }
+
+    /// @brief Convenience method that enables or disables DHCP service.
+    ///
+    /// @param enable true to enable service, false to disable it.
+    void enableService(bool enable) {
+        if (enable) {
+            network_state_->enableService(NetworkState::USER_COMMAND);
+        } else {
+            network_state_->disableService(NetworkState::USER_COMMAND);
+        }
+    }
 };
 
-
+/// @brief test class for Kea configuration backend.
+///
+/// This class is used for testing Kea configuration backend.
+/// It is very simple and currently focuses on reading
+/// config file from disk. It is expected to be expanded in the
+/// near future.
 class JSONFileBackendTest : public dhcp::test::BaseServerTest {
 public:
     JSONFileBackendTest() {
@@ -285,7 +303,6 @@ public:
         EXPECT_EQ(1, cb_control->getDatabaseTotalConfigFetchCalls());
         EXPECT_EQ(0, cb_control->getDatabaseCurrentConfigFetchCalls());
         EXPECT_EQ(1, cb_control->getDatabaseStagingConfigFetchCalls());
-
 
         if (call_command) {
             // The case where there is no backend is tested in the
@@ -796,7 +813,6 @@ TEST_F(JSONFileBackendTest, timers) {
                                        duid_expired, 1, 50, 60, SubnetID(1)));
     lease_expired->cltt_ = time(NULL) - 100;
 
-
     // Create expired-reclaimed lease. The lease has expired 1000 - 60 seconds
     // ago. It should be removed from the lease database when the "flush" timer
     // goes off.
@@ -939,8 +955,7 @@ TEST_F(JSONFileBackendTest, configBackendPullCommandWithTimer) {
 }
 
 // Starting tests which require MySQL backend availability. Those tests
-// will not be executed if Kea has been compiled without the
-// --with-mysql.
+// will not be executed if Kea has been compiled without MySQL support.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the tests utilizing MySQL database
@@ -983,6 +998,9 @@ public:
     /// reconfiguration.
     void testBackendReconfiguration(const std::string& backend_first,
                                     const std::string& backend_second);
+
+    /// @brief Initializer.
+    MySqlLeaseMgrInit init_;
 };
 
 std::string
@@ -1062,7 +1080,6 @@ testBackendReconfiguration(const std::string& backend_first,
               LeaseMgrFactory::instance().getType());
 }
 
-
 // This test verifies that backend specification can be added on
 // server reconfiguration.
 TEST_F(JSONFileBackendMySQLTest, reconfigureBackendUndefinedToMySQL) {
@@ -1082,5 +1099,110 @@ TEST_F(JSONFileBackendMySQLTest, reconfigureBackendMemfileToMySQL) {
 }
 
 #endif
+
+// This test verifies that the DHCP server only reclaims or flushes leases
+// when DHCP6 service is enabled.
+TEST_F(JSONFileBackendTest, reclaimOnlyWhenServiceEnabled) {
+    // This is a basic configuration which enables timers for reclaiming
+    // expired leases and flushing them after 500 seconds since they expire.
+    // Both timers run at 1 second intervals.
+    string config =
+        "{ \"Dhcp6\": {"
+        "\"interfaces-config\": {"
+        "    \"interfaces\": [ ]"
+        "},"
+        "\"lease-database\": {"
+        "     \"type\": \"memfile\","
+        "     \"persist\": false"
+        "},"
+        "\"expired-leases-processing\": {"
+        "     \"reclaim-timer-wait-time\": 1,"
+        "     \"hold-reclaimed-time\": 500,"
+        "     \"flush-reclaimed-timer-wait-time\": 1"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }"
+        "}";
+    writeFile(TEST_FILE, config);
+
+    // Create an instance of the server and initialize it.
+    boost::scoped_ptr<NakedControlledDhcpv6Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedControlledDhcpv6Srv()));
+    ASSERT_NO_THROW(srv->init(TEST_FILE));
+
+    // Create an expired lease. The lease is expired by 40 seconds ago
+    // (valid lifetime = 60, cltt = now - 100). The lease will be reclaimed
+    // but shouldn't be flushed in the database because the reclaimed are
+    // held in the database 500 seconds after reclamation, according to the
+    // current configuration.
+    DuidPtr duid_expired(new DUID(DUID::fromText("00:01:02:03:04:05:06").getDuid()));
+    Lease6Ptr lease_expired(new Lease6(Lease::TYPE_NA, IOAddress("3000::1"),
+                                       duid_expired, 1, 50, 60, SubnetID(1)));
+    lease_expired->cltt_ = time(NULL) - 100;
+
+    // Create expired-reclaimed lease. The lease has expired 1000 - 60 seconds
+    // ago. It should be removed from the lease database when the "flush" timer
+    // goes off.
+    DuidPtr duid_reclaimed(new DUID(DUID::fromText("01:02:03:04:05:06:07").getDuid()));
+    Lease6Ptr lease_reclaimed(new Lease6(Lease::TYPE_NA, IOAddress("3000::2"),
+                                         duid_reclaimed, 1, 50, 60, SubnetID(1)));
+    lease_reclaimed->cltt_ = time(NULL) - 1000;
+    lease_reclaimed->state_ = Lease6::STATE_EXPIRED_RECLAIMED;
+
+    // Add leases to the database.
+    LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
+    ASSERT_NO_THROW(lease_mgr.addLease(lease_expired));
+    ASSERT_NO_THROW(lease_mgr.addLease(lease_reclaimed));
+
+    // Make sure they have been added.
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1")));
+    ASSERT_TRUE(lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2")));
+
+    // Disable service.
+    srv->enableService(false);
+
+    // Poll the timers for a while to make sure that each of them is executed
+    // at least once.
+    ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 5000));
+
+    // Verify that the leases in the database have not been processed.
+    ASSERT_NO_THROW(
+        lease_expired = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1"))
+    );
+    ASSERT_TRUE(lease_expired);
+    ASSERT_EQ(Lease::STATE_DEFAULT, lease_expired->state_);
+
+    // Second lease should not have been removed.
+    ASSERT_NO_THROW(
+        lease_reclaimed = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2"))
+    );
+    ASSERT_TRUE(lease_reclaimed);
+    ASSERT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease_reclaimed->state_);
+
+    // Enable service.
+    srv->enableService(true);
+
+    // Poll the timers for a while to make sure that each of them is executed
+    // at least once.
+    ASSERT_NO_THROW(runTimersWithTimeout(srv->getIOService(), 5000));
+
+    // Verify that the leases in the database have been processed as expected.
+
+    // First lease should be reclaimed, but not removed.
+    ASSERT_NO_THROW(
+        lease_expired = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::1"))
+    );
+    ASSERT_TRUE(lease_expired);
+    EXPECT_TRUE(lease_expired->stateExpiredReclaimed());
+
+    // Second lease should have been removed.
+    ASSERT_NO_THROW(
+        lease_reclaimed = lease_mgr.getLease6(Lease::TYPE_NA, IOAddress("3000::2"))
+    );
+    EXPECT_FALSE(lease_reclaimed);
+}
 
 } // End of anonymous namespace

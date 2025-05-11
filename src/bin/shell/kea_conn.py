@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """
-This file contains classes used for communication with Control Agent.
+This file contains classes used for communication with Kea over HTTP/HTTPS.
 """
 
 
@@ -36,7 +36,7 @@ class CARequest:
     cert = False
     key = False
     command = ''
-    service = ''
+    service = None
     timeout = 0
     auth = None
     args = ''

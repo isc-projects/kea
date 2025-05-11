@@ -120,6 +120,10 @@ CfgHostsSubnet::toElement() const {
         if (prefixes && prefixes->empty()) {
             resv->remove("prefixes");
         }
+        ConstElementPtr excluded_prefixes = resv->get("excluded-prefixes");
+        if (excluded_prefixes && excluded_prefixes->empty()) {
+            resv->remove("excluded-prefixes");
+        }
         ConstElementPtr hostname = resv->get("hostname");
         if (hostname && hostname->stringValue().empty()) {
             resv->remove("hostname");
@@ -327,6 +331,94 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     EXPECT_EQ(IPv6Resrv::TYPE_PD, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8:1:2::", prefixes.first->second.getPrefix().toText());
     EXPECT_EQ(80, prefixes.first->second.getPrefixLen());
+
+    // Get back the config from cfg_hosts
+    ElementPtr resv = config_element->getNonConst(0);
+    resv->remove("ip-addresses");
+    config = prettyPrint(config_element);
+    boost::algorithm::to_lower(config);
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(2));
+    runToElementTest<CfgHostsSubnet>(config, cfg_subnet);
+
+    CfgMgr::instance().setFamily(AF_INET);
+    CfgHostsSubnet cfg_subnet4(cfg_hosts, SubnetID(2));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet4);
+
+    CfgMgr::instance().setFamily(AF_INET6);
+    CfgHostsSubnet cfg_subnet1(cfg_hosts, SubnetID(1));
+    runToElementTest<CfgHostsSubnet>("[ ]", cfg_subnet1);
+}
+
+// This test verifies that the parser for the list of the host reservations
+// parses IPv6 reservations with Prefix Exclude options correctly.
+TEST_F(HostReservationsListParserTest, prefixExclude) {
+    // hexadecimal in lower case for toElement()
+    std::string config =
+        "[ "
+        "  { \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "    \"ip-addresses\": [ ],"
+        "    \"prefixes\": [ \"2001:db8::/48\" ],"
+        "    \"excluded-prefixes\": [ \"2001:db8:0:1::/64\" ],"
+        "    \"hostname\": \"foo.example.com\" "
+        "  }, "
+        "  { \"hw-address\": \"01:02:03:04:05:06\","
+        "    \"ip-addresses\": [ \"2001:db8:1::123\" ],"
+        "    \"hostname\": \"bar.example.com\" "
+        "  } "
+        "]";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse configuration.
+    HostCollection hosts;
+    HostReservationsListParser<HostReservationParser6> parser;
+    ASSERT_NO_THROW(parser.parse(SubnetID(2), config_element, hosts));
+
+    for (auto const& h : hosts) {
+        CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(h);
+    }
+
+    CfgHostsPtr cfg_hosts = CfgMgr::instance().getStagingCfg()->getCfgHosts();
+
+    // Get the reservation for the host identified by the HW address.
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
+                                              &hwaddr_->hwaddr_[0],
+                                              hwaddr_->hwaddr_.size()));
+    ASSERT_EQ(1, hosts.size());
+
+    // Make sure it belongs to a valid subnet.
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+
+    // Get the reserved addresses for the host. There should be exactly one
+    // address reserved for this host.
+    IPv6ResrvRange prefixes =
+        hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+    ASSERT_EQ(1, std::distance(prefixes.first, prefixes.second));
+
+    EXPECT_EQ(IPv6Resrv::TYPE_NA, prefixes.first->second.getType());
+    EXPECT_EQ("2001:db8:1::123", prefixes.first->second.getPrefix().toText());
+    EXPECT_EQ(128, prefixes.first->second.getPrefixLen());
+
+    // Validate the second reservation.
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
+    ASSERT_EQ(1, hosts.size());
+
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+
+    // This reservation was for a prefix, instead of an IPv6 address.
+    prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
+    ASSERT_EQ(1, std::distance(prefixes.first, prefixes.second));
+
+    EXPECT_EQ(IPv6Resrv::TYPE_PD, prefixes.first->second.getType());
+    EXPECT_EQ("2001:db8::", prefixes.first->second.getPrefix().toText());
+    EXPECT_EQ(48, prefixes.first->second.getPrefixLen());
+    EXPECT_TRUE(prefixes.first->second.getPDExclude());
+    EXPECT_EQ("2001:db8:0:1::/64", prefixes.first->second.PDExcludetoText());
 
     // Get back the config from cfg_hosts
     ElementPtr resv = config_element->getNonConst(0);

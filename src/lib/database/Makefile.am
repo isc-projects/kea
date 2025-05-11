@@ -29,7 +29,7 @@ libkea_database_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_database_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_database_la_LDFLAGS = -no-undefined -version-info 71:0:0
+libkea_database_la_LDFLAGS = -no-undefined -version-info 75:0:0
 
 # If we want to get rid of all generated messages files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for
@@ -55,7 +55,8 @@ messages: db_messages.h db_messages.cc
 	@echo Message files regenerated
 
 db_messages.h db_messages.cc: db_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/database/db_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/lib/database/db_messages.mes)
 
 else
 

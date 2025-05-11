@@ -228,7 +228,7 @@ class Name {
     //@{
 private:
     /// \brief Name data string
-    typedef std::basic_string<uint8_t> NameString;
+    typedef std::vector<uint8_t> NameString;
     /// \brief Name offsets type
     typedef std::vector<uint8_t> NameOffsets;
 

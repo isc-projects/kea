@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/default_credentials.h>
 #include <http/auth_log.h>
 #include <http/basic_auth_config.h>
 #include <util/filesystem.h>
@@ -224,6 +225,13 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                           << password_cfg->getPosition() << ")");
             }
             password = password_cfg->stringValue();
+            try {
+                DefaultCredentials::check(password);
+            } catch (const DefaultCredential&) {
+                isc_throw(DhcpConfigError,
+                          "password must not be a default one ("
+                          << password_cfg->getPosition() << ")");
+            }
         }
 
         // password file.

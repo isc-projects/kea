@@ -60,6 +60,7 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
 
      global_param ::= http_host
                  | http_port
+                 | http_headers
                  | trust_anchor
                  | cert_file
                  | key_file
@@ -87,6 +88,31 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
      user_context ::= "user-context" ":" map_value
 
      comment ::= "comment" ":" STRING
+
+     http_headers ::= "http-headers" ":" "[" http_header_list "]"
+
+     http_header_list ::= 
+                     | not_empty_http_header_list
+
+     not_empty_http_header_list ::= http_header
+                               | not_empty_http_header_list "," http_header
+                               | not_empty_http_header_list ","
+
+     http_header ::= "{" http_header_params "}"
+
+     http_header_params ::= http_header_param
+                       | http_header_params "," http_header_param
+                       | http_header_params ","
+
+     http_header_param ::= name
+                      | header_value
+                      | user_context
+                      | comment
+                      | unknown_map_entry
+
+     name ::= "name" ":" STRING
+
+     header_value ::= "value" ":" STRING
 
      hooks_libraries ::= "hooks-libraries" ":" "[" hooks_libraries_list "]"
 
@@ -216,8 +242,6 @@ This grammar is generated from ``agent_parser.yy``. See :ref:`kea-ctrl-agent` fo
                  | user_context
                  | comment
                  | unknown_map_entry
-
-     name ::= "name" ":" STRING
 
      debuglevel ::= "debuglevel" ":" INTEGER
 

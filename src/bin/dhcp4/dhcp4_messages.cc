@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp4/dhcp4_messages.mes
+// File created from src/bin/dhcp4/dhcp4_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -7,6 +7,10 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP4_ADDITIONAL_CLASS_EVAL_ERROR";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP4_ADDITIONAL_CLASS_EVAL_RESULT";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_NO_TEST = "DHCP4_ADDITIONAL_CLASS_NO_TEST";
+extern const isc::log::MessageID DHCP4_ADDITIONAL_CLASS_UNDEFINED = "DHCP4_ADDITIONAL_CLASS_UNDEFINED";
 extern const isc::log::MessageID DHCP4_ALREADY_RUNNING = "DHCP4_ALREADY_RUNNING";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVED = "DHCP4_BUFFER_RECEIVED";
 extern const isc::log::MessageID DHCP4_BUFFER_RECEIVE_FAIL = "DHCP4_BUFFER_RECEIVE_FAIL";
@@ -19,8 +23,6 @@ extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED = "DHCP4_CLASSES_ASSIGNE
 extern const isc::log::MessageID DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP4_CLASS_ASSIGNED = "DHCP4_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFIGURED";
-extern const isc::log::MessageID DHCP4_CLASS_UNDEFINED = "DHCP4_CLASS_UNDEFINED";
-extern const isc::log::MessageID DHCP4_CLASS_UNTESTABLE = "DHCP4_CLASS_UNTESTABLE";
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES = "DHCP4_CLIENTID_IGNORED_FOR_LEASES";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA = "DHCP4_CLIENT_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS = "DHCP4_CLIENT_FQDN_PROCESS";
@@ -139,6 +141,7 @@ extern const isc::log::MessageID DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL = "DHCP4
 extern const isc::log::MessageID DHCP4_QUERY_DATA = "DHCP4_QUERY_DATA";
 extern const isc::log::MessageID DHCP4_QUERY_LABEL = "DHCP4_QUERY_LABEL";
 extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_FAIL = "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL";
+extern const isc::log::MessageID DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED = "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED";
 extern const isc::log::MessageID DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO = "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO";
 extern const isc::log::MessageID DHCP4_RELEASE = "DHCP4_RELEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_DELETED = "DHCP4_RELEASE_DELETED";
@@ -148,8 +151,6 @@ extern const isc::log::MessageID DHCP4_RELEASE_FAIL = "DHCP4_RELEASE_FAIL";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_NO_LEASE = "DHCP4_RELEASE_FAIL_NO_LEASE";
 extern const isc::log::MessageID DHCP4_RELEASE_FAIL_WRONG_CLIENT = "DHCP4_RELEASE_FAIL_WRONG_CLIENT";
 extern const isc::log::MessageID DHCP4_REQUEST = "DHCP4_REQUEST";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_ERROR = "DHCP4_REQUIRED_CLASS_EVAL_ERROR";
-extern const isc::log::MessageID DHCP4_REQUIRED_CLASS_EVAL_RESULT = "DHCP4_REQUIRED_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP4_RESERVED_HOSTNAME_ASSIGNED = "DHCP4_RESERVED_HOSTNAME_ASSIGNED";
 extern const isc::log::MessageID DHCP4_RESPONSE_DATA = "DHCP4_RESPONSE_DATA";
@@ -185,6 +186,10 @@ extern const isc::log::MessageID DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER = "DHC
 namespace {
 
 const char* values[] = {
+    "DHCP4_ADDITIONAL_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
+    "DHCP4_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
+    "DHCP4_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
+    "DHCP4_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
     "DHCP4_ALREADY_RUNNING", "%1 already running? %2",
     "DHCP4_BUFFER_RECEIVED", "received buffer from %1:%2 to %3:%4 over interface %5",
     "DHCP4_BUFFER_RECEIVE_FAIL", "error on attempt to receive packet: %1",
@@ -197,8 +202,6 @@ const char* values[] = {
     "DHCP4_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP4_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP4_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
-    "DHCP4_CLASS_UNDEFINED", "required class %1 has no definition",
-    "DHCP4_CLASS_UNTESTABLE", "required class %1 has no test expression",
     "DHCP4_CLIENTID_IGNORED_FOR_LEASES", "%1: not using client identifier for lease allocation for subnet %2",
     "DHCP4_CLIENT_FQDN_DATA", "%1: Client sent FQDN option: %2",
     "DHCP4_CLIENT_FQDN_PROCESS", "%1: processing Client FQDN option",
@@ -214,11 +217,11 @@ const char* values[] = {
     "DHCP4_CONFIG_SYNTAX_WARNING", "configuration syntax warning: %1",
     "DHCP4_CONFIG_UNRECOVERABLE_ERROR", "DHCPv4 server new configuration failed with an error which cannot be recovered",
     "DHCP4_CONFIG_UNSUPPORTED_OBJECT", "DHCPv4 server configuration includes an unsupported object: %1",
-    "DHCP4_DB_RECONNECT_DISABLED", "database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2",
-    "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
-    "DHCP4_DB_RECONNECT_LOST_CONNECTION", "database connection lost.",
+    "DHCP4_DB_RECONNECT_DISABLED", "database reconnect is disabled: retries left: %1, reconnect wait time: %2, manager ID: %3, timer: %4",
+    "DHCP4_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success, manager ID: %2, timer: %3",
+    "DHCP4_DB_RECONNECT_LOST_CONNECTION", "database connection lost: manager ID: %1, timer: %2.",
     "DHCP4_DB_RECONNECT_NO_DB_CTL", "unexpected error in database reconnect",
-    "DHCP4_DB_RECONNECT_SUCCEEDED", "database connection recovered.",
+    "DHCP4_DB_RECONNECT_SUCCEEDED", "database connection recovered: manager ID: %1, timer: %2.",
     "DHCP4_DDNS_REQUEST_SEND_FAILED", "failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2",
     "DHCP4_DECLINE_FAIL", "%1: error on decline lease for address %2: %3",
     "DHCP4_DECLINE_LEASE", "Received DHCPDECLINE for addr %1 from client %2. The lease will be unavailable for %3 seconds.",
@@ -317,6 +320,7 @@ const char* values[] = {
     "DHCP4_QUERY_DATA", "%1, packet details: %2",
     "DHCP4_QUERY_LABEL", "received query: %1",
     "DHCP4_RECLAIM_EXPIRED_LEASES_FAIL", "failed to reclaim expired leases: %1",
+    "DHCP4_RECLAIM_EXPIRED_LEASES_SKIPPED", "dhcp6 service is currently disabled. Try again in %1 seconds.",
     "DHCP4_RECOVERED_STASHED_RELAY_AGENT_INFO", "recovered for query %1 relay agent option from lease %2: %3",
     "DHCP4_RELEASE", "%1: address %2 was released properly.",
     "DHCP4_RELEASE_DELETED", "%1: address %2 was deleted on release.",
@@ -326,8 +330,6 @@ const char* values[] = {
     "DHCP4_RELEASE_FAIL_NO_LEASE", "%1: client is trying to release non-existing lease %2",
     "DHCP4_RELEASE_FAIL_WRONG_CLIENT", "%1: client is trying to release the lease %2 which belongs to a different client",
     "DHCP4_REQUEST", "%1: server is processing DHCPREQUEST with hint=%2",
-    "DHCP4_REQUIRED_CLASS_EVAL_ERROR", "%1: Expression '%2' evaluated to %3",
-    "DHCP4_REQUIRED_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP4_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP4_RESERVED_HOSTNAME_ASSIGNED", "%1: server assigned reserved hostname %2",
     "DHCP4_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",

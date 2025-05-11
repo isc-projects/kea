@@ -1,11 +1,11 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <dhcpsrv/testutils/test_utils.h>
 
 #include <hooks/server_hooks.h>
@@ -138,7 +138,7 @@ public:
 
     // Buffers (callback will store received values here)
     static string callback_name_;
-    static Subnet6Ptr callback_subnet6_;
+    static ConstSubnet6Ptr callback_subnet6_;
     static Lease6Ptr callback_lease6_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
@@ -160,7 +160,7 @@ IOAddress HookAllocEngine6Test::callback_addr_original_("::");
 IOAddress HookAllocEngine6Test::callback_addr_updated_("::");
 
 string HookAllocEngine6Test::callback_name_;
-Subnet6Ptr HookAllocEngine6Test::callback_subnet6_;
+ConstSubnet6Ptr HookAllocEngine6Test::callback_subnet6_;
 Lease6Ptr HookAllocEngine6Test::callback_lease6_;
 bool HookAllocEngine6Test::callback_fake_allocation_;
 vector<string> HookAllocEngine6Test::callback_argument_names_;
@@ -454,7 +454,7 @@ public:
 
     // Buffers (callback will store received values here)
     static string callback_name_;
-    static Subnet4Ptr callback_subnet4_;
+    static ConstSubnet4Ptr callback_subnet4_;
     static Lease4Ptr callback_lease4_;
     static bool callback_fake_allocation_;
     static vector<string> callback_argument_names_;
@@ -475,7 +475,7 @@ IOAddress HookAllocEngine4Test::callback_addr_original_("::");
 IOAddress HookAllocEngine4Test::callback_addr_updated_("::");
 
 string HookAllocEngine4Test::callback_name_;
-Subnet4Ptr HookAllocEngine4Test::callback_subnet4_;
+ConstSubnet4Ptr HookAllocEngine4Test::callback_subnet4_;
 Lease4Ptr HookAllocEngine4Test::callback_lease4_;
 bool HookAllocEngine4Test::callback_fake_allocation_;
 vector<string> HookAllocEngine4Test::callback_argument_names_;

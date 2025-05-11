@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,14 +23,7 @@
 
 #include <unistd.h>             // for some network system calls
 
-// We want to use coroutine.hpp from the system's boost headers if possible.
-// However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
-// this header. So we can resort to our bundled version, but only if necessary.
-#ifndef HAVE_BOOST_ASIO_COROUTINE_HPP
-#include <ext/coroutine/coroutine.hpp>
-#else
 #include <boost/asio/coroutine.hpp>
-#endif
 
 namespace isc {
 namespace asiolink {

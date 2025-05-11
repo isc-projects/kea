@@ -51,6 +51,23 @@ OptionDescriptor::equals(const OptionDescriptor& other) const {
             option_->equals(other.option_));
 }
 
+void
+OptionDescriptor::addClientClass(const std::string& class_name) {
+    std::string trimmed = util::str::trim(class_name);
+    if (!trimmed.empty()) {
+        client_classes_.insert(ClientClass(trimmed));
+    }
+}
+
+bool
+OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
+    if (client_classes_.empty()) {
+        return (true);
+    }
+
+    return (client_classes_.intersects(cclasses));
+}
+
 CfgOption::CfgOption()
     : encapsulated_(false) {
 }
@@ -84,7 +101,7 @@ CfgOption::add(const OptionDescriptor& desc, const std::string& option_space) {
     if (!desc.option_) {
         isc_throw(isc::BadValue, "option being configured must not be NULL");
 
-    } else  if (!OptionSpace::validateName(option_space)) {
+    } else if (!OptionSpace::validateName(option_space)) {
         isc_throw(isc::BadValue, "invalid option space name: '"
                   << option_space << "'");
     }
@@ -445,7 +462,13 @@ CfgOption::toElement() const {
 }
 
 ElementPtr
-CfgOption::toElementWithMetadata(const bool include_metadata) const {
+CfgOption::toElement(CfgOptionDefPtr cfg_option_def) const {
+    return (toElementWithMetadata(false, cfg_option_def));
+}
+
+ElementPtr
+CfgOption::toElementWithMetadata(const bool include_metadata,
+                                 CfgOptionDefPtr cfg_option_def) const {
     // option-data value is a list of maps
     ElementPtr result = Element::createList();
     // Iterate first on options using space names
@@ -463,7 +486,13 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             uint16_t code = opt.option_->getType();
             map->set("code", Element::create(code));
             // Set the name (always for standard options else when asked for)
-            OptionDefinitionPtr def = LibDHCP::getOptionDef(name, code);
+            OptionDefinitionPtr def;
+            if (cfg_option_def) {
+                def = cfg_option_def->get(name, code);
+            }
+            if (!def) {
+                def = LibDHCP::getOptionDef(name, code);
+            }
             if (!def) {
                 def = LibDHCP::getRuntimeOptionDef(name, code);
             }
@@ -500,6 +529,11 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             // Include metadata if requested.
             if (include_metadata) {
                 map->set("metadata", opt.getMetadata());
+            }
+
+            // Include client-classes if not empty.
+            if (!opt.client_classes_.empty()) {
+                map->set("client-classes", opt.client_classes_.toElement());
             }
 
             // Push on the list
@@ -557,10 +591,17 @@ CfgOption::toElementWithMetadata(const bool include_metadata) const {
             map->set("always-send", Element::create(opt.persistent_));
             // Set the cancellation flag
             map->set("never-send", Element::create(opt.cancelled_));
+
+            // Include client-classes if not empty.
+            if (!opt.client_classes_.empty()) {
+                map->set("client-classes", opt.client_classes_.toElement());
+            }
+
             // Push on the list
             result->add(map);
         }
     }
+
     return (result);
 }
 

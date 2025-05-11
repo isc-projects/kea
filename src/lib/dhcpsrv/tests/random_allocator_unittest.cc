@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/random_allocator.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 #include <set>
@@ -86,8 +86,8 @@ TEST_F(RandomAllocatorTest4, manyPools) {
         // Verify that the addresses are returned in the random order.
         // Count how many times we found consecutive addresses. It should
         // be 0 or close to 0.
-        int consecutive_addresses = 0;
-        for (auto k = 0; k < addresses_vector.size()-1; ++k) {
+        size_t consecutive_addresses = 0;
+        for (size_t k = 0; k < addresses_vector.size()-1; ++k) {
             if (addresses_vector[k].toUint32() == addresses_vector[k+1].toUint32()-1) {
                 ++consecutive_addresses;
             }
@@ -98,8 +98,8 @@ TEST_F(RandomAllocatorTest4, manyPools) {
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
-        int consecutive_pools = 0;
-        for (auto k = 0; k < pools_vector.size()-1; ++k) {
+        size_t consecutive_pools = 0;
+        for (size_t k = 0; k < pools_vector.size()-1; ++k) {
             // Check if the pools are adjacent (i.e., last address of the
             // previous pool is a neighbor of the first address of the next
             // pool).
@@ -252,8 +252,8 @@ TEST_F(RandomAllocatorTest6, manyPools) {
         // Verify that the addresses are returned in the random order.
         // Count how many times we found consecutive addresses. It should
         // be 0 or close to 0.
-        int consecutive_addresses = 0;
-        for (auto k = 0; k < addresses_vector.size()-1; ++k) {
+        size_t consecutive_addresses = 0;
+        for (size_t k = 0; k < addresses_vector.size()-1; ++k) {
             if (IOAddress::increase(addresses_vector[k]) == addresses_vector[k+1]) {
                 ++consecutive_addresses;
             }
@@ -264,8 +264,8 @@ TEST_F(RandomAllocatorTest6, manyPools) {
 
         // Repeat similar check for pools. The pools should be picked in the
         // random order too.
-        int consecutive_pools = 0;
-        for (auto k = 0; k < pools_vector.size()-1; ++k) {
+        size_t consecutive_pools = 0;
+        for (size_t k = 0; k < pools_vector.size()-1; ++k) {
             if (IOAddress::increase(pools_vector[k]->getLastAddress()) ==
                 pools_vector[k]->getFirstAddress()) {
                 ++consecutive_pools;
@@ -374,9 +374,9 @@ TEST_F(RandomAllocatorTest6, manyPdPools) {
 
     Pool6Ptr pool;
 
-    for (auto j = 0; j < 2; ++j) {
+    for (size_t j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
@@ -405,9 +405,9 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferLower) {
 
     Pool6Ptr pool;
 
-    for (auto j = 0; j < 2; ++j) {
+    for (size_t j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_LOWER, IOAddress("::"), 120);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
@@ -436,9 +436,9 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferEqual) {
 
     Pool6Ptr pool;
 
-    for (auto j = 0; j < 2; ++j) {
+    for (size_t j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_EQUAL, IOAddress("::"), 128);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
@@ -467,9 +467,9 @@ TEST_F(RandomAllocatorTest6, manyPdPoolsPreferHigher) {
 
     Pool6Ptr pool;
 
-    for (auto j = 0; j < 2; ++j) {
+    for (size_t j = 0; j < 2; ++j) {
         std::set<IOAddress> prefixes;
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 64);
             prefixes.insert(candidate);
             EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));

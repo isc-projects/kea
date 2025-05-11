@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,7 +141,7 @@ to the end of this list.
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in/out</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in/out</b>
    - name: @b subnet6collection, type: const isc::dhcp::Subnet6Collection *, direction: <b>in</b>
 
  - @b Description: This callout is executed when a subnet is being
@@ -180,7 +180,7 @@ called before "subnet6_select".
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
    - name: @b fake_allocation, type: bool, direction: <b>in</b>
    - name: @b lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in/out</b>
 
@@ -316,7 +316,7 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
    - name: @b hostname, type: std::string, direction: <b>in/out</b>
    - name: @b fwd-update, type: bool, direction: <b>in/out</b>
    - name: @b rev-update, type: bool, direction: <b>in/out</b>
@@ -345,10 +345,30 @@ called before "subnet6_select".
 
  - <b>Next step status</b>: Not applicable, its value will be ignored.
 
+@subsection dhcpv6HookAddr6Register addr6_register
+
+ - @b Arguments:
+  - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
+  - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
+  - name: @b address6, type: isc::asiolink::IOAddress, direction: <b>in</b>
+  - name: @b old_lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in</b>
+  - name: @b new_lease6, type: isc::dhcp::Lease6Ptr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when an addr-reg-inform was
+   received and successfully processed but before the lease operation which
+   maintains the registration state when not skipped.
+
+ - <b>Next step status</b>: If any callout sets the status to SKIP,
+   the lease operation (add or update) will be skipped but the
+   response sent and DNS updates handled for the part not relying on
+   leases.  If any callout sets the status to DROP, the server will
+   cancel current packet processing and the query dropped.
+
 @subsection dhcpv6Leases6Committed leases6_committed
 
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
+   - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
    - name: @b deleted_leases6, type: isc::dhcp::Lease6CollectionPtr, direction: <b>in</b>
 
@@ -384,7 +404,7 @@ called before "subnet6_select".
  - @b Arguments:
    - name: @b query6, type: isc::dhcp::Pkt6Ptr, direction: <b>in</b>
    - name: @b response6, type: isc::dhcp::Pkt6Ptr, direction: <b>in/out</b>
-   - name: @b subnet6, type: isc::dhcp::Subnet6Ptr, direction: <b>in</b>
+   - name: @b subnet6, type: isc::dhcp::ConstSubnet6Ptr, direction: <b>in</b>
 
  - @b Description: This callout is executed when server's response
    is about to be send back to the client. The argument "response6"

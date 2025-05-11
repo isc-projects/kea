@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ TEST(OptionSpaceTest, validateName) {
     const char specials[] = { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')',
                               '+', '=', '[', ']', '{', '}', ';', ':', '"', '\'',
                               '\\', '|', '<','>', ',', '.', '?', '~', '`' };
-    for (int i = 0; i < sizeof(specials); ++i) {
+    for (unsigned i = 0; i < sizeof(specials); ++i) {
         std::ostringstream stream;
         // Concatenate valid option space name: "abc" with an invalid character.
         // That way we get option space names like: "abc!", "abc$" etc. It is
@@ -139,4 +139,4 @@ TEST(OptionSpace6Test, setVendorSpace) {
 }
 
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace

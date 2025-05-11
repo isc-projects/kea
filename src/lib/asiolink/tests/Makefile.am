@@ -46,7 +46,7 @@ run_unittests_SOURCES += tls_unittest.cc
 run_unittests_SOURCES += tls_acceptor_unittest.cc
 run_unittests_SOURCES += tls_socket_unittest.cc
 endif
-if HAVE_BOTAN_BOOST
+if HAVE_BOTAN
 run_unittests_SOURCES += tls_unittest.cc
 run_unittests_SOURCES += tls_acceptor_unittest.cc
 run_unittests_SOURCES += tls_socket_unittest.cc

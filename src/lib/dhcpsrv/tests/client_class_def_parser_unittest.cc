@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <asiolink/io_address.h>
 #include <eval/evaluate.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <stdint.h>
@@ -28,6 +29,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -101,7 +103,7 @@ protected:
 };
 
 /// @brief Test fixture class for @c ClientClassDefParser.
-class ClientClassDefParserTest : public ::testing::Test {
+class ClientClassDefParserTest : public LogContentTest {
 protected:
 
     /// @brief Convenience method for parsing a configuration
@@ -373,7 +375,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported4) {
         "    \"option-def\": [ ],\n"
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
-        "    \"only-if-required\": false,\n"
+        "    \"only-in-additional-list\": false,\n"
         "    \"valid-lifetime\": 1000,\n"
         "    \"min-valid-lifetime\": 1000,\n"
         "    \"max-valid-lifetime\": 1000,\n"
@@ -399,7 +401,7 @@ TEST_F(ClientClassDefParserTest, checkAllSupported6) {
         "    \"test\": \"member('ALL')\","
         "    \"option-data\": [ ],\n"
         "    \"user-context\": { },\n"
-        "    \"only-if-required\": false,\n"
+        "    \"only-in-additional-list\": false,\n"
         "    \"template-test\": \"\",\n"
         "    \"preferred-lifetime\": 800,\n"
         "    \"min-preferred-lifetime\": 800,\n"
@@ -427,7 +429,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"option-def\": [ ],\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET6);
@@ -441,7 +443,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"next-server\": \"192.0.2.3\"\n"
             "}\n";
 
@@ -456,7 +458,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"server-hostname\": \"myhost\"\n"
             "}\n";
 
@@ -471,7 +473,7 @@ TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
             "    \"test\": \"member('ALL')\","
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false,\n"
+            "    \"only-in-additional-list\": false,\n"
             "    \"boot-file-name\": \"efi\""
             "}\n";
 
@@ -494,7 +496,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -509,7 +511,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"min-preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -524,7 +526,7 @@ TEST_F(ClientClassDefParserTest, checkParams6Unsupported4) {
             "    \"max-preferred-lifetime\": 800,\n"
             "    \"option-data\": [ ],\n"
             "    \"user-context\": { },\n"
-            "    \"only-if-required\": false\n"
+            "    \"only-in-additional-list\": false\n"
             "}\n";
 
         testClassParamsUnsupported(cfg_text, AF_INET);
@@ -1472,6 +1474,66 @@ TEST_F(ClientClassDefParserTest, option43Def) {
     EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
 }
 
+// Test verifies option-def and option-data is correctly unparsed
+// option 43 as a string.
+TEST_F(ClientClassDefParserTest, option43DefString) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"aruba\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"vendor-encapsulated-options\", \n"
+        "           \"code\": 43, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"type\": \"string\" \n"
+        "        } \n"
+        "      ], \n"
+        "    \"option-data\": [ \n"
+        "      { \n"
+        "         \"name\": \"vendor-encapsulated-options\", \n"
+        "         \"csv-format\": true, \n"
+        "         \"data\": \"192.168.0.150\" \n"
+        "      } \n"
+        "    ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg_def = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg_def);
+    EXPECT_TRUE(cfg_def->get(DHCP4_OPTION_SPACE, 43));
+
+    // Verify the option data.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(43, od.option_->getType());
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(od.option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("192.168.0.150", opstr->getValue());
+
+    // Verify unparse.
+    auto const& unparsed = cclass->toElement();
+    ASSERT_TRUE(unparsed);
+    ASSERT_EQ(unparsed->getType(), Element::map);
+    auto const& option_data = unparsed->get("option-data");
+    ASSERT_TRUE(option_data);
+    ASSERT_EQ(option_data->getType(), Element::list);
+    ASSERT_EQ(1, option_data->size());
+    auto const& option = option_data->get(0);
+    ASSERT_TRUE(option);
+    ASSERT_EQ(option->getType(), Element::map);
+    auto const& data = option->get("data");
+    ASSERT_TRUE(data);
+    ASSERT_EQ(data->getType(), Element::string);
+    // Data entry must be "192.168.0.150", not "".
+    EXPECT_EQ("192.168.0.150", data->stringValue());
+}
+
 // Test verifies that it is possible to define next-server field and it
 // is actually set in the class properly.
 TEST_F(ClientClassDefParserTest, nextServer) {
@@ -1827,7 +1889,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"ALL\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1847,7 +1909,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"KNOWN\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1867,7 +1929,7 @@ TEST_F(ClientClassDefListParserTest, builtinCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"UNKNOWN\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -1900,7 +1962,7 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
         "[ \n"
         "   { \n"
         "       \"name\": \"DROP\", \n"
-        "       \"only-if-required\": true \n"
+        "       \"only-in-additional-list\": true \n"
         "   } \n"
         "] \n";
 
@@ -2086,6 +2148,202 @@ TEST_F(ClientClassDefParserTest, offerLftInvalid) {
     EXPECT_THROW_MSG(parseClientClassDef(cfg_text, AF_INET), DhcpConfigError,
                      "the value of offer-lifetime '-24' must be a positive number"
                      " (<string>:3:23)");
+}
+
+TEST_F(ClientClassDefParserTest, deprecatedOnlyIfRequired) {
+    // Valid entry using only-if-required.
+    std::string cfg_text =
+       R"^({
+            "name": "foo",
+            "only-if-required": true
+        })^";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // Class should exist.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo", cclass->getName());
+    ASSERT_TRUE(cclass->getAdditional());
+
+    // Valid entry using only-in-additional-list.
+    cfg_text =
+       R"^({
+            "name": "foo",
+            "only-in-additional-list": true
+        })^";
+
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // Class should exist.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo", cclass->getName());
+    ASSERT_TRUE(cclass->getAdditional());
+
+    // Invalid entry specifies both parameters.
+    std::string cfg_text2 =
+       R"^({
+            "name": "foo",
+            "only-if-required": true,
+            "only-in-additional-list": true
+        })^";
+
+    ASSERT_THROW_MSG(cclass = parseClientClassDef(cfg_text2, AF_INET),
+                     DhcpConfigError,
+                     "cannot specify both 'only-if-required' and "
+                     "'only-in-additional-list'. Use only the latter.");
+}
+
+// Verifies that the parser detects use of life time parameters
+// in classes that also set `only-in-additinal-list' true.
+TEST_F(ClientClassDefParserTest, addtionalWithLifetimes4) {
+    CfgMgr::instance().setFamily(AF_INET);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    struct Scenario {
+        size_t line_no_;
+        std::string cfg_;
+        bool should_log_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "valid-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "offer-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "valid-lifetime": 100
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "offer-lifetime": 100
+            })",
+            false
+        }
+    };
+
+    size_t exp_log_count = 0;
+    for (auto& scenario : scenarios) {
+        std::stringstream oss;
+        oss << "scenario at: " << scenario.line_no_;
+        SCOPED_TRACE(oss.str());
+        // Parse the class definition.
+        auto class_def = parseClientClassDef(scenario.cfg_, AF_INET);
+        ASSERT_TRUE(class_def);
+
+        // If we expect the warning log to be emitted the occurrences
+        // in the log file should bump by 1.
+        if (scenario.should_log_) {
+            ++exp_log_count;
+        }
+
+        // Veriy we have the expected count of log messages.
+        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES"),
+                            exp_log_count);
+    }
+}
+
+// Verifies that the parser detects use of life time parameters
+// in classes that also set `only-in-additinal-list' true.
+TEST_F(ClientClassDefParserTest, addtionalWithLifetimes6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    struct Scenario {
+        size_t line_no_;
+        std::string cfg_;
+        bool should_log_;
+    };
+
+    std::list<Scenario> scenarios = {
+        {
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "valid-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": true,
+                "preferred-lifetime": 100
+            })",
+            true
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "valid-lifetime": 100
+            })",
+            false
+        },{
+            __LINE__,
+            R"({
+                "name": "boo",
+                "only-in-additional-list": false,
+                "preferred-lifetime": 100
+            })",
+            false
+        }
+    };
+
+    size_t exp_log_count = 0;
+    for (auto& scenario : scenarios) {
+        std::stringstream oss;
+        oss << "scenario at: " << scenario.line_no_;
+        SCOPED_TRACE(oss.str());
+        // Parse the class definition.
+        auto class_def = parseClientClassDef(scenario.cfg_, AF_INET6);
+        ASSERT_TRUE(class_def);
+
+        // If we expect the warning log to be emitted the occurrences
+        // in the log file should bump by 1.
+        if (scenario.should_log_) {
+            ++exp_log_count;
+        }
+
+        // Veriy we have the expected count of log messages.
+        ASSERT_EQ(countFile("DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES"),
+                            exp_log_count);
+    }
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -211,25 +211,31 @@ LibraryManager::runLoad() {
         // afterwards.
 
         int status = -1;
+        int old_index = manager_->getLibraryHandle().getLibraryIndex();
         try {
             manager_->setLibraryIndex(index_);
+            manager_->getLibraryHandle().setLibraryIndex(index_);
             status = (*pc.loadPtr())(manager_->getLibraryHandle());
         } catch (const isc::Exception& ex) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_FRAMEWORK_EXCEPTION)
                 .arg(library_name_).arg(ex.what());
+            manager_->getLibraryHandle().setLibraryIndex(old_index);
             return (false);
         } catch (...) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_EXCEPTION).arg(library_name_);
+            manager_->getLibraryHandle().setLibraryIndex(old_index);
             return (false);
         }
 
+        manager_->getLibraryHandle().setLibraryIndex(old_index);
+
         if (status != 0) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_ERROR).arg(library_name_)
-                      .arg(status);
+                    .arg(status);
             return (false);
         } else {
-        LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
-            .arg(library_name_);
+            LOG_DEBUG(hooks_logger, HOOKS_DBG_TRACE, HOOKS_LOAD_SUCCESS)
+                    .arg(library_name_);
         }
 
     } else {

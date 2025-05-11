@@ -328,7 +328,7 @@ TEST(ParserTest, file) {
     configs.push_back("tee-times.json");
     configs.push_back("with-ddns.json");
 
-    for (int i = 0; i<configs.size(); i++) {
+    for (unsigned i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
 }
@@ -1038,7 +1038,7 @@ TEST(ParserTest, duplicateControlSocket) {
      }
 })");
 
-    ASSERT_NO_THROW(Element::fromJSON(bad1, true));
+    ASSERT_NO_THROW(Element::fromJSON(bad2, true));
     Parser6Context ctx2;
     EXPECT_THROW(ctx2.parseString(bad2, Parser6Context::PARSER_DHCP6),
                  Dhcp6ParseError);

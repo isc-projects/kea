@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,7 +132,7 @@ Iface::getPlainMac() const {
     ostringstream tmp;
     tmp.fill('0');
     tmp << hex;
-    for (int i = 0; i < mac_len_; i++) {
+    for (unsigned i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << static_cast<int>(mac_[i]);
         if (i < mac_len_-1) {
@@ -1034,7 +1034,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     }
 
     // Create socket that will be used to connect to remote endpoint.
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
     boost::asio::ip::udp::socket sock(io_service);
 
     boost::system::error_code err_code;

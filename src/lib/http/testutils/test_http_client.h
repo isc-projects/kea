@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,11 +15,15 @@
 #include <boost/asio/read.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <gtest/gtest.h>
 
 using namespace boost::asio::ip;
 using namespace isc::asiolink;
 using namespace isc::http;
+
+/// @brief Sending chuck size.
+const size_t TEST_HTTP_CHUCK_SIZE = 8 * 1024;
 
 /// @brief Common base for test HTTP/HTTPS clients.
 class BaseTestHttpClient : public boost::noncopyable {
@@ -82,7 +86,8 @@ public:
 };
 
 /// @brief Entity which can connect to the HTTP server endpoint.
-class TestHttpClient : public BaseTestHttpClient {
+class TestHttpClient : public BaseTestHttpClient,
+                       public boost::enable_shared_from_this<TestHttpClient> {
 public:
 
     /// @brief Constructor.
@@ -112,9 +117,10 @@ public:
     ///
     /// @param request HTTP request in the textual format.
     virtual void startRequest(const std::string& request) {
-        tcp::endpoint endpoint(address::from_string(server_address_), server_port_);
+        tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        auto ref = shared_from_this();
         socket_.async_connect(endpoint,
-        [this, request](const boost::system::error_code& ec) {
+                              [this, ref, request](const boost::system::error_code& ec) {
             receive_done_ = false;
             if (ec) {
                 // One would expect that async_connect wouldn't return
@@ -146,9 +152,11 @@ public:
     ///
     /// @param request part of the HTTP request to be sent.
     virtual void sendPartialRequest(std::string request) {
-        socket_.async_send(boost::asio::buffer(request.data(), request.size()),
-                           [this, request](const boost::system::error_code& ec,
-                                           std::size_t bytes_transferred) mutable {
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
+        auto ref = shared_from_this();
+        socket_.async_send(boost::asio::buffer(request.data(), chuck_size),
+                           [this, ref, request](const boost::system::error_code& ec,
+                                                std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -185,9 +193,10 @@ public:
 
     /// @brief Receive response from the server.
     virtual void receivePartialResponse() {
-        socket_.async_read_some(boost::asio::buffer(buf_.data(), buf_.size()),
-                                [this](const boost::system::error_code& ec,
-                                       std::size_t bytes_transferred) {
+        auto ref = shared_from_this();
+        socket_.async_read_some(boost::asio::buffer(ref->buf_.data(), ref->buf_.size()),
+                                [this, ref](const boost::system::error_code& ec,
+                                            std::size_t bytes_transferred) {
             if (ec) {
                 // IO service stopped so simply return.
                 if (ec.value() == boost::asio::error::operation_aborted) {
@@ -350,7 +359,8 @@ private:
 typedef boost::shared_ptr<TestHttpClient> TestHttpClientPtr;
 
 /// @brief Entity which can connect to the HTTPS server endpoint.
-class TestHttpsClient : public BaseTestHttpClient {
+class TestHttpsClient : public BaseTestHttpClient,
+                        public boost::enable_shared_from_this<TestHttpsClient> {
 public:
 
     /// @brief Constructor.
@@ -382,10 +392,10 @@ public:
     ///
     /// @param request HTTP request in the textual format.
     virtual void startRequest(const std::string& request) {
-        tcp::endpoint endpoint(address::from_string(server_address_),
-                               server_port_);
+        tcp::endpoint endpoint(make_address(server_address_), server_port_);
+        auto ref = shared_from_this();
         stream_.lowest_layer().async_connect(endpoint,
-        [this, request](const boost::system::error_code& ec) {
+                                             [this, ref, request](const boost::system::error_code& ec) {
             receive_done_ = false;
             if (ec) {
                 // One would expect that async_connect wouldn't return
@@ -426,10 +436,12 @@ public:
     ///
     /// @param request part of the HTTP request to be sent.
     virtual void sendPartialRequest(std::string request) {
+        size_t chuck_size = std::min(TEST_HTTP_CHUCK_SIZE, request.size());
+        auto ref = shared_from_this();
         boost::asio::async_write(stream_,
-                boost::asio::buffer(request.data(), request.size()),
-                [this, request](const boost::system::error_code& ec,
-                                std::size_t bytes_transferred) mutable {
+                                 boost::asio::buffer(request.data(), chuck_size),
+                                 [this, ref, request](const boost::system::error_code& ec,
+                                                      std::size_t bytes_transferred) mutable {
             if (ec) {
                 if (ec.value() == boost::asio::error::operation_aborted) {
                     return;
@@ -466,9 +478,10 @@ public:
 
     /// @brief Receive response from the server.
     virtual void receivePartialResponse() {
-        stream_.async_read_some(boost::asio::buffer(buf_.data(), buf_.size()),
-                                [this](const boost::system::error_code& ec,
-                                       std::size_t bytes_transferred) {
+        auto ref = shared_from_this();
+        stream_.async_read_some(boost::asio::buffer(ref->buf_.data(), ref->buf_.size()),
+                                [this, ref](const boost::system::error_code& ec,
+                                            std::size_t bytes_transferred) {
             if (ec) {
                 // IO service stopped so simply return.
                 if (ec.value() == boost::asio::error::operation_aborted) {

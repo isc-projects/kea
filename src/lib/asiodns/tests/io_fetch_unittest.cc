@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,7 +44,7 @@ namespace ph = std::placeholders;
 namespace isc {
 namespace asiodns {
 
-const boost::asio::ip::address TEST_HOST(boost::asio::ip::address::from_string("127.0.0.1"));
+const boost::asio::ip::address TEST_HOST(boost::asio::ip::make_address("127.0.0.1"));
 const uint16_t TEST_PORT(5301);
 const int SEND_INTERVAL = 250;      // Interval in ms between TCP sends
 const size_t MAX_SIZE = 64 * 1024;  // Should be able to take 64kB
@@ -290,7 +290,7 @@ public:
         if (cumulative_ > 2) {
             uint16_t dns_length = readUint16(receive_buffer_,
                                              sizeof(receive_buffer_));
-            complete = ((dns_length + 2) == cumulative_);
+            complete = ((static_cast<size_t>(dns_length) + 2) == cumulative_);
         }
 
         if (!complete) {

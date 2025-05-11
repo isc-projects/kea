@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -672,6 +672,7 @@ public:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
+    /// - Lease::STATE_REGISTERED
     void start() {
         switch (getSelectMode()) {
         case ALL_SUBNETS:
@@ -701,6 +702,7 @@ private:
     ///
     /// - Lease::STATE_DEFAULT (i.e. assigned)
     /// - Lease::STATE_DECLINED
+    /// - Lease::STATE_REGISTERED
     virtual void startSubnets() {
         const Lease6StorageSubnetIdIndex& idx
             = storage6_.get<SubnetIdIndexTag>();
@@ -740,6 +742,7 @@ private:
         int64_t assigned = 0;
         int64_t declined = 0;
         int64_t assigned_pds = 0;
+        int64_t registered = 0;
         for (Lease6StorageSubnetIdIndex::const_iterator lease = lower;
              lease != upper; ++lease) {
             // If we've hit the next subnet, add rows for the current subnet
@@ -766,6 +769,13 @@ private:
                                                       assigned_pds));
                         assigned_pds = 0;
                     }
+
+                    if (registered > 0) {
+                        rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                                      Lease::STATE_REGISTERED,
+                                                      registered));
+                        registered = 0;
+                    }
                 }
 
                 // Update current subnet id
@@ -789,6 +799,11 @@ private:
                 if (((*lease)->type_) == Lease::TYPE_NA) {
                     ++declined;
                 }
+            } else if ((*lease)->state_ == Lease::STATE_REGISTERED) {
+                // In theory only NAs can be registered
+                if (((*lease)->type_) == Lease::TYPE_NA) {
+                    ++registered;
+                }
             }
         }
 
@@ -806,6 +821,11 @@ private:
         if (assigned_pds > 0) {
             rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_PD,
                                           Lease::STATE_DEFAULT, assigned_pds));
+        }
+
+        if (registered > 0) {
+            rows_.push_back(LeaseStatsRow(cur_id, Lease::TYPE_NA,
+                                          Lease::STATE_REGISTERED, registered));
         }
 
         // Set the next row position to the beginning of the rows.
@@ -1030,7 +1050,7 @@ Memfile_LeaseMgr::~Memfile_LeaseMgr() {
 }
 
 std::string
-Memfile_LeaseMgr::getDBVersion(Universe const& u) {
+Memfile_LeaseMgr::getDBVersionInternal(Universe const& u) {
     std::stringstream tmp;
     tmp << "Memfile backend ";
     if (u == V4) {
@@ -1039,6 +1059,16 @@ Memfile_LeaseMgr::getDBVersion(Universe const& u) {
         tmp << MAJOR_VERSION_V6 << "." << MINOR_VERSION_V6;
     }
     return tmp.str();
+}
+
+std::string
+Memfile_LeaseMgr::getDBVersion() {
+    uint16_t family = CfgMgr::instance().getFamily();
+    if (family == AF_INET6) {
+        return (Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V6));
+    } else {
+        return (Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V4));
+    }
 }
 
 bool
@@ -1381,7 +1411,8 @@ Memfile_LeaseMgr::getLeases4Internal(const asiolink::IOAddress& lower_bound_addr
 
     // Return all other leases being within the page size.
     for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         (lease != idx.end()) &&
+         (static_cast<size_t>(std::distance(lb, lease)) < page_size.page_size_);
          ++lease) {
         collection.push_back(Lease4Ptr(new Lease4(**lease)));
     }
@@ -1656,7 +1687,8 @@ Memfile_LeaseMgr::getLeases6Internal(const asiolink::IOAddress& lower_bound_addr
 
     // Return all other leases being within the page size.
     for (auto lease = lb;
-         (lease != idx.end()) && (std::distance(lb, lease) < page_size.page_size_);
+         (lease != idx.end()) &&
+         (static_cast<size_t>(std::distance(lb, lease)) < page_size.page_size_);
          ++lease) {
         collection.push_back(Lease6Ptr(new Lease6(**lease)));
     }
@@ -1759,8 +1791,9 @@ Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease4StorageExpirationIndex::const_iterator lease = index.begin();
-         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
-                                                 max_leases));
+         (lease != ub) &&
+         ((max_leases == 0) ||
+          (static_cast<size_t>(std::distance(index.begin(), lease)) < max_leases));
          ++lease) {
         expired_leases.push_back(Lease4Ptr(new Lease4(**lease)));
     }
@@ -1795,8 +1828,9 @@ Memfile_LeaseMgr::getExpiredLeases6Internal(Lease6Collection& expired_leases,
 
     // Copy only the number of leases indicated by the max_leases parameter.
     for (Lease6StorageExpirationIndex::const_iterator lease = index.begin();
-         (lease != ub) && ((max_leases == 0) || (std::distance(index.begin(), lease) <
-                                                 max_leases));
+         (lease != ub) &&
+         ((max_leases == 0) ||
+          (static_cast<size_t>(std::distance(index.begin(), lease)) < max_leases));
          ++lease) {
         expired_leases.push_back(Lease6Ptr(new Lease6(**lease)));
     }
@@ -1832,8 +1866,9 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
         ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
-        isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_ << " - lease has changed in database");
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  lease->addr_.toText() << " either because the lease does not exist, "
+                      "it has been deleted or it has changed in the database.");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
@@ -1895,8 +1930,9 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
         ((*lease_it)->valid_lft_ != lease->current_valid_lft_))) {
         // For test purpose only: check that the lease has not changed in
         // the database.
-        isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_ << " - lease has changed in database");
+        isc_throw(NoSuchLease, "unable to update lease for address " <<
+                  lease->addr_.toText() << " either because the lease does not exist, "
+                      "it has been deleted or it has changed in the database.");
     }
 
     // Try to write a lease to disk first. If this fails, the lease will
@@ -1997,7 +2033,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(lease->addr_.toText());
+              DHCPSRV_MEMFILE_DELETE_ADDR4).arg(lease->addr_.toText());
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2056,7 +2092,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
 bool
 Memfile_LeaseMgr::deleteLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(lease->addr_.toText());
+              DHCPSRV_MEMFILE_DELETE_ADDR6).arg(lease->addr_.toText());
 
     if (MultiThreadingMgr::instance().getMode()) {
         std::lock_guard<std::mutex> lock(*mutex_);
@@ -2686,7 +2722,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
     // an "address-limit", check its value against the class's lease count.
     ConstElementPtr classes = limits->get("client-classes");
     if (classes) {
-        for (int i = 0; i < classes->size(); ++i) {
+        for (unsigned i = 0; i < classes->size(); ++i) {
             ConstElementPtr class_elem = classes->get(i);
             // Get class name.
             ConstElementPtr name_elem = class_elem->get("name");
@@ -2744,7 +2780,7 @@ Memfile_LeaseMgr::checkLimits4(isc::data::ConstElementPtr const& user_context) c
             }
 
             // If we're over the limit, return the error.
-            if (lease_count >= limit) {
+            if (static_cast<uint64_t>(lease_count) >= limit) {
                 std::ostringstream ss;
                 ss << "address limit " << limit << " for subnet ID " << subnet_id
                    << ", current lease count " << lease_count;
@@ -2773,7 +2809,7 @@ Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) c
     // class lease count.
     ConstElementPtr classes = limits->get("client-classes");
     if (classes) {
-        for (int i = 0; i < classes->size(); ++i) {
+        for (unsigned i = 0; i < classes->size(); ++i) {
             ConstElementPtr class_elem = classes->get(i);
             // Get class name.
             ConstElementPtr name_elem = class_elem->get("name");
@@ -2845,7 +2881,7 @@ Memfile_LeaseMgr::checkLimits6(isc::data::ConstElementPtr const& user_context) c
         }
 
         // If we're over the limit, return the error.
-        if (lease_count >= limit) {
+        if (static_cast<uint64_t>(lease_count) >= limit) {
             std::ostringstream ss;
             ss << (ltype == Lease::TYPE_NA ? "address" : "prefix")
                << " limit " << limit << " for subnet ID " << subnet_id
@@ -3447,6 +3483,13 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         }
         throw;
     }
+}
+
+TrackingLeaseMgrPtr
+Memfile_LeaseMgr::factory(const isc::db::DatabaseConnection::ParameterMap& parameters) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB)
+        .arg(DatabaseConnection::redactedAccessString(parameters));
+    return (TrackingLeaseMgrPtr(new Memfile_LeaseMgr(parameters)));
 }
 
 }  // namespace dhcp

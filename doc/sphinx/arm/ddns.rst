@@ -135,7 +135,7 @@ directly. It accepts the following command-line switches:
 -  ``-V`` - displays the extended Kea version and exits.
 
 -  ``-W`` - displays the Kea configuration report and exits. The report
-   is a copy of the ``config.report`` file produced by ``./configure``;
+   is a copy of the ``config.report`` file produced by ``meson setup``;
    it is embedded in the executable binary.
 
 -  ``-t file`` - specifies the configuration file to be tested.
@@ -166,18 +166,21 @@ directly. It accepts the following command-line switches:
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
 
-During startup, the server attempts to create a PID file of the form:
-``[runstatedir]/[conf name].kea-dhcp-ddns.pid`` where:
+During startup, the server attempts to create a PID file of the
+form: ``[pidfile_dir]/[conf name].kea-dhcp-ddns.pid`` where:
 
--  ``runstatedir`` - is the value as passed into the build configure
-   script; it defaults to "/usr/local/var/run". Note that this value may be
-   overridden at runtime by setting the environment variable
-   ``KEA_PIDFILE_DIR``. This is intended primarily for testing purposes.
+- ``pidfile_dir`` - is ``[prefix]/[localstatedir]/run/kea`` where
+  ``prefix`` and ``localstatedir`` are the values passed into meson setup using
+  ``--prefix`` and ``--localstatedir`` which default to ``/usr/local`` and
+  ``var`` respectively. So the whole ``pidfile_dir`` defaults to
+  ``/usr/local/var``. Note that this value may be overridden at runtime by
+  setting the environment variable  ``KEA_PIDFILE_DIR`` intended primarily for
+  testing purposes.
 
 -  ``conf name`` - is the configuration file name used to start the server,
    minus all preceding paths and the file extension. For example, given
-   a pathname of "/usr/local/etc/kea/myconf.txt", the portion used would
-   be "myconf".
+   a pathname of ``/usr/local/etc/kea/myconf.txt``, the portion used would
+   be ``myconf``.
 
 If the file already exists and contains the PID of a live process, the
 server issues a ``DHCP_DDNS_ALREADY_RUNNING`` log message and exits. It
@@ -319,6 +322,8 @@ operating system, i.e. the size of the ``sun_path`` field in the
 different operating systems, between 91 and 107 characters. Typical
 values are 107 on Linux and 103 on FreeBSD.
 
+Kea supports only one ``unix`` control socket in the "control-sockets" list.
+
 Communication over the control channel is conducted using JSON structures.
 See the `Control Channel section in the Kea Developer's
 Guide <https://reports.kea.isc.org/dev_guide/d2/d96/ctrlSocket.html>`__
@@ -424,6 +429,16 @@ password, these values can be read from files. The syntax is extended by:
 -  The ``user-file`` client parameter, which, with the ``directory`` parameter,
    specifies the path of a file where the user ID can be read.
 
+Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections.
+Both IPv4 and IPv6 addresses can be used.
+The server will issue an error when changing the socket type from HTTP to HTTPS
+or from HTTPS to HTTP using the same address and port. This action is not
+allowed as it might introduce a security issue accidentally caused by a user
+mistake.
+A different address or port must be specified when using the "config-set"
+command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
+when modyfying the configuration file and then running "config-reload" command.
+
 When files are used, they are read when the configuration is loaded,
 to detect configuration errors as soon as possible.
 
@@ -448,6 +463,11 @@ to detect configuration errors as soon as possible.
                        "password": "1234"
                    } ]
                }
+           },
+           {
+               "socket-type": "http",
+               "socket-address": "2010:30:40::50",
+               "socket-port": 8004
            }
        ],
        ...

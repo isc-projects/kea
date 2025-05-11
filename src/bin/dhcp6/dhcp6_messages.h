@@ -1,4 +1,4 @@
-// File created from ../../../src/bin/dhcp6/dhcp6_messages.mes
+// File created from src/bin/dhcp6/dhcp6_messages.mes
 
 #ifndef DHCP6_MESSAGES_H
 #define DHCP6_MESSAGES_H
@@ -9,6 +9,12 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL;
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR;
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT;
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST;
+extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED;
+extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE;
+extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL;
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE;
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA;
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING;
@@ -22,8 +28,6 @@ extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION;
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED;
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED;
-extern const isc::log::MessageID DHCP6_CLASS_UNDEFINED;
-extern const isc::log::MessageID DHCP6_CLASS_UNTESTABLE;
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE;
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL;
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE;
@@ -62,6 +66,8 @@ extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_FAIL;
 extern const isc::log::MessageID DHCP6_DYNAMIC_RECONFIGURATION_SUCCESS;
 extern const isc::log::MessageID DHCP6_FLEX_ID;
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_DROP;
+extern const isc::log::MessageID DHCP6_HOOK_ADDR6_REGISTER_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_DROP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_RCVD_SKIP;
 extern const isc::log::MessageID DHCP6_HOOK_BUFFER_SEND_SKIP;
@@ -136,6 +142,9 @@ extern const isc::log::MessageID DHCP6_QUERY_DATA;
 extern const isc::log::MessageID DHCP6_QUERY_LABEL;
 extern const isc::log::MessageID DHCP6_RAPID_COMMIT;
 extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_FAIL;
+extern const isc::log::MessageID DHCP6_RECLAIM_EXPIRED_LEASES_SKIPPED;
+extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_ADD_FAIL;
+extern const isc::log::MessageID DHCP6_REGISTERED_LEASE_UPDATE_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_NA;
 extern const isc::log::MessageID DHCP6_RELEASE_NA_DELETED;
 extern const isc::log::MessageID DHCP6_RELEASE_NA_EXPIRED;
@@ -148,8 +157,6 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_EXPIRED;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_DUID;
 extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID;
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_ERROR;
-extern const isc::log::MessageID DHCP6_REQUIRED_CLASS_EVAL_RESULT;
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL;
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED;
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA;

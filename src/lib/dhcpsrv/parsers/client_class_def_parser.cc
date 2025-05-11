@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
@@ -170,10 +171,29 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         }
     }
 
-    // Let's try to parse the only-if-required flag
-    bool required = false;
-    if (class_def_cfg->contains("only-if-required")) {
-        required = getBoolean(class_def_cfg, "only-if-required");
+    // Let's try to parse the only-in-additional-list/only-if-required flag
+    auto required_elem = class_def_cfg->get("only-if-required");
+    auto additional_elem = class_def_cfg->get("only-in-additional-list");
+    if (required_elem) {
+        if (!additional_elem) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_ONLY_IF_REQUIRED_DEPRECATED);
+            additional_elem = required_elem;
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "cannot specify both 'only-if-required' and "
+                      "'only-in-additional-list'. Use only the latter.");
+        }
+    }
+
+    bool additional = false;
+    if (additional_elem) {
+        if (additional_elem->getType() == Element::boolean) {
+            additional = additional_elem->boolValue();
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "'only-in-additional-list' must be boolean"
+                      << additional_elem->getPosition());
+        }
     }
 
     // Let's try to parse the next-server field
@@ -252,9 +272,9 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     // Sanity checks on built-in classes
     for (auto const& bn : builtinNames) {
         if (name == bn) {
-            if (required) {
+            if (additional) {
                 isc_throw(DhcpConfigError, "built-in class '" << name
-                          << "' only-if-required flag must be false");
+                          << "' only-in-additional-list flag must be false");
             }
             if (!test.empty()) {
                 isc_throw(DhcpConfigError, "built-in class '" << name
@@ -265,16 +285,24 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
 
     // Sanity checks on DROP
     if (name == "DROP") {
-        if (required) {
+        if (additional) {
             isc_throw(DhcpConfigError, "special class '" << name
-                      << "' only-if-required flag must be false");
+                      << "' only-in-additional-list flag must be false");
         }
         // depend_on_known is now allowed
     }
 
+    if (additional &&
+        (!valid_lft.unspecified() ||
+         !preferred_lft.unspecified() ||
+         !offer_lft.unspecified())) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES)
+            .arg(name);
+    }
+
     // Add the client class definition
     try {
-        class_dictionary->addClass(name, match_expr, test, required,
+        class_dictionary->addClass(name, match_expr, test, additional,
                                    depend_on_known, options, defs,
                                    user_context, next_server, sname, filename,
                                    valid_lft, preferred_lft, is_template, offer_lft);
@@ -302,7 +330,8 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
                                                       "test",
                                                       "option-data",
                                                       "user-context",
-                                                      "only-if-required",
+                                                      "only-if-required",   // deprecated
+                                                      "only-in-additional-list",
                                                       "valid-lifetime",
                                                       "min-valid-lifetime",
                                                       "max-valid-lifetime",

@@ -11,8 +11,8 @@ server.
 .. note::
 
     :ischooklib:`libdhcp_ha.so` is part of the open source code and is
-    available to every Kea user. It was previously available only to ISC
-    customers with a paid support contract.
+    available to every Kea user.
+    It was previously available only to ISC customers with a paid support contract.
 
 .. note::
 
@@ -700,7 +700,7 @@ only difference that ``this-server-name`` should be set to "server2" and
                        "url": "http://192.168.56.99:8000/",
                        "role": "backup",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "auto-failover": false
                    }]
                }]
@@ -712,10 +712,10 @@ only difference that ``this-server-name`` should be set to "server2" and
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.150",
-               "client-class": "HA_server1"
+               "client-classes": [ "HA_server1" ]
             }, {
                "pool": "192.0.3.200 - 192.0.3.250",
-               "client-class": "HA_server2"
+               "client-classes": [ "HA_server2" ]
             }],
 
             "option-data": [{
@@ -945,7 +945,7 @@ other words, if the query would normally be processed by ``server2`` but this
 server is not available, ``server1`` allocates the lease from the pool of
 "192.0.3.200 - 192.0.3.250". The Kea control agent in front of ``server3``
 requires basic HTTP authentication, and authorizes the user ID "foo" with the
-password "bar".
+password "1234".
 
 .. note::
 
@@ -1022,16 +1022,16 @@ library configuration has been removed from this example.
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.125",
-               "client-class": "phones_server1"
+               "client-classes": [ "phones_server1" ]
            }, {
                "pool": "192.0.3.126 - 192.0.3.150",
-               "client-class": "laptops_server1"
+               "client-classes": [ "laptops_server1" ]
            }, {
                "pool": "192.0.3.200 - 192.0.3.225",
-               "client-class": "phones_server2"
+               "client-classes": [ "phones_server2" ]
            }, {
                "pool": "192.0.3.226 - 192.0.3.250",
-               "client-class": "laptops_server2"
+               "client-classes": [ "laptops_server2" ]
            }],
 
            "option-data": [{
@@ -1096,7 +1096,7 @@ The following is an example configuration of the primary server in a
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "role": "backup",
                        "auto-failover": false
                    }]
@@ -1109,7 +1109,7 @@ The following is an example configuration of the primary server in a
            "subnet": "192.0.3.0/24",
            "pools": [{
                "pool": "192.0.3.100 - 192.0.3.250",
-               "client-class": "HA_server1"
+               "client-classes": [ "HA_server1" ]
            }],
 
            "option-data": [{
@@ -1175,7 +1175,7 @@ The following is an example configuration file for the primary server in a
                        "name": "server3",
                        "url": "http://192.168.56.99:8000/",
                        "basic-auth-user": "foo",
-                       "basic-auth-password": "bar",
+                       "basic-auth-password": "1234",
                        "role": "backup"
                    }]
                }]
@@ -1746,7 +1746,7 @@ lease, it parks the client response until the peers acknowledge the lease
 update. At that point, the server unparks the response and sends it to the
 client. This applies to client queries that cause lease changes, such as
 DHCPREQUEST for DHCPv4 and Request, Renew, and Rebind for DHCPv6. It does not
-apply to DHPCDISCOVERs (v4) or Solicits (v6).
+apply to DHCPDISCOVERs (v4) or Solicits (v6).
 
 .. _ha-maintenance:
 
@@ -2280,9 +2280,14 @@ previous state. See the :ref:`ha-maintenance` section for details.
        "service": [ "dhcp4" ],
        "arguments": {
            "cancel": false,
+           "state": "ready",
            "server-name": "server2"
        }
    }
+
+The ``state`` argument informs the recipient about the state of the sending server. The
+recipient can instantly resume the operation of the state machine without sending
+a heartbeat to check the partner's state.
 
 The optional ``server-name`` parameter specifies the name of one of the partners in
 the HA relationship that this command pertains to. This parameter can be omitted if the

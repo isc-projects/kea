@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ Logged at debug log level 10.
 This debug messages is issued when a command is rejected. Arguments detail
 the command and the address the request was received from.
 
-% COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on %2:%3, use TLS: %4
+% COMMAND_HTTP_LISTENER_STARTED Command HTTP listener started with %1 threads, listening on address: %2 port: %3, use TLS: %4
 Logged at debug log level 10.
 This debug messages is issued when an HTTP listener has been started to
 accept connections from Command API clients through which commands can be
@@ -38,12 +38,12 @@ received and responses sent.  Arguments detail the number of threads
 that the listener is using, the address and port at which it is listening,
 and if HTTPS/TLS is used or not.
 
-% COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for %1:%2 stopped.
+% COMMAND_HTTP_LISTENER_STOPPED Command HTTP listener for address: %1 port: %2 stopped.
 Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has completed shutdown.
 
-% COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for %1:%2
+% COMMAND_HTTP_LISTENER_STOPPING Stopping Command HTTP listener for address: %1 port: %2
 Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has begun to shutdown.
@@ -153,17 +153,30 @@ ready status after scheduling asynchronous send. This is programmatic error
 that should be reported. The command manager may or may not continue
 to operate correctly.
 
-% HTTP_COMMAND_MGR_IGNORED_TLS_SETUP_CHANGES ignore a change in TLS setup of the http control socket
-The warning message is issued when the HTTP/HTTPS control socket was
-reconfigured with a different TLS setup but keeping the address and port.
-These changes are ignored because they can't be applied without opening a new
-socket which will conflicts with the existing one.
+% HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED failed to reused HTTPS service bound to address: %1 port: %2
+This error message indicates that the server has failed reusing existing
+HTTPS service on the specified address and port. The server can not swith from
+HTTPS to HTTP sockets using the same address and port.
 
-% HTTP_COMMAND_MGR_SERVICE_STARTED started %1 service bound to address %2 port %3
+% HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED reused HTTPS service bound to address: %1 port: %2 and updated TLS settings
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
+% HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED failed to reused HTTP service bound to address: %1 port: %2
+This error message indicates that the server has failed reusing existing
+HTTP service on the specified address and port. The server can not swith from
+HTTP to HTTPS sockets using the same address and port.
+
+% HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED reused HTTP service bound to address: %1 port: %2
+This informational message indicates that the server has reused existing
+HTTP service on the specified address and port.
+
+% HTTP_COMMAND_MGR_SERVICE_STARTED started %1 service bound to address: %2 port: %3
 This informational message indicates that the server has started
 HTTP/HTTPS service on the specified address and port for receiving
 control commands.
 
-% HTTP_COMMAND_MGR_SERVICE_STOPPING stopping %1 service %2
+% HTTP_COMMAND_MGR_SERVICE_STOPPING Server is stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.

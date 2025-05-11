@@ -1,0 +1,37 @@
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Subnet Commands Hooks Library
+
+Welcome to Kea Subnet Commands Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+Subnet Commands library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section host_cmds Overview
+## Introduction
+
+@todo
+
+## Internal structure
+
+@todo
+
+@section subnet_cmdsMTCompatibility Multi-Threading Compatibility
+
+The subnet_cmds hooks library is compatible with multi-threading.
+Commands which modify the shared network and/or subnet configuration
+are executed inside a critical section, i.e. with threads stopped.
+
+*/

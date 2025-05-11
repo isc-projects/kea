@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,9 +23,12 @@ using namespace isc::dhcp::test;
 
 namespace {
 
-// @brief Register memFactory 
+// @brief Register memFactory
 bool registerFactory() {
-    return (HostDataSourceFactory::registerFactory("mem", memFactory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 1"));
+    };
+    return (HostDataSourceFactory::registerFactory("mem", memFactory, false, db_version));
 }
 
 // @brief Derive mem1 class
@@ -63,7 +66,10 @@ mem2Factory(const DatabaseConnection::ParameterMap&) {
 
 // @brief Register mem2Factory
 bool registerFactory2() {
-    return (HostDataSourceFactory::registerFactory("mem2", mem2Factory));
+    static auto db_version = []() -> std::string {
+        return (std::string("version 2"));
+    };
+    return (HostDataSourceFactory::registerFactory("mem2", mem2Factory, false, db_version));
 }
 
 // @brief Factory function returning 0
@@ -149,7 +155,7 @@ TEST_F(HostDataSourceFactoryTest, notype) {
                  InvalidType);
 }
 
-// Verify that factory must not return NULL
+// Verify that factory must not return null
 TEST_F(HostDataSourceFactoryTest, null) {
     EXPECT_TRUE(HostDataSourceFactory::registerFactory("mem", factory0));
     EXPECT_THROW(HostDataSourceFactory::add(sources_, "type=mem"),
@@ -187,6 +193,17 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_TRUE(registerFactory2());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem2"));
 
+    std::list<std::string> expected;
+    expected.push_back("version 2");
+    EXPECT_EQ(expected, HostDataSourceFactory::getDBVersions());
+
+    EXPECT_TRUE(registerFactory());
+
+    expected.clear();
+    expected.push_back("version 1");
+    expected.push_back("version 2");
+    EXPECT_EQ(expected, HostDataSourceFactory::getDBVersions());
+
     // Delete them
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem2"));
@@ -199,4 +216,4 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem2"));
 }
 
-}; // end of anonymous namespace
+}  // end of anonymous namespace

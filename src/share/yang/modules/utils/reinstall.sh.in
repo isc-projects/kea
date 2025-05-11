@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,7 +87,7 @@ prefix="@prefix@"
 # If script is in sources, use modules from sources.
 # If script is in installation, use modules from installation.
 for i in \
-  "@datarootdir@/@PACKAGE_NAME@/yang/modules" \
+  "@datarootdir@/kea/yang/modules" \
   "@abs_top_builddir@/src/share/yang/modules" \
 ; do
   if test "${script_path}" = "${i}/utils"; then

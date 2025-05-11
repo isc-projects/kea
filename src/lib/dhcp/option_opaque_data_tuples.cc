@@ -60,7 +60,7 @@ OptionOpaqueDataTuples::unpack(OptionBufferConstIter begin,
 
     // Start reading opaque data.
     size_t offset = 0;
-    while (offset < std::distance(begin, end)) {
+    while (offset < static_cast<size_t>(std::distance(begin, end))) {
         // Parse a tuple.
         OpaqueDataTuple tuple(length_field_type_, begin + offset, end);
         addTuple(tuple);

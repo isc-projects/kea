@@ -88,6 +88,7 @@ public:
     void testAdd6Invalid2Hosts();
     void testAllowAddress6AlreadyReserved();
     void testAllowPrefix6AlreadyReserved();
+    void testPrefixExclude();
     void testDuplicatesSubnet4HWAddr();
     void testDuplicatesSubnet4DUID();
     void testDuplicatesSubnet6HWAddr();
@@ -723,7 +724,6 @@ CfgHostsTest::testDelete2ForIPv6() {
     // Add a host with two addresses.
     IOAddress address1("2001:db8:1::1");
     IOAddress address2("2001:db8:2::2");
-    size_t host_count = 10;
     SubnetID subnet_id(42);
 
     HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
@@ -758,7 +758,6 @@ CfgHostsTest::testDeleteBothForIPv6() {
     // Add a host with two addresses.
     IOAddress address1("2001:db8:1::1");
     IOAddress address2("2001:db8:2::");
-    size_t host_count = 10;
     SubnetID subnet_id(42);
 
     HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
@@ -1732,6 +1731,31 @@ TEST_F(CfgHostsTest, unusedSubnetIDs) {
                                           SUBNET_ID_UNUSED, SUBNET_ID_UNUSED,
                                           IOAddress("10.0.0.1")))),
                  isc::BadValue);
+}
+// Test insert and retrieve a v6 host with prefix exclude option.
+TEST_F(CfgHostsTest, prefixExclude) {
+    CfgHosts cfg;
+
+    // Create a host reservation.
+    HostPtr host = HostPtr(new Host(duids_[0]->toText(), "duid",
+                                    SUBNET_ID_UNUSED, SubnetID(1),
+                                    IOAddress("0.0.0.0")));
+    IPv6Resrv resv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48);
+    resv.setPDExclude(IOAddress("2001:db8:0:1::"), 64);
+    host->addReservation(resv);
+    SubnetID subnet = host->getIPv6SubnetID();
+
+    // Try to add it to the host config.
+    ASSERT_NO_THROW(cfg.add(host));
+
+    // Retrieve it.
+    ConstHostPtr from_cfg = cfg.get6(subnet, Host::IDENT_DUID,
+                                     &host->getIdentifier()[0],
+                                     host->getIdentifier().size());
+    ASSERT_TRUE(from_cfg);
+
+    // Compare host and from_cfg.
+    EXPECT_EQ(host->toText(), from_cfg->toText());
 }
 
 // This test verifies that it is not possible to add the same Host to the

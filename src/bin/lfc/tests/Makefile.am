@@ -26,12 +26,6 @@ lfc_unittests_SOURCES += lfc_controller_unittests.cc
 
 lfc_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 lfc_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-lfc_unittests_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-lfc_unittests_LDFLAGS += $(PGSQL_LIBS)
-endif
 lfc_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 lfc_unittests_LDADD  = $(top_builddir)/src/bin/lfc/liblfc.la
@@ -44,15 +38,6 @@ lfc_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-lfc_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-lfc_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 lfc_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 lfc_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la

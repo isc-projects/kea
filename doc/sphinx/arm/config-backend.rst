@@ -14,10 +14,10 @@ this documentation, the term "Configuration Backend" may also refer to
 the particular Kea module providing support to manage and fetch the
 configuration information from the particular database type. For
 example, the MySQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_mysql_cb.so`, which provides a complete set of functions to
+:ischooklib:`libdhcp_mysql.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the MySQL database.
 The PostgreSQL Configuration Backend is the logic implemented within
-:ischooklib:`libdhcp_pgsql_cb.so`, which provides a complete set of functions to
+:ischooklib:`libdhcp_pgsql.so`, which provides a complete set of functions to
 manage and fetch the configuration information from the PostgreSQL database.
 From here on, the term "database" is used to refer to either a MySQL or
 PostgreSQL database.
@@ -163,15 +163,17 @@ in two independent configuration sources.
 CB Components
 -------------
 
-To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql_cb.so`
-must be compiled and the DHCP servers must be configured to load it.
-It is compiled when the ``--with-mysql`` configuration switch is used during the Kea build.
-The MySQL C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+To use a MySQL configuration backend, :ischooklib:`libdhcp_mysql.so` must
+be compiled and the DHCP servers must be configured to load it. It is compiled
+when the ``-D mysql`` configuration switch is used during the Kea build.
+The MySQL C client libraries must be installed, as explained in
+:ref:`dhcp-install-configure`.
 
-To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql_cb.so` must
-be compiled and the DHCP servers must be configured to load it. It is compiled when
-the ``--with-pgsql`` configuration switch is used during the Kea build. The PostgreSQL
-C client libraries must be installed, as explained in :ref:`dhcp-install-configure`.
+To use a PostgreSQL configuration backend, :ischooklib:`libdhcp_pgsql.so` must
+be compiled and the DHCP servers must be configured to load it. It is compiled
+when the ``-D pgsql`` configuration switch is used during the Kea build.
+The PostgreSQL C client libraries must be installed, as explained in
+:ref:`dhcp-install-configure`.
 
 .. note::
 

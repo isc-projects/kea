@@ -95,7 +95,8 @@ CalloutManager::registerCallout(const std::string& name,
 bool
 CalloutManager::calloutsPresent(int hook_index) const {
     // Validate the hook index.
-    if ((hook_index < 0) || (hook_index >= hook_vector_.size())) {
+    if ((hook_index < 0) ||
+        (static_cast<size_t>(hook_index) >= hook_vector_.size())) {
         isc_throw(NoSuchHook, "hook index " << hook_index <<
                   " is not valid for the list of registered hooks");
     }
@@ -242,7 +243,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout,
     int hook_index = server_hooks_.getIndex(name);
 
     // New hooks can have been registered since the manager was constructed.
-    if (hook_index >= hook_vector_.size()) {
+    if (static_cast<size_t>(hook_index) >= hook_vector_.size()) {
         return (false);
     }
 
@@ -340,7 +341,7 @@ CalloutManager::registerCommandHook(const std::string& command_name) {
 void
 CalloutManager::ensureHookLibsVectorSize() {
     ServerHooks& hooks = ServerHooks::getServerHooks();
-    if (hooks.getCount() > hook_vector_.size()) {
+    if (static_cast<size_t>(hooks.getCount()) > hook_vector_.size()) {
         // Uh oh, there are more hook points that our vector allows.
         hook_vector_.resize(hooks.getCount());
     }

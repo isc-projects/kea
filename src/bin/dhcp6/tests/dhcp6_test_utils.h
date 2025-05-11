@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <asiolink/process_spawn.h>
-#include <dhcp6/dhcp6_srv.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/parser_context.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
@@ -31,6 +31,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/log_utils.h>
 
@@ -132,9 +133,13 @@ private:
 };
 
 /// @brief "naked" Dhcpv6Srv class that exposes internal members
-class NakedDhcpv6Srv: public isc::dhcp::Dhcpv6Srv {
+class NakedDhcpv6Srv: public ControlledDhcpv6Srv {
 public:
-    NakedDhcpv6Srv(uint16_t port) : isc::dhcp::Dhcpv6Srv(port) {
+    /// @brief Constructor.
+    ///
+    /// @param port port number to listen on; the default value 0 indicates
+    /// that sockets should not be opened.
+    NakedDhcpv6Srv(uint16_t port) : ControlledDhcpv6Srv(port) {
         // Open the "memfile" database for leases
         std::string memfile = "type=memfile universe=6 persist=false";
         isc::dhcp::LeaseMgrFactory::create(memfile);
@@ -145,7 +150,7 @@ public:
 
         dhcp::TimerMgr::instance()->setIOService(getIOService());
 
-        config::CommandMgr::instance().setIOService(getIOService());
+        config::UnixCommandMgr::instance().setIOService(getIOService());
     }
 
     /// @brief fakes packet reception
@@ -344,6 +349,27 @@ public:
         return (processDecline(ctx));
     }
 
+    /// @brief Processes incoming Addr-reg-inform message.
+    ///
+    /// @param addr_reg_inf a message received from client
+    /// @return Addr-reg-reply message or null
+    Pkt6Ptr processAddrRegInform(const Pkt6Ptr& addr_reg_inf) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = !earlyGHRLookup(addr_reg_inf, ctx);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        ctx.subnet_ = selectSubnet(addr_reg_inf, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        initContext(ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processAddrRegInform(ctx));
+    }
+
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
@@ -352,6 +378,7 @@ public:
     using Dhcpv6Srv::processRelease;
     using Dhcpv6Srv::processDecline;
     using Dhcpv6Srv::processInfRequest;
+    using Dhcpv6Srv::processAddrRegInform;
     using Dhcpv6Srv::processClientFqdn;
     using Dhcpv6Srv::createNameChangeRequests;
     using Dhcpv6Srv::selectSubnet;
@@ -591,7 +618,7 @@ public:
 class Dhcp6Client;
 
 // Provides support for tests against a preconfigured subnet6
-// extends upon NakedDhcp6SrvTest
+// extends upon NakedDhcpv6SrvTest
 class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// @brief Specifies expected outcome
@@ -913,6 +940,15 @@ public:
                      const isc::asiolink::IOAddress& release_addr,
                      const LeaseAffinity lease_affinity);
 
+    /// @brief Performs RELEASE test for an address within a subnet
+    /// and does not cause counters to decrease below 0.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    void
+    testReleaseAndReclaim(isc::dhcp::Lease::Type type);
+
     /// @brief Checks that reassignment of a released-expired lease
     /// does not lead to zero lifetimes.
     ///
@@ -969,7 +1005,7 @@ public:
     isc::dhcp::Pool6Ptr pd_pool_;
 
     /// @brief Server object under test.
-    NakedDhcpv6Srv srv_;
+    boost::shared_ptr<NakedDhcpv6Srv> srv_;
 
     /// @brief The multi-threading flag.
     bool multi_threading_;

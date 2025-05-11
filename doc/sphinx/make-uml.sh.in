@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -eu
+
+cd '@srcdir@'
+
+if test '@HAVE_PLANTUML@' = 'no'; then
+    exit 0
+fi
+
+# uml-to-png
+# shellcheck disable=SC2043
+for uml in @umls@; do @PLANTUML@ -tpng "$uml"; done
+# uml-to-svg
+# shellcheck disable=SC2043
+for uml in @umls@; do @PLANTUML@ -tsvg "$uml"; done
+# format-svgs
+if test '@HAVE_XMLLINT' != 'no'; then
+    # shellcheck disable=SC2043
+    for svg in @svgs@; do xmllint --format "$svg" > tmp; mv tmp "$svg"; done
+else
+    printf 'WARNING: xmllint not found. SVGs not formatted.\n'
+fi
+# uml-to-txt
+# shellcheck disable=SC2043
+for uml in @tumls@; do @PLANTUML@ -ttxt "$uml"; done
+# shellcheck disable=SC2043
+for txt in @txts@; do sed 's/ *$//g' "$txt" > tmp; mv tmp "$txt"; done

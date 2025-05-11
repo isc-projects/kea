@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@ using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
+
 
 void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
@@ -139,72 +140,7 @@ BaseNetworkParser::parseCacheParams(const ConstElementPtr& network_data,
 void
 BaseNetworkParser::parseDdnsParams(const data::ConstElementPtr& network_data,
                                    NetworkPtr& network) {
-
-    if (network_data->contains("ddns-send-updates")) {
-        network->setDdnsSendUpdates(getBoolean(network_data, "ddns-send-updates"));
-    }
-
-    if (network_data->contains("ddns-override-no-update")) {
-        network->setDdnsOverrideNoUpdate(getBoolean(network_data, "ddns-override-no-update"));
-    }
-
-    if (network_data->contains("ddns-override-client-update")) {
-        network->setDdnsOverrideClientUpdate(getBoolean(network_data, "ddns-override-client-update"));
-    }
-
-    if (network_data->contains("ddns-replace-client-name")) {
-        network->setDdnsReplaceClientNameMode(getAndConvert<D2ClientConfig::ReplaceClientNameMode,
-                                                            D2ClientConfig::stringToReplaceClientNameMode>
-                                                            (network_data, "ddns-replace-client-name",
-                                                             "ReplaceClientName mode"));
-    }
-
-    if (network_data->contains("ddns-generated-prefix")) {
-        network->setDdnsGeneratedPrefix(getString(network_data, "ddns-generated-prefix"));
-    }
-
-    if (network_data->contains("ddns-qualifying-suffix")) {
-        network->setDdnsQualifyingSuffix(getString(network_data, "ddns-qualifying-suffix"));
-    }
-
-    std::string hostname_char_set;
-    if (network_data->contains("hostname-char-set")) {
-        hostname_char_set = getString(network_data, "hostname-char-set");
-        network->setHostnameCharSet(hostname_char_set);
-    }
-
-    std::string hostname_char_replacement;
-    if (network_data->contains("hostname-char-replacement")) {
-        hostname_char_replacement = getString(network_data, "hostname-char-replacement");
-        network->setHostnameCharReplacement(hostname_char_replacement);
-    }
-
-    // We need to validate sanitizer values here so we can detect problems and
-    // cause a configuration.  We don't retain the compilation because it's not
-    // something we can inherit.
-    if (!hostname_char_set.empty()) {
-        try {
-            str::StringSanitizerPtr sanitizer(new str::StringSanitizer(hostname_char_set,
-                                                                       hostname_char_replacement));
-        } catch (const std::exception& ex) {
-            isc_throw(BadValue, "hostname-char-set '" << hostname_char_set
-                      << "' is not a valid regular expression");
-        }
-    }
-
-    if (network_data->contains("ddns-update-on-renew")) {
-        network->setDdnsUpdateOnRenew(getBoolean(network_data, "ddns-update-on-renew"));
-    }
-
-    if (network_data->contains("ddns-ttl-percent")) {
-        network->setDdnsTtlPercent(getDouble(network_data, "ddns-ttl-percent"));
-    }
-
-    // For backward compatibility, ddns-conflict-resolution-mode is optional.
-    if (network_data->contains("ddns-conflict-resolution-mode")) {
-        network->setDdnsConflictResolutionMode(getString(network_data,
-                                                         "ddns-conflict-resolution-mode"));
-    }
+    parseDdnsParameters(network_data, network);
 }
 
 void
@@ -247,6 +183,71 @@ BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
         }
 
         network->setOfferLft(value);
+    }
+}
+
+void
+BaseNetworkParser::getAdditionalClassesElem(ConstElementPtr params,
+                                            ClassAdderFunc adder_func) {
+    // Try setting up additional client classes.
+    ConstElementPtr req_class_list = params->get("require-client-classes");
+    ConstElementPtr class_list = params->get("evaluate-additional-classes");
+    if (req_class_list) {
+        if (!class_list) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_REQUIRE_CLIENT_CLASSES_DEPRECATED);
+            class_list = req_class_list;
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "cannot specify both 'require-client-classes' and "
+                      "'evaluate-additional-classes'. Use only the latter.");
+        }
+    }
+
+    if (class_list) {
+        const std::vector<data::ElementPtr>& classes = class_list->listValue();
+        for (auto const& cclass : classes) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name (" << cclass->getPosition() << ")");
+            }
+
+            (adder_func)(cclass->stringValue());
+        }
+    }
+}
+
+void
+BaseNetworkParser::getClientClassesElem(ConstElementPtr params,
+                                        ClassAdderFunc adder_func) {
+    // Try setting up client client classes.
+    ConstElementPtr class_elem = params->get("client-class");
+    ConstElementPtr class_list = params->get("client-classes");
+    if (class_elem) {
+        if (!class_list) {
+            LOG_WARN(dhcpsrv_logger, DHCPSRV_CLIENT_CLASS_DEPRECATED);
+            if (class_elem->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "invalid class name (" << class_elem->getPosition() << ")");
+            }
+
+            if (!class_elem->stringValue().empty()) {
+                (adder_func)(class_elem->stringValue());
+            }
+        } else {
+            isc_throw(isc::dhcp::DhcpConfigError,
+                      "cannot specify both 'client-class' and "
+                      "'client-classes'. Use only the latter.");
+        }
+    }
+
+    if (class_list) {
+        for (auto const& cclass : class_list->listValue()) {
+            if ((cclass->getType() != Element::string) ||
+                cclass->stringValue().empty()) {
+                isc_throw(DhcpConfigError, "invalid class name (" << cclass->getPosition() << ")");
+            }
+
+            (adder_func)(cclass->stringValue());
+        }
     }
 }
 

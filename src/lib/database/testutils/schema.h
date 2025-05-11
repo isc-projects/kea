@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,7 @@ extern const char* VALID_SECURE_USER;
 extern const char* INVALID_USER;
 extern const char* VALID_PASSWORD;
 extern const char* INVALID_PASSWORD;
+extern const char* DEFAULT_PASSWORD;
 extern const char* VALID_TIMEOUT;
 extern const char* INVALID_TIMEOUT_1;
 extern const char* INVALID_TIMEOUT_2;

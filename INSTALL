@@ -1,43 +1,38 @@
 INSTALLATION INSTRUCTIONS
 
-1. Generate the configure script.  If you downloaded the source from git or
-are compiling with premium hook packages, you will need to run autoreconf to
-generate the configure script as shown below.  If you are building from a
-tarball you may skip this step.
+1. Set up the build. If you want to alter Kea's installation path, or want to
+make sure that certain capabilities are included (e.g. enabling MySQL or
+PostgreSQL), you will need to specify these as options to the command (run
+"meson configure" for a list of options).
 
-   $ autoreconf --install
+   $ meson setup build
 
-2. Run the configure script.  If you want to alter Kea's installation path, or
-need to include capabilities (e.g. enabling MySQL or PostgreSQL) you will need
-to specify these as options to the configure script (run ./configure -h for
-list of options).
-
-   $ ./configure
-
-If your environment is missing dependencies, the configure script will exit
+If your environment is missing dependencies, the command will exit
 with error and should emit sufficient information to guide you on how to
-proceed.  A detailed account of the configure process is captured in
-./config.log.
+proceed. A detailed account of the setup process is captured in
+build/meson-logs/meson-log.txt.
 
-3. Build it. Once you've successfully configured the source tree, run "make" to
-build it.  You may wish to include the -j<n> command line option to specify
-parallel execution to speed things along:
+2. Build it. Once you've successfully set up the build, run "meson compile" to
+build it.
 
-  $ make
+  $ meson compile -C build
 
-4. Install it. Depending on your target directory, this step will likely require
-a root privileges. You can install the software by running:
+4. Install it. Depending on your target directory, this step will likely
+require a root privileges. You can install the software by running:
 
-  $ sudo make install
+  $ meson install -C build
 
-Kea depends on C++ compiler, make, libtool, boost (at least includes, but many
+Kea depends on C++ compiler, meson, ninja, boost (at least includes, but many
 OSes require boost-system library), log4cplus and one crypto library (either
-OpenSSL or Botan) for compilation.  Optional backends (MySQL and PostgreSQL)
-have additional dependencies. For detailed installation directions, see the
-documentation in doc/sphinx/arm/install.rst text file or on the Kea online
-docs: https://kea.readthedocs.io/.
-Another optional dependency is Sysrepo, a system for providing YANG/NETCONF
-interface.
+OpenSSL or Botan) for compilation.
+
+Optional backends (MySQL and PostgreSQL) have additional dependencies. For
+detailed installation directions, see the documentation in the
+doc/sphinx/arm/install.rst text file or on the Kea online docs:
+https://kea.readthedocs.io/en/stable/arm/install.html.
+
+Other optional dependencies are Kerberos with GSSAPI support for the GSS-TSIG
+hook library and libyang and sysrepo for providing a YANG/NETCONF interface.
 
 You can find current OS-specific build/installation
-instructions in our knowledge base at https://kb.isc.org/docs/installing-kea
+instructions in our knowledge base at https://kb.isc.org/docs/installing-kea.

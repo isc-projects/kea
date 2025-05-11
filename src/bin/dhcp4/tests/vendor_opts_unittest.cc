@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -176,10 +176,8 @@ public:
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP4(config));
 
-        // Configure a mocked server.
-        NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
-        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json));
+        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
@@ -199,7 +197,7 @@ public:
         dis->addOption(clientid);
 
         // Pass it to the server and get an offer
-        Pkt4Ptr offer = srv.processDiscover(dis);
+        Pkt4Ptr offer = srv_->processDiscover(dis);
 
         // Check if we get a response at all.
         ASSERT_TRUE(offer);
@@ -222,7 +220,7 @@ public:
         }
 
         // Need to process DHCPDISCOVER again after requesting new option.
-        offer = srv.processDiscover(dis);
+        offer = srv_->processDiscover(dis);
         ASSERT_TRUE(offer);
 
         // Check if there is a vendor option in the response, if the Cable Labs
@@ -445,10 +443,8 @@ public:
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP4(config));
 
-        // Configure a mocked server.
-        NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
-        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json));
+        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
@@ -477,7 +473,7 @@ public:
         }
 
         // Pass it to the server and get an offer
-        Pkt4Ptr offer = srv.processDiscover(dis);
+        Pkt4Ptr offer = srv_->processDiscover(dis);
 
         // check if we get response at all
         ASSERT_TRUE(offer);
@@ -704,10 +700,8 @@ public:
         ConstElementPtr json;
         ASSERT_NO_THROW(json = parseDHCP4(config));
 
-        // Configure a mocked server.
-        NakedDhcpv4Srv srv(0);
         ConstElementPtr x;
-        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json));
+        EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
         ASSERT_EQ(0, rcode_);
@@ -740,7 +734,7 @@ public:
         }
 
         // Pass it to the server and get an offer
-        Pkt4Ptr offer = srv.processDiscover(dis);
+        Pkt4Ptr offer = srv_->processDiscover(dis);
 
         // check if we get response at all
         ASSERT_TRUE(offer);
@@ -840,8 +834,6 @@ public:
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
 TEST_F(VendorOptsTest, vendorOptionsDocsis) {
-    NakedDhcpv4Srv srv(0);
-
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -865,7 +857,7 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -879,19 +871,19 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     ASSERT_NO_THROW(dis = PktCaptures::captureRelayedDiscover());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 
     // Get Relay Agent Info from query...
@@ -1335,8 +1327,6 @@ TEST_F(VendorOptsTest, vendorOptionsOROAndPersistentMultipleOptionDifferentVendo
 
 // This test checks if cancelled options are actually never assigned.
 TEST_F(VendorOptsTest, vendorCancelledOptions) {
-    NakedDhcpv4Srv srv(0);
-
     ConstElementPtr x;
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
@@ -1377,7 +1367,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
 
-    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_) << comment_->str();
@@ -1400,7 +1390,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
     dis->addOption(vendor);
 
     // Pass it to the server and get an advertise
-    Pkt4Ptr offer = srv.processDiscover(dis);
+    Pkt4Ptr offer = srv_->processDiscover(dis);
 
     // check if we get response at all
     ASSERT_TRUE(offer);
@@ -1416,7 +1406,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
     vendor->addOption(vendor_oro);
 
     // Need to process DHCPDISCOVER again after requesting new option.
-    offer = srv.processDiscover(dis);
+    offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
 
     // Again there should be no vendor option response.
@@ -1426,7 +1416,7 @@ TEST_F(VendorOptsTest, vendorCancelledOptions) {
     vendor_oro->addValue(100);
 
     // Try again.
-    offer = srv.processDiscover(dis);
+    offer = srv_->processDiscover(dis);
     ASSERT_TRUE(offer);
 
     // Check if there is a vendor option response
@@ -1482,16 +1472,14 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr json_valid;
     ASSERT_NO_THROW(json_valid = parseDHCP4(config_valid));
 
-    NakedDhcpv4Srv srv(0);
-
     // This should fail (missing option definition)
-    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json_bogus));
+    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json_bogus));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(1, rcode_);
 
     // This should work (option definition present)
-    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(srv, json_valid));
+    EXPECT_NO_THROW(x = Dhcpv4SrvTest::configure(*srv_, json_valid));
     ASSERT_TRUE(x);
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
@@ -1502,19 +1490,16 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
 /// The test has been updated to work with the updated generic
 /// vendor options handling code.
 TEST_F(VendorOptsTest, docsisClientClassification) {
-
-    NakedDhcpv4Srv srv(0);
-
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // vendor-class set to docsis3.0
     Pkt4Ptr dis1;
     ASSERT_NO_THROW(dis1 = PktCaptures::captureRelayedDiscover());
     ASSERT_NO_THROW(dis1->unpack());
 
-    srv.classifyPacket(dis1);
+    srv_->classifyPacket(dis1);
 
-    EXPECT_TRUE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
-    EXPECT_FALSE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_TRUE(dis1->inClass(srv_->VENDOR_CLASS_PREFIX + "docsis3.0:"));
+    EXPECT_FALSE(dis1->inClass(srv_->VENDOR_CLASS_PREFIX + "eRouter1.0"));
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // vendor-class set to eRouter1.0
@@ -1522,17 +1507,17 @@ TEST_F(VendorOptsTest, docsisClientClassification) {
     ASSERT_NO_THROW(dis2 = PktCaptures::captureRelayedDiscover2());
     ASSERT_NO_THROW(dis2->unpack());
 
-    srv.classifyPacket(dis2);
+    srv_->classifyPacket(dis2);
 
-    EXPECT_TRUE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
-    EXPECT_FALSE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
+    EXPECT_TRUE(dis2->inClass(srv_->VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_FALSE(dis2->inClass(srv_->VENDOR_CLASS_PREFIX + "docsis3.0:"));
 }
 
 // Checks that it's possible to have a vivso (125) option in the response
 // only. Once specific client (Genexis) sends only vendor-class info and
 // expects the server to include vivso in the response.
 TEST_F(VendorOptsTest, vivsoInResponseOnly) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     // The config defines custom vendor 125 suboption 2 that conveys a TFTP URL.
     // The client doesn't send vendor 125 option, so normal vendor option
@@ -1623,8 +1608,6 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
 
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
-    NakedDhcpv4Srv srv(0);
-
     // If there is no definition for option 43 a last resort
     // one is applied. This definition was used by Kea <= 1.2
     // so should be backward compatible.
@@ -1652,7 +1635,7 @@ TEST_F(VendorOptsTest, option43LastResort) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1676,11 +1659,11 @@ TEST_F(VendorOptsTest, option43LastResort) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1701,8 +1684,6 @@ TEST_F(VendorOptsTest, option43LastResort) {
 
 // Checks effect of raw not compatible option 43 (no failure)
 TEST_F(VendorOptsTest, option43BadRaw) {
-    NakedDhcpv4Srv srv(0);
-
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content but processing of truncated
     // (suboption length > available length) suboptions does not raise
@@ -1725,7 +1706,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1758,8 +1739,8 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    srv.deferredUnpack(query);
+    srv_->classifyPacket(query);
+    srv_->deferredUnpack(query);
 
     // Check if the option was (uncorrectly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -1767,7 +1748,7 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     EXPECT_TRUE(custom);
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1785,8 +1766,6 @@ TEST_F(VendorOptsTest, option43BadRaw) {
 
 // Checks effect of raw not compatible option 43 (failure)
 TEST_F(VendorOptsTest, option43FailRaw) {
-    NakedDhcpv4Srv srv(0);
-
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content. Here the processing
     // of suboptions tries to unpack the uitn32 foo suboption and
@@ -1814,7 +1793,7 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1849,16 +1828,14 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    EXPECT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    EXPECT_NO_THROW(srv_->deferredUnpack(query));
     ASSERT_TRUE(query->getOption(vopt->getType()));
     EXPECT_EQ(vopt, query->getOption(vopt->getType()));
 }
 
 // Verifies raw option 43 can be handled (global)
 TEST_F(VendorOptsTest, option43RawGlobal) {
-    NakedDhcpv4Srv srv(0);
-
     // The vendor-encapsulated-options is redefined as raw binary
     // in a global definition.
     string config = "{ \"interfaces-config\": {"
@@ -1883,7 +1860,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -1916,8 +1893,8 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -1925,7 +1902,7 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     EXPECT_FALSE(custom);
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -1945,8 +1922,6 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
 
 // Verifies raw option 43 can be handled (catch-all class)
 TEST_F(VendorOptsTest, option43RawClass) {
-    NakedDhcpv4Srv srv(0);
-
     // The vendor-encapsulated-options is redefined as raw binary
     // in a class definition.
     string config = "{ \"interfaces-config\": {"
@@ -1974,7 +1949,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2007,8 +1982,8 @@ TEST_F(VendorOptsTest, option43RawClass) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2016,7 +1991,7 @@ TEST_F(VendorOptsTest, option43RawClass) {
     EXPECT_FALSE(custom);
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -2036,8 +2011,6 @@ TEST_F(VendorOptsTest, option43RawClass) {
 
 // Verifies option 43 deferred processing (one class)
 TEST_F(VendorOptsTest, option43Class) {
-    NakedDhcpv4Srv srv(0);
-
     // A client class defines vendor-encapsulated-options (code 43)
     // and data for it and its sub-option.
     string config = "{ \"interfaces-config\": {"
@@ -2072,7 +2045,7 @@ TEST_F(VendorOptsTest, option43Class) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2114,8 +2087,8 @@ TEST_F(VendorOptsTest, option43Class) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2124,7 +2097,7 @@ TEST_F(VendorOptsTest, option43Class) {
     EXPECT_EQ(1, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -2149,8 +2122,6 @@ TEST_F(VendorOptsTest, option43Class) {
 
 // Verifies option 43 priority
 TEST_F(VendorOptsTest, option43ClassPriority) {
-    NakedDhcpv4Srv srv(0);
-
     // Both global and client-class scopes get vendor-encapsulated-options
     // (code 43) definition and data. The client-class has precedence.
     // Note it does not work without the vendor-encapsulated-options
@@ -2202,7 +2173,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2244,8 +2215,8 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2254,7 +2225,7 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     EXPECT_EQ(1, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -2283,8 +2254,6 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
 
 // Verifies option 43 deferred processing (two classes)
 TEST_F(VendorOptsTest, option43Classes) {
-    NakedDhcpv4Srv srv(0);
-
     // Two client-class scopes get vendor-encapsulated-options
     // (code 43) definition and data. The first matching client-class
     // (from a set?) applies.
@@ -2338,7 +2307,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2380,8 +2349,8 @@ TEST_F(VendorOptsTest, option43Classes) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Check if the option was (correctly) re-unpacked
     vopt = query->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
@@ -2390,7 +2359,7 @@ TEST_F(VendorOptsTest, option43Classes) {
     EXPECT_EQ(1, vopt->getOptions().size());
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -2419,7 +2388,7 @@ TEST_F(VendorOptsTest, option43Classes) {
 
 // Checks effect of raw not compatible option 43 sent by a client (failure)
 TEST_F(VendorOptsTest, clientOption43FailRaw) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     // The vendor-encapsulated-options has an incompatible data
     // so won't have the expected content. Here the processing
@@ -2457,7 +2426,7 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
 
 // Verifies raw option 43 sent by a client can be handled (global)
 TEST_F(VendorOptsTest, clientOption43RawGlobal) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     // The vendor-encapsulated-options is redefined as raw binary
     // in a global definition.
@@ -2501,7 +2470,7 @@ TEST_F(VendorOptsTest, clientOption43RawGlobal) {
 
 // Verifies raw option 43 sent by a client can be handled (catch-all class)
 TEST_F(VendorOptsTest, clientOption43RawClass) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     // The vendor-encapsulated-options is redefined as raw binary
     // in a class definition.
@@ -2550,8 +2519,6 @@ TEST_F(VendorOptsTest, clientOption43RawClass) {
 // Verifies that a client query with a truncated length in
 // vendor option (125) will still be processed by the server.
 TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
-    NakedDhcpv4Srv srv(0);
-
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
@@ -2570,7 +2537,7 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_) << isc::data::prettyPrint(status);
@@ -2583,26 +2550,24 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     ASSERT_NO_THROW(dis = PktCaptures::discoverWithTruncatedVIVSO());
 
     // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
+    srv_->fakeReceive(dis);
 
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
     // In particular, it should call registered buffer4_receive callback.
-    srv.run();
+    srv_->run();
 
     // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
+    ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received an response and it was a DHCPOFFER.
-    Pkt4Ptr offer = srv.fake_sent_.front();
+    Pkt4Ptr offer = srv_->fake_sent_.front();
     ASSERT_TRUE(offer);
 }
 
 /// Checks that it's possible to define and use a suboption 0.
 TEST_F(VendorOptsTest, vendorOpsSubOption0) {
-    NakedDhcpv4Srv srv(0);
-
     // Zero Touch provisioning
     string config =
         "{"
@@ -2675,7 +2640,7 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     ConstElementPtr status;
 
     // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(srv, json));
+    EXPECT_NO_THROW(status = Dhcpv4SrvTest::configure(*srv_, json));
     ASSERT_TRUE(status);
     comment_ = parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
@@ -2699,11 +2664,11 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
     prl->addValue(DHO_VENDOR_CLASS_IDENTIFIER);
     query->addOption(prl);
 
-    srv.classifyPacket(query);
-    ASSERT_NO_THROW(srv.deferredUnpack(query));
+    srv_->classifyPacket(query);
+    ASSERT_NO_THROW(srv_->deferredUnpack(query));
 
     // Pass it to the server and get a DHCPOFFER.
-    Pkt4Ptr offer = srv.processDiscover(query);
+    Pkt4Ptr offer = srv_->processDiscover(query);
 
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
@@ -2726,7 +2691,7 @@ TEST_F(VendorOptsTest, vendorOpsSubOption0) {
 
 // Checks if it's possible to have 2 vivco options  with different vendor IDs.
 TEST_F(VendorOptsTest, twoVivcos) {
-    Dhcp4Client client;
+    Dhcp4Client client(srv_);
 
     // The config defines 2 vendors with for each a vivco option,
     // having the always send flag set to true.

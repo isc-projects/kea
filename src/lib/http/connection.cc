@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -68,23 +68,17 @@ SocketCallback::operator()(boost::system::error_code ec, size_t length) {
 HttpConnection::HttpConnection(const asiolink::IOServicePtr& io_service,
                                const HttpAcceptorPtr& acceptor,
                                const TlsContextPtr& tls_context,
-                               HttpConnectionPool& connection_pool,
+                               HttpConnectionPoolPtr connection_pool,
                                const HttpResponseCreatorPtr& response_creator,
                                const HttpAcceptorCallback& callback,
                                const long request_timeout,
                                const long idle_timeout)
-    : request_timer_(io_service),
-      request_timeout_(request_timeout),
-      tls_context_(tls_context),
-      idle_timeout_(idle_timeout),
-      tcp_socket_(),
-      tls_socket_(),
-      acceptor_(acceptor),
-      connection_pool_(connection_pool),
-      response_creator_(response_creator),
-      acceptor_callback_(callback),
-      use_external_(false),
-      watch_socket_() {
+    : io_service_(io_service), request_timer_(io_service_),
+      request_timeout_(request_timeout), tls_context_(tls_context),
+      idle_timeout_(idle_timeout), tcp_socket_(), tls_socket_(),
+      acceptor_(acceptor), connection_pool_(connection_pool),
+      response_creator_(response_creator), acceptor_callback_(callback),
+      use_external_(false), watch_socket_(), defer_shutdown_(false) {
     if (!tls_context) {
         tcp_socket_.reset(new asiolink::TCPSocket<SocketCallback>(io_service));
     } else {
@@ -211,6 +205,10 @@ HttpConnection::closeWatchSocket() {
 
 void
 HttpConnection::close() {
+    if (defer_shutdown_) {
+        io_service_->post(std::bind([](HttpConnectionPtr c) { c->close(); }, shared_from_this()));
+        return;
+    }
     request_timer_.cancel();
     if (tcp_socket_) {
         if (use_external_) {
@@ -234,11 +232,16 @@ HttpConnection::close() {
 
 void
 HttpConnection::shutdownConnection() {
+    auto connection_pool = connection_pool_.lock();
     try {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_CONNECTION_SHUTDOWN)
             .arg(getRemoteEndpointAddressAsText());
-        connection_pool_.shutdown(shared_from_this());
+        if (connection_pool) {
+            connection_pool->shutdown(shared_from_this());
+        } else {
+            shutdown();
+        }
     } catch (...) {
         LOG_ERROR(http_logger, HTTP_CONNECTION_SHUTDOWN_FAILED);
     }
@@ -246,11 +249,16 @@ HttpConnection::shutdownConnection() {
 
 void
 HttpConnection::stopThisConnection() {
+    auto connection_pool = connection_pool_.lock();
     try {
         LOG_DEBUG(http_logger, isc::log::DBGLVL_TRACE_BASIC,
                   HTTP_CONNECTION_STOP)
             .arg(getRemoteEndpointAddressAsText());
-        connection_pool_.stop(shared_from_this());
+        if (connection_pool) {
+            connection_pool->stop(shared_from_this());
+        } else {
+            close();
+        }
     } catch (...) {
         LOG_ERROR(http_logger, HTTP_CONNECTION_STOP_FAILED);
     }
@@ -405,7 +413,6 @@ HttpConnection::asyncSendResponse(const ConstHttpResponsePtr& response,
     doWrite(transaction);
 }
 
-
 void
 HttpConnection::acceptorCallback(const boost::system::error_code& ec) {
     if (!acceptor_->isOpen()) {
@@ -538,6 +545,10 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 
         // Don't want to timeout if creation of the response takes long.
         request_timer_.cancel();
+
+        defer_shutdown_ = true;
+
+        std::unique_ptr<HttpConnection, void(*)(HttpConnection*)> p(this, [](HttpConnection* p) { p->defer_shutdown_ = false; });
 
         // Create the response from the received request using the custom
         // response creator.

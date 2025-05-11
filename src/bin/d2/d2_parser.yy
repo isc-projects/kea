@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 %define parse.assert
 %code requires
 {
+#include <config.h>
 #include <string>
 #include <cc/data.h>
 #include <d2srv/d2_config.h>

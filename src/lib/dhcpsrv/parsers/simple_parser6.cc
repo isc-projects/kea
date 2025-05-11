@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,6 +100,9 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "pd-allocator",                     Element::string },
     { "ddns-ttl-percent",                 Element::real },
     { "ddns-conflict-resolution-mode",    Element::string },
+    { "ddns-ttl",                         Element::integer },
+    { "ddns-ttl-min",                     Element::integer },
+    { "ddns-ttl-max",                     Element::integer },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -175,16 +178,17 @@ const SimpleDefaults SimpleParser6::OPTION6_DEF_DEFAULTS = {
 /// list and map types for entries.
 /// Order follows option_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::OPTION6_PARAMETERS = {
-    { "name",         Element::string },
-    { "data",         Element::string },
-    { "code",         Element::integer },
-    { "space",        Element::string },
-    { "csv-format",   Element::boolean },
-    { "always-send",  Element::boolean },
-    { "never-send",   Element::boolean },
-    { "user-context", Element::map },
-    { "comment",      Element::string },
-    { "metadata",     Element::map }
+    { "name",           Element::string },
+    { "data",           Element::string },
+    { "code",           Element::integer },
+    { "space",          Element::string },
+    { "csv-format",     Element::boolean },
+    { "always-send",    Element::boolean },
+    { "never-send",     Element::boolean },
+    { "user-context",   Element::map },
+    { "comment",        Element::string },
+    { "client-classes", Element::list },
+    { "metadata",       Element::map }
 };
 
 /// @brief This table defines default values for options in DHCPv6.
@@ -222,7 +226,9 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "id",                             Element::integer },
     { "rapid-commit",                   Element::boolean },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "reservations",                   Element::list },
     { "reservations-global",            Element::boolean },
     { "reservations-in-subnet",         Element::boolean },
@@ -250,6 +256,9 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -260,7 +269,6 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
 /// defined on global level.
 const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "interface",        Element::string,  "" },
-    { "client-class",     Element::string,  "" },
     { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
     { "interface-id",     Element::string,  "" }
 };
@@ -275,7 +283,6 @@ const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
 
 /// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
-    { "client-class",     Element::string,  "" },
     { "interface",        Element::string,  "" },
     { "interface-id",     Element::string,  "" },
     { "rapid-commit",     Element::boolean, "false" } // rapid-commit disabled by default
@@ -316,14 +323,30 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
 /// list and map types for entries.
 /// Order follows pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
-    { "pool",                   Element::string },
-    { "pool-id",                Element::integer },
-    { "option-data",            Element::list },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "metadata",               Element::map }
+    { "pool",                           Element::string },
+    { "pool-id",                        Element::integer },
+    { "option-data",                    Element::list },
+    { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
+    { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
+    { "user-context",                   Element::map },
+    { "comment",                        Element::string },
+    { "ddns-send-updates",              Element::boolean },
+    { "ddns-override-no-update",        Element::boolean },
+    { "ddns-override-client-update",    Element::boolean },
+    { "ddns-replace-client-name",       Element::string },
+    { "ddns-generated-prefix",          Element::string },
+    { "ddns-qualifying-suffix",         Element::string },
+    { "hostname-char-set",              Element::string },
+    { "hostname-char-replacement",      Element::string },
+    { "ddns-update-on-renew",           Element::boolean },
+    { "ddns-ttl-percent",               Element::real },
+    { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
+    { "metadata",                       Element::map }
 };
 
 /// @brief This table defines all prefix delegation pool parameters.
@@ -332,18 +355,20 @@ const SimpleKeywords SimpleParser6::POOL6_PARAMETERS = {
 /// list and map types for entries.
 /// Order follows pd_pool_param rules in bison grammar.
 const SimpleKeywords SimpleParser6::PD_POOL6_PARAMETERS = {
-    { "prefix",                 Element::string },
-    { "prefix-len",             Element::integer },
-    { "delegated-len",          Element::integer },
-    { "pool-id",                Element::integer },
-    { "option-data",            Element::list },
-    { "client-class",           Element::string },
-    { "require-client-classes", Element::list },
-    { "excluded-prefix",        Element::string },
-    { "excluded-prefix-len",    Element::integer },
-    { "user-context",           Element::map },
-    { "comment",                Element::string },
-    { "metadata",               Element::map }
+    { "prefix",                      Element::string },
+    { "prefix-len",                  Element::integer },
+    { "delegated-len",               Element::integer },
+    { "pool-id",                     Element::integer },
+    { "option-data",                 Element::list },
+    { "client-class",                Element::string },
+    { "client-classes",              Element::list },
+    { "require-client-classes",      Element::list },
+    { "evaluate-additional-classes", Element::list },
+    { "excluded-prefix",             Element::string },
+    { "excluded-prefix-len",         Element::integer },
+    { "user-context",                Element::map },
+    { "comment",                     Element::string },
+    { "metadata",                    Element::map }
 };
 
 /// @brief This table defines all shared network parameters for DHCPv6.
@@ -364,7 +389,9 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "reservations-in-subnet",         Element::boolean },
     { "reservations-out-of-pool",       Element::boolean },
     { "client-class",                   Element::string },
+    { "client-classes",                 Element::list },
     { "require-client-classes",         Element::list },
+    { "evaluate-additional-classes",    Element::list },
     { "preferred-lifetime",             Element::integer },
     { "min-preferred-lifetime",         Element::integer },
     { "max-preferred-lifetime",         Element::integer },
@@ -394,6 +421,9 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "pd-allocator",                   Element::string },
     { "ddns-ttl-percent",               Element::real },
     { "ddns-conflict-resolution-mode",  Element::string },
+    { "ddns-ttl",                       Element::integer },
+    { "ddns-ttl-min",                   Element::integer },
+    { "ddns-ttl-max",                   Element::integer },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.
@@ -435,17 +465,13 @@ size_t SimpleParser6::setAllDefaults(ElementPtr global) {
     // Now set the defaults for each specified option definition
     ConstElementPtr option_defs = global->get("option-def");
     if (option_defs) {
-        for (auto const& option_def : option_defs->listValue()) {
-            cnt += SimpleParser::setDefaults(option_def, OPTION6_DEF_DEFAULTS);
-        }
+        cnt += setListDefaults(option_defs, OPTION6_DEF_DEFAULTS);
     }
 
     // Set the defaults for option data
     ConstElementPtr options = global->get("option-data");
     if (options) {
-        for (auto const& single_option : options->listValue()) {
-            cnt += SimpleParser::setDefaults(single_option, OPTION6_DEFAULTS);
-        }
+        cnt += setListDefaults(options, OPTION6_DEFAULTS);
     }
 
     // Now set the defaults for defined subnets

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -292,7 +292,8 @@ LeaseMgr::recountLeaseStats6() {
 
     // Zero out the global stats.
     // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
-    // "cumulative-assigned-nas", "cumulative-assigned-pds") never get zeroed.
+    // "cumulative-assigned-nas", "cumulative-assigned-pds",
+    // "cumulative-registered-nas")) never get zeroed.
     int64_t zero = 0;
     stats_mgr.setValue("declined-addresses", zero);
 
@@ -312,6 +313,11 @@ LeaseMgr::recountLeaseStats6() {
     // Create if it does not exit cumulative pds global stats.
     if (!stats_mgr.getObservation("cumulative-assigned-pds")) {
         stats_mgr.setValue("cumulative-assigned-pds", zero);
+    }
+
+    // Create if it does not exit cumulative registered nas global stats.
+    if (!stats_mgr.getObservation("cumulative-registered-nas")) {
+        stats_mgr.setValue("cumulative-registered-nas", zero);
     }
 
     // Clear subnet level stats.  This ensures we don't end up with corner
@@ -348,6 +354,15 @@ LeaseMgr::recountLeaseStats6() {
             stats_mgr.setValue(
                 StatsMgr::generateName("subnet", subnet_id,
                                        "reclaimed-leases"),
+                zero);
+        }
+
+        if (!stats_mgr.getObservation(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "registered-nas"))) {
+            stats_mgr.setValue(
+                StatsMgr::generateName("subnet", subnet_id,
+                                       "registered-nas"),
                 zero);
         }
 
@@ -422,6 +437,11 @@ LeaseMgr::recountLeaseStats6() {
                     // Declined leases also count as assigned.
                     stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                               "assigned-nas"),
+                                       row.state_count_);
+                } else if (row.lease_state_ == Lease::STATE_REGISTERED) {
+                    // Add to subnet level value
+                    stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
+                                                              "registered-nas"),
                                        row.state_count_);
                 }
                 break;
@@ -848,7 +868,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
             }
 
             verifying = "relay";
-            for (i = 0; i < relay_info->size(); ++i) {
+            for (i = 0; static_cast<size_t>(i) < relay_info->size(); ++i) {
                 ElementPtr relay = relay_info->getNonConst(i);
                 if (!relay) {
                     mutable_isc->remove("relay-info");
@@ -923,7 +943,7 @@ LeaseMgr::upgradeLease6ExtendedInfo(const Lease6Ptr& lease,
         }
 
         verifying = "relay";
-        for (i = 0; i < relay_info->size(); ++i) {
+        for (i = 0; static_cast<size_t>(i) < relay_info->size(); ++i) {
             ElementPtr relay = relay_info->getNonConst(i);
             if (!upgraded && !relay) {
                 mutable_isc->remove("relay-info");
@@ -1215,7 +1235,7 @@ LeaseMgr::addExtendedInfo6(const Lease6Ptr& lease) {
         return (added);
     }
 
-    for (int i = 0; i < relay_info->size(); ++i) {
+    for (unsigned i = 0; i < relay_info->size(); ++i) {
         ConstElementPtr relay = relay_info->get(i);
         if (!relay || (relay->getType() != Element::map) || relay->empty()) {
             continue;

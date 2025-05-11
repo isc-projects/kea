@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@ namespace {
 
 template <typename ElementPtrType>
 ElementPtrType
-redact(ElementPtrType const& element, list<string> json_path) {
+redact(ElementPtrType const& element, list<string> json_path, string obscure) {
     if (!element) {
         isc_throw(BadValue, "redact() got a null pointer");
     }
@@ -36,7 +36,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
             // Then redact all children.
             result = Element::createList();
             for (ElementPtr const& child : element->listValue()) {
-                result->add(redact(child, json_path));
+                result->add(redact(child, json_path, obscure));
             }
             return result;
         }
@@ -53,7 +53,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
                 if (boost::algorithm::ends_with(key, "password") ||
                     boost::algorithm::ends_with(key, "secret")) {
                     // Sensitive data
-                    result->set(key, Element::create(string("*****")));
+                    result->set(key, Element::create(obscure));
                 } else if (key == "user-context") {
                     // Skip user contexts.
                     result->set(key, value);
@@ -64,7 +64,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
                         result->set(key, value);
                     } else {
                         // We are looking for anything '*' so redact further.
-                        result->set(key, redact(value, json_path));
+                        result->set(key, redact(value, json_path, obscure));
                     }
                 }
             }
@@ -74,7 +74,7 @@ redact(ElementPtrType const& element, list<string> json_path) {
             if (child) {
                 result = isc::data::copy(element, 1);
                 json_path.pop_front();
-                result->set(next_key, redact(child, json_path));
+                result->set(next_key, redact(child, json_path, obscure));
                 return result;
             }
         }
@@ -89,8 +89,9 @@ namespace isc {
 namespace process {
 
 ConstElementPtr
-redactConfig(ConstElementPtr const& element, list<string> const& json_path) {
-    return redact(element, json_path);
+redactConfig(ConstElementPtr const& element, list<string> const& json_path,
+             string obscure) {
+    return redact(element, json_path, obscure);
 }
 
 }  // namespace process

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,19 +21,31 @@ namespace dhcp {
 Pool::Pool(Lease::Type type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
     : id_(0), first_(first), last_(last), type_(type), capacity_(0),
-      cfg_option_(new CfgOption()), client_class_("") {
+      cfg_option_(new CfgOption()) {
 }
 
-bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
+bool
+Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_ <= addr && addr <= last_);
 }
 
-bool Pool::clientSupported(const ClientClasses& classes) const {
-    return (client_class_.empty() || classes.contains(client_class_));
+bool
+Pool::clientSupported(const ClientClasses& classes) const {
+    return (client_classes_.empty() || client_classes_.intersects(classes));
 }
 
-void Pool::allowClientClass(const ClientClass& class_name) {
-    client_class_ = class_name;
+void
+Pool::allowClientClass(const ClientClass& class_name) {
+    if (!client_classes_.contains(class_name)) {
+        client_classes_.insert(class_name);
+    }
+}
+
+void
+Pool::addAdditionalClass(const isc::dhcp::ClientClass& class_name) {
+    if (!additional_classes_.contains(class_name)) {
+        additional_classes_.insert(class_name);
+    }
 }
 
 std::string
@@ -42,6 +54,24 @@ Pool::toText() const {
     tmp << "type=" << Lease::typeToText(type_) << ", " << first_
         << "-" << last_;
     return (tmp.str());
+}
+
+bool
+Pool::hasDdnsParameters() const {
+    return (!(ddns_send_updates_.unspecified() &&
+              ddns_override_no_update_.unspecified() &&
+              ddns_override_client_update_.unspecified() &&
+              ddns_replace_client_name_mode_.unspecified() &&
+              ddns_generated_prefix_.unspecified() &&
+              ddns_qualifying_suffix_.unspecified() &&
+              ddns_update_on_renew_.unspecified() &&
+              ddns_conflict_resolution_mode_.unspecified() &&
+              ddns_ttl_percent_.unspecified() &&
+              ddns_ttl_.unspecified() &&
+              ddns_ttl_min_.unspecified() &&
+              ddns_ttl_max_.unspecified() &&
+              hostname_char_set_.unspecified() &&
+              hostname_char_replacement_.unspecified()));
 }
 
 Pool4::Pool4(const isc::asiolink::IOAddress& first,
@@ -115,24 +145,80 @@ Pool::toElement() const {
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
-    // Set client-class
-    const ClientClass& cclass = getClientClass();
-    if (!cclass.empty()) {
-        map->set("client-class", Element::create(cclass));
+    // Set client-classes
+    if (!client_classes_.empty()) {
+        map->set("client-classes", client_classes_.toElement());
     }
 
-    // Set require-client-classes
-    const ClientClasses& classes = getRequiredClasses();
-    if (!classes.empty()) {
-        ElementPtr class_list = Element::createList();
-        for (auto const& it : classes) {
-            class_list->add(Element::create(it));
-        }
-        map->set("require-client-classes", class_list);
+    // Set evaluate-additional-classes
+    if (!additional_classes_.empty()) {
+        map->set("evaluate-additional-classes",
+                 additional_classes_.toElement());
     }
 
     if (id_) {
         map->set("pool-id", Element::create(static_cast<long long>(id_)));
+    }
+
+    // Add in DDNS parameters for non-prefix pools.
+    if (type_ != Lease::TYPE_PD) {
+        if (!ddns_send_updates_.unspecified()) {
+            map->set("ddns-send-updates", Element::create(ddns_send_updates_));
+        }
+
+        if (!ddns_override_no_update_.unspecified()) {
+            map->set("ddns-override-no-update", Element::create(ddns_override_no_update_));
+        }
+
+        if (!ddns_override_client_update_.unspecified()) {
+            map->set("ddns-override-client-update", Element::create(ddns_override_client_update_));
+        }
+
+        if (!ddns_replace_client_name_mode_.unspecified()) {
+            map->set("ddns-replace-client-name",
+                      Element::create(D2ClientConfig::
+                                      replaceClientNameModeToString(ddns_replace_client_name_mode_)));
+        }
+
+        if (!ddns_generated_prefix_.unspecified()) {
+            map->set("ddns-generated-prefix", Element::create(ddns_generated_prefix_));
+        }
+
+        if (!ddns_qualifying_suffix_.unspecified()) {
+            map->set("ddns-qualifying-suffix", Element::create(ddns_qualifying_suffix_));
+        }
+
+        if (!ddns_update_on_renew_.unspecified()) {
+            map->set("ddns-update-on-renew", Element::create(ddns_update_on_renew_));
+        }
+
+        if (!ddns_conflict_resolution_mode_.unspecified()) {
+            map->set("ddns-conflict-resolution-mode", Element::create(ddns_conflict_resolution_mode_));
+        }
+
+        if (!ddns_ttl_percent_.unspecified()) {
+            map->set("ddns-ttl-percent", Element::create(ddns_ttl_percent_));
+        }
+
+        if (!ddns_ttl_.unspecified()) {
+            map->set("ddns-ttl", Element::create(ddns_ttl_));
+        }
+
+        if (!ddns_ttl_min_.unspecified()) {
+            map->set("ddns-ttl-min", Element::create(ddns_ttl_min_));
+        }
+
+        if (!ddns_ttl_max_.unspecified()) {
+                map->set("ddns-ttl-max", Element::create(ddns_ttl_max_));
+        }
+
+        if (!hostname_char_set_.unspecified()) {
+            map->set("hostname-char-set", Element::create(hostname_char_set_));
+        }
+
+        if (!hostname_char_replacement_.unspecified()) {
+            map->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
+        }
     }
 
     return (map);
@@ -427,7 +513,9 @@ Pool6::toText() const {
       << static_cast<unsigned>(prefix_len_);
 
     if (pd_exclude_option_) {
-       s << ", excluded_prefix_len="
+       s << ", excluded_prefix="
+         << pd_exclude_option_->getExcludedPrefix(first_, prefix_len_).toText()
+         << "/"
          << static_cast<unsigned>(pd_exclude_option_->getExcludedPrefixLength());
     }
     return (s.str());

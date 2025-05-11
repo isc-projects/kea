@@ -146,6 +146,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | ddns_use_conflict_resolution
                  | ddns_conflict_resolution_mode
                  | ddns_ttl_percent
+                 | ddns_ttl
+                 | ddns_ttl_min
+                 | ddns_ttl_max
                  | store_extended_info
                  | statistic_default_sample_count
                  | statistic_default_sample_age
@@ -219,6 +222,12 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                                         | "no-check-without-dhcid"
 
      ddns_ttl_percent ::= "ddns-ttl-percent" ":" FLOAT
+
+     ddns_ttl ::= "ddns-ttl" ":" INTEGER
+
+     ddns_ttl_min ::= "ddns-ttl-min" ":" INTEGER
+
+     ddns_ttl_max ::= "ddns-ttl-mix" ":" INTEGER
 
      hostname_char_set ::= "hostname-char-set" ":" STRING
 
@@ -314,11 +323,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | cipher_list
                        | unknown_map_entry
 
-     database_type ::= "type" ":" db_type
-
-     db_type ::= "memfile"
-            | "mysql"
-            | "postgresql"
+     database_type ::= "type" ":" STRING
 
      user ::= "user" ":" STRING
 
@@ -511,7 +516,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | id
                   | rapid_commit
                   | client_class
+                  | network_client_classes
                   | require_client_classes
+                  | evaluate_additional_classes
                   | reservations
                   | reservations_global
                   | reservations_in_subnet
@@ -536,6 +543,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | ddns_use_conflict_resolution
                   | ddns_conflict_resolution_mode
                   | ddns_ttl_percent
+                  | ddns_ttl
+                  | ddns_ttl_min
+                  | ddns_ttl_max
                   | store_extended_info
                   | allocator
                   | pd_allocator
@@ -549,7 +559,11 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      client_class ::= "client-class" ":" STRING
 
+     network_client_classes ::= "client-classes" ":" list_strings
+
      require_client_classes ::= "require-client-classes" ":" list_strings
+
+     evaluate_additional_classes ::= "evaluate-additional-classes" ":" list_strings
 
      reservations_global ::= "reservations-global" ":" BOOLEAN
 
@@ -588,7 +602,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | reservations_in_subnet
                          | reservations_out_of_pool
                          | client_class
+                         | network_client_classes
                          | require_client_classes
+                         | evaluate_additional_classes
                          | preferred_lifetime
                          | min_preferred_lifetime
                          | max_preferred_lifetime
@@ -615,6 +631,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | ddns_use_conflict_resolution
                          | ddns_conflict_resolution_mode
                          | ddns_ttl_percent
+                         | ddns_ttl
+                         | ddns_ttl_min
+                         | ddns_ttl_max
                          | store_extended_info
                          | allocator
                          | pd_allocator
@@ -700,6 +719,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                       | option_data_never_send
                       | user_context
                       | comment
+                      | option_data_client_classes
                       | unknown_map_entry
 
      option_data_name ::= name
@@ -715,6 +735,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      option_data_always_send ::= "always-send" ":" BOOLEAN
 
      option_data_never_send ::= "never-send" ":" BOOLEAN
+
+     option_data_client_classes ::= "client-classes" ":" list_strings
 
      pools_list ::= "pools" ":" "[" pools_list_content "]"
 
@@ -737,7 +759,23 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                | pool_id
                | option_data_list
                | client_class
+               | network_client_classes
                | require_client_classes
+               | evaluate_additional_classes
+               | ddns_send_updates
+               | ddns_override_no_update
+               | ddns_override_client_update
+               | ddns_replace_client_name
+               | ddns_generated_prefix
+               | ddns_qualifying_suffix
+               | ddns_update_on_renew
+               | ddns_conflict_resolution_mode
+               | ddns_ttl_percent
+               | ddns_ttl
+               | ddns_ttl_min
+               | ddns_ttl_max
+               | hostname_char_set
+               | hostname_char_replacement
                | user_context
                | comment
                | unknown_map_entry
@@ -773,7 +811,9 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                   | pool_id
                   | option_data_list
                   | client_class
+                  | network_client_classes
                   | require_client_classes
+                  | evaluate_additional_classes
                   | excluded_prefix
                   | excluded_prefix_len
                   | user_context
@@ -814,6 +854,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                       | reservation_client_classes
                       | ip_addresses
                       | prefixes
+                      | excluded_prefixes
                       | hw_address
                       | hostname
                       | flex_id_value
@@ -825,6 +866,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      ip_addresses ::= "ip-addresses" ":" list_strings
 
      prefixes ::= "prefixes" ":" list_strings
+
+     excluded_prefixes ::= "excluded-prefixes" ":" list_strings
 
      duid ::= "duid" ":" STRING
 
@@ -859,6 +902,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | client_class_test
                        | client_class_template_test
                        | only_if_required
+                       | only_in_additional_list
                        | option_data_list
                        | user_context
                        | comment
@@ -877,6 +921,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      client_class_template_test ::= "template-test" ":" STRING
 
      only_if_required ::= "only-if-required" ":" BOOLEAN
+
+     only_in_additional_list ::= "only-in-additional-list" ":" BOOLEAN
 
      server_id ::= "server-id" ":" "{" server_id_params "}"
 
@@ -936,6 +982,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                          | cert_file
                          | key_file
                          | cert_required
+                         | http_headers
                          | user_context
                          | comment
                          | unknown_map_entry
@@ -953,6 +1000,29 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      control_socket_port ::= "socket-port" ":" INTEGER
 
      cert_required ::= "cert-required" ":" BOOLEAN
+
+     http_headers ::= "http-headers" ":" "[" http_header_list "]"
+
+     http_header_list ::= 
+                     | not_empty_http_header_list
+
+     not_empty_http_header_list ::= http_header
+                               | not_empty_http_header_list "," http_header
+                               | not_empty_http_header_list ","
+
+     http_header ::= "{" http_header_params "}"
+
+     http_header_params ::= http_header_param
+                       | http_header_params "," http_header_param
+                       | http_header_params ","
+
+     http_header_param ::= name
+                      | header_value
+                      | user_context
+                      | comment
+                      | unknown_map_entry
+
+     header_value ::= "value" ":" STRING
 
      authentication ::= "authentication" ":" "{" auth_params "}"
 

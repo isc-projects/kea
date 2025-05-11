@@ -11,10 +11,10 @@ EXTRA_DIST  =
 EXTRA_DIST += ca/00af7a28.0
 EXTRA_DIST += ca/0c7eedb9.0
 EXTRA_DIST += ca/28f5a777.0
-EXTRA_DIST += ca/2eefa08b.0
 EXTRA_DIST += ca/71336a4d.0
-EXTRA_DIST += ca/7a5b785e.0
 EXTRA_DIST += ca/ad950210.0
+EXTRA_DIST += ca/b488a7b8.0
+EXTRA_DIST += ca/d3d11a5f.0
 EXTRA_DIST += ca/doc.txt
 EXTRA_DIST += ca/ext-addr-conf.cnf
 EXTRA_DIST += ca/ext-conf.cnf
@@ -75,19 +75,19 @@ openssl_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
 openssl_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
 endif
 
-if HAVE_BOTAN_BOOST
-# Same samples ported to Botan boost ASIO.
+if HAVE_BOTAN
+# Same samples ported to Botan ASIO.
 
-noinst_PROGRAMS = botan_boost_sample_client botan_boost_sample_server
+noinst_PROGRAMS = botan_sample_client botan_sample_server
 
-botan_boost_sample_client_SOURCES = botan_boost_sample_client.cc
-botan_boost_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
-botan_boost_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-botan_boost_sample_client_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
+botan_sample_client_SOURCES = botan_sample_client.cc
+botan_sample_client_CPPFLAGS = $(AM_CPPFLAGS)
+botan_sample_client_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+botan_sample_client_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
 
-botan_boost_sample_server_SOURCES = botan_boost_sample_server.cc
-botan_boost_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
-botan_boost_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-botan_boost_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
+botan_sample_server_SOURCES = botan_sample_server.cc
+botan_sample_server_CPPFLAGS = $(AM_CPPFLAGS)
+botan_sample_server_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
+botan_sample_server_LDADD = $(BOOST_LIBS) $(CRYPTO_LIBS)
 endif
 endif

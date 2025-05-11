@@ -57,15 +57,14 @@ D2ParserContext::parseCommon() {
             isc_throw(D2ParseError, "Parser abort");
         }
         scanEnd();
-    }
-    catch (...) {
+    } catch (...) {
         scanEnd();
         throw;
     }
     if (stack_.size() == 1) {
         return (stack_[0]);
     } else {
-        isc_throw(D2ParseError, "Expected exactly one terminal Element expected, found "
+        isc_throw(D2ParseError, "Expected exactly one terminal Element, found "
                   << stack_.size());
     }
 }

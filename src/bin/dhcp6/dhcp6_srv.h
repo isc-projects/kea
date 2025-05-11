@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -48,7 +48,7 @@ namespace dhcp {
 class DHCPv6DiscardMessageError : public Exception {
 public:
     DHCPv6DiscardMessageError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief DHCPv6 server service.
@@ -172,7 +172,8 @@ public:
     /// @param rsp A pointer to the response.
     /// @param subnet A pointer to the selected subnet.
     void sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
-                             Pkt6Ptr query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
+                             Pkt6Ptr query, Pkt6Ptr& rsp,
+                             ConstSubnet6Ptr& subnet);
 
     /// @brief Process a single incoming DHCPv6 packet.
     ///
@@ -240,9 +241,7 @@ public:
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getServerPort() const {
-        return (server_port_);
-    }
+    uint16_t getServerPort() const;
     //@}
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
@@ -408,7 +407,7 @@ protected:
 
     /// @brief Processes incoming Rebind message.
     ///
-    /// @todo There are cases when the Rebind message should be  discarded
+    /// @todo There are cases when the Rebind message should be discarded
     /// by the DHCP server. One of those is when the server doesn't have a
     /// record of the client and it is unable to determine whether the
     /// client is on the appropriate link or not. We don't seem to do it
@@ -481,12 +480,19 @@ protected:
     /// Does not throw
     void processDhcp4Query(const Pkt6Ptr& dhcp4_query);
 
+    /// @brief Processes incoming Addr-reg-inform message.
+    ///
+    /// @param ctx Reference to client context
+    ///
+    /// @return Addr-reg-reply message to be sent to the client.
+    Pkt6Ptr processAddrRegInform(AllocEngine::ClientContext6& ctx);
+
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
     /// @param drop if it is true the packet will be dropped
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
+    isc::dhcp::ConstSubnet6Ptr selectSubnet(const Pkt6Ptr& question, bool& drop);
 
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
@@ -817,7 +823,9 @@ protected:
     /// @param preferred_lft preferred lease time of the lease being assigned to the client
     /// @param subnet the subnet to which the lease belongs
     /// @param resp outbound IA option in which the timers are set.
-    void setTeeTimes(uint32_t preferred_lft, const Subnet6Ptr& subnet, Option6IAPtr& resp);
+    void setTeeTimes(uint32_t preferred_lft,
+                     const ConstSubnet6Ptr& subnet,
+                     Option6IAPtr& resp);
 
     /// @brief Attempts to release received addresses
     ///
@@ -904,18 +912,24 @@ protected:
     void conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
                                                const AllocEngine::ClientContext6& ctx);
 
-    /// @brief Assigns incoming packet to zero or more classes (required pass).
+    /// @brief Evaluates classes in the additional classes lists
     ///
-    /// @note This required classification evaluates all classes which
-    /// were marked for required evaluation. Classes are collected so
-    /// evaluated in the reversed order than output option processing.
+    /// The evaluation takes place after all other classification and
+    /// lease assignment. It evaluates all classes in the packet's
+    /// additional classes list plus any contributed via
+    /// evaluate-additional-classes lists.
     ///
-    /// @note The only-if-required flag is related because it avoids
+    /// @note Evaluates all classes which were marked for the additional
+    /// evaluation stage. Classes are collected and evaluated in the following
+    /// order: pool/pd-pool, subnet, shared-network to produce option precedence
+    /// pool/pd-pool over subnet over shared-network.
+    ///
+    /// @note The only-in-additional-list flag is related because it avoids
     /// double evaluation (which is not forbidden).
     ///
     /// @param pkt packet to be classified
     /// @param ctx allocation context where to get information
-    void requiredClassify(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
+    void evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx);
 
     /// @brief Attempts to get a MAC/hardware address using configured sources
     ///
@@ -1023,18 +1037,18 @@ protected:
 
     /// @brief Iterates over new leases, update stale DNS entries
     ///
-    /// Checks the context's current subnet (most recently selected) against
-    /// an original selected subnet.  If they are the same the function
-    /// simply returns.
+    /// Updates the context DDNS parameters to include those from the pool
+    /// associated with the first active NA lease address and then checks
+    /// to see if the subnet has been dynamically changed.  If either the
+    /// pool has DDNS parameters or the subnet has changed the FQDN and
+    /// DDNS flags are recalculated in the event the pool or subnet change
+    /// introduced different parameter values otherwise the function returns.
     ///
-    /// If they differ, we treat this as a dynamic subnet change made by the
-    /// allocation engine. It is possible that DDNS subnet parameters for
-    /// the new subnet are different and this needs to handled. We first
-    /// save the current DNS-related values from the context and then
-    /// re-run processClientFqdn().  This will rebuild the FQDN option
-    /// to send back to the client based on the new subnet as well as
-    /// update the context.  If the new values are different from the
-    /// previous values, we iterate over the leases and update the
+    /// When recalculating we first save the current DNS-related values
+    /// from the context and then re-run processClientFqdn().  This will
+    /// rebuild the FQDN option to send back to the client based on the new
+    /// subnet as well as update the context.  If the new values are different
+    /// from the previous values, we iterate over the leases and update the
     /// DNS values.
     ///
     /// @param question Client's message.
@@ -1056,9 +1070,18 @@ protected:
     /// class guards etc)
     /// 3. subnets have differing options or DDNS parameters
     //
-    void checkDynamicSubnetChange(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                                  AllocEngine::ClientContext6& ctx,
-                                  const Subnet6Ptr orig_subnet);
+    void checkPostAssignmentChanges(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                                    AllocEngine::ClientContext6& ctx,
+                                    const ConstSubnet6Ptr orig_subnet);
+
+    /// @brief Return the PD exclude option to include.
+    ///
+    /// @param ctx client context (contains subnet and hosts).
+    /// @param lease lease (contains address/prefix and prefix length).
+    /// @return the prefix exclude option or null.
+    OptionPtr getPDExclude(const AllocEngine::ClientContext6& ctx,
+                           const Lease6Ptr& lease);
+
 public:
 
     /// Used for DHCPv4-over-DHCPv6 too.
@@ -1212,7 +1235,8 @@ protected:
     /// @param rsp Pointer to a response.
     /// @param subnet A pointer to the selected subnet.
     void processPacketPktSend(hooks::CalloutHandlePtr& callout_handle,
-                              Pkt6Ptr& query, Pkt6Ptr& rsp, Subnet6Ptr& subnet);
+                              Pkt6Ptr& query, Pkt6Ptr& rsp,
+                              ConstSubnet6Ptr& subnet);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

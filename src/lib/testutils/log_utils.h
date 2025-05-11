@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,9 @@ public:
 
     /// @brief remove the test log file
     void remFile();
+
+    /// @brief reset the logger to INFO stdout.
+    void reset();
 
     /// @brief Enables or disables verbose mode.
     ///

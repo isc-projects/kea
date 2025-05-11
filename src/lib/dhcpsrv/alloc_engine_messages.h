@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/dhcpsrv/alloc_engine_messages.mes
+// File created from src/lib/dhcpsrv/alloc_engine_messages.mes
 
 #ifndef ALLOC_ENGINE_MESSAGES_H
 #define ALLOC_ENGINE_MESSAGES_H

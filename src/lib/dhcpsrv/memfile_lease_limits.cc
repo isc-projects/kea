@@ -83,7 +83,7 @@ ClassLeaseCounter::adjustClassCounts(ConstElementPtr classes, int offset,
         return;
     }
 
-    for (int i = 0; i < classes->size(); ++i) {
+    for (unsigned i = 0; i < classes->size(); ++i) {
         std::string class_name = classes->get(i)->stringValue();
         adjustClassCount(class_name, offset, ltype);
     }

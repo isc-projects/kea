@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define CFG_OPTION_H
 
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 #include <dhcp/option_space_container.h>
 #include <cc/cfg_to_element.h>
 #include <cc/stamped_element.h>
@@ -89,6 +90,10 @@ public:
     /// won't be set.
     std::string space_name_;
 
+    /// @brief Collection of classes for the which option is allowed.
+    /// An empty list means no class restrictions.
+    ClientClasses client_classes_;
+
     /// @brief Constructor.
     ///
     /// @param opt option instance.
@@ -103,7 +108,7 @@ public:
           cancelled_(cancel), formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
-    };
+    }
 
     /// @brief Constructor.
     ///
@@ -111,7 +116,7 @@ public:
     /// @param cancel if true, option is never sent.
     OptionDescriptor(bool persist, bool cancel)
         : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
-          cancelled_(cancel), formatted_value_(), space_name_() {};
+          cancelled_(cancel), formatted_value_(), space_name_() {}
 
     /// @brief Copy constructor.
     ///
@@ -122,9 +127,10 @@ public:
           persistent_(desc.persistent_),
           cancelled_(desc.cancelled_),
           formatted_value_(desc.formatted_value_),
-          space_name_(desc.space_name_) {
+          space_name_(desc.space_name_),
+          client_classes_(desc.client_classes_) {
         setContext(desc.getContext());
-    };
+    }
 
     /// @brief Assignment operator.
     ///
@@ -138,6 +144,7 @@ public:
             cancelled_ = other.cancelled_;
             formatted_value_ = other.formatted_value_;
             space_name_ = other.space_name_;
+            client_classes_ = other.client_classes_;
             setContext(other.getContext());
         }
         return (*this);
@@ -198,6 +205,19 @@ public:
     bool operator!=(const OptionDescriptor& other) const {
         return (!equals(other));
     }
+
+    /// @brief Adds new client class for which the option is allowed.
+    ///
+    /// @param class_name Class name.
+    void addClientClass(const std::string& class_name);
+
+    /// @brief Validates an OptionDescriptor's client-classes against a list
+    /// of classes
+    ///
+    /// @param cclasses list of ClientClasses to validate against
+    /// @return True if descriptor's client-classes is empty or at least
+    /// one of its members is found in the validation list.
+    bool allowedForClientClasses(const ClientClasses& cclasses) const;
 };
 
 /// @brief Multi index container for DHCP option descriptors.
@@ -654,6 +674,66 @@ public:
         return (list);
     }
 
+    /// @brief Fetches an option for a given code if it is allowed for the given list
+    /// of client classes.
+    ///
+    /// @param key Option space name or vendor identifier.
+    /// @param option_code Code of the option to be returned.
+    /// @param cclasses list of ClientClasses to validate against
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    ///
+    /// @return Descriptor of the option. If option hasn't been found, the
+    /// descriptor holds null option.
+    template<typename Selector>
+    OptionDescriptor allowedForClientClasses(const Selector& key,
+                                             const uint16_t option_code,
+                                             const ClientClasses& cclasses) const {
+        // Check for presence of options.
+        OptionContainerPtr options = getAll(key);
+        if (!options || options->empty()) {
+            return (OptionDescriptor(false, false));
+        }
+
+        // We treat the empty client-classes case (if present) as a default.
+        // If we encounter it before we reach the end of the list of options
+        // remember it but keep checking the list for an actual match. We do 
+        // it this way to avoid expecting the entries in any particular order.
+        auto & index = options->get<1>();
+        auto range = index.equal_range(option_code);
+        switch (std::distance(range.first, range.second)) {
+        case 0:
+            break;
+        case 1:
+            if ((*range.first).allowedForClientClasses(cclasses)) {
+                return (*range.first);
+            }
+            break;
+        default: 
+        {   
+            auto default_opt = index.end();
+            auto otr = range.first;
+            while (otr != range.second) {
+                if ((*otr).allowedForClientClasses(cclasses)) {
+                    if (!(*otr).client_classes_.empty()) {
+                        return (*otr);
+                    }
+                    
+                    default_opt = otr;
+                }
+                
+                ++otr;
+            }
+            
+            // If we have a default return it.
+            if (default_opt != index.end()) {
+                return (*default_opt);
+            }
+        }}  
+
+        // None allowed.
+        return (OptionDescriptor(false, false));
+    }
+
     /// @brief Deletes option for the specified option space and option code.
     ///
     /// If the option is encapsulated within some non top level option space,
@@ -727,15 +807,23 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Unparse a configuration object
+    ///
+    /// @param cfg_option_def config option definitions
+    /// @return a pointer to unparsed configuration
+    virtual isc::data::ElementPtr toElement(CfgOptionDefPtr cfg_option_def) const;
+
     /// @brief Unparse a configuration object with optionally including
     /// the metadata.
     ///
     /// @param include_metadata boolean value indicating if the metadata
     /// should be included (if true) or not (if false).
+    /// @param cfg_option_def config option definitions (optional).
     ///
     /// @return A pointer to the unparsed configuration.
     isc::data::ElementPtr
-    toElementWithMetadata(const bool include_metadata) const;
+    toElementWithMetadata(const bool include_metadata,
+			  CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr()) const;
 
 private:
 
@@ -799,6 +887,7 @@ private:
 
 /// @name Pointers to the @c CfgOption objects.
 //@{
+
 /// @brief Non-const pointer.
 typedef boost::shared_ptr<CfgOption> CfgOptionPtr;
 

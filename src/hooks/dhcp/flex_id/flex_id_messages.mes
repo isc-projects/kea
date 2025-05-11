@@ -1,0 +1,117 @@
+# Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+% FLEX_ID_EXPRESSION_EMPTY Specified identifier-expression is empty
+This warning message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is empty. The library
+will load, but will not generate any identifiers. Please make sure that
+the identifier-expression parameter is specified.
+
+% FLEX_ID_EXPRESSION_EVALUATED Expression evaluated for packet to "%1" (size: %2)
+Logged at debug log level 40.
+This debug message is printed every time a packet evaluation is successful.
+This means that the identifier expression has been generated. Note that
+depending on the expression and content of the incoming packet, the
+expression may be evaluated to an empty string.
+
+% FLEX_ID_EXPRESSION_EVALUATED_NP Expression evaluated for packet to 0x%1 (size: %2)
+This debug message is printed every time a packet evaluation is successful.
+This means that the identifier expression has been generated. As it is
+not printable it is converted to hexadecimal.
+
+% FLEX_ID_EXPRESSION_HEX evaluated expression in hexadecimal form "%1"
+Logged at debug log level 40.
+This debug message provides a hexadecimal representation of the evaluated
+expression. This is useful for debugging purposes because further logs use
+hexadecimal format for logging.
+
+% FLEX_ID_EXPRESSION_INVALID_JSON_TYPE The identifier-expression is %1, but expected JSON string
+This error message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is malformed. It has
+a different JSON type (e.g. is a map) rather than expected string.
+
+% FLEX_ID_EXPRESSION_NOT_DEFINED Expression (identifier-expression) is not defined.
+This warning message is printed when the flex-id library is loaded, but the
+expression used to generate the identifier is not specified. The library
+will load, but will not generate any identifiers. Please make sure that
+the identifier-expression parameter is specified for your library.
+
+% FLEX_ID_EXPRESSION_PARSE_FAILED The identifier-expression is [%1], but fails to parse with error: %2
+This error message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier is malformed. It failed
+to parse.
+
+% FLEX_ID_IGNORE_IAID_APPLIED_ON_NA the ignore-iaid has changed IAID (%1) to 0 for the IA_NA option.
+Logged at debug log level 40.
+This DEBUG message is printed when the flex-id library did apply the ignore-iaid
+flag and changed IAID to 0 because the received packet contains exactly one
+IA_NA.
+
+% FLEX_ID_IGNORE_IAID_APPLIED_ON_PD the ignore-iaid has changed IAID (%1) to 0 for the IA_PD option.
+Logged at debug log level 40.
+This DEBUG message is printed when the flex-id library did apply the ignore-iaid
+flag and changed IAID to 0 because the received packet contains exactly one
+IA_PD.
+
+% FLEX_ID_IGNORE_IAID_ENABLED the ignore-iaid is set. It only has an effect on clients with at most one IA_NA and one IA_PD.
+This WARNING message is printed when the flex-id library is being loaded,
+and the ignore-iaid parameter is set. This flag will enable the server to drop
+packets which contain more than one IA_NA and one IA_PD.
+
+% FLEX_ID_IGNORE_IAID_JSON_TYPE the ignore-iaid is %1 but expected boolean value
+This error message is printed when the flex-id library is being loaded,
+but the ignore-iaid parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
+
+% FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_NA the ignore-iaid was not applied on the packet because it contains more than one IA_NA.
+Logged at debug log level 40.
+This WARNING message is printed when the flex-id library did not apply the
+ignore-iaid flag because the received packet contains more than one IA_NA.
+
+% FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_PD the ignore-iaid was not applied on the packet because it contains more than one IA_PD.
+Logged at debug log level 40.
+This WARNING message is printed when the flex-id library did not apply the
+ignore-iaid flag because the received packet contains more than one IA_PD.
+
+% FLEX_ID_LOAD_ERROR An error occurred loading the library %1
+This error message will be printed when an error is encountered during
+loading of the library. Details of the problem are printed as parameter
+to this message.
+
+% FLEX_ID_REPLACE_CLIENT_ID_JSON_TYPE the replace-client-id is %1 but expected boolean value
+This error message is printed when the flex-id library is being loaded,
+but the replace-client-id parameter is malformed, i.e. it has a different
+type than expected. It is expected to be a boolean value.
+
+% FLEX_ID_RESTORE_CLIENT_ID restoring original client identifier '%1' in the response
+Logged at debug log level 40.
+This debug message is issued when the original (client supplied) client identifier
+is restored into the server's response.
+
+% FLEX_ID_RESTORE_DUID restoring original DUID "%1" in the response
+Logged at debug log level 40.
+This debug message is issued when the original (client supplied) client identifier
+is restored into the server"s response.
+
+% FLEX_ID_UNLOAD Flex-id library has been unloaded.
+This informational message signifies that the flexible-identifier library has been
+unloaded.
+
+% FLEX_ID_USED_AS_CLIENT_ID using flexible identifier "%1" as client identifier
+Logged at debug log level 40.
+This debug message is issued to indicate that the library is removing client
+supplied client identifier from the received message and is inserting flexible
+identifier based client identifier instead. The server will use this new client
+identifier for processing the packet. The original client identifier  will be
+restored in the pkt4_send callout and sent back to the client.
+
+% FLEX_ID_USED_AS_DUID using flexible identifier "%1" as DUID
+Logged at debug log level 40.
+This debug message is issued to indicate that the library is removing client
+supplied DUID from the received message and is inserting flexible identifier
+based DUID instead. The server will use this new DUID for processing the
+packet. The original DUID will be restored in the pkt6_send callout and
+sent back to the client.

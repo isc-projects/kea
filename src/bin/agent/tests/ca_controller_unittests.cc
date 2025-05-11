@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@
 
 #include <unistd.h>
 
+using namespace isc::asiolink;
 using namespace isc::asiolink::test;
 using namespace isc::agent;
 using namespace isc::data;
@@ -402,7 +403,7 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
 // Tests that it is possible to update the configuration in such a way that the
 // listener configuration remains the same. The server should continue using the
 // listener instance it has been using prior to the reconfiguration.
-TEST_F(CtrlAgentControllerTest, noListenerChange) {
+TEST_F(CtrlAgentControllerTest, noListenerChangeHttp) {
     // This configuration should be used to override the initial configuration.
     const char* second_config =
         "{"
@@ -420,6 +421,11 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         "  }"
         "}";
 
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
+    const HttpListener* listener_ptr = 0;
+
     // This check callback is called before the shutdown.
     auto check_callback = [&] {
         CtrlAgentProcessPtr process = getCtrlAgentProcess();
@@ -428,6 +434,8 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         // Check that the HTTP listener still exists after reconfiguration.
         ConstHttpListenerPtr listener = process->getHttpListener();
         ASSERT_TRUE(listener);
+        ASSERT_EQ(listener_ptr, listener.get());
+        ASSERT_FALSE(listener->getTlsContext());
         EXPECT_TRUE(process->isListening());
 
         EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
@@ -438,6 +446,16 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     scheduleTimedWrite(second_config, 100);
     // Schedule SIGHUP signal to trigger reconfiguration.
     TimedSignal sighup(getIOService(), SIGHUP, 200);
+
+    IntervalTimer timer(getIOService());
+    timer.setup([&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        listener_ptr = listener.get();
+        ASSERT_FALSE(listener->getTlsContext());
+    }, 50, IntervalTimer::ONE_SHOT);
 
     // Start the server.
     time_duration elapsed_time;
@@ -455,6 +473,301 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     // The forwarding configuration should have been updated.
     testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
     testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
+}
+
+// Tests that it is possible to update the configuration in such a way that the
+// listener configuration remains the same. The server should continue using the
+// listener instance it has been using prior to the reconfiguration.
+TEST_F(CtrlAgentControllerTest, noListenerChangeHttps) {
+    // This configuration should be used to override the initial configuration.
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream agent_st;
+    agent_st << "{"
+             << "  \"http-host\": \"127.0.0.1\","
+             << "  \"http-port\": 8081,"
+             << "  \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+             << "  \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+             << "  \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+             << "  \"control-sockets\": {"
+             << "    \"dhcp4\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/first/dhcp4/socket\""
+             << "    },"
+             << "    \"dhcp6\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/first/dhcp6/socket\""
+             << "    }"
+             << "  }"
+             << "}";
+
+    ostringstream second_config_st;
+    second_config_st << "{"
+             << "  \"http-host\": \"127.0.0.1\","
+             << "  \"http-port\": 8081,"
+             << "  \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+             << "  \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+             << "  \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+             << "  \"control-sockets\": {"
+             << "    \"dhcp4\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp4/socket\""
+             << "    },"
+             << "    \"dhcp6\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp6/socket\""
+             << "    }"
+             << "  }"
+             << "}";
+
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
+    const HttpListener* listener_ptr = 0;
+    TlsContext* context = 0;
+
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // Check that the HTTP listener still exists after reconfiguration.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        ASSERT_EQ(listener_ptr, listener.get());
+        ASSERT_TRUE(listener->getTlsContext());
+        // The TLS settings have been applied
+        ASSERT_NE(context, listener->getTlsContext().get());
+        EXPECT_TRUE(process->isListening());
+
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8081, listener->getLocalPort());
+    };
+
+    // Schedule reconfiguration.
+    scheduleTimedWrite(second_config_st.str(), 100);
+    // Schedule SIGHUP signal to trigger reconfiguration.
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
+
+    IntervalTimer timer(getIOService());
+    timer.setup([&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        listener_ptr = listener.get();
+        ASSERT_TRUE(listener->getTlsContext());
+        context = listener->getTlsContext().get();
+    }, 50, IntervalTimer::ONE_SHOT);
+
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(agent_st.str(), 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    // The server should use a correct listener configuration.
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8081, ctx->getHttpPort());
+
+    // The forwarding configuration should have been updated.
+    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
+}
+
+// Verify that the reload will issue an error
+TEST_F(CtrlAgentControllerTest, handleHttpToHttpsSwitch) {
+    string ca_dir(string(TEST_CA_DIR));
+
+    // This configuration should be used to override the initial configuration.
+    ostringstream second_config_st;
+    second_config_st << "{"
+             << "  \"http-host\": \"127.0.0.1\","
+             << "  \"http-port\": 8081,"
+             << "  \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+             << "  \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+             << "  \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+             << "  \"control-sockets\": {"
+             << "    \"dhcp4\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp4/socket\""
+             << "    },"
+             << "    \"dhcp6\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp6/socket\""
+             << "    }"
+             << "  }"
+             << "}";
+
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
+    const HttpListener* listener_ptr = 0;
+
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // Check that the HTTP listener still exists after reconfiguration.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        ASSERT_EQ(listener_ptr, listener.get());
+        ASSERT_FALSE(listener->getTlsContext());
+        EXPECT_TRUE(process->isListening());
+
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8081, listener->getLocalPort());
+    };
+
+    // Schedule reconfiguration.
+    scheduleTimedWrite(second_config_st.str(), 100);
+    // Schedule SIGHUP signal to trigger reconfiguration.
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
+
+    IntervalTimer timer(getIOService());
+    timer.setup([&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        listener_ptr = listener.get();
+        ASSERT_FALSE(listener->getTlsContext());
+    }, 50, IntervalTimer::ONE_SHOT);
+
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(valid_agent_config, 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    // The server should use a correct listener configuration.
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8081, ctx->getHttpPort());
+
+    // The forwarding configuration should have not been updated.
+    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
+
+    CtrlAgentProcessPtr process = getCtrlAgentProcess();
+    ASSERT_TRUE(process);
+    ConstHttpListenerPtr listener = process->getHttpListener();
+    ASSERT_FALSE(listener);
+    EXPECT_FALSE(process->isListening());
+}
+
+// Verify that the reload will issue an error
+TEST_F(CtrlAgentControllerTest, handleHttpsToHttpSwitch) {
+    string ca_dir(string(TEST_CA_DIR));
+    ostringstream agent_st;
+    agent_st << "{"
+             << "  \"http-host\": \"127.0.0.1\","
+             << "  \"http-port\": 8081,"
+             << "  \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+             << "  \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+             << "  \"key-file\": \"" << ca_dir << "/kea-server.key\", \n"
+             << "  \"control-sockets\": {"
+             << "    \"dhcp4\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/first/dhcp4/socket\""
+             << "    },"
+             << "    \"dhcp6\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/first/dhcp6/socket\""
+             << "    }"
+             << "  }"
+             << "}";
+
+    // This configuration should be used to override the initial configuration.
+    ostringstream second_config_st;
+    second_config_st << "{"
+             << "  \"http-host\": \"127.0.0.1\","
+             << "  \"http-port\": 8081,"
+             << "  \"control-sockets\": {"
+             << "    \"dhcp4\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp4/socket\""
+             << "    },"
+             << "    \"dhcp6\": {"
+             << "      \"socket-type\": \"unix\","
+             << "      \"socket-name\": \"/second/dhcp6/socket\""
+             << "    }"
+             << "  }"
+             << "}";
+
+    // Pointer used to store the listener instance. It is set after 50 ms the
+    // process has started (using a timer) and it's value is checked on server
+    // shutdown using the callback.
+    const HttpListener* listener_ptr = 0;
+    TlsContext* context = 0;
+
+    // This check callback is called before the shutdown.
+    auto check_callback = [&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+
+        // Check that the HTTP listener still exists after reconfiguration.
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        ASSERT_EQ(listener_ptr, listener.get());
+        ASSERT_TRUE(listener->getTlsContext());
+        // The TLS settings have not changed
+        ASSERT_EQ(context, listener->getTlsContext().get());
+        EXPECT_TRUE(process->isListening());
+
+        EXPECT_EQ("127.0.0.1", listener->getLocalAddress().toText());
+        EXPECT_EQ(8081, listener->getLocalPort());
+    };
+
+    // Schedule reconfiguration.
+    scheduleTimedWrite(second_config_st.str(), 100);
+    // Schedule SIGHUP signal to trigger reconfiguration.
+    TimedSignal sighup(getIOService(), SIGHUP, 200);
+
+    IntervalTimer timer(getIOService());
+    timer.setup([&] {
+        CtrlAgentProcessPtr process = getCtrlAgentProcess();
+        ASSERT_TRUE(process);
+        ConstHttpListenerPtr listener = process->getHttpListener();
+        ASSERT_TRUE(listener);
+        listener_ptr = listener.get();
+        ASSERT_TRUE(listener->getTlsContext());
+        context = listener->getTlsContext().get();
+    }, 50, IntervalTimer::ONE_SHOT);
+
+    // Start the server.
+    time_duration elapsed_time;
+    runWithConfig(agent_st.str(), 500,
+                  static_cast<const TestCallback&>(check_callback),
+                  elapsed_time);
+
+    CtrlAgentCfgContextPtr ctx = getCtrlAgentCfgContext();
+    ASSERT_TRUE(ctx);
+
+    // The server should use a correct listener configuration.
+    EXPECT_EQ("127.0.0.1", ctx->getHttpHost());
+    EXPECT_EQ(8081, ctx->getHttpPort());
+
+    // The forwarding configuration should have not been updated.
+    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
+    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);

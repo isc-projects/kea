@@ -344,7 +344,7 @@ TEST_F(TlsListenerTest, multipleClientsListen) {
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         ASSERT_NO_THROW(startRequest(request, clientContext()));
     }
 
@@ -386,7 +386,7 @@ TEST_F(TlsListenerTest, multipleRequetsPerClients) {
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         ASSERT_NO_THROW(startRequests(requests, clientContext()));
     }
 
@@ -437,7 +437,7 @@ TEST_F(TlsListenerTest, filterClientsTest) {
     ASSERT_EQ(SERVER_ADDRESS, listener.getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener.getLocalPort());
     size_t num_clients = 5;
-    for (auto i = 0; i < num_clients; ++i) {
+    for (size_t i = 0; i < num_clients; ++i) {
         // Every other client sends nothing (i.e. waits for EOF) as
         // we expect the filter to reject them.
         if (i % 2 == 0) {

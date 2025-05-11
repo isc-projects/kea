@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,5 +33,5 @@ int selectCheck(int fd_to_check) {
     return (select(maxfd + 1, &read_fds, NULL, NULL, &select_timeout));
 }
 
-}; // namespace isc::d2
-}; // namespace isc
+}  // namespace isc::d2
+}  // namespace isc

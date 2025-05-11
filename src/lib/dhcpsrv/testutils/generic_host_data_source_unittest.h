@@ -328,6 +328,14 @@ public:
     /// @param user_context The user context.
     void testUserContext(isc::data::ConstElementPtr user_context);
 
+    /// @brief Test insert and retrieve a v6 host with prefix exclude option.
+    ///
+    /// Uses gtest macros to report failures.
+    ///
+    /// @param prefix Prefix to reserve (/48).
+    /// @param exclude Prefix to exclude (/64).
+    void testPrefixExclude(std::string prefix, std::string exclude);
+
     /// @brief Test inserts multiple reservations for the same host for different
     /// subnets and check that they can be retrieved properly.
     ///
@@ -485,6 +493,7 @@ public:
     /// @param n_of_hosts number of hosts to insert into and retrieve from the
     ///     database
     void stressTest(uint32_t n_of_hosts);
+
     /// @brief Tests that delete(subnet-id, addr4) call works.
     ///
     /// Uses gtest macros to report failures.

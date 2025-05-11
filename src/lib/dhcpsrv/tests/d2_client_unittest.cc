@@ -745,6 +745,11 @@ TEST_F(D2ClientMgrParamsTest, generateFqdn) {
     EXPECT_EQ("prefix-2001-db8--2.suffix.com.",
               mgr.generateFqdn(v6address, *ddns_params_, do_dot));
 
+    // Verify that it appends a zero when v6 address ends in colon.
+    asiolink::IOAddress v6address2("2001:db8::");
+    EXPECT_EQ("prefix-2001-db8--0.suffix.com.",
+              mgr.generateFqdn(v6address2, *ddns_params_, do_dot));
+
     // Create a disabled config.
     subnet_->setDdnsSendUpdates(false);
 

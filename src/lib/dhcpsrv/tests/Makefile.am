@@ -1,11 +1,12 @@
 SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
 AM_CPPFLAGS += -DDHCP_DATA_DIR=\"$(abs_top_builddir)/src/lib/dhcpsrv/tests\"
-AM_CPPFLAGS += -DKEA_LFC_BUILD_DIR=\"$(abs_top_builddir)/src/bin/lfc\"
+AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
+AM_CPPFLAGS += -DDEFAULT_HOOKS_PATH=\"$(libdir)/kea/hooks\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -59,12 +60,12 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
-libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
 libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine4_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine6_unittest.cc
 libdhcpsrv_unittests_SOURCES += allocation_state_unittest.cc
+libdhcpsrv_unittests_SOURCES += legal_log_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cb_ctl_dhcp_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfg_db_access_unittest.cc
@@ -116,16 +117,6 @@ libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += multi_threading_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 libdhcpsrv_unittests_SOURCES += ncr_generator_unittest.cc
-if HAVE_MYSQL
-libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
-libdhcpsrv_unittests_SOURCES += mysql_lease_extended_info_unittest.cc
-libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
-endif
-if HAVE_PGSQL
-libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
-libdhcpsrv_unittests_SOURCES += pgsql_lease_extended_info_unittest.cc
-libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
-endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
 libdhcpsrv_unittests_SOURCES += random_allocation_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += random_allocator_unittest.cc
@@ -142,23 +133,15 @@ libdhcpsrv_unittests_SOURCES += tracking_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_state_unittest.cc
 libdhcpsrv_unittests_SOURCES += network_unittest.cc
 
+if FUZZING
+libdhcpsrv_unittests_SOURCES += packet_fuzzer_unittest.cc
+endif
+
 libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-if HAVE_MYSQL
-libdhcpsrv_unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-libdhcpsrv_unittests_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
-if HAVE_MYSQL
-libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
-endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
@@ -171,16 +154,6 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/testutils/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
 
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la

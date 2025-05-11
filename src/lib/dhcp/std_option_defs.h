@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,8 @@
 #define LW_V6_OPTION_SPACE               "s46-cont-lw-options"
 #define V4V6_RULE_OPTION_SPACE           "s46-rule-options"
 #define V4V6_BIND_OPTION_SPACE           "s46-v4v6bind-options"
+#define V6_NTP_SERVER_SPACE              "v6-ntp-server-suboptions"
+#define CABLELABS_CLIENT_CONF_SPACE      "cablelabs-client-conf"
 #define LAST_RESORT_V4_OPTION_SPACE      "last-resort-v4"
 
 /// @brief encapsulated option spaces
@@ -324,6 +326,8 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
       true, NO_RECORD_DEF, "" },
     { "classless-static-route", DHO_CLASSLESS_STATIC_ROUTE, DHCP4_OPTION_SPACE, OPT_INTERNAL_TYPE,
       false, NO_RECORD_DEF, "" },
+    { "cablelabs-client-conf", DHO_CCC, DHCP4_OPTION_SPACE, OPT_EMPTY_TYPE,
+      false, NO_RECORD_DEF, CABLELABS_CLIENT_CONF_SPACE },
     { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, DHCP4_OPTION_SPACE,
       OPT_RECORD_TYPE, false, RECORD_DEF(VIVCO_RECORDS), "" },
     // Vendor-Identifying Vendor Specific Information option payload begins with a
@@ -606,6 +610,8 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "relay-id", D6O_RELAY_ID, DHCP6_OPTION_SPACE, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "ntp-server", D6O_NTP_SERVER, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
+      false, NO_RECORD_DEF, V6_NTP_SERVER_SPACE },
     { "v6-access-domain", D6O_V6_ACCESS_DOMAIN, DHCP6_OPTION_SPACE,
       OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
     { "sip-ua-cs-list", D6O_SIP_UA_CS_LIST, DHCP6_OPTION_SPACE,
@@ -644,7 +650,7 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "relay-source-port", D6O_RELAY_SOURCE_PORT, DHCP6_OPTION_SPACE,
       OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
-    { "v6-sztp-redirect", D60_V6_SZTP_REDIRECT, DHCP6_OPTION_SPACE,
+    { "v6-sztp-redirect", D6O_V6_SZTP_REDIRECT, DHCP6_OPTION_SPACE,
       OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, DHCP6_OPTION_SPACE,
       OPT_IPV6_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
@@ -655,7 +661,9 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "s46-cont-lw", D6O_S46_CONT_LW, DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE,
       false, NO_RECORD_DEF, LW_V6_OPTION_SPACE },
     { "v6-dnr", D6O_V6_DNR, DHCP6_OPTION_SPACE, OPT_INTERNAL_TYPE,
-     false, NO_RECORD_DEF, "" }
+      false, NO_RECORD_DEF, "" },
+    { "addr-reg-enable", D6O_ADDR_REG_ENABLE, DHCP6_OPTION_SPACE,
+      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "" }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
@@ -741,6 +749,53 @@ const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
     sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
+
+/// @brief NTP server suboption definitions
+const OptionDefParams V6_NTP_SERVER_DEFINITIONS[] = {
+    { "ntp-server-address", NTP_SUBOPTION_SRV_ADDR, V6_NTP_SERVER_SPACE,
+      OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
+    { "ntp-server-multicast", NTP_SUBOPTION_MC_ADDR, V6_NTP_SERVER_SPACE,
+      OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
+    { "ntp-server-fqdn", NTP_SUBOPTION_SRV_FQDN, V6_NTP_SERVER_SPACE,
+      OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
+};
+
+const int V6_NTP_SERVER_DEFINITIONS_SIZE =
+    sizeof(V6_NTP_SERVER_DEFINITIONS) /
+    sizeof(V6_NTP_SERVER_DEFINITIONS[0]);
+
+/// @brief TSP's AS-REQ/AS-REP Backoff and Retry aka tsp-as-parameters record
+/// (nominal timeout, maximum timeout, maximum retries)
+/// Reused for TSP's AP-REQ/AP-REP Backoff and Retry record
+RECORD_DECL(TSP_AS_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
+
+/// @brief CableLabs client conf suboption definitions
+const OptionDefParams CABLELABS_CLIENT_CONF_DEFINITIONS[] = {
+    { "tsp-primary-server", TSP_PRIMARY_SERVER, CABLELABS_CLIENT_CONF_SPACE,
+      OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
+    { "tsp-secondary-server", TSP_SECONDARY_SERVER, CABLELABS_CLIENT_CONF_SPACE,
+      OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
+    // No tsp-provisioning-server as it has a variant record type
+    { "tsp-as-parameters", TSP_AS_PARAMETERS, CABLELABS_CLIENT_CONF_SPACE,
+       OPT_RECORD_TYPE, false, RECORD_DEF(TSP_AS_RECORDS), "" },
+    { "tsp-ap-parameters", TSP_AP_PARAMETERS, CABLELABS_CLIENT_CONF_SPACE,
+       OPT_RECORD_TYPE, false, RECORD_DEF(TSP_AS_RECORDS), "" },
+    // RFC 3495 rrata says fqdn (vs string)
+    { "tsp-realm", TSP_REALM, CABLELABS_CLIENT_CONF_SPACE, OPT_FQDN_TYPE,
+      false, NO_RECORD_DEF, "" },
+    { "tsp-use-tgt", TSP_USE_TGT, CABLELABS_CLIENT_CONF_SPACE,
+      OPT_BOOLEAN_TYPE, false, NO_RECORD_DEF, "" },
+    { "tsp-provisioning-timer", TSP_PROVISIONING_TIMER,
+      CABLELABS_CLIENT_CONF_SPACE, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "tsp-sct", TSP_SCT, CABLELABS_CLIENT_CONF_SPACE, OPT_UINT16_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "kdc-server", KDC_SERVER, CABLELABS_CLIENT_CONF_SPACE,
+      OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" }
+};
+
+const int CABLELABS_CLIENT_CONF_DEFINITIONS_SIZE =
+    sizeof(CABLELABS_CLIENT_CONF_DEFINITIONS) /
+    sizeof(CABLELABS_CLIENT_CONF_DEFINITIONS[0]);
 
 }  // namespace
 

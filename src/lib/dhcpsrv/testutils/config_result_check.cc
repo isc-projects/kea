@@ -57,14 +57,14 @@ bool errorContainsPosition(ConstElementPtr error_element,
                 (!split_pos[1].empty()) && !(split_pos[2].empty())) {
 
                 // Make sure that the line number comprises only digits.
-                for (int i = 0; i < split_pos[1].size(); ++i) {
+                for (unsigned i = 0; i < split_pos[1].size(); ++i) {
                     if (!isdigit(split_pos[1][i])) {
                         return (false);
                     }
                 }
 
                 // Go over digits of the position within the line.
-                int i = 0;
+                unsigned i = 0;
                 while (isdigit(split_pos[2][i])) {
                     ++i;
                 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -257,7 +257,7 @@ public:
     virtual ~PacketQueueRing6(){}
 };
 
-}; // namespace isc::dhcp
-}; // namespace isc
+}  // namespace isc::dhcp
+}  // namespace isc
 
 #endif // PACKET_QUEUE_RING_H

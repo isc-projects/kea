@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,7 @@ void CfgHostsList::internalize(ConstElementPtr list) {
             isc_throw(BadValue, "internal error: CfgHostsList::internalize: "
                       "no reservations for subnet ID " << subnet_id);
         }
-        map_.insert(std::make_pair(subnet_id, 
+        map_.insert(std::make_pair(subnet_id,
                                    boost::const_pointer_cast<Element>(resvs)));
     }
 }

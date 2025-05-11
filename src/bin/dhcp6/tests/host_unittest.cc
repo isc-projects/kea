@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -473,7 +473,7 @@ const char* CONFIGS[] = {
         "            \"pools\": ["
         "                {"
         "                    \"pool\": \"2001:db8:1::10-2001:db8:1::11\","
-        "                    \"client-class\": \"reserved_class\""
+        "                    \"client-classes\": [ \"reserved_class\" ]"
         "                }"
         "            ],\n"
         "            \"interface\": \"eth0\"\n"
@@ -484,7 +484,7 @@ const char* CONFIGS[] = {
         "            \"pools\": ["
         "                {"
         "                    \"pool\": \"2001:db8:2::10-2001:db8:2::11\","
-        "                    \"client-class\": \"unreserved_class\""
+        "                    \"client-classes\": [ \"unreserved_class\" ]"
         "                }"
         "            ],\n"
         "            \"interface\": \"eth0\"\n"
@@ -522,7 +522,7 @@ const char* CONFIGS[] = {
         "    \"subnet6\": [\n"
         "        {\n"
         "            \"subnet\": \"2001:db8:1::/64\", \n"
-        "            \"client-class\": \"reserved_class\","
+        "            \"client-classes\": [ \"reserved_class\" ],"
         "            \"id\": 10,"
         "            \"pools\": ["
         "                {"
@@ -533,7 +533,7 @@ const char* CONFIGS[] = {
         "        },\n"
         "        {\n"
         "            \"subnet\": \"2001:db8:2::/64\", \n"
-        "            \"client-class\": \"unreserved_class\","
+        "            \"client-classes\": [ \"unreserved_class\" ],"
         "            \"id\": 11,"
         "            \"pools\": ["
         "                {"
@@ -571,11 +571,11 @@ const char* CONFIGS[] = {
         "        \"pools\": ["
         "            {"
         "                \"pool\": \"2001:db8:1::10-2001:db8:1::11\","
-        "                \"client-class\": \"reserved_class\""
+        "                \"client-classes\": [ \"reserved_class\" ]"
         "            },"
         "            {"
         "                \"pool\": \"2001:db8:1::20-2001:db8:1::21\","
-        "                \"client-class\": \"unreserved_class\""
+        "                \"client-classes\": [ \"unreserved_class\" ]"
         "            }"
         "        ],\n"
         "        \"interface\": \"eth0\"\n"
@@ -806,7 +806,7 @@ public:
     HostTest()
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true),
-          client_(),
+          client_(srv_),
           do_solicit_(std::bind(&Dhcp6Client::doSolicit, &client_, true)),
           do_solicit_request_(std::bind(&Dhcp6Client::doSARR, &client_)) {
     }
@@ -1125,7 +1125,7 @@ HostTest::doExchange(const uint16_t msg_type, Dhcp6Client& client) {
 
 void
 HostTest::testOverrideRequestedOptions(const uint16_t msg_type) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Reservation has been made for a client with this DUID.
     client.setDUID("01:02:03:05");
 
@@ -1359,7 +1359,7 @@ HostTest::requestIA(Dhcp6Client& client, const Hint& hint) {
 
 void
 HostTest::testHostOnlyOptions(const uint16_t msg_type) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:05");
     client.requestOption(D6O_NAME_SERVERS);
     client.requestOption(D6O_NIS_SERVERS);
@@ -1383,7 +1383,7 @@ HostTest::testHostOnlyOptions(const uint16_t msg_type) {
 
 void
 HostTest::testOverrideVendorOptions(const uint16_t msg_type) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:05");
 
     // Client needs to include Vendor Specific Information option
@@ -1420,7 +1420,7 @@ void
 HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
                                              const std::string& first_address,
                                              const std::string& second_address) {
-    Dhcp6Client client_resrv;
+    Dhcp6Client client_resrv(srv_);
 
     // Use DUID for which we have host reservation including client class.
     client_resrv.setDUID("01:02:03:05");
@@ -1440,7 +1440,7 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
     // This client has no reservation and therefore should be
     // assigned to the unreserved_class and be given an address
     // from the other pool.
-    Dhcp6Client client_no_resrv(client_resrv.getServer());
+    Dhcp6Client client_no_resrv(srv_);
     client_no_resrv.setDUID("01:02:03:04");
 
     // Let's use the address of 2001:db8:1::10 as a hint to make sure that the
@@ -1455,7 +1455,7 @@ HostTest::testGlobalClassSubnetPoolSelection(const int config_idx,
 void
 HostTest::testMultipleClientsRace(const std::string& duid1,
                                   const std::string& duid2) {
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setDUID(duid1);
     ASSERT_NO_THROW(configure(CONFIGS[13], *client1.getServer()));
     // client1 performs 4-way exchange to get the reserved lease.
@@ -1467,7 +1467,7 @@ HostTest::testMultipleClientsRace(const std::string& duid1,
 
     // Create another client that has a reservation for the same
     // IP address.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setDUID(duid2);
     requestIA(client2, Hint(IAID(1), "2001:db8:1::15"));
 
@@ -1527,7 +1527,7 @@ HostTest::sarrTest(Dhcp6Client& client, const std::string& exp_address,
 // lease and the hostname for the lease is blank.
 //
 TEST_F(HostTest, basicSarrs) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[0], *client.getServer());
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -1596,7 +1596,7 @@ TEST_F(HostTest, basicSarrs) {
 // Test basic SARR and renew situation with a client that matches a host
 // reservation
 TEST_F(HostTest, sarrAndRenew) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     configure(CONFIGS[0], *client.getServer());
 
@@ -1648,7 +1648,7 @@ TEST_F(HostTest, sarrAndRenew) {
 // Test basic SARR and rebind situation with a client that matches a host
 // reservation.
 TEST_F(HostTest, sarrAndRebind) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     configure(CONFIGS[0], *client.getServer());
 
@@ -1700,7 +1700,7 @@ TEST_F(HostTest, sarrAndRebind) {
 // This test verifies that the host reservation by DUID is found by the
 // server.
 TEST_F(HostTest, reservationByDUID) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
     // Run the actual test.
@@ -1710,7 +1710,7 @@ TEST_F(HostTest, reservationByDUID) {
 // This test verifies that the host reservation by HW address is found
 // by the server.
 TEST_F(HostTest, reservationByHWAddress) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Set link local address for the client which the server will
     // use to decode the HW address as 38:60:77:d5:ff:ee. This
     // decoded address will be used to search for host reservations.
@@ -1722,7 +1722,7 @@ TEST_F(HostTest, reservationByHWAddress) {
 // This test verifies that order in which host identifiers are used to
 // retrieve host reservations can be controlled.
 TEST_F(HostTest, hostIdentifiersOrder) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Set DUID matching the one used to create host reservations.
     client.setDUID("01:02:03:05");
     // Set link local address for the client which the server will
@@ -2202,7 +2202,7 @@ TEST_F(HostTest, insertReservationDuringRenew) {
 // pools. The second client renews and it obtains all reserved
 // addresses and prefixes.
 TEST_F(HostTest, multipleIAsConflict) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     client.setDUID("01:02:03:05");
 
     // Create configuration without any reservations.
@@ -2306,7 +2306,7 @@ TEST_F(HostTest, multipleIAsConflict) {
 // client. The client is assigned another available lease from a
 // dynamic pool by reusing an expired lease.
 TEST_F(HostTest, conflictResolutionReuseExpired) {
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
 
     ASSERT_NO_THROW(configure(CONFIGS[6], *client1.getServer()));
 
@@ -2322,7 +2322,7 @@ TEST_F(HostTest, conflictResolutionReuseExpired) {
     ASSERT_TRUE(client1.hasLeaseForPrefix(IOAddress("3000::"), 120));
 
     // Create another client which is assigned another lease.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
 
     // Second client performs 4-way exchange and obtains an address and
     // prefix indicated in hints.
@@ -2370,7 +2370,7 @@ TEST_F(HostTest, conflictResolutionReuseExpired) {
 
 // Verifies fundamental Global vs Subnet host reservations for NA leases
 TEST_F(HostTest, globalReservationsNA) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[8], *client.getServer()));
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -2451,7 +2451,7 @@ TEST_F(HostTest, globalReservationsNA) {
 
 // Verifies fundamental Global vs Subnet host reservations for PD leases
 TEST_F(HostTest, globalReservationsPD) {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     ASSERT_NO_FATAL_FAILURE(configure(CONFIGS[9], *client.getServer()));
 
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -2538,7 +2538,7 @@ TEST_F(HostTest, clientClassPoolSelection) {
 // client will be given a different lease.
 TEST_F(HostTest, firstClientGetsReservedAddress) {
     // Create a client which has DUID matching the reservation.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setDUID("01:02:03:04");
     ASSERT_NO_THROW(configure(CONFIGS[13], *client1.getServer()));
     // client1 performs 4-way exchange to get the reserved lease.
@@ -2550,7 +2550,7 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
 
     // Create another client that has a reservation for the same
     // IP address.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setDUID("01:02:03:05");
     requestIA(client2, Hint(IAID(1), "2001:db8:1::10"));
 
@@ -2589,7 +2589,7 @@ TEST_F(HostTest, firstClientGetsReservedAddress) {
 // client will be given a different lease.
 TEST_F(HostTest, firstClientGetsReservedPrefix) {
     // Create a client which has DUID matching the reservation.
-    Dhcp6Client client1;
+    Dhcp6Client client1(srv_);
     client1.setDUID("01:02:03:04");
     ASSERT_NO_THROW(configure(CONFIGS[14], *client1.getServer()));
     // client1 performs 4-way exchange to get the reserved lease.
@@ -2601,7 +2601,7 @@ TEST_F(HostTest, firstClientGetsReservedPrefix) {
 
     // Create another client that has a reservation for the same
     // IP address.
-    Dhcp6Client client2(client1.getServer());
+    Dhcp6Client client2(srv_);
     client2.setDUID("01:02:03:05");
     client2.requestPrefix(1);
 

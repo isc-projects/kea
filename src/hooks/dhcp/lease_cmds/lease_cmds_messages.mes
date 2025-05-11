@@ -1,4 +1,8 @@
-# Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 % LEASE_CMDS_ADD4 lease4-add command successful (address: %1)
 Logged at debug log level 20.
@@ -70,6 +74,36 @@ parameters passed are logged.
 % LEASE_CMDS_INIT_OK loading Lease Commands hooks library successful
 This info message indicates that the Lease Commands hooks library has been
 loaded successfully. Enjoy!
+
+% LEASE_CMDS_LEASE4_OFFER_FAILED processing error occurred evaluating binding variables: %1
+This error log is emitted when an error occurs in  the lease4_offer
+handler is invoked. The argument provides an explanation.
+
+% LEASE_CMDS_LEASES4_COMMITTED_FAILED processing error occurred evaluating binding variables: %1
+This error log is emitted when an error occurs in  the leases4_committed
+handler is invoked. The argument provides an explanation.
+
+% LEASE_CMDS_LEASES6_COMMITTED_CONFLICT could not updating lease: %1 for: %2
+This error log is emitted by the leases6_committed callback when attempting
+to update a lease with new binding-variable values but a conflicting change
+has occurred rendering the update invalid. The arguments provide the lease
+address and the query details.
+
+% LEASE_CMDS_LEASES6_COMMITTED_FAILED reason: %1
+This error log is emitted when one or more leases associated with a client
+query failed to be updated with binding-variable values. The argument
+provides details. Individual errors for each lease should precede this log.
+
+% LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR evaluating binding-variables for lease: %1 for: %2, reason: %3
+This error log is emitted by the leases6_committed callback when an
+unexpected error occurs evaluating the binding-variables for a given
+lease. The arguments provide the lease address, the query details, and
+an error explanation.
+
+% LEASE_CMDS_LOAD_ERROR loading Lease Commands hooks library failed: %1
+This error message indicates an error loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
 
 % LEASE_CMDS_RESEND_DDNS4 lease4-resend-ddns command successful: %1
 A request to update DNS for the requested IPv4 lease has been

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,17 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet_id.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#include <hooks/dhcp/mysql/mysql_lease_mgr.h>
+#endif
+
+#ifdef HAVE_PGSQL
+#include <pgsql/testutils/pgsql_schema.h>
+#include <hooks/dhcp/pgsql/pgsql_lease_mgr.h>
+#endif
+
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>
@@ -21,6 +32,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::stats;
@@ -248,7 +260,7 @@ public:
 
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
@@ -257,7 +269,8 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMemfile) {
 #ifdef HAVE_MYSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    MySqlLeaseMgrInit init;
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 1);
@@ -267,7 +280,8 @@ TEST_F(DeclineTest, declineNoIdentifierChangeMySQL) {
 #ifdef HAVE_PGSQL
 // This test checks that the client can acquire and decline the lease.
 TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    PgSqlLeaseMgrInit init;
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS, 2);
@@ -280,7 +294,7 @@ TEST_F(DeclineTest, declineNoIdentifierChangePgSQL) {
 //   client identifier.
 // - The server successfully declines the lease.
 TEST_F(DeclineTest, declineHWAddressOnly) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
@@ -292,7 +306,7 @@ TEST_F(DeclineTest, declineHWAddressOnly) {
 //   client identifier.
 // - The server successfully declines the lease.
 TEST_F(DeclineTest, declineNoClientId) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "",
                       SHOULD_PASS);
@@ -305,7 +319,7 @@ TEST_F(DeclineTest, declineNoClientId) {
 // - The server identifies the lease using HW address and declines
 //   this lease.
 TEST_F(DeclineTest, declineNoClientId2) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "",
                       "01:02:03:04:05:06", "12:14",
                       SHOULD_PASS);
@@ -317,7 +331,7 @@ TEST_F(DeclineTest, declineNoClientId2) {
 //   client identifier.
 // - The server should not remove the lease.
 TEST_F(DeclineTest, declineNonMatchingClientId) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "01:02:03:04:05:06", "12:15:16",
                       SHOULD_FAIL);
@@ -330,7 +344,7 @@ TEST_F(DeclineTest, declineNonMatchingClientId) {
 // - The server uses client identifier to find the client's lease and
 //   declines it.
 TEST_F(DeclineTest, declineNonMatchingHWAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     acquireAndDecline(client, "01:02:03:04:05:06", "12:14",
                       "06:06:06:06:06:06", "12:14",
                       SHOULD_PASS);
@@ -343,7 +357,7 @@ TEST_F(DeclineTest, declineNonMatchingHWAddress) {
 // - Server determines that the client is trying to decline a
 //   wrong address and will refuse to decline.
 TEST_F(DeclineTest, declineNonMatchingIPAddress) {
-    Dhcp4Client client(Dhcp4Client::SELECTING);
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
     // Configure DHCP server.
     configure(DECLINE_CONFIGS[0], *client.getServer());
     // Perform 4-way exchange to obtain a new lease.
@@ -362,6 +376,79 @@ TEST_F(DeclineTest, declineNonMatchingIPAddress) {
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
     ASSERT_TRUE(lease);
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+}
+
+// Test that the released lease cannot be declined.
+TEST_F(DeclineTest, declineAfterRelease) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer(), true, true, true, false, LEASE_AFFINITY_ENABLED);
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Remember the acquired address.
+    IOAddress leased_address = client.config_.lease_.addr_;
+
+    // Release the acquired lease.
+    client.doRelease();
+
+    // Try to decline the released address.
+    client.config_.lease_.addr_ = leased_address;
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // released state.
+    Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(leased_address);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_RELEASED, lease->state_);
+}
+
+// Test that the expired lease cannot be declined.
+TEST_F(DeclineTest, declineAfterExpire) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Age the lease (expire it).
+    auto lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    lease->cltt_ -= 7200;
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Try to decline the expired lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // default state.
+    lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+}
+
+// Test that expired-reclaimed lease cannot be declined.
+TEST_F(DeclineTest, declineAfterReclamation) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DECLINE_CONFIGS[0], *client.getServer());
+    // Perform 4-way exchange to obtain a new lease.
+    acquireLease(client);
+
+    // Reclaim the lease.
+    auto lease = LeaseMgrFactory::instance().getLease4(client.config_.lease_.addr_);
+    ASSERT_TRUE(lease);
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    LeaseMgrFactory::instance().updateLease4(lease);
+
+    // Try to decline the reclaimed lease.
+    ASSERT_NO_THROW(client.doDecline());
+
+    // The address should not be declined. It should still be in the
+    // reclaimed state.
+    lease = LeaseMgrFactory::instance().getLease4(lease->addr_);
+    ASSERT_TRUE(lease);
+    EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
 }
 
 } // end of anonymous namespace

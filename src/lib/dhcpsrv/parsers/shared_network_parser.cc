@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::util;
+namespace ph = std::placeholders;
 
 namespace isc {
 namespace dhcp {
@@ -152,30 +153,20 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
             }
         }
 
-        if (shared_network_data->contains("client-class")) {
-            std::string client_class = getString(shared_network_data, "client-class");
-            if (!client_class.empty()) {
-                shared_network->allowClientClass(client_class);
-            }
-        }
-
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
         }
 
-        if (shared_network_data->contains("require-client-classes")) {
-            const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("require-client-classes")->listValue();
-            for (auto const& cclass : class_list) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                shared_network->requireClientClass(cclass->stringValue());
-            }
-        }
+        // Setup additional class list.
+        getClientClassesElem(shared_network_data,
+                             std::bind(&Network::allowClientClass,
+                                       boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
+
+        // Setup additional class list.
+        getAdditionalClassesElem(shared_network_data,
+                                 std::bind(&Network::addAdditionalClass,
+                                           boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         if (shared_network_data->contains("relay")) {
             auto relay_parms = shared_network_data->get("relay");
@@ -202,9 +193,6 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data,
         Network4Ptr network4 = boost::dynamic_pointer_cast<Network4>(shared_network);
         parseOfferLft(shared_network_data, network4);
 
-    } catch (const DhcpConfigError&) {
-        // Position was already added
-        throw;
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << shared_network_data->getPosition() << ")");
@@ -323,30 +311,20 @@ SharedNetwork6Parser::parse(const data::ConstElementPtr& shared_network_data,
             parser->parse(cfg_option, json, encapsulate_options);
         }
 
-        if (shared_network_data->contains("client-class")) {
-            std::string client_class = getString(shared_network_data, "client-class");
-            if (!client_class.empty()) {
-                shared_network->allowClientClass(client_class);
-            }
-        }
-
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
         }
 
-        if (shared_network_data->contains("require-client-classes")) {
-            const std::vector<data::ElementPtr>& class_list =
-                shared_network_data->get("require-client-classes")->listValue();
-            for (auto const& cclass : class_list) {
-                if ((cclass->getType() != Element::string) ||
-                    cclass->stringValue().empty()) {
-                    isc_throw(DhcpConfigError, "invalid class name ("
-                              << cclass->getPosition() << ")");
-                }
-                shared_network->requireClientClass(cclass->stringValue());
-            }
-        }
+        // Setup additional class list.
+        getClientClassesElem(shared_network_data,
+                             std::bind(&Network::allowClientClass,
+                                       boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
+
+        // Setup additional class list.
+        getAdditionalClassesElem(shared_network_data,
+                                 std::bind(&Network::addAdditionalClass,
+                                           boost::dynamic_pointer_cast<Network>(shared_network), ph::_1));
 
         if (shared_network_data->contains("subnet6")) {
             auto json = shared_network_data->get("subnet6");

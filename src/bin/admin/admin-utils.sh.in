@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,9 +26,14 @@ set -eu
 # specific deployment. Also used in unit tests.
 db_host='localhost'
 db_user='keatest'
-db_password='keatest'
+db_password='1234'
 db_name='keatest'
 extra_arguments=
+
+# Set the db_password.
+set_db_password() {
+    db_password=$1
+}
 
 # Runs all the given arguments as a single command. Maintains quoting. Places
 # output in ${OUTPUT} and exit code in ${EXIT_CODE}. Does not support pipes and
@@ -214,7 +219,7 @@ START TRANSACTION; \
 DELETE FROM lease6_stat; \
 INSERT INTO lease6_stat (subnet_id, lease_type, state, leases) \
     SELECT subnet_id, lease_type, state, COUNT(*) \
-    FROM lease6 WHERE state = 0 OR state = 1 \
+    FROM lease6 WHERE state = 0 OR state = 1 OR state = 4 \
     GROUP BY subnet_id, lease_type, state; \
 DELETE FROM lease6_pool_stat; \
 INSERT INTO lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) \

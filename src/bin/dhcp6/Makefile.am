@@ -4,12 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -17,19 +11,20 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
+CLEANFILES  = *.gcno *.gcda
+
 EXTRA_DIST = dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp6_parser.yy
-
 
 # convenience archive
 
 noinst_LTLIBRARIES = libdhcp6.la
 
 libdhcp6_la_SOURCES  =
-libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
-libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
+libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
+libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
 libdhcp6_la_SOURCES += client_handler.cc client_handler.h
 libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh
@@ -52,15 +47,6 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
-
-if HAVE_PGSQL
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-
-if HAVE_MYSQL
-kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -72,12 +58,6 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp6_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_dhcp6_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_dhcp6_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_dhcp6_LDFLAGS += $(PGSQL_LIBS)
-endif
 
 kea_dhcp6dir = $(pkgdatadir)
 
@@ -105,7 +85,8 @@ messages: dhcp6_messages.h dhcp6_messages.cc
 	@echo Message files regenerated
 
 dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/bin/dhcp6/dhcp6_messages.mes)
 
 else
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,7 @@ const uint32_t Lease::STATE_DEFAULT = 0;
 const uint32_t Lease::STATE_DECLINED = 1;
 const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 2;
 const uint32_t Lease::STATE_RELEASED = 3;
+const uint32_t Lease::STATE_REGISTERED = 4;
 
 std::string
 Lease::lifetimeToText(uint32_t lifetime) {
@@ -100,6 +101,8 @@ Lease::basicStatesToText(const uint32_t state) {
         return ("expired-reclaimed");
     case STATE_RELEASED:
         return ("released");
+    case STATE_REGISTERED:
+        return ("registered");
     default:
         // The default case will be handled further on
         ;
@@ -122,6 +125,11 @@ Lease::stateExpiredReclaimed() const {
 bool
 Lease::stateDeclined() const {
     return (state_ == STATE_DECLINED);
+}
+
+bool
+Lease::stateRegistered() const {
+    return (state_ == STATE_REGISTERED);
 }
 
 int64_t
@@ -284,10 +292,10 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
                   " or it is not an integer");
     }
 
-    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_EXPIRED_RECLAIMED)) {
+    if ((state->intValue() < 0) || (state->intValue() > Lease::STATE_REGISTERED)) {
         isc_throw(BadValue, "state " << state->intValue()
                   << " must be in range [0.."
-                  << Lease::STATE_EXPIRED_RECLAIMED << "]");
+                  << Lease::STATE_REGISTERED << "]");
     }
 
     lease->state_ = state->intValue();
@@ -383,6 +391,7 @@ Lease4::decline(uint32_t probation_period) {
     fqdn_rev_ = false;
     state_ = STATE_DECLINED;
     valid_lft_ = probation_period;
+    setContext(ElementPtr());
 }
 
 isc::data::ElementPtr
@@ -741,6 +750,40 @@ Lease6::fromElement(const data::ConstElementPtr& element) {
     lease->preferred_lft_ = static_cast<uint32_t>(preferred_lft->intValue());
 
     return (lease);
+}
+
+bool
+Lease::updateUserContextISC(const std::string elem_name,
+                            ConstElementPtr new_values) {
+    // Get a mutable copy of the lease's current user context.
+    ConstElementPtr user_context = getContext();
+    ElementPtr mutable_user_context;
+    if (user_context && (user_context->getType() == Element::map)) {
+        mutable_user_context = copy(user_context, 0);
+    } else {
+        mutable_user_context = Element::createMap();
+    }
+
+    // Get a mutable copy of the ISC entry.
+    ConstElementPtr isc = mutable_user_context->get("ISC");
+    ElementPtr mutable_isc;
+    if (isc && (isc->getType() == Element::map)) {
+        mutable_isc = copy(isc, 0);
+    } else {
+        mutable_isc = Element::createMap();
+    }
+
+    // Add/replace the new_values entry
+    bool changed = false;
+    ConstElementPtr old_values = mutable_isc->get(elem_name);
+    if (!old_values || (*old_values != *new_values)) {
+        changed = true;
+        mutable_isc->set(elem_name, new_values);
+        mutable_user_context->set("ISC", mutable_isc);
+        setContext(mutable_user_context);
+    }
+
+    return(changed);
 }
 
 std::ostream&

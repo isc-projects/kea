@@ -1,4 +1,4 @@
-// Copyright (C) 2022-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2022-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcpsrv/iterative_allocator.h>
-#include <dhcpsrv/tests/alloc_engine_utils.h>
+#include <dhcpsrv/testutils/alloc_engine_utils.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -79,12 +79,12 @@ TEST_F(IterativeAllocatorTest4, manyPools) {
         subnet_->addPool(pool);
     }
 
-    int total = 10 + 8 * 9; // first pool (.100 - .109) has 10 addresses in it,
-                            // there are 8 extra pools with 9 addresses in each.
+    size_t total = 10 + 8 * 9; // first pool (.100 - .109) has 10 addresses in it,
+                               // there are 8 extra pools with 9 addresses in each.
 
     // Let's keep picked addresses here and check their uniqueness.
     std::set<IOAddress> generated_addrs;
-    int cnt = 0;
+    size_t cnt = 0;
     while (++cnt) {
         IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
@@ -177,12 +177,12 @@ TEST_F(IterativeAllocatorTest6, manyPools) {
         subnet_->addPool(pool);
     }
 
-    int total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
-                            // there are 8 extra pools with 9 addresses in each.
+    size_t total = 17 + 8 * 9; // First pool (::10 - ::20) has 17 addresses in it,
+                               // there are 8 extra pools with 9 addresses in each.
 
     // Let's keep picked addresses here and check their uniqueness.
     std::set<IOAddress> generated_addrs;
-    int cnt = 0;
+    size_t cnt = 0;
     while (++cnt) {
         IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));

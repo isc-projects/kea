@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,15 +43,34 @@ error. The error was displayed and the configuration parsing resumed.
 This is a fatal error message issued when the Control Agent application
 encounters an unrecoverable error from within the event loop.
 
-% CTRL_AGENT_HTTPS_SERVICE_STARTED HTTPS service bound to address %1:%2
+% CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED failed to reuse HTTPS service bound to address: %1 port: %2
+This error message indicates that the server has failed reusing existing
+HTTPS service on the specified address and port. The server can not swith from
+HTTPS to HTTP sockets using the same address and port.
+
+% CTRL_AGENT_HTTPS_SERVICE_STARTED HTTPS service bound to address: %1 port: %2
 This informational message indicates that the server has started HTTPS service
 on the specified address and port. All control commands should be sent to this
 address and port over a TLS channel.
 
-% CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address %1:%2
+% CTRL_AGENT_HTTPS_SERVICE_UPDATED reused HTTPS service bound to address: %1 port: %2 and updated TLS settings
+This informational message indicates that the server has reused existing
+HTTPS service on the specified address and port. Note that any change in
+the TLS setup has been applied.
+
+% CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED failed to reused HTTP service bound to address: %1 port: %2
+This error message indicates that the server has failed reusing existing
+HTTP service on the specified address and port. The server can not swith from
+HTTP to HTTPS sockets using the same address and port.
+
+% CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address: %1 port: %2
 This informational message indicates that the server has started HTTP service
 on the specified address and port. All control commands should be sent to this
 address and port.
+
+% CTRL_AGENT_HTTP_SERVICE_UPDATED reused HTTP service bound to address: %1 port: %2
+This informational message indicates that the server has reused existing
+HTTP service on the specified address and port.
 
 % CTRL_AGENT_RUN_EXIT application is exiting the event loop
 Logged at debug log level 0.

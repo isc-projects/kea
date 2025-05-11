@@ -246,7 +246,7 @@ To create the database:
 
    .. code-block:: mysql
 
-      mysql> CREATE USER 'user-name'@'localhost' IDENTIFIED BY 'password';
+      mysql> CREATE USER 'user-name'@'localhost' IDENTIFIED BY '1234';
       mysql> GRANT ALL ON database-name.* TO 'user-name'@'localhost';
 
    (``user-name`` and ``password`` are the user ID and password used to
@@ -485,7 +485,7 @@ which the servers will access it. A number of steps are required:
 
    .. code-block:: psql
 
-      postgres=# CREATE USER user-name WITH PASSWORD 'password';
+      postgres=# CREATE USER user-name WITH PASSWORD '1234';
       CREATE ROLE
       postgres=# GRANT ALL PRIVILEGES ON DATABASE database-name TO user-name;
       GRANT
@@ -632,19 +632,6 @@ Use the following command to perform an upgrade:
 .. code-block:: console
 
    $ kea-admin db-upgrade pgsql -u database-user -p database-password -n database-name
-
-.. _pgsl-ssl:
-
-PostgreSQL without OpenSSL support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Usually the PostgreSQL database client library is built with the OpenSSL
-support but Kea can be configured to handle the case where it is not
-supported:
-
-.. code-block:: console
-
-   $ ./configure [other-options] --disable-pgsql-ssl
 
 .. _pgsql-performance:
 

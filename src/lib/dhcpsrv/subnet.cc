@@ -276,8 +276,8 @@ Subnet4::create(const IOAddress& prefix, uint8_t length,
     return (subnet);
 }
 
-Subnet4Ptr
-Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
+ConstSubnet4Ptr
+Subnet4::getNextSubnet(const ConstSubnet4Ptr& first_subnet) const {
     SharedNetwork4Ptr network;
     getSharedNetwork(network);
     if (network) {
@@ -287,15 +287,15 @@ Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet) const {
     return (Subnet4Ptr());
 }
 
-Subnet4Ptr
-Subnet4::getNextSubnet(const Subnet4Ptr& first_subnet,
+ConstSubnet4Ptr
+Subnet4::getNextSubnet(const ConstSubnet4Ptr& first_subnet,
                        const ClientClasses& client_classes) const {
     SharedNetwork4Ptr network;
     getSharedNetwork(network);
     // We can only get next subnet if shared network has been defined for
     // the current subnet.
     if (network) {
-        Subnet4Ptr subnet;
+        ConstSubnet4Ptr subnet;
         do {
             // Use subnet identifier of this subnet if this is the first
             // time we're calling getNextSubnet. Otherwise, use the
@@ -685,8 +685,8 @@ void Subnet6::checkType(Lease::Type type) const {
     }
 }
 
-Subnet6Ptr
-Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
+ConstSubnet6Ptr
+Subnet6::getNextSubnet(const ConstSubnet6Ptr& first_subnet) const {
     SharedNetwork6Ptr network;
     getSharedNetwork(network);
     if (network) {
@@ -696,15 +696,15 @@ Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet) const {
     return (Subnet6Ptr());
 }
 
-Subnet6Ptr
-Subnet6::getNextSubnet(const Subnet6Ptr& first_subnet,
+ConstSubnet6Ptr
+Subnet6::getNextSubnet(const ConstSubnet6Ptr& first_subnet,
                        const ClientClasses& client_classes) const {
     SharedNetwork6Ptr network;
     getSharedNetwork(network);
     // We can only get next subnet if shared network has been defined for
     // the current subnet.
     if (network) {
-        Subnet6Ptr subnet;
+        ConstSubnet6Ptr subnet;
         do {
             // Use subnet identifier of this subnet if this is the first
             // time we're calling getNextSubnet. Otherwise, use the

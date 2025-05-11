@@ -27,7 +27,7 @@ run_unittests_SOURCES += mt_tcp_listener_mgr_unittests.cc
 if HAVE_OPENSSL
 run_unittests_SOURCES += tls_listener_unittests.cc
 endif
-if HAVE_BOTAN_BOOST
+if HAVE_BOTAN
 run_unittests_SOURCES += tls_listener_unittests.cc
 endif
 

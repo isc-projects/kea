@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,6 +32,7 @@ const char* VALID_SECURE_USER = "user=keatest_secure";
 const char* INVALID_USER = "user=invaliduser";
 const char* VALID_PASSWORD = "password=keatest";
 const char* INVALID_PASSWORD = "password=invalid";
+const char* DEFAULT_PASSWORD = "password=1234";
 const char* VALID_TIMEOUT = "connect-timeout=10";
 const char* INVALID_TIMEOUT_1 = "connect-timeout=foo";
 const char* INVALID_TIMEOUT_2 = "connect-timeout=-17";

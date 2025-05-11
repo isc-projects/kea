@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,16 @@ namespace {
 ///   - One subnet with three distinct pools.
 ///   - Random allocator enabled globally for delegated prefixes.
 ///   - Iterative allocator for address allocation.
+///
+/// - Configation 7:
+///   - Cache max age and threshold.
+///
+/// - Configuration 8 (derived from 3):
+///   - one subnet 3000::/32 used on eth0 interface
+///   - prefixes of length 64, delegated from the pool: 2001:db8:3::/48
+///   - Excluded Prefix specified (RFC 6603).
+///   - Reservation (which has precedence over the pool) with excluded prefix.
+///
 const char* CONFIGS[] = {
     // Configuration 0
     "{ \"interfaces-config\": {"
@@ -303,6 +313,11 @@ const char* CONFIGS[] = {
         "interfaces-config": {
             "interfaces": [ "*" ]
         },
+        "dhcp-ddns": {
+            "enable-updates": true
+        },
+        "ddns-send-updates": true,
+        "ddns-update-on-renew": true,
         "subnet6": [
             {
                 "id": 1,
@@ -328,6 +343,35 @@ const char* CONFIGS[] = {
         ],
         "valid-lifetime": 600
     })",
+
+    // Configuration 8
+    "{ \"interfaces-config\": {"
+        "  \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"id\": 1, "
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:3::\", "
+        "          \"prefix-len\": 48, "
+        "          \"delegated-len\": 64,"
+        "          \"excluded-prefix\": \"2001:db8:3::1000\","
+        "          \"excluded-prefix-len\": 120"
+        "        } ],"
+        "    \"subnet\": \"3000::/32\", "
+        "    \"reservations\": ["
+        "    {"
+        "        \"duid\": \"01:02:03:05\","
+        "        \"prefixes\": [ \"2001:db8:3::/64\" ],"
+        "        \"excluded-prefixes\": [ \"2001:db8:3::2000/120\" ]"
+        "    } ],"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"eth0\""
+        " } ],"
+        "\"valid-lifetime\": 4000"
+    "}",
 };
 
 /// @brief Test fixture class for testing 4-way exchange: Solicit-Advertise,
@@ -379,8 +423,17 @@ public:
 
     /// @brief This test verifies that it is possible to specify an excluded
     /// prefix (RFC 6603) and send it back to the client requesting prefix
-    /// delegation.
-    void directClientExcludedPrefix();
+    /// delegation using a pool.
+    ///
+    /// @param request_pdx request pd exclude option.
+    void directClientExcludedPrefixPool(bool request_pdx);
+
+    /// @brief This test verifies that it is possible to specify an excluded
+    /// prefix (RFC 6603) and send it back to the client requesting prefix
+    /// delegation using a reservation.
+    ///
+    /// @param request_pdx request pd exclude option.
+    void directClientExcludedPrefixHost(bool request_pdx);
 
     /// @brief Check that when the client includes the Rapid Commit option in
     /// its Solicit, the server responds with Reply and commits the lease.
@@ -447,7 +500,7 @@ public:
 
 void
 SARRTest::directClientPrefixHint() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     configure(CONFIGS[0], *client.getServer());
@@ -512,7 +565,7 @@ TEST_F(SARRTest, directClientPrefixHintMultiThreading) {
 
 void
 SARRTest::directClientPrefixLengthHintRenewal() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
     configure(CONFIGS[0], *client.getServer());
@@ -570,7 +623,7 @@ TEST_F(SARRTest, directClientPrefixLengthHintRenewalMultiThreading) {
 
 void
 SARRTest::optionsInheritance() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Request a single address and single prefix.
     ASSERT_NO_THROW(client.requestPrefix(0xabac, 64, IOAddress("2001:db8:4::")));
     ASSERT_NO_THROW(client.requestAddress(0xabca, IOAddress("3000::45")));
@@ -638,11 +691,14 @@ TEST_F(SARRTest, optionsInheritanceMultiThreading) {
 }
 
 void
-SARRTest::directClientExcludedPrefix() {
-    Dhcp6Client client;
+SARRTest::directClientExcludedPrefixPool(bool request_pdx) {
+    Dhcp6Client client(srv_);
     // Configure client to request IA_PD.
     client.requestPrefix();
-    client.requestOption(D6O_PD_EXCLUDE);
+    // Request pd exclude option when wanted.
+    if (request_pdx) {
+        client.requestOption(D6O_PD_EXCLUDE);
+    }
     configure(CONFIGS[3], *client.getServer());
     // Make sure we ended-up having expected number of subnets configured.
     const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
@@ -669,6 +725,10 @@ SARRTest::directClientExcludedPrefix() {
     Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
     ASSERT_TRUE(pd_option);
     option = pd_option->getOption(D6O_PD_EXCLUDE);
+    if (!request_pdx) {
+        EXPECT_FALSE(option);
+        return;
+    }
     ASSERT_TRUE(option);
     Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
     ASSERT_TRUE(pd_exclude);
@@ -677,19 +737,98 @@ SARRTest::directClientExcludedPrefix() {
     EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
 }
 
-TEST_F(SARRTest, directClientExcludedPrefix) {
+TEST_F(SARRTest, directClientExcludedPrefixPool) {
     Dhcpv6SrvMTTestGuard guard(*this, false);
-    directClientExcludedPrefix();
+    directClientExcludedPrefixPool(true);
 }
 
-TEST_F(SARRTest, directClientExcludedPrefixMultiThreading) {
+TEST_F(SARRTest, directClientExcludedPrefixPoolMultiThreading) {
     Dhcpv6SrvMTTestGuard guard(*this, true);
-    directClientExcludedPrefix();
+    directClientExcludedPrefixPool(true);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixPoolNoOro) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixPool(false);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixPoolNoOroMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixPool(false);
+}
+
+void
+SARRTest::directClientExcludedPrefixHost(bool request_pdx) {
+    Dhcp6Client client(srv_);
+    // Set DUID matching the one used to create host reservations.
+    client.setDUID("01:02:03:05");
+    // Configure client to request IA_PD.
+    client.requestPrefix();
+    // Request pd exclude option when wanted.
+    if (request_pdx) {
+        client.requestOption(D6O_PD_EXCLUDE);
+    }
+    configure(CONFIGS[8], *client.getServer());
+    // Make sure we ended-up having expected number of subnets configured.
+    const Subnet6Collection* subnets = CfgMgr::instance().getCurrentCfg()->
+        getCfgSubnets6()->getAll();
+    ASSERT_EQ(1, subnets->size());
+    // Perform 4-way exchange.
+    ASSERT_NO_THROW(client.doSARR());
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client = client.getLease(0);
+    EXPECT_EQ(64, lease_client.prefixlen_);
+    EXPECT_EQ(3000, lease_client.preferred_lft_);
+    EXPECT_EQ(4000, lease_client.valid_lft_);
+    Lease6Ptr lease_server = checkLease(lease_client);
+    // Check that the server recorded the lease.
+    ASSERT_TRUE(lease_server);
+
+    OptionPtr option = client.getContext().response_->getOption(D6O_IA_PD);
+    ASSERT_TRUE(option);
+    Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(option);
+    ASSERT_TRUE(ia);
+    option = ia->getOption(D6O_IAPREFIX);
+    ASSERT_TRUE(option);
+    Option6IAPrefixPtr pd_option = boost::dynamic_pointer_cast<Option6IAPrefix>(option);
+    ASSERT_TRUE(pd_option);
+    option = pd_option->getOption(D6O_PD_EXCLUDE);
+    if (!request_pdx) {
+        EXPECT_FALSE(option);
+        return;
+    }
+    ASSERT_TRUE(option);
+    Option6PDExcludePtr pd_exclude = boost::dynamic_pointer_cast<Option6PDExclude>(option);
+    ASSERT_TRUE(pd_exclude);
+    EXPECT_EQ("2001:db8:3::2000", pd_exclude->getExcludedPrefix(IOAddress("2001:db8:3::"),
+                                                                64).toText());
+    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude->getExcludedPrefixLength()));
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHost) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixHost(true);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixHost(true);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostNoOro) {
+    Dhcpv6SrvMTTestGuard guard(*this, false);
+    directClientExcludedPrefixHost(false);
+}
+
+TEST_F(SARRTest, directClientExcludedPrefixHostNoOroMultiThreading) {
+    Dhcpv6SrvMTTestGuard guard(*this, true);
+    directClientExcludedPrefixHost(false);
 }
 
 void
 SARRTest::rapidCommitEnable() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA
     client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
@@ -736,7 +875,7 @@ TEST_F(SARRTest, rapidCommitEnableMultiThreading) {
 
 void
 SARRTest::rapidCommitNoOption() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // Configure client to request IA_NA
     client.requestAddress();
     configure(CONFIGS[1], *client.getServer());
@@ -775,7 +914,7 @@ TEST_F(SARRTest, rapidCommitNoOptionMultiThreading) {
 
 void
 SARRTest::rapidCommitDisable() {
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     // The subnet assigned to eth1 has Rapid Commit disabled.
     client.setInterface("eth1");
     // Configure client to request IA_NA
@@ -818,10 +957,16 @@ TEST_F(SARRTest, rapidCommitDisableMultiThreading) {
 
 void
 SARRTest::sarrStats() {
+    StatsMgr::instance().setValue("pkt6-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-solicit-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-advertise-sent", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-request-received", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-reply-sent", int64_t(0));
+    StatsMgr::instance().setValue("pkt6-sent", int64_t(0));
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -900,7 +1045,7 @@ SARRTest::pkt6ReceiveDropStat1() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -934,7 +1079,7 @@ SARRTest::pkt6ReceiveDropStat2() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -967,7 +1112,7 @@ SARRTest::pkt6ReceiveDropStat3() {
 
     // Let's use one of the existing configurations and tell the client to
     // ask for an address.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[1], *client.getServer());
     client.setInterface("eth1");
     client.requestAddress();
@@ -1002,7 +1147,7 @@ void
 SARRTest::reservationModeOutOfPool() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[4], *client.getServer());
     client.setDUID("aa:bb:cc:dd:ee:ff");
     client.setInterface("eth0");
@@ -1047,7 +1192,7 @@ void
 SARRTest::reservationIgnoredInOutOfPoolMode() {
     // Create the first client for which we have a reservation out of the
     // dynamic pool.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[4], *client.getServer());
     client.setDUID("12:34:56:78:9A:BC");
     client.setInterface("eth0");
@@ -1076,7 +1221,7 @@ TEST_F(SARRTest, reservationIgnoredInOutOfPoolModeMultiThreading) {
 void
 SARRTest::randomAddressAllocation() {
     // Create the base client and server configuration.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[5], *client.getServer());
 
     // Record what addresses have been allocated and in what order.
@@ -1087,7 +1232,7 @@ SARRTest::randomAddressAllocation() {
     // Simulate allocations from different clients.
     for (auto i = 0; i < 30; ++i) {
         // Create a client from the base client.
-        Dhcp6Client next_client(client.getServer());
+        Dhcp6Client next_client(srv_);
         next_client.requestAddress();
         next_client.requestPrefix();
         // Run 4-way exchange.
@@ -1111,8 +1256,8 @@ SARRTest::randomAddressAllocation() {
     ASSERT_EQ(30, allocated_pd_vector.size());
 
     // Make sure that the addresses are not allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_na_vector.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation). Some cases like this are
         // possible even with the random allocation but they should be
@@ -1125,7 +1270,7 @@ SARRTest::randomAddressAllocation() {
 
     // Make sure that delegated prefixes have been allocated iteratively.
     consecutives = 0;
-    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+    for (size_t i = 1; i < allocated_pd_vector.size(); ++i) {
         if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
             ++consecutives;
         }
@@ -1146,7 +1291,7 @@ TEST_F(SARRTest, randomAddressAllocationMultiThreading) {
 void
 SARRTest::randomPrefixAllocation() {
     // Create the base client and server configuration.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
     configure(CONFIGS[6], *client.getServer());
 
     // Record what addresses have been allocated and in what order.
@@ -1157,7 +1302,7 @@ SARRTest::randomPrefixAllocation() {
     // Simulate allocations from different clients.
     for (auto i = 0; i < 30; ++i) {
         // Create a client from the base client.
-        Dhcp6Client next_client(client.getServer());
+        Dhcp6Client next_client(srv_);
         next_client.requestAddress();
         next_client.requestPrefix();
         // Run 4-way exchange.
@@ -1181,8 +1326,8 @@ SARRTest::randomPrefixAllocation() {
     ASSERT_EQ(30, allocated_pd_vector.size());
 
     // Make sure that the addresses have been allocated iteratively.
-    int consecutives = 0;
-    for (auto i = 1; i < allocated_na_vector.size(); ++i) {
+    size_t consecutives = 0;
+    for (size_t i = 1; i < allocated_na_vector.size(); ++i) {
         // Record the cases when the previously allocated address is
         // lower by 1 (iterative allocation).
         if (IOAddress::increase(allocated_na_vector[i-1]) == allocated_na_vector[i]) {
@@ -1195,7 +1340,7 @@ SARRTest::randomPrefixAllocation() {
 
     // Make sure that delegated prefixes have been allocated randomly.
     consecutives = 0;
-    for (auto i = 1; i < allocated_pd_vector.size(); ++i) {
+    for (size_t i = 1; i < allocated_pd_vector.size(); ++i) {
         if (IOAddress::subtract(allocated_pd_vector[i], allocated_pd_vector[i-1]) == IOAddress("0:0:0:1::")) {
             ++consecutives;
         }
@@ -1215,8 +1360,14 @@ TEST_F(SARRTest, randomPrefixAllocationMultiThreading) {
 
 void
 SARRTest::leaseCaching() {
+    StatsMgr::instance().setValue("v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[1].v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[2].v6-ia-na-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("v6-ia-pd-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[1].v6-ia-pd-lease-reuses", int64_t(0));
+    StatsMgr::instance().setValue("subnet[2].v6-ia-pd-lease-reuses", int64_t(0));
     // Configure a DHCP client.
-    Dhcp6Client client;
+    Dhcp6Client client(srv_);
 
     // Configure a DHCP server.
     configure(CONFIGS[7], *client.getServer());
@@ -1232,6 +1383,16 @@ SARRTest::leaseCaching() {
     // Append IAADDR and IAPREFIX options to the client's message.
     ASSERT_NO_THROW(client.requestAddress(1234, asiolink::IOAddress("2001:db8::10")));
     ASSERT_NO_THROW(client.requestPrefix(5678, 32, asiolink::IOAddress("2001:db8:1::")));
+
+    // Include FQDN to trigger generation of name change requests.
+    ASSERT_NO_THROW(client.useFQDN(Option6ClientFqdn::FLAG_S,
+                                   "client-name.example.org",
+                                   Option6ClientFqdn::FULL));
+
+    // Start D2 client mgr and verify the NCR queue is empty.
+    ASSERT_NO_THROW(client.getServer()->startD2());
+    auto& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
@@ -1259,6 +1420,12 @@ SARRTest::leaseCaching() {
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 1, 0);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
+    // There should be a single NCR.
+    ASSERT_EQ(1, d2_mgr.getQueueSize());
+    // Clear the NCR queue.
+    ASSERT_NO_THROW(d2_mgr.runReadyIO());
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Request the same prefix with a different length. The server should
     // return an existing lease.
     client.clearRequestedIAs();
@@ -1281,6 +1448,9 @@ SARRTest::leaseCaching() {
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 2, 1);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
 
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
+
     // Try to request another prefix. The client should still get the existing
     // lease.
     client.clearRequestedIAs();
@@ -1302,6 +1472,9 @@ SARRTest::leaseCaching() {
     checkStat("v6-ia-pd-lease-reuses", 3, 2);
     checkStat("subnet[1].v6-ia-pd-lease-reuses", 3, 2);
     checkStat("subnet[2].v6-ia-pd-lease-reuses", 1, 0);
+
+    // There should be no NCRs queued.
+    ASSERT_EQ(0, d2_mgr.getQueueSize());
 }
 
 TEST_F(SARRTest, leaseCaching) {

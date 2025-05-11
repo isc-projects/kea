@@ -1,0 +1,101 @@
+#!/bin/sh
+
+# Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+# Check version.
+version=$(mysql_version "${@}")
+if test "${version}" != "25.0"; then
+    printf 'This script upgrades 25.0 to 26.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
+    exit 0
+fi
+
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in "${@}"
+do
+    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
+    then
+        schema="$arg"
+        break
+    fi
+done
+
+# Make sure we have the schema.
+if [ -z "$schema" ]
+then
+    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
+    exit 255
+fi
+
+mysql "$@" <<EOF
+
+-- This line starts the schema upgrade to version 26.0.
+
+-- Add client_classes column to options tables for option class taggging.
+ALTER TABLE dhcp4_options
+    ADD COLUMN client_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_options
+    ADD COLUMN client_classes LONGTEXT DEFAULT NULL;
+
+UPDATE option_def_data_type SET name='int8' WHERE id = 3;
+
+-- Rename require_client_classes and only_if_required.
+ALTER TABLE dhcp4_shared_network
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp4_pool
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_pool
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_pd_pool
+    CHANGE require_client_classes evaluate_additional_classes LONGTEXT DEFAULT NULL;
+
+ALTER TABLE dhcp4_client_class
+    CHANGE only_if_required only_in_additional_list TINYINT NOT NULL DEFAULT '0';
+
+ALTER TABLE dhcp6_client_class
+    CHANGE only_if_required only_in_additional_list TINYINT NOT NULL DEFAULT '0';
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '26', minor = '0';
+
+-- This line concludes the schema upgrade to version 26.0.
+EOF

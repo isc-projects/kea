@@ -5,7 +5,7 @@
 // parameters available.
 //
 // To use this configuration file, you need to have both RADIUS and
-// Host Cache hooks. These are currently available to support customers only.
+// Host Cache hooks.
 //
 // clients get a wine name (option AOP code 250) divided into red and white.
 // Expensive brands have a host entry, i.e. a reserved address.
@@ -106,12 +106,12 @@
          {
             // Red pool (10-19 are for reservations)
             "pool": "192.0.2.20-192.0.2.99",
-            "client-class": "red"
+            "client-classes": [ "red" ]
          },
          {
             // White pool (110-119 are for reservations)
             "pool": "192.0.2.120-192.0.2.199",
-            "client-class": "white"
+            "client-classes": [ "white" ]
          }
 
           // Note there are not pools available to anyone. This is
@@ -173,7 +173,7 @@
                          // These are parameters for the first (and only) access server
                          "name": "127.0.0.1",
                          "port": 1812,
-                         "secret": "secret"
+                         "secret": "1234"
                      }
                      // Additional access servers could be specified here
                  ],
@@ -212,7 +212,7 @@
                  "servers": [ {
                          "name": "127.0.0.1",
                          "port": 1813,
-                         "secret": "secret"
+                         "secret": "1234"
                      }
                 ]
              }

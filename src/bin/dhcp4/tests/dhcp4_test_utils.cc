@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,7 +58,7 @@ BaseServerTest::~BaseServerTest() {
 }
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-    : rcode_(-1), srv_(0), multi_threading_(false), start_time_(PktEvent::now()) {
+    : rcode_(-1), srv_(new NakedDhcpv4Srv(0)), multi_threading_(false), start_time_(PktEvent::now()) {
 
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
@@ -218,7 +218,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
     desc.option_ = makeServerIdOption(IOAddress("192.0.5.254"));
     options->add(desc, DHCP4_OPTION_SPACE);
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("foo", ExpressionPtr(), "", true, false, options);
-    subnet5->requireClientClass("foo");
+    subnet5->addAdditionalClass("foo");
 
     // Build and add subnet6.
     Subnet4Ptr subnet6(new Subnet4(IOAddress("192.0.6.0"), 24, unspec, unspec, 3600, 6));
@@ -233,7 +233,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
     desc_other.option_ = makeFqdnListOption();
     options->add(desc_other, DHCP4_OPTION_SPACE);
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("bar", ExpressionPtr(), "", true, false, options);
-    subnet6->requireClientClass("bar");
+    subnet6->addAdditionalClass("bar");
 
     // Build and add subnet7.
     Subnet4Ptr subnet7(new Subnet4(IOAddress("192.0.7.0"), 24, unspec, unspec, 3600, 7));
@@ -245,7 +245,7 @@ Dhcpv4SrvTest::configureServerIdentifier() {
 
     options.reset();
     CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass("xyz", ExpressionPtr(), "", true, false, options);
-    subnet7->requireClientClass("xyz");
+    subnet7->addAdditionalClass("xyz");
 
     // Build and add a shared-network.
     CfgSharedNetworks4Ptr networks = cfg_mgr.getStagingCfg()->getCfgSharedNetworks4();
@@ -631,7 +631,6 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     IfaceMgr::instance().openSockets4();
 
     // Create an instance of the tested class.
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
     // Initialize the source HW address.
     vector<uint8_t> mac(6);
@@ -683,14 +682,14 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIface("eth0");
     received->setIndex(ETH0_INDEX);
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
 
         // Should return OFFER
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
 
         // Should return ACK
         ASSERT_TRUE(rsp);
@@ -719,14 +718,14 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
@@ -757,12 +756,12 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     received->setIndex(ETH0_INDEX);
 
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        ASSERT_NO_THROW(rsp = srv_->processDiscover(received));
         // Should return NULL packet.
         ASSERT_FALSE(rsp);
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        ASSERT_NO_THROW(rsp = srv_->processRequest(received));
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         // We should get the NAK packet with yiaddr set to 0.
@@ -795,7 +794,7 @@ Dhcpv4SrvTest::buildCfgOptionTest(IOAddress expected_server_id,
     query->addOption(makeServerIdOption(server_id));
 
     Pkt4Ptr response;
-    ASSERT_NO_THROW(response = srv_.processRequest(query));
+    ASSERT_NO_THROW(response = srv_->processRequest(query));
 
     checkServerIdOption(response, expected_server_id);
 
@@ -811,7 +810,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
                          const bool create_managers,
                          const bool test,
                          const LeaseAffinity lease_affinity) {
-    configure(config, srv_, commit, open_sockets, create_managers, test,
+    configure(config, *srv_, commit, open_sockets, create_managers, test,
               lease_affinity);
 }
 
@@ -828,7 +827,7 @@ Dhcpv4SrvTest::configure(const std::string& config,
     ConstElementPtr json;
     try {
         json = parseJSON(config);
-    } catch (const std::exception& ex){
+    } catch (const std::exception& ex) {
         // Fatal failure on parsing error
         FAIL() << "parsing failure:"
                << "config:" << config << std::endl
@@ -941,11 +940,11 @@ Dhcpv4SrvTest::configureWithStatus(const std::string& config, NakedDhcpv4Srv& sr
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
     bool drop = false;
-    Subnet4Ptr subnet = srv_.selectSubnet(query, drop);
+    ConstSubnet4Ptr subnet = srv_->selectSubnet(query, drop);
     EXPECT_FALSE(drop);
     AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
-    EXPECT_TRUE(srv_.earlyGHRLookup(query, context));
-    Dhcpv4Exchange ex(srv_.alloc_engine_, query, context, subnet, drop);
+    EXPECT_TRUE(srv_->earlyGHRLookup(query, context));
+    Dhcpv4Exchange ex(srv_->alloc_engine_, query, context, subnet, drop);
     EXPECT_FALSE(context);
     EXPECT_FALSE(drop);
     return (ex);
@@ -1012,6 +1011,16 @@ Dhcpv4SrvTest::checkPktEvents(const PktPtr& msg,
         prev_time = event.timestamp_;
         ++expected_event;
     }
+}
+
+void
+Dhcpv4SrvTest::checkServerIdentifier(Pkt4Ptr msg, std::string exp_address) {
+    ASSERT_TRUE(msg);
+    OptionPtr opt = msg->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(opt);
+    OptionCustomPtr opt_serverid = boost::dynamic_pointer_cast<OptionCustom>(opt);
+    ASSERT_TRUE(opt_serverid);
+    EXPECT_EQ(exp_address, opt_serverid->readAddress().toText());
 }
 
 } // end of isc::dhcp::test namespace

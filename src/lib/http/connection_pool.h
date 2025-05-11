@@ -71,6 +71,9 @@ protected:
     std::mutex mutex_;
 };
 
+/// @brief Pointer to the @ref HttpConnectionPool.
+typedef std::shared_ptr<HttpConnectionPool> HttpConnectionPoolPtr;
+
 }
 }
 

@@ -1,9 +1,10 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
@@ -15,8 +16,6 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <lease_cmds_exceptions.h>
 #include <lease_parser.h>
-
-#include <config.h>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -144,10 +143,10 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Check if the state value is sane.
-    if (state > Lease::STATE_RELEASED) {
+    if (state > Lease::STATE_REGISTERED) {
         isc_throw(BadValue, "Invalid state value: " << state << ", supported "
-                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed)"
-                  " and 3 (released)");
+                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed),"
+                  " 3 (released) and 4 (registered)");
     }
 
     // Handle user context.
@@ -352,10 +351,10 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     }
 
     // Check if the state value is sane.
-    if (state > Lease::STATE_RELEASED) {
+    if (state > Lease::STATE_REGISTERED) {
         isc_throw(BadValue, "Invalid state value: " << state << ", supported "
-                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed)"
-                  " and 3 (released)");
+                  "values are: 0 (default), 1 (declined), 2 (expired-reclaimed),"
+                  " 3 (released) and 4 (registered)");
     }
 
     if ((state == Lease::STATE_DECLINED) && (type == Lease::TYPE_PD)) {

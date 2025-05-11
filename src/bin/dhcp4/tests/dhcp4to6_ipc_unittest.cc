@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -150,12 +150,6 @@ public:
     /// Flags indicating if copying retrieved options was enabled for
     /// a sent packet during callout execution.
     static std::pair<bool, bool> callback_sent_pkt_options_copy_;
-
-    /// @brief reference to a controlled server
-    ///
-    /// Dhcp4to6Ipc::handler() uses the instance of the controlled server
-    /// so it has to be build. This reference does this.
-    ControlledDhcpv4Srv srv_;
 
 private:
 

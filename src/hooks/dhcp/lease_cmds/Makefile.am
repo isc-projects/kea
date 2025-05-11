@@ -1,7 +1,7 @@
 SUBDIRS = . tests libloadtests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Ensure that the message file and doxygen file is included in the distribution
@@ -20,6 +20,7 @@ liblease_cmds_la_SOURCES += lease_cmds_exceptions.h
 liblease_cmds_la_SOURCES += lease_parser.h lease_parser.cc
 liblease_cmds_la_SOURCES += lease_cmds_log.cc lease_cmds_log.h
 liblease_cmds_la_SOURCES += lease_cmds_messages.cc lease_cmds_messages.h
+liblease_cmds_la_SOURCES += binding_variables.h binding_variables.cc
 liblease_cmds_la_SOURCES += version.cc
 
 liblease_cmds_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -78,7 +79,8 @@ messages: lease_cmds_messages.h lease_cmds_messages.cc
 	@echo Message files regenerated
 
 lease_cmds_messages.h lease_cmds_messages.cc: lease_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
+	(cd $(top_srcdir); \
+	$(abs_top_builddir)/src/lib/log/compiler/kea-msg-compiler src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes)
 
 else
 

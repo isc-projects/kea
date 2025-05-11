@@ -35,7 +35,7 @@ using namespace isc::log;
 namespace {
 /// @brief Maximum number of errors to allow when reading leases from the file.
 const uint32_t MAX_LEASE_ERRORS = 100;
-}; // namespace anonymous
+}  // namespace anonymous
 
 namespace isc {
 namespace lfc {
@@ -324,9 +324,9 @@ LFCController::getVersion(const bool extended) const{
     if (extended) {
         std::string db_version;
         if (protocol_version_ == 4) {
-            db_version = Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V4);
+            db_version = Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V4);
         } else if (protocol_version_ == 6) {
-            db_version = Memfile_LeaseMgr::getDBVersion(Memfile_LeaseMgr::V6);
+            db_version = Memfile_LeaseMgr::getDBVersionInternal(Memfile_LeaseMgr::V6);
         }
 
         version_stream << " (" << EXTENDED_VERSION << ")";
@@ -438,5 +438,5 @@ LFCController::startLogger(const bool test_mode) const {
     }
 }
 
-}; // namespace isc::lfc
-}; // namespace isc
+}  // namespace isc::lfc
+}  // namespace isc

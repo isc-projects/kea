@@ -1,11 +1,11 @@
-SUBDIRS = bootp flex_option high_availability lease_cmds perfmon
+SUBDIRS = bootp class_cmds ddns_tuning flex_id flex_option high_availability host_cache host_cmds lease_cmds limits perfmon ping_check
 
 if HAVE_MYSQL
-SUBDIRS += mysql_cb
+SUBDIRS += mysql
 endif
 
 if HAVE_PGSQL
-SUBDIRS += pgsql_cb
+SUBDIRS += pgsql
 endif
 
-SUBDIRS += run_script stat_cmds user_chk
+SUBDIRS += forensic_log lease_query radius run_script stat_cmds subnet_cmds user_chk

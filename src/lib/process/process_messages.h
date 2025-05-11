@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/process/process_messages.mes
+// File created from src/lib/process/process_messages.mes
 
 #ifndef PROCESS_MESSAGES_H
 #define PROCESS_MESSAGES_H
@@ -18,6 +18,7 @@ extern const isc::log::MessageID DCTL_CONFIG_FETCH;
 extern const isc::log::MessageID DCTL_CONFIG_FILE_LOAD_FAIL;
 extern const isc::log::MessageID DCTL_CONFIG_START;
 extern const isc::log::MessageID DCTL_DB_OPEN_CONNECTION_WITH_RETRY_FAILED;
+extern const isc::log::MessageID DCTL_DEPRECATED_OUTPUT_OPTIONS;
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DCTL_INIT_PROCESS;
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL;

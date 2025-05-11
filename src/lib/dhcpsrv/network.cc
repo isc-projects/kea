@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,30 +67,26 @@ Network::getRelayAddresses() const {
 
 bool
 Network::clientSupported(const isc::dhcp::ClientClasses& classes) const {
-    if (client_class_.empty()) {
-        // There is no class defined for this network, so we do
-        // support everyone.
+    if (client_classes_.empty()) {
+        // Empty list for this network, so we support everyone.
         return (true);
     }
 
-    return (classes.contains(client_class_));
+    return (client_classes_.intersects(classes));
 }
 
 void
 Network::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    client_class_ = class_name;
-}
-
-void
-Network::requireClientClass(const isc::dhcp::ClientClass& class_name) {
-    if (!required_classes_.contains(class_name)) {
-        required_classes_.insert(class_name);
+    if (!client_classes_.contains(class_name)) {
+        client_classes_.insert(class_name);
     }
 }
 
-const ClientClasses&
-Network::getRequiredClasses() const {
-    return (required_classes_);
+void
+Network::addAdditionalClass(const isc::dhcp::ClientClass& class_name) {
+    if (!additional_classes_.contains(class_name)) {
+        additional_classes_.insert(class_name);
+    }
 }
 
 Optional<IOAddress>
@@ -135,19 +131,15 @@ Network::toElement() const {
     relay_map->set("ip-addresses", address_list);
     map->set("relay", relay_map);
 
-    // Set client-class
-    if (!client_class_.unspecified()) {
-        map->set("client-class", Element::create(client_class_.get()));
+    // Set client-classes
+    if (!client_classes_.empty()) {
+        map->set("client-classes", client_classes_.toElement());
     }
 
-    // Set require-client-classes
-    const ClientClasses& classes = getRequiredClasses();
-    if (!classes.empty()) {
-        ElementPtr class_list = Element::createList();
-        for (auto const& it : classes) {
-            class_list->add(Element::create(it));
-        }
-        map->set("require-client-classes", class_list);
+    // Set evaluate-additional-classes
+    if (!additional_classes_.empty()) {
+        map->set("evaluate-additional-classes",
+                 additional_classes_.toElement());
     }
 
     // T1, T2, and Valid are optional for SharedNetworks, and
@@ -237,6 +229,18 @@ Network::toElement() const {
 
     if (!ddns_ttl_percent_.unspecified()) {
         map->set("ddns-ttl-percent", Element::create(ddns_ttl_percent_));
+    }
+
+    if (!ddns_ttl_.unspecified()) {
+        map->set("ddns-ttl", Element::create(ddns_ttl_));
+    }
+
+    if (!ddns_ttl_min_.unspecified()) {
+        map->set("ddns-ttl-min", Element::create(ddns_ttl_min_));
+    }
+
+    if (!ddns_ttl_max_.unspecified()) {
+            map->set("ddns-ttl-max", Element::create(ddns_ttl_max_));
     }
 
     if (!hostname_char_set_.unspecified()) {

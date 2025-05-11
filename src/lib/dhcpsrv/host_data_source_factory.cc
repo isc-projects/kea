@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,14 +10,6 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/hosts_log.h>
 #include <log/logger_support.h>
-
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_host_data_source.h>
-#endif
-
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_host_data_source.h>
-#endif
 
 #include <boost/algorithm/string.hpp>
 
@@ -34,7 +26,7 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-map<string, HostDataSourceFactory::Factory> HostDataSourceFactory::map_;
+map<string, pair<HostDataSourceFactory::Factory, HostDataSourceFactory::DBVersion>> HostDataSourceFactory::map_;
 
 void
 HostDataSourceFactory::add(HostDataSourceList& sources,
@@ -43,7 +35,7 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
     DatabaseConnection::ParameterMap parameters =
             DatabaseConnection::parse(dbaccess);
 
-    // Get the database type and open the corresponding database
+    // Get the database type and open the corresponding database.
     DatabaseConnection::ParameterMap::iterator it = parameters.find("type");
     if (it == parameters.end()) {
         isc_throw(InvalidParameter, "Host database configuration does not "
@@ -55,25 +47,26 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 
     // No match?
     if (index == map_.end()) {
-        if ((db_type == "mysql") ||
-            (db_type == "postgresql")) {
-            string with = (db_type == "postgresql" ? "pgsql" : db_type);
-            isc_throw(InvalidType, "The type of host backend: '" << db_type
-                      << "' is not compiled in. Did you forget to use --with-"
-                      << with << " during compilation?");
+        if ((db_type == "mysql") || (db_type == "postgresql")) {
+            string libdhcp(db_type == "postgresql" ? "pgsql" : db_type);
+            isc_throw(InvalidType, "The Kea server has not been compiled with "
+                      "support for host database type: " << db_type
+                      << ". Did you forget to use -D "
+                      << db_type << "=enabled during setup or to load libdhcp_"
+                      << libdhcp << " hook library?");
         }
         isc_throw(InvalidType, "The type of host backend: '" <<
                   db_type << "' is not supported");
     }
 
     // Call the factory and push the pointer on sources.
-    sources.push_back(index->second(parameters));
+    sources.push_back(index->second.first(parameters));
 
-    // Check the factory did not return NULL.
+    // Check the factory did not return null.
     if (!sources.back()) {
         sources.pop_back();
         isc_throw(Unexpected, "Hosts database " << db_type <<
-                  " factory returned NULL");
+                  " factory returned null");
     }
 }
 
@@ -123,11 +116,21 @@ HostDataSourceFactory::del(HostDataSourceList& sources,
 bool
 HostDataSourceFactory::registerFactory(const string& db_type,
                                        const Factory& factory,
-                                       bool no_log) {
+                                       bool no_log,
+                                       DBVersion db_version) {
     if (map_.count(db_type)) {
         return (false);
     }
-    map_.insert(pair<string, Factory>(db_type, factory));
+
+    static auto default_db_version = []() -> std::string {
+        return (std::string());
+    };
+
+    if (!db_version) {
+        db_version = default_db_version;
+    }
+
+    map_.insert(pair<string, pair<Factory, DBVersion>>(db_type, pair<Factory, DBVersion>(factory, db_version)));
 
     // We are dealing here with static logger initialization fiasco.
     // registerFactory may be called from constructors of static global
@@ -151,9 +154,8 @@ HostDataSourceFactory::deregisterFactory(const string& db_type, bool no_log) {
                 .arg(db_type);
         }
         return (true);
-    } else {
-        return (false);
     }
+    return (false);
 }
 
 bool
@@ -163,75 +165,32 @@ HostDataSourceFactory::registeredFactory(const std::string& db_type) {
 }
 
 void
-HostDataSourceFactory::printRegistered() {
+HostDataSourceFactory::logRegistered() {
     std::stringstream txt;
 
     for (auto const& x : map_) {
-        txt << x.first << " ";
+        if (!txt.str().empty()) {
+            txt << " ";
+        }
+        txt << x.first;
     }
 
-    LOG_INFO(hosts_logger, HOSTS_BACKENDS_REGISTERED).arg(txt.str());
+    LOG_INFO(hosts_logger, HOSTS_BACKENDS_REGISTERED)
+        .arg(txt.str());
+}
+
+std::list<std::string>
+HostDataSourceFactory::getDBVersions() {
+    std::list<std::string> result;
+    for (auto const& x : map_) {
+        auto version = x.second.second();
+        if (!version.empty()) {
+            result.push_back(version);
+        }
+    }
+
+    return (result);
 }
 
 }  // namespace dhcp
 }  // namespace isc
-
-//
-// Register database backends
-//
-
-using namespace isc::dhcp;
-
-namespace {
-
-#ifdef HAVE_MYSQL
-struct MySqlHostDataSourceInit {
-    // Constructor registers
-    MySqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("mysql", factory, true);
-    }
-
-    // Destructor deregisters
-    ~MySqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("mysql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(hosts_logger, DHCPSRV_MYSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new MySqlHostDataSource(parameters)));
-    }
-};
-
-// Database backend will be registered at object initialization
-MySqlHostDataSourceInit mysql_init_;
-#endif
-
-#ifdef HAVE_PGSQL
-struct PgSqlHostDataSourceInit {
-    // Constructor registers
-    PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::registerFactory("postgresql", factory, true);
-    }
-
-    // Destructor deregisters
-    ~PgSqlHostDataSourceInit() {
-        HostDataSourceFactory::deregisterFactory("postgresql", true);
-    }
-
-    // Factory class method
-    static HostDataSourcePtr
-    factory(const DatabaseConnection::ParameterMap& parameters) {
-        LOG_INFO(hosts_logger, DHCPSRV_PGSQL_HOST_DB)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        return (HostDataSourcePtr(new PgSqlHostDataSource(parameters)));
-    }
-};
-
-// Database backend will be registered at object initialization
-PgSqlHostDataSourceInit pgsql_init_;
-#endif
-
-} // end of anonymous namespace

@@ -22,12 +22,11 @@ if HAVE_OPENSSL
 libkea_cryptolink_la_SOURCES += openssl_link.cc
 libkea_cryptolink_la_SOURCES += openssl_common.h
 libkea_cryptolink_la_SOURCES += openssl_hash.cc
-libkea_cryptolink_la_SOURCES += openssl_compat.h
 libkea_cryptolink_la_SOURCES += openssl_hmac.cc
 endif
 
 libkea_cryptolink_la_LDFLAGS = $(CRYPTO_LDFLAGS)
-libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 60:0:0
+libkea_cryptolink_la_LDFLAGS += -no-undefined -version-info 62:0:0
 libkea_cryptolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cryptolink_la_LIBADD += $(CRYPTO_LIBS)
 
@@ -47,6 +46,5 @@ endif
 
 if HAVE_OPENSSL
 libkea_cryptolink_include_HEADERS += \
-	openssl_common.h \
-	openssl_compat.h
+	openssl_common.h
 endif

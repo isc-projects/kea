@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -109,7 +109,7 @@ public:
     /// @param io_service is the io_service used by the caller for
     /// asynchronous event handling.
     ///
-    /// @throw DProcessBaseError is io_service is NULL.
+    /// @throw DProcessBaseError if io_service is null.
     DStubProcess(const char* name, asiolink::IOServicePtr io_service);
 
     /// @brief Invoked after process instantiation to perform initialization.
@@ -237,7 +237,7 @@ protected:
     /// ftCreateProcessException OR ftCreateProcessNull.
     ///
     /// @return returns a pointer to the new process instance (DProcessBase*)
-    /// or NULL if SimFailure is set to ftCreateProcessNull.
+    /// or null if SimFailure is set to ftCreateProcessNull.
     /// @throw throws std::runtime_error if SimFailure is set to
     /// ftCreateProcessException.
     virtual DProcessBase* createProcess();

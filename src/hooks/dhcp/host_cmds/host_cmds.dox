@@ -1,0 +1,194 @@
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@mainpage Kea Host Commands Hooks Library
+
+Welcome to Kea Host Commands Hooks Library. This documentation is
+addressed at developers who are interested in internal operation of the
+Host Commands library. This file provides information needed to understand and perhaps
+extend this library.
+
+This documentation is stand-alone: you should have read and
+understood <a href="https://reports.kea.isc.org/dev_guide/">Kea
+Developer's Guide</a> and in particular its section about hooks: <a
+href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
+Hooks Developer's Guide</a>.
+
+@section host_cmds Overview
+
+## Introduction
+libdhcp_host_cmds is a hooks library which provides additional commands
+for manipulating host reservations. The currently supported commands are:
+
+- reservation-get-all - which attempts to retrieve all host reservations
+  in specified subnet.
+
+- reservation-get-page - which attempts to retrieve a page of host
+  reservations optionally in specified subnet.
+
+- reservation-get-by-hostname - which attempts to retrieve all host
+  reservations with specified hostname and optionally in a specified subnet.
+
+- reservation-get-by-id - which attempts to retrieve all host reservations
+  with specified identifier, e.g. for a given MAC address.
+
+- reservation-get - which attempts to retrieve host reservation with specified
+  parameters, e.g. for a given IP or MAC address. This allows you to do several
+  things. You can check if a given device has any IP addresses or options
+  reserved. Alternatively, you can check whether a given IP is reserved by
+  anyone. Details of the reservation, if present, will be returned.
+
+- reservation-add - inserts a new host reservation. This allows you to
+  dynamically (while the server is running) to insert a new host reservation
+  that would reserve an IPv4 address, IPv6 address, IPv6 prefix, DHCPv4 options,
+  DHCPv6 options, several DHCPv4 fields or even assign a client to specified
+  client class. The host reservation will be inserted into a database and
+  will be kept after Kea restart.
+
+- reservation-del - deletes existing host reservation. This allows you to remove
+  an existing reservation while the server is running. This will delete the
+  reservation and options associated with that reservation (if present) from the
+  database.
+
+- reservation-update - updates an existing host reservation.
+
+## Applying reservation modifications
+
+To take full advantage of the host reservations API, it is useful to understand
+the life cycle of host reservations and leases. There are two interesting cases
+which are worth mentioning.
+
+First is a case where there is a device that doesn't have any reservation and
+simply got an address or prefix from a dynamic pool. Then the system
+administrator decides to add a reservation for this device. There is no reliable
+DHCP protocol mechanism that will enforce this change immediately (there is
+reconfigure mechanism, but it is rarely supported by client implementations, so
+Kea does not support it yet). However, the reservation will be deployed shortly
+after the client renews. When it tries to renew, Kea will detect that the client
+has an address, but there is a reservation that reserves a different address.
+Client's renewal request will be rejected (by sending NAK in DHCPv4 or sending
+the address with 0 lifetimes in DHCPv6). In DHCPv4, the client will then restart
+configuration process and will get the new address specified in the
+reservation. DHCPv6 protocol is a bit more flexible in this regard in the sense
+that it allows to send the new lease in the same REPLY message that forces the
+old address to be abandoned. This may take up to your renew-timer seconds to
+complete.
+
+The second case is for cases when a new reservation was added for an address for
+client B, but the address is currently used by client A. In principle, this is
+somewhat bad operational practice, but there may be valid cases when this is
+really needed. If such circumstances are detected, Kea will revoke the address
+from A when it tries to renew. However, until that happens, Kea has no way to
+assign it to B, so it will temporarily assign a different address to
+B. Eventually, the address will become available, so B would be able to get it.
+This may take up to almost twice the time of your renew-timer to complete.
+
+The bottom point is that after you change the reservation, Kea will do its best
+to apply your changes, no matter of the current state of affairs. It may not be
+an instant process, but the reservation will be fully enforced.
+
+Of course changing a reservation requires the target backend to not
+be in read-only mode.
+
+## Internal structure
+
+Almost all code is constrained within isc::host_cmds namespace.
+
+The core library consists of several files:
+
+- host_cmds.h - This file contains definition of a isc::host_cmds::HostCmds
+  class that contains handlers for specific operations: reservationAddHandler
+  for adding new reservation, reservationGetHandler for retrieving an existing
+  reservation, reservationGetAllHandler for retrieving existing reservations
+  in a subnet, reservationGetPageHandler for retrieving by pages existing
+  reservations in a subnet and reservationDelHandler for deleting a
+  reservation. This class
+  uses pimpl design pattern, which means that the actual implementation is
+  hidden in an internal object. The advantage of this approach is mostly
+  hermetization, i.e.  the internals are not exposed and the whole library
+  provides small, clean interface. There is a pointer to internal class called
+  HostCmdsImpl. That class is defined in host_cmds.cc.
+
+- host_cmds.cc - This file contains the most importance piece: code that
+  performs the operations on reservations. There are some auxiliary methods and
+  structures present as well. The most notable one is
+  HostCmdsImpl::getParameters(), which tries to extract parameters set by the
+  client. The set of allowed parameters for retrieving and deleting a
+  reservation is the same, so this method is used in both cases. All command
+  handlers do not implement the logic itself, but rather pass the execution to
+  HostMgr, which is part of open source Kea. See isc::dhcp::HostMgr in Kea for
+  details. One notable aspect here that should be mentioned is how add
+  reservation code handles parameters specified by whoever called the
+  reservation-add command.  In principle, the syntax is very similar to defining
+  host reservations in a configuration file. However, there is one significant
+  difference. In the configuration file, each reservation is defined for
+  specific subnet, so the subnet-id can be inferred from its parent subnet and
+  thus not specified. However, with reservation-add command, this has to be
+  specified explicitly. Therefore there is an extension called @ref
+  isc::host_cmds::HostDataParser. See host_data_parser.h file for details.
+
+- host_cmds_callouts.cc - This is a very simple file that provides wrappers for
+  hook points. Due to the way how hooks interface is defined in Kea, these are
+  plain C-style functions (note extern "C" clause and lack of namespaces).  This
+  file also contains @ref load() and @ref unload() functions. The load function
+  registers the commands.
+
+- version.cc - This file contains a single function that returns Kea hooks
+  version. This is part of the mandatory hooks library interface and is used
+  by Kea to check if the library is not compiled against too old or too new
+  version.
+
+- host_cmds_messages.cc - This file is autogenerated and should never be
+  modified.  If you want to introduce any changes, please modify
+  host_cmds_messages.mes instead.
+
+- host_cmds_messages.h - This file is autogenerated and should never be
+  modified.  If you want to introduce any changes, please modify
+  host_cmds_messages.mes instead.
+
+- host_cmds_messages.mes - This file contains list of all message the library
+  could print, with a short description of what specific message means.
+
+- host_data_parser.h - This file contains a template that extends regular parser
+  that is able to parse host reservations. See isc::dhcp::HostReservationParser4
+  and isc::dhcp::HostReservationParser6 is Kea source code. This extended parser
+  adds the ability to also parse subnet-id parameter that is not needed in
+  a configuration file, but is necessary in commands.
+
+- host_cmds_log.h - This file contains declaration of a logger that is used
+  in host_cmds library.
+
+- host_cmds_log.cc - This file contains definition of a logger that is used
+  in host_cmds library.
+
+- host_cmds.dox - This doxygen documentation contains main part of the Developer's
+  Guide text.
+
+## Regenerating this documentation
+
+To regenerate this documentation, type: make devel in the main directory of the
+host_cmds library. Make sure you have at least doxygen software installed, but it
+is useful to also have graphviz. The generated documentation will be stored
+in html/ directory.
+
+## Testing
+
+Similar to all other code in Kea, also this library comes with unit-tests that
+use googletest framework. Those tests are stored in tests/ directory. To build
+and run them, you need to pass -D tests=enabled to the "meson setup" command
+line.  Once the code builds, you can run tests with "meson compile". This
+command can be run in top-level build directory (all tests will be run) or by
+running tests on this library only "meson test -C build dhcp-host-cmds-tests".
+
+@section host_cmdsMTCompatibility Multi-Threading Compatibility
+
+The libdhcp_host_cmds hooks library is compatible with multi-threading.
+Commands which modify a host reservation are limited to database backends which
+are thread safe.
+
+*/

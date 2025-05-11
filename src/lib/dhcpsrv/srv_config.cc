@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -412,7 +412,7 @@ SrvConfig::updateStatistics() {
     // a lease manager, such as D2. @todo We should probably examine why
     // "SrvConfig" is being used by D2.
     if (LeaseMgrFactory::haveInstance()) {
-        // Updates  statistics for v4 and v6 subnets
+        // Updates statistics for v4 and v6 subnets.
         getCfgSubnets4()->updateStatistics();
         getCfgSubnets6()->updateStatistics();
     }
@@ -896,10 +896,14 @@ SrvConfig::toElement() const {
     // Set control-sockets.
     ElementPtr control_sockets = Element::createList();
     if (!isNull(unix_control_socket_)) {
-        control_sockets->add(UserContext::toElement(unix_control_socket_));
+        for (auto const& socket : unix_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
-    if (http_control_socket_) {
-        control_sockets->add(http_control_socket_->toElement());
+    if (!isNull(http_control_socket_)) {
+        for (auto const& socket : http_control_socket_->listValue()) {
+            control_sockets->add(UserContext::toElement(socket));
+        }
     }
     if (!control_sockets->empty()) {
         dhcp->set("control-sockets", control_sockets);
@@ -942,15 +946,15 @@ SrvConfig::toElement() const {
 }
 
 DdnsParamsPtr
-SrvConfig::getDdnsParams(const Subnet4Ptr& subnet) const {
+SrvConfig::getDdnsParams(const ConstSubnet4Ptr& subnet) const {
     return (DdnsParamsPtr(new DdnsParams(subnet,
                                          getD2ClientConfig()->getEnableUpdates())));
 }
 
 DdnsParamsPtr
-SrvConfig::getDdnsParams(const Subnet6Ptr& subnet) const {
-   return(DdnsParamsPtr(new DdnsParams(subnet,
-                                       getD2ClientConfig()->getEnableUpdates())));
+SrvConfig::getDdnsParams(const ConstSubnet6Ptr& subnet) const {
+    return (DdnsParamsPtr(new DdnsParams(subnet,
+                                         getD2ClientConfig()->getEnableUpdates())));
 }
 
 void
@@ -973,6 +977,13 @@ DdnsParams::getEnableUpdates() const {
         return (false);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsSendUpdates();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (d2_client_enabled_ && subnet_->getDdnsSendUpdates().get());
 }
 
@@ -982,12 +993,26 @@ DdnsParams::getOverrideNoUpdate() const {
         return (false);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideNoUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsOverrideNoUpdate().get());
 }
 
 bool DdnsParams::getOverrideClientUpdate() const {
     if (!subnet_) {
         return (false);
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsOverrideClientUpdate();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsOverrideClientUpdate().get());
@@ -999,6 +1024,13 @@ DdnsParams::getReplaceClientNameMode() const {
         return (D2ClientConfig::RCM_NEVER);
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsReplaceClientNameMode();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsReplaceClientNameMode().get());
 }
 
@@ -1008,6 +1040,13 @@ DdnsParams::getGeneratedPrefix() const {
         return ("");
     }
 
+    if (pool_) {
+        auto optional = pool_->getDdnsGeneratedPrefix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
+    }
+
     return (subnet_->getDdnsGeneratedPrefix().get());
 }
 
@@ -1015,6 +1054,13 @@ std::string
 DdnsParams::getQualifyingSuffix() const {
     if (!subnet_) {
         return ("");
+    }
+
+    if (pool_) {
+        auto optional = pool_->getDdnsQualifyingSuffix();
+        if (!optional.unspecified()) {
+            return (optional.get());
+        }
     }
 
     return (subnet_->getDdnsQualifyingSuffix().get());
@@ -1057,31 +1103,40 @@ DdnsParams::getHostnameSanitizer() const {
     return (sanitizer);
 }
 
-bool
-DdnsParams::getUpdateOnRenew() const {
-    if (!subnet_) {
-        return (false);
+void
+SrvConfig::sanityChecksDdnsTtlParameters() const {
+    // Need to check that global DDNS TTL values make sense
+
+    // Get ddns-ttl first. If ddns-ttl is specified none of the others should be.
+    ConstElementPtr has_ddns_ttl = getConfiguredGlobal("ddns-ttl");
+
+    if (getConfiguredGlobal("ddns-ttl-percent")) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-percent and ddns-ttl");
+        }
     }
 
-    return (subnet_->getDdnsUpdateOnRenew().get());
-}
-
-util::Optional<double>
-DdnsParams::getTtlPercent() const {
-    if (!subnet_) {
-        return (util::Optional<double>());
+    ConstElementPtr has_ddns_ttl_min = getConfiguredGlobal("ddns-ttl-min");
+    if (has_ddns_ttl_min && has_ddns_ttl) {
+        isc_throw(BadValue, "cannot specify both ddns-ttl-min and ddns-ttl");
     }
 
-    return (subnet_->getDdnsTtlPercent());
-}
+    ConstElementPtr has_ddns_ttl_max = getConfiguredGlobal("ddns-ttl-max");
+    if (has_ddns_ttl_max) {
+        if (has_ddns_ttl) {
+            isc_throw(BadValue, "cannot specify both ddns-ttl-max and ddns-ttl");
+        }
 
-std::string
-DdnsParams::getConflictResolutionMode() const {
-    if (!subnet_) {
-        return ("check-with-dhcid");
+        if (has_ddns_ttl_min) {
+            // Have min and max, make sure the range is sane.
+            uint32_t ddns_ttl_min = has_ddns_ttl_min->intValue();
+            uint32_t ddns_ttl_max = has_ddns_ttl_max->intValue();
+            if (ddns_ttl_max < ddns_ttl_min) {
+                isc_throw(BadValue, "ddns-ttl-max: " << ddns_ttl_max
+                          << " must be greater than ddns-ttl-min: " <<  ddns_ttl_min);
+            }
+        }
     }
-
-    return (subnet_->getDdnsConflictResolutionMode().get());
 }
 
 } // namespace dhcp

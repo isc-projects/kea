@@ -36,6 +36,12 @@ ClientClasses::ClientClasses(const std::string& class_names)
     }
 }
 
+ClientClasses::ClientClasses(const ClientClasses& other) {
+    for (auto const& cclass : other) {
+        insert(cclass);
+    }
+}
+
 void
 ClientClasses::erase(const ClientClass& class_name) {
     auto& idx = container_.get<ClassNameTag>();
@@ -49,6 +55,25 @@ bool
 ClientClasses::contains(const ClientClass& x) const {
     auto const& idx = container_.get<ClassNameTag>();
     return (idx.count(x) != 0);
+}
+
+bool
+ClientClasses::intersects(const ClientClasses& cclasses) const {
+    if (cclasses.size() > size()) {
+        for (const auto& cclass : *this) {
+            if (cclasses.contains(cclass)) {
+                return (true);
+            }
+        }
+    } else {
+        for (const auto& cclass : cclasses) {
+            if (contains(cclass)) {
+                return (true);
+            }
+        }
+    }
+
+    return (false);
 }
 
 std::string
@@ -73,6 +98,40 @@ ClientClasses::toElement() const {
         result->add(Element::create(c));
     }
     return (result);
+}
+
+void
+ClientClasses::fromElement(isc::data::ConstElementPtr cc_list) {
+    if (cc_list) {
+        clear();
+        if (cc_list->getType() != Element::list) {
+            isc_throw(BadValue, "not a List element");
+        }
+
+        for (unsigned i = 0; i < cc_list->size(); ++i) {
+            auto cclass = cc_list->get(i);
+            if (cclass->getType() != Element::string) {
+                isc_throw(BadValue, "elements of list must be valid strings");
+            }
+
+            static_cast<void>(insert(cclass->stringValue()));
+        }
+    }
+}
+
+bool
+ClientClasses::equals(const ClientClasses& other) const {
+ return ((size() == other.size()) && std::equal(cbegin(), cend(), other.cbegin()));
+}
+
+ClientClasses&
+ClientClasses::operator=(const ClientClasses& other) {
+    clear();
+    for (auto const& cclass : other) {
+        insert(cclass);
+    }
+
+    return (*this);
 }
 
 } // end of namespace isc::dhcp

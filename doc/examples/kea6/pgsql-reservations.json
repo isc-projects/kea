@@ -50,8 +50,17 @@
        "max-reconnect-tries": 3,
        "name": "keatest",
        "user": "keatest",
-       "password": "keatest",
+       "password": "1234",
        "host": "localhost"
+    }
+  ],
+// Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
+// store host reservations in the PostgreSQL Host Database Backend.
+// Specify the host backend hook library location.
+  "hooks-libraries": [
+    {
+        // the PostgreSQL host backend hook library required for host storage.
+        "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
     }
   ],
 

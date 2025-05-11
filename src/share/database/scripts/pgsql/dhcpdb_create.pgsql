@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6432,7 +6432,7 @@ BEGIN
         (0, 'empty'),
         (1, 'binary'),
         (2, 'boolean'),
-        (3, 'int8"'),
+        (3, 'int8'),
         (4, 'int16'),
         (5, 'int32'),
         (6, 'uint8'),
@@ -6465,10 +6465,251 @@ SELECT updateOptionDataDef();
 -- Get rid of the now obsolete function.
 DROP FUNCTION IF EXISTS updateOptionDataDef();
 
+-- Update the schema version number.
 UPDATE schema_version
     SET version = '24', minor = '0';
 
 -- This line concludes the schema upgrade to version 24.0.
+
+-- This line starts the schema upgrade to version 25.0.
+
+-- Add prefix exclude option to IPv6 reservations.
+ALTER TABLE ipv6_reservations
+    ADD COLUMN excluded_prefix INET DEFAULT NULL,
+    ADD COLUMN excluded_prefix_len SMALLINT NOT NULL DEFAULT '0';
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '25', minor = '0';
+
+-- This line concludes the schema upgrade to version 25.0.
+
+-- This line starts the schema upgrade to version 26.0.
+
+-- Add client_classes column to options tables for option class taggging.
+ALTER TABLE dhcp4_options
+    ADD COLUMN client_classes TEXT DEFAULT NULL;
+
+ALTER TABLE dhcp6_options
+    ADD COLUMN client_classes TEXT DEFAULT NULL;
+
+UPDATE option_def_data_type SET name='int8' WHERE id = 3;
+
+-- Rename require_client_classes and only_if_required.
+ALTER TABLE dhcp4_shared_network
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_subnet
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_shared_network
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_subnet
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp6_pd_pool
+    RENAME COLUMN require_client_classes TO evaluate_additional_classes;
+
+ALTER TABLE dhcp4_client_class
+    RENAME COLUMN only_if_required TO only_in_additional_list;
+
+ALTER TABLE dhcp6_client_class
+    RENAME COLUMN only_if_required TO only_in_additional_list;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '26', minor = '0';
+
+-- This line concludes the schema upgrade to version 26.0.
+
+-- This line starts the schema upgrade to version 27.0.
+
+SELECT set_config('kea.disable_audit', 'true', false);
+
+CREATE OR REPLACE FUNCTION textToJSONList(orig TEXT)
+    RETURNS TEXT AS $$
+DECLARE
+BEGIN
+    IF orig = '' OR orig IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN CONCAT('[ "', orig, '" ]');
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE dhcp4_shared_network RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_shared_network ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp4_shared_network SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp4_subnet RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_subnet ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp4_subnet SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp4_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp4_pool ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp4_pool SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp6_shared_network RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_shared_network ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_shared_network SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp6_subnet RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_subnet ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_subnet SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp6_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_pool ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_pool SET client_classes = textToJSONList(client_classes);
+
+ALTER TABLE dhcp6_pd_pool RENAME client_class TO client_classes;
+ALTER TABLE dhcp6_pd_pool ALTER COLUMN client_classes TYPE TEXT;
+
+UPDATE dhcp6_pd_pool SET client_classes = textToJSONList(client_classes);
+
+DROP FUNCTION IF EXISTS testToJSONList();
+
+SELECT set_config('kea.disable_audit', 'false', false);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '27', minor = '0';
+
+-- This line concludes the schema upgrade to version 27.0.
+
+-- This line starts the schema upgrade to version 28.0.
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN ddns_ttl_percent FLOAT DEFAULT NULL,
+    ADD COLUMN ddns_ttl         BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_min     BIGINT DEFAULT NULL,
+    ADD COLUMN ddns_ttl_max     BIGINT DEFAULT NULL;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '28', minor = '0';
+
+-- This line concludes the schema upgrade to version 28.0.
+
+-- This line starts the schema upgrade to version 29.0.
+
+-- New lease state for address registration
+INSERT INTO lease_state VALUES (4, 'registered');
+
+-- Update *_lease6_stat stored procedures to count registered leases.
+-- Not *_lease6_pool_stat because a registered address is not from a pool
+-- Not *_lease6_stat_by_client_class because it is for state 0 only
+
+CREATE OR REPLACE FUNCTION lease6_AINS_lease6_stat(IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF new_state = 0 OR new_state = 1 OR new_state = 4 THEN
+        -- Update the state count if it exists.
+        UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+            AND state = new_state;
+
+        -- Insert the state count record if it does not exist.
+        IF NOT FOUND THEN
+            INSERT INTO lease6_stat VALUES (new_subnet_id, new_lease_type, new_state, 1);
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_AUPD_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT,
+                                                   IN new_state BIGINT,
+                                                   IN new_subnet_id BIGINT,
+                                                   IN new_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF old_subnet_id != new_subnet_id OR
+       old_lease_type != new_lease_type OR
+       old_state != new_state THEN
+        IF old_state = 0 OR old_state = 1 OR old_state = 4 THEN
+            -- Decrement the old state count if record exists.
+            UPDATE lease6_stat
+                SET leases = GREATEST(leases - 1, 0)
+                WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+                AND state = old_state;
+        END IF;
+
+        IF new_state = 0 OR new_state = 1 OR new_state = 4 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+                WHERE subnet_id = new_subnet_id AND lease_type = new_lease_type
+                AND state = new_state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat
+                VALUES (new_subnet_id, new_lease_type, new_state, 1);
+            END IF;
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION lease6_ADEL_lease6_stat(IN old_state BIGINT,
+                                                   IN old_subnet_id BIGINT,
+                                                   IN old_lease_type SMALLINT)
+RETURNS VOID
+AS $$
+BEGIN
+    IF old_state = 0 OR old_state = 1 OR old_state = 4 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat
+            SET leases = GREATEST(leases - 1, 0)
+            WHERE subnet_id = old_subnet_id AND lease_type = old_lease_type
+            AND state = old_state;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Not reinstall triggers: assume procedures are called by name.
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '29', minor = '0';
+
+-- This line concludes the schema upgrade to version 29.0.
 
 -- Commit the script transaction.
 COMMIT;

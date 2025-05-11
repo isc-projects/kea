@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ constexpr unsigned long INTERFACE_ID_BUF_LENGTH = 128;
 
 constexpr unsigned long RELAY_BUF_LENGTH = 65536;
 
-constexpr unsigned long REQUIRE_CLIENT_CLASSES_BUF_LENGTH = 65536;
+constexpr unsigned long CLIENT_CLASS_LIST_BUF_LENGTH = 65536;
 
 constexpr unsigned long SERVER_HOSTNAME_BUF_LENGTH = 512;
 

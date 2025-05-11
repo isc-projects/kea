@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,15 +9,36 @@
 #include <cryptolink.h>
 #include <cryptolink/crypto_hmac.h>
 
-#include <boost/scoped_ptr.hpp>
-
-#include <botan/hmac.h>
-#include <botan/lookup.h>
+#include <botan/mac.h>
+#include <botan/exceptn.h>
 
 #include <cryptolink/botan_common.h>
 
 namespace isc {
 namespace cryptolink {
+
+const std::string
+btn::getHmacAlgorithmName(HashAlgorithm algorithm) {
+    switch (algorithm) {
+    case isc::cryptolink::MD5:
+        return ("HMAC(MD5)");
+    case isc::cryptolink::SHA1:
+        return ("HMAC(SHA-1)");
+    case isc::cryptolink::SHA256:
+        return ("HMAC(SHA-256)");
+    case isc::cryptolink::SHA224:
+        return ("HMAC(SHA-224)");
+    case isc::cryptolink::SHA384:
+        return ("HMAC(SHA-384)");
+    case isc::cryptolink::SHA512:
+        return ("HMAC(SHA-512)");
+    case isc::cryptolink::UNKNOWN_HASH:
+        return ("HMAC(Unknown)");
+    }
+    // compiler should have prevented us to reach this, since we have
+    // no default. But we need a return value anyway
+    return ("Unknown");
+}
 
 /// @brief Botan implementation of HMAC. Each method is the counterpart
 /// of the HMAC corresponding method.
@@ -33,18 +54,11 @@ public:
     explicit HMACImpl(const void* secret, size_t secret_len,
                       const HashAlgorithm hash_algorithm)
     : hash_algorithm_(hash_algorithm), hmac_() {
-        Botan::HashFunction* hash;
         try {
             const std::string& name =
-                btn::getHashAlgorithmName(hash_algorithm);
-            std::unique_ptr<Botan::HashFunction> hash_ptr =
-                Botan::HashFunction::create(name);
-            if (hash_ptr) {
-                hash = hash_ptr.release();
-            } else {
-                throw Botan::Algorithm_Not_Found(name);
-            }
-        } catch (const Botan::Algorithm_Not_Found&) {
+                btn::getHmacAlgorithmName(hash_algorithm);
+            hmac_ = Botan::MessageAuthenticationCode::create_or_throw(name);
+        } catch (const Botan::Lookup_Error&) {
             isc_throw(UnsupportedAlgorithm,
                       "Unknown hash algorithm: " <<
                       static_cast<int>(hash_algorithm));
@@ -52,28 +66,14 @@ public:
             isc_throw(LibraryError, "Botan error: " << exc.what());
         }
 
-        hmac_.reset(new Botan::HMAC(hash));
-
-        // If the key length is larger than the block size, we hash the
-        // key itself first.
         try {
-            // use a temp var so we don't have blocks spanning
-            // preprocessor directives
-            size_t block_length = hash->hash_block_size();
-            if (secret_len > block_length) {
-                Botan::secure_vector<Botan::byte> hashed_key =
-                    hash->process(static_cast<const Botan::byte*>(secret),
-                                  secret_len);
-                hmac_->set_key(&hashed_key[0], hashed_key.size());
-            } else {
-                // Botan 1.8 considers len 0 a bad key. 1.9 does not,
-                // but we won't accept it anyway, and fail early
-                if (secret_len == 0) {
-                    isc_throw(BadKey, "Bad HMAC secret length: 0");
-                }
-                hmac_->set_key(static_cast<const Botan::byte*>(secret),
-                               secret_len);
+            // Botan 1.8 considers len 0 a bad key. 1.9 does not,
+            // but we won't accept it anyway, and fail early
+            if (secret_len == 0) {
+                isc_throw(BadKey, "Bad HMAC secret length: 0");
             }
+            hmac_->set_key(static_cast<const Botan::byte*>(secret),
+                           secret_len);
         } catch (const Botan::Invalid_Key_Length& ikl) {
             isc_throw(BadKey, ikl.what());
         } catch (const Botan::Exception& exc) {
@@ -82,8 +82,7 @@ public:
     }
 
     /// @brief Destructor
-    ~HMACImpl() {
-    }
+    ~HMACImpl() = default;
 
     /// @brief Returns the HashAlgorithm of the object
     HashAlgorithm getHashAlgorithm() const {
@@ -177,9 +176,8 @@ public:
             if (digest_.size() == 0) {
                 digest_ = hmac_->final();
             }
-            return (Botan::same_mem(&digest_[0],
-                                    static_cast<const unsigned char*>(sig),
-                                    len));
+            const uint8_t* sig8 = static_cast<const uint8_t*>(sig);
+            return (Botan::constant_time_compare(&digest_[0], sig8, len));
         } catch (const Botan::Exception& exc) {
             isc_throw(LibraryError, "Botan error: " << exc.what());
         }
@@ -190,7 +188,7 @@ private:
     HashAlgorithm hash_algorithm_;
 
     /// @brief The protected pointer to the Botan HMAC object
-    boost::scoped_ptr<Botan::HMAC> hmac_;
+    std::unique_ptr<Botan::MessageAuthenticationCode> hmac_;
 
     /// @brief The digest cache for multiple verify
     Botan::secure_vector<Botan::byte> digest_;

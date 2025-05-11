@@ -1037,32 +1037,31 @@ TEST_F(Pkt4Test, clientClasses) {
     EXPECT_TRUE(pkt.inClass("foo"));
 }
 
-// Tests whether a packet can be marked to evaluate later a class and
-// after check if a given class is in the collection
-TEST_F(Pkt4Test, deferredClientClasses) {
+// Tests operations on additional classes list.
+TEST_F(Pkt4Test, additionalClientClasses) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
     // Default values (do not belong to any class)
-    EXPECT_TRUE(pkt.getClasses(true).empty());
+    EXPECT_TRUE(pkt.getAdditionalClasses().empty());
 
     // Add to the first class
-    pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
-    EXPECT_EQ(1, pkt.getClasses(true).size());
+    pkt.addAdditionalClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_EQ(1, pkt.getAdditionalClasses().size());
 
     // Add to a second class
-    pkt.addClass(DOCSIS3_CLASS_MODEM, true);
-    EXPECT_EQ(2, pkt.getClasses(true).size());
-    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
-    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
-    EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
+    pkt.addAdditionalClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_EQ(2, pkt.getAdditionalClasses().size());
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_MODEM));
+    EXPECT_FALSE(pkt.getAdditionalClasses().contains("foo"));
 
     // Check that it's ok to add to the same class repeatedly
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
-    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
+    EXPECT_NO_THROW(pkt.addAdditionalClass("foo"));
 
     // Check that the packet belongs to 'foo'
-    EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
+    EXPECT_TRUE(pkt.getAdditionalClasses().contains("foo"));
 }
 
 // Tests whether a packet can be assigned to a subclass and later
@@ -1085,6 +1084,21 @@ TEST_F(Pkt4Test, templateClasses) {
     pkt.addSubClass("template-interface-id", "SPAWN_template-interface-id_interface-id0");
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-name_eth0"));
     EXPECT_TRUE(pkt.inClass("SPAWN_template-interface-id_interface-id0"));
+
+    // Verify the order is as expected.
+    const ClientClasses& classes = pkt.getClasses();
+    auto cclass = classes.cbegin();
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-name_eth0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-name", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("SPAWN_template-interface-id_interface-id0", (*cclass));
+    ++cclass;
+    ASSERT_NE(cclass, classes.cend());
+    EXPECT_EQ("template-interface-id", (*cclass));
 
     // Check that it's ok to add to the same subclass repeatedly
     EXPECT_NO_THROW(pkt.addSubClass("template-foo", "SPAWN_template-foo_bar"));

@@ -239,7 +239,7 @@ bufferToCharString(isc::util::InputBuffer& buffer, size_t rdata_len,
                   "insufficient data to read character-string length");
     }
     const uint8_t len = buffer.readUint8();
-    if (rdata_len < len + 1) {
+    if (rdata_len < static_cast<size_t>(len) + 1) {
         isc_throw(isc::dns::DNSMessageFORMERR,
                   "character string length is too large: " <<
                   static_cast<int>(len));

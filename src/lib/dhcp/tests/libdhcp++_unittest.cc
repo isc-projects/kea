@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2954,6 +2954,61 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     fqdn1_buf.end(), typeid(OptionCustom));
 }
 
+/// Test verifies if the CableLabs Client Configuration (CCC) options are
+/// parsed properly.
+TEST_F(LibDhcpTest, ccc) {
+    // CCC (CableLabs Client Config) options for cable modems
+    const unsigned char ccc_data[] = {
+
+        // RFC3495 sub-opts
+
+        // opt 1: TSP's primary DHCP address 161.162.163.164
+        0x01, 0x04, 0xa1, 0xa2, 0xa3, 0xa4,
+
+        // sub-option 2, len 4, TSP's secondary DHCP addr: 177.178.179.180
+        0x02, 0x04, 0xb1, 0xb2, 0xb3, 0xb4,
+        // sub-option 3 is not defined, because the RFC defined it
+        // conditionally. It's either IP address or FQDN. Kea doesn't support
+        // conditional formatting, so we left this one out and let the user
+
+        // sub-option 4, len 12, MTA's Kerberos AS-REQ/AS-REP timeout,
+        // backoff, and retry mechanism.
+        0x04, 0x0c, 0x01, 0x02, 0x03, 0x04, 0x11, 0x12, 0x13, 0x14,
+        0x21, 0x22, 0x23, 0x24,
+
+        // sub-option 5, len 12, TSP's AP-REQ/AP-REP Backoff and Retry
+        0x05, 0x0c, 0x31, 0x32, 0x33, 0x34, 0x41, 0x42, 0x43, 0x44,
+        0x51, 0x52, 0x53, 0x54,
+
+        // sub-option 6, len var, TSP's Kerberos Realm Name Sub-Option
+        // realm = "testrealm"
+        0x06, 0x0b, 0x09, 0x54,0x45,0x53,0x54,0x52,0x45,0x41,0x4c,0x4d, 0x00,
+
+        // sub-option 7, TSP's Ticket Granting Server Utilization Sub-Option
+        // granting not allowed = 0
+        0x07, 0x01, 0x00,
+
+        // sub-option 8, TSP's Provisioning Timer Sub-Option
+        // timer value = 100
+        0x08, 0x01, 0x64,
+
+        // RFC 3594 sub-option (9)
+
+        // sub-option 9, Security Ticket Control, set bits 0 (PacketCable
+        // Provisioning Server used by the CCD) and 1 (the group of all
+        // PacketCable Call Management Servers used by the CCD)
+        0x09, 0x02, 0x0, 0x03,
+
+        // RFC 3634 (sub-option 10), Key Distrbution Center, two KDC servers
+        // configured: 1.2.3.4, 17.18.19.20
+        0x0a, 0x08, 0x01, 0x02, 0x03, 0x04, 0x11, 0x12, 0x13, 0x14
+    };
+    std::vector<uint8_t> ccc_buf(ccc_data, ccc_data + sizeof(ccc_data));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_CCC, ccc_buf.begin(), ccc_buf.end(),
+        typeid(OptionCustom), "cablelabs-client-conf");
+}
+
 // Test that definitions of standard options have been initialized
 // correctly.
 // @todo Only limited number of option definitions are now created
@@ -3261,13 +3316,16 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     std::vector<uint8_t> opaque_tuple_buf(opaque_tuple_data,
                                           opaque_tuple_data + sizeof(opaque_tuple_data));
 
-    LibDhcpTest::testStdOptionDefs6(D60_V6_SZTP_REDIRECT,
+    LibDhcpTest::testStdOptionDefs6(D6O_V6_SZTP_REDIRECT,
                                     opaque_tuple_buf.begin(),
                                     opaque_tuple_buf.end(),
                                     typeid(OptionOpaqueDataTuples));
 
     LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
+
+    LibDhcpTest::testStdOptionDefs6(D6O_ADDR_REG_ENABLE, begin, end,
+                                    typeid(Option));
 
     // RFC7598 options
     LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
@@ -3730,6 +3788,179 @@ TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
     auto elapsed = boost::dynamic_pointer_cast<OptionInt<uint16_t>>(opt->second);
     ASSERT_TRUE(elapsed);
     EXPECT_EQ(77, elapsed->getValue());
+}
+
+// RFC 5908 v6 NTP server option and suboptions.
+TEST_F(LibDhcpTest, v6NtpServer) {
+    // A NTP server option with the 3 suboptions.
+    std::vector<uint8_t> bin {
+        0, 56, 0, 53,                      // ntp-server
+        0, 1, 0, 16,                       // ntp-server-address
+        0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0, // 2001:db8::abcd
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd,
+        0, 2, 0, 16,                       // ntp-server-multicast
+        0xff, 0x02, 0, 0, 0, 0, 0, 0,      // ff02::101
+        0, 0, 0, 0, 0, 0, 0x01, 0x01,
+        0, 3, 0, 9,                        // ntp-server-fqdn
+        3, 0x66, 0x6f, 0x6f,               // foo.bar.
+        3, 0x62, 0x61, 0x72, 0
+    };
+
+    // List of parsed options will be stored here.
+    OptionCollection options;
+    OptionBuffer buf(bin);
+    size_t parsed = 0;
+    EXPECT_NO_THROW(parsed = LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE,
+                                                     options));
+    EXPECT_EQ(bin.size(), parsed);
+
+    // We expect to have exactly one option with 3 suboptions.
+    EXPECT_EQ(1, options.size());
+    auto opt = options.find(D6O_NTP_SERVER);
+    ASSERT_FALSE(opt == options.end());
+
+    // Get the option.
+    OptionCustomPtr option =
+        boost::dynamic_pointer_cast<OptionCustom>(opt->second);
+    ASSERT_TRUE(option);
+    EXPECT_EQ(D6O_NTP_SERVER, option->getType());
+    EXPECT_EQ(57, option->len());
+    EXPECT_EQ(53, option->getData().size());
+
+    // Check the address suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_SRV_ADDR));
+    OptionCustomPtr addr =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_SRV_ADDR));
+    ASSERT_TRUE(addr);
+    EXPECT_EQ("type=00001, len=00016: 2001:db8::abcd (ipv6-address)",
+              addr->toText());
+
+    // Check the multicast suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_MC_ADDR));
+    OptionCustomPtr multicast =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_MC_ADDR));
+    ASSERT_TRUE(multicast);
+    EXPECT_EQ("type=00002, len=00016: ff02::101 (ipv6-address)",
+              multicast->toText());
+
+    // Check the fqdn suboption.
+    ASSERT_TRUE(option->getOption(NTP_SUBOPTION_SRV_FQDN));
+    OptionCustomPtr fqdn =
+        boost::dynamic_pointer_cast<OptionCustom>(option->getOption(NTP_SUBOPTION_SRV_FQDN));
+    ASSERT_TRUE(fqdn);
+    EXPECT_EQ("type=00003, len=00009: \"foo.bar.\" (fqdn)",
+              fqdn->toText());
+
+    // Build back the NTP server option.
+    auto opt_def = LibDHCP::D6O_NTP_SERVER_DEF();
+    ASSERT_NO_THROW(option.reset(new OptionCustom(opt_def, Option::V6)));
+    ASSERT_TRUE(option);
+
+    // Add address.
+    OptionDefinitionPtr addr_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_ADDR);
+    ASSERT_TRUE(addr_def);
+    OptionBuffer addr_buf = {
+        0x20, 0x01, 0xd, 0xb8, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd
+    };
+    ASSERT_NO_THROW(addr.reset(new OptionCustom(*addr_def, Option::V6,
+                                                addr_buf)));
+    ASSERT_TRUE(addr);
+    option->addOption(addr);
+
+    // Add multicast.
+    OptionDefinitionPtr multicast_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_MC_ADDR);
+    ASSERT_TRUE(multicast_def);
+    OptionBuffer multicast_buf = {
+        0xff, 0x02, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0x01, 0x01
+    };
+    ASSERT_NO_THROW(multicast.reset(new OptionCustom(*multicast_def,
+                                                     Option::V6,
+                                                     multicast_buf)));
+    ASSERT_TRUE(multicast);
+    option->addOption(multicast);
+
+    // Add fqdn.
+    OptionDefinitionPtr fqdn_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_FQDN);
+    ASSERT_TRUE(fqdn_def);
+    OptionBuffer fqdn_buf = {
+        3, 0x66, 0x6f, 0x6f, 3, 0x62, 0x61, 0x72, 0
+    };
+    ASSERT_NO_THROW(fqdn.reset(new OptionCustom(*fqdn_def, Option::V6,
+                                                fqdn_buf)));
+    ASSERT_TRUE(fqdn);
+    option->addOption(fqdn);
+
+    // Pack output.
+    OutputBuffer outbuf(0);
+    ASSERT_NO_THROW(option->pack(outbuf, true));
+    ASSERT_EQ(bin.size(), outbuf.getLength());
+    EXPECT_TRUE(memcmp(&bin[0], outbuf.getData(), bin.size()) == 0);
+}
+
+// Check splitNtpServerOptions6.
+TEST_F(LibDhcpTest, splitNtpServerOptions6) {
+    OptionCollection col;
+    auto def = LibDHCP::D6O_NTP_SERVER_DEF();
+    OptionCustomPtr opt1(new OptionCustom(def, Option::V6));
+    OptionCustomPtr opt2(new OptionCustom(def, Option::V6));
+    OptionCustomPtr opt3(new OptionCustom(def, Option::V6));
+
+    // Fill first option with three addresses.
+    OptionDefinitionPtr addr_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_ADDR);
+    ASSERT_TRUE(addr_def);
+    OptionCustomPtr addr1(new OptionCustom(*addr_def, Option::V6));
+    OptionCustomPtr addr2(new OptionCustom(*addr_def, Option::V6));
+    OptionCustomPtr addr3(new OptionCustom(*addr_def, Option::V6));
+    EXPECT_NO_THROW(addr1->writeAddress(IOAddress("2001:db8::abcd")));
+    opt1->addOption(addr1);
+    EXPECT_NO_THROW(addr2->writeAddress(IOAddress("2001:db8::bcde")));
+    opt1->addOption(addr2);
+    EXPECT_NO_THROW(addr3->writeAddress(IOAddress("2001:db8::cdef")));
+    opt1->addOption(addr3);
+    col.insert(make_pair(D6O_NTP_SERVER, opt1));
+
+    // Leave second option empty.
+    col.insert(make_pair(D6O_NTP_SERVER, opt2));
+
+    // Fill third option with a FQDN.
+    OptionDefinitionPtr fqdn_def =
+        LibDHCP::getOptionDef(V6_NTP_SERVER_SPACE, NTP_SUBOPTION_SRV_FQDN);
+    ASSERT_TRUE(fqdn_def);
+    OptionCustomPtr fqdn(new OptionCustom(*fqdn_def, Option::V6));
+    EXPECT_NO_THROW(fqdn->writeFqdn("foo.bar."));
+    opt3->addOption(fqdn);
+    col.insert(make_pair(D6O_NTP_SERVER, opt3));
+
+    // Insert another option.
+    OptionPtr opts(new OptionString(Option::V6, D6O_BOOTFILE_URL, "foobar"));
+    col.insert(make_pair(D6O_BOOTFILE_URL, opts));
+
+    // Split them: expect 5 options (opt1 -> 3, opt2 -> 0, opt3 -> 1 and opts).
+    ASSERT_EQ(4, col.size());
+    ASSERT_NO_THROW(LibDHCP::splitNtpServerOptions6(col));
+    EXPECT_EQ(5, col.size());
+
+    // Expected output.
+    string expected = "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::abcd (ipv6-address)\n";
+    expected += "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::bcde (ipv6-address)\n";
+    expected += "type=00056, len=00020:,\noptions:\n";
+    expected += "  type=00001, len=00016: 2001:db8::cdef (ipv6-address)\n";
+    expected += "type=00056, len=00013:,\noptions:\n";
+    expected += "  type=00003, len=00009: \"foo.bar.\" (fqdn)\n";
+    expected += "type=00059, len=00006: \"foobar\" (string)\n";
+    ostringstream output;
+    for (auto const& opt : col) {
+        output << opt.second->toText() << endl;
+    }
+    EXPECT_EQ(expected, output.str());
 }
 
 }  // namespace

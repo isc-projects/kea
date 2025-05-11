@@ -1,4 +1,4 @@
-// File created from ../../../src/lib/database/db_messages.mes
+// File created from src/lib/database/db_messages.mes
 
 #ifndef DB_MESSAGES_H
 #define DB_MESSAGES_H
@@ -8,6 +8,7 @@
 namespace isc {
 namespace db {
 
+extern const isc::log::MessageID CONFIG_BACKENDS_REGISTERED;
 extern const isc::log::MessageID DATABASE_INVALID_ACCESS;
 extern const isc::log::MessageID DATABASE_MYSQL_COMMIT;
 extern const isc::log::MessageID DATABASE_MYSQL_FATAL_ERROR;

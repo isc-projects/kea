@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,6 +154,22 @@ public:
     /// @param enabled The new mode.
     void setMode(bool enabled);
 
+    /// @brief Sets or clears the test mode for @c MultiThreadingMgr.
+    ///
+    /// @param test_mode A flag which indicates that the @c MultiThreadingMgr is
+    /// in the test mode (if true), or not (if false).
+    void setTestMode(const bool test_mode) {
+        test_mode_ = test_mode;
+    }
+
+    /// @brief Checks if the @c MultiThreadingMgr is in the test mode.
+    ///
+    /// @return true if the @c MultiThreadingMgr is in the test mode, false
+    /// otherwise.
+    bool isTestMode() const {
+        return (test_mode_);
+    }
+
     /// @brief Enter critical section.
     ///
     /// When entering @ref MultiThreadingCriticalSection, increment internal
@@ -307,6 +323,9 @@ private:
     /// The multi-threading flag: true if multi-threading is enabled, false
     /// otherwise.
     bool enabled_;
+
+    /// @brief Indicates if the @c MultiThreadingMgr is in the test mode.
+    bool test_mode_;
 
     /// @brief The critical section count.
     ///

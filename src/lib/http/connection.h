@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ namespace http {
 class HttpConnectionError : public Exception {
 public:
     HttpConnectionError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
+        isc::Exception(file, line, what) { }
 };
 
 /// @brief Forward declaration to the @ref HttpConnectionPool.
@@ -245,7 +245,7 @@ public:
     HttpConnection(const asiolink::IOServicePtr& io_service,
                    const HttpAcceptorPtr& acceptor,
                    const asiolink::TlsContextPtr& tls_context,
-                   HttpConnectionPool& connection_pool,
+                   std::shared_ptr<HttpConnectionPool> connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
                    const HttpAcceptorCallback& callback,
                    const long request_timeout,
@@ -418,6 +418,9 @@ protected:
     /// @brief Close the watch socket.
     void closeWatchSocket();
 
+    /// @brief The IO service used to handle events.
+    asiolink::IOServicePtr io_service_;
+
     /// @brief Timer used to detect Request Timeout.
     asiolink::IntervalTimer request_timer_;
 
@@ -441,7 +444,7 @@ protected:
     HttpAcceptorPtr acceptor_;
 
     /// @brief Connection pool holding this connection.
-    HttpConnectionPool& connection_pool_;
+    std::weak_ptr<HttpConnectionPool> connection_pool_;
 
     /// @brief Pointer to the @ref HttpResponseCreator object used to create
     /// HTTP responses.
@@ -456,6 +459,10 @@ protected:
     /// @brief Pointer to watch socket instance used to signal that the socket
     /// is ready for read or write when use external sockets is true.
     util::WatchSocketPtr watch_socket_;
+
+    /// @brief Flag which indicates if the connection shutdown should be
+    /// deferred until the connection is no longer used (a reply is sent).
+    bool defer_shutdown_;
 };
 
 } // end of namespace isc::http

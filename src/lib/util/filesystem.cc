@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,14 +10,12 @@
 #include <util/filesystem.h>
 #include <util/str.h>
 
-#include <algorithm>
-#include <cctype>
-#include <cerrno>
-#include <cstring>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <string>
 
+#include <dirent.h>
 #include <fcntl.h>
 
 using namespace isc::util::str;
@@ -76,6 +74,15 @@ Umask::~Umask() {
     umask(orig_umask_);
 }
 
+bool
+isSocket(string const& path) {
+    struct stat statbuf;
+    if (::stat(path.c_str(), &statbuf) < 0) {
+        return (false);
+    }
+    return ((statbuf.st_mode & S_IFMT) == S_IFSOCK);
+}
+
 Path::Path(string const& full_name) {
     if (!full_name.empty()) {
         bool dir_present = false;
@@ -84,9 +91,9 @@ Path::Path(string const& full_name) {
         if (last_slash != string::npos) {
             // Found the last slash, so extract directory component and
             // set where the scan for the last_dot should terminate.
-            parent_path_ = full_name.substr(0, last_slash + 1);
+            parent_path_ = full_name.substr(0, last_slash);
             if (last_slash == full_name.size()) {
-                // The entire string was a directory, so exit not and don't
+                // The entire string was a directory, so exit and don't
                 // do any more searching.
                 return;
             }
@@ -119,7 +126,7 @@ Path::Path(string const& full_name) {
 
 string
 Path::str() const {
-    return (parent_path_ + stem_ + extension_);
+    return (parent_path_ + ((parent_path_.empty() || parent_path_ == "/") ? string() : "/") + stem_ + extension_);
 }
 
 string
@@ -163,12 +170,49 @@ Path::replaceParentPath(string const& replacement) {
     string const trimmed_replacement(trim(replacement));
     if (trimmed_replacement.empty()) {
         parent_path_ = string();
-    } else if (trimmed_replacement.at(trimmed_replacement.size() - 1) == '/') {
+    } else if (trimmed_replacement == "/") {
         parent_path_ = trimmed_replacement;
+    } else if (trimmed_replacement.at(trimmed_replacement.size() - 1) == '/') {
+        parent_path_ = trimmed_replacement.substr(0, trimmed_replacement.size() - 1);
     } else {
-        parent_path_ = trimmed_replacement + '/';
+        parent_path_ = trimmed_replacement;
     }
     return (*this);
+}
+
+TemporaryDirectory::TemporaryDirectory() {
+    char dir[]("/tmp/kea-tmpdir-XXXXXX");
+    char const* dir_name = mkdtemp(dir);
+    if (!dir_name) {
+        isc_throw(Unexpected, "mkdtemp failed " << dir << ": " << strerror(errno));
+    }
+    dir_name_ = string(dir_name);
+}
+
+TemporaryDirectory::~TemporaryDirectory() {
+    DIR *dir(opendir(dir_name_.c_str()));
+    if (!dir) {
+        return;
+    }
+
+    std::unique_ptr<DIR, void(*)(DIR*)> defer(dir, [](DIR* d) { closedir(d); });
+
+    struct dirent *i;
+    string filepath;
+    while ((i = readdir(dir))) {
+        if (strcmp(i->d_name, ".") == 0 || strcmp(i->d_name, "..") == 0) {
+            continue;
+        }
+
+        filepath = dir_name_ + '/' + i->d_name;
+        remove(filepath.c_str());
+    }
+
+    rmdir(dir_name_.c_str());
+}
+
+string TemporaryDirectory::dirName() {
+    return dir_name_;
 }
 
 }  // namespace file
