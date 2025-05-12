@@ -1158,5 +1158,5 @@ This warning message is emitted when the configuration parsing detects
 that the `data-directory` parameter has been specified.  This parameter
 has been is no longer supported. The first argument is the path specified
 the second argument is the supported path that will be used.  This path
-may be overridden at runtime by setting the environment variable, 
+may be overridden at runtime by setting the environment variable
 'KEA_DHCP_DATA_DIR'
