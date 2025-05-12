@@ -12,7 +12,8 @@
 namespace isc {
 namespace test {
 
-/// @brief Wrapper for environment variable that restores
+/// @brief Wrapper for environment variable that restores the
+/// variable to its original.
 class EnvVarWrapper {
 public:
     /// @brief Constructor
@@ -37,7 +38,7 @@ public:
     ///
     /// @param value new value of the variable. If empty the
     /// variable is unset.
-    void setValue(const std::string value = "" );
+    void setValue(const std::string value = "");
 
 private:
     /// @brief Name of the variable.

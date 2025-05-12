@@ -240,9 +240,9 @@ PathChecker::getPath(bool reset /* = false */,
             path_ = default_path_;
         }
 
-        // Remove the trailing "/" if it present so comparison to
+        // Remove the trailing "/" if it is present so comparison to
         // other Path::parentPath() works.
-        if (path_.back() == '/') {
+        while (!path_.empty() && path_.back() == '/') {
             path_.pop_back();
         }
     }

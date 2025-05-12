@@ -174,10 +174,10 @@ public:
     /// 3. Use the value of default path.
     ///
     /// @param reset recalculate when true, defaults to false.
-    /// @param explicit_path set default hooks path to this value. This is
+    /// @param explicit_path set the default path to this value. This is
     /// for testing purposes only.
     ///
-    /// @return String containing the default hooks path.
+    /// @return String containing the default path.
     std::string getPath(bool reset = false, const std::string explicit_path = "");
 
     /// @brief Validates a file path against a supported path.
