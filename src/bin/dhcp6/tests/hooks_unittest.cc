@@ -5729,8 +5729,6 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
         EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "3"));
         EXPECT_TRUE(checkMarkerFile(SRV_CONFIG_MARKER_FILE,
                                     "3io_contextjson_confignetwork_stateserver_config"));
-
-        break;
     }
 }
 

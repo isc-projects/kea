@@ -6461,7 +6461,7 @@ TEST_F(Dhcp6ParserTest, invalidDataDir) {
     string text;
     ASSERT_NO_THROW(text = comment->stringValue());
     std::ostringstream os;
-    os << "'data-directory' of '/dev/null' is invalid, supported path is '" 
+    os << "'data-directory' of '/dev/null' is invalid, supported path is '"
        << CfgMgr::instance().getDataDir() << "'";
 
     EXPECT_EQ(os.str(), text);
