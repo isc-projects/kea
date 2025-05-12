@@ -341,8 +341,8 @@ TEST_F(CfgMgrTest, getDataDir) {
     ASSERT_EQ(CfgMgr::instance().getDataDir(), std::string(DHCP_DATA_DIR));
 
     setenv("KEA_DHCP_DATA_DIR", "/tmp/envpath", 1);
-    ASSERT_EQ(CfgMgr::instance().getDataDir(true),"/tmp/envpath");
-    ASSERT_EQ(CfgMgr::instance().getDataDir(),"/tmp/envpath");
+    ASSERT_EQ(CfgMgr::instance().getDataDir(true), "/tmp/envpath");
+    ASSERT_EQ(CfgMgr::instance().getDataDir(), "/tmp/envpath");
 
     ASSERT_EQ(CfgMgr::instance().getDataDir(true, "/tmp/explicit"), "/tmp/explicit");
     ASSERT_EQ(CfgMgr::instance().getDataDir(), "/tmp/explicit");
