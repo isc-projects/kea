@@ -12,7 +12,7 @@
 namespace isc {
 namespace test {
 
-/// @brief Wrapper for environment varible that restores
+/// @brief Wrapper for environment variable that restores
 class EnvVarWrapper {
 public:
     /// @brief Constructor

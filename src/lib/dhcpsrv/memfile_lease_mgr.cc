@@ -2317,7 +2317,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     try {
         lease_file = conn_.getParameter("name");
     } catch (const Exception&) {
-        // Not specified, use the defualt.
+        // Not specified, use the default.
         return (getDefaultLeaseFilePath(u));
     }
 

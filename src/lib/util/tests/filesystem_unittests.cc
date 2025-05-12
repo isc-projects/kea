@@ -222,7 +222,7 @@ TEST_F(PathCheckerTest, getPathExplicit) {
     PathChecker checker("/tmp/def_path", env_name_.c_str());
     ASSERT_EQ(checker.getPath(), checker.getDefaultPath());
 
-    // A subsequent call wiht reset=true and an explicit path
+    // A subsequent call with reset=true and an explicit path
     // should return the explicit path.
     ASSERT_EQ(checker.getPath(true, "/tmp/explicit"),
               "/tmp/explicit");

@@ -154,7 +154,7 @@ public:
     ///
     /// Makes a call to getPath(true) to initialize the supported path.
     ///
-    /// @param default_path path to use unless overidden by explicitly or via
+    /// @param default_path path to use unless overridden by explicitly or via
     /// environment variable.
     /// @param env_name name of environment variable (if one), that can override
     /// the default path.

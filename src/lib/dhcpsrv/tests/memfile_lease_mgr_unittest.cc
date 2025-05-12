@@ -477,7 +477,7 @@ TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
                      BadValue, os.str());
 }
 
-/// @brief Verifies that the supported path may be overriden witn
+/// @brief Verifies that the supported path may be overridden with
 /// the environment variable KEA_DHCP_DATA_DIR.
 TEST_F(MemfileLeaseMgrTest, dataDirEnvVarOverride) {
     ASSERT_TRUE(data_dir_env_var_.getValue().empty());
@@ -497,7 +497,7 @@ TEST_F(MemfileLeaseMgrTest, dataDirEnvVarOverride) {
               "/tmp/leasefile6_1.csv");
 }
 
-/// @brief Verifies that the supported path may be overriden with
+/// @brief Verifies that the supported path may be overridden with
 /// an explicit path even though its really only for UT testing.
 TEST_F(MemfileLeaseMgrTest, dataDirExplicitOveride) {
     ASSERT_TRUE(data_dir_env_var_.getValue().empty());
