@@ -321,7 +321,7 @@ that can be used to configure the memfile backend.
 
 -  ``name``: specifies the lease file in which new leases and lease updates
    are recorded. The default value for this parameter is
-   ``"[kea-install-dir]/var/lib/kea/kea-leases4.csv"``.
+   ``"[kea-install-dir]/var/lib/kea/kea-leases6.csv"``.
 
 .. note::
 

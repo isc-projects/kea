@@ -13,7 +13,7 @@ namespace isc {
 namespace test {
 
 /// @brief Wrapper for environment variable that restores the
-/// variable to its original.
+/// variable to its original value.
 class EnvVarWrapper {
 public:
     /// @brief Constructor
