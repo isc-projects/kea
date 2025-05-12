@@ -2290,6 +2290,10 @@ def _build_rpm(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20230620152003.fc37'
     elif system == 'fedora' and revision == '38':
         frc_version = 'isc20230621000612.fc38'
+    elif system == 'fedora' and revision == '40':
+        frc_version = 'isc202505010000.fc40'
+    elif system == 'fedora' and revision == '41':
+        frc_version = 'isc202505010000.fc41'
     elif system == 'centos' and revision == '7':
         frc_version = 'isc20200318122047.el7'
     elif system in ['centos', 'rhel'] and revision == '8':
@@ -2417,6 +2421,8 @@ def _build_deb(system, revision, features, tarball_path, env, check_times, dry_r
         frc_version = 'isc20210528123038'
     elif system == 'ubuntu' and revision == '22.04':
         frc_version = 'isc20220608134906'
+    elif system == 'ubuntu' and revision == '24.04':
+        frc_version = 'isc202505010000'
     else:
         raise NotImplementedError('missing freeradius-client version for %s-%s' % (system, revision))
 
