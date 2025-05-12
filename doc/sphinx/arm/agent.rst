@@ -231,53 +231,8 @@ the example above.
 Secure Connections
 ==================
 
-The Kea Control Agent natively supports secure
-HTTP connections using TLS. This allows protection against users from
-the node where the agent runs, something that a reverse proxy cannot
-provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
-
-TLS is configured using three string parameters with file names, and
-a boolean parameter:
-
--  The ``trust-anchor`` specifies the Certification Authority file name or
-   directory path.
-
--  The ``cert-file`` specifies the server certificate file name.
-
--  The ``key-file`` specifies the private key file name. The file must not
-   be encrypted.
-
--  The ``cert-required`` specifies whether client certificates are required
-   or optional. The default is to require them and to perform mutual
-   authentication.
-
-The file format is PEM. Either all the string parameters are specified and
-HTTP over TLS (HTTPS) is used, or none is specified and plain HTTP is used.
-Configuring only one or two string parameters results in an error.
-
-.. note::
-
-   When client certificates are not required, only the server side is
-   authenticated, i.e. the communication is encrypted with an unknown
-   client. This protects only against passive attacks; active
-   attacks, such as "man-in-the-middle," are still possible.
-
-.. note::
-
-   No standard HTTP authentication scheme cryptographically binds its end
-   entity with TLS. This means that the TLS client and server can be
-   mutually authenticated, but there is no proof they are the same as
-   for the HTTP authentication.
-
-The server will issue an error when changing the socket type from HTTP to HTTPS
-or from HTTPS to HTTP using the same address and port. This action is not
-allowed as it might introduce a security issue accidentally caused by a user
-mistake.
-A different address or port must be specified when using the "config-set"
-command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
-when modyfying the configuration file and then running "config-reload" command.
-
-The :iscman:`kea-shell` tool also supports TLS.
+Configuration options related to Kea Control Agent security can be found in the
+:ref:`secure-control-agent` section.
 
 .. _agent-launch:
 

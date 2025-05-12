@@ -38,10 +38,13 @@ protection possible:
 
 .. note::
 
-   On reconfiguration a new listener HTTP socket is opened only when the
-   address or the port was changed so to apply a TLS setup change, e.g.
-   a certificate update, Kea must be restarted (i.e. stopped and started
-   vs reloaded).
+   The server will issue an error when changing the socket type from HTTP to HTTPS
+   or from HTTPS to HTTP using the same address and port. This action is not
+   allowed as it might introduce a security issue accidentally caused by a user
+   mistake.
+   A different address or port must be specified when using the "config-set"
+   command to switch from HTTP to HTTPS or from HTTPS to HTTP. The same applies
+   when modyfying the configuration file and then running "config-reload" command.
 
 .. _tls_config:
 
@@ -211,6 +214,51 @@ desired.
 It is highly recommended to read the ``openssl.cnf`` manual page,
 normally called ``config.5ssl`` and displayed using ``man config``.
 
+.. _secure-control-agent:
+
+Secure Kea Control Agent
+========================
+
+The Kea Control Agent natively supports secure
+HTTP connections using TLS. This allows protection against users from
+the node where the agent runs, something that a reverse proxy cannot
+provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
+
+TLS is configured using three string parameters with file names, and
+a boolean parameter:
+
+-  The ``trust-anchor`` specifies the Certification Authority file name or
+   directory path.
+
+-  The ``cert-file`` specifies the server certificate file name.
+
+-  The ``key-file`` specifies the private key file name. The file must not
+   be encrypted.
+
+-  The ``cert-required`` specifies whether client certificates are required
+   or optional. The default is to require them and to perform mutual
+   authentication.
+
+The file format is PEM. Either all the string parameters are specified and
+HTTP over TLS (HTTPS) is used, or none is specified and plain HTTP is used.
+Configuring only one or two string parameters results in an error.
+
+.. note::
+
+   When client certificates are not required, only the server side is
+   authenticated, i.e. the communication is encrypted with an unknown
+   client. This protects only against passive attacks; active
+   attacks, such as "man-in-the-middle," are still possible.
+
+.. note::
+
+   No standard HTTP authentication scheme cryptographically binds its end
+   entity with TLS. This means that the TLS client and server can be
+   mutually authenticated, but there is no proof they are the same as
+   for the HTTP authentication.
+
+The :iscman:`kea-shell` tool also supports TLS.
+
 Securing a Kea Deployment
 =========================
 
@@ -224,7 +272,8 @@ The Kea architecture is modular, with separate daemons for separate tasks.
 A Kea deployment may include DHCPv4, DHCPv6, and Dynamic DNS daemons; a Control Agent
 daemon run on each application server; the ``kea-lfc utility`` for doing periodic lease
 file cleanup; MySQL and or PostgreSQL databases, run either locally on the application
-servers or accessed over the internal network; and a Stork monitoring system.
+servers or accessed over the internal network; a Netconf daemon to perform config and stats
+monitoring of Kea servers; and a Stork monitoring system.
 This modular architecture allows the administrator to minimize the attack surface
 by minimizing the code that is loaded and running.
 For example, :iscman:`kea-dhcp-ddns` should not be run unless DNS updates are required.
@@ -252,6 +301,12 @@ read from or write to this socket, root access is generally required, although i
 to run as non-root, the owner of the process can write to it. Access can be controlled using normal
 file-access control on POSIX systems (owner, group, others, read/write).
 
+Since Kea version 2.7.2 DHCP servers support HTTP/HTTPS control channels so the Control Agent (CA)
+is no longer needed.
+
+Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections. Both IPv4 and IPv6 addresses can be used.
+Security can be enhanced if configuring HTTPS connections for all daemons.
+
 Kea configuration is controlled by a JSON file on the Kea server. This file can be viewed or edited
 by anyone with file permissions (which are controlled by the operating system). Note that
 passwords are stored in clear text in the configuration file, so anyone with access to read the
@@ -272,6 +327,9 @@ in the configuration file.**
 
 Depending on the database configuration, it is also possible to verify whether the system user matches the
 database username. Consult the MySQL or PostgreSQL manual for details.
+
+Kea supports TLS settings for MySQL database and it must be configured explicitly for all used connections
+(configuration, reservations, leases, forensic logging).
 
 Information Leakage Through Logging
 -----------------------------------
@@ -361,6 +419,12 @@ iptables, is generally a good idea.
 Note that in High Availability (HA) deployments, DHCP partners connect to each other using a CA
 connection.
 
+Since Kea version 2.7.2 DHCP and DDNS servers support HTTP/HTTPS control channels so the Control Agent (CA)
+is no longer needed.
+
+Since Kea-2.7.6 Kea supports multiple HTTP/HTTPS connections. Both IPv4 and IPv6 addresses can be used.
+Security can be enhanced if configuring HTTPS connections for all daemons.
+
 Authentication for Kea's RESTful API
 ------------------------------------
 
@@ -376,7 +440,8 @@ using basic HTTP authentication.
 
 Kea 1.9.2 introduced a new ``auth`` hook point. With this new hook point, it is possible to develop an external
 hook library to extend the access controls, integrate with another authentication authority, or add role-based
-access control to the Control Agent.
+access control to the Control Agent. This hookpoint is also supported by the DHCP and DDNS servers since Kea
+version 2.7.2.
 
 Kea Security Processes
 ======================
@@ -406,9 +471,9 @@ processes that are used to ensure adequate code quality:
 
 - Each line of code goes through a formal review before it is accepted. The review process is
   documented and available publicly.
-- Roughly 50% of the source code is dedicated to unit tests. As of December 2020, there were over 6000
+- Roughly 50% of the source code is dedicated to unit tests. As of May 2024, there were over 12000
   unit tests and the number is increasing with time. Unit tests are required to commit any new feature.
-- There are around 1500 system tests for Kea. These simulate both correct and invalid
+- There are around 2000 system tests for Kea. These simulate both correct and invalid
   situations, covering network packets (mostly DHCP, but also DNS, HTTP, HTTPS and others),
   command-line usage, API calls, database interactions, scripts, and more.
 - There are performance tests with over 80 scenarios that test Kea overall performance and
@@ -422,17 +487,40 @@ processes that are used to ensure adequate code quality:
   packets in an invalid order) and more.
 - The Kea development team uses many tools that perform automatic code quality checks, such as danger, as well as
   internally developed sanity checkers.
-- The Kea team uses the following static code analyzers: Coverity Scan, shellcheck, and danger.
-- The Kea team uses the following dynamic code analyzers: Valgrind and Thread Sanitizer (TSAN).
+- The Kea team uses the following static code analyzers: Coverity Scan, cppcheck, clang-static-analyzer, shellcheck,
+  flawfinder, semgrep and danger.
+- The Kea team uses the following dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN), Address Sanitizer (ASAN),
+  Undefined Behavior Sanitizer (UBSAN).
 
 Fuzz Testing
 ------------
 
-The Kea team has a process for running fuzz testing, using `AFL <https://github.com/google/AFL>`_. There
-are two modes which are run: the first mode fuzzes incoming packets, effectively throwing millions of mostly
-broken packets at Kea per day, while the second mode fuzzes configuration structures and forces Kea to
-attempt to load them. Kea has been fuzzed since around 2018 in both modes. The input seeds
-(the data being used to generate or "fuzz" other input) are changed periodically.
+The Kea team has a process for running fuzz testing.
+Fuzzing is a software-testing technique whereby a program is presented with a
+variety of generated data as input and is monitored for abnormal conditions
+such as crashes or hangs.
+
+There are two ways to fuzz Kea.
+
+Option 1. With the libfuzzer harness function LLVMFuzzerTestOneInput.
+
+Option 2. With the AFL (American Fuzzy Lop https://github.com/google/AFL) compiler.
+
+Using the LLVMFuzzerTestOneInput Harness Function:
+
+This mode of fuzzing works with virtually any compiler.
+
+There are four types of fuzzers implemented with this mode:
+
+- Config fuzzer
+- HTTP endpoint fuzzer
+- Packet fuzzer
+- Unix socket fuzzer
+
+There are two binaries under test:
+
+- `kea-dhcp4`
+- `kea-dhcp6`
 
 Release Integrity
 -----------------
