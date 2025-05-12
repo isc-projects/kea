@@ -279,7 +279,6 @@ PathChecker::validatePath(const std::string input_path_str,
     return (valid_path);
 }
 
-
 }  // namespace file
 }  // namespace util
 }  // namespace isc
