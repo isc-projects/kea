@@ -91,6 +91,7 @@ public:
     HttpCtrlDhcpv6Test()
         : BaseServerTest() {
         reset();
+        setLogTestPath("/dev");
     }
 
     virtual ~HttpCtrlDhcpv6Test() {

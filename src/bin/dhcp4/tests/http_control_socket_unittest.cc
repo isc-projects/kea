@@ -27,6 +27,7 @@
 #include <http/response_parser.h>
 #include <http/testutils/test_http_client.h>
 #include <log/logger_support.h>
+#include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
 
@@ -56,6 +57,7 @@ using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::process;
 namespace ph = std::placeholders;
 
 namespace {
@@ -99,6 +101,7 @@ public:
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
                                                IfaceMgr::instancePtr().get(), ph::_1));
+        setLogTestPath("/dev");
     }
 
     /// @brief Destructor
@@ -117,6 +120,19 @@ public:
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().detectIfaces();
+        resetLogPath();
+    }
+
+    /// @brief Sets the log path where log output may be written.
+    /// @param explicit_path path to use as the log path.
+    void setLogTestPath(const std::string explicit_path = "") {
+        LogConfigParser::getLogPath(true, (!explicit_path.empty() ?
+                                           explicit_path : TEST_DATA_BUILDDIR));
+    }
+
+    /// @brief Resets the log path to TEST_DATA_BUILDDIR.
+    void resetLogPath() {
+        LogConfigParser::getLogPath(true);
     }
 
     /// @brief Returns pointer to the server's IO service.

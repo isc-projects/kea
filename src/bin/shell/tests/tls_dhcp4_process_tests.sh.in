@@ -27,6 +27,9 @@ LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
 # Path to the Dhcp4 Server log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
+# Set env KEA_LOG_FILE_DIR to override default log path.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/shell/tests"
+
 # Path to the test certificate authority directory.
 TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"
 

@@ -32,7 +32,9 @@ namespace {
 class LoggingTest : public ::testing::Test {
     public:
         /// @brief Constructor
-        LoggingTest() {}
+        LoggingTest() {
+            resetLogPath();
+        }
 
         /// @brief Destructor
         ///
@@ -40,6 +42,7 @@ class LoggingTest : public ::testing::Test {
         ~LoggingTest() {
             isc::log::initLogger();
             wipeFiles();
+            resetLogPath();
         }
 
     /// @brief Generates a log file name suffixed with a rotation number
@@ -61,6 +64,19 @@ class LoggingTest : public ::testing::Test {
         std::ostringstream os;
         os << TEST_LOG_NAME << ".lock";
         static_cast<void>(remove(os.str().c_str()));
+    }
+
+    /// @brief Sets the Hooks path from which hooks can be loaded.
+    /// @param explicit_path path to use as the hooks path.
+    void setLogTestPath(const std::string explicit_path = "") {
+        LogConfigParser::getLogPath(true,
+                                     (!explicit_path.empty() ?
+                                      explicit_path : TEST_DATA_BUILDDIR));
+    }
+
+    /// @brief Resets the log path to default.
+    void resetLogPath() {
+        LogConfigParser::getLogPath(true);
     }
 
     /// @brief Name of the log file
@@ -115,7 +131,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
 
     // We need to parse properly formed JSON and then extract
     // "loggers" element from it. For some reason fromJSON is
-    // throwing at opening square bracket
+    // throwing at openin0 square bracket
     ConstElementPtr config = Element::fromJSON(config_txt);
     config = config->get("loggers");
 
@@ -309,7 +325,8 @@ TEST_F(LoggingTest, parsingFile) {
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
 
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
+              storage->getLoggingInfo()[0].destinations_[0].output_);
     // Default for immediate flush is true
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
 
@@ -365,14 +382,15 @@ TEST_F(LoggingTest, multipleLoggers) {
     EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
+              storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
-
     EXPECT_EQ("wombat", storage->getLoggingInfo()[1].name_);
     EXPECT_EQ(99, storage->getLoggingInfo()[1].debuglevel_);
     EXPECT_EQ(isc::log::DEBUG, storage->getLoggingInfo()[1].severity_);
     ASSERT_EQ(1, storage->getLoggingInfo()[1].destinations_.size());
-    EXPECT_EQ("logfile2.txt" , storage->getLoggingInfo()[1].destinations_[0].output_);
+    EXPECT_EQ(LogConfigParser::validatePath("logfile2.txt"),
+              storage->getLoggingInfo()[1].destinations_[0].output_);
     EXPECT_FALSE(storage->getLoggingInfo()[1].destinations_[0].flush_);
 }
 
@@ -380,7 +398,7 @@ TEST_F(LoggingTest, multipleLoggers) {
 // into Configuration usable by log4cplus. This test checks that more than
 // one logging destination can be configured.
 TEST_F(LoggingTest, multipleLoggingDestinations) {
-
+    setLogTestPath();
     const char* config_txt =
     "{ \"loggers\": ["
     "    {"
@@ -415,7 +433,8 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
     EXPECT_EQ(0, storage->getLoggingInfo()[0].debuglevel_);
     EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
     ASSERT_EQ(2, storage->getLoggingInfo()[0].destinations_.size());
-    EXPECT_EQ("logfile.txt" , storage->getLoggingInfo()[0].destinations_[0].output_);
+    EXPECT_EQ(LogConfigParser::validatePath("logfile.txt"),
+              storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[1].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[1].flush_);
@@ -427,6 +446,7 @@ TEST_F(LoggingTest, multipleLoggingDestinations) {
 // we can correctly configure logging such that rotation occurs as
 // expected.
 TEST_F(LoggingTest, logRotate) {
+    setLogTestPath();
     wipeFiles();
 
     std::ostringstream os;
@@ -467,7 +487,7 @@ TEST_F(LoggingTest, logRotate) {
     EXPECT_EQ(TEST_MAX_VERS, server_cfg->getLoggingInfo()[0].destinations_[0].maxver_);
 
     // Make sure we have the initial log file.
-    ASSERT_TRUE(isc::test::fileExists(TEST_LOG_NAME));
+    ASSERT_TRUE(isc::test::fileExists(LogConfigParser::validatePath(TEST_LOG_NAME)));
 
     // Now generate a log we know will be large enough to force a rotation.
     // We borrow a one argument log message for the test.
@@ -477,7 +497,7 @@ TEST_F(LoggingTest, logRotate) {
     for (int i = 1; i < TEST_MAX_VERS + 1; i++) {
         // Output the big log and make sure we get the expected rotation file.
         LOG_INFO(logger, DCTL_CONFIG_COMPLETE).arg(big_arg);
-        EXPECT_TRUE(isc::test::fileExists(logName(i).c_str()));
+        EXPECT_TRUE(isc::test::fileExists(LogConfigParser::validatePath(logName(i).c_str())));
     }
 
     // Clean up.
@@ -604,6 +624,7 @@ void testMaxSize(uint64_t maxsize_candidate, uint64_t expected_maxsize) {
 
 // Test that maxsize can be configured with high values.
 TEST_F(LoggingTest, maxsize) {
+    setLogTestPath();
     testMaxSize(TEST_MAX_SIZE, TEST_MAX_SIZE);
     testMaxSize(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
     testMaxSize(std::numeric_limits<uint32_t>::max(), std::numeric_limits<uint32_t>::max());

@@ -21,6 +21,9 @@ LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
 # Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
 export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/agent/tests/@dotlibs@"
 
+# Set env KEA_LOG_FILE_DIR to override default log path
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/agent/tests"
+
 # Control Agent configuration to be stored in the configuration file.
 CONFIG="{
     \"Control-agent\":

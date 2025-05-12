@@ -23,6 +23,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
+#include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
@@ -54,6 +55,7 @@ using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
+using namespace isc::process;
 namespace ph = std::placeholders;
 
 namespace {
@@ -120,6 +122,7 @@ public:
     ///
     /// Sets socket path to its default value.
     CtrlChannelDhcpv4SrvTest() : interfaces_("\"*\"") {
+        resetLogPath();
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
             socket_path_ = string(env) + "/kea4.sock";
@@ -134,6 +137,7 @@ public:
 
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
+        resetLogPath();
         if (test_timer_) {
             test_timer_->cancel();
             getIOService()->stopAndPoll();
@@ -152,6 +156,18 @@ public:
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().detectIfaces();
+    }
+
+    /// @brief Sets the log path where log output may be written.
+    /// @param explicit_path path to use as the log path.
+    void setLogTestPath(const std::string explicit_path = "") {
+        LogConfigParser::getLogPath(true, (!explicit_path.empty() ?
+                                           explicit_path : TEST_DATA_BUILDDIR));
+    }
+
+    /// @brief Resets the log path to TEST_DATA_BUILDDIR.
+    void resetLogPath() {
+        LogConfigParser::getLogPath(true);
     }
 
     /// @brief Returns pointer to the server's IO service.
@@ -675,6 +691,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
 
 // Check that the "config-set" command will replace current configuration
 TEST_F(CtrlChannelDhcpv4SrvTest, configSet) {
+    setLogTestPath("/dev");
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
@@ -913,6 +930,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configHashGet) {
 
 // Verify that the "config-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv4SrvTest, configTest) {
+    setLogTestPath("/dev");
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments

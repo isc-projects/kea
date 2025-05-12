@@ -126,6 +126,13 @@ public:
     /// @brief Destructor.
     virtual ~BaseServerTest();
 
+    /// @brief Sets the log path where log output may be written.
+    /// @param explicit_path path to use as the log path.
+    void setLogTestPath(const std::string explicit_path = "");
+
+    /// @brief Resets the log path to TEST_DATA_BUILDDIR.
+    void resetLogPath();
+
 private:
 
     /// @brief Holds the original data directory.

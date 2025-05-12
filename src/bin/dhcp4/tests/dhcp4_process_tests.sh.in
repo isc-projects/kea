@@ -27,6 +27,9 @@ HOOK_FAIL_POLL_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/@dotlibs@libco4.so"
 # Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
 export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/dhcp4/tests/@dotlibs@"
 
+# Set env KEA_LOG_FILE_DIR to override default log path.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/dhcp4/tests"
+
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
     \"Dhcp4\":

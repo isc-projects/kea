@@ -26,6 +26,9 @@ LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
 # Path to the Dhcp6 Server log file.
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
+# Set env KEA_LOG_FILE_DIR to override default log path.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/shell/tests"
+
 # Dhcp6 Server configuration to be stored in the configuration file.
 # todo: use actual configuration once we support it.
 CONFIG="{

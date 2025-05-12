@@ -14,6 +14,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/json_config_parser.h>
 #include <log/logger_support.h>
+#include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/pointer_util.h>
 #include <cstdio>
@@ -25,6 +26,7 @@ using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::process;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -38,6 +40,7 @@ BaseServerTest::BaseServerTest() {
     CfgMgr::instance().setFamily(AF_INET6);
     original_datadir_ = CfgMgr::instance().getDataDir();
     CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
+    resetLogPath();
 }
 
 BaseServerTest::~BaseServerTest() {
@@ -56,6 +59,18 @@ BaseServerTest::~BaseServerTest() {
 
     // Revert to unit test logging, in case the test reconfigured it.
     isc::log::initLogger();
+    resetLogPath();
+}
+
+void
+BaseServerTest::setLogTestPath(const std::string explicit_path /* = "" */) {
+    LogConfigParser::getLogPath(true, (!explicit_path.empty() ?
+                                       explicit_path : TEST_DATA_BUILDDIR));
+}
+
+void
+BaseServerTest::resetLogPath() {
+    LogConfigParser::getLogPath(true);
 }
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()
