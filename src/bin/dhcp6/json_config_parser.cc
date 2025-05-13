@@ -74,21 +74,6 @@ using namespace isc::util;
 
 namespace {
 
-/// @brief Checks if specified directory exists.
-///
-/// @param dir_path Path to a directory.
-/// @throw BadValue If the directory does not exist or is not a directory.
-void dirExists(const string& dir_path) {
-    struct stat statbuf;
-    if (stat(dir_path.c_str(), &statbuf) < 0) {
-        isc_throw(BadValue, "Bad directory '" << dir_path
-                  << "': " << strerror(errno));
-    }
-    if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
-        isc_throw(BadValue, "'" << dir_path << "' is not a directory");
-    }
-}
-
 /// @brief Parser for list of RSOO options
 ///
 /// This parser handles a Dhcp6/relay-supplied-options entry. It contains a
@@ -183,8 +168,15 @@ public:
 
         // Set the data directory for server id file.
         if (global->contains("data-directory")) {
-            CfgMgr::instance().setDataDir(getString(global, "data-directory"),
-                                          false);
+            auto dd = getString(global, "data-directory");
+            if (dd != CfgMgr::instance().getDataDir()) {
+                isc_throw(DhcpConfigError,
+                          "'data-directory' of '" << dd << "' is invalid,"
+                          << " supported path is '"
+                          << CfgMgr::instance().getDataDir() << "'");
+            }
+
+            LOG_WARN(dhcp6_logger, DHCP6_DATA_DIRECTORY_DEPRECATED);
         }
 
         // Set the probation period for decline handling.
@@ -487,13 +479,6 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
 
         // Apply global options in the staging config, e.g. ip-reservations-unique
         global_parser.parseEarly(srv_config, mutable_cfg);
-
-        // Specific check for this global parameter.
-        ConstElementPtr data_directory = mutable_cfg->get("data-directory");
-        if (data_directory) {
-            parameter_name = "data-directory";
-            dirExists(data_directory->stringValue());
-        }
 
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");

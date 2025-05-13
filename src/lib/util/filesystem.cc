@@ -191,16 +191,38 @@ string TemporaryDirectory::dirName() {
     return dir_name_;
 }
 
+PathChecker::PathChecker(const std::string default_path,
+                             const std::string env_name /* = "" */)
+    : default_path_(default_path), env_name_(env_name) {
+    getPath(true);
+}
+
 std::string
-FileManager::validatePath(const std::string supported_path_str, const std::string input_path_str,
-                          bool enforce_path /* = true */) {
-    // Remove the trailing "/" if it present so comparison to
-    // input's parent path functions.
-    auto supported_path_copy(supported_path_str);
-    if (supported_path_copy.back() == '/') {
-        supported_path_copy.pop_back();
+PathChecker::getPath(bool reset /* = false */,
+                     const std::string explicit_path /* = "" */) {
+    if (reset) {
+        if (!explicit_path.empty()) {
+            path_ = explicit_path;
+        } else if (!env_name_.empty()) {
+            path_ = std::string(std::getenv(env_name_.c_str()) ?
+                                std::getenv(env_name_.c_str()) : default_path_);
+        } else {
+            path_ = default_path_;
+        }
+
+        // Remove the trailing "/" if it is present so comparison to
+        // other Path::parentPath() works.
+        while (!path_.empty() && path_.back() == '/') {
+            path_.pop_back();
+        }
     }
 
+    return (path_);
+}
+
+std::string
+PathChecker::validatePath(const std::string input_path_str,
+                          bool enforce_path /* = true */) const {
     Path input_path(trim(input_path_str));
     auto filename = input_path.filename();
     if (filename.empty()) {
@@ -214,15 +236,16 @@ FileManager::validatePath(const std::string supported_path_str, const std::strin
             return (input_path_str);
         }
 
-         // We only allow absolute path equal to default. Catch an invalid path.
-        if (parent_path != supported_path_copy) {
+
+        // We only allow absolute path equal to default. Catch an invalid path.
+        if (parent_path != path_) {
             isc_throw(BadValue, "invalid path specified: '"
                       << parent_path << "', supported path is '"
-                      << supported_path_copy << "'");
+                      << path_ << "'");
         }
     }
 
-    std::string valid_path(supported_path_copy + "/" +  filename);
+    std::string valid_path(path_ + "/" +  filename);
     return (valid_path);
 }
 

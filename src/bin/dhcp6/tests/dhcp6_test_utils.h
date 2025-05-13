@@ -30,6 +30,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <hooks/hooks_manager.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/log_utils.h>
 
 #include <list>
 
@@ -110,7 +111,7 @@ struct StrictIAIDChecking : public SpecializedTypeWrapper<bool> {
 /// Currently it configures the test data path directory in
 /// the @c CfgMgr. When the object is destroyed, the original
 /// path is reverted.
-class BaseServerTest : public ::testing::Test {
+class BaseServerTest : public LogContentTest {
 public:
 
     /// @brief Location of a test DUID file

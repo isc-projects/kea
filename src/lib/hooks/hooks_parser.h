@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <hooks/hooks_config.h>
+#include <util/filesystem.h>
 
 namespace isc {
 namespace hooks {

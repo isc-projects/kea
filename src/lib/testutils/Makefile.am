@@ -16,10 +16,14 @@ libkea_testutils_la_SOURCES += unix_control_client.cc unix_control_client.h
 libkea_testutils_la_SOURCES += user_context_utils.cc user_context_utils.h
 libkea_testutils_la_SOURCES += gtest_utils.h
 libkea_testutils_la_SOURCES += multi_threading_utils.h
+libkea_testutils_la_SOURCES += env_var_wrapper.cc env_var_wrapper.h
 libkea_testutils_la_SOURCES += lib_load_test_fixture.h
 libkea_testutils_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+libkea_testutils_la_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
+
 libkea_testutils_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_testutils_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+libkea_testutils_la_LIBADD += $(GTEST_LDADD)
 endif
 
 # Include common libraries being used by shell-based tests.

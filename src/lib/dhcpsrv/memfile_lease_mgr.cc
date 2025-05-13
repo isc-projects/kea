@@ -2174,11 +2174,18 @@ Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
 }
 
 std::string
-Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u) const {
-    std::ostringstream s;
-    s << CfgMgr::instance().getDataDir() << "/kea-leases";
-    s << (u == V4 ? "4" : "6");
-    s << ".csv";
+Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u,
+                                          std::string filename /* = "" */) const {
+    std::ostringstream s;;
+    s << CfgMgr::instance().getDataDir();
+    if (filename.empty()) {
+        s << "/kea-leases";
+        s << (u == V4 ? "4" : "6");
+        s << ".csv";
+    } else {
+        s << "/" << filename;
+    }
+
     return (s.str());
 }
 
@@ -2227,8 +2234,12 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     try {
         lease_file = conn_.getParameter("name");
     } catch (const Exception&) {
-        lease_file = getDefaultLeaseFilePath(u);
+        // Not specified, use the default.
+        return (getDefaultLeaseFilePath(u));
     }
+
+    // If path is invalid this will throw.
+    lease_file = CfgMgr::instance().validatePath(lease_file);
     return (lease_file);
 }
 

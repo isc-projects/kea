@@ -62,7 +62,7 @@ public:
 std::string
 CfgDUIDTest::absolutePath(const std::string& filename) const {
     std::ostringstream s;
-    s << DHCP_DATA_DIR << "/" << filename;
+    s << TEST_DATA_BUILDDIR << "/" << filename;
     return (s.str());
 }
 

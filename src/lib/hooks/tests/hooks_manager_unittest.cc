@@ -1166,6 +1166,14 @@ TEST_F(HooksParserTest, validatePathEnforcePath) {
         def_path + "/mylib.so",
         def_path + "/mylib.so",
         ""
+    },
+    {
+        // Invalid relative path.
+        __LINE__,
+        "../kea/mylib.so",
+        "",
+        string("invalid path specified: '../kea', supported path is '" +
+               def_path + "'")
     }
     };
 

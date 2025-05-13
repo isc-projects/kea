@@ -1048,12 +1048,12 @@ bool HooksDhcpv6SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv6SrvTest::callback_resp_options_copy_;
 
 /// @brief Fixture class used to do basic library load/unload tests
-class LoadUnloadDhcpv6SrvTest : public Dhcpv6SrvTest {
+class LoadUnloadDhcpv6SrvTest : public BaseServerTest {
 public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedDhcpv6Srv> server_;
 
-    LoadUnloadDhcpv6SrvTest() : Dhcpv6SrvTest() {
+    LoadUnloadDhcpv6SrvTest() {
         reset();
         MultiThreadingMgr::instance().setMode(false);
 

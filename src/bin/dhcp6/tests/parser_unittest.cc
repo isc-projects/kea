@@ -770,6 +770,7 @@ TEST(ParserTest, mapEntries) {
     loadFile(sample_dir + "reservations.json", sample_json);
     loadFile(sample_dir + "all-keys-netconf.json", sample_json);
     KeywordSet sample_keys = {
+        "data-directory",
         "hosts-database",
         "reservation-mode"
     };

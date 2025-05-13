@@ -79,9 +79,15 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 #endif
     }
     if (parameters[type] == string("memfile")) {
-        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
-        getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
-        return;
+        try {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
+            getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
+            return;
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_FAILED_TO_OPEN)
+                .arg(ex.what());
+            throw;
+        }
     }
 
     // Get here on no match

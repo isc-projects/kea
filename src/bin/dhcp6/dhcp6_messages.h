@@ -32,6 +32,7 @@ extern const isc::log::MessageID DHCP6_CONFIG_SYNTAX_WARNING;
 extern const isc::log::MessageID DHCP6_CONFIG_UNRECOVERABLE_ERROR;
 extern const isc::log::MessageID DHCP6_CONFIG_UNSUPPORTED_OBJECT;
 extern const isc::log::MessageID DHCP6_CONFIG_UPDATE;
+extern const isc::log::MessageID DHCP6_DATA_DIRECTORY_DEPRECATED;
 extern const isc::log::MessageID DHCP6_DB_BACKEND_STARTED;
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_DISABLED;
 extern const isc::log::MessageID DHCP6_DB_RECONNECT_FAILED;
