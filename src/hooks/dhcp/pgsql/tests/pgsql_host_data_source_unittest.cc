@@ -245,15 +245,9 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
         NoDatabaseName);
 
     // Check for SSL/TLS support.
-#ifdef HAVE_PGSQL_SSL
     EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         0, 0, 0, 0, VALID_CA)));
-#else
-    EXPECT_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
-        0, 0, 0, 0, VALID_CA)), DbOpenError);
-#endif
 
     // Tidy up after the test
     destroyPgSQLSchema();

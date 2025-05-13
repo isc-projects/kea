@@ -40,9 +40,6 @@
 /* PostgreSQL is present */
 #mesondefine HAVE_PGSQL
 
-/* PostgreSQL was built with OpenSSL support */
-#mesondefine HAVE_PGSQL_SSL
-
 /* PostgreSQL connection parameter tcp_user_timeout supported */
 #mesondefine HAVE_PGSQL_TCP_USER_TIMEOUT
 

@@ -46,9 +46,7 @@ extern const isc::log::MessageID PGSQL_LB_GET_SUBID_HWADDR = "PGSQL_LB_GET_SUBID
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID_PAGE6 = "PGSQL_LB_GET_SUBID_PAGE6";
 extern const isc::log::MessageID PGSQL_LB_GET_VERSION = "PGSQL_LB_GET_VERSION";
 extern const isc::log::MessageID PGSQL_LB_NEGATIVE_LEASES_STAT = "PGSQL_LB_NEGATIVE_LEASES_STAT";
-extern const isc::log::MessageID PGSQL_LB_NO_TLS_SUPPORT = "PGSQL_LB_NO_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_LB_ROLLBACK = "PGSQL_LB_ROLLBACK";
-extern const isc::log::MessageID PGSQL_LB_TLS_SUPPORT = "PGSQL_LB_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_LB_UPDATE_ADDR4 = "PGSQL_LB_UPDATE_ADDR4";
 extern const isc::log::MessageID PGSQL_LB_UPDATE_ADDR6 = "PGSQL_LB_UPDATE_ADDR6";
 extern const isc::log::MessageID PGSQL_LB_UPGRADE_EXTENDED_INFO4 = "PGSQL_LB_UPGRADE_EXTENDED_INFO4";
@@ -103,9 +101,7 @@ const char* values[] = {
     "PGSQL_LB_GET_SUBID_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3",
     "PGSQL_LB_GET_VERSION", "obtaining schema version information",
     "PGSQL_LB_NEGATIVE_LEASES_STAT", "recount of leases returned a negative value",
-    "PGSQL_LB_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "PGSQL_LB_ROLLBACK", "rolling back PostgreSQL database",
-    "PGSQL_LB_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "PGSQL_LB_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "PGSQL_LB_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
     "PGSQL_LB_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",

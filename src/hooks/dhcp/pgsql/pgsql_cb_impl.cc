@@ -88,21 +88,6 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
     tls += parameters.count("cert-file");
     tls += parameters.count("key-file");
     tls += parameters.count("cipher-list");
-#ifdef HAVE_PGSQL_SSL
-    if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
-        PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(pgsql_cb_logger, PGSQL_CB_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters);
-        PQinitSSL(1);
-    }
-#else
-    if (tls > 0) {
-        LOG_ERROR(pgsql_cb_logger, PGSQL_CB_NO_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
-                  << "backend (built with this feature disabled)");
-    }
-#endif
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlConfigBackend";
@@ -1170,7 +1155,7 @@ PgSqlConfigBackendImpl::addOptionValueBinding(PsqlBindArray& bindings,
     }
 }
 
-void 
+void
 PgSqlConfigBackendImpl::addClientClassesBinding(db::PsqlBindArray& bindings,
                                                 const ClientClasses& client_classes) {
     // Create JSON list of client classes.

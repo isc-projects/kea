@@ -50,11 +50,6 @@ and the attempt ended in error.  The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
-% LEGAL_LOG_PGSQL_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
 % LEGAL_LOG_PGSQL_ROLLBACK rolling back PostgreSQL database
 The code has issued a rollback call.  All outstanding transaction will
 be rolled back and not committed to the database.
@@ -67,12 +62,6 @@ transactions in this case. This message is issued when data is
 inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
-
-% LEGAL_LOG_PGSQL_TLS_SUPPORT Attempt to configure TLS: %1
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
 
 % PGSQL_FB_DB opening PostgreSQL log database: %1
 This informational message is logged when a legal log hook library is

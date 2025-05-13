@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -216,21 +216,10 @@ in the PostgreSQL database returned a negative value. This shows a problem
 which can be fixed only by an offline direct recount on the database.
 This message is issued only once.
 
-% PGSQL_LB_NO_TLS_SUPPORT Attempt to configure TLS (unsupported for PostgreSQL): %1
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
 % PGSQL_LB_ROLLBACK rolling back PostgreSQL database
 Logged at debug log level 50.
 The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
-
-% PGSQL_LB_TLS_SUPPORT Attempt to configure TLS: %1
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
 
 % PGSQL_LB_UPDATE_ADDR4 updating IPv4 lease for address %1
 Logged at debug log level 50.

@@ -16,10 +16,8 @@ extern const isc::log::MessageID LEGAL_LOG_PGSQL_FATAL_ERROR = "LEGAL_LOG_PGSQL_
 extern const isc::log::MessageID LEGAL_LOG_PGSQL_GET_VERSION = "LEGAL_LOG_PGSQL_GET_VERSION";
 extern const isc::log::MessageID LEGAL_LOG_PGSQL_INSERT_LOG = "LEGAL_LOG_PGSQL_INSERT_LOG";
 extern const isc::log::MessageID LEGAL_LOG_PGSQL_INVALID_ACCESS = "LEGAL_LOG_PGSQL_INVALID_ACCESS";
-extern const isc::log::MessageID LEGAL_LOG_PGSQL_NO_TLS_SUPPORT = "LEGAL_LOG_PGSQL_NO_TLS_SUPPORT";
 extern const isc::log::MessageID LEGAL_LOG_PGSQL_ROLLBACK = "LEGAL_LOG_PGSQL_ROLLBACK";
 extern const isc::log::MessageID LEGAL_LOG_PGSQL_START_TRANSACTION = "LEGAL_LOG_PGSQL_START_TRANSACTION";
-extern const isc::log::MessageID LEGAL_LOG_PGSQL_TLS_SUPPORT = "LEGAL_LOG_PGSQL_TLS_SUPPORT";
 extern const isc::log::MessageID PGSQL_FB_DB = "PGSQL_FB_DB";
 
 } // namespace dhcp
@@ -37,10 +35,8 @@ const char* values[] = {
     "LEGAL_LOG_PGSQL_GET_VERSION", "obtaining schema version information",
     "LEGAL_LOG_PGSQL_INSERT_LOG", "Adding a log entry to the database: %1",
     "LEGAL_LOG_PGSQL_INVALID_ACCESS", "invalid database access string: %1",
-    "LEGAL_LOG_PGSQL_NO_TLS_SUPPORT", "Attempt to configure TLS (unsupported for PostgreSQL): %1",
     "LEGAL_LOG_PGSQL_ROLLBACK", "rolling back PostgreSQL database",
     "LEGAL_LOG_PGSQL_START_TRANSACTION", "starting a new PostgreSQL transaction",
-    "LEGAL_LOG_PGSQL_TLS_SUPPORT", "Attempt to configure TLS: %1",
     "PGSQL_FB_DB", "opening PostgreSQL log database: %1",
     NULL
 };

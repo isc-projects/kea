@@ -1625,21 +1625,6 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     tls += parameters.count("cert-file");
     tls += parameters.count("key-file");
     tls += parameters.count("cipher-list");
-#ifdef HAVE_PGSQL_SSL
-    if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
-        PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(pgsql_lb_logger, PGSQL_LB_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters_));
-        PQinitSSL(1);
-    }
-#else
-    if (tls > 0) {
-        LOG_ERROR(pgsql_lb_logger, PGSQL_LB_NO_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters_));
-        isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
-                  << "backend (built with this feature disabled)");
-    }
-#endif
 
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";

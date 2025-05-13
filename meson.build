@@ -124,7 +124,6 @@ KEA_MSG_COMPILER = disabler()
 #### Configuration Data
 
 # TODO: Remaining define macros used in code, but not handled by meson:
-# - HAVE_PGSQL_SSL
 # - USE_STATIC_LINK
 
 conf_data = configuration_data(

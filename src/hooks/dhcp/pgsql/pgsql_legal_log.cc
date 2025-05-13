@@ -187,21 +187,6 @@ void PgSqlStore::open() {
     tls += parameters.count("cert-file");
     tls += parameters.count("key-file");
     tls += parameters.count("cipher-list");
-#ifdef HAVE_PGSQL_SSL
-    if ((tls > 0) && !PgSqlConnection::warned_about_tls) {
-        PgSqlConnection::warned_about_tls = true;
-        LOG_INFO(pgsql_fb_logger, LEGAL_LOG_PGSQL_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        PQinitSSL(1);
-    }
-#else
-    if (tls > 0) {
-        LOG_ERROR(pgsql_fb_logger, LEGAL_LOG_PGSQL_NO_TLS_SUPPORT)
-            .arg(DatabaseConnection::redactedAccessString(parameters));
-        isc_throw(DbOpenError, "Attempt to configure TLS for PostgreSQL "
-                  << "backend (built with this feature disabled)");
-    }
-#endif
 
     // Test schema version first.
     pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
