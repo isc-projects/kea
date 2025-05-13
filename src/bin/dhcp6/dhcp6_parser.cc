@@ -1133,291 +1133,292 @@ namespace isc { namespace dhcp {
 #line 573 "dhcp6_parser.yy"
                {
     ElementPtr datadir(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.warning(yystack_[2].location, "data-directory is deprecated and will be ignored");
     ctx.stack_.back()->set("data-directory", datadir);
     ctx.leave();
 }
-#line 1140 "dhcp6_parser.cc"
+#line 1141 "dhcp6_parser.cc"
     break;
 
   case 142: // preferred_lifetime: "preferred-lifetime" ":" "integer"
-#line 579 "dhcp6_parser.yy"
+#line 580 "dhcp6_parser.yy"
                                                      {
     ctx.unique("preferred-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("preferred-lifetime", prf);
 }
-#line 1150 "dhcp6_parser.cc"
+#line 1151 "dhcp6_parser.cc"
     break;
 
   case 143: // min_preferred_lifetime: "min-preferred-lifetime" ":" "integer"
-#line 585 "dhcp6_parser.yy"
+#line 586 "dhcp6_parser.yy"
                                                              {
     ctx.unique("min-preferred-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("min-preferred-lifetime", prf);
 }
-#line 1160 "dhcp6_parser.cc"
+#line 1161 "dhcp6_parser.cc"
     break;
 
   case 144: // max_preferred_lifetime: "max-preferred-lifetime" ":" "integer"
-#line 591 "dhcp6_parser.yy"
+#line 592 "dhcp6_parser.yy"
                                                              {
     ctx.unique("max-preferred-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-preferred-lifetime", prf);
 }
-#line 1170 "dhcp6_parser.cc"
+#line 1171 "dhcp6_parser.cc"
     break;
 
   case 145: // valid_lifetime: "valid-lifetime" ":" "integer"
-#line 597 "dhcp6_parser.yy"
+#line 598 "dhcp6_parser.yy"
                                              {
     ctx.unique("valid-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 }
-#line 1180 "dhcp6_parser.cc"
+#line 1181 "dhcp6_parser.cc"
     break;
 
   case 146: // min_valid_lifetime: "min-valid-lifetime" ":" "integer"
-#line 603 "dhcp6_parser.yy"
+#line 604 "dhcp6_parser.yy"
                                                      {
     ctx.unique("min-valid-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("min-valid-lifetime", prf);
 }
-#line 1190 "dhcp6_parser.cc"
+#line 1191 "dhcp6_parser.cc"
     break;
 
   case 147: // max_valid_lifetime: "max-valid-lifetime" ":" "integer"
-#line 609 "dhcp6_parser.yy"
+#line 610 "dhcp6_parser.yy"
                                                      {
     ctx.unique("max-valid-lifetime", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-valid-lifetime", prf);
 }
-#line 1200 "dhcp6_parser.cc"
+#line 1201 "dhcp6_parser.cc"
     break;
 
   case 148: // renew_timer: "renew-timer" ":" "integer"
-#line 615 "dhcp6_parser.yy"
+#line 616 "dhcp6_parser.yy"
                                        {
     ctx.unique("renew-timer", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("renew-timer", prf);
 }
-#line 1210 "dhcp6_parser.cc"
+#line 1211 "dhcp6_parser.cc"
     break;
 
   case 149: // rebind_timer: "rebind-timer" ":" "integer"
-#line 621 "dhcp6_parser.yy"
+#line 622 "dhcp6_parser.yy"
                                          {
     ctx.unique("rebind-timer", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("rebind-timer", prf);
 }
-#line 1220 "dhcp6_parser.cc"
+#line 1221 "dhcp6_parser.cc"
     break;
 
   case 150: // calculate_tee_times: "calculate-tee-times" ":" "boolean"
-#line 627 "dhcp6_parser.yy"
+#line 628 "dhcp6_parser.yy"
                                                        {
     ctx.unique("calculate-tee-times", ctx.loc2pos(yystack_[2].location));
     ElementPtr ctt(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("calculate-tee-times", ctt);
 }
-#line 1230 "dhcp6_parser.cc"
+#line 1231 "dhcp6_parser.cc"
     break;
 
   case 151: // t1_percent: "t1-percent" ":" "floating point"
-#line 633 "dhcp6_parser.yy"
+#line 634 "dhcp6_parser.yy"
                                    {
     ctx.unique("t1-percent", ctx.loc2pos(yystack_[2].location));
     ElementPtr t1(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t1-percent", t1);
 }
-#line 1240 "dhcp6_parser.cc"
+#line 1241 "dhcp6_parser.cc"
     break;
 
   case 152: // t2_percent: "t2-percent" ":" "floating point"
-#line 639 "dhcp6_parser.yy"
+#line 640 "dhcp6_parser.yy"
                                    {
     ctx.unique("t2-percent", ctx.loc2pos(yystack_[2].location));
     ElementPtr t2(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("t2-percent", t2);
 }
-#line 1250 "dhcp6_parser.cc"
+#line 1251 "dhcp6_parser.cc"
     break;
 
   case 153: // cache_threshold: "cache-threshold" ":" "floating point"
-#line 645 "dhcp6_parser.yy"
+#line 646 "dhcp6_parser.yy"
                                              {
     ctx.unique("cache-threshold", ctx.loc2pos(yystack_[2].location));
     ElementPtr ct(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cache-threshold", ct);
 }
-#line 1260 "dhcp6_parser.cc"
+#line 1261 "dhcp6_parser.cc"
     break;
 
   case 154: // cache_max_age: "cache-max-age" ":" "integer"
-#line 651 "dhcp6_parser.yy"
+#line 652 "dhcp6_parser.yy"
                                            {
     ctx.unique("cache-max-age", ctx.loc2pos(yystack_[2].location));
     ElementPtr cm(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cache-max-age", cm);
 }
-#line 1270 "dhcp6_parser.cc"
+#line 1271 "dhcp6_parser.cc"
     break;
 
   case 155: // decline_probation_period: "decline-probation-period" ":" "integer"
-#line 657 "dhcp6_parser.yy"
+#line 658 "dhcp6_parser.yy"
                                                                  {
     ctx.unique("decline-probation-period", ctx.loc2pos(yystack_[2].location));
     ElementPtr dpp(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 }
-#line 1280 "dhcp6_parser.cc"
+#line 1281 "dhcp6_parser.cc"
     break;
 
   case 156: // ddns_send_updates: "ddns-send-updates" ":" "boolean"
-#line 663 "dhcp6_parser.yy"
+#line 664 "dhcp6_parser.yy"
                                                    {
     ctx.unique("ddns-send-updates", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-send-updates", b);
 }
-#line 1290 "dhcp6_parser.cc"
+#line 1291 "dhcp6_parser.cc"
     break;
 
   case 157: // ddns_override_no_update: "ddns-override-no-update" ":" "boolean"
-#line 669 "dhcp6_parser.yy"
+#line 670 "dhcp6_parser.yy"
                                                                {
     ctx.unique("ddns-override-no-update", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-override-no-update", b);
 }
-#line 1300 "dhcp6_parser.cc"
+#line 1301 "dhcp6_parser.cc"
     break;
 
   case 158: // ddns_override_client_update: "ddns-override-client-update" ":" "boolean"
-#line 675 "dhcp6_parser.yy"
+#line 676 "dhcp6_parser.yy"
                                                                        {
     ctx.unique("ddns-override-client-update", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-override-client-update", b);
 }
-#line 1310 "dhcp6_parser.cc"
+#line 1311 "dhcp6_parser.cc"
     break;
 
   case 159: // $@22: %empty
-#line 681 "dhcp6_parser.yy"
+#line 682 "dhcp6_parser.yy"
                                                    {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
     ctx.unique("ddns-replace-client-name", ctx.loc2pos(yystack_[0].location));
 }
-#line 1319 "dhcp6_parser.cc"
+#line 1320 "dhcp6_parser.cc"
     break;
 
   case 160: // ddns_replace_client_name: "ddns-replace-client-name" $@22 ":" ddns_replace_client_name_value
-#line 684 "dhcp6_parser.yy"
+#line 685 "dhcp6_parser.yy"
                                        {
     ctx.stack_.back()->set("ddns-replace-client-name", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1328 "dhcp6_parser.cc"
+#line 1329 "dhcp6_parser.cc"
     break;
 
   case 161: // ddns_replace_client_name_value: "when-present"
-#line 690 "dhcp6_parser.yy"
+#line 691 "dhcp6_parser.yy"
                  {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1336 "dhcp6_parser.cc"
+#line 1337 "dhcp6_parser.cc"
     break;
 
   case 162: // ddns_replace_client_name_value: "never"
-#line 693 "dhcp6_parser.yy"
+#line 694 "dhcp6_parser.yy"
           {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1344 "dhcp6_parser.cc"
+#line 1345 "dhcp6_parser.cc"
     break;
 
   case 163: // ddns_replace_client_name_value: "always"
-#line 696 "dhcp6_parser.yy"
+#line 697 "dhcp6_parser.yy"
            {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1352 "dhcp6_parser.cc"
+#line 1353 "dhcp6_parser.cc"
     break;
 
   case 164: // ddns_replace_client_name_value: "when-not-present"
-#line 699 "dhcp6_parser.yy"
+#line 700 "dhcp6_parser.yy"
                      {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1360 "dhcp6_parser.cc"
+#line 1361 "dhcp6_parser.cc"
     break;
 
   case 165: // ddns_replace_client_name_value: "boolean"
-#line 702 "dhcp6_parser.yy"
+#line 703 "dhcp6_parser.yy"
             {
       error(yystack_[0].location, "boolean values for the ddns-replace-client-name are "
                 "no longer supported");
       }
-#line 1369 "dhcp6_parser.cc"
+#line 1370 "dhcp6_parser.cc"
     break;
 
   case 166: // $@23: %empty
-#line 708 "dhcp6_parser.yy"
+#line 709 "dhcp6_parser.yy"
                                              {
     ctx.unique("ddns-generated-prefix", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1378 "dhcp6_parser.cc"
+#line 1379 "dhcp6_parser.cc"
     break;
 
   case 167: // ddns_generated_prefix: "ddns-generated-prefix" $@23 ":" "constant string"
-#line 711 "dhcp6_parser.yy"
+#line 712 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-generated-prefix", s);
     ctx.leave();
 }
-#line 1388 "dhcp6_parser.cc"
+#line 1389 "dhcp6_parser.cc"
     break;
 
   case 168: // $@24: %empty
-#line 717 "dhcp6_parser.yy"
+#line 718 "dhcp6_parser.yy"
                                                {
     ctx.unique("ddns-qualifying-suffix", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1397 "dhcp6_parser.cc"
+#line 1398 "dhcp6_parser.cc"
     break;
 
   case 169: // ddns_qualifying_suffix: "ddns-qualifying-suffix" $@24 ":" "constant string"
-#line 720 "dhcp6_parser.yy"
+#line 721 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-qualifying-suffix", s);
     ctx.leave();
 }
-#line 1407 "dhcp6_parser.cc"
+#line 1408 "dhcp6_parser.cc"
     break;
 
   case 170: // ddns_update_on_renew: "ddns-update-on-renew" ":" "boolean"
-#line 726 "dhcp6_parser.yy"
+#line 727 "dhcp6_parser.yy"
                                                          {
     ctx.unique("ddns-update-on-renew", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-update-on-renew", b);
 }
-#line 1417 "dhcp6_parser.cc"
+#line 1418 "dhcp6_parser.cc"
     break;
 
   case 171: // ddns_use_conflict_resolution: "ddns-use-conflict-resolution" ":" "boolean"
-#line 735 "dhcp6_parser.yy"
+#line 736 "dhcp6_parser.yy"
                                                                          {
     ctx.unique("ddns-use-conflict-resolution", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
@@ -1427,236 +1428,236 @@ namespace isc { namespace dhcp {
                                       : "no-check-with-dhcid"));
     ctx.stack_.back()->set("ddns-conflict-resolution-mode", mode);
 }
-#line 1431 "dhcp6_parser.cc"
+#line 1432 "dhcp6_parser.cc"
     break;
 
   case 172: // $@25: %empty
-#line 745 "dhcp6_parser.yy"
+#line 746 "dhcp6_parser.yy"
                                                              {
     ctx.unique("ddns-conflict-resolution-mode", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.DDNS_CONFLICT_RESOLUTION_MODE);
 }
-#line 1440 "dhcp6_parser.cc"
+#line 1441 "dhcp6_parser.cc"
     break;
 
   case 173: // ddns_conflict_resolution_mode: "ddns-conflict-resolution-mode" $@25 ":" ddns_conflict_resolution_mode_value
-#line 748 "dhcp6_parser.yy"
+#line 749 "dhcp6_parser.yy"
                                             {
     ctx.stack_.back()->set("ddns-conflict-resolution-mode", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1449 "dhcp6_parser.cc"
+#line 1450 "dhcp6_parser.cc"
     break;
 
   case 174: // ddns_conflict_resolution_mode_value: "check-with-dhcid"
-#line 754 "dhcp6_parser.yy"
+#line 755 "dhcp6_parser.yy"
                      {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("check-with-dhcid", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1457 "dhcp6_parser.cc"
+#line 1458 "dhcp6_parser.cc"
     break;
 
   case 175: // ddns_conflict_resolution_mode_value: "no-check-with-dhcid"
-#line 757 "dhcp6_parser.yy"
+#line 758 "dhcp6_parser.yy"
                         {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("no-check-with-dhcid", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1465 "dhcp6_parser.cc"
+#line 1466 "dhcp6_parser.cc"
     break;
 
   case 176: // ddns_conflict_resolution_mode_value: "check-exists-with-dhcid"
-#line 760 "dhcp6_parser.yy"
+#line 761 "dhcp6_parser.yy"
                             {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("check-exists-with-dhcid", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1473 "dhcp6_parser.cc"
+#line 1474 "dhcp6_parser.cc"
     break;
 
   case 177: // ddns_conflict_resolution_mode_value: "no-check-without-dhcid"
-#line 763 "dhcp6_parser.yy"
+#line 764 "dhcp6_parser.yy"
                            {
       yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("no-check-without-dhcid", ctx.loc2pos(yystack_[0].location)));
       }
-#line 1481 "dhcp6_parser.cc"
+#line 1482 "dhcp6_parser.cc"
     break;
 
   case 178: // ddns_ttl_percent: "ddns-ttl-percent" ":" "floating point"
-#line 768 "dhcp6_parser.yy"
+#line 769 "dhcp6_parser.yy"
                                                {
     ctx.unique("ddns-ttl-percent", ctx.loc2pos(yystack_[2].location));
     ElementPtr ttl(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-ttl-percent", ttl);
 }
-#line 1491 "dhcp6_parser.cc"
+#line 1492 "dhcp6_parser.cc"
     break;
 
   case 179: // $@26: %empty
-#line 774 "dhcp6_parser.yy"
+#line 775 "dhcp6_parser.yy"
                                      {
     ctx.unique("hostname-char-set", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1500 "dhcp6_parser.cc"
+#line 1501 "dhcp6_parser.cc"
     break;
 
   case 180: // hostname_char_set: "hostname-char-set" $@26 ":" "constant string"
-#line 777 "dhcp6_parser.yy"
+#line 778 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-set", s);
     ctx.leave();
 }
-#line 1510 "dhcp6_parser.cc"
+#line 1511 "dhcp6_parser.cc"
     break;
 
   case 181: // $@27: %empty
-#line 783 "dhcp6_parser.yy"
+#line 784 "dhcp6_parser.yy"
                                                      {
     ctx.unique("hostname-char-replacement", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1519 "dhcp6_parser.cc"
+#line 1520 "dhcp6_parser.cc"
     break;
 
   case 182: // hostname_char_replacement: "hostname-char-replacement" $@27 ":" "constant string"
-#line 786 "dhcp6_parser.yy"
+#line 787 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 }
-#line 1529 "dhcp6_parser.cc"
+#line 1530 "dhcp6_parser.cc"
     break;
 
   case 183: // store_extended_info: "store-extended-info" ":" "boolean"
-#line 792 "dhcp6_parser.yy"
+#line 793 "dhcp6_parser.yy"
                                                        {
     ctx.unique("store-extended-info", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("store-extended-info", b);
 }
-#line 1539 "dhcp6_parser.cc"
+#line 1540 "dhcp6_parser.cc"
     break;
 
   case 184: // statistic_default_sample_count: "statistic-default-sample-count" ":" "integer"
-#line 798 "dhcp6_parser.yy"
+#line 799 "dhcp6_parser.yy"
                                                                              {
     ctx.unique("statistic-default-sample-count", ctx.loc2pos(yystack_[2].location));
     ElementPtr count(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("statistic-default-sample-count", count);
 }
-#line 1549 "dhcp6_parser.cc"
+#line 1550 "dhcp6_parser.cc"
     break;
 
   case 185: // statistic_default_sample_age: "statistic-default-sample-age" ":" "integer"
-#line 804 "dhcp6_parser.yy"
+#line 805 "dhcp6_parser.yy"
                                                                          {
     ctx.unique("statistic-default-sample-age", ctx.loc2pos(yystack_[2].location));
     ElementPtr age(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("statistic-default-sample-age", age);
 }
-#line 1559 "dhcp6_parser.cc"
+#line 1560 "dhcp6_parser.cc"
     break;
 
   case 186: // $@28: %empty
-#line 810 "dhcp6_parser.yy"
+#line 811 "dhcp6_parser.yy"
                        {
     ctx.unique("server-tag", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1568 "dhcp6_parser.cc"
+#line 1569 "dhcp6_parser.cc"
     break;
 
   case 187: // server_tag: "server-tag" $@28 ":" "constant string"
-#line 813 "dhcp6_parser.yy"
+#line 814 "dhcp6_parser.yy"
                {
     ElementPtr stag(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
 }
-#line 1578 "dhcp6_parser.cc"
+#line 1579 "dhcp6_parser.cc"
     break;
 
   case 188: // parked_packet_limit: "parked-packet-limit" ":" "integer"
-#line 819 "dhcp6_parser.yy"
+#line 820 "dhcp6_parser.yy"
                                                        {
     ctx.unique("parked-packet-limit", ctx.loc2pos(yystack_[2].location));
     ElementPtr ppl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("parked-packet-limit", ppl);
 }
-#line 1588 "dhcp6_parser.cc"
+#line 1589 "dhcp6_parser.cc"
     break;
 
   case 189: // $@29: %empty
-#line 825 "dhcp6_parser.yy"
+#line 826 "dhcp6_parser.yy"
                      {
     ctx.unique("allocator", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1597 "dhcp6_parser.cc"
+#line 1598 "dhcp6_parser.cc"
     break;
 
   case 190: // allocator: "allocator" $@29 ":" "constant string"
-#line 828 "dhcp6_parser.yy"
+#line 829 "dhcp6_parser.yy"
                {
     ElementPtr al(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("allocator", al);
     ctx.leave();
 }
-#line 1607 "dhcp6_parser.cc"
+#line 1608 "dhcp6_parser.cc"
     break;
 
   case 191: // $@30: %empty
-#line 834 "dhcp6_parser.yy"
+#line 835 "dhcp6_parser.yy"
                            {
     ctx.unique("pd-allocator", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1616 "dhcp6_parser.cc"
+#line 1617 "dhcp6_parser.cc"
     break;
 
   case 192: // pd_allocator: "pd-allocator" $@30 ":" "constant string"
-#line 837 "dhcp6_parser.yy"
+#line 838 "dhcp6_parser.yy"
                {
     ElementPtr al(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pd-allocator", al);
     ctx.leave();
 }
-#line 1626 "dhcp6_parser.cc"
+#line 1627 "dhcp6_parser.cc"
     break;
 
   case 193: // early_global_reservations_lookup: "early-global-reservations-lookup" ":" "boolean"
-#line 843 "dhcp6_parser.yy"
+#line 844 "dhcp6_parser.yy"
                                                                                  {
     ctx.unique("early-global-reservations-lookup", ctx.loc2pos(yystack_[2].location));
     ElementPtr early(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("early-global-reservations-lookup", early);
 }
-#line 1636 "dhcp6_parser.cc"
+#line 1637 "dhcp6_parser.cc"
     break;
 
   case 194: // ip_reservations_unique: "ip-reservations-unique" ":" "boolean"
-#line 849 "dhcp6_parser.yy"
+#line 850 "dhcp6_parser.yy"
                                                              {
     ctx.unique("ip-reservations-unique", ctx.loc2pos(yystack_[2].location));
     ElementPtr unique(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-reservations-unique", unique);
 }
-#line 1646 "dhcp6_parser.cc"
+#line 1647 "dhcp6_parser.cc"
     break;
 
   case 195: // reservations_lookup_first: "reservations-lookup-first" ":" "boolean"
-#line 855 "dhcp6_parser.yy"
+#line 856 "dhcp6_parser.yy"
                                                                    {
     ctx.unique("reservations-lookup-first", ctx.loc2pos(yystack_[2].location));
     ElementPtr first(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations-lookup-first", first);
 }
-#line 1656 "dhcp6_parser.cc"
+#line 1657 "dhcp6_parser.cc"
     break;
 
   case 196: // $@31: %empty
-#line 861 "dhcp6_parser.yy"
+#line 862 "dhcp6_parser.yy"
                                      {
     ctx.unique("interfaces-config", ctx.loc2pos(yystack_[0].location));
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1664,48 +1665,48 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
 }
-#line 1668 "dhcp6_parser.cc"
+#line 1669 "dhcp6_parser.cc"
     break;
 
   case 197: // interfaces_config: "interfaces-config" $@31 ":" "{" interfaces_config_params "}"
-#line 867 "dhcp6_parser.yy"
+#line 868 "dhcp6_parser.yy"
                                                                {
     // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1678 "dhcp6_parser.cc"
+#line 1679 "dhcp6_parser.cc"
     break;
 
   case 198: // $@32: %empty
-#line 873 "dhcp6_parser.yy"
+#line 874 "dhcp6_parser.yy"
                                 {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1688 "dhcp6_parser.cc"
+#line 1689 "dhcp6_parser.cc"
     break;
 
   case 199: // sub_interfaces6: "{" $@32 interfaces_config_params "}"
-#line 877 "dhcp6_parser.yy"
+#line 878 "dhcp6_parser.yy"
                                           {
     // No interfaces config param is required
     // parsing completed
 }
-#line 1697 "dhcp6_parser.cc"
+#line 1698 "dhcp6_parser.cc"
     break;
 
   case 202: // interfaces_config_params: interfaces_config_params ","
-#line 884 "dhcp6_parser.yy"
+#line 885 "dhcp6_parser.yy"
                                                          {
                             ctx.warnAboutExtraCommas(yystack_[0].location);
                             }
-#line 1705 "dhcp6_parser.cc"
+#line 1706 "dhcp6_parser.cc"
     break;
 
   case 211: // $@33: %empty
-#line 899 "dhcp6_parser.yy"
+#line 900 "dhcp6_parser.yy"
                             {
     ctx.unique("interfaces", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1713,60 +1714,60 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1717 "dhcp6_parser.cc"
+#line 1718 "dhcp6_parser.cc"
     break;
 
   case 212: // interfaces_list: "interfaces" $@33 ":" list_strings
-#line 905 "dhcp6_parser.yy"
+#line 906 "dhcp6_parser.yy"
                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1726 "dhcp6_parser.cc"
+#line 1727 "dhcp6_parser.cc"
     break;
 
   case 213: // re_detect: "re-detect" ":" "boolean"
-#line 910 "dhcp6_parser.yy"
+#line 911 "dhcp6_parser.yy"
                                    {
     ctx.unique("re-detect", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("re-detect", b);
 }
-#line 1736 "dhcp6_parser.cc"
+#line 1737 "dhcp6_parser.cc"
     break;
 
   case 214: // service_sockets_require_all: "service-sockets-require-all" ":" "boolean"
-#line 916 "dhcp6_parser.yy"
+#line 917 "dhcp6_parser.yy"
                                                                        {
     ctx.unique("service-sockets-require-all", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("service-sockets-require-all", b);
 }
-#line 1746 "dhcp6_parser.cc"
+#line 1747 "dhcp6_parser.cc"
     break;
 
   case 215: // service_sockets_retry_wait_time: "service-sockets-retry-wait-time" ":" "integer"
-#line 922 "dhcp6_parser.yy"
+#line 923 "dhcp6_parser.yy"
                                                                                {
     ctx.unique("service-sockets-retry-wait-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("service-sockets-retry-wait-time", n);
 }
-#line 1756 "dhcp6_parser.cc"
+#line 1757 "dhcp6_parser.cc"
     break;
 
   case 216: // service_sockets_max_retries: "service-sockets-max-retries" ":" "integer"
-#line 928 "dhcp6_parser.yy"
+#line 929 "dhcp6_parser.yy"
                                                                        {
     ctx.unique("service-sockets-max-retries", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("service-sockets-max-retries", n);
 }
-#line 1766 "dhcp6_parser.cc"
+#line 1767 "dhcp6_parser.cc"
     break;
 
   case 217: // $@34: %empty
-#line 934 "dhcp6_parser.yy"
+#line 935 "dhcp6_parser.yy"
                                {
     ctx.unique("lease-database", ctx.loc2pos(yystack_[0].location));
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1774,22 +1775,22 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
 }
-#line 1778 "dhcp6_parser.cc"
+#line 1779 "dhcp6_parser.cc"
     break;
 
   case 218: // lease_database: "lease-database" $@34 ":" "{" database_map_params "}"
-#line 940 "dhcp6_parser.yy"
+#line 941 "dhcp6_parser.yy"
                                                           {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1789 "dhcp6_parser.cc"
+#line 1790 "dhcp6_parser.cc"
     break;
 
   case 219: // $@35: %empty
-#line 947 "dhcp6_parser.yy"
+#line 948 "dhcp6_parser.yy"
                                {
     ctx.unique("hosts-database", ctx.loc2pos(yystack_[0].location));
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -1797,22 +1798,22 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1801 "dhcp6_parser.cc"
+#line 1802 "dhcp6_parser.cc"
     break;
 
   case 220: // hosts_database: "hosts-database" $@35 ":" "{" database_map_params "}"
-#line 953 "dhcp6_parser.yy"
+#line 954 "dhcp6_parser.yy"
                                                           {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1812 "dhcp6_parser.cc"
+#line 1813 "dhcp6_parser.cc"
     break;
 
   case 221: // $@36: %empty
-#line 960 "dhcp6_parser.yy"
+#line 961 "dhcp6_parser.yy"
                                  {
     ctx.unique("hosts-databases", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -1820,400 +1821,400 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1824 "dhcp6_parser.cc"
+#line 1825 "dhcp6_parser.cc"
     break;
 
   case 222: // hosts_databases: "hosts-databases" $@36 ":" "[" database_list "]"
-#line 966 "dhcp6_parser.yy"
+#line 967 "dhcp6_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1833 "dhcp6_parser.cc"
+#line 1834 "dhcp6_parser.cc"
     break;
 
   case 227: // not_empty_database_list: not_empty_database_list ","
-#line 977 "dhcp6_parser.yy"
+#line 978 "dhcp6_parser.yy"
                                                        {
                            ctx.warnAboutExtraCommas(yystack_[0].location);
                            }
-#line 1841 "dhcp6_parser.cc"
+#line 1842 "dhcp6_parser.cc"
     break;
 
   case 228: // $@37: %empty
-#line 982 "dhcp6_parser.yy"
+#line 983 "dhcp6_parser.yy"
                          {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1851 "dhcp6_parser.cc"
+#line 1852 "dhcp6_parser.cc"
     break;
 
   case 229: // database: "{" $@37 database_map_params "}"
-#line 986 "dhcp6_parser.yy"
+#line 987 "dhcp6_parser.yy"
                                      {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1861 "dhcp6_parser.cc"
+#line 1862 "dhcp6_parser.cc"
     break;
 
   case 232: // database_map_params: database_map_params ","
-#line 994 "dhcp6_parser.yy"
+#line 995 "dhcp6_parser.yy"
                                                {
                        ctx.warnAboutExtraCommas(yystack_[0].location);
                        }
-#line 1869 "dhcp6_parser.cc"
+#line 1870 "dhcp6_parser.cc"
     break;
 
   case 256: // $@38: %empty
-#line 1024 "dhcp6_parser.yy"
+#line 1025 "dhcp6_parser.yy"
                     {
     ctx.unique("type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.DATABASE_TYPE);
 }
-#line 1878 "dhcp6_parser.cc"
+#line 1879 "dhcp6_parser.cc"
     break;
 
   case 257: // database_type: "type" $@38 ":" db_type
-#line 1027 "dhcp6_parser.yy"
+#line 1028 "dhcp6_parser.yy"
                 {
     ctx.stack_.back()->set("type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1887 "dhcp6_parser.cc"
+#line 1888 "dhcp6_parser.cc"
     break;
 
   case 258: // db_type: "memfile"
-#line 1032 "dhcp6_parser.yy"
+#line 1033 "dhcp6_parser.yy"
                  { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
-#line 1893 "dhcp6_parser.cc"
+#line 1894 "dhcp6_parser.cc"
     break;
 
   case 259: // db_type: "mysql"
-#line 1033 "dhcp6_parser.yy"
+#line 1034 "dhcp6_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
-#line 1899 "dhcp6_parser.cc"
+#line 1900 "dhcp6_parser.cc"
     break;
 
   case 260: // db_type: "postgresql"
-#line 1034 "dhcp6_parser.yy"
+#line 1035 "dhcp6_parser.yy"
                     { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
-#line 1905 "dhcp6_parser.cc"
+#line 1906 "dhcp6_parser.cc"
     break;
 
   case 261: // $@39: %empty
-#line 1037 "dhcp6_parser.yy"
+#line 1038 "dhcp6_parser.yy"
            {
     ctx.unique("user", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1914 "dhcp6_parser.cc"
+#line 1915 "dhcp6_parser.cc"
     break;
 
   case 262: // user: "user" $@39 ":" "constant string"
-#line 1040 "dhcp6_parser.yy"
+#line 1041 "dhcp6_parser.yy"
                {
     ElementPtr user(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 }
-#line 1924 "dhcp6_parser.cc"
+#line 1925 "dhcp6_parser.cc"
     break;
 
   case 263: // $@40: %empty
-#line 1046 "dhcp6_parser.yy"
+#line 1047 "dhcp6_parser.yy"
                    {
     ctx.unique("password", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1933 "dhcp6_parser.cc"
+#line 1934 "dhcp6_parser.cc"
     break;
 
   case 264: // password: "password" $@40 ":" "constant string"
-#line 1049 "dhcp6_parser.yy"
+#line 1050 "dhcp6_parser.yy"
                {
     ElementPtr pwd(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password", pwd);
     ctx.leave();
 }
-#line 1943 "dhcp6_parser.cc"
+#line 1944 "dhcp6_parser.cc"
     break;
 
   case 265: // $@41: %empty
-#line 1055 "dhcp6_parser.yy"
+#line 1056 "dhcp6_parser.yy"
            {
     ctx.unique("host", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1952 "dhcp6_parser.cc"
+#line 1953 "dhcp6_parser.cc"
     break;
 
   case 266: // host: "host" $@41 ":" "constant string"
-#line 1058 "dhcp6_parser.yy"
+#line 1059 "dhcp6_parser.yy"
                {
     ElementPtr h(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
 }
-#line 1962 "dhcp6_parser.cc"
+#line 1963 "dhcp6_parser.cc"
     break;
 
   case 267: // port: "port" ":" "integer"
-#line 1064 "dhcp6_parser.yy"
+#line 1065 "dhcp6_parser.yy"
                          {
     ctx.unique("port", ctx.loc2pos(yystack_[2].location));
     ElementPtr p(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", p);
 }
-#line 1972 "dhcp6_parser.cc"
+#line 1973 "dhcp6_parser.cc"
     break;
 
   case 268: // $@42: %empty
-#line 1070 "dhcp6_parser.yy"
+#line 1071 "dhcp6_parser.yy"
            {
     ctx.unique("name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1981 "dhcp6_parser.cc"
+#line 1982 "dhcp6_parser.cc"
     break;
 
   case 269: // name: "name" $@42 ":" "constant string"
-#line 1073 "dhcp6_parser.yy"
+#line 1074 "dhcp6_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1991 "dhcp6_parser.cc"
+#line 1992 "dhcp6_parser.cc"
     break;
 
   case 270: // persist: "persist" ":" "boolean"
-#line 1079 "dhcp6_parser.yy"
+#line 1080 "dhcp6_parser.yy"
                                {
     ctx.unique("persist", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("persist", n);
 }
-#line 2001 "dhcp6_parser.cc"
+#line 2002 "dhcp6_parser.cc"
     break;
 
   case 271: // lfc_interval: "lfc-interval" ":" "integer"
-#line 1085 "dhcp6_parser.yy"
+#line 1086 "dhcp6_parser.yy"
                                          {
     ctx.unique("lfc-interval", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lfc-interval", n);
 }
-#line 2011 "dhcp6_parser.cc"
+#line 2012 "dhcp6_parser.cc"
     break;
 
   case 272: // readonly: "readonly" ":" "boolean"
-#line 1091 "dhcp6_parser.yy"
+#line 1092 "dhcp6_parser.yy"
                                  {
     ctx.unique("readonly", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("readonly", n);
 }
-#line 2021 "dhcp6_parser.cc"
+#line 2022 "dhcp6_parser.cc"
     break;
 
   case 273: // connect_timeout: "connect-timeout" ":" "integer"
-#line 1097 "dhcp6_parser.yy"
+#line 1098 "dhcp6_parser.yy"
                                                {
     ctx.unique("connect-timeout", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("connect-timeout", n);
 }
-#line 2031 "dhcp6_parser.cc"
+#line 2032 "dhcp6_parser.cc"
     break;
 
   case 274: // read_timeout: "read-timeout" ":" "integer"
-#line 1103 "dhcp6_parser.yy"
+#line 1104 "dhcp6_parser.yy"
                                          {
     ctx.unique("read-timeout", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("read-timeout", n);
 }
-#line 2041 "dhcp6_parser.cc"
+#line 2042 "dhcp6_parser.cc"
     break;
 
   case 275: // write_timeout: "write-timeout" ":" "integer"
-#line 1109 "dhcp6_parser.yy"
+#line 1110 "dhcp6_parser.yy"
                                            {
     ctx.unique("write-timeout", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("write-timeout", n);
 }
-#line 2051 "dhcp6_parser.cc"
+#line 2052 "dhcp6_parser.cc"
     break;
 
   case 276: // tcp_user_timeout: "tcp-user-timeout" ":" "integer"
-#line 1115 "dhcp6_parser.yy"
+#line 1116 "dhcp6_parser.yy"
                                                  {
     ctx.unique("tcp-user-timeout", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-user-timeout", n);
 }
-#line 2061 "dhcp6_parser.cc"
+#line 2062 "dhcp6_parser.cc"
     break;
 
   case 277: // reconnect_wait_time: "reconnect-wait-time" ":" "integer"
-#line 1122 "dhcp6_parser.yy"
+#line 1123 "dhcp6_parser.yy"
                                                        {
     ctx.unique("reconnect-wait-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 }
-#line 2071 "dhcp6_parser.cc"
+#line 2072 "dhcp6_parser.cc"
     break;
 
   case 278: // $@43: %empty
-#line 1128 "dhcp6_parser.yy"
+#line 1129 "dhcp6_parser.yy"
                  {
     ctx.unique("on-fail", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.DATABASE_ON_FAIL);
 }
-#line 2080 "dhcp6_parser.cc"
+#line 2081 "dhcp6_parser.cc"
     break;
 
   case 279: // on_fail: "on-fail" $@43 ":" on_fail_mode
-#line 1131 "dhcp6_parser.yy"
+#line 1132 "dhcp6_parser.yy"
                      {
     ctx.stack_.back()->set("on-fail", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 2089 "dhcp6_parser.cc"
+#line 2090 "dhcp6_parser.cc"
     break;
 
   case 280: // on_fail_mode: "stop-retry-exit"
-#line 1136 "dhcp6_parser.yy"
+#line 1137 "dhcp6_parser.yy"
                               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("stop-retry-exit", ctx.loc2pos(yystack_[0].location))); }
-#line 2095 "dhcp6_parser.cc"
+#line 2096 "dhcp6_parser.cc"
     break;
 
   case 281: // on_fail_mode: "serve-retry-exit"
-#line 1137 "dhcp6_parser.yy"
+#line 1138 "dhcp6_parser.yy"
                                { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("serve-retry-exit", ctx.loc2pos(yystack_[0].location))); }
-#line 2101 "dhcp6_parser.cc"
+#line 2102 "dhcp6_parser.cc"
     break;
 
   case 282: // on_fail_mode: "serve-retry-continue"
-#line 1138 "dhcp6_parser.yy"
+#line 1139 "dhcp6_parser.yy"
                                    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("serve-retry-continue", ctx.loc2pos(yystack_[0].location))); }
-#line 2107 "dhcp6_parser.cc"
+#line 2108 "dhcp6_parser.cc"
     break;
 
   case 283: // retry_on_startup: "retry-on-startup" ":" "boolean"
-#line 1141 "dhcp6_parser.yy"
+#line 1142 "dhcp6_parser.yy"
                                                  {
     ctx.unique("retry-on-startup", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("retry-on-startup", n);
 }
-#line 2117 "dhcp6_parser.cc"
+#line 2118 "dhcp6_parser.cc"
     break;
 
   case 284: // max_row_errors: "max-row-errors" ":" "integer"
-#line 1147 "dhcp6_parser.yy"
+#line 1148 "dhcp6_parser.yy"
                                              {
     ctx.unique("max-row-errors", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-row-errors", n);
 }
-#line 2127 "dhcp6_parser.cc"
+#line 2128 "dhcp6_parser.cc"
     break;
 
   case 285: // max_reconnect_tries: "max-reconnect-tries" ":" "integer"
-#line 1153 "dhcp6_parser.yy"
+#line 1154 "dhcp6_parser.yy"
                                                        {
     ctx.unique("max-reconnect-tries", ctx.loc2pos(yystack_[2].location));
     ElementPtr n(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
 }
-#line 2137 "dhcp6_parser.cc"
+#line 2138 "dhcp6_parser.cc"
     break;
 
   case 286: // $@44: %empty
-#line 1159 "dhcp6_parser.yy"
+#line 1160 "dhcp6_parser.yy"
                            {
     ctx.unique("trust-anchor", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2146 "dhcp6_parser.cc"
+#line 2147 "dhcp6_parser.cc"
     break;
 
   case 287: // trust_anchor: "trust-anchor" $@44 ":" "constant string"
-#line 1162 "dhcp6_parser.yy"
+#line 1163 "dhcp6_parser.yy"
                {
     ElementPtr ca(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("trust-anchor", ca);
     ctx.leave();
 }
-#line 2156 "dhcp6_parser.cc"
+#line 2157 "dhcp6_parser.cc"
     break;
 
   case 288: // $@45: %empty
-#line 1168 "dhcp6_parser.yy"
+#line 1169 "dhcp6_parser.yy"
                      {
     ctx.unique("cert-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2165 "dhcp6_parser.cc"
+#line 2166 "dhcp6_parser.cc"
     break;
 
   case 289: // cert_file: "cert-file" $@45 ":" "constant string"
-#line 1171 "dhcp6_parser.yy"
+#line 1172 "dhcp6_parser.yy"
                {
     ElementPtr cert(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cert-file", cert);
     ctx.leave();
 }
-#line 2175 "dhcp6_parser.cc"
+#line 2176 "dhcp6_parser.cc"
     break;
 
   case 290: // $@46: %empty
-#line 1177 "dhcp6_parser.yy"
+#line 1178 "dhcp6_parser.yy"
                    {
     ctx.unique("key-file", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2184 "dhcp6_parser.cc"
+#line 2185 "dhcp6_parser.cc"
     break;
 
   case 291: // key_file: "key-file" $@46 ":" "constant string"
-#line 1180 "dhcp6_parser.yy"
+#line 1181 "dhcp6_parser.yy"
                {
     ElementPtr key(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("key-file", key);
     ctx.leave();
 }
-#line 2194 "dhcp6_parser.cc"
+#line 2195 "dhcp6_parser.cc"
     break;
 
   case 292: // $@47: %empty
-#line 1186 "dhcp6_parser.yy"
+#line 1187 "dhcp6_parser.yy"
                          {
     ctx.unique("cipher-list", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2203 "dhcp6_parser.cc"
+#line 2204 "dhcp6_parser.cc"
     break;
 
   case 293: // cipher_list: "cipher-list" $@47 ":" "constant string"
-#line 1189 "dhcp6_parser.yy"
+#line 1190 "dhcp6_parser.yy"
                {
     ElementPtr cl(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("cipher-list", cl);
     ctx.leave();
 }
-#line 2213 "dhcp6_parser.cc"
+#line 2214 "dhcp6_parser.cc"
     break;
 
   case 294: // $@48: %empty
-#line 1195 "dhcp6_parser.yy"
+#line 1196 "dhcp6_parser.yy"
                              {
     ctx.unique("sanity-checks", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -2221,37 +2222,37 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SANITY_CHECKS);
 }
-#line 2225 "dhcp6_parser.cc"
+#line 2226 "dhcp6_parser.cc"
     break;
 
   case 295: // sanity_checks: "sanity-checks" $@48 ":" "{" sanity_checks_params "}"
-#line 1201 "dhcp6_parser.yy"
+#line 1202 "dhcp6_parser.yy"
                                                            {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2234 "dhcp6_parser.cc"
+#line 2235 "dhcp6_parser.cc"
     break;
 
   case 298: // sanity_checks_params: sanity_checks_params ","
-#line 1208 "dhcp6_parser.yy"
+#line 1209 "dhcp6_parser.yy"
                                                  {
                         ctx.warnAboutExtraCommas(yystack_[0].location);
                         }
-#line 2242 "dhcp6_parser.cc"
+#line 2243 "dhcp6_parser.cc"
     break;
 
   case 301: // $@49: %empty
-#line 1217 "dhcp6_parser.yy"
+#line 1218 "dhcp6_parser.yy"
                            {
     ctx.unique("lease-checks", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2251 "dhcp6_parser.cc"
+#line 2252 "dhcp6_parser.cc"
     break;
 
   case 302: // lease_checks: "lease-checks" $@49 ":" "constant string"
-#line 1220 "dhcp6_parser.yy"
+#line 1221 "dhcp6_parser.yy"
                {
 
     if ( (string(yystack_[0].value.as < std::string > ()) == "none") ||
@@ -2267,20 +2268,20 @@ namespace isc { namespace dhcp {
               ", supported values are: none, warn, fix, fix-del, del");
     }
 }
-#line 2271 "dhcp6_parser.cc"
+#line 2272 "dhcp6_parser.cc"
     break;
 
   case 303: // $@50: %empty
-#line 1236 "dhcp6_parser.yy"
+#line 1237 "dhcp6_parser.yy"
                                            {
     ctx.unique("extended-info-checks", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2280 "dhcp6_parser.cc"
+#line 2281 "dhcp6_parser.cc"
     break;
 
   case 304: // extended_info_checks: "extended-info-checks" $@50 ":" "constant string"
-#line 1239 "dhcp6_parser.yy"
+#line 1240 "dhcp6_parser.yy"
                {
 
     if ( (string(yystack_[0].value.as < std::string > ()) == "none") ||
@@ -2295,11 +2296,11 @@ namespace isc { namespace dhcp {
               ", supported values are: none, fix, strict, pedantic");
     }
 }
-#line 2299 "dhcp6_parser.cc"
+#line 2300 "dhcp6_parser.cc"
     break;
 
   case 305: // $@51: %empty
-#line 1254 "dhcp6_parser.yy"
+#line 1255 "dhcp6_parser.yy"
                          {
     ctx.unique("mac-sources", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2307,46 +2308,46 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.MAC_SOURCES);
 }
-#line 2311 "dhcp6_parser.cc"
+#line 2312 "dhcp6_parser.cc"
     break;
 
   case 306: // mac_sources: "mac-sources" $@51 ":" "[" mac_sources_list "]"
-#line 1260 "dhcp6_parser.yy"
+#line 1261 "dhcp6_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2320 "dhcp6_parser.cc"
+#line 2321 "dhcp6_parser.cc"
     break;
 
   case 309: // mac_sources_list: mac_sources_list ","
-#line 1267 "dhcp6_parser.yy"
+#line 1268 "dhcp6_parser.yy"
                                          {
                     ctx.warnAboutExtraCommas(yystack_[0].location);
                     }
-#line 2328 "dhcp6_parser.cc"
+#line 2329 "dhcp6_parser.cc"
     break;
 
   case 312: // duid_id: "duid"
-#line 1276 "dhcp6_parser.yy"
+#line 1277 "dhcp6_parser.yy"
               {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(duid);
 }
-#line 2337 "dhcp6_parser.cc"
+#line 2338 "dhcp6_parser.cc"
     break;
 
   case 313: // string_id: "constant string"
-#line 1281 "dhcp6_parser.yy"
+#line 1282 "dhcp6_parser.yy"
                   {
     ElementPtr duid(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(duid);
 }
-#line 2346 "dhcp6_parser.cc"
+#line 2347 "dhcp6_parser.cc"
     break;
 
   case 314: // $@52: %empty
-#line 1286 "dhcp6_parser.yy"
+#line 1287 "dhcp6_parser.yy"
                                                            {
     ctx.unique("host-reservation-identifiers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2354,46 +2355,46 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);
 }
-#line 2358 "dhcp6_parser.cc"
+#line 2359 "dhcp6_parser.cc"
     break;
 
   case 315: // host_reservation_identifiers: "host-reservation-identifiers" $@52 ":" "[" host_reservation_identifiers_list "]"
-#line 1292 "dhcp6_parser.yy"
+#line 1293 "dhcp6_parser.yy"
                                                                           {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2367 "dhcp6_parser.cc"
+#line 2368 "dhcp6_parser.cc"
     break;
 
   case 318: // host_reservation_identifiers_list: host_reservation_identifiers_list ","
-#line 1299 "dhcp6_parser.yy"
+#line 1300 "dhcp6_parser.yy"
                                               {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 2375 "dhcp6_parser.cc"
+#line 2376 "dhcp6_parser.cc"
     break;
 
   case 322: // hw_address_id: "hw-address"
-#line 1309 "dhcp6_parser.yy"
+#line 1310 "dhcp6_parser.yy"
                           {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(hwaddr);
 }
-#line 2384 "dhcp6_parser.cc"
+#line 2385 "dhcp6_parser.cc"
     break;
 
   case 323: // flex_id: "flex-id"
-#line 1314 "dhcp6_parser.yy"
+#line 1315 "dhcp6_parser.yy"
                  {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(flex_id);
 }
-#line 2393 "dhcp6_parser.cc"
+#line 2394 "dhcp6_parser.cc"
     break;
 
   case 324: // $@53: %empty
-#line 1321 "dhcp6_parser.yy"
+#line 1322 "dhcp6_parser.yy"
                                                {
     ctx.unique("relay-supplied-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2401,20 +2402,20 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2405 "dhcp6_parser.cc"
+#line 2406 "dhcp6_parser.cc"
     break;
 
   case 325: // relay_supplied_options: "relay-supplied-options" $@53 ":" "[" list_content "]"
-#line 1327 "dhcp6_parser.yy"
+#line 1328 "dhcp6_parser.yy"
                                                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2414 "dhcp6_parser.cc"
+#line 2415 "dhcp6_parser.cc"
     break;
 
   case 326: // $@54: %empty
-#line 1334 "dhcp6_parser.yy"
+#line 1335 "dhcp6_parser.yy"
                                            {
     ctx.unique("multi-threading", ctx.loc2pos(yystack_[0].location));
     ElementPtr mt(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -2422,60 +2423,60 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(mt);
     ctx.enter(ctx.DHCP_MULTI_THREADING);
 }
-#line 2426 "dhcp6_parser.cc"
+#line 2427 "dhcp6_parser.cc"
     break;
 
   case 327: // dhcp_multi_threading: "multi-threading" $@54 ":" "{" multi_threading_params "}"
-#line 1340 "dhcp6_parser.yy"
+#line 1341 "dhcp6_parser.yy"
                                                              {
     // The enable parameter is required.
     ctx.require("enable-multi-threading", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2437 "dhcp6_parser.cc"
+#line 2438 "dhcp6_parser.cc"
     break;
 
   case 330: // multi_threading_params: multi_threading_params ","
-#line 1349 "dhcp6_parser.yy"
+#line 1350 "dhcp6_parser.yy"
                                                      {
                           ctx.warnAboutExtraCommas(yystack_[0].location);
                           }
-#line 2445 "dhcp6_parser.cc"
+#line 2446 "dhcp6_parser.cc"
     break;
 
   case 337: // enable_multi_threading: "enable-multi-threading" ":" "boolean"
-#line 1362 "dhcp6_parser.yy"
+#line 1363 "dhcp6_parser.yy"
                                                              {
     ctx.unique("enable-multi-threading", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-multi-threading", b);
 }
-#line 2455 "dhcp6_parser.cc"
+#line 2456 "dhcp6_parser.cc"
     break;
 
   case 338: // thread_pool_size: "thread-pool-size" ":" "integer"
-#line 1368 "dhcp6_parser.yy"
+#line 1369 "dhcp6_parser.yy"
                                                  {
     ctx.unique("thread-pool-size", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("thread-pool-size", prf);
 }
-#line 2465 "dhcp6_parser.cc"
+#line 2466 "dhcp6_parser.cc"
     break;
 
   case 339: // packet_queue_size: "packet-queue-size" ":" "integer"
-#line 1374 "dhcp6_parser.yy"
+#line 1375 "dhcp6_parser.yy"
                                                    {
     ctx.unique("packet-queue-size", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("packet-queue-size", prf);
 }
-#line 2475 "dhcp6_parser.cc"
+#line 2476 "dhcp6_parser.cc"
     break;
 
   case 340: // $@55: %empty
-#line 1380 "dhcp6_parser.yy"
+#line 1381 "dhcp6_parser.yy"
                                  {
     ctx.unique("hooks-libraries", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2483,113 +2484,113 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 2487 "dhcp6_parser.cc"
+#line 2488 "dhcp6_parser.cc"
     break;
 
   case 341: // hooks_libraries: "hooks-libraries" $@55 ":" "[" hooks_libraries_list "]"
-#line 1386 "dhcp6_parser.yy"
+#line 1387 "dhcp6_parser.yy"
                                                              {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2496 "dhcp6_parser.cc"
+#line 2497 "dhcp6_parser.cc"
     break;
 
   case 346: // not_empty_hooks_libraries_list: not_empty_hooks_libraries_list ","
-#line 1397 "dhcp6_parser.yy"
+#line 1398 "dhcp6_parser.yy"
                                            {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 2504 "dhcp6_parser.cc"
+#line 2505 "dhcp6_parser.cc"
     break;
 
   case 347: // $@56: %empty
-#line 1402 "dhcp6_parser.yy"
+#line 1403 "dhcp6_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2514 "dhcp6_parser.cc"
+#line 2515 "dhcp6_parser.cc"
     break;
 
   case 348: // hooks_library: "{" $@56 hooks_params "}"
-#line 1406 "dhcp6_parser.yy"
+#line 1407 "dhcp6_parser.yy"
                               {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2524 "dhcp6_parser.cc"
+#line 2525 "dhcp6_parser.cc"
     break;
 
   case 349: // $@57: %empty
-#line 1412 "dhcp6_parser.yy"
+#line 1413 "dhcp6_parser.yy"
                                   {
     // Parse the hooks-libraries list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2534 "dhcp6_parser.cc"
+#line 2535 "dhcp6_parser.cc"
     break;
 
   case 350: // sub_hooks_library: "{" $@57 hooks_params "}"
-#line 1416 "dhcp6_parser.yy"
+#line 1417 "dhcp6_parser.yy"
                               {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2544 "dhcp6_parser.cc"
+#line 2545 "dhcp6_parser.cc"
     break;
 
   case 353: // hooks_params: hooks_params ","
-#line 1424 "dhcp6_parser.yy"
+#line 1425 "dhcp6_parser.yy"
                                  {
                 ctx.warnAboutExtraCommas(yystack_[0].location);
                 }
-#line 2552 "dhcp6_parser.cc"
+#line 2553 "dhcp6_parser.cc"
     break;
 
   case 357: // $@58: %empty
-#line 1434 "dhcp6_parser.yy"
+#line 1435 "dhcp6_parser.yy"
                  {
     ctx.unique("library", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2561 "dhcp6_parser.cc"
+#line 2562 "dhcp6_parser.cc"
     break;
 
   case 358: // library: "library" $@58 ":" "constant string"
-#line 1437 "dhcp6_parser.yy"
+#line 1438 "dhcp6_parser.yy"
                {
     ElementPtr lib(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 2571 "dhcp6_parser.cc"
+#line 2572 "dhcp6_parser.cc"
     break;
 
   case 359: // $@59: %empty
-#line 1443 "dhcp6_parser.yy"
+#line 1444 "dhcp6_parser.yy"
                        {
     ctx.unique("parameters", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2580 "dhcp6_parser.cc"
+#line 2581 "dhcp6_parser.cc"
     break;
 
   case 360: // parameters: "parameters" $@59 ":" map_value
-#line 1446 "dhcp6_parser.yy"
+#line 1447 "dhcp6_parser.yy"
                   {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 2589 "dhcp6_parser.cc"
+#line 2590 "dhcp6_parser.cc"
     break;
 
   case 361: // $@60: %empty
-#line 1452 "dhcp6_parser.yy"
+#line 1453 "dhcp6_parser.yy"
                                                      {
     ctx.unique("expired-leases-processing", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -2597,89 +2598,89 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 }
-#line 2601 "dhcp6_parser.cc"
+#line 2602 "dhcp6_parser.cc"
     break;
 
   case 362: // expired_leases_processing: "expired-leases-processing" $@60 ":" "{" expired_leases_params "}"
-#line 1458 "dhcp6_parser.yy"
+#line 1459 "dhcp6_parser.yy"
                                                             {
     // No expired lease parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2611 "dhcp6_parser.cc"
+#line 2612 "dhcp6_parser.cc"
     break;
 
   case 365: // expired_leases_params: expired_leases_params ","
-#line 1466 "dhcp6_parser.yy"
+#line 1467 "dhcp6_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 2619 "dhcp6_parser.cc"
+#line 2620 "dhcp6_parser.cc"
     break;
 
   case 372: // reclaim_timer_wait_time: "reclaim-timer-wait-time" ":" "integer"
-#line 1479 "dhcp6_parser.yy"
+#line 1480 "dhcp6_parser.yy"
                                                                {
     ctx.unique("reclaim-timer-wait-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reclaim-timer-wait-time", value);
 }
-#line 2629 "dhcp6_parser.cc"
+#line 2630 "dhcp6_parser.cc"
     break;
 
   case 373: // flush_reclaimed_timer_wait_time: "flush-reclaimed-timer-wait-time" ":" "integer"
-#line 1485 "dhcp6_parser.yy"
+#line 1486 "dhcp6_parser.yy"
                                                                                {
     ctx.unique("flush-reclaimed-timer-wait-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
 }
-#line 2639 "dhcp6_parser.cc"
+#line 2640 "dhcp6_parser.cc"
     break;
 
   case 374: // hold_reclaimed_time: "hold-reclaimed-time" ":" "integer"
-#line 1491 "dhcp6_parser.yy"
+#line 1492 "dhcp6_parser.yy"
                                                        {
     ctx.unique("hold-reclaimed-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hold-reclaimed-time", value);
 }
-#line 2649 "dhcp6_parser.cc"
+#line 2650 "dhcp6_parser.cc"
     break;
 
   case 375: // max_reclaim_leases: "max-reclaim-leases" ":" "integer"
-#line 1497 "dhcp6_parser.yy"
+#line 1498 "dhcp6_parser.yy"
                                                      {
     ctx.unique("max-reclaim-leases", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-leases", value);
 }
-#line 2659 "dhcp6_parser.cc"
+#line 2660 "dhcp6_parser.cc"
     break;
 
   case 376: // max_reclaim_time: "max-reclaim-time" ":" "integer"
-#line 1503 "dhcp6_parser.yy"
+#line 1504 "dhcp6_parser.yy"
                                                  {
     ctx.unique("max-reclaim-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-time", value);
 }
-#line 2669 "dhcp6_parser.cc"
+#line 2670 "dhcp6_parser.cc"
     break;
 
   case 377: // unwarned_reclaim_cycles: "unwarned-reclaim-cycles" ":" "integer"
-#line 1509 "dhcp6_parser.yy"
+#line 1510 "dhcp6_parser.yy"
                                                                {
     ctx.unique("unwarned-reclaim-cycles", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 }
-#line 2679 "dhcp6_parser.cc"
+#line 2680 "dhcp6_parser.cc"
     break;
 
   case 378: // $@61: %empty
-#line 1518 "dhcp6_parser.yy"
+#line 1519 "dhcp6_parser.yy"
                       {
     ctx.unique("subnet6", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2687,38 +2688,38 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SUBNET6);
 }
-#line 2691 "dhcp6_parser.cc"
+#line 2692 "dhcp6_parser.cc"
     break;
 
   case 379: // subnet6_list: "subnet6" $@61 ":" "[" subnet6_list_content "]"
-#line 1524 "dhcp6_parser.yy"
+#line 1525 "dhcp6_parser.yy"
                                                              {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2700 "dhcp6_parser.cc"
+#line 2701 "dhcp6_parser.cc"
     break;
 
   case 384: // not_empty_subnet6_list: not_empty_subnet6_list ","
-#line 1538 "dhcp6_parser.yy"
+#line 1539 "dhcp6_parser.yy"
                                                      {
                           ctx.warnAboutExtraCommas(yystack_[0].location);
                           }
-#line 2708 "dhcp6_parser.cc"
+#line 2709 "dhcp6_parser.cc"
     break;
 
   case 385: // $@62: %empty
-#line 1547 "dhcp6_parser.yy"
+#line 1548 "dhcp6_parser.yy"
                         {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2718 "dhcp6_parser.cc"
+#line 2719 "dhcp6_parser.cc"
     break;
 
   case 386: // subnet6: "{" $@62 subnet6_params "}"
-#line 1551 "dhcp6_parser.yy"
+#line 1552 "dhcp6_parser.yy"
                                 {
     // Once we reached this place, the subnet parsing is now complete.
     // If we want to, we can implement default values here.
@@ -2740,115 +2741,115 @@ namespace isc { namespace dhcp {
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2744 "dhcp6_parser.cc"
+#line 2745 "dhcp6_parser.cc"
     break;
 
   case 387: // $@63: %empty
-#line 1573 "dhcp6_parser.yy"
+#line 1574 "dhcp6_parser.yy"
                             {
     // Parse the subnet6 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2754 "dhcp6_parser.cc"
+#line 2755 "dhcp6_parser.cc"
     break;
 
   case 388: // sub_subnet6: "{" $@63 subnet6_params "}"
-#line 1577 "dhcp6_parser.yy"
+#line 1578 "dhcp6_parser.yy"
                                 {
     // The subnet subnet6 parameter is required
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2764 "dhcp6_parser.cc"
+#line 2765 "dhcp6_parser.cc"
     break;
 
   case 391: // subnet6_params: subnet6_params ","
-#line 1586 "dhcp6_parser.yy"
+#line 1587 "dhcp6_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 2772 "dhcp6_parser.cc"
+#line 2773 "dhcp6_parser.cc"
     break;
 
   case 438: // $@64: %empty
-#line 1640 "dhcp6_parser.yy"
+#line 1641 "dhcp6_parser.yy"
                {
     ctx.unique("subnet", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2781 "dhcp6_parser.cc"
+#line 2782 "dhcp6_parser.cc"
     break;
 
   case 439: // subnet: "subnet" $@64 ":" "constant string"
-#line 1643 "dhcp6_parser.yy"
+#line 1644 "dhcp6_parser.yy"
                {
     ElementPtr subnet(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet", subnet);
     ctx.leave();
 }
-#line 2791 "dhcp6_parser.cc"
+#line 2792 "dhcp6_parser.cc"
     break;
 
   case 440: // $@65: %empty
-#line 1649 "dhcp6_parser.yy"
+#line 1650 "dhcp6_parser.yy"
                      {
     ctx.unique("interface", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2800 "dhcp6_parser.cc"
+#line 2801 "dhcp6_parser.cc"
     break;
 
   case 441: // interface: "interface" $@65 ":" "constant string"
-#line 1652 "dhcp6_parser.yy"
+#line 1653 "dhcp6_parser.yy"
                {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interface", iface);
     ctx.leave();
 }
-#line 2810 "dhcp6_parser.cc"
+#line 2811 "dhcp6_parser.cc"
     break;
 
   case 442: // $@66: %empty
-#line 1658 "dhcp6_parser.yy"
+#line 1659 "dhcp6_parser.yy"
                            {
     ctx.unique("interface-id", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2819 "dhcp6_parser.cc"
+#line 2820 "dhcp6_parser.cc"
     break;
 
   case 443: // interface_id: "interface-id" $@66 ":" "constant string"
-#line 1661 "dhcp6_parser.yy"
+#line 1662 "dhcp6_parser.yy"
                {
     ElementPtr iface(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interface-id", iface);
     ctx.leave();
 }
-#line 2829 "dhcp6_parser.cc"
+#line 2830 "dhcp6_parser.cc"
     break;
 
   case 444: // $@67: %empty
-#line 1667 "dhcp6_parser.yy"
+#line 1668 "dhcp6_parser.yy"
                            {
     ctx.unique("client-class", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2838 "dhcp6_parser.cc"
+#line 2839 "dhcp6_parser.cc"
     break;
 
   case 445: // client_class: "client-class" $@67 ":" "constant string"
-#line 1670 "dhcp6_parser.yy"
+#line 1671 "dhcp6_parser.yy"
                {
     ElementPtr cls(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-class", cls);
     ctx.leave();
 }
-#line 2848 "dhcp6_parser.cc"
+#line 2849 "dhcp6_parser.cc"
     break;
 
   case 446: // $@68: %empty
-#line 1676 "dhcp6_parser.yy"
+#line 1677 "dhcp6_parser.yy"
                                                {
     ctx.unique("require-client-classes", ctx.loc2pos(yystack_[0].location));
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2856,70 +2857,70 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2860 "dhcp6_parser.cc"
+#line 2861 "dhcp6_parser.cc"
     break;
 
   case 447: // require_client_classes: "require-client-classes" $@68 ":" list_strings
-#line 1682 "dhcp6_parser.yy"
+#line 1683 "dhcp6_parser.yy"
                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2869 "dhcp6_parser.cc"
+#line 2870 "dhcp6_parser.cc"
     break;
 
   case 448: // reservations_global: "reservations-global" ":" "boolean"
-#line 1687 "dhcp6_parser.yy"
+#line 1688 "dhcp6_parser.yy"
                                                        {
     ctx.unique("reservations-global", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations-global", b);
 }
-#line 2879 "dhcp6_parser.cc"
+#line 2880 "dhcp6_parser.cc"
     break;
 
   case 449: // reservations_in_subnet: "reservations-in-subnet" ":" "boolean"
-#line 1693 "dhcp6_parser.yy"
+#line 1694 "dhcp6_parser.yy"
                                                              {
     ctx.unique("reservations-in-subnet", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations-in-subnet", b);
 }
-#line 2889 "dhcp6_parser.cc"
+#line 2890 "dhcp6_parser.cc"
     break;
 
   case 450: // reservations_out_of_pool: "reservations-out-of-pool" ":" "boolean"
-#line 1699 "dhcp6_parser.yy"
+#line 1700 "dhcp6_parser.yy"
                                                                  {
     ctx.unique("reservations-out-of-pool", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations-out-of-pool", b);
 }
-#line 2899 "dhcp6_parser.cc"
+#line 2900 "dhcp6_parser.cc"
     break;
 
   case 451: // id: "id" ":" "integer"
-#line 1705 "dhcp6_parser.yy"
+#line 1706 "dhcp6_parser.yy"
                      {
     ctx.unique("id", ctx.loc2pos(yystack_[2].location));
     ElementPtr id(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("id", id);
 }
-#line 2909 "dhcp6_parser.cc"
+#line 2910 "dhcp6_parser.cc"
     break;
 
   case 452: // rapid_commit: "rapid-commit" ":" "boolean"
-#line 1711 "dhcp6_parser.yy"
+#line 1712 "dhcp6_parser.yy"
                                          {
     ctx.unique("rapid-commit", ctx.loc2pos(yystack_[2].location));
     ElementPtr rc(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("rapid-commit", rc);
 }
-#line 2919 "dhcp6_parser.cc"
+#line 2920 "dhcp6_parser.cc"
     break;
 
   case 453: // $@69: %empty
-#line 1719 "dhcp6_parser.yy"
+#line 1720 "dhcp6_parser.yy"
                                  {
     ctx.unique("shared-networks", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2927,54 +2928,54 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SHARED_NETWORK);
 }
-#line 2931 "dhcp6_parser.cc"
+#line 2932 "dhcp6_parser.cc"
     break;
 
   case 454: // shared_networks: "shared-networks" $@69 ":" "[" shared_networks_content "]"
-#line 1725 "dhcp6_parser.yy"
+#line 1726 "dhcp6_parser.yy"
                                                                 {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2940 "dhcp6_parser.cc"
+#line 2941 "dhcp6_parser.cc"
     break;
 
   case 459: // shared_networks_list: shared_networks_list ","
-#line 1738 "dhcp6_parser.yy"
+#line 1739 "dhcp6_parser.yy"
                                                  {
                         ctx.warnAboutExtraCommas(yystack_[0].location);
                         }
-#line 2948 "dhcp6_parser.cc"
+#line 2949 "dhcp6_parser.cc"
     break;
 
   case 460: // $@70: %empty
-#line 1743 "dhcp6_parser.yy"
+#line 1744 "dhcp6_parser.yy"
                                {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2958 "dhcp6_parser.cc"
+#line 2959 "dhcp6_parser.cc"
     break;
 
   case 461: // shared_network: "{" $@70 shared_network_params "}"
-#line 1747 "dhcp6_parser.yy"
+#line 1748 "dhcp6_parser.yy"
                                        {
     ctx.stack_.pop_back();
 }
-#line 2966 "dhcp6_parser.cc"
+#line 2967 "dhcp6_parser.cc"
     break;
 
   case 464: // shared_network_params: shared_network_params ","
-#line 1753 "dhcp6_parser.yy"
+#line 1754 "dhcp6_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 2974 "dhcp6_parser.cc"
+#line 2975 "dhcp6_parser.cc"
     break;
 
   case 508: // $@71: %empty
-#line 1807 "dhcp6_parser.yy"
+#line 1808 "dhcp6_parser.yy"
                             {
     ctx.unique("option-def", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -2982,55 +2983,55 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DEF);
 }
-#line 2986 "dhcp6_parser.cc"
+#line 2987 "dhcp6_parser.cc"
     break;
 
   case 509: // option_def_list: "option-def" $@71 ":" "[" option_def_list_content "]"
-#line 1813 "dhcp6_parser.yy"
+#line 1814 "dhcp6_parser.yy"
                                                                 {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2995 "dhcp6_parser.cc"
+#line 2996 "dhcp6_parser.cc"
     break;
 
   case 510: // $@72: %empty
-#line 1821 "dhcp6_parser.yy"
+#line 1822 "dhcp6_parser.yy"
                                     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3004 "dhcp6_parser.cc"
+#line 3005 "dhcp6_parser.cc"
     break;
 
   case 511: // sub_option_def_list: "{" $@72 option_def_list "}"
-#line 1824 "dhcp6_parser.yy"
+#line 1825 "dhcp6_parser.yy"
                                  {
     // parsing completed
 }
-#line 3012 "dhcp6_parser.cc"
+#line 3013 "dhcp6_parser.cc"
     break;
 
   case 516: // not_empty_option_def_list: not_empty_option_def_list ","
-#line 1836 "dhcp6_parser.yy"
+#line 1837 "dhcp6_parser.yy"
                                                            {
                              ctx.warnAboutExtraCommas(yystack_[0].location);
                              }
-#line 3020 "dhcp6_parser.cc"
+#line 3021 "dhcp6_parser.cc"
     break;
 
   case 517: // $@73: %empty
-#line 1843 "dhcp6_parser.yy"
+#line 1844 "dhcp6_parser.yy"
                                  {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3030 "dhcp6_parser.cc"
+#line 3031 "dhcp6_parser.cc"
     break;
 
   case 518: // option_def_entry: "{" $@73 option_def_params "}"
-#line 1847 "dhcp6_parser.yy"
+#line 1848 "dhcp6_parser.yy"
                                    {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -3038,21 +3039,21 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 3042 "dhcp6_parser.cc"
+#line 3043 "dhcp6_parser.cc"
     break;
 
   case 519: // $@74: %empty
-#line 1858 "dhcp6_parser.yy"
+#line 1859 "dhcp6_parser.yy"
                                {
     // Parse the option-def list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3052 "dhcp6_parser.cc"
+#line 3053 "dhcp6_parser.cc"
     break;
 
   case 520: // sub_option_def: "{" $@74 option_def_params "}"
-#line 1862 "dhcp6_parser.yy"
+#line 1863 "dhcp6_parser.yy"
                                    {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -3060,115 +3061,115 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3064 "dhcp6_parser.cc"
+#line 3065 "dhcp6_parser.cc"
     break;
 
   case 525: // not_empty_option_def_params: not_empty_option_def_params ","
-#line 1878 "dhcp6_parser.yy"
+#line 1879 "dhcp6_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 3072 "dhcp6_parser.cc"
+#line 3073 "dhcp6_parser.cc"
     break;
 
   case 537: // code: "code" ":" "integer"
-#line 1897 "dhcp6_parser.yy"
+#line 1898 "dhcp6_parser.yy"
                          {
     ctx.unique("code", ctx.loc2pos(yystack_[2].location));
     ElementPtr code(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("code", code);
 }
-#line 3082 "dhcp6_parser.cc"
+#line 3083 "dhcp6_parser.cc"
     break;
 
   case 539: // $@75: %empty
-#line 1905 "dhcp6_parser.yy"
+#line 1906 "dhcp6_parser.yy"
                       {
     ctx.unique("type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3091 "dhcp6_parser.cc"
+#line 3092 "dhcp6_parser.cc"
     break;
 
   case 540: // option_def_type: "type" $@75 ":" "constant string"
-#line 1908 "dhcp6_parser.yy"
+#line 1909 "dhcp6_parser.yy"
                {
     ElementPtr prf(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("type", prf);
     ctx.leave();
 }
-#line 3101 "dhcp6_parser.cc"
+#line 3102 "dhcp6_parser.cc"
     break;
 
   case 541: // $@76: %empty
-#line 1914 "dhcp6_parser.yy"
+#line 1915 "dhcp6_parser.yy"
                                       {
     ctx.unique("record-types", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3110 "dhcp6_parser.cc"
+#line 3111 "dhcp6_parser.cc"
     break;
 
   case 542: // option_def_record_types: "record-types" $@76 ":" "constant string"
-#line 1917 "dhcp6_parser.yy"
+#line 1918 "dhcp6_parser.yy"
                {
     ElementPtr rtypes(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("record-types", rtypes);
     ctx.leave();
 }
-#line 3120 "dhcp6_parser.cc"
+#line 3121 "dhcp6_parser.cc"
     break;
 
   case 543: // $@77: %empty
-#line 1923 "dhcp6_parser.yy"
+#line 1924 "dhcp6_parser.yy"
              {
     ctx.unique("space", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3129 "dhcp6_parser.cc"
+#line 3130 "dhcp6_parser.cc"
     break;
 
   case 544: // space: "space" $@77 ":" "constant string"
-#line 1926 "dhcp6_parser.yy"
+#line 1927 "dhcp6_parser.yy"
                {
     ElementPtr space(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("space", space);
     ctx.leave();
 }
-#line 3139 "dhcp6_parser.cc"
+#line 3140 "dhcp6_parser.cc"
     break;
 
   case 546: // $@78: %empty
-#line 1934 "dhcp6_parser.yy"
+#line 1935 "dhcp6_parser.yy"
                                     {
     ctx.unique("encapsulate", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3148 "dhcp6_parser.cc"
+#line 3149 "dhcp6_parser.cc"
     break;
 
   case 547: // option_def_encapsulate: "encapsulate" $@78 ":" "constant string"
-#line 1937 "dhcp6_parser.yy"
+#line 1938 "dhcp6_parser.yy"
                {
     ElementPtr encap(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("encapsulate", encap);
     ctx.leave();
 }
-#line 3158 "dhcp6_parser.cc"
+#line 3159 "dhcp6_parser.cc"
     break;
 
   case 548: // option_def_array: "array" ":" "boolean"
-#line 1943 "dhcp6_parser.yy"
+#line 1944 "dhcp6_parser.yy"
                                       {
     ctx.unique("array", ctx.loc2pos(yystack_[2].location));
     ElementPtr array(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("array", array);
 }
-#line 3168 "dhcp6_parser.cc"
+#line 3169 "dhcp6_parser.cc"
     break;
 
   case 549: // $@79: %empty
-#line 1953 "dhcp6_parser.yy"
+#line 1954 "dhcp6_parser.yy"
                               {
     ctx.unique("option-data", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3176,123 +3177,123 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DATA);
 }
-#line 3180 "dhcp6_parser.cc"
+#line 3181 "dhcp6_parser.cc"
     break;
 
   case 550: // option_data_list: "option-data" $@79 ":" "[" option_data_list_content "]"
-#line 1959 "dhcp6_parser.yy"
+#line 1960 "dhcp6_parser.yy"
                                                                  {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3189 "dhcp6_parser.cc"
+#line 3190 "dhcp6_parser.cc"
     break;
 
   case 555: // not_empty_option_data_list: not_empty_option_data_list ","
-#line 1974 "dhcp6_parser.yy"
+#line 1975 "dhcp6_parser.yy"
                                                              {
                               ctx.warnAboutExtraCommas(yystack_[0].location);
                               }
-#line 3197 "dhcp6_parser.cc"
+#line 3198 "dhcp6_parser.cc"
     break;
 
   case 556: // $@80: %empty
-#line 1981 "dhcp6_parser.yy"
+#line 1982 "dhcp6_parser.yy"
                                   {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3207 "dhcp6_parser.cc"
+#line 3208 "dhcp6_parser.cc"
     break;
 
   case 557: // option_data_entry: "{" $@80 option_data_params "}"
-#line 1985 "dhcp6_parser.yy"
+#line 1986 "dhcp6_parser.yy"
                                     {
     /// @todo: the code or name parameters are required.
     ctx.stack_.pop_back();
 }
-#line 3216 "dhcp6_parser.cc"
+#line 3217 "dhcp6_parser.cc"
     break;
 
   case 558: // $@81: %empty
-#line 1993 "dhcp6_parser.yy"
+#line 1994 "dhcp6_parser.yy"
                                 {
     // Parse the option-data list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3226 "dhcp6_parser.cc"
+#line 3227 "dhcp6_parser.cc"
     break;
 
   case 559: // sub_option_data: "{" $@81 option_data_params "}"
-#line 1997 "dhcp6_parser.yy"
+#line 1998 "dhcp6_parser.yy"
                                     {
     /// @todo: the code or name parameters are required.
     // parsing completed
 }
-#line 3235 "dhcp6_parser.cc"
+#line 3236 "dhcp6_parser.cc"
     break;
 
   case 564: // not_empty_option_data_params: not_empty_option_data_params ","
-#line 2013 "dhcp6_parser.yy"
+#line 2014 "dhcp6_parser.yy"
                                          {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 3243 "dhcp6_parser.cc"
+#line 3244 "dhcp6_parser.cc"
     break;
 
   case 576: // $@82: %empty
-#line 2034 "dhcp6_parser.yy"
+#line 2035 "dhcp6_parser.yy"
                        {
     ctx.unique("data", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3252 "dhcp6_parser.cc"
+#line 3253 "dhcp6_parser.cc"
     break;
 
   case 577: // option_data_data: "data" $@82 ":" "constant string"
-#line 2037 "dhcp6_parser.yy"
+#line 2038 "dhcp6_parser.yy"
                {
     ElementPtr data(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("data", data);
     ctx.leave();
 }
-#line 3262 "dhcp6_parser.cc"
+#line 3263 "dhcp6_parser.cc"
     break;
 
   case 580: // option_data_csv_format: "csv-format" ":" "boolean"
-#line 2047 "dhcp6_parser.yy"
+#line 2048 "dhcp6_parser.yy"
                                                  {
     ctx.unique("csv-format", ctx.loc2pos(yystack_[2].location));
     ElementPtr csv(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("csv-format", csv);
 }
-#line 3272 "dhcp6_parser.cc"
+#line 3273 "dhcp6_parser.cc"
     break;
 
   case 581: // option_data_always_send: "always-send" ":" "boolean"
-#line 2053 "dhcp6_parser.yy"
+#line 2054 "dhcp6_parser.yy"
                                                    {
     ctx.unique("always-send", ctx.loc2pos(yystack_[2].location));
     ElementPtr persist(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("always-send", persist);
 }
-#line 3282 "dhcp6_parser.cc"
+#line 3283 "dhcp6_parser.cc"
     break;
 
   case 582: // option_data_never_send: "never-send" ":" "boolean"
-#line 2059 "dhcp6_parser.yy"
+#line 2060 "dhcp6_parser.yy"
                                                  {
     ctx.unique("never-send", ctx.loc2pos(yystack_[2].location));
     ElementPtr cancel(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("never-send", cancel);
 }
-#line 3292 "dhcp6_parser.cc"
+#line 3293 "dhcp6_parser.cc"
     break;
 
   case 583: // $@83: %empty
-#line 2068 "dhcp6_parser.yy"
+#line 2069 "dhcp6_parser.yy"
                   {
     ctx.unique("pools", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3300,113 +3301,113 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.POOLS);
 }
-#line 3304 "dhcp6_parser.cc"
+#line 3305 "dhcp6_parser.cc"
     break;
 
   case 584: // pools_list: "pools" $@83 ":" "[" pools_list_content "]"
-#line 2074 "dhcp6_parser.yy"
+#line 2075 "dhcp6_parser.yy"
                                                            {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3313 "dhcp6_parser.cc"
+#line 3314 "dhcp6_parser.cc"
     break;
 
   case 589: // not_empty_pools_list: not_empty_pools_list ","
-#line 2087 "dhcp6_parser.yy"
+#line 2088 "dhcp6_parser.yy"
                                                  {
                         ctx.warnAboutExtraCommas(yystack_[0].location);
                         }
-#line 3321 "dhcp6_parser.cc"
+#line 3322 "dhcp6_parser.cc"
     break;
 
   case 590: // $@84: %empty
-#line 2092 "dhcp6_parser.yy"
+#line 2093 "dhcp6_parser.yy"
                                 {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3331 "dhcp6_parser.cc"
+#line 3332 "dhcp6_parser.cc"
     break;
 
   case 591: // pool_list_entry: "{" $@84 pool_params "}"
-#line 2096 "dhcp6_parser.yy"
+#line 2097 "dhcp6_parser.yy"
                              {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 3341 "dhcp6_parser.cc"
+#line 3342 "dhcp6_parser.cc"
     break;
 
   case 592: // $@85: %empty
-#line 2102 "dhcp6_parser.yy"
+#line 2103 "dhcp6_parser.yy"
                           {
     // Parse the pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3351 "dhcp6_parser.cc"
+#line 3352 "dhcp6_parser.cc"
     break;
 
   case 593: // sub_pool6: "{" $@85 pool_params "}"
-#line 2106 "dhcp6_parser.yy"
+#line 2107 "dhcp6_parser.yy"
                              {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3361 "dhcp6_parser.cc"
+#line 3362 "dhcp6_parser.cc"
     break;
 
   case 596: // pool_params: pool_params ","
-#line 2114 "dhcp6_parser.yy"
+#line 2115 "dhcp6_parser.yy"
                                {
                ctx.warnAboutExtraCommas(yystack_[0].location);
                }
-#line 3369 "dhcp6_parser.cc"
+#line 3370 "dhcp6_parser.cc"
     break;
 
   case 605: // $@86: %empty
-#line 2129 "dhcp6_parser.yy"
+#line 2130 "dhcp6_parser.yy"
                  {
     ctx.unique("pool", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3378 "dhcp6_parser.cc"
+#line 3379 "dhcp6_parser.cc"
     break;
 
   case 606: // pool_entry: "pool" $@86 ":" "constant string"
-#line 2132 "dhcp6_parser.yy"
+#line 2133 "dhcp6_parser.yy"
                {
     ElementPtr pool(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
 }
-#line 3388 "dhcp6_parser.cc"
+#line 3389 "dhcp6_parser.cc"
     break;
 
   case 607: // pool_id: "pool-id" ":" "integer"
-#line 2138 "dhcp6_parser.yy"
+#line 2139 "dhcp6_parser.yy"
                                {
     ctx.unique("pool-id", ctx.loc2pos(yystack_[2].location));
     ElementPtr id(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pool-id", id);
 }
-#line 3398 "dhcp6_parser.cc"
+#line 3399 "dhcp6_parser.cc"
     break;
 
   case 608: // $@87: %empty
-#line 2144 "dhcp6_parser.yy"
+#line 2145 "dhcp6_parser.yy"
                            {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3406 "dhcp6_parser.cc"
+#line 3407 "dhcp6_parser.cc"
     break;
 
   case 609: // user_context: "user-context" $@87 ":" map_value
-#line 2146 "dhcp6_parser.yy"
+#line 2147 "dhcp6_parser.yy"
                   {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
@@ -3429,19 +3430,19 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 3433 "dhcp6_parser.cc"
+#line 3434 "dhcp6_parser.cc"
     break;
 
   case 610: // $@88: %empty
-#line 2169 "dhcp6_parser.yy"
+#line 2170 "dhcp6_parser.yy"
                  {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3441 "dhcp6_parser.cc"
+#line 3442 "dhcp6_parser.cc"
     break;
 
   case 611: // comment: "comment" $@88 ":" "constant string"
-#line 2171 "dhcp6_parser.yy"
+#line 2172 "dhcp6_parser.yy"
                {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -3466,11 +3467,11 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 3470 "dhcp6_parser.cc"
+#line 3471 "dhcp6_parser.cc"
     break;
 
   case 612: // $@89: %empty
-#line 2199 "dhcp6_parser.yy"
+#line 2200 "dhcp6_parser.yy"
                         {
     ctx.unique("pd-pools", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3478,38 +3479,38 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.PD_POOLS);
 }
-#line 3482 "dhcp6_parser.cc"
+#line 3483 "dhcp6_parser.cc"
     break;
 
   case 613: // pd_pools_list: "pd-pools" $@89 ":" "[" pd_pools_list_content "]"
-#line 2205 "dhcp6_parser.yy"
+#line 2206 "dhcp6_parser.yy"
                                                               {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3491 "dhcp6_parser.cc"
+#line 3492 "dhcp6_parser.cc"
     break;
 
   case 618: // not_empty_pd_pools_list: not_empty_pd_pools_list ","
-#line 2218 "dhcp6_parser.yy"
+#line 2219 "dhcp6_parser.yy"
                                                        {
                            ctx.warnAboutExtraCommas(yystack_[0].location);
                            }
-#line 3499 "dhcp6_parser.cc"
+#line 3500 "dhcp6_parser.cc"
     break;
 
   case 619: // $@90: %empty
-#line 2223 "dhcp6_parser.yy"
+#line 2224 "dhcp6_parser.yy"
                               {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3509 "dhcp6_parser.cc"
+#line 3510 "dhcp6_parser.cc"
     break;
 
   case 620: // pd_pool_entry: "{" $@90 pd_pool_params "}"
-#line 2227 "dhcp6_parser.yy"
+#line 2228 "dhcp6_parser.yy"
                                 {
     // The prefix, prefix len and delegated len parameters are required.
     ctx.require("prefix", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -3517,21 +3518,21 @@ namespace isc { namespace dhcp {
     ctx.require("delegated-len", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 3521 "dhcp6_parser.cc"
+#line 3522 "dhcp6_parser.cc"
     break;
 
   case 621: // $@91: %empty
-#line 2235 "dhcp6_parser.yy"
+#line 2236 "dhcp6_parser.yy"
                             {
     // Parse the pd-pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3531 "dhcp6_parser.cc"
+#line 3532 "dhcp6_parser.cc"
     break;
 
   case 622: // sub_pd_pool: "{" $@91 pd_pool_params "}"
-#line 2239 "dhcp6_parser.yy"
+#line 2240 "dhcp6_parser.yy"
                                 {
     // The prefix, prefix len and delegated len parameters are required.
     ctx.require("prefix", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -3539,87 +3540,87 @@ namespace isc { namespace dhcp {
     ctx.require("delegated-len", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3543 "dhcp6_parser.cc"
+#line 3544 "dhcp6_parser.cc"
     break;
 
   case 625: // pd_pool_params: pd_pool_params ","
-#line 2249 "dhcp6_parser.yy"
+#line 2250 "dhcp6_parser.yy"
                                      {
                   ctx.warnAboutExtraCommas(yystack_[0].location);
                   }
-#line 3551 "dhcp6_parser.cc"
+#line 3552 "dhcp6_parser.cc"
     break;
 
   case 638: // $@92: %empty
-#line 2268 "dhcp6_parser.yy"
+#line 2269 "dhcp6_parser.yy"
                   {
     ctx.unique("prefix", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3560 "dhcp6_parser.cc"
+#line 3561 "dhcp6_parser.cc"
     break;
 
   case 639: // pd_prefix: "prefix" $@92 ":" "constant string"
-#line 2271 "dhcp6_parser.yy"
+#line 2272 "dhcp6_parser.yy"
                {
     ElementPtr prf(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("prefix", prf);
     ctx.leave();
 }
-#line 3570 "dhcp6_parser.cc"
+#line 3571 "dhcp6_parser.cc"
     break;
 
   case 640: // pd_prefix_len: "prefix-len" ":" "integer"
-#line 2277 "dhcp6_parser.yy"
+#line 2278 "dhcp6_parser.yy"
                                         {
     ctx.unique("prefix-len", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("prefix-len", prf);
 }
-#line 3580 "dhcp6_parser.cc"
+#line 3581 "dhcp6_parser.cc"
     break;
 
   case 641: // $@93: %empty
-#line 2283 "dhcp6_parser.yy"
+#line 2284 "dhcp6_parser.yy"
                                  {
     ctx.unique("excluded-prefix", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3589 "dhcp6_parser.cc"
+#line 3590 "dhcp6_parser.cc"
     break;
 
   case 642: // excluded_prefix: "excluded-prefix" $@93 ":" "constant string"
-#line 2286 "dhcp6_parser.yy"
+#line 2287 "dhcp6_parser.yy"
                {
     ElementPtr prf(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("excluded-prefix", prf);
     ctx.leave();
 }
-#line 3599 "dhcp6_parser.cc"
+#line 3600 "dhcp6_parser.cc"
     break;
 
   case 643: // excluded_prefix_len: "excluded-prefix-len" ":" "integer"
-#line 2292 "dhcp6_parser.yy"
+#line 2293 "dhcp6_parser.yy"
                                                        {
     ctx.unique("excluded-prefix-len", ctx.loc2pos(yystack_[2].location));
     ElementPtr prf(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("excluded-prefix-len", prf);
 }
-#line 3609 "dhcp6_parser.cc"
+#line 3610 "dhcp6_parser.cc"
     break;
 
   case 644: // pd_delegated_len: "delegated-len" ":" "integer"
-#line 2298 "dhcp6_parser.yy"
+#line 2299 "dhcp6_parser.yy"
                                               {
     ctx.unique("delegated-len", ctx.loc2pos(yystack_[2].location));
     ElementPtr deleg(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("delegated-len", deleg);
 }
-#line 3619 "dhcp6_parser.cc"
+#line 3620 "dhcp6_parser.cc"
     break;
 
   case 645: // $@94: %empty
-#line 2307 "dhcp6_parser.yy"
+#line 2308 "dhcp6_parser.yy"
                            {
     ctx.unique("reservations", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3627,74 +3628,74 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.RESERVATIONS);
 }
-#line 3631 "dhcp6_parser.cc"
+#line 3632 "dhcp6_parser.cc"
     break;
 
   case 646: // reservations: "reservations" $@94 ":" "[" reservations_list "]"
-#line 2313 "dhcp6_parser.yy"
+#line 2314 "dhcp6_parser.yy"
                                                           {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3640 "dhcp6_parser.cc"
+#line 3641 "dhcp6_parser.cc"
     break;
 
   case 651: // not_empty_reservations_list: not_empty_reservations_list ","
-#line 2324 "dhcp6_parser.yy"
+#line 2325 "dhcp6_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 3648 "dhcp6_parser.cc"
+#line 3649 "dhcp6_parser.cc"
     break;
 
   case 652: // $@95: %empty
-#line 2329 "dhcp6_parser.yy"
+#line 2330 "dhcp6_parser.yy"
                             {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3658 "dhcp6_parser.cc"
+#line 3659 "dhcp6_parser.cc"
     break;
 
   case 653: // reservation: "{" $@95 reservation_params "}"
-#line 2333 "dhcp6_parser.yy"
+#line 2334 "dhcp6_parser.yy"
                                     {
     /// @todo: an identifier parameter is required.
     ctx.stack_.pop_back();
 }
-#line 3667 "dhcp6_parser.cc"
+#line 3668 "dhcp6_parser.cc"
     break;
 
   case 654: // $@96: %empty
-#line 2338 "dhcp6_parser.yy"
+#line 2339 "dhcp6_parser.yy"
                                 {
     // Parse the reservations list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3677 "dhcp6_parser.cc"
+#line 3678 "dhcp6_parser.cc"
     break;
 
   case 655: // sub_reservation: "{" $@96 reservation_params "}"
-#line 2342 "dhcp6_parser.yy"
+#line 2343 "dhcp6_parser.yy"
                                     {
     /// @todo: an identifier parameter is required.
     // parsing completed
 }
-#line 3686 "dhcp6_parser.cc"
+#line 3687 "dhcp6_parser.cc"
     break;
 
   case 660: // not_empty_reservation_params: not_empty_reservation_params ","
-#line 2353 "dhcp6_parser.yy"
+#line 2354 "dhcp6_parser.yy"
                                          {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 3694 "dhcp6_parser.cc"
+#line 3695 "dhcp6_parser.cc"
     break;
 
   case 672: // $@97: %empty
-#line 2372 "dhcp6_parser.yy"
+#line 2373 "dhcp6_parser.yy"
                            {
     ctx.unique("ip-addresses", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3702,20 +3703,20 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3706 "dhcp6_parser.cc"
+#line 3707 "dhcp6_parser.cc"
     break;
 
   case 673: // ip_addresses: "ip-addresses" $@97 ":" list_strings
-#line 2378 "dhcp6_parser.yy"
+#line 2379 "dhcp6_parser.yy"
                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3715 "dhcp6_parser.cc"
+#line 3716 "dhcp6_parser.cc"
     break;
 
   case 674: // $@98: %empty
-#line 2383 "dhcp6_parser.yy"
+#line 2384 "dhcp6_parser.yy"
                    {
     ctx.unique("prefixes", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3723,96 +3724,96 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3727 "dhcp6_parser.cc"
+#line 3728 "dhcp6_parser.cc"
     break;
 
   case 675: // prefixes: "prefixes" $@98 ":" list_strings
-#line 2389 "dhcp6_parser.yy"
+#line 2390 "dhcp6_parser.yy"
                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3736 "dhcp6_parser.cc"
+#line 3737 "dhcp6_parser.cc"
     break;
 
   case 676: // $@99: %empty
-#line 2394 "dhcp6_parser.yy"
+#line 2395 "dhcp6_parser.yy"
            {
     ctx.unique("duid", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3745 "dhcp6_parser.cc"
+#line 3746 "dhcp6_parser.cc"
     break;
 
   case 677: // duid: "duid" $@99 ":" "constant string"
-#line 2397 "dhcp6_parser.yy"
+#line 2398 "dhcp6_parser.yy"
                {
     ElementPtr d(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("duid", d);
     ctx.leave();
 }
-#line 3755 "dhcp6_parser.cc"
+#line 3756 "dhcp6_parser.cc"
     break;
 
   case 678: // $@100: %empty
-#line 2403 "dhcp6_parser.yy"
+#line 2404 "dhcp6_parser.yy"
                        {
     ctx.unique("hw-address", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3764 "dhcp6_parser.cc"
+#line 3765 "dhcp6_parser.cc"
     break;
 
   case 679: // hw_address: "hw-address" $@100 ":" "constant string"
-#line 2406 "dhcp6_parser.yy"
+#line 2407 "dhcp6_parser.yy"
                {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 }
-#line 3774 "dhcp6_parser.cc"
+#line 3775 "dhcp6_parser.cc"
     break;
 
   case 680: // $@101: %empty
-#line 2412 "dhcp6_parser.yy"
+#line 2413 "dhcp6_parser.yy"
                    {
     ctx.unique("hostname", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3783 "dhcp6_parser.cc"
+#line 3784 "dhcp6_parser.cc"
     break;
 
   case 681: // hostname: "hostname" $@101 ":" "constant string"
-#line 2415 "dhcp6_parser.yy"
+#line 2416 "dhcp6_parser.yy"
                {
     ElementPtr host(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
 }
-#line 3793 "dhcp6_parser.cc"
+#line 3794 "dhcp6_parser.cc"
     break;
 
   case 682: // $@102: %empty
-#line 2421 "dhcp6_parser.yy"
+#line 2422 "dhcp6_parser.yy"
                        {
     ctx.unique("flex-id", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3802 "dhcp6_parser.cc"
+#line 3803 "dhcp6_parser.cc"
     break;
 
   case 683: // flex_id_value: "flex-id" $@102 ":" "constant string"
-#line 2424 "dhcp6_parser.yy"
+#line 2425 "dhcp6_parser.yy"
                {
     ElementPtr hw(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 }
-#line 3812 "dhcp6_parser.cc"
+#line 3813 "dhcp6_parser.cc"
     break;
 
   case 684: // $@103: %empty
-#line 2430 "dhcp6_parser.yy"
+#line 2431 "dhcp6_parser.yy"
                                            {
     ctx.unique("client-classes", ctx.loc2pos(yystack_[0].location));
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3820,20 +3821,20 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3824 "dhcp6_parser.cc"
+#line 3825 "dhcp6_parser.cc"
     break;
 
   case 685: // reservation_client_classes: "client-classes" $@103 ":" list_strings
-#line 2436 "dhcp6_parser.yy"
+#line 2437 "dhcp6_parser.yy"
                      {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3833 "dhcp6_parser.cc"
+#line 3834 "dhcp6_parser.cc"
     break;
 
   case 686: // $@104: %empty
-#line 2444 "dhcp6_parser.yy"
+#line 2445 "dhcp6_parser.yy"
              {
     ctx.unique("relay", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -3841,20 +3842,20 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.RELAY);
 }
-#line 3845 "dhcp6_parser.cc"
+#line 3846 "dhcp6_parser.cc"
     break;
 
   case 687: // relay: "relay" $@104 ":" "{" relay_map "}"
-#line 2450 "dhcp6_parser.yy"
+#line 2451 "dhcp6_parser.yy"
                                                 {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3854 "dhcp6_parser.cc"
+#line 3855 "dhcp6_parser.cc"
     break;
 
   case 689: // $@105: %empty
-#line 2461 "dhcp6_parser.yy"
+#line 2462 "dhcp6_parser.yy"
                                {
     ctx.unique("client-classes", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -3862,104 +3863,104 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENT_CLASSES);
 }
-#line 3866 "dhcp6_parser.cc"
+#line 3867 "dhcp6_parser.cc"
     break;
 
   case 690: // client_classes: "client-classes" $@105 ":" "[" client_classes_list "]"
-#line 2467 "dhcp6_parser.yy"
+#line 2468 "dhcp6_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3875 "dhcp6_parser.cc"
+#line 3876 "dhcp6_parser.cc"
     break;
 
   case 693: // client_classes_list: client_classes_list ","
-#line 2474 "dhcp6_parser.yy"
+#line 2475 "dhcp6_parser.yy"
                                                {
                        ctx.warnAboutExtraCommas(yystack_[0].location);
                        }
-#line 3883 "dhcp6_parser.cc"
+#line 3884 "dhcp6_parser.cc"
     break;
 
   case 694: // $@106: %empty
-#line 2479 "dhcp6_parser.yy"
+#line 2480 "dhcp6_parser.yy"
                                    {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3893 "dhcp6_parser.cc"
+#line 3894 "dhcp6_parser.cc"
     break;
 
   case 695: // client_class_entry: "{" $@106 client_class_params "}"
-#line 2483 "dhcp6_parser.yy"
+#line 2484 "dhcp6_parser.yy"
                                      {
     // The name client class parameter is required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 3903 "dhcp6_parser.cc"
+#line 3904 "dhcp6_parser.cc"
     break;
 
   case 700: // not_empty_client_class_params: not_empty_client_class_params ","
-#line 2495 "dhcp6_parser.yy"
+#line 2496 "dhcp6_parser.yy"
                                           {
         ctx.warnAboutExtraCommas(yystack_[0].location);
         }
-#line 3911 "dhcp6_parser.cc"
+#line 3912 "dhcp6_parser.cc"
     break;
 
   case 716: // $@107: %empty
-#line 2518 "dhcp6_parser.yy"
+#line 2519 "dhcp6_parser.yy"
                         {
     ctx.unique("test", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3920 "dhcp6_parser.cc"
+#line 3921 "dhcp6_parser.cc"
     break;
 
   case 717: // client_class_test: "test" $@107 ":" "constant string"
-#line 2521 "dhcp6_parser.yy"
+#line 2522 "dhcp6_parser.yy"
                {
     ElementPtr test(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
-#line 3930 "dhcp6_parser.cc"
+#line 3931 "dhcp6_parser.cc"
     break;
 
   case 718: // $@108: %empty
-#line 2527 "dhcp6_parser.yy"
+#line 2528 "dhcp6_parser.yy"
                                           {
     ctx.unique("template-test", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3939 "dhcp6_parser.cc"
+#line 3940 "dhcp6_parser.cc"
     break;
 
   case 719: // client_class_template_test: "template-test" $@108 ":" "constant string"
-#line 2530 "dhcp6_parser.yy"
+#line 2531 "dhcp6_parser.yy"
                {
     ElementPtr template_test(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("template-test", template_test);
     ctx.leave();
 }
-#line 3949 "dhcp6_parser.cc"
+#line 3950 "dhcp6_parser.cc"
     break;
 
   case 720: // only_if_required: "only-if-required" ":" "boolean"
-#line 2536 "dhcp6_parser.yy"
+#line 2537 "dhcp6_parser.yy"
                                                  {
     ctx.unique("only-if-required", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("only-if-required", b);
 }
-#line 3959 "dhcp6_parser.cc"
+#line 3960 "dhcp6_parser.cc"
     break;
 
   case 721: // $@109: %empty
-#line 2545 "dhcp6_parser.yy"
+#line 2546 "dhcp6_parser.yy"
                      {
     ctx.unique("server-id", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -3967,125 +3968,125 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SERVER_ID);
 }
-#line 3971 "dhcp6_parser.cc"
+#line 3972 "dhcp6_parser.cc"
     break;
 
   case 722: // server_id: "server-id" $@109 ":" "{" server_id_params "}"
-#line 2551 "dhcp6_parser.yy"
+#line 2552 "dhcp6_parser.yy"
                                                        {
     // The type parameter is required.
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3982 "dhcp6_parser.cc"
+#line 3983 "dhcp6_parser.cc"
     break;
 
   case 725: // server_id_params: server_id_params ","
-#line 2560 "dhcp6_parser.yy"
+#line 2561 "dhcp6_parser.yy"
                                          {
                     ctx.warnAboutExtraCommas(yystack_[0].location);
                     }
-#line 3990 "dhcp6_parser.cc"
+#line 3991 "dhcp6_parser.cc"
     break;
 
   case 735: // $@110: %empty
-#line 2576 "dhcp6_parser.yy"
+#line 2577 "dhcp6_parser.yy"
                      {
     ctx.unique("type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.DUID_TYPE);
 }
-#line 3999 "dhcp6_parser.cc"
+#line 4000 "dhcp6_parser.cc"
     break;
 
   case 736: // server_id_type: "type" $@110 ":" duid_type
-#line 2579 "dhcp6_parser.yy"
+#line 2580 "dhcp6_parser.yy"
                   {
     ctx.stack_.back()->set("type", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 4008 "dhcp6_parser.cc"
+#line 4009 "dhcp6_parser.cc"
     break;
 
   case 737: // duid_type: "LLT"
-#line 2584 "dhcp6_parser.yy"
+#line 2585 "dhcp6_parser.yy"
                { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("LLT", ctx.loc2pos(yystack_[0].location))); }
-#line 4014 "dhcp6_parser.cc"
+#line 4015 "dhcp6_parser.cc"
     break;
 
   case 738: // duid_type: "EN"
-#line 2585 "dhcp6_parser.yy"
+#line 2586 "dhcp6_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("EN", ctx.loc2pos(yystack_[0].location))); }
-#line 4020 "dhcp6_parser.cc"
+#line 4021 "dhcp6_parser.cc"
     break;
 
   case 739: // duid_type: "LL"
-#line 2586 "dhcp6_parser.yy"
+#line 2587 "dhcp6_parser.yy"
               { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("LL", ctx.loc2pos(yystack_[0].location))); }
-#line 4026 "dhcp6_parser.cc"
+#line 4027 "dhcp6_parser.cc"
     break;
 
   case 740: // htype: "htype" ":" "integer"
-#line 2589 "dhcp6_parser.yy"
+#line 2590 "dhcp6_parser.yy"
                            {
     ctx.unique("htype", ctx.loc2pos(yystack_[2].location));
     ElementPtr htype(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("htype", htype);
 }
-#line 4036 "dhcp6_parser.cc"
+#line 4037 "dhcp6_parser.cc"
     break;
 
   case 741: // $@111: %empty
-#line 2595 "dhcp6_parser.yy"
+#line 2596 "dhcp6_parser.yy"
                        {
     ctx.unique("identifier", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4045 "dhcp6_parser.cc"
+#line 4046 "dhcp6_parser.cc"
     break;
 
   case 742: // identifier: "identifier" $@111 ":" "constant string"
-#line 2598 "dhcp6_parser.yy"
+#line 2599 "dhcp6_parser.yy"
                {
     ElementPtr id(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("identifier", id);
     ctx.leave();
 }
-#line 4055 "dhcp6_parser.cc"
+#line 4056 "dhcp6_parser.cc"
     break;
 
   case 743: // time: "time" ":" "integer"
-#line 2604 "dhcp6_parser.yy"
+#line 2605 "dhcp6_parser.yy"
                          {
     ctx.unique("time", ctx.loc2pos(yystack_[2].location));
     ElementPtr time(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("time", time);
 }
-#line 4065 "dhcp6_parser.cc"
+#line 4066 "dhcp6_parser.cc"
     break;
 
   case 744: // enterprise_id: "enterprise-id" ":" "integer"
-#line 2610 "dhcp6_parser.yy"
+#line 2611 "dhcp6_parser.yy"
                                            {
     ctx.unique("enterprise-id", ctx.loc2pos(yystack_[2].location));
     ElementPtr time(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enterprise-id", time);
 }
-#line 4075 "dhcp6_parser.cc"
+#line 4076 "dhcp6_parser.cc"
     break;
 
   case 745: // dhcp4o6_port: "dhcp4o6-port" ":" "integer"
-#line 2618 "dhcp6_parser.yy"
+#line 2619 "dhcp6_parser.yy"
                                          {
     ctx.unique("dhcp4o6-port", ctx.loc2pos(yystack_[2].location));
     ElementPtr time(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 }
-#line 4085 "dhcp6_parser.cc"
+#line 4086 "dhcp6_parser.cc"
     break;
 
   case 746: // $@112: %empty
-#line 2626 "dhcp6_parser.yy"
+#line 2627 "dhcp6_parser.yy"
                                {
     ctx.unique("control-socket", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -4093,66 +4094,66 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 4097 "dhcp6_parser.cc"
+#line 4098 "dhcp6_parser.cc"
     break;
 
   case 747: // control_socket: "control-socket" $@112 ":" "{" control_socket_params "}"
-#line 2632 "dhcp6_parser.yy"
+#line 2633 "dhcp6_parser.yy"
                                                             {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4106 "dhcp6_parser.cc"
+#line 4107 "dhcp6_parser.cc"
     break;
 
   case 750: // control_socket_params: control_socket_params ","
-#line 2639 "dhcp6_parser.yy"
+#line 2640 "dhcp6_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 4114 "dhcp6_parser.cc"
+#line 4115 "dhcp6_parser.cc"
     break;
 
   case 756: // $@113: %empty
-#line 2651 "dhcp6_parser.yy"
+#line 2652 "dhcp6_parser.yy"
                          {
     ctx.unique("socket-type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4123 "dhcp6_parser.cc"
+#line 4124 "dhcp6_parser.cc"
     break;
 
   case 757: // socket_type: "socket-type" $@113 ":" "constant string"
-#line 2654 "dhcp6_parser.yy"
+#line 2655 "dhcp6_parser.yy"
                {
     ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 4133 "dhcp6_parser.cc"
+#line 4134 "dhcp6_parser.cc"
     break;
 
   case 758: // $@114: %empty
-#line 2660 "dhcp6_parser.yy"
+#line 2661 "dhcp6_parser.yy"
                          {
     ctx.unique("socket-name", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4142 "dhcp6_parser.cc"
+#line 4143 "dhcp6_parser.cc"
     break;
 
   case 759: // socket_name: "socket-name" $@114 ":" "constant string"
-#line 2663 "dhcp6_parser.yy"
+#line 2664 "dhcp6_parser.yy"
                {
     ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 4152 "dhcp6_parser.cc"
+#line 4153 "dhcp6_parser.cc"
     break;
 
   case 760: // $@115: %empty
-#line 2672 "dhcp6_parser.yy"
+#line 2673 "dhcp6_parser.yy"
                                        {
     ctx.unique("dhcp-queue-control", ctx.loc2pos(yystack_[0].location));
     ElementPtr qc(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -4160,87 +4161,87 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(qc);
     ctx.enter(ctx.DHCP_QUEUE_CONTROL);
 }
-#line 4164 "dhcp6_parser.cc"
+#line 4165 "dhcp6_parser.cc"
     break;
 
   case 761: // dhcp_queue_control: "dhcp-queue-control" $@115 ":" "{" queue_control_params "}"
-#line 2678 "dhcp6_parser.yy"
+#line 2679 "dhcp6_parser.yy"
                                                            {
     // The enable queue parameter is required.
     ctx.require("enable-queue", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4175 "dhcp6_parser.cc"
+#line 4176 "dhcp6_parser.cc"
     break;
 
   case 764: // queue_control_params: queue_control_params ","
-#line 2687 "dhcp6_parser.yy"
+#line 2688 "dhcp6_parser.yy"
                                                  {
                         ctx.warnAboutExtraCommas(yystack_[0].location);
                         }
-#line 4183 "dhcp6_parser.cc"
+#line 4184 "dhcp6_parser.cc"
     break;
 
   case 771: // enable_queue: "enable-queue" ":" "boolean"
-#line 2700 "dhcp6_parser.yy"
+#line 2701 "dhcp6_parser.yy"
                                          {
     ctx.unique("enable-queue", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-queue", b);
 }
-#line 4193 "dhcp6_parser.cc"
+#line 4194 "dhcp6_parser.cc"
     break;
 
   case 772: // $@116: %empty
-#line 2706 "dhcp6_parser.yy"
+#line 2707 "dhcp6_parser.yy"
                        {
     ctx.unique("queue-type", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4202 "dhcp6_parser.cc"
+#line 4203 "dhcp6_parser.cc"
     break;
 
   case 773: // queue_type: "queue-type" $@116 ":" "constant string"
-#line 2709 "dhcp6_parser.yy"
+#line 2710 "dhcp6_parser.yy"
                {
     ElementPtr qt(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("queue-type", qt);
     ctx.leave();
 }
-#line 4212 "dhcp6_parser.cc"
+#line 4213 "dhcp6_parser.cc"
     break;
 
   case 774: // capacity: "capacity" ":" "integer"
-#line 2715 "dhcp6_parser.yy"
+#line 2716 "dhcp6_parser.yy"
                                  {
     ctx.unique("capacity", ctx.loc2pos(yystack_[2].location));
     ElementPtr c(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("capacity", c);
 }
-#line 4222 "dhcp6_parser.cc"
+#line 4223 "dhcp6_parser.cc"
     break;
 
   case 775: // $@117: %empty
-#line 2721 "dhcp6_parser.yy"
+#line 2722 "dhcp6_parser.yy"
                             {
     ctx.unique(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4231 "dhcp6_parser.cc"
+#line 4232 "dhcp6_parser.cc"
     break;
 
   case 776: // arbitrary_map_entry: "constant string" $@117 ":" value
-#line 2724 "dhcp6_parser.yy"
+#line 2725 "dhcp6_parser.yy"
               {
     ctx.stack_.back()->set(yystack_[3].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 4240 "dhcp6_parser.cc"
+#line 4241 "dhcp6_parser.cc"
     break;
 
   case 777: // $@118: %empty
-#line 2731 "dhcp6_parser.yy"
+#line 2732 "dhcp6_parser.yy"
                      {
     ctx.unique("dhcp-ddns", ctx.loc2pos(yystack_[0].location));
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -4248,177 +4249,177 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
 }
-#line 4252 "dhcp6_parser.cc"
+#line 4253 "dhcp6_parser.cc"
     break;
 
   case 778: // dhcp_ddns: "dhcp-ddns" $@118 ":" "{" dhcp_ddns_params "}"
-#line 2737 "dhcp6_parser.yy"
+#line 2738 "dhcp6_parser.yy"
                                                        {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4263 "dhcp6_parser.cc"
+#line 4264 "dhcp6_parser.cc"
     break;
 
   case 779: // $@119: %empty
-#line 2744 "dhcp6_parser.yy"
+#line 2745 "dhcp6_parser.yy"
                               {
     // Parse the dhcp-ddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 4273 "dhcp6_parser.cc"
+#line 4274 "dhcp6_parser.cc"
     break;
 
   case 780: // sub_dhcp_ddns: "{" $@119 dhcp_ddns_params "}"
-#line 2748 "dhcp6_parser.yy"
+#line 2749 "dhcp6_parser.yy"
                                   {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 4283 "dhcp6_parser.cc"
+#line 4284 "dhcp6_parser.cc"
     break;
 
   case 783: // dhcp_ddns_params: dhcp_ddns_params ","
-#line 2756 "dhcp6_parser.yy"
+#line 2757 "dhcp6_parser.yy"
                                          {
                     ctx.warnAboutExtraCommas(yystack_[0].location);
                     }
-#line 4291 "dhcp6_parser.cc"
+#line 4292 "dhcp6_parser.cc"
     break;
 
   case 795: // enable_updates: "enable-updates" ":" "boolean"
-#line 2774 "dhcp6_parser.yy"
+#line 2775 "dhcp6_parser.yy"
                                              {
     ctx.unique("enable-updates", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-updates", b);
 }
-#line 4301 "dhcp6_parser.cc"
+#line 4302 "dhcp6_parser.cc"
     break;
 
   case 796: // $@120: %empty
-#line 2780 "dhcp6_parser.yy"
+#line 2781 "dhcp6_parser.yy"
                      {
     ctx.unique("server-ip", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4310 "dhcp6_parser.cc"
+#line 4311 "dhcp6_parser.cc"
     break;
 
   case 797: // server_ip: "server-ip" $@120 ":" "constant string"
-#line 2783 "dhcp6_parser.yy"
+#line 2784 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-ip", s);
     ctx.leave();
 }
-#line 4320 "dhcp6_parser.cc"
+#line 4321 "dhcp6_parser.cc"
     break;
 
   case 798: // server_port: "server-port" ":" "integer"
-#line 2789 "dhcp6_parser.yy"
+#line 2790 "dhcp6_parser.yy"
                                        {
     ctx.unique("server-port", ctx.loc2pos(yystack_[2].location));
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-port", i);
 }
-#line 4330 "dhcp6_parser.cc"
+#line 4331 "dhcp6_parser.cc"
     break;
 
   case 799: // $@121: %empty
-#line 2795 "dhcp6_parser.yy"
+#line 2796 "dhcp6_parser.yy"
                      {
     ctx.unique("sender-ip", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4339 "dhcp6_parser.cc"
+#line 4340 "dhcp6_parser.cc"
     break;
 
   case 800: // sender_ip: "sender-ip" $@121 ":" "constant string"
-#line 2798 "dhcp6_parser.yy"
+#line 2799 "dhcp6_parser.yy"
                {
     ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-ip", s);
     ctx.leave();
 }
-#line 4349 "dhcp6_parser.cc"
+#line 4350 "dhcp6_parser.cc"
     break;
 
   case 801: // sender_port: "sender-port" ":" "integer"
-#line 2804 "dhcp6_parser.yy"
+#line 2805 "dhcp6_parser.yy"
                                        {
     ctx.unique("sender-port", ctx.loc2pos(yystack_[2].location));
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-port", i);
 }
-#line 4359 "dhcp6_parser.cc"
+#line 4360 "dhcp6_parser.cc"
     break;
 
   case 802: // max_queue_size: "max-queue-size" ":" "integer"
-#line 2810 "dhcp6_parser.yy"
+#line 2811 "dhcp6_parser.yy"
                                              {
     ctx.unique("max-queue-size", ctx.loc2pos(yystack_[2].location));
     ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-queue-size", i);
 }
-#line 4369 "dhcp6_parser.cc"
+#line 4370 "dhcp6_parser.cc"
     break;
 
   case 803: // $@122: %empty
-#line 2816 "dhcp6_parser.yy"
+#line 2817 "dhcp6_parser.yy"
                            {
     ctx.unique("ncr-protocol", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 4378 "dhcp6_parser.cc"
+#line 4379 "dhcp6_parser.cc"
     break;
 
   case 804: // ncr_protocol: "ncr-protocol" $@122 ":" ncr_protocol_value
-#line 2819 "dhcp6_parser.yy"
+#line 2820 "dhcp6_parser.yy"
                            {
     ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 4387 "dhcp6_parser.cc"
+#line 4388 "dhcp6_parser.cc"
     break;
 
   case 805: // ncr_protocol_value: "UDP"
-#line 2825 "dhcp6_parser.yy"
+#line 2826 "dhcp6_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
-#line 4393 "dhcp6_parser.cc"
+#line 4394 "dhcp6_parser.cc"
     break;
 
   case 806: // ncr_protocol_value: "TCP"
-#line 2826 "dhcp6_parser.yy"
+#line 2827 "dhcp6_parser.yy"
         { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
-#line 4399 "dhcp6_parser.cc"
+#line 4400 "dhcp6_parser.cc"
     break;
 
   case 807: // $@123: %empty
-#line 2829 "dhcp6_parser.yy"
+#line 2830 "dhcp6_parser.yy"
                        {
     ctx.unique("ncr-format", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NCR_FORMAT);
 }
-#line 4408 "dhcp6_parser.cc"
+#line 4409 "dhcp6_parser.cc"
     break;
 
   case 808: // ncr_format: "ncr-format" $@123 ":" "JSON"
-#line 2832 "dhcp6_parser.yy"
+#line 2833 "dhcp6_parser.yy"
              {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 4418 "dhcp6_parser.cc"
+#line 4419 "dhcp6_parser.cc"
     break;
 
   case 809: // $@124: %empty
-#line 2840 "dhcp6_parser.yy"
+#line 2841 "dhcp6_parser.yy"
                                {
     ctx.unique("config-control", ctx.loc2pos(yystack_[0].location));
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -4426,48 +4427,48 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.CONFIG_CONTROL);
 }
-#line 4430 "dhcp6_parser.cc"
+#line 4431 "dhcp6_parser.cc"
     break;
 
   case 810: // config_control: "config-control" $@124 ":" "{" config_control_params "}"
-#line 2846 "dhcp6_parser.yy"
+#line 2847 "dhcp6_parser.yy"
                                                             {
     // No config control params are required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4440 "dhcp6_parser.cc"
+#line 4441 "dhcp6_parser.cc"
     break;
 
   case 811: // $@125: %empty
-#line 2852 "dhcp6_parser.yy"
+#line 2853 "dhcp6_parser.yy"
                                    {
     // Parse the config-control map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 4450 "dhcp6_parser.cc"
+#line 4451 "dhcp6_parser.cc"
     break;
 
   case 812: // sub_config_control: "{" $@125 config_control_params "}"
-#line 2856 "dhcp6_parser.yy"
+#line 2857 "dhcp6_parser.yy"
                                        {
     // No config_control params are required
     // parsing completed
 }
-#line 4459 "dhcp6_parser.cc"
+#line 4460 "dhcp6_parser.cc"
     break;
 
   case 815: // config_control_params: config_control_params ","
-#line 2864 "dhcp6_parser.yy"
+#line 2865 "dhcp6_parser.yy"
                                                    {
                          ctx.warnAboutExtraCommas(yystack_[0].location);
                          }
-#line 4467 "dhcp6_parser.cc"
+#line 4468 "dhcp6_parser.cc"
     break;
 
   case 818: // $@126: %empty
-#line 2874 "dhcp6_parser.yy"
+#line 2875 "dhcp6_parser.yy"
                                    {
     ctx.unique("config-databases", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -4475,30 +4476,30 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CONFIG_DATABASE);
 }
-#line 4479 "dhcp6_parser.cc"
+#line 4480 "dhcp6_parser.cc"
     break;
 
   case 819: // config_databases: "config-databases" $@126 ":" "[" database_list "]"
-#line 2880 "dhcp6_parser.yy"
+#line 2881 "dhcp6_parser.yy"
                                                       {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4488 "dhcp6_parser.cc"
+#line 4489 "dhcp6_parser.cc"
     break;
 
   case 820: // config_fetch_wait_time: "config-fetch-wait-time" ":" "integer"
-#line 2885 "dhcp6_parser.yy"
+#line 2886 "dhcp6_parser.yy"
                                                              {
     ctx.unique("config-fetch-wait-time", ctx.loc2pos(yystack_[2].location));
     ElementPtr value(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-fetch-wait-time", value);
 }
-#line 4498 "dhcp6_parser.cc"
+#line 4499 "dhcp6_parser.cc"
     break;
 
   case 821: // $@127: %empty
-#line 2893 "dhcp6_parser.yy"
+#line 2894 "dhcp6_parser.yy"
                  {
     ctx.unique("loggers", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -4506,83 +4507,83 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 4510 "dhcp6_parser.cc"
+#line 4511 "dhcp6_parser.cc"
     break;
 
   case 822: // loggers: "loggers" $@127 ":" "[" loggers_entries "]"
-#line 2899 "dhcp6_parser.yy"
+#line 2900 "dhcp6_parser.yy"
                                                          {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4519 "dhcp6_parser.cc"
+#line 4520 "dhcp6_parser.cc"
     break;
 
   case 825: // loggers_entries: loggers_entries ","
-#line 2908 "dhcp6_parser.yy"
+#line 2909 "dhcp6_parser.yy"
                                        {
                    ctx.warnAboutExtraCommas(yystack_[0].location);
                    }
-#line 4527 "dhcp6_parser.cc"
+#line 4528 "dhcp6_parser.cc"
     break;
 
   case 826: // $@128: %empty
-#line 2914 "dhcp6_parser.yy"
+#line 2915 "dhcp6_parser.yy"
                              {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 4537 "dhcp6_parser.cc"
+#line 4538 "dhcp6_parser.cc"
     break;
 
   case 827: // logger_entry: "{" $@128 logger_params "}"
-#line 2918 "dhcp6_parser.yy"
+#line 2919 "dhcp6_parser.yy"
                                {
     ctx.stack_.pop_back();
 }
-#line 4545 "dhcp6_parser.cc"
+#line 4546 "dhcp6_parser.cc"
     break;
 
   case 830: // logger_params: logger_params ","
-#line 2924 "dhcp6_parser.yy"
+#line 2925 "dhcp6_parser.yy"
                                    {
                  ctx.warnAboutExtraCommas(yystack_[0].location);
                  }
-#line 4553 "dhcp6_parser.cc"
+#line 4554 "dhcp6_parser.cc"
     break;
 
   case 838: // debuglevel: "debuglevel" ":" "integer"
-#line 2938 "dhcp6_parser.yy"
+#line 2939 "dhcp6_parser.yy"
                                      {
     ctx.unique("debuglevel", ctx.loc2pos(yystack_[2].location));
     ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 4563 "dhcp6_parser.cc"
+#line 4564 "dhcp6_parser.cc"
     break;
 
   case 839: // $@129: %empty
-#line 2944 "dhcp6_parser.yy"
+#line 2945 "dhcp6_parser.yy"
                    {
     ctx.unique("severity", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4572 "dhcp6_parser.cc"
+#line 4573 "dhcp6_parser.cc"
     break;
 
   case 840: // severity: "severity" $@129 ":" "constant string"
-#line 2947 "dhcp6_parser.yy"
+#line 2948 "dhcp6_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 4582 "dhcp6_parser.cc"
+#line 4583 "dhcp6_parser.cc"
     break;
 
   case 841: // $@130: %empty
-#line 2953 "dhcp6_parser.yy"
+#line 2954 "dhcp6_parser.yy"
                                     {
     ctx.unique("output-options", ctx.loc2pos(yystack_[0].location));
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
@@ -4590,122 +4591,122 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 4594 "dhcp6_parser.cc"
+#line 4595 "dhcp6_parser.cc"
     break;
 
   case 842: // output_options_list: "output-options" $@130 ":" "[" output_options_list_content "]"
-#line 2959 "dhcp6_parser.yy"
+#line 2960 "dhcp6_parser.yy"
                                                                     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4603 "dhcp6_parser.cc"
+#line 4604 "dhcp6_parser.cc"
     break;
 
   case 845: // output_options_list_content: output_options_list_content ","
-#line 2966 "dhcp6_parser.yy"
+#line 2967 "dhcp6_parser.yy"
                                                                {
                                ctx.warnAboutExtraCommas(yystack_[0].location);
                                }
-#line 4611 "dhcp6_parser.cc"
+#line 4612 "dhcp6_parser.cc"
     break;
 
   case 846: // $@131: %empty
-#line 2971 "dhcp6_parser.yy"
+#line 2972 "dhcp6_parser.yy"
                              {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 4621 "dhcp6_parser.cc"
+#line 4622 "dhcp6_parser.cc"
     break;
 
   case 847: // output_entry: "{" $@131 output_params_list "}"
-#line 2975 "dhcp6_parser.yy"
+#line 2976 "dhcp6_parser.yy"
                                     {
     ctx.stack_.pop_back();
 }
-#line 4629 "dhcp6_parser.cc"
+#line 4630 "dhcp6_parser.cc"
     break;
 
   case 850: // output_params_list: output_params_list ","
-#line 2981 "dhcp6_parser.yy"
+#line 2982 "dhcp6_parser.yy"
                                              {
                       ctx.warnAboutExtraCommas(yystack_[0].location);
                       }
-#line 4637 "dhcp6_parser.cc"
+#line 4638 "dhcp6_parser.cc"
     break;
 
   case 856: // $@132: %empty
-#line 2993 "dhcp6_parser.yy"
+#line 2994 "dhcp6_parser.yy"
                {
     ctx.unique("output", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4646 "dhcp6_parser.cc"
+#line 4647 "dhcp6_parser.cc"
     break;
 
   case 857: // output: "output" $@132 ":" "constant string"
-#line 2996 "dhcp6_parser.yy"
+#line 2997 "dhcp6_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 4656 "dhcp6_parser.cc"
+#line 4657 "dhcp6_parser.cc"
     break;
 
   case 858: // flush: "flush" ":" "boolean"
-#line 3002 "dhcp6_parser.yy"
+#line 3003 "dhcp6_parser.yy"
                            {
     ctx.unique("flush", ctx.loc2pos(yystack_[2].location));
     ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 4666 "dhcp6_parser.cc"
+#line 4667 "dhcp6_parser.cc"
     break;
 
   case 859: // maxsize: "maxsize" ":" "integer"
-#line 3008 "dhcp6_parser.yy"
+#line 3009 "dhcp6_parser.yy"
                                {
     ctx.unique("maxsize", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 4676 "dhcp6_parser.cc"
+#line 4677 "dhcp6_parser.cc"
     break;
 
   case 860: // maxver: "maxver" ":" "integer"
-#line 3014 "dhcp6_parser.yy"
+#line 3015 "dhcp6_parser.yy"
                              {
     ctx.unique("maxver", ctx.loc2pos(yystack_[2].location));
     ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 4686 "dhcp6_parser.cc"
+#line 4687 "dhcp6_parser.cc"
     break;
 
   case 861: // $@133: %empty
-#line 3020 "dhcp6_parser.yy"
+#line 3021 "dhcp6_parser.yy"
                  {
     ctx.unique("pattern", ctx.loc2pos(yystack_[0].location));
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 4695 "dhcp6_parser.cc"
+#line 4696 "dhcp6_parser.cc"
     break;
 
   case 862: // pattern: "pattern" $@133 ":" "constant string"
-#line 3023 "dhcp6_parser.yy"
+#line 3024 "dhcp6_parser.yy"
                {
     ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pattern", sev);
     ctx.leave();
 }
-#line 4705 "dhcp6_parser.cc"
+#line 4706 "dhcp6_parser.cc"
     break;
 
   case 863: // $@134: %empty
-#line 3029 "dhcp6_parser.yy"
+#line 3030 "dhcp6_parser.yy"
                              {
     ctx.unique("compatibility", ctx.loc2pos(yystack_[0].location));
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -4713,38 +4714,38 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(i);
     ctx.enter(ctx.COMPATIBILITY);
 }
-#line 4717 "dhcp6_parser.cc"
+#line 4718 "dhcp6_parser.cc"
     break;
 
   case 864: // compatibility: "compatibility" $@134 ":" "{" compatibility_params "}"
-#line 3035 "dhcp6_parser.yy"
+#line 3036 "dhcp6_parser.yy"
                                                            {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 4726 "dhcp6_parser.cc"
+#line 4727 "dhcp6_parser.cc"
     break;
 
   case 867: // compatibility_params: compatibility_params ","
-#line 3042 "dhcp6_parser.yy"
+#line 3043 "dhcp6_parser.yy"
                                                  {
                         ctx.warnAboutExtraCommas(yystack_[0].location);
                         }
-#line 4734 "dhcp6_parser.cc"
+#line 4735 "dhcp6_parser.cc"
     break;
 
   case 870: // lenient_option_parsing: "lenient-option-parsing" ":" "boolean"
-#line 3051 "dhcp6_parser.yy"
+#line 3052 "dhcp6_parser.yy"
                                                              {
     ctx.unique("lenient-option-parsing", ctx.loc2pos(yystack_[2].location));
     ElementPtr b(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lenient-option-parsing", b);
 }
-#line 4744 "dhcp6_parser.cc"
+#line 4745 "dhcp6_parser.cc"
     break;
 
 
-#line 4748 "dhcp6_parser.cc"
+#line 4749 "dhcp6_parser.cc"
 
             default:
               break;
@@ -6298,80 +6299,80 @@ namespace isc { namespace dhcp {
      538,   539,   540,   541,   542,   543,   544,   545,   546,   547,
      548,   549,   550,   551,   552,   553,   554,   555,   556,   557,
      558,   559,   560,   561,   562,   563,   564,   565,   566,   567,
-     570,   570,   579,   585,   591,   597,   603,   609,   615,   621,
-     627,   633,   639,   645,   651,   657,   663,   669,   675,   681,
-     681,   690,   693,   696,   699,   702,   708,   708,   717,   717,
-     726,   735,   745,   745,   754,   757,   760,   763,   768,   774,
-     774,   783,   783,   792,   798,   804,   810,   810,   819,   825,
-     825,   834,   834,   843,   849,   855,   861,   861,   873,   873,
-     882,   883,   884,   889,   890,   891,   892,   893,   894,   895,
-     896,   899,   899,   910,   916,   922,   928,   934,   934,   947,
-     947,   960,   960,   971,   972,   975,   976,   977,   982,   982,
-     992,   993,   994,   999,  1000,  1001,  1002,  1003,  1004,  1005,
-    1006,  1007,  1008,  1009,  1010,  1011,  1012,  1013,  1014,  1015,
-    1016,  1017,  1018,  1019,  1020,  1021,  1024,  1024,  1032,  1033,
-    1034,  1037,  1037,  1046,  1046,  1055,  1055,  1064,  1070,  1070,
-    1079,  1085,  1091,  1097,  1103,  1109,  1115,  1122,  1128,  1128,
-    1136,  1137,  1138,  1141,  1147,  1153,  1159,  1159,  1168,  1168,
-    1177,  1177,  1186,  1186,  1195,  1195,  1206,  1207,  1208,  1213,
-    1214,  1217,  1217,  1236,  1236,  1254,  1254,  1265,  1266,  1267,
-    1272,  1273,  1276,  1281,  1286,  1286,  1297,  1298,  1299,  1304,
-    1305,  1306,  1309,  1314,  1321,  1321,  1334,  1334,  1347,  1348,
-    1349,  1354,  1355,  1356,  1357,  1358,  1359,  1362,  1368,  1374,
-    1380,  1380,  1391,  1392,  1395,  1396,  1397,  1402,  1402,  1412,
-    1412,  1422,  1423,  1424,  1427,  1430,  1431,  1434,  1434,  1443,
-    1443,  1452,  1452,  1464,  1465,  1466,  1471,  1472,  1473,  1474,
-    1475,  1476,  1479,  1485,  1491,  1497,  1503,  1509,  1518,  1518,
-    1532,  1533,  1536,  1537,  1538,  1547,  1547,  1573,  1573,  1584,
-    1585,  1586,  1592,  1593,  1594,  1595,  1596,  1597,  1598,  1599,
-    1600,  1601,  1602,  1603,  1604,  1605,  1606,  1607,  1608,  1609,
-    1610,  1611,  1612,  1613,  1614,  1615,  1616,  1617,  1618,  1619,
-    1620,  1621,  1622,  1623,  1624,  1625,  1626,  1627,  1628,  1629,
-    1630,  1631,  1632,  1633,  1634,  1635,  1636,  1637,  1640,  1640,
-    1649,  1649,  1658,  1658,  1667,  1667,  1676,  1676,  1687,  1693,
-    1699,  1705,  1711,  1719,  1719,  1731,  1732,  1736,  1737,  1738,
-    1743,  1743,  1751,  1752,  1753,  1758,  1759,  1760,  1761,  1762,
-    1763,  1764,  1765,  1766,  1767,  1768,  1769,  1770,  1771,  1772,
-    1773,  1774,  1775,  1776,  1777,  1778,  1779,  1780,  1781,  1782,
-    1783,  1784,  1785,  1786,  1787,  1788,  1789,  1790,  1791,  1792,
-    1793,  1794,  1795,  1796,  1797,  1798,  1799,  1800,  1807,  1807,
-    1821,  1821,  1830,  1831,  1834,  1835,  1836,  1843,  1843,  1858,
-    1858,  1872,  1873,  1876,  1877,  1878,  1883,  1884,  1885,  1886,
-    1887,  1888,  1889,  1890,  1891,  1892,  1895,  1897,  1903,  1905,
-    1905,  1914,  1914,  1923,  1923,  1932,  1934,  1934,  1943,  1953,
-    1953,  1966,  1967,  1972,  1973,  1974,  1981,  1981,  1993,  1993,
-    2005,  2006,  2011,  2012,  2013,  2020,  2021,  2022,  2023,  2024,
-    2025,  2026,  2027,  2028,  2029,  2032,  2034,  2034,  2043,  2045,
-    2047,  2053,  2059,  2068,  2068,  2081,  2082,  2085,  2086,  2087,
-    2092,  2092,  2102,  2102,  2112,  2113,  2114,  2119,  2120,  2121,
-    2122,  2123,  2124,  2125,  2126,  2129,  2129,  2138,  2144,  2144,
-    2169,  2169,  2199,  2199,  2212,  2213,  2216,  2217,  2218,  2223,
-    2223,  2235,  2235,  2247,  2248,  2249,  2254,  2255,  2256,  2257,
-    2258,  2259,  2260,  2261,  2262,  2263,  2264,  2265,  2268,  2268,
-    2277,  2283,  2283,  2292,  2298,  2307,  2307,  2318,  2319,  2322,
-    2323,  2324,  2329,  2329,  2338,  2338,  2347,  2348,  2351,  2352,
-    2353,  2359,  2360,  2361,  2362,  2363,  2364,  2365,  2366,  2367,
-    2368,  2369,  2372,  2372,  2383,  2383,  2394,  2394,  2403,  2403,
-    2412,  2412,  2421,  2421,  2430,  2430,  2444,  2444,  2455,  2461,
-    2461,  2472,  2473,  2474,  2479,  2479,  2489,  2490,  2493,  2494,
-    2495,  2500,  2501,  2502,  2503,  2504,  2505,  2506,  2507,  2508,
-    2509,  2510,  2511,  2512,  2513,  2516,  2518,  2518,  2527,  2527,
-    2536,  2545,  2545,  2558,  2559,  2560,  2565,  2566,  2567,  2568,
-    2569,  2570,  2571,  2572,  2573,  2576,  2576,  2584,  2585,  2586,
-    2589,  2595,  2595,  2604,  2610,  2618,  2626,  2626,  2637,  2638,
-    2639,  2644,  2645,  2646,  2647,  2648,  2651,  2651,  2660,  2660,
-    2672,  2672,  2685,  2686,  2687,  2692,  2693,  2694,  2695,  2696,
-    2697,  2700,  2706,  2706,  2715,  2721,  2721,  2731,  2731,  2744,
-    2744,  2754,  2755,  2756,  2761,  2762,  2763,  2764,  2765,  2766,
-    2767,  2768,  2769,  2770,  2771,  2774,  2780,  2780,  2789,  2795,
-    2795,  2804,  2810,  2816,  2816,  2825,  2826,  2829,  2829,  2840,
-    2840,  2852,  2852,  2862,  2863,  2864,  2870,  2871,  2874,  2874,
-    2885,  2893,  2893,  2906,  2907,  2908,  2914,  2914,  2922,  2923,
-    2924,  2929,  2930,  2931,  2932,  2933,  2934,  2935,  2938,  2944,
-    2944,  2953,  2953,  2964,  2965,  2966,  2971,  2971,  2979,  2980,
-    2981,  2986,  2987,  2988,  2989,  2990,  2993,  2993,  3002,  3008,
-    3014,  3020,  3020,  3029,  3029,  3040,  3041,  3042,  3047,  3048,
-    3051
+     570,   570,   580,   586,   592,   598,   604,   610,   616,   622,
+     628,   634,   640,   646,   652,   658,   664,   670,   676,   682,
+     682,   691,   694,   697,   700,   703,   709,   709,   718,   718,
+     727,   736,   746,   746,   755,   758,   761,   764,   769,   775,
+     775,   784,   784,   793,   799,   805,   811,   811,   820,   826,
+     826,   835,   835,   844,   850,   856,   862,   862,   874,   874,
+     883,   884,   885,   890,   891,   892,   893,   894,   895,   896,
+     897,   900,   900,   911,   917,   923,   929,   935,   935,   948,
+     948,   961,   961,   972,   973,   976,   977,   978,   983,   983,
+     993,   994,   995,  1000,  1001,  1002,  1003,  1004,  1005,  1006,
+    1007,  1008,  1009,  1010,  1011,  1012,  1013,  1014,  1015,  1016,
+    1017,  1018,  1019,  1020,  1021,  1022,  1025,  1025,  1033,  1034,
+    1035,  1038,  1038,  1047,  1047,  1056,  1056,  1065,  1071,  1071,
+    1080,  1086,  1092,  1098,  1104,  1110,  1116,  1123,  1129,  1129,
+    1137,  1138,  1139,  1142,  1148,  1154,  1160,  1160,  1169,  1169,
+    1178,  1178,  1187,  1187,  1196,  1196,  1207,  1208,  1209,  1214,
+    1215,  1218,  1218,  1237,  1237,  1255,  1255,  1266,  1267,  1268,
+    1273,  1274,  1277,  1282,  1287,  1287,  1298,  1299,  1300,  1305,
+    1306,  1307,  1310,  1315,  1322,  1322,  1335,  1335,  1348,  1349,
+    1350,  1355,  1356,  1357,  1358,  1359,  1360,  1363,  1369,  1375,
+    1381,  1381,  1392,  1393,  1396,  1397,  1398,  1403,  1403,  1413,
+    1413,  1423,  1424,  1425,  1428,  1431,  1432,  1435,  1435,  1444,
+    1444,  1453,  1453,  1465,  1466,  1467,  1472,  1473,  1474,  1475,
+    1476,  1477,  1480,  1486,  1492,  1498,  1504,  1510,  1519,  1519,
+    1533,  1534,  1537,  1538,  1539,  1548,  1548,  1574,  1574,  1585,
+    1586,  1587,  1593,  1594,  1595,  1596,  1597,  1598,  1599,  1600,
+    1601,  1602,  1603,  1604,  1605,  1606,  1607,  1608,  1609,  1610,
+    1611,  1612,  1613,  1614,  1615,  1616,  1617,  1618,  1619,  1620,
+    1621,  1622,  1623,  1624,  1625,  1626,  1627,  1628,  1629,  1630,
+    1631,  1632,  1633,  1634,  1635,  1636,  1637,  1638,  1641,  1641,
+    1650,  1650,  1659,  1659,  1668,  1668,  1677,  1677,  1688,  1694,
+    1700,  1706,  1712,  1720,  1720,  1732,  1733,  1737,  1738,  1739,
+    1744,  1744,  1752,  1753,  1754,  1759,  1760,  1761,  1762,  1763,
+    1764,  1765,  1766,  1767,  1768,  1769,  1770,  1771,  1772,  1773,
+    1774,  1775,  1776,  1777,  1778,  1779,  1780,  1781,  1782,  1783,
+    1784,  1785,  1786,  1787,  1788,  1789,  1790,  1791,  1792,  1793,
+    1794,  1795,  1796,  1797,  1798,  1799,  1800,  1801,  1808,  1808,
+    1822,  1822,  1831,  1832,  1835,  1836,  1837,  1844,  1844,  1859,
+    1859,  1873,  1874,  1877,  1878,  1879,  1884,  1885,  1886,  1887,
+    1888,  1889,  1890,  1891,  1892,  1893,  1896,  1898,  1904,  1906,
+    1906,  1915,  1915,  1924,  1924,  1933,  1935,  1935,  1944,  1954,
+    1954,  1967,  1968,  1973,  1974,  1975,  1982,  1982,  1994,  1994,
+    2006,  2007,  2012,  2013,  2014,  2021,  2022,  2023,  2024,  2025,
+    2026,  2027,  2028,  2029,  2030,  2033,  2035,  2035,  2044,  2046,
+    2048,  2054,  2060,  2069,  2069,  2082,  2083,  2086,  2087,  2088,
+    2093,  2093,  2103,  2103,  2113,  2114,  2115,  2120,  2121,  2122,
+    2123,  2124,  2125,  2126,  2127,  2130,  2130,  2139,  2145,  2145,
+    2170,  2170,  2200,  2200,  2213,  2214,  2217,  2218,  2219,  2224,
+    2224,  2236,  2236,  2248,  2249,  2250,  2255,  2256,  2257,  2258,
+    2259,  2260,  2261,  2262,  2263,  2264,  2265,  2266,  2269,  2269,
+    2278,  2284,  2284,  2293,  2299,  2308,  2308,  2319,  2320,  2323,
+    2324,  2325,  2330,  2330,  2339,  2339,  2348,  2349,  2352,  2353,
+    2354,  2360,  2361,  2362,  2363,  2364,  2365,  2366,  2367,  2368,
+    2369,  2370,  2373,  2373,  2384,  2384,  2395,  2395,  2404,  2404,
+    2413,  2413,  2422,  2422,  2431,  2431,  2445,  2445,  2456,  2462,
+    2462,  2473,  2474,  2475,  2480,  2480,  2490,  2491,  2494,  2495,
+    2496,  2501,  2502,  2503,  2504,  2505,  2506,  2507,  2508,  2509,
+    2510,  2511,  2512,  2513,  2514,  2517,  2519,  2519,  2528,  2528,
+    2537,  2546,  2546,  2559,  2560,  2561,  2566,  2567,  2568,  2569,
+    2570,  2571,  2572,  2573,  2574,  2577,  2577,  2585,  2586,  2587,
+    2590,  2596,  2596,  2605,  2611,  2619,  2627,  2627,  2638,  2639,
+    2640,  2645,  2646,  2647,  2648,  2649,  2652,  2652,  2661,  2661,
+    2673,  2673,  2686,  2687,  2688,  2693,  2694,  2695,  2696,  2697,
+    2698,  2701,  2707,  2707,  2716,  2722,  2722,  2732,  2732,  2745,
+    2745,  2755,  2756,  2757,  2762,  2763,  2764,  2765,  2766,  2767,
+    2768,  2769,  2770,  2771,  2772,  2775,  2781,  2781,  2790,  2796,
+    2796,  2805,  2811,  2817,  2817,  2826,  2827,  2830,  2830,  2841,
+    2841,  2853,  2853,  2863,  2864,  2865,  2871,  2872,  2875,  2875,
+    2886,  2894,  2894,  2907,  2908,  2909,  2915,  2915,  2923,  2924,
+    2925,  2930,  2931,  2932,  2933,  2934,  2935,  2936,  2939,  2945,
+    2945,  2954,  2954,  2965,  2966,  2967,  2972,  2972,  2980,  2981,
+    2982,  2987,  2988,  2989,  2990,  2991,  2994,  2994,  3003,  3009,
+    3015,  3021,  3021,  3030,  3030,  3041,  3042,  3043,  3048,  3049,
+    3052
   };
 
   void
@@ -6404,9 +6405,9 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp6_parser.yy"
 } } // isc::dhcp
-#line 6408 "dhcp6_parser.cc"
+#line 6409 "dhcp6_parser.cc"
 
-#line 3057 "dhcp6_parser.yy"
+#line 3058 "dhcp6_parser.yy"
 
 
 void

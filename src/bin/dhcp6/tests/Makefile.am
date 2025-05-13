@@ -15,6 +15,7 @@ DISTCLEANFILES += marker_file.h
 DISTCLEANFILES += test_data_files_config.h
 DISTCLEANFILES += test_libraries.h
 
+dhcp_data_dir = @localstatedir@/lib/@PACKAGE@
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
@@ -25,6 +26,7 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/kea6\"
 AM_CPPFLAGS += -DSYNTAX_FILE=\"$(abs_srcdir)/../dhcp6_parser.yy\"
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE=\"$(abs_top_builddir)/src/bin/lfc/kea-lfc\"
+AM_CPPFLAGS += -DDHCP_DATA_DIR="\"$(dhcp_data_dir)\""
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

@@ -317,9 +317,19 @@ that can be used to configure the memfile backend.
    default value of the ``persist`` parameter is ``true``, which enables
    writing lease updates to the lease file.
 
--  ``name``: specifies an absolute location of the lease file in which
-   new leases and lease updates are recorded. The default value for
-   this parameter is ``"[kea-install-dir]/var/lib/kea/kea-leases6.csv"``.
+-  ``name``: specifies the lease file in which new leases and lease updates
+   are recorded. The default value for this parameter is
+   ``"[kea-install-dir]/var/lib/kea/kea-leases6.csv"``.
+
+.. note::
+
+    As of Kea 2.7.9, lease files may only be loaded from the data directory
+    determined during compilation: ``"[kea-install-dir]/var/lib/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    this value is used in ``name``, Kea will emit an error and refuse to start
+    or, if already running, log an unrecoverable error.  For ease of use in
+    specifying a custom file name simply omit the path component from ``name``.
 
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes
@@ -6223,6 +6233,16 @@ memory lease file into its data directory. By default this directory is
        "data-directory": "/var/tmp/kea-server6",
        ...
    }
+
+.. note::
+
+    As of Kea 2.7.9, ``data-directory`` is deprecated. The duid and lease
+    files may only be loaded from the directory determined at
+    compilation: ``"[kea-install-dir]/var/lib/kea"``. This path may be
+    overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    this value is used in ``data-directory``, Kea will emit an error and
+    refuse to start or, if already running, log an unrecoverable error.
 
 .. _stateless-dhcp6:
 

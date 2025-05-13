@@ -13,7 +13,7 @@
 
   "lease-database": {
       "type": "memfile",
-      "name": "/tmp/kea-dhcp6.csv"
+      "name": "kea-dhcp6.csv"
   },
 
   "preferred-lifetime": 3000,

@@ -26,6 +26,7 @@
 #include <util/pid_file.h>
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
+#include <testutils/env_var_wrapper.h>
 
 #include <gtest/gtest.h>
 
@@ -45,6 +46,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
+using namespace isc::test;
 
 namespace {
 
@@ -105,16 +107,19 @@ public:
 /// @brief Test fixture class for @c Memfile_LeaseMgr
 class MemfileLeaseMgrTest : public GenericLeaseMgrTest {
 public:
-
     /// @brief memfile lease mgr test constructor
     ///
     /// Creates memfile and stores it in lmptr_ pointer
     MemfileLeaseMgrTest() :
-        io4_(getLeaseFilePath("leasefile4_0.csv")),
-        io6_(getLeaseFilePath("leasefile6_0.csv")),
         io_service_(getIOService()),
         timer_mgr_(TimerMgr::instance()),
-        extra_files_() {
+        extra_files_(),
+        data_dir_env_var_("KEA_DHCP_DATA_DIR") {
+
+        // Save the pre-test data dir and set it to the test directory.
+        CfgMgr::instance().clear();
+        original_datadir_ = CfgMgr::instance().getDataDir();
+        CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
 
         timer_mgr_->setIOService(io_service_);
         DatabaseConnection::setIOService(io_service_);
@@ -167,6 +172,9 @@ public:
         MultiThreadingMgr::instance().setMode(false);
 
         getIOService()->stopAndPoll();
+
+        // Revert to original data directory.
+        CfgMgr::instance().getDataDir(true, original_datadir_);
     }
 
     /// @brief Remove files being products of Lease File Cleanup.
@@ -204,7 +212,7 @@ public:
     /// @return Full path to the lease file.
     static std::string getLeaseFilePath(const std::string& filename) {
         std::ostringstream s;
-        s << TEST_DATA_BUILDDIR << "/" << filename;
+        s << CfgMgr::instance().getDataDir() << "/" << filename;
         return (s.str());
     }
 
@@ -388,12 +396,6 @@ public:
         return (lease);
     }
 
-    /// @brief Object providing access to v4 lease IO.
-    LeaseFileIO io4_;
-
-    /// @brief Object providing access to v6 lease IO.
-    LeaseFileIO io6_;
-
     /// @brief Pointer to the IO service used by the tests.
     IOServicePtr io_service_;
 
@@ -402,6 +404,12 @@ public:
 
     /// @brief List of names of other files to removed.
     vector<string> extra_files_;
+
+    /// @brief RAII wrapper for KEA_DHCP_DATA_DIR env variable.
+    EnvVarWrapper data_dir_env_var_;
+
+    /// @brief Stores the pre-test DHCP data directory.
+    std::string original_datadir_;
 };
 
 /// @brief This test checks if the LeaseMgr can be instantiated and that it
@@ -446,6 +454,68 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     // Moved to the end as it can leave the timer registered.
     pmap["max-row-errors"] = "5";
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+}
+
+/// @brief Verifies that the supported path is the enforced.
+TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
+    ASSERT_TRUE(data_dir_env_var_.getValue().empty());
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = "leasefile6_1.csv";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
+              CfgMgr::instance().validatePath("leasefile6_1.csv"));
+
+    pmap["name"] = "/tmp/leasefile6_1.csv";
+    std::ostringstream os;
+    os << "invalid path specified: '/tmp', supported path is '"
+       << CfgMgr::instance().getDataDir() << "'";
+
+    ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
+                     BadValue, os.str());
+}
+
+/// @brief Verifies that the supported path may be overridden with
+/// the environment variable KEA_DHCP_DATA_DIR.
+TEST_F(MemfileLeaseMgrTest, dataDirEnvVarOverride) {
+    ASSERT_TRUE(data_dir_env_var_.getValue().empty());
+    data_dir_env_var_.setValue("/tmp");
+    auto valid_path = CfgMgr::instance().getDataDir(true);
+    ASSERT_EQ(valid_path, "/tmp");
+
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = "leasefile6_1.csv";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
+              "/tmp/leasefile6_1.csv");
+}
+
+/// @brief Verifies that the supported path may be overridden with
+/// an explicit path even though its really only for UT testing.
+TEST_F(MemfileLeaseMgrTest, dataDirExplicitOveride) {
+    ASSERT_TRUE(data_dir_env_var_.getValue().empty());
+    auto valid_path = CfgMgr::instance().getDataDir(true, "/tmp");
+    ASSERT_EQ(valid_path, "/tmp");
+
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = "leasefile6_1.csv";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
+              "/tmp/leasefile6_1.csv");
 }
 
 /// @brief Checks if there is no lease manager NoLeaseManager is thrown.

@@ -572,6 +572,7 @@ data_directory: DATA_DIRECTORY {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr datadir(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.warning(@2, "data-directory is deprecated and will be ignored");
     ctx.stack_.back()->set("data-directory", datadir);
     ctx.leave();
 };

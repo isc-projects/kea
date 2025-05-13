@@ -97,6 +97,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6 = "DH
 extern const isc::log::MessageID DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START = "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4 = "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR = "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_FAILED_TO_OPEN = "DHCPSRV_MEMFILE_FAILED_TO_OPEN";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET4 = "DHCPSRV_MEMFILE_GET4";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6 = "DHCPSRV_MEMFILE_GET6";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_GET6_DUID = "DHCPSRV_MEMFILE_GET6_DUID";
@@ -381,6 +382,7 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START", "starting deletion of %1 expired-reclaimed leases",
     "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4", "extracting extended info saw %1 leases, extended info sanity checks modified %2 / updated %3 leases and %4 leases have relay or remote id",
     "DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR", "extracting extended info got an exception on the lease for %1: %2",
+    "DHCPSRV_MEMFILE_FAILED_TO_OPEN", "Could not open lease file: %1",
     "DHCPSRV_MEMFILE_GET4", "obtaining all IPv4 leases",
     "DHCPSRV_MEMFILE_GET6", "obtaining all IPv6 leases",
     "DHCPSRV_MEMFILE_GET6_DUID", "obtaining IPv6 leases for DUID %1",

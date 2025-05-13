@@ -94,7 +94,7 @@ CSVLeaseFile6Test::CSVLeaseFile6Test()
 std::string
 CSVLeaseFile6Test::absolutePath(const std::string& filename) {
     std::ostringstream s;
-    s << DHCP_DATA_DIR << "/" << filename;
+    s << TEST_DATA_BUILDDIR << "/" << filename;
     return (s.str());
 }
 

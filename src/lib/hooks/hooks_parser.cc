@@ -23,20 +23,31 @@ using namespace isc::util::file;
 namespace isc {
 namespace hooks {
 
+namespace {
+    // Singleton PathChecker to set and hold valid hooks library path.
+    PathCheckerPtr hooks_path_checker_;
+};
+
 std::string
 HooksLibrariesParser::getHooksPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {
-    static std::string default_hooks_path = "";
-    if (default_hooks_path.empty() || reset) {
-        if (explicit_path.empty()) {
-            default_hooks_path = std::string(std::getenv("KEA_HOOKS_PATH") ?
-                                             std::getenv("KEA_HOOKS_PATH")
-                                             : DEFAULT_HOOKS_PATH);
-        } else {
-            default_hooks_path = explicit_path;
+    if (!hooks_path_checker_ || reset) {
+        hooks_path_checker_.reset(new PathChecker(DEFAULT_HOOKS_PATH, "KEA_HOOKS_PATH"));
+        if (!explicit_path.empty()) {
+            hooks_path_checker_->getPath(true, explicit_path);
         }
     }
 
-    return (default_hooks_path);
+    return (hooks_path_checker_->getPath());
+}
+
+std::string
+HooksLibrariesParser::validatePath(const std::string libpath,
+                                   bool enforce_path /* = true */) {
+    if (!hooks_path_checker_) {
+        getHooksPath();
+    }
+
+    return (hooks_path_checker_->validatePath(libpath, enforce_path));
 }
 
 // @todo use the flat style, split into list and item
@@ -116,13 +127,6 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
 
         libraries.add(libname, parameters);
     }
-}
-
-std::string
-HooksLibrariesParser::validatePath(const std::string libpath,
-                                   bool enforce_path /* = true */) {
-    return (FileManager::validatePath(HooksLibrariesParser::getHooksPath(),
-                                      libpath, enforce_path));
 }
 
 }

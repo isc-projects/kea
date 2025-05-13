@@ -726,15 +726,6 @@ SrvConfig::toElement() const {
     // Set user-context
     contextToElement(dhcp);
 
-    // Set data directory if DHCPv6 and specified.
-    if (family == AF_INET6) {
-        const util::Optional<std::string>& datadir =
-            CfgMgr::instance().getDataDir();
-        if (!datadir.unspecified()) {
-            dhcp->set("data-directory", Element::create(datadir));
-        }
-    }
-
     // Set compatibility flags.
     ElementPtr compatibility = Element::createMap();
     if (getLenientOptionParsing()) {
