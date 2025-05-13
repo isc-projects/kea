@@ -24,6 +24,7 @@ export KEA_DHCP_DATA_DIR="@abs_top_builddir@/src/bin/shell/tests"
 LEASE_FILE="@abs_top_builddir@/src/bin/shell/tests/test_leases.csv"
 
 # Path to the Dhcp6 Server log file.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/shell/tests"
 LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
 
 # Dhcp6 Server configuration to be stored in the configuration file.

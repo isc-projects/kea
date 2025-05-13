@@ -2,6 +2,8 @@ SUBDIRS = cfgrpt . testutils tests
 dhcp_data_dir = @runstatedir@/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DPIDFILE_DIR="\"$(dhcp_data_dir)\""
+log_file_dir = @localstatedir@/log/@PACKAGE@
+AM_CPPFLAGS += -DLOGFILE_DIR="\"$(log_file_dir)\""
 
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)

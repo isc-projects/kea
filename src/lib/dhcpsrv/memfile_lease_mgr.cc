@@ -3505,7 +3505,7 @@ Memfile_LeaseMgr::factory(const isc::db::DatabaseConnection::ParameterMap& param
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_FAILED_TO_OPEN)
             .arg(ex.what());
-        throw ex;
+        throw;
     }
 }
 
