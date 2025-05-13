@@ -323,7 +323,7 @@ that can be used to configure the memfile backend.
 
 .. note::
 
-    As of Kea 2.7.9, lease files may only be loaded from the data directory
+    As of Kea 2.4.2, lease files may only be loaded from the data directory
     determined during compilation: ``"[kea-install-dir]/var/lib/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
@@ -6043,7 +6043,7 @@ memory lease file into its data directory. By default this directory is
 
 .. note::
 
-    As of Kea 2.7.9, ``data-directory`` is deprecated. The duid and lease
+    As of Kea 2.4.2, ``data-directory`` is deprecated. The duid and lease
     files may only be loaded from the directory determined at
     compilation: ``"[kea-install-dir]/var/lib/kea"``. This path may be
     overridden at startup by setting the environment variable
