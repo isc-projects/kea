@@ -13,6 +13,7 @@ set -eu
 # Path to the temporary configuration file.
 CFG_FILE="@abs_top_builddir@/src/bin/netconf/tests/shtests/test_config.json"
 # Path to the Kea log file.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/netconf/tests/shtests"
 LOG_FILE="@abs_top_builddir@/src/bin/netconf/tests/shtests/test.log"
 
 # Kea-netconf configuration to be stored in the configuration file.
