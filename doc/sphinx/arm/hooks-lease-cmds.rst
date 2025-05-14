@@ -1095,6 +1095,17 @@ to the previous filename: for example, ``.bak14326``.
 
 .. note::
 
+    As of Kea 2.7.9, the lease file may only be written to the data directory
+    determined during compilation: ``"[kea-install-dir]/var/lib/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    this value is used in ``name``, Kea will emit an error and refuse to start
+    or, if already running, log an unrecoverable error.  For ease of use in
+    specifying a custom file name simply omit the path portion from ``filename``.
+
+
+.. note::
+
    These commands do not replace the LFC mechanism; they should be used
    only in exceptional circumstances, such as when recovering after
    running out of disk space.

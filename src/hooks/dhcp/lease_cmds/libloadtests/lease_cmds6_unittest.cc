@@ -4409,7 +4409,7 @@ void Lease6CmdsTest::testLease6ConflictingBulkApplyAdd() {
 }
 
 void Lease6CmdsTest::testLease6Write() {
-    // lease4-write negative tests. Positive tests are in the
+    // lease6-write negative tests. Positive tests are in the
     // memfile_lease_mgr_unittest.cc file.
 
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -4444,8 +4444,22 @@ void Lease6CmdsTest::testLease6Write() {
         "        \"filename\": \"\"\n"
         "    }\n"
         "}";
-    exp_rsp = "'filename' parameter is empty";
+    exp_rsp = "'filename' parameter is invalid: path: '' has no filename";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must use supported path.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"/tmp/myleases.txt\"\n"
+        "    }\n"
+        "}";
+
+    std::ostringstream os;
+    os << "'filename' parameter is invalid: invalid path specified:"
+       << " '/tmp', supported path is '" << CfgMgr::instance().getDataDir() << "'";
+
 }
 
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {
