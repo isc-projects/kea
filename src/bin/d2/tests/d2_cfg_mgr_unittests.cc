@@ -242,7 +242,7 @@ public:
 };
 
 /// @brief Convenience macros for invoking runOrConfig()
-#define RUN_CONFIG_OK(a) (runConfigOrFail(a, NO_ERROR, ""))
+#define RUN_CONFIG_OK(a) (static_cast<void>(runConfigOrFail(a, NO_ERROR, "")))
 #define SYNTAX_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,SYNTAX_ERROR,b))
 #define LOGIC_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,LOGIC_ERROR,b))
 
