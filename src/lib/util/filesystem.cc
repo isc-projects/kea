@@ -257,7 +257,7 @@ PathChecker::validatePath(const std::string input_path_str,
     auto filename = input_path.filename();
     if (filename.empty()) {
         isc_throw(BadValue, "path: '" << input_path.str() << "' has no filename");
-     }
+    }
 
     auto parent_path = input_path.parentPath();
     if (!parent_path.empty()) {

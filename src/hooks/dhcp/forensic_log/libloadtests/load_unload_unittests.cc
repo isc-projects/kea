@@ -17,6 +17,7 @@
 #include <dhcpsrv/testutils/lib_load_test_fixture.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
+#include <dhcpsrv/legal_log_mgr.h>
 #include <testutils/gtest_utils.h>
 
 #ifdef HAVE_MYSQL

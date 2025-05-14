@@ -58,7 +58,7 @@ public:
     void parseConfiguration(const isc::data::ConstElementPtr& log_config,
                             bool verbose = false);
 
-    /// @brief Fetches the supported log file path. 
+    /// @brief Fetches the supported log file path.
     ///
     /// The first call to this function with no arguments will set the default
     /// hooks path to either the value of LOGFILE_DIR or the environment
@@ -80,7 +80,7 @@ public:
     ///
     /// @return validated path
     static std::string validatePath(const std::string logpath, bool enforce_path = true);
-   
+
 private:
 
     /// @brief Parses one JSON structure in Server/loggers" array

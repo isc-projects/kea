@@ -155,7 +155,6 @@ LogConfigParser::validatePath(const std::string logpath,
     return (log_path_checker_->validatePath(logpath, enforce_path));
 }
 
-
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
                                          isc::data::ConstElementPtr output_options) {
     if (!output_options) {
@@ -181,8 +180,8 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
             try {
                 dest.output_ = validatePath(output_str);
             } catch (const std::exception& ex) {
-                isc_throw(BadValue, "invalid path in `output`: " << ex.what() 
-                          <<  " (" << output_option->getPosition() << ")");
+                isc_throw(BadValue, "invalid path in `output`: " << ex.what()
+                          << " (" << output_option->getPosition() << ")");
             }
         }
 

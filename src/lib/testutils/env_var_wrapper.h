@@ -45,7 +45,7 @@ private:
     std::string name_;
 
     /// @brief Value of the env variable at the time the wrapper
-    /// was constructed. 
+    /// was constructed.
     std::string original_value_;
 };
 

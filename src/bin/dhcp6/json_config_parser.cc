@@ -178,9 +178,9 @@ public:
         if (global->contains("data-directory")) {
             auto dd = getString(global, "data-directory");
             if (dd != CfgMgr::instance().getDataDir()) {
-                isc_throw(DhcpConfigError, 
+                isc_throw(DhcpConfigError,
                           "'data-directory' of '" << dd << "' is invalid,"
-                          << " supported path is '" 
+                          << " supported path is '"
                           << CfgMgr::instance().getDataDir() << "'");
             }
 

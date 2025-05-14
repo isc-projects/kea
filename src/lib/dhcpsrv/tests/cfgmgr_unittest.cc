@@ -288,7 +288,7 @@ public:
     /// @brief Sets the DHCP data path for server data files.
     /// @param custom_path path to use.
     void setDataDir(const std::string explicit_path = "") {
-        CfgMgr::instance().getDataDir(true, 
+        CfgMgr::instance().getDataDir(true,
                                       (!explicit_path.empty() ?
                                       explicit_path : std::string(DHCP_DATA_DIR)));
     }

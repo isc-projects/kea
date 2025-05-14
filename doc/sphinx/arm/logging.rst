@@ -563,7 +563,7 @@ interpreted as a filename to which messages should be written.
     path may be overridden at startup by setting the environment variable
     ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
     this value is used in ``output``, Kea will emit an error and refuse to start
-    or, if already running, log an unrecoverable error.  For ease of use simply 
+    or, if already running, log an unrecoverable error.  For ease of use simply
     omit the path component from ``output`` and specify only the file name.
 
 

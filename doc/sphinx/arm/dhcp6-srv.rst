@@ -333,7 +333,6 @@ that can be used to configure the memfile backend.
     or, if already running, log an unrecoverable error.  For ease of use in
     specifying a custom file name simply omit the path component from ``name``.
 
-
 -  ``lfc-interval``: specifies the interval, in seconds, at which the
    server will perform a lease file cleanup (LFC). This removes
    redundant (historical) information from the lease file and
