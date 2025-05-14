@@ -13,6 +13,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <eval/eval_context.h>
 #include <util/reconnect_ctl.h>
+#include <util/filesystem.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -32,6 +33,11 @@ using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::util;
 using namespace std;
+
+namespace {
+    // Singleton PathChecker to set and hold valid legal log path.
+    file::PathCheckerPtr legal_log_path_checker_;
+};
 
 void
 LegalLogMgr::parseConfig(const ConstElementPtr& parameters, DatabaseConnection::ParameterMap& map) {
@@ -366,6 +372,28 @@ actionToVerb(Action action) {
     default:
         return ("unknown-action");
     }
+}
+
+std::string
+LegalLogMgr::getLogPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {
+    if (!legal_log_path_checker_ || reset) {
+        legal_log_path_checker_.reset(new file::PathChecker(LEGAL_LOG_DIR, "KEA_LEGAL_LOG_DIR"));
+        if (!explicit_path.empty()) {
+            legal_log_path_checker_->getPath(true, explicit_path);
+        }
+    }
+
+    return (legal_log_path_checker_->getPath());
+}
+
+std::string
+LegalLogMgr::validatePath(const std::string logpath,
+                          bool enforce_path /* = true */) {
+    if (!legal_log_path_checker_) {
+        getLogPath();
+    }
+    
+    return (legal_log_path_checker_->validatePath(logpath, enforce_path));
 }
 
 } // namespace dhcp

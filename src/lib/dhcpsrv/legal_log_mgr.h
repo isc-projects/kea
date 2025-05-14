@@ -52,6 +52,32 @@ public:
     /// Derived destructors do call the close method.
     virtual ~LegalLogMgr() = default;
 
+    /// @brief Fetches the supported legal log file path.
+    ///
+    /// The first call to this function with no arguments will set the default
+    /// legal log path to either the value of LEGAL_LOG_DIR or the environment
+    /// variable KEA_LEGAL LOG_DIR if it is defined. Subsequent calls with no
+    /// arguments will simply return this value.
+    ///
+    /// @param reset recalculate when true, defaults to false.
+    /// @param explicit_path set default log path to this value. This is
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default log file path.
+    static std::string getLogPath(bool reset = false,
+                                  const std::string explicit_path = "");
+
+    /// @brief Validates a log path against the supported path for legal
+    /// log files.
+    ///
+    /// @param logpath path to validate.
+    /// @param enforce_path enables validation against the supported path.
+    /// If false simply returns the input path.
+    ///
+    /// @return validated path
+    static std::string validatePath(const std::string logpath,
+                                    bool enforce_path = true);
+
     /// @brief Parse database specification.
     ///
     /// Parse the configuration and check that the various keywords are

@@ -279,6 +279,31 @@ PathChecker::validatePath(const std::string input_path_str,
     return (valid_path);
 }
 
+std::string
+PathChecker::validateDirectory(const std::string input_path_str,
+                               bool enforce_path /* = true */) const {
+    std::string input_copy = trim(input_path_str);
+    if (!enforce_path) {
+        return(input_copy);
+    }
+
+    // We only allow absolute path equal to default. Catch an invalid path.
+    if (!input_path_str.empty()) {
+        std::string input_copy = input_path_str;
+        while (!input_copy.empty() && input_copy.back() == '/') {
+               input_copy.pop_back();
+        }
+
+        if (input_copy != path_) {
+            isc_throw(BadValue, "invalid path specified: '"
+                      << input_path_str << "', supported path is '"
+                      << path_ << "'");
+        }
+    }
+
+    return (path_);
+}
+
 }  // namespace file
 }  // namespace util
 }  // namespace isc
