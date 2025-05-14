@@ -13,12 +13,19 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
+#include <util/filesystem.h>
 
 using namespace isc::data;
 using namespace isc::log;
+using namespace isc::util::file;
 
 namespace isc {
 namespace process {
+
+namespace {
+    // Singleton PathChecker to set and hold valid log file path.
+    PathCheckerPtr log_path_checker_;
+};
 
 LogConfigParser::LogConfigParser(const ConfigPtr& storage)
     :config_(storage), verbose_(false) {
@@ -126,6 +133,28 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     config_->addLoggingInfo(info);
 }
 
+std::string
+LogConfigParser::getLogPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {
+    if (!log_path_checker_ || reset) {
+        log_path_checker_.reset(new PathChecker(LOGFILE_DIR, "KEA_LOG_FILE_DIR"));
+        if (!explicit_path.empty()) {
+            log_path_checker_->getPath(true, explicit_path);
+        }
+    }
+
+    return (log_path_checker_->getPath());
+}
+
+std::string
+LogConfigParser::validatePath(const std::string logpath,
+                                   bool enforce_path /* = true */) {
+    if (!log_path_checker_) {
+        getLogPath();
+    }
+
+    return (log_path_checker_->validatePath(logpath, enforce_path));
+}
+
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,
                                          isc::data::ConstElementPtr output_options) {
     if (!output_options) {
@@ -141,7 +170,20 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
             isc_throw(BadValue, "output-options entry does not have a mandatory 'output' "
                       "element (" << output_option->getPosition() << ")");
         }
-        dest.output_ = output->stringValue();
+
+        auto output_str = output->stringValue();
+        if ((output_str == "stdout") ||
+            (output_str == "stderr") ||
+            (output_str == "syslog")) {
+            dest.output_ = output_str;
+        } else {
+            try {
+                dest.output_ = validatePath(output_str);
+            } catch (const std::exception& ex) {
+                isc_throw(BadValue, "invalid path in `output`: " << ex.what()
+                          << " (" << output_option->getPosition() << ")");
+            }
+        }
 
         isc::data::ConstElementPtr maxver_ptr = output_option->get("maxver");
         if (maxver_ptr) {

@@ -58,6 +58,29 @@ public:
     void parseConfiguration(const isc::data::ConstElementPtr& log_config,
                             bool verbose = false);
 
+    /// @brief Fetches the supported log file path.
+    ///
+    /// The first call to this function with no arguments will set the default
+    /// hooks path to either the value of LOGFILE_DIR or the environment
+    /// variable KEA_LOG_FILE_DIR if it is defined. Subsequent calls with no
+    /// arguments will simply return this value.
+    ///
+    /// @param reset recalculate when true, defaults to false.
+    /// @param explicit_path set default log path to this value. This is
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default log file path.
+    static std::string getLogPath(bool reset = false, const std::string explicit_path = "");
+
+    /// @brief Validates a library path against the supported path for log files.
+    ///
+    /// @param logpath path to validate.
+    /// @param enforce_path enables validation against the supported path.
+    /// If false verifies only that the path contains a file name.
+    ///
+    /// @return validated path
+    static std::string validatePath(const std::string logpath, bool enforce_path = true);
+
 private:
 
     /// @brief Parses one JSON structure in Server/loggers" array

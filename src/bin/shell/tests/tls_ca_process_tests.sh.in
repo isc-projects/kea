@@ -15,10 +15,13 @@ set -eu
 . "@abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh"
 
 # Path to the temporary configuration file.
-CFG_FILE="@abs_top_builddir@/src/bin/agent/tests/test_config.json"
+CFG_FILE="@abs_top_builddir@/src/bin/shell/tests/test_config.json"
 
 # Path to the Control Agent log file.
-LOG_FILE="@abs_top_builddir@/src/bin/agent/tests/test.log"
+LOG_FILE="@abs_top_builddir@/src/bin/shell/tests/test.log"
+
+# Set env KEA_LOG_FILE_DIR to override default log path.
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/shell/tests"
 
 # Path to the test certificate authority directory.
 TEST_CA_DIR="@abs_top_srcdir@/src/lib/asiolink/testutils/ca"

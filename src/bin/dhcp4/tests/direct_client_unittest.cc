@@ -219,7 +219,7 @@ DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
     // local and remote address are set like it was a message sent from the
     // directly connected client.
     Pkt4Ptr received;
-    createPacketFromBuffer(msg, received);
+    static_cast<void>(createPacketFromBuffer(msg, received));
     received->setIface(iface);
     received->setIndex(ifindex);
     received->setLocalAddr(IOAddress("255.255.255.255"));

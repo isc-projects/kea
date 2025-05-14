@@ -6236,7 +6236,7 @@ memory lease file into its data directory. By default this directory is
 
 .. note::
 
-    As of Kea 2.7.9, ``data-directory`` is deprecated. The duid and lease
+    As of Kea 2.6.3, ``data-directory`` is deprecated. The duid and lease
     files may only be loaded from the directory determined at
     compilation: ``"[kea-install-dir]/var/lib/kea"``. This path may be
     overridden at startup by setting the environment variable

@@ -436,7 +436,7 @@
                 // - syslog (logs to syslog)
                 // - syslog:name (logs to syslog using specified name)
                 // Any other value is considered a name of the file
-                "output": "@localstatedir@/log/kea-dhcp4.log"
+                "output": "kea-dhcp4.log"
 
                 // Shorter log pattern suitable for use with systemd,
                 // avoids redundant information

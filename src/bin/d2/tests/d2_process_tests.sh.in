@@ -17,6 +17,10 @@ LOG_FILE="@abs_top_builddir@/src/bin/d2/tests/test.log"
 # D2 configuration to be stored in the configuration file.
 # Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
 export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/d2/tests/.libs"
+
+# Set env KEA_LOG_FILE_DIR to override default log path
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/d2/tests"
+
 CONFIG="{
     \"DhcpDdns\":
     {

@@ -59,6 +59,10 @@ KEACTRL_BUILD_DIR="@abs_top_builddir@"
 KEACTRL_CFG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf"
 # Path to the Kea log file.
 LOG_FILE="@abs_top_builddir@/src/bin/keactrl/tests/test.log"
+
+# Set env KEA_LOG_FILE_DIR to override default log path
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/keactrl/tests"
+
 # Binaries' names
 wildcard_name="kea-"
 kea4_name="${wildcard_name}dhcp4"

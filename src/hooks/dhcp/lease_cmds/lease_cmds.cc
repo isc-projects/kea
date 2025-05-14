@@ -2674,9 +2674,12 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
         if (file->getType() != Element::string) {
             isc_throw(BadValue, "'filename' parameter must be a string");
         }
-        string filename = file->stringValue();
-        if (filename.empty()) {
-            isc_throw(BadValue, "'filename' parameter is empty");
+
+        std::string filename;
+        try {
+          filename = CfgMgr::instance().validatePath(file->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "'filename' parameter is invalid: " << ex.what());
         }
 
         if (v4) {
@@ -2684,6 +2687,7 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
         } else {
             LeaseMgrFactory::instance().writeLeases6(filename);
         }
+
         ostringstream s;
         s << (v4 ? "IPv4" : "IPv6")
           << " lease database into '"
