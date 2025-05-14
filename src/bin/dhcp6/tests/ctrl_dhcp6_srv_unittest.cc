@@ -647,6 +647,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
 
 // Check that the "config-set" command will replace current configuration
 TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
+    setLogTestPath("/dev");
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments
@@ -884,6 +885,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
 
 // Verify that the "config-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
+    setLogTestPath("/dev");
     createUnixChannelServer();
 
     // Define strings to permutate the config arguments

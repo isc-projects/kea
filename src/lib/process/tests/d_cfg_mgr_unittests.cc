@@ -261,7 +261,7 @@ TEST_F(DStubCfgMgrTest, simpleParseConfig) {
     string config = "{ \"bool_test\": true , \n"
                     "  \"uint32_test\": 77 , \n"
                     "  \"string_test\": \"hmmm chewy\" }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_NO_THROW(static_cast<void>(fromJSON(config)));
 
     answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
@@ -273,7 +273,7 @@ TEST_F(DStubCfgMgrTest, simpleParseConfigWithCallback) {
     string config = "{ \"bool_test\": true , \n"
                     "  \"uint32_test\": 77 , \n"
                     "  \"string_test\": \"hmmm chewy\" }";
-    ASSERT_NO_THROW(fromJSON(config));
+    ASSERT_NO_THROW(static_cast<void>(fromJSON(config)));
 
     answer_ = cfg_mgr_->simpleParseConfig(config_set_, false,
                                           []() {

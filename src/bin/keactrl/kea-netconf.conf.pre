@@ -69,7 +69,7 @@
                 // - syslog (logs to syslog)
                 // - syslog:name (logs to syslog using specified name)
                 // Any other value is considered a name of a time
-                "output": "@localstatedir@/log/kea-netconf.log"
+                "output": "kea-netconf.log"
 
                 // Shorter log pattern suitable for use with systemd,
                 // avoids redundant information

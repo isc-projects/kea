@@ -624,6 +624,17 @@ output), ``stderr`` (messages are printed on stderr), ``syslog``
 (messages are logged to syslog using a specified name). Any other value is
 interpreted as a filename to which messages should be written.
 
+.. note::
+
+    As of Kea 2.4.2, log files may only be written to the output directory
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
+    this value is used in ``output``, Kea will emit an error and refuse to start
+    or, if already running, log an unrecoverable error.  For ease of use simply
+    omit the path component from ``output`` and specify only the file name.
+
+
 The ``flush`` (boolean) Option
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

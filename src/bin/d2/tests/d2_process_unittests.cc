@@ -636,7 +636,7 @@ TEST_F(D2ProcessTest, notLoopbackTest) {
     // Note we don't care nor can we predict if this
     // succeeds or fails. The address and port may or may
     // not be valid on the test host.
-    runWithConfig(config);
+    static_cast<void>(runWithConfig(config));
 }
 
 /// @brief Used to permit visual inspection of logs to ensure

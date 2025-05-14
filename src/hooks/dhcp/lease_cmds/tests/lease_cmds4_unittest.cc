@@ -3424,8 +3424,23 @@ void Lease4CmdsTest::testLease4Write() {
         "        \"filename\": \"\"\n"
         "    }\n"
         "}";
-    exp_rsp = "'filename' parameter is empty";
+    exp_rsp = "'filename' parameter is invalid: path: '' has no filename";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Filename must use supported path.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"/tmp/myleases.txt\"\n"
+        "    }\n"
+        "}";
+
+    std::ostringstream os;
+    os << "'filename' parameter is invalid: invalid path specified:"
+       << " '/tmp', supported path is '" << CfgMgr::instance().getDataDir() << "'";
+
+    testCommand(txt, CONTROL_RESULT_ERROR, os.str());
 }
 
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {

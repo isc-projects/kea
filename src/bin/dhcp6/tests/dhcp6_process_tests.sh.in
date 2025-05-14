@@ -28,8 +28,11 @@ export KEA_LFC_EXECUTABLE="@abs_top_builddir@/src/bin/lfc/kea-lfc"
 # Path to test hooks library
 HOOK_PATH="@abs_top_builddir@/src/bin/dhcp6/tests/.libs/libco3.so"
 
-# Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
+# Set env KEA_HOOKS_PATH to override DEFAULT_HOOKS_PATH
 export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/dhcp6/tests/.libs"
+
+# Set env KEA_LOG_FILE_DIR to override default log path
+export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/dhcp6/tests"
 
 # Kea configuration to be stored in the configuration file.
 CONFIG="{
