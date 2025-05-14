@@ -53,12 +53,14 @@ public:
     /// over from previous tests
     LegalLibLoadTest() : LibLoadTest(LEGAL_LOG_LIB_SO) {
         reset();
+        setLogTestPath();
     }
 
     /// @brief Destructor
     /// Removes files that may be left over from previous tests
     virtual ~LegalLibLoadTest() {
         reset();
+        resetLogPath();
     }
 
     /// @brief Removes files that may be left over from previous tests
@@ -72,6 +74,18 @@ public:
             // files to be removed don't exist.
             ;
         }
+    }
+
+    /// @brief Sets the log path for log files.
+    /// @param custom_path path to use as the log file path.
+    void setLogTestPath(const std::string explicit_path = "") {
+        LegalLogMgr::getLogPath(true, (!explicit_path.empty() ?
+                                      explicit_path : TEST_DATA_BUILDDIR));
+    }
+
+    /// @brief Resets the log path to LEGAL_LOG_DIR.
+    void resetLogPath() {
+        LegalLogMgr::getLogPath(true);
     }
 
     /// @brief Checks if the given file exists
@@ -115,7 +129,6 @@ TEST_F(LegalLibLoadTest, invalidType) {
     data::ElementPtr params = data::Element::createMap();
     params->set("type", data::Element::create("no-such-type"));
     // Still set path and base-name in the case the library loads
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("nobody-should-use-this"));
 
     // Attempting to Load the library should fail.
@@ -129,10 +142,12 @@ TEST_F(LegalLibLoadTest, invalidType) {
 // one runs the risk of harming a legal file opened with default values
 // by a live instance of Kea.
 TEST_F(LegalLibLoadTest, validLoad) {
+    // Set family and daemon's proc name.
+    isc::dhcp::CfgMgr::instance().setFamily(AF_INET);
+    isc::process::Daemon::setProcName("kea-dhcp4");
 
     // Prepare parameters for the callout parameters library.
     data::ElementPtr params = data::Element::createMap();
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("test-legal"));
     params->set("request-parser-format", data::Element::create("'request'"));
     params->set("response-parser-format", data::Element::create("'response'"));
@@ -169,7 +184,6 @@ TEST_F(LegalLibLoadTest, invalidDaemonLoad) {
     // Prepare parameters for the callout parameters library.
     // Even if loads will fail still avoid defaults!
     data::ElementPtr params = data::Element::createMap();
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("test-legal"));
 
     // V4 is invalid when family is AF_INET6.
@@ -203,7 +217,6 @@ TEST_F(LegalLibLoadTest, fileValidLoad) {
 
     // Prepare parameters for the callout parameters library.
     data::ElementPtr params = data::Element::createMap();
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("test-legal"));
     params->set("type", data::Element::create("logfile"));
 
@@ -280,7 +293,6 @@ TEST_F(PgSqlLegalLibLoadTest, PgSqlValidLoad) {
     params->set("password", data::Element::create("keatest"));
 
     // Still set path and base-name in the case the library switches to file
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("nobody-should-use-this"));
 
     // Load the library. Is there a way to check more than return code?
@@ -298,7 +310,6 @@ TEST_F(PgSqlLegalLibLoadTest, PgSqlInvalidLoad) {
     params->set("password", data::Element::create("keatest"));
 
     // Still set path and base-name in the case the library switches to file
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("nobody-should-use-this"));
 
     // Attempting to Load the library should fail.
@@ -338,7 +349,6 @@ TEST_F(MySqlLegalLibLoadTest, MySqlValidLoad) {
     params->set("password", data::Element::create("keatest"));
 
     // Still set path and base-name in the case the library switches to file
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("nobody-should-use-this"));
 
     // Load the library. Is there a way to check more than return code?
@@ -356,7 +366,6 @@ TEST_F(MySqlLegalLibLoadTest, MySqlInvalidLoad) {
     params->set("password", data::Element::create("keatest"));
 
     // Still set path and base-name in the case the library switches to file
-    params->set("path", data::Element::create(TEST_DATA_BUILDDIR));
     params->set("base-name", data::Element::create("nobody-should-use-this"));
 
     // Attempting to Load the library should fail.

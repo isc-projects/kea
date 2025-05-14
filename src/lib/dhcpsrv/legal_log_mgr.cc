@@ -172,6 +172,11 @@ LegalLogMgr::parseFile(const ConstElementPtr& parameters, DatabaseConnection::Pa
     for (char const* const& key : { "path", "base-name", "time-unit", "prerotate", "postrotate" }) {
         ConstElementPtr const value(parameters->get(key));
         if (value) {
+            if (key == std::string("path")) {
+                auto valid_path = validatePath(value->stringValue());
+                file_parameters.emplace(key, valid_path);
+            }
+
             file_parameters.emplace(key, value->stringValue());
         }
     }
@@ -388,12 +393,12 @@ LegalLogMgr::getLogPath(bool reset /* = false */, const std::string explicit_pat
 
 std::string
 LegalLogMgr::validatePath(const std::string logpath,
-                          bool enforce_path /* = true */) {
+                               bool enforce_path /* = true */) {
     if (!legal_log_path_checker_) {
         getLogPath();
     }
     
-    return (legal_log_path_checker_->validatePath(logpath, enforce_path));
+    return (legal_log_path_checker_->validateDirectory(logpath, enforce_path));
 }
 
 } // namespace dhcp

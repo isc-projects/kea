@@ -16,6 +16,7 @@
 #include <dhcpsrv/legal_log_db_log.h>
 #include <legal_log_log.h>
 #include <rotating_file.h>
+#include <testutils/env_var_wrapper.h>
 
 #include <gtest/gtest.h>
 
@@ -26,6 +27,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::legal_log;
+using namespace isc::test;
 using namespace std;
 
 namespace {
@@ -37,11 +39,16 @@ DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
 
 /// @brief Test fixture
 struct LegalLogMgrTest : ::testing::Test {
+    /// @brief Construtor.
+    LegalLogMgrTest() : legal_log_dir_env_var_("KEA_LEGAL_LOG_DIR") {
+    }
+
     /// @brief Destructor.
     virtual ~LegalLogMgrTest() = default;
 
     /// @brief Called before each test.
     virtual void SetUp() override {
+        setLogTestPath();
         // Clean up from past tests.
         LegalLogMgrFactory::delAllBackends();
     }
@@ -51,6 +58,7 @@ struct LegalLogMgrTest : ::testing::Test {
         // Clean up from past tests.
         LegalLogMgrFactory::delAllBackends();
         reset();
+        resetLogPath();
     }
 
     /// @brief Removes files that may be left over from previous tests
@@ -66,8 +74,23 @@ struct LegalLogMgrTest : ::testing::Test {
         }
     }
 
+    /// @brief Sets the log path for log files.
+    /// @param custom_path path to use as the log file path.
+    void setLogTestPath(const std::string explicit_path = "") {
+        LegalLogMgr::getLogPath(true, (!explicit_path.empty() ?
+                                      explicit_path : TEST_DATA_BUILDDIR));
+    }
+
+    /// @brief Resets the log path to LEGAL_LOG_DIR.
+    void resetLogPath() {
+        LegalLogMgr::getLogPath(true);
+    }
+
     /// @brief Initializer.
     RotatingFileInit init_;
+
+    /// @brief RAII wrapper for KEA_LEGAL_LOG_DIR env variable.
+    EnvVarWrapper legal_log_dir_env_var_;
 };
 
 // Verifies output of genDurationString()
@@ -135,17 +158,70 @@ TEST_F(LegalLogMgrTest, emptyVectorDump) {
     EXPECT_TRUE(LegalLogMgr::vectorHexDump(bytes).empty());
 }
 
+// Verify path validation
+TEST_F(LegalLogMgrTest, pathValidation) {
+    isc::db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(LegalLogMgr::parseConfig(ConstElementPtr(), map));
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
+
+    // Default path should be OK.
+    ElementPtr params = Element::createMap();
+    params->set("base-name", Element::create("name"));
+    ASSERT_NO_THROW_LOG(LegalLogMgr::parseFile(params, map));
+
+    // Valid path should be OK.
+    params = Element::createMap();
+    params->set("path", Element::create(LegalLogMgr::getLogPath()));
+    ASSERT_NO_THROW_LOG(LegalLogMgr::parseFile(params, map));
+
+    // Invalid path should NOT be OK.
+    params = Element::createMap();
+    params->set("path", Element::create("/tmp"));
+    std::ostringstream os;
+    os << "invalid path specified: '/tmp', supported path is '"
+       << LegalLogMgr::getLogPath() << "'";
+    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), BadValue, os.str());
+}
+
+// Verify env variable path override.
+TEST_F(LegalLogMgrTest, pathEnvVarOverride) {
+    legal_log_dir_env_var_.setValue("/tmp");
+    resetLogPath();
+    isc::db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(LegalLogMgr::parseConfig(ConstElementPtr(), map));
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
+
+    // Default path should be OK.
+    ElementPtr params = Element::createMap();
+    params->set("base-name", Element::create("name"));
+    ASSERT_NO_THROW_LOG(LegalLogMgr::parseFile(params, map));
+
+    // Valid path should be OK.
+    params = Element::createMap();
+    params->set("path", Element::create("/tmp"));
+    ASSERT_NO_THROW_LOG(LegalLogMgr::parseFile(params, map));
+
+    // Invalid path should NOT be OK.
+    params = Element::createMap();
+    params->set("path", Element::create("/bogus"));
+    std::ostringstream os;
+    os << "invalid path specified: '/bogus', supported path is '"
+       << LegalLogMgr::getLogPath() << "'";
+    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), BadValue, os.str());
+}
+
 // Verify that parsing extra parameters for rotate file works
 TEST_F(LegalLogMgrTest, parseExtraRotatingFileParameters) {
     isc::db::DatabaseConnection::ParameterMap map;
     EXPECT_NO_THROW(LegalLogMgr::parseConfig(ConstElementPtr(), map));
-    map["path"] = TEST_DATA_BUILDDIR;
     EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
     EXPECT_TRUE(LegalLogMgrFactory::instance());
     RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*LegalLogMgrFactory::instance());
 
     ElementPtr params = Element::createMap();
-    params->set("path", Element::create("path"));
+    params->set("path", Element::create(LegalLogMgr::getLogPath()));
     params->set("base-name", Element::create("name"));
 
     params->set("time-unit", Element::create(0));
@@ -178,7 +254,6 @@ TEST_F(LegalLogMgrTest, parseExtraRotatingFileParameters) {
 // Verify that parsing extra parameters works
 TEST_F(LegalLogMgrTest, parseExtraParameters) {
     db::DatabaseConnection::ParameterMap map;
-    map["path"] = "path";
     map["base-name"] = "name";
     ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new RotatingFile(map)));
     ElementPtr params = Element::createMap();
@@ -208,13 +283,12 @@ TEST_F(LegalLogMgrTest, parseExtraParameters) {
 TEST_F(LegalLogMgrTest, fileNoParameters) {
     db::DatabaseConnection::ParameterMap map;
     EXPECT_NO_THROW(LegalLogMgr::parseFile(ConstElementPtr(), map));
-    map["path"] = TEST_DATA_BUILDDIR;
     ASSERT_NO_THROW(LegalLogMgrFactory::instance().reset(new RotatingFile(map)));
     ASSERT_NO_THROW(LegalLogMgrFactory::instance()->open());
     RotatingFile& rotating_file = dynamic_cast<RotatingFile&>(*LegalLogMgrFactory::instance());
     map.clear();
     rotating_file.apply(map);
-    EXPECT_EQ(rotating_file.getPath(), LEGAL_LOG_DIR);
+    EXPECT_EQ(rotating_file.getPath(), LegalLogMgr::getLogPath());
     EXPECT_EQ(rotating_file.getBaseName(), "kea-legal");
 }
 

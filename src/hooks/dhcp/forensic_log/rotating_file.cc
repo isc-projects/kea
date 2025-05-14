@@ -37,7 +37,7 @@ RotatingFile::RotatingFile(const DatabaseConnection::ParameterMap& parameters)
 
 void
 RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
-    string path(LEGAL_LOG_DIR);
+    string path(LegalLogMgr::getLogPath());
     string base("kea-legal");
     RotatingFile::TimeUnit unit(RotatingFile::TimeUnit::Day);
     int64_t count(1);

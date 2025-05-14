@@ -127,7 +127,18 @@ For :iscman:`kea-dhcp6`, the configuration is:
 The hook library parameters for the text file configuration are:
 
 -  ``path`` - the directory in which the forensic file(s) will be written.
-   The default value is ``[prefix]/var/lib/kea``. The directory must exist.
+   The default value is ``[kea-install-dir]/var/log/kea``. The directory
+   must exist.
+
+.. note::
+
+    As of Kea 2.7.9, log files may only be written to the output directory
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_LEGAL_LOG_DIR`` to the desired path.  If a path other than this value
+    is used in ``path``, Kea will emit an error and refuse to start or if already
+    running, if already running, log an unrecoverable error. For ease of use
+    simply omit the ``path`` parameter.
 
 -  ``base-name`` - an arbitrary value which is used in conjunction with the
    current system date to form the current forensic file name. It
