@@ -26,10 +26,10 @@ else
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 fi
 
-# Check version.
-version=$(mysql_version "${@}")
-if test "${version}" != "27.0"; then
-    printf 'This script upgrades 27.0 to 28.0. '
+# Check only major version to allow for intermediary backported schema changes.
+version=$(mysql_version "${@}" | cut -d '.' -f 1)
+if test "${version}" != '27'; then
+    printf 'This script upgrades 27.* to 28.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
 fi

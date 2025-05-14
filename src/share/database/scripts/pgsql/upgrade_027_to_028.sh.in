@@ -26,11 +26,11 @@ else
     . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
 fi
 
-VERSION=$(pgsql_version "$@")
-
-if [ "$VERSION" != "27.0" ]; then
-    printf 'This script upgrades 27.0 to 28.0. '
-    printf 'Reported version is %s. Skipping upgrade.\n' "${VERSION}"
+# Check only major version to allow for intermediary backported schema changes.
+version=$(pgsql_version "${@}" | cut -d '.' -f 1)
+if test "${version}" != '27'; then
+    printf 'This script upgrades 27.* to 28.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
 fi
 
