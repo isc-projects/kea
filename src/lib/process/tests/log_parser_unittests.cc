@@ -131,7 +131,7 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
 
     // We need to parse properly formed JSON and then extract
     // "loggers" element from it. For some reason fromJSON is
-    // throwing at openin0 square bracket
+    // throwing at opening square bracket
     ConstElementPtr config = Element::fromJSON(config_txt);
     config = config->get("loggers");
 
