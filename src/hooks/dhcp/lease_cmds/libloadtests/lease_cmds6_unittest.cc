@@ -4459,7 +4459,6 @@ void Lease6CmdsTest::testLease6Write() {
     std::ostringstream os;
     os << "'filename' parameter is invalid: invalid path specified:"
        << " '/tmp', supported path is '" << CfgMgr::instance().getDataDir() << "'";
-
 }
 
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {

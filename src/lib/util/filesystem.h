@@ -200,7 +200,7 @@ public:
 
     /// @brief Validates a directory against a supported path.
     ///
-    /// Used to validate a string that represents a directory that may 0or
+    /// Used to validate a string that represents a directory that may or
     /// may not end with a "/" (i.e "/foo/bar", bar is assumed to be the
     /// a directory, not a file.
     ///

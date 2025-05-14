@@ -39,7 +39,7 @@ DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
 
 /// @brief Test fixture
 struct LegalLogMgrTest : ::testing::Test {
-    /// @brief Construtor.
+    /// @brief Constructor.
     LegalLogMgrTest() : legal_log_dir_env_var_("KEA_LEGAL_LOG_DIR") {
     }
 

@@ -1103,7 +1103,6 @@ to the previous filename: for example, ``.bak14326``.
     or, if already running, log an unrecoverable error.  For ease of use in
     specifying a custom file name simply omit the path portion from ``filename``.
 
-
 .. note::
 
    These commands do not replace the LFC mechanism; they should be used
