@@ -532,6 +532,12 @@ An example command invocation looks like this:
        }
    }
 
+.. note::
+
+    As of Kea 2.7.9, the config file file may only be written to the same
+    directory as the config file used when starting Kea (passed as a ``-c``
+    argument).
+
 .. isccmd:: leases-reclaim
 .. _command-leases-reclaim:
 

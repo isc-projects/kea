@@ -290,11 +290,18 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
         // filename parameter was not specified, so let's use whatever we remember
         // from the command-line
         filename = getConfigFile();
-    }
-
-    if (filename.empty()) {
-        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
-                             "Please specify filename explicitly."));
+        if (filename.empty()) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    } else {
+        try {
+            checkWriteConfigFile(filename);
+        } catch (const isc::Exception& ex) {
+            return (createAnswer(CONTROL_RESULT_ERROR,
+                                 string("not allowed to write config into ") +
+                                 filename));
+        }
     }
 
     // Ok, it's time to write the file.
