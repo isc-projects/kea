@@ -144,7 +144,7 @@ Daemon::checkWriteConfigFile(std::string& file) {
         return;
     }
     isc_throw(isc::BadValue, "file " << file << " must be in the same "
-              << "directory as the config file (" << config_file_ << "'");
+              << "directory as the config file (" << config_file_ << ")");
 }
 
 std::string

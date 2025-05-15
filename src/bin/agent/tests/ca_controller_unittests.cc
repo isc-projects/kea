@@ -828,6 +828,9 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
     // Now clean up after ourselves.
     ctrl->registerCommands();
 
+    // Add a config file.
+    ctrl->setConfigFile(string(TEST_DATA_BUILDDIR) + string("/config.json"));
+
     // First, build the command:
     string file = string(TEST_DATA_BUILDDIR) + string("/config-write.json");
     string cmd_txt = "{ \"command\": \"config-write\" }";

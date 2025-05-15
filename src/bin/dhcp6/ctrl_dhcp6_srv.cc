@@ -301,9 +301,10 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&,
         try {
             checkWriteConfigFile(filename);
         } catch (const isc::Exception& ex) {
-            return (createAnswer(CONTROL_RESULT_ERROR,
-                                 string("not allowed to write config into ") +
-                                 filename));
+            std::ostringstream msg;
+            msg << "not allowed to write config into " << filename
+                << ": " << ex.what();
+            return (createAnswer(CONTROL_RESULT_ERROR, msg.str()));
         }
     }
 
