@@ -11,6 +11,7 @@
 #include <host_cache_parsers.h>
 #include <host_cache_log.h>
 #include <database/db_exceptions.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <util/encode/encode.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
@@ -750,9 +751,10 @@ HostCache::cacheWriteHandler(hooks::CalloutHandle& handle) {
             isc_throw(BadValue, "invalid (not a string) parameter");
         }
 
-        filename = cmd_args_->stringValue();
-        if (filename.empty()) {
-            isc_throw(BadValue, "invalid (empty string) parameter");
+        try {
+            filename = CfgMgr::instance().validatePath(cmd_args_->stringValue());
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "parameter is invalid: " << ex.what());
         }
 
         ofstream out(filename, ios::trunc);

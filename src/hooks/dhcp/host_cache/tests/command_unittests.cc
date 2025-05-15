@@ -11,6 +11,8 @@
 #include <host_cache.h>
 #include <host_cache_parsers.h>
 #include <hooks/hooks_manager.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <testutils/env_var_wrapper.h>
 #include <testutils/multi_threading_utils.h>
 #include <gtest/gtest.h>
 #include <fstream>
@@ -36,6 +38,11 @@ class CommandTest : public ::testing::Test {
 public:
     /// @brief Constructor
     CommandTest() {
+        // Save the pre-test data dir and set it to the test directory.
+        CfgMgr::instance().clear();
+        original_datadir_ = CfgMgr::instance().getDataDir();
+        CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
+
         hcptr_.reset(new HostCache());
         MultiThreadingMgr::instance().setMode(false);
     }
@@ -44,6 +51,9 @@ public:
     virtual ~CommandTest() {
         ::remove("dump.json");
         ::remove("source.json");
+
+        // Revert to original data directory.
+        CfgMgr::instance().getDataDir(true, original_datadir_);
     }
 
     /// @brief Creates a sample IPv4 host
@@ -290,6 +300,9 @@ public:
 
     /// @brief Host Cache
     HostCachePtr hcptr_;
+
+    /// @brief Stores the pre-test DHCP data directory.
+    std::string original_datadir_;
 };
 
 /// @brief Size handler function
@@ -686,6 +699,7 @@ CommandTest::testWriteCommand() {
     // Prepare
     handlerType write_handler = std::bind(&writeHandler, hcptr_, ph::_1);
     string file_txt = "dump.json";
+    string full_file_txt = CfgMgr::instance().getDataDir() + "/" + file_txt;
     string write_cmd =
         "{ \"command\": \"cache-write\", \"arguments\": \"" + file_txt + "\" }";
 
@@ -696,17 +710,29 @@ CommandTest::testWriteCommand() {
 
     // Write file
     checkCommand(write_handler, write_cmd, 0, 0,
-                 "2 entries dumped to '" + file_txt + "'.");
+                 "2 entries dumped to '" + full_file_txt + "'.");
 
     // Check file
-    ifstream f(file_txt, ios::binary | ios::ate);
+    ifstream f(full_file_txt, ios::binary | ios::ate);
     ASSERT_TRUE(f.good());
     EXPECT_LE(host4_txt.size(), static_cast<size_t>(f.tellg()));
-    ElementPtr from_file = Element::fromJSONFile(file_txt);
+    ElementPtr from_file = Element::fromJSONFile(full_file_txt);
     ASSERT_TRUE(from_file);
     ElementPtr expected = Element::createList();
     expected->add(Element::fromJSON(host4_txt));
     expected->add(Element::fromJSON(host6_txt));
+    EXPECT_EQ(*from_file, *expected);
+
+    // Check with full path.
+    write_cmd = "{ \"command\": \"cache-write\", \"arguments\": \"";
+    write_cmd += full_file_txt + "\" }";
+    checkCommand(write_handler, write_cmd, 0, 0,
+                 "2 entries dumped to '" + full_file_txt + "'.");
+    ifstream ff(full_file_txt, ios::binary | ios::ate);
+    ASSERT_TRUE(ff.good());
+    EXPECT_LE(host4_txt.size(), static_cast<size_t>(ff.tellg()));
+    from_file = Element::fromJSONFile(full_file_txt);
+    ASSERT_TRUE(from_file);
     EXPECT_EQ(*from_file, *expected);
 
     // Check errors
@@ -720,12 +746,16 @@ CommandTest::testWriteCommand() {
     string emptyarg_cmd =
         "{ \"command\": \"cache-write\", \"arguments\": \"\" }";
     checkCommand(write_handler, emptyarg_cmd, 1, 1,
-                 "invalid (empty string) parameter");
-    string notexists = "/this/does/not/exit";
-    string notexists_cmd =
-        "{ \"command\": \"cache-write\", \"arguments\": \"" + notexists + "\" }";
-    checkCommand(write_handler, notexists_cmd, 1, 1,
-                 "Unable to open file '" + notexists + "' for writing.");
+                 "parameter is invalid: path: '' has no filename");
+    string badpath = "/foo/bar";
+    string badpath_cmd =
+        "{ \"command\": \"cache-write\", \"arguments\": \"" + badpath + "\" }";
+    string exp_error = "parameter is invalid: invalid path specified: ";
+    exp_error += "'/foo', ";
+    exp_error += "supported path is '";
+    exp_error += CfgMgr::instance().getDataDir();
+    exp_error += "'";
+    checkCommand(write_handler, badpath_cmd, 1, 1, exp_error);
 }
 
 // Verifies that cache-load can load a dump file.
@@ -1114,6 +1144,14 @@ TEST_F(CommandTest, write) {
 
 TEST_F(CommandTest, writeMultiThreading) {
     MultiThreadingTest mt(true);
+    testWriteCommand();
+}
+
+TEST_F(CommandTest, writeEnvVarOverride) {
+    EnvVarWrapper data_dir_env_var_("KEA_DHCP_DATA_DIR");
+    data_dir_env_var_.setValue("/tmp");
+    auto valid_path = CfgMgr::instance().getDataDir(true);
+    EXPECT_EQ(valid_path, "/tmp");
     testWriteCommand();
 }
 

@@ -7,6 +7,7 @@ dhcp_host_cache_tests_libs = [
     dhcp_host_cache_archive,
     kea_dhcpsrv_testutils_lib,
     kea_database_testutils_lib,
+    kea_testutils_lib,
 ]
 dhcp_host_cache_tests = executable(
     'dhcp-host-cache-tests',

@@ -137,12 +137,20 @@ example usage looks as follows:
 
    {
        "command": "cache-write",
-       "arguments": "/tmp/kea-host-cache.json"
+       "arguments": "/usr/local/var/lib/kea/kea-host-cache.json"
    }
 
-This causes the contents to be stored in the ``/tmp/kea-host-cache.json``
+This causes the contents to be stored in the ``/usr/local/var/lib/kea/kea-host-cache.json``
 file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
+
+.. note::
+
+    As of Kea 2.7.9, the cache file may only be written to the data directory
+    determined during compilation: ``"[kea-install-dir]/var/lib/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path. For ease of use in
+    specifying a custom file name simply omit the path portion from ``filename``.
 
 .. isccmd:: cache-load
 .. _command-cache-load:
