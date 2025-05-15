@@ -80,7 +80,7 @@ TEST_CA_DIR = TOP_SOURCE_DIR / 'src/lib/asiolink/testutils/ca'
 # So we revert what it does.
 if PREFIX == '/usr/local'
     SYSCONFDIR_INSTALLED = '/usr/local/etc'
-    LOGDIR_INSTALLED = '/usr/local/var/log'
+    LOGDIR_INSTALLED = '/usr/local/var/log/kea'
     RUNSTATEDIR_INSTALLED = '/usr/local/var/run/kea'
     SHAREDSTATEDIR_INSTALLED = '/usr/local/var/lib/kea'
 endif
@@ -1060,12 +1060,9 @@ install_emptydir(SHAREDSTATEDIR)
 # In case prefix is default, install to hardcoded path.
 if PREFIX == '/usr/local'
     install_emptydir('/usr/local/lib/kea')
-    install_emptydir('/usr/local/log')
-    install_emptydir('/usr/local/run/kea')
     install_emptydir('/usr/local/var/lib/kea')
-    install_emptydir('/usr/local/var/log')
+    install_emptydir('/usr/local/var/log/kea')
     install_emptydir('/usr/local/var/run/kea')
-    install_emptydir('/var/local/run/kea')
 endif
 
 # Print the setup report.

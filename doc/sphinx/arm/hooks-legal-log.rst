@@ -137,8 +137,8 @@ The hook library parameters for the text file configuration are:
     path may be overridden at startup by setting the environment variable
     ``KEA_LEGAL_LOG_DIR`` to the desired path.  If a path other than this value
     is used in ``path``, Kea will emit an error and refuse to start or if already
-    running, if already running, log an unrecoverable error. For ease of use
-    simply omit the ``path`` parameter.
+    running, log an unrecoverable error. For ease of use simply omit the ``path``
+    parameter.
 
 -  ``base-name`` - an arbitrary value which is used in conjunction with the
    current system date to form the current forensic file name. It

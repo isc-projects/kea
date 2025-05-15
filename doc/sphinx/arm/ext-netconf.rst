@@ -611,7 +611,7 @@ Kea sources.
                    "name": "kea-netconf",
                    "output-options": [
                        {
-                           "output": "/var/log/kea-netconf.log",
+                           "output": "/var/log/kea/kea-netconf.log",
                            // Several additional parameters are possible in
                            // addition to the typical output.
                            // Flush determines whether logger flushes output

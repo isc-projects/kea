@@ -72,13 +72,13 @@
   ],
 
 // The following configures logging. Kea will log all debug messages
-// to /var/log/kea-debug.log file.
+// to /var/log/kea/kea-debug.log file.
     "loggers": [
         {
             "name": "kea-dhcp6",
             "output-options": [
                 {
-                    "output": "/var/log/kea-debug.log"
+                    "output": "/var/log/kea/kea-debug.log"
                 }
             ],
             "debuglevel": 99,

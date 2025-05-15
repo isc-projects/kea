@@ -26,6 +26,38 @@
     // is specifically for HA updates only.
     "http-port": 8000,
 
+    // Allow access only to kea-api user.
+    // To make it work, please store your password in kea-api-password file.
+    // The basic HTTP auth offers poor security for unencrypted channels.
+    // If possible, a better, stronger HTTPS mechanism should be deployed,
+    // in particular when the client authentication is enabled by setting the
+    // cert-required to true (the default). See trust-anchor, cert-file,
+    // key-file and cert-required below. For more details read the Kea Security
+    // section in the ARM.
+    "authentication": {
+        "type": "basic",
+        "realm": "Kea Control Agent",
+        "directory": "/etc/kea",
+        "clients": [
+            {
+                "user": "kea-api",
+                "password-file": "kea-api-password"
+            }
+        ]
+    },
+
+    // Configuration section containing HTTPS parameters:
+    // TLS trust anchor (Certificate Authority). This is a file name or
+    // (for OpenSSL only) a directory path.
+    // "trust-anchor": "kea-server-ca",
+    // TLS server certificate file name.
+    // "cert-file": "kea-server-cert",
+    // TLS server private key file name.
+    // "key-file": "kea-server-key",
+    // TLS require client certificates flag. Default is true and means
+    // require client certificates. False means they are optional.
+    // "cert-required": true
+
     // Specify location of the files to which the Control Agent
     // should connect to forward commands to the DHCPv4, DHCPv6
     // and D2 servers via unix domain sockets.

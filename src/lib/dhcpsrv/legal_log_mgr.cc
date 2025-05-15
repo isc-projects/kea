@@ -314,7 +314,7 @@ LegalLogMgr::genDurationString(const uint32_t secs) {
 
 string
 LegalLogMgr::vectorHexDump(const vector<uint8_t>& bytes,
-                         const string& delimiter) {
+                           const string& delimiter) {
     stringstream tmp;
     tmp << hex;
     bool delim = false;
@@ -393,11 +393,11 @@ LegalLogMgr::getLogPath(bool reset /* = false */, const std::string explicit_pat
 
 std::string
 LegalLogMgr::validatePath(const std::string logpath,
-                               bool enforce_path /* = true */) {
+                          bool enforce_path /* = true */) {
     if (!legal_log_path_checker_) {
         getLogPath();
     }
-    
+
     return (legal_log_path_checker_->validateDirectory(logpath, enforce_path));
 }
 

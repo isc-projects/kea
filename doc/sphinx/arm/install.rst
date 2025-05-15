@@ -134,7 +134,7 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``var/lib/kea/`` — server identification and lease database files.
 
--  ``var/log/`` - log files.
+-  ``var/log/kea/`` - log files.
 
 -  ``var/run/kea`` - PID file and logger lock file.
 
@@ -496,10 +496,10 @@ parameter passed to ``meson setup``:
 
    chown -R admin /opt/kea
    chgrp -R admin /opt/kea
-   chown -R admin /var/log/kea-dhcp4.log
-   chgrp -R admin /var/log/kea-dhcp4.log
-   chown -R admin /var/log/kea-dhcp6.log
-   chgrp -R admin /var/log/kea-dhcp6.log
+   chown -R admin /var/log/kea/kea-dhcp4.log
+   chgrp -R admin /var/log/kea/kea-dhcp4.log
+   chown -R admin /var/log/kea/kea-dhcp6.log
+   chgrp -R admin /var/log/kea/kea-dhcp6.log
 
 If using systemd, modify its service file
 (e.g. /etc/systemd/system/kea-dhcp6.service):

@@ -559,7 +559,7 @@ interpreted as a filename to which messages should be written.
 .. note::
 
     As of Kea 2.7.9, log files may only be written to the output directory
-    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
     this value is used in ``output``, Kea will emit an error and refuse to start
@@ -904,7 +904,7 @@ logfile grows to 2MB, it should be renamed and a new file should be created.
                "name": "kea-dhcp6",
                "output-options": [
                    {
-                       "output": "/var/log/kea-debug.log",
+                       "output": "/var/log/kea/kea-debug.log",
                        "maxver": 8,
                        "maxsize": 204800,
                        "flush": true,
