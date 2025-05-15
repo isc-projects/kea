@@ -17,42 +17,42 @@ namespace {
 // like to the real shared library.
 
 // Basic library with context_create and three "standard" callouts.
-static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/@dotlibs@libbcl.so";
+static const char* BASIC_CALLOUT_LIBRARY = "@abs_builddir@/libbcl.so";
 
 // Library with context_create and three "standard" callouts, as well as
 // load() and unload() functions.
-static const char* FULL_CALLOUT_LIBRARY = "@abs_builddir@/@dotlibs@libfcl.so";
+static const char* FULL_CALLOUT_LIBRARY = "@abs_builddir@/libfcl.so";
 
 // Library where the all framework functions throw an exception
-static const char* FRAMEWORK_EXCEPTION_LIBRARY = "@abs_builddir@/@dotlibs@libfxl.so";
+static const char* FRAMEWORK_EXCEPTION_LIBRARY = "@abs_builddir@/libfxl.so";
 
 // Library where the version() function returns an incorrect result.
-static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/@dotlibs@libivl.so";
+static const char* INCORRECT_VERSION_LIBRARY = "@abs_builddir@/libivl.so";
 
 // Library where some of the callout registration is done with the load()
 // function.
-static const char* LOAD_CALLOUT_LIBRARY = "@abs_builddir@/@dotlibs@liblcl.so";
+static const char* LOAD_CALLOUT_LIBRARY = "@abs_builddir@/liblcl.so";
 
 // Library where the load() function returns an error.
 static const char* LOAD_ERROR_CALLOUT_LIBRARY =
-    "@abs_builddir@/@dotlibs@liblecl.so";
+    "@abs_builddir@/liblecl.so";
 
 // Name of a library which is not present.
-static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/@dotlibs@libnothere.so";
+static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/libnothere.so";
 
 // Library that does not include a version function.
-static const char* NO_VERSION_LIBRARY = "@abs_builddir@/@dotlibs@libnvl.so";
+static const char* NO_VERSION_LIBRARY = "@abs_builddir@/libnvl.so";
 
 // Library where there is an unload() function.
-static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/@dotlibs@libucl.so";
+static const char* UNLOAD_CALLOUT_LIBRARY = "@abs_builddir@/libucl.so";
 
 // Library where parameters are checked.
-static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/@dotlibs@libpcl.so";
+static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/libpcl.so";
 
 // Library which tests objects parking.
 // Used only by hooks_manager_unittest.cc.
 #ifdef TEST_ASYNC_CALLOUT
-static const char* ASYNC_CALLOUT_LIBRARY = "@abs_builddir@/@dotlibs@libacl.so";
+static const char* ASYNC_CALLOUT_LIBRARY = "@abs_builddir@/libacl.so";
 #endif
 
 } // anonymous namespace

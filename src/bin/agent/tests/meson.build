@@ -7,7 +7,6 @@ kea_agent_tests_data = configuration_data()
 kea_agent_tests_data.set('abs_top_builddir', TOP_BUILD_DIR)
 kea_agent_tests_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 kea_agent_tests_data.set('abs_builddir', current_build_dir)
-kea_agent_tests_data.set('dotlibs', '')
 ca_process_tests = configure_file(
     input: 'ca_process_tests.sh.in',
     output: 'ca_process_tests.sh',

@@ -34,7 +34,6 @@ dhcp6_tests_conf_data = configuration_data()
 dhcp6_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 dhcp6_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 dhcp6_tests_conf_data.set('abs_builddir', current_build_dir)
-dhcp6_tests_conf_data.set('dotlibs', '')
 dhcp6_process_tests = configure_file(
     input: 'dhcp6_process_tests.sh.in',
     output: 'dhcp6_process_tests.sh',

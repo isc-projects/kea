@@ -1133,7 +1133,7 @@ kea_dhcp_config() {
     },
     "hooks-libraries": [
       {
-        "library": "@abs_top_builddir@/src/bin/dhcp%s/tests/@dotlibs@libco1.so",
+        "library": "@abs_top_builddir@/src/bin/dhcp%s/tests/libco1.so",
         "parameters": {
           "password": "sensitive",
           "user": "keatest",

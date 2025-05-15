@@ -17,7 +17,7 @@ namespace {
 // like to the real shared library.
 
 // Basic HTTP authentication as a callout library.
-static const char* BASIC_AUTH_LIBRARY = "@abs_builddir@/@dotlibs@libbasicauth.so";
+static const char* BASIC_AUTH_LIBRARY = "@abs_builddir@/libbasicauth.so";
 
 } // anonymous namespace
 

@@ -19,13 +19,13 @@ namespace {
 
 // Library with load/unload functions creating marker files to check their
 // operation.
-const char* const CALLOUT_LIBRARY_1 = "@abs_builddir@/@dotlibs@libco1.so";
-const char* const CALLOUT_LIBRARY_2 = "@abs_builddir@/@dotlibs@libco2.so";
-const char* const CALLOUT_LIBRARY_3 = "@abs_builddir@/@dotlibs@libco3.so";
-const char* const CALLOUT_LIBRARY_4 = "@abs_builddir@/@dotlibs@libco4.so";
+const char* const CALLOUT_LIBRARY_1 = "@abs_builddir@/libco1.so";
+const char* const CALLOUT_LIBRARY_2 = "@abs_builddir@/libco2.so";
+const char* const CALLOUT_LIBRARY_3 = "@abs_builddir@/libco3.so";
+const char* const CALLOUT_LIBRARY_4 = "@abs_builddir@/libco4.so";
 
 // Name of a library which is not present.
-const char* const NOT_PRESENT_LIBRARY = "@abs_builddir@/@dotlibs@libnothere.so";
+const char* const NOT_PRESENT_LIBRARY = "@abs_builddir@/libnothere.so";
 
 // Test path to use for in place of DEFAULT_HOOKS_PATH
 static const char* DHCP4_HOOKS_TEST_PATH = "@abs_builddir@/@dotlibs@";

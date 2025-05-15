@@ -19,7 +19,7 @@ namespace {
 // Configured library with d2_srv_configured testing: if there is a toplevel
 // user context with an error entry the returned status is DROP with the
 // content of the error entry.
-static const char* CONFIGURED_LIBRARY = "@abs_builddir@/@dotlibs@libconfigured.so";
+static const char* CONFIGURED_LIBRARY = "@abs_builddir@/libconfigured.so";
 
 // Test path to use for in place of DEFAULT_HOOKS_PATH
 static const char* D2_HOOKS_TEST_PATH = "@abs_builddir@/@dotlibs@";
