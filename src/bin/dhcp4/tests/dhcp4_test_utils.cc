@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
 #include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/libdhcp++.h>
@@ -33,6 +34,7 @@ using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::util;
+using namespace isc::config;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -89,6 +91,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
+    resetSocketPath();
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
 
@@ -99,6 +102,21 @@ Dhcpv4SrvTest::~Dhcpv4SrvTest() {
 
     // Reset the thread pool.
     MultiThreadingMgr::instance().apply(false, 0, 0);
+}
+
+void
+Dhcpv4SrvTest::setSocketTestPath(const std::string explicit_path /* = "" */) {
+    UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                            explicit_path : TEST_DATA_BUILDDIR));
+
+    auto path = UnixCommandConfig::getSocketPath();
+    UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+}
+
+void
+Dhcpv4SrvTest::resetSocketPath() {
+    UnixCommandConfig::getSocketPath(true);
+    UnixCommandConfig::setSocketPathPerms();
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {

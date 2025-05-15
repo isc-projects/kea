@@ -385,6 +385,13 @@ public:
     /// Removes existing configuration.
     virtual ~Dhcpv4SrvTest();
 
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "");
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath();
+
     /// @brief Add 'Parameter Request List' option to the packet.
     ///
     /// This function adds PRL option comprising the following option codes:

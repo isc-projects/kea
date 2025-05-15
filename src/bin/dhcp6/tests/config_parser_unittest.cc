@@ -320,7 +320,7 @@ const char* PARSER_CONFIGS[] = {
     "    \"control-sockets\": ["
     "        {"
     "            \"socket-type\": \"unix\","
-    "            \"socket-name\": \"/tmp/kea6-ctrl-socket\","
+    "            \"socket-name\": \"kea6-ctrl-socket\","
     "            \"user-context\": { \"comment\": \"Indirect comment\" }"
     "        },"
     "        {"
@@ -7699,6 +7699,7 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
+    setSocketTestPath();
 
     string config = PARSER_CONFIGS[9];
     extractConfig(config);
@@ -7812,7 +7813,7 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-name"));
-    EXPECT_EQ("\"/tmp/kea6-ctrl-socket\"", socket->get("socket-name")->str());
+    EXPECT_EQ("\"kea6-ctrl-socket\"", socket->get("socket-name")->str());
 
     // Check UNIX control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");

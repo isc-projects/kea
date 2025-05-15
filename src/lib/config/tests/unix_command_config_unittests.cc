@@ -11,6 +11,7 @@
 #include <http/basic_auth_config.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <util/filesystem.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -19,6 +20,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::test;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -28,10 +30,29 @@ class UnixCommandConfigTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     UnixCommandConfigTest() : unix_config_() {
+        setSocketTestPath();
     }
 
     /// @brief Destructor.
     ~UnixCommandConfigTest() {
+        resetSocketPath();
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the hooks path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true,
+                                         (!explicit_path.empty() ?
+                                          explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief UNIX control socket configuration.
@@ -41,22 +62,20 @@ public:
 // This test verifies the default UNIX control socket configuration.
 TEST_F(UnixCommandConfigTest, default) {
     ElementPtr json = Element::createMap();
-    ASSERT_THROW(unix_config_.reset(new UnixCommandConfig(json)), BadSocketInfo);
+    ASSERT_THROW(unix_config_.reset(new UnixCommandConfig(json)), DhcpConfigError);
     json->set("socket-name", Element::create("name"));
     ASSERT_NO_THROW_LOG(unix_config_.reset(new UnixCommandConfig(json)));
 
     // Check default values.
     EXPECT_EQ("unix", unix_config_->getSocketType());
-    EXPECT_EQ("name", unix_config_->getSocketName());
+    EXPECT_EQ((UnixCommandConfig::getSocketPath() + "/name"),
+              unix_config_->getSocketName());
 
-    // Check unparse.
-    string expected = R"(
-        {
-            "socket-type": "unix",
-            "socket-name": "name"
-        }
-    )";
-    runToElementTest(expected, *unix_config_);
+    std::ostringstream os;
+    os << "{ \"socket-type\": \"unix\", \"socket-name\": \""
+       << UnixCommandConfig::getSocketPath()
+       << "/name\" }";
+    runToElementTest(os.str(), *unix_config_);
 }
 
 // This test verifies direct error cases.
@@ -93,6 +112,12 @@ TEST_F(UnixCommandConfigTest, errors) {
             R"( { "socket-name": 8000 } )",
             "invalid type specified for parameter 'socket-name' "
             "(<string>:1:19)"
+        },
+        {
+            "bad socket-name path",
+            R"( { "socket-name": "/tmp/mysocket" } )",
+            "'socket-name' is invalid: invalid path specified: '/tmp',"
+            " supported path is '" + UnixCommandConfig::getSocketPath() + "'"
         }
     };
     for (auto const& s : scenarios) {

@@ -123,12 +123,7 @@ public:
     /// Sets socket path to its default value.
     CtrlChannelDhcpv4SrvTest() : interfaces_("\"*\"") {
         resetLogPath();
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path_ = string(env) + "/kea4.sock";
-        } else {
-            socket_path_ = sandbox.join("/kea4.sock");
-        }
+        setSocketTestPath();
         reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
@@ -138,6 +133,7 @@ public:
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
         resetLogPath();
+        resetSocketPath();
         if (test_timer_) {
             test_timer_->cancel();
             getIOService()->stopAndPoll();
@@ -169,6 +165,25 @@ public:
     void resetLogPath() {
         LogConfigParser::getLogPath(true);
     }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true,
+                                         (!explicit_path.empty() ?
+                                          explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+        socket_path_ = path + "/kea4.sock";
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
+    }
+
 
     /// @brief Returns pointer to the server's IO service.
     ///

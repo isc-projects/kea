@@ -7,6 +7,7 @@
 #include <config.h>
 #include <gtest/gtest.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
 #include <dhcp/option6_status_code.h>
 #include <dhcp/testutils/pkt_captures.h>
 #include <dhcpsrv/cfg_multi_threading.h>
@@ -27,6 +28,7 @@ using namespace isc::asiolink;
 using namespace isc::stats;
 using namespace isc::util;
 using namespace isc::process;
+using namespace isc::config;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -41,6 +43,7 @@ BaseServerTest::BaseServerTest() {
     original_datadir_ = CfgMgr::instance().getDataDir();
     CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
     resetLogPath();
+    resetSocketPath();
 }
 
 BaseServerTest::~BaseServerTest() {
@@ -60,6 +63,7 @@ BaseServerTest::~BaseServerTest() {
     // Revert to unit test logging, in case the test reconfigured it.
     isc::log::initLogger();
     resetLogPath();
+    resetSocketPath();
 }
 
 void
@@ -71,6 +75,22 @@ BaseServerTest::setLogTestPath(const std::string explicit_path /* = "" */) {
 void
 BaseServerTest::resetLogPath() {
     LogConfigParser::getLogPath(true);
+}
+
+void
+BaseServerTest::setSocketTestPath(const std::string explicit_path /* = "" */) {
+    UnixCommandConfig::getSocketPath(true,
+                                     (!explicit_path.empty() ?
+                                     explicit_path : TEST_DATA_BUILDDIR));
+
+    auto path = UnixCommandConfig::getSocketPath();
+    UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+}
+
+void
+BaseServerTest::resetSocketPath() {
+    UnixCommandConfig::getSocketPath(true);
+    UnixCommandConfig::setSocketPathPerms();
 }
 
 Dhcpv6SrvTest::Dhcpv6SrvTest()

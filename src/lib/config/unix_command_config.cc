@@ -10,6 +10,7 @@
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
 #include <config/unix_command_config.h>
+#include <util/filesystem.h>
 #include <limits>
 
 using namespace isc;
@@ -17,10 +18,17 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::util::file;
 using namespace std;
 
 namespace isc {
 namespace config {
+
+namespace {
+    // Singleton PathChecker to set and hold valid legal log path.
+    PathCheckerPtr socket_path_checker_;
+    mode_t socket_path_perms_ = UnixCommandConfig::DEFAULT_SOCKET_PATH_PERMS;
+};
 
 UnixCommandConfig::UnixCommandConfig(ConstElementPtr config)
     : socket_type_("unix"), socket_name_() {
@@ -50,15 +58,20 @@ UnixCommandConfig::UnixCommandConfig(ConstElementPtr config)
     }
     // Get socket name.
     ConstElementPtr socket_name = config->get("socket-name");
-    if (socket_name) {
-        if (socket_name->getType() != Element::string) {
-            isc_throw(DhcpConfigError,
-                      "invalid type specified for parameter 'socket-name' ("
-                      << socket_name->getPosition() << ")");
-        }
-        socket_name_ = socket_name->stringValue();
-    } else {
-        isc_throw(BadSocketInfo, "Mandatory 'socket-name' parameter missing");
+    if (!socket_name) {
+        isc_throw(DhcpConfigError, "Mandatory 'socket-name' parameter missing");
+    }
+
+    if (socket_name->getType() != Element::string) {
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter 'socket-name' ("
+                  << socket_name->getPosition() << ")");
+    }
+
+    try {
+        socket_name_ = validatePath(socket_name->stringValue());
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, "'socket-name' is invalid: " << ex.what());
     }
 
     // Get user context.
@@ -78,6 +91,49 @@ UnixCommandConfig::toElement() const {
     // Set socket name.
     result->set("socket-name", Element::create(socket_name_));
     return (result);
+}
+
+std::string
+UnixCommandConfig::getSocketPath(bool reset /* = false */,
+                                 const std::string explicit_path /* = "" */) {
+    if (!socket_path_checker_ || reset) {
+        socket_path_checker_.reset(new PathChecker(CONTROL_SOCKET_DIR,
+                                                   "KEA_CONTROL_SOCKET_DIR"));
+        if (!explicit_path.empty()) {
+            socket_path_checker_->getPath(true, explicit_path);
+        }
+    }
+
+    return (socket_path_checker_->getPath());
+}
+
+std::string
+UnixCommandConfig::validatePath(const std::string socket_path,
+                                bool enforce /* = true */) {
+    if (!socket_path_checker_) {
+        getSocketPath();
+    }
+
+    auto valid_path = socket_path_checker_->validatePath(socket_path, enforce);
+    if (enforce && !(socket_path_checker_->pathHasPermissions(socket_path_perms_))) {
+        isc_throw (DhcpConfigError,
+                   "socket path:" << socket_path_checker_->getPath()
+                   << " does not exist or does not have permssions = "
+                   << std::hex << socket_path_perms_);
+    }
+
+    return (valid_path);
+}
+
+mode_t
+UnixCommandConfig::getSocketPathPerms() {
+    return(socket_path_perms_);
+}
+
+void
+UnixCommandConfig::setSocketPathPerms(mode_t perms
+                                      /* = DEFAULT_SOCKET_PATH_PERMS */) {
+    socket_path_perms_ = perms;
 }
 
 } // end of isc::config

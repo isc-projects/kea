@@ -21,6 +21,9 @@ kea_config_lib = shared_library(
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
     version: '81.0.0',
+    cpp_args: [
+        f'-DCONTROL_SOCKET_DIR="@RUNSTATEDIR_INSTALLED@"'
+    ],
 )
 LIBS_BUILT_SO_FAR = [kea_config_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')

@@ -13,12 +13,14 @@
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
 #include <config/unix_command_mgr.h>
+#include <util/filesystem.h>
 #include <string>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::util;
 using namespace std;
 
 // Test class for Unix Command Manager
@@ -28,6 +30,7 @@ public:
 
     /// Default constructor
     UnixCommandMgrTest() : io_service_(new IOService()) {
+        resetSocketPath();
         UnixCommandMgr::instance().setIOService(io_service_);
         UnixCommandMgr::instance().closeCommandSockets();
     }
@@ -35,19 +38,24 @@ public:
     /// Default destructor
     virtual ~UnixCommandMgrTest() {
         UnixCommandMgr::instance().closeCommandSockets();
+        resetSocketPath();
     }
 
-    /// @brief Returns socket path (using either hardcoded path or env variable)
-    /// @return path to the unix socket
-    std::string getSocketPath() {
-        std::string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = std::string(env) + "/test-socket";
-        } else {
-            socket_path = sandbox.join("test-socket");
-        }
-        return (socket_path);
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the hooks path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true,
+                                         (!explicit_path.empty() ?
+                                          explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief IO service used by these tests.
@@ -57,6 +65,8 @@ public:
 // This test verifies that a Unix socket can be opened properly and that input
 // parameters (socket-type and socket-name) are verified.
 TEST_F(UnixCommandMgrTest, unixCreate) {
+    setSocketTestPath();
+
     // Null pointer is obviously a bad idea.
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(ConstElementPtr()),
                  BadSocketInfo);
@@ -64,7 +74,7 @@ TEST_F(UnixCommandMgrTest, unixCreate) {
     // So is passing no parameters.
     ElementPtr socket_info = Element::createMap();
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 BadSocketInfo);
+                 DhcpConfigError);
 
     // We don't support ipx sockets
     socket_info->set("socket-type", Element::create("ipx"));
@@ -73,9 +83,9 @@ TEST_F(UnixCommandMgrTest, unixCreate) {
 
     socket_info->set("socket-type", Element::create("unix"));
     EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info),
-                 BadSocketInfo);
+                 DhcpConfigError);
 
-    socket_info->set("socket-name", Element::create(getSocketPath()));
+    socket_info->set("socket-name", Element::create("test_socket"));
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
     EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
 
@@ -85,8 +95,10 @@ TEST_F(UnixCommandMgrTest, unixCreate) {
 
 // This test checks that when unix path is too long, the socket cannot be opened.
 TEST_F(UnixCommandMgrTest, unixCreateTooLong) {
+    setSocketTestPath();
+
     ElementPtr socket_info = Element::fromJSON("{ \"socket-type\": \"unix\","
-        "\"socket-name\": \"/tmp/toolongtoolongtoolongtoolongtoolongtoolong"
+        "\"socket-name\": \"toolongtoolongtoolongtoolongtoolongtoolong"
         "toolongtoolongtoolongtoolongtoolongtoolongtoolongtoolongtoolong"
         "\" }");
 
@@ -97,10 +109,12 @@ TEST_F(UnixCommandMgrTest, unixCreateTooLong) {
 // Verifies that a socket cannot be concurrently opened more than once.
 // It should be reused instead.
 TEST_F(UnixCommandMgrTest, exclusiveOpen) {
+    setSocketTestPath();
+
     // Pass in valid parameters.
     ElementPtr socket_info = Element::createMap();
     socket_info->set("socket-type", Element::create("unix"));
-    socket_info->set("socket-name", Element::create(getSocketPath()));
+    socket_info->set("socket-name", Element::create("test_socket"));
 
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
     EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);

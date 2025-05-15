@@ -2,6 +2,8 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+control_socket_dir = @runstatedir@/@PACKAGE@
+AM_CPPFLAGS += -DCONTROL_SOCKET_DIR=\"$(control_socket_dir)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

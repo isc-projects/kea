@@ -38,6 +38,7 @@
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
 #include <util/doubles.h>
+#include <util/filesystem.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -63,6 +64,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::test;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -239,7 +241,7 @@ const char* PARSER_CONFIGS[] = {
     "    \"control-sockets\": ["
     "        {"
     "            \"socket-type\": \"unix\","
-    "            \"socket-name\": \"/tmp/kea4-ctrl-socket\","
+    "            \"socket-name\": \"kea4-ctrl-socket\","
     "            \"user-context\": { \"comment\": \"Indirect comment\" }"
     "        },"
     "        {"
@@ -337,6 +339,7 @@ public:
         resetConfiguration();
 
         resetHooksPath();
+        resetSocketPath();
     }
 
     ~Dhcp4ParserTest() {
@@ -348,6 +351,7 @@ public:
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
 
         resetHooksPath();
+        resetSocketPath();
     };
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -361,6 +365,22 @@ public:
     /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
     void resetHooksPath() {
         HooksLibrariesParser::getHooksPath(true);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                         explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     // Checks if the result of DHCP server configuration has
@@ -6919,6 +6939,7 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
+    setSocketTestPath();
 
     string config = PARSER_CONFIGS[6];
     extractConfig(config);
@@ -7020,7 +7041,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-name"));
-    EXPECT_EQ("\"/tmp/kea4-ctrl-socket\"", socket->get("socket-name")->str());
+    EXPECT_EQ("\"kea4-ctrl-socket\"", socket->get("socket-name")->str());
 
     // Check UNIX control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");

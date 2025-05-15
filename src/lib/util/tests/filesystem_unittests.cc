@@ -72,6 +72,16 @@ TEST_F(FileUtilTest, isFile) {
     EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
 }
 
+/// @brief Check hasPermissions.
+TEST_F(FileUtilTest, hasPermissions) {
+    const std::string path = ABS_SRCDIR "/filesystem_unittests.cc";
+    ASSERT_TRUE(isFile(path));
+    mode_t current_permissions = getPermissions(path);
+    EXPECT_TRUE(hasPermissions(path, current_permissions));
+    current_permissions = ~current_permissions;
+    EXPECT_FALSE(hasPermissions(path, current_permissions));
+}
+
 /// @brief Test fixture class for testing operations on umask.
 struct UMaskUtilTest : ::testing::Test {
     /// @brief Constructor.

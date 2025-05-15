@@ -103,7 +103,7 @@
                // Location of the UNIX domain socket file the DHCPv6
                // server uses to receive control commands from the
                // local server administrator.
-               "socket-name": "/tmp/kea6-ctrl-socket"
+               "socket-name": "kea6-ctrl-socket"
             },
             {
                 // Control socket type used by the Kea DHCPv6 server.
