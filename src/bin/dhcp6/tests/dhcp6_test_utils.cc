@@ -53,10 +53,6 @@ BaseServerTest::~BaseServerTest() {
     s2 << CfgMgr::instance().getDataDir() << "/kea-leases6.csv";
     static_cast<void>(::remove(s2.str().c_str()));
 
-    std::ostringstream s3;
-    s3 << CfgMgr::instance().getDataDir() << "/kea-dhcp6.csv";
-    static_cast<void>(::remove(s3.str().c_str()));
-
     // Revert to original data directory.
     CfgMgr::instance().getDataDir(true, original_datadir_);
 

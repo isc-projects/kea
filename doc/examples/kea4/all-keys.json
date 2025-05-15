@@ -542,7 +542,7 @@
 
             // Name of the lease file. In the case of a database it specifies the
             // database name.
-            "name": "kea-dhcp4.csv",
+            "name": "kea-leases4.csv",
 
             // memfile-specific parameter indicating whether leases should
             // be saved on persistent storage (disk) or not. The true value
