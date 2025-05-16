@@ -401,6 +401,12 @@ public:
             ASSERT_TRUE(from_file);
         } else if (exp_status == CONTROL_RESULT_ERROR) {
 
+            // Errors can be in a list.
+            if (rsp->getType() == Element::list) {
+                ASSERT_EQ(1, rsp->size());
+                rsp = rsp->get(0);
+            }
+
             // Let's check if the reason for failure was given.
             ConstElementPtr text = rsp->get("text");
             ASSERT_TRUE(text);
@@ -514,6 +520,15 @@ public:
 
     // Tests if config-write can be called with a valid filename as parameter.
     void testConfigWriteFilename();
+
+    // Tests if config-write can be called with a valid full path as parameter.
+    void testConfigWriteFullPath();
+
+    // Tests if config-write raises an error with invalid path as parameter.
+    void testConfigWriteBadPath();
+
+    // Tests if config-write raises an error with invalid full path as parameter.
+    void testConfigWriteBadFullPath();
 
     // Tests if config-reload attempts to reload a file and reports that the
     // file is missing.
@@ -2322,6 +2337,9 @@ BaseCtrlChannelDhcpv6Test::testConfigWriteFilename() {
     createHttpChannelServer();
     std::string response;
 
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
     sendHttpCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }",
                     response);
@@ -2336,6 +2354,87 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configWriteFilename) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, configWriteFilename) {
     testConfigWriteFilename();
+}
+
+// Tests if config-write can be called with a valid full path as parameter.
+void
+BaseCtrlChannelDhcpv6Test::testConfigWriteFullPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/test1.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }",
+                    response);
+
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "/tmp/test2.json");
+    ::remove("/tmp/test2.json");
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, configWriteFullPath) {
+    testConfigWriteFullPath();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, configWriteFullPath) {
+    testConfigWriteFullPath();
+}
+
+// Tests if config-write raises an error with invalid path as parameter.
+void
+BaseCtrlChannelDhcpv6Test::testConfigWriteBadPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }",
+                    response);
+
+    string expected = "not allowed to write config into /tmp/test2.json: ";
+    expected += "file /tmp/test2.json must be in the same directory ";
+    expected += "as the config file (test1.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/test2.json");
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, configWriteBadPath) {
+    testConfigWriteBadPath();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, configWriteBadPath) {
+    testConfigWriteBadPath();
+}
+
+// Tests if config-write raises an error with invalid full path as parameter.
+void
+BaseCtrlChannelDhcpv6Test::testConfigWriteBadFullPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/kea1/test.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/kea2/test.json\" } }",
+                    response);
+
+    string expected = "not allowed to write config into /tmp/kea2/test.json: ";
+    expected += "file /tmp/kea2/test.json must be in the same directory ";
+    expected += "as the config file (/tmp/kea1/test.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/kea2/test.json");
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, configWriteBadFullPath) {
+    testConfigWriteBadFullPath();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, configWriteBadFullPath) {
+    testConfigWriteBadFullPath();
 }
 
 // Tests if config-reload attempts to reload a file and reports that the

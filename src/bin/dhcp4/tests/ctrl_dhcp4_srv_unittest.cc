@@ -1544,10 +1544,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFullPath) {
     createUnixChannelServer();
     std::string response;
 
-
     // This is normally set by the command line -c parameter.
     server_->setConfigFile("/tmp/test1.json");
-
 
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }", response);

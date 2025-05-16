@@ -866,6 +866,54 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
     ctrl->deregisterCommands();
 }
 
+// Tests that config-write fails with a bad path.
+TEST_F(CtrlAgentControllerTest, badConfigWrite) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution should
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // Add a config file.
+    ctrl->setConfigFile(string(TEST_DATA_BUILDDIR) + string("/config.json"));
+
+    // First, build the command:
+    string file("/tmp/config-write.json");
+    string cmd_txt = "{ \"command\": \"config-write\" }";
+    ConstElementPtr cmd = Element::fromJSON(cmd_txt);
+    ConstElementPtr params = Element::fromJSON("{\"filename\": \"" + file + "\" }");
+    CtrlAgentCommandMgr& mgr_ =  CtrlAgentCommandMgr::instance();
+
+    // Send the command
+    ConstElementPtr answer = mgr_.handleCommand("config-write", params, cmd);
+
+    // Check that the command failed.
+    string expected = "not allowed to write config into ";
+    expected += file;
+    expected += ": file ";
+    expected += file;
+    expected += " must be in the same directory as the config file (";
+    expected += string(TEST_DATA_BUILDDIR) + string("/config.json");
+    expected += ")";
+    checkAnswer(answer, isc::config::CONTROL_RESULT_ERROR, expected);
+
+    // Remove the file.
+    ::remove(file.c_str());
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
+}
+
 // Tests if config-reload attempts to reload a file and reports that the
 // file is missing.
 TEST_F(CtrlAgentControllerTest, configReloadMissingFile) {

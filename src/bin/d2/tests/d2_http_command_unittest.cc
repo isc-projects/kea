@@ -368,6 +368,12 @@ public:
             ASSERT_TRUE(from_file);
         } else if (exp_status == CONTROL_RESULT_ERROR) {
 
+            // Errors can be in a list.
+            if (rsp->getType() == Element::list) {
+                ASSERT_EQ(1, rsp->size());
+                rsp = rsp->get(0);
+            }
+
             // Let's check if the reason for failure was given.
             ConstElementPtr text = rsp->get("text");
             ASSERT_TRUE(text);
@@ -450,10 +456,19 @@ public:
     void testConfigHashGet();
 
     // Tests if config-write can be called without any parameters.
-    void testWriteConfigNoFilename();
+    void testConfigWriteNoFilename();
 
     // Tests if config-write can be called with a valid filename as parameter.
-    void testWriteConfigFilename();
+    void testConfigWriteFilename();
+
+    // Tests if config-write can be called with a valid full path as parameter.
+    void testConfigWriteFullPath();
+
+    // Tests if config-write raises an error with invalid path as parameter.
+    void testConfigWriteBadPath();
+
+    // Tests if config-write raises an error with invalid full path as parameter.
+    void testConfigWriteBadFullPath();
 
     // Tests if config-reload attempts to reload a file and reports that the
     // file is missing.
@@ -1437,7 +1452,7 @@ TEST_F(HttpsCtrlChannelD2Test, configSet) {
 
 // Tests if config-write can be called without any parameters.
 void
-BaseCtrlChannelD2Test::testWriteConfigNoFilename() {
+BaseCtrlChannelD2Test::testConfigWriteNoFilename() {
     EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
@@ -1452,17 +1467,17 @@ BaseCtrlChannelD2Test::testWriteConfigNoFilename() {
     ::remove("test1.json");
 }
 
-TEST_F(HttpCtrlChannelD2Test, writeConfigNoFilename) {
-    testWriteConfigNoFilename();
+TEST_F(HttpCtrlChannelD2Test, configWriteNoFilename) {
+    testConfigWriteNoFilename();
 }
 
-TEST_F(HttpsCtrlChannelD2Test, writeConfigNoFilename) {
-    testWriteConfigNoFilename();
+TEST_F(HttpsCtrlChannelD2Test, configWriteNoFilename) {
+    testConfigWriteNoFilename();
 }
 
 // Tests if config-write can be called with a valid filename as parameter.
 void
-BaseCtrlChannelD2Test::testWriteConfigFilename() {
+BaseCtrlChannelD2Test::testConfigWriteFilename() {
     EXPECT_NO_THROW(createHttpChannelServer());
     string response;
 
@@ -1474,12 +1489,93 @@ BaseCtrlChannelD2Test::testWriteConfigFilename() {
     ::remove("test2.json");
 }
 
-TEST_F(HttpCtrlChannelD2Test, writeConfigFilename) {
-    testWriteConfigFilename();
+TEST_F(HttpCtrlChannelD2Test, configWriteFilename) {
+    testConfigWriteFilename();
 }
 
-TEST_F(HttpsCtrlChannelD2Test, writeConfigFilename) {
-    testWriteConfigFilename();
+TEST_F(HttpsCtrlChannelD2Test, configWriteFilename) {
+    testConfigWriteFilename();
+}
+
+// Tests if config-write can be called with a valid full path as parameter.
+void
+BaseCtrlChannelD2Test::testConfigWriteFullPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/test1.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }",
+                    response);
+
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "/tmp/test2.json");
+    ::remove("/tmp/test2.json");
+}
+
+TEST_F(HttpCtrlChannelD2Test, configWriteFullPath) {
+    testConfigWriteFullPath();
+}
+
+TEST_F(HttpsCtrlChannelD2Test, configWriteFullPath) {
+    testConfigWriteFullPath();
+}
+
+// Tests if config-write raises an error with invalid path as parameter.
+void
+BaseCtrlChannelD2Test::testConfigWriteBadPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }",
+                    response);
+
+    string expected = "not allowed to write config into /tmp/test2.json: ";
+    expected += "file /tmp/test2.json must be in the same directory ";
+    expected += "as the config file (test1.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/test2.json");
+}
+
+TEST_F(HttpCtrlChannelD2Test, configWriteBadPath) {
+    testConfigWriteBadPath();
+}
+
+TEST_F(HttpsCtrlChannelD2Test, configWriteBadPath) {
+    testConfigWriteBadPath();
+}
+
+// Tests if config-write raises an error with invalid full path as parameter.
+void
+BaseCtrlChannelD2Test::testConfigWriteBadFullPath() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/kea1/test.json");
+
+    sendHttpCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/kea2/test.json\" } }",
+                    response);
+
+    string expected = "not allowed to write config into /tmp/kea2/test.json: ";
+    expected += "file /tmp/kea2/test.json must be in the same directory ";
+    expected += "as the config file (/tmp/kea1/test.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/kea2/test.json");
+}
+
+TEST_F(HttpCtrlChannelD2Test, configWriteBadFullPath) {
+    testConfigWriteBadFullPath();
+}
+
+TEST_F(HttpsCtrlChannelD2Test, configWriteBadFullPath) {
+    testConfigWriteBadFullPath();
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
