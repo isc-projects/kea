@@ -16,7 +16,7 @@
     "control-sockets": [
         {
             "socket-type": "unix",
-            "socket-name": "/tmp/kea-ddns-ctrl-socket",
+            "socket-name": "kea-ddns-ctrl-socket",
             "user-context": { "comment": "Indirect comment" }
         },
         {

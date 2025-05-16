@@ -44,7 +44,7 @@
             // Location of the UNIX domain socket file the DHCP-DDNS
             // server uses to receive control commands from the
             // local server administrator.
-            "socket-name": "/tmp/kea-ddns-ctrl-socket"
+            "socket-name": "kea-ddns-ctrl-socket"
         },
         {
             // Control socket type used by the Kea DHCP-DDNS server.

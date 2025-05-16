@@ -17,6 +17,7 @@
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <util/filesystem.h>
 #include <gtest/gtest.h>
 #include <testutils/sandbox.h>
 #include <boost/pointer_cast.hpp>
@@ -34,6 +35,7 @@ using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::dhcp::test;
 using namespace isc::process;
+using namespace isc::util;
 using namespace boost::asio;
 namespace ph = std::placeholders;
 
@@ -125,12 +127,7 @@ public:
     /// Sets socket path to its default value.
     CtrlChannelD2Test()
         : server_(NakedD2Controller::instance()) {
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path_ = string(env) + "/d2.sock";
-        } else {
-            socket_path_ = sandbox.join("d2.sock");
-        }
+        setSocketTestPath();
         ::remove(socket_path_.c_str());
     }
 
@@ -146,6 +143,7 @@ public:
         // Reset command manager.
         CommandMgr::instance().deregisterAll();
         UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
+        resetSocketPath();
     }
 
     /// @brief Returns pointer to the server's IO service.
@@ -154,6 +152,23 @@ public:
     /// server hasn't been created.
     IOServicePtr getIOService() {
         return (server_ ? d2Controller()->getIOService() : IOServicePtr());
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                         explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+        socket_path_ = path + "/d2.sock";
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Runs parser in DHCPDDNS mode

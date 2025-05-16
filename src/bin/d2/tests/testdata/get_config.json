@@ -2,7 +2,7 @@
     "DhcpDdns": {
         "control-sockets": [
             {
-                "socket-name": "/tmp/kea-ddns-ctrl-socket",
+                "socket-name": "kea-ddns-ctrl-socket",
                 "socket-type": "unix"
             }
         ],

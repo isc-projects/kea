@@ -8,12 +8,14 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <d2/parser_context.h>
 #include <d2srv/d2_cfg_mgr.h>
 #include <d2srv/d2_config.h>
 #include <hooks/hooks_parser.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/user_context_utils.h>
+#include <util/filesystem.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -30,6 +32,7 @@ using namespace isc::data;
 using namespace isc::process;
 using namespace isc::test;
 using namespace isc::hooks;
+using namespace isc::util;
 
 namespace {
 
@@ -142,6 +145,7 @@ public:
     D2GetConfigTest()
     : rcode_(-1) {
         resetHooksPath();
+        resetSocketPath();
         srv_.reset(new D2CfgMgr());
         // Enforce not verbose mode.
         Daemon::setVerbose(false);
@@ -155,6 +159,7 @@ public:
         static_cast<void>(remove(test_file_name.c_str()));
         resetConfiguration();
         resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -168,6 +173,23 @@ public:
     /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
     void resetHooksPath() {
         HooksLibrariesParser::getHooksPath(true);
+    }
+
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                         explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Parse and Execute configuration
@@ -279,6 +301,7 @@ public:
 /// Test a configuration
 TEST_F(D2GetConfigTest, sample1) {
     setHooksTestPath();
+    setSocketTestPath();
 
     // get the sample1 configuration
     std::string sample1_file = string(CFG_EXAMPLES) + "/" + "sample1.json";
