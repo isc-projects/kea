@@ -23,21 +23,21 @@
         },
         "control-sockets": {
             "d2": {
-                "socket-name": "/tmp/kea-ddns-ctrl-socket",
+                "socket-name": "kea-ddns-ctrl-socket",
                 "socket-type": "unix",
                 "user-context": {
                     "in-use": false
                 }
             },
             "dhcp4": {
-                "socket-name": "/tmp/kea4-ctrl-socket",
+                "socket-name": "kea4-ctrl-socket",
                 "socket-type": "unix",
                 "user-context": {
                     "comment": "socket to DHCPv4 server"
                 }
             },
             "dhcp6": {
-                "socket-name": "/tmp/kea6-ctrl-socket",
+                "socket-name": "kea6-ctrl-socket",
                 "socket-type": "unix"
             }
         },

@@ -8,12 +8,14 @@
 
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
 #include <testutils/user_context_utils.h>
 #include <process/redact_config.h>
 #include <process/testutils/d_test_stubs.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
 #include <hooks/hooks_parser.h>
+#include <util/filesystem.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -31,6 +33,8 @@ using namespace isc::data;
 using namespace isc::process;
 using namespace isc::test;
 using namespace isc::hooks;
+using namespace isc::config;
+using namespace isc::util;
 
 namespace {
 
@@ -141,11 +145,13 @@ public:
         srv_.reset(new NakedAgentCfgMgr());
         // Create fresh context.
         resetConfiguration();
+        setSocketTestPath();
     }
 
     ~CtrlAgentGetCfgTest() {
         resetConfiguration();
         resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -159,6 +165,20 @@ public:
     /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
     void resetHooksPath() {
         HooksLibrariesParser::getHooksPath(true);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        auto path = UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                     explicit_path : TEST_DATA_BUILDDIR));
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Parse and Execute configuration

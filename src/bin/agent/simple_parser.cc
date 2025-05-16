@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,12 +10,14 @@
 #include <asiolink/io_service_mgr.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
+#include <config/unix_command_config.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <http/basic_auth_config.h>
 
 using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::config;
 
 namespace isc {
 namespace agent {
@@ -149,7 +151,14 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     if (ctrl_sockets) {
         auto const& sockets_map = ctrl_sockets->mapValue();
         for (auto const& cs : sockets_map) {
-            ctx->setControlSocketInfo(cs.second, cs.first);
+            // Add a validated socket name so we can suppress it in 
+            // toElement() but don't have to revalidate it every time we
+            // want to use it.
+            auto mutable_socket_info = boost::const_pointer_cast<Element>(cs.second);
+            std::string socket_name = mutable_socket_info->get("socket-name")->stringValue();
+            auto validated_name = UnixCommandConfig::validatePath(socket_name);
+            mutable_socket_info->set("validated-socket-name", Element::create(validated_name));
+            ctx->setControlSocketInfo(mutable_socket_info, cs.first);
         }
     }
 
