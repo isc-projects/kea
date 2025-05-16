@@ -134,13 +134,13 @@ Daemon::checkWriteConfigFile(std::string& file) {
                   << " is missing file name");
     }
     Path current(config_file_);
-    if (current.parentPath() == path.parentPath()) {
-        // Same paths!
+    if (current.parentDirectory() == path.parentDirectory()) {
+        // Same parent directories!
         return;
     }
-    if (path.parentPath().empty()) {
-        // Note the current path can't be empty here.
-        file = current.parentPath() + "/" + file;
+    if (path.parentDirectory().empty()) {
+        // Note the current parent directory can't be empty here.
+        file = current.parentDirectory() + file;
         return;
     }
     isc_throw(isc::BadValue, "file " << file << " must be in the same "

@@ -3490,13 +3490,13 @@ void Lease4CmdsTest::testLease4Write() {
         "{\n"
         "    \"command\": \"lease4-write\",\n"
         "    \"arguments\": {"
-        "        \"filename\": \"/tmp/myleases.txt\"\n"
+        "        \"filename\": \"/foo-bar/myleases.txt\"\n"
         "    }\n"
         "}";
 
     std::ostringstream os;
     os << "'filename' parameter is invalid: invalid path specified:"
-       << " '/tmp', supported path is '" << CfgMgr::instance().getDataDir() << "'";
+       << " '/foo-bar', supported path is '" << CfgMgr::instance().getDataDir() << "'";
 
     testCommand(txt, CONTROL_RESULT_ERROR, os.str());
 }

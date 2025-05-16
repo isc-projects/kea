@@ -111,9 +111,55 @@ TEST(PathTest, components) {
     Path fname("/alpha/beta/gamma.delta");
     EXPECT_EQ("/alpha/beta/gamma.delta", fname.str());
     EXPECT_EQ("/alpha/beta", fname.parentPath());
+    EXPECT_EQ("/alpha/beta/", fname.parentDirectory());
     EXPECT_EQ("gamma", fname.stem());
     EXPECT_EQ(".delta", fname.extension());
     EXPECT_EQ("gamma.delta", fname.filename());
+
+    // The root.
+    Path root("/");
+    EXPECT_EQ("/", root.str());
+    EXPECT_EQ("", root.parentPath());
+    EXPECT_EQ("/", root.parentDirectory());
+    EXPECT_EQ("", root.stem());
+    EXPECT_EQ("", root.extension());
+    EXPECT_EQ("", root.filename());
+
+    // In the root directory.
+    Path inroot("/gamma.delta");
+    EXPECT_EQ("/gamma.delta", inroot.str());
+    EXPECT_EQ("", inroot.parentPath());
+    EXPECT_EQ("/", inroot.parentDirectory());
+    EXPECT_EQ("gamma", inroot.stem());
+    EXPECT_EQ(".delta", inroot.extension());
+    EXPECT_EQ("gamma.delta", inroot.filename());
+
+    // No directory.
+    Path nodir("gamma.delta");
+    EXPECT_EQ("gamma.delta", nodir.str());
+    EXPECT_EQ("", nodir.parentPath());
+    EXPECT_EQ("", nodir.parentDirectory());
+    EXPECT_EQ("gamma", nodir.stem());
+    EXPECT_EQ(".delta", nodir.extension());
+    EXPECT_EQ("gamma.delta", nodir.filename());
+
+    // Relative name.
+    Path relative("../alpha/gamma.delta");
+    EXPECT_EQ("../alpha/gamma.delta", relative.str());
+    EXPECT_EQ("../alpha", relative.parentPath());
+    EXPECT_EQ("../alpha/", relative.parentDirectory());
+    EXPECT_EQ("gamma", relative.stem());
+    EXPECT_EQ(".delta", relative.extension());
+    EXPECT_EQ("gamma.delta", relative.filename());
+
+    // Multiple extensions.
+    Path extensions("/alpha/beta/gamma.delta.epsilon");
+    EXPECT_EQ("/alpha/beta/gamma.delta.epsilon", extensions.str());
+    EXPECT_EQ("/alpha/beta", extensions.parentPath());
+    EXPECT_EQ("/alpha/beta/", extensions.parentDirectory());
+    EXPECT_EQ("gamma.delta", extensions.stem());
+    EXPECT_EQ(".epsilon", extensions.extension());
+    EXPECT_EQ("gamma.delta.epsilon", extensions.filename());
 }
 
 /// @brief Check replaceExtension.
@@ -133,30 +179,37 @@ TEST(PathTest, replaceExtension) {
 TEST(PathTest, replaceParentPath) {
     Path fname("a.b");
     EXPECT_EQ("", fname.parentPath());
+    EXPECT_EQ("", fname.parentDirectory());
     EXPECT_EQ("a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir/");
     EXPECT_EQ("/just/some/dir", fname.parentPath());
+    EXPECT_EQ("/just/some/dir/", fname.parentDirectory());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
     EXPECT_EQ("/just/some/dir", fname.parentPath());
+    EXPECT_EQ("/just/some/dir/", fname.parentDirectory());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 
     fname.replaceParentPath("/");
-    EXPECT_EQ("/", fname.parentPath());
+    EXPECT_EQ("", fname.parentPath());
+    EXPECT_EQ("/", fname.parentDirectory());
     EXPECT_EQ("/a.b", fname.str());
 
     fname.replaceParentPath("");
     EXPECT_EQ("", fname.parentPath());
+    EXPECT_EQ("", fname.parentDirectory());
     EXPECT_EQ("a.b", fname.str());
 
     fname = Path("/first/a.b");
     EXPECT_EQ("/first", fname.parentPath());
+    EXPECT_EQ("/first/", fname.parentDirectory());
     EXPECT_EQ("/first/a.b", fname.str());
 
     fname.replaceParentPath("/just/some/dir");
     EXPECT_EQ("/just/some/dir", fname.parentPath());
+    EXPECT_EQ("/just/some/dir/", fname.parentDirectory());
     EXPECT_EQ("/just/some/dir/a.b", fname.str());
 }
 
