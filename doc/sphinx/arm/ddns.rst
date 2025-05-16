@@ -324,6 +324,17 @@ values are 107 on Linux and 103 on FreeBSD.
 
 Kea supports only one ``unix`` control socket in the "control-sockets" list.
 
+.. note::
+
+    As of Kea 2.7.9, control sockets may reside in the directory
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
+    this value is used in ``socket-name``, Kea will emit an error and refuse to
+    start or, if already running, log an unrecoverable error.  For ease of use in
+    simply omit the path component from ``socket-name``.
+
+
 Communication over the control channel is conducted using JSON structures.
 See the `Control Channel section in the Kea Developer's
 Guide <https://reports.kea.isc.org/dev_guide/d2/d96/ctrlSocket.html>`__
