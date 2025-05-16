@@ -283,9 +283,9 @@ public:
     /// current configuration to disk. This command takes one optional
     /// parameter called filename. If specified, the current configuration
     /// will be written to that file. If not specified, the file used during
-    /// Kea start-up will be used. To avoid any exploits, the path is
-    /// always relative and .. is not allowed in the filename. This is
-    /// a security measure against exploiting file writes remotely.
+    /// Kea start-up will be used. To avoid any exploits, the target
+    /// directory must be the same as a security measure against
+    /// exploiting file writes remotely.
     ///
     /// @param command (ignored)
     /// @param args may contain optional string argument filename

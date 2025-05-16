@@ -139,6 +139,15 @@ public:
     /// @throw BadValue when the configuration file name is bad.
     void checkConfigFile() const;
 
+    /// @brief Checks the to-be-written configuration file name.
+    ///
+    /// @note As a side effect prepend the current config file path
+    /// when the name does not contain a slash.
+    ///
+    /// @param[in][out] file Reference to the TBW configuration file name.
+    /// @throw BadValue when not in the same directory.
+    void checkWriteConfigFile(std::string& file);
+
     /// @brief Writes current configuration to specified file
     ///
     /// This method writes the current configuration to specified file.

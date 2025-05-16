@@ -125,6 +125,28 @@ Daemon::checkConfigFile() const {
     }
 }
 
+void
+Daemon::checkWriteConfigFile(std::string& file) {
+    Path path(file);
+    // from checkConfigFile().
+    if (path.stem().empty()) {
+        isc_throw(isc::BadValue, "config file:" << file
+                  << " is missing file name");
+    }
+    Path current(config_file_);
+    if (current.parentDirectory() == path.parentDirectory()) {
+        // Same parent directories!
+        return;
+    }
+    if (path.parentDirectory().empty()) {
+        // Note the current parent directory can't be empty here.
+        file = current.parentDirectory() + file;
+        return;
+    }
+    isc_throw(isc::BadValue, "file " << file << " must be in the same "
+              << "directory as the config file (" << config_file_ << ")");
+}
+
 std::string
 Daemon::getProcName() {
     return (proc_name_);

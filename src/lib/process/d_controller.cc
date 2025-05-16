@@ -508,13 +508,22 @@ DControllerBase::configWriteHandler(const std::string&,
                                  "Unable to determine filename."
                                  "Please specify filename explicitly."));
         }
+    } else {
+        try {
+            checkWriteConfigFile(filename);
+        } catch (const isc::Exception& ex) {
+            std::ostringstream msg;
+            msg << "not allowed to write config into " << filename
+                << ": " << ex.what();
+            return (createAnswer(CONTROL_RESULT_ERROR, msg.str()));
+        }
     }
 
     // Ok, it's time to write the file.
     size_t size = 0;
-    ElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
 
     try {
+        ElementPtr cfg = process_->getCfgMgr()->getContext()->toElement();
         size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(CONTROL_RESULT_ERROR,

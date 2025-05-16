@@ -291,11 +291,19 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&,
         // filename parameter was not specified, so let's use whatever we remember
         // from the command-line
         filename = getConfigFile();
-    }
-
-    if (filename.empty()) {
-        return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
-                             "Please specify filename explicitly."));
+        if (filename.empty()) {
+            return (createAnswer(CONTROL_RESULT_ERROR, "Unable to determine filename."
+                                 "Please specify filename explicitly."));
+        }
+    } else {
+        try {
+            checkWriteConfigFile(filename);
+        } catch (const isc::Exception& ex) {
+            std::ostringstream msg;
+            msg << "not allowed to write config into " << filename
+                << ": " << ex.what();
+            return (createAnswer(CONTROL_RESULT_ERROR, msg.str()));
+        }
     }
 
     // Ok, it's time to write the file.

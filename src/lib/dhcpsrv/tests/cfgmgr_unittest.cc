@@ -279,6 +279,7 @@ public:
     }
 
     void clear() {
+        data_dir_env_var_.setValue();
         CfgMgr::instance().setFamily(AF_INET);
         resetDataDir();
         CfgMgr::instance().clear();

@@ -75,6 +75,14 @@ struct Path {
     /// @return parent path of current path.
     std::string parentPath() const;
 
+    /// @brief Get the parent directory.
+    ///
+    /// Empty if no directory is present, the parent path follwed by
+    /// a slash otherwise.
+    ///
+    /// @return parent directory of current path.
+    std::string parentDirectory() const;
+
     /// @brief Get the base name of the file without the extension.
     ///
     /// Counterpart for std::filesystem::path::stem.
@@ -121,6 +129,9 @@ struct Path {
     Path& replaceParentPath(std::string const& replacement = std::string());
 
 private:
+    /// @brief Is a directory present.
+    bool dir_present_;
+
     /// @brief Parent path.
     std::string parent_path_;
 

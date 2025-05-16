@@ -4172,13 +4172,13 @@ void Lease6CmdsTest::testLease6Write() {
         "{\n"
         "    \"command\": \"lease6-write\",\n"
         "    \"arguments\": {"
-        "        \"filename\": \"/tmp/myleases.txt\"\n"
+        "        \"filename\": \"/foo-bar/myleases.txt\"\n"
         "    }\n"
         "}";
 
     std::ostringstream os;
     os << "'filename' parameter is invalid: invalid path specified:"
-       << " '/tmp', supported path is '" << CfgMgr::instance().getDataDir() << "'";
+       << " '/foo-bar', supported path is '" << CfgMgr::instance().getDataDir() << "'";
 }
 
 TEST_F(Lease6CmdsTest, lease6AddMissingParams) {

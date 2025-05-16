@@ -81,11 +81,14 @@ setUmask() {
 }
 
 Path::Path(string const& full_name) {
+    dir_present_ = false;
     if (!full_name.empty()) {
-        bool dir_present = false;
         // Find the directory.
         size_t last_slash = full_name.find_last_of('/');
         if (last_slash != string::npos) {
+            // Found a directory so note the fact.
+            dir_present_ = true;
+
             // Found the last slash, so extract directory component and
             // set where the scan for the last_dot should terminate.
             parent_path_ = full_name.substr(0, last_slash);
@@ -94,14 +97,11 @@ Path::Path(string const& full_name) {
                 // do any more searching.
                 return;
             }
-
-            // Found a directory so note the fact.
-            dir_present = true;
         }
 
         // Now search backwards for the last ".".
         size_t last_dot = full_name.find_last_of('.');
-        if ((last_dot == string::npos) || (dir_present && (last_dot < last_slash))) {
+        if ((last_dot == string::npos) || (dir_present_ && (last_dot < last_slash))) {
             // Last "." either not found or it occurs to the left of the last
             // slash if a directory was present (so it is part of a directory
             // name).  In this case, the remainder of the string after the slash
@@ -123,12 +123,17 @@ Path::Path(string const& full_name) {
 
 string
 Path::str() const {
-    return (parent_path_ + ((parent_path_.empty() || parent_path_ == "/") ? string() : "/") + stem_ + extension_);
+    return (parent_path_ + (dir_present_ ? "/" : "") + stem_ + extension_);
 }
 
 string
 Path::parentPath() const {
     return (parent_path_);
+}
+
+string
+Path::parentDirectory() const {
+    return (parent_path_ + (dir_present_ ? "/" : ""));
 }
 
 string
@@ -165,10 +170,9 @@ Path::replaceExtension(string const& replacement) {
 Path&
 Path::replaceParentPath(string const& replacement) {
     string const trimmed_replacement(trim(replacement));
-    if (trimmed_replacement.empty()) {
+    dir_present_ = (trimmed_replacement.find_last_of('/') != string::npos);
+    if (trimmed_replacement.empty() || (trimmed_replacement == "/")) {
         parent_path_ = string();
-    } else if (trimmed_replacement == "/") {
-        parent_path_ = trimmed_replacement;
     } else if (trimmed_replacement.at(trimmed_replacement.size() - 1) == '/') {
         parent_path_ = trimmed_replacement.substr(0, trimmed_replacement.size() - 1);
     } else {
