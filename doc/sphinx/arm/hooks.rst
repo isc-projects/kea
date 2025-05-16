@@ -224,10 +224,10 @@ configuration would be:
 
 As of Kea 2.7.9, hook libraries may only be loaded from the default installation
 directory determined during compilation and shown in the config report as
-"Hooks directory".  This value may be overridden at startup by setting the 
+"Hooks directory".  This value may be overridden at startup by setting the
 environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
 than this value is used in a ``library`` element Kea will emit an error and refuse
-to load the library. For ease of use ``library`` elements may simply omit path 
+to load the library. For ease of use ``library`` elements may simply omit path
 components, specifying the file name only as shown below:
 
 .. code-block:: json

@@ -559,7 +559,7 @@ interpreted as a filename to which messages should be written.
 .. note::
 
     As of Kea 2.7.9, log files may only be written to the output directory
-    determined during compilation as: ``"[kea-install-dir]/var/log/kea/kea"``. This
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
     this value is used in ``output``, Kea will emit an error and refuse to start
