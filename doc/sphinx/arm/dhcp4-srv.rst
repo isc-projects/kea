@@ -7838,7 +7838,7 @@ Kea supports only one ``unix`` control socket in the "control-sockets" list.
 
 .. note::
 
-    As of Kea 2.7.9, control sockets may reside in the directory
+    As of Kea 2.7.9, control sockets may only reside in the directory
     determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
