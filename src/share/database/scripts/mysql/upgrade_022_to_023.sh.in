@@ -28,7 +28,7 @@ fi
 
 # Check only major version to allow for intermediary backported schema changes.
 version=$(mysql_version "${@}" | cut -d '.' -f 1)
-if test "${version}" != "22"; then
+if test "${version}" != '22'; then
     printf 'This script upgrades 22.* to 23.0. '
     printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
     exit 0
