@@ -1529,11 +1529,67 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFilename) {
     createUnixChannelServer();
     std::string response;
 
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
     sendUnixCommand("{ \"command\": \"config-write\", "
                     "\"arguments\": { \"filename\": \"test2.json\" } }", response);
 
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
+}
+
+// Tests if config-write can be called with a valid full path as parameter.
+TEST_F(CtrlChannelDhcpv4SrvTest, configWriteFullPath) {
+    createUnixChannelServer();
+    std::string response;
+
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/test1.json");
+
+
+    sendUnixCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }", response);
+
+    checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "/tmp/test2.json");
+    ::remove("/tmp/test2.json");
+}
+
+// Tests if config-write raises an error with invalid path as parameter.
+TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadPath) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("test1.json");
+
+    sendUnixCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/test2.json\" } }", response);
+
+    string expected = "not allowed to write config into /tmp/test2.json: ";
+    expected += "file /tmp/test2.json must be in the same directory ";
+    expected += "as the config file (test1.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/test2.json");
+}
+
+// Tests if config-write raises an error with invalid full path as parameter.
+TEST_F(CtrlChannelDhcpv4SrvTest, configWriteBadFullPath) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set by the command line -c parameter.
+    server_->setConfigFile("/tmp/kea1/test.json");
+
+    sendUnixCommand("{ \"command\": \"config-write\", "
+                    "\"arguments\": { \"filename\": \"/tmp/kea2/test.json\" } }", response);
+
+    string expected = "not allowed to write config into /tmp/kea2/test.json: ";
+    expected += "file /tmp/kea2/test.json must be in the same directory ";
+    expected += "as the config file (/tmp/kea1/test.json)";
+    checkConfigWrite(response, CONTROL_RESULT_ERROR, expected);
+    ::remove("/tmp/kea2/test.json");
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
