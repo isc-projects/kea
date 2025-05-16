@@ -40,8 +40,8 @@ std::string DaemonImpl::getVersion(bool extended) {
     }
 }
 
-};
-};
+}
+}
 
 namespace {
 
@@ -77,7 +77,6 @@ private:
     std::string env_copy_;
 };
 
-
 // Very simple test. Checks whether Daemon can be instantiated and its
 // default parameters are sane
 TEST_F(DaemonTest, constructor) {
@@ -111,6 +110,47 @@ TEST_F(DaemonTest, checkConfigFile) {
     EXPECT_THROW(instance.checkConfigFile(), BadValue);
     EXPECT_NO_THROW(instance.setConfigFile("/tmp/test.txt"));
     EXPECT_NO_THROW(instance.checkConfigFile());
+}
+
+// Verify write config file checker.
+TEST_F(DaemonTest, checkWriteConfigFile) {
+    Daemon instance;
+
+    std::string file("");
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "/tmp/";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "tmp/";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    instance.setConfigFile("/tmp/foo");
+    file = "/foo/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "/tmp/foo/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "/tmp/bar";
+    EXPECT_NO_THROW(instance.checkWriteConfigFile(file));
+    EXPECT_EQ("/tmp/bar", file);
+    file = "bar";
+    EXPECT_NO_THROW(instance.checkWriteConfigFile(file));
+    EXPECT_EQ("/tmp/bar", file);
+    instance.setConfigFile("tmp/foo");
+    file = "/tmp/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "/tmp/foo/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "tmp/bar";
+    EXPECT_NO_THROW(instance.checkWriteConfigFile(file));
+    EXPECT_EQ("tmp/bar", file);
+    instance.setConfigFile("foo");
+    file = "/tmp/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "tmp/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "foo/bar";
+    EXPECT_THROW(instance.checkWriteConfigFile(file), BadValue);
+    file = "bar";
+    EXPECT_NO_THROW(instance.checkWriteConfigFile(file));
+    EXPECT_EQ("bar", file);
 }
 
 // Verify process name accessors
@@ -318,7 +358,6 @@ TEST_F(DaemonTest, exitValue) {
     EXPECT_EQ(77, instance.getExitValue());
 }
 
-
 // More tests will appear here as we develop Daemon class.
 
-};
+}

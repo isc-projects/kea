@@ -116,6 +116,9 @@ public:
         extra_files_(),
         data_dir_env_var_("KEA_DHCP_DATA_DIR") {
 
+        // Reset the env variable.
+        data_dir_env_var_.setValue();
+
         // Save the pre-test data dir and set it to the test directory.
         CfgMgr::instance().clear();
         original_datadir_ = CfgMgr::instance().getDataDir();
