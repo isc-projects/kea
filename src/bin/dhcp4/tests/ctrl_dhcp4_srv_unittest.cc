@@ -133,7 +133,7 @@ public:
     /// @brief Destructor
     ~CtrlChannelDhcpv4SrvTest() {
         resetLogPath();
-        resetSocketPath();
+        Dhcpv4SrvTest::resetSocketPath();
         if (test_timer_) {
             test_timer_->cancel();
             getIOService()->stopAndPoll();
@@ -169,21 +169,9 @@ public:
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = "") {
-        UnixCommandConfig::getSocketPath(true,
-                                         (!explicit_path.empty() ?
-                                          explicit_path : TEST_DATA_BUILDDIR));
-
-        auto path = UnixCommandConfig::getSocketPath();
-        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
-        socket_path_ = path + "/kea4.sock";
+        Dhcpv4SrvTest::setSocketTestPath(explicit_path);
+        socket_path_ = UnixCommandConfig::getSocketPath() + "/kea4.sock";
     }
-
-    /// @brief Resets the socket path to the default.
-    void resetSocketPath() {
-        UnixCommandConfig::getSocketPath(true);
-        UnixCommandConfig::setSocketPathPerms();
-    }
-
 
     /// @brief Returns pointer to the server's IO service.
     ///

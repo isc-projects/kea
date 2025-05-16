@@ -9,6 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <config/unix_command_config.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -16,6 +17,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
 
@@ -33,6 +35,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -1985,7 +1988,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "        ],\n"
 "        \"control-sockets\": [\n"
 "            {\n"
-"                \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"                \"socket-name\": \"kea6-ctrl-socket\",\n"
 "                \"socket-type\": \"unix\",\n"
 "                \"user-context\": {\n"
 "                    \"comment\": \"Indirect comment\"\n"
@@ -11388,7 +11391,7 @@ const char* UNPARSED_CONFIGS[] = {
 "        ],\n"
 "        \"control-sockets\": [\n"
 "            {\n"
-"                \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"                \"socket-name\": \"kea6-ctrl-socket\",\n"
 "                \"socket-type\": \"unix\",\n"
 "                \"user-context\": {\n"
 "                    \"comment\": \"Indirect comment\"\n"
@@ -14618,11 +14621,13 @@ public:
 
         // Reset configuration for each test.
         resetConfiguration();
+        BaseServerTest::setSocketTestPath();
     }
 
     ~Dhcp6GetConfigTest() {
         // Reset configuration database after each test.
         resetConfiguration();
+        BaseServerTest::resetSocketPath();
     };
 
     /// @brief Parse and Execute configuration
