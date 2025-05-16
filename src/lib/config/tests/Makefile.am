@@ -4,6 +4,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/config/tests\"
 AM_CPPFLAGS += -DTEST_CA_DIR=\"$(srcdir)/../../asiolink/testutils/ca\"
+control_socket_dir = @runstatedir@/@PACKAGE@
+AM_CPPFLAGS += -DCONTROL_SOCKET_DIR=\"$(control_socket_dir)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

@@ -9,9 +9,10 @@
 #include <config/command_mgr.h>
 #include <config/unix_command_config.h>
 #include <http/basic_auth_config.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <util/filesystem.h>
+#include <testutils/env_var_wrapper.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -58,6 +59,18 @@ public:
     /// @brief UNIX control socket configuration.
     UnixCommandConfigPtr unix_config_;
 };
+
+TEST(SocketPathTest, socketDir) {
+    EnvVarWrapper env("KEA_CONTROL_SOCKET_DIR");
+    env.setValue("");
+
+    auto path = UnixCommandConfig::getSocketPath(true);
+    ASSERT_EQ(path, std::string(CONTROL_SOCKET_DIR));
+
+    env.setValue(TEST_DATA_BUILDDIR);
+    path = UnixCommandConfig::getSocketPath(true);
+    ASSERT_EQ(path, std::string(TEST_DATA_BUILDDIR));
+}
 
 // This test verifies the default UNIX control socket configuration.
 TEST_F(UnixCommandConfigTest, default) {
