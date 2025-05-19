@@ -15,7 +15,9 @@
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <util/filesystem.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <testutils/sandbox.h>
@@ -28,6 +30,8 @@ using namespace isc::agent;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::config;
+using namespace isc::util;
 
 namespace {
 
@@ -50,6 +54,7 @@ public:
         : DControllerTest(CtrlAgentController::instance),
           mgr_(CtrlAgentCommandMgr::instance()) {
         mgr_.deregisterAll();
+        setSocketTestPath();
         removeUnixSocketFile();
         initProcess();
     }
@@ -60,6 +65,7 @@ public:
     virtual ~CtrlAgentCommandMgrTest() {
         mgr_.deregisterAll();
         removeUnixSocketFile();
+        resetSocketPath();
     }
 
     /// @brief Verifies received answer
@@ -106,19 +112,22 @@ public:
     }
 
     /// @brief Returns socket file path.
-    ///
-    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
-    /// socket file is created in the location pointed to by this variable.
-    /// Otherwise, it is created in the build directory.
     std::string unixSocketFilePath() {
-        std::string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = std::string(env) + "/test-socket";
-        } else {
-            socket_path = sandbox.join("test-socket");
-        }
-        return (socket_path);
+        return (UnixCommandConfig::getSocketPath() + "/test-socket");
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        auto path = UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                     explicit_path : TEST_DATA_BUILDDIR));
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Removes unix socket descriptor.
@@ -158,7 +167,7 @@ public:
         ASSERT_TRUE(ctx);
 
         ElementPtr control_socket = Element::createMap();
-        control_socket->set("socket-name",
+        control_socket->set("validated-socket-name",
                             Element::create(unixSocketFilePath()));
         ctx->setControlSocketInfo(control_socket, service);
     }

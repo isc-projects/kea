@@ -424,4 +424,15 @@ TEST(PathChecker, validatePathEnforcePathFalse) {
     }
 }
 
+/// @brief Check hasPermissions.
+TEST_F(FileUtilTest, hasPermissions) {
+    const std::string path = ABS_SRCDIR "/filesystem_unittests.cc";
+    ASSERT_TRUE(isFile(path));
+    mode_t current_permissions = getPermissions(path);
+    EXPECT_TRUE(hasPermissions(path, current_permissions));
+    current_permissions = ~current_permissions;
+    EXPECT_FALSE(hasPermissions(path, current_permissions));
+}
+
+
 }  // namespace

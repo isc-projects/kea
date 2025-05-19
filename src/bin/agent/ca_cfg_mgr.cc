@@ -201,9 +201,13 @@ CtrlAgentCfgContext::toElement() const {
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
     for (auto const& si : ctrl_sockets_) {
-        ConstElementPtr socket = UserContext::toElement(si.second);
-        control_sockets->set(si.first, socket);
+        // Remove validated_path.
+        auto mutable_socket_info = boost::const_pointer_cast<Element>(
+                                   UserContext::toElement(si.second));
+        mutable_socket_info->remove("validated-socket-name");
+        control_sockets->set(si.first, mutable_socket_info);
     }
+
     ca->set("control-sockets", control_sockets);
     // Set Control-agent
     ElementPtr result = Element::createMap();

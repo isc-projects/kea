@@ -136,15 +136,15 @@ TEST(ParserTest, keywordAgent) {
         "    \"control-sockets\": {"
         "        \"dhcp4\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea4-ctrl-socket\""
+        "            \"socket-name\": \"kea4-ctrl-socket\""
         "        },"
         "        \"dhcp6\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea6-ctrl-socket\""
+        "            \"socket-name\": \"kea6-ctrl-socket\""
         "        },"
         "        \"d2\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea-ddns-ctrl-socket\""
+        "            \"socket-name\": \"kea-ddns-ctrl-socket\""
         "        }"
         "    },"
         "    \"hooks-libraries\": ["
@@ -173,15 +173,15 @@ TEST(ParserTest, keywordSubAgent) {
         "    \"control-sockets\": {"
         "        \"dhcp4\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea4-ctrl-socket\""
+        "            \"socket-name\": \"kea4-ctrl-socket\""
         "        },"
         "        \"dhcp6\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea6-ctrl-socket\""
+        "            \"socket-name\": \"kea6-ctrl-socket\""
         "        },"
         "        \"d2\": {"
         "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/tmp/kea-ddns-ctrl-socket\""
+        "            \"socket-name\": \"kea-ddns-ctrl-socket\""
         "        }"
         "    },"
         "    \"hooks-libraries\": ["
@@ -888,15 +888,15 @@ TEST_F(TrailingCommasTest, tests) {
   "Control-agent": {
     "control-sockets": {
       "d2": {
-        "socket-name": "/tmp/kea-dhcp-ddns-ctrl.sock",
+        "socket-name": "kea-dhcp-ddns-ctrl.sock",
         "socket-type": "unix",
       },
       "dhcp4": {
-        "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
+        "socket-name": "kea-dhcp4-ctrl.sock",
         "socket-type": "unix",
       },
       "dhcp6": {
-        "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+        "socket-name": "kea-dhcp6-ctrl.sock",
         "socket-type": "unix",
       },
     },

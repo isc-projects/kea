@@ -220,9 +220,15 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                   " for the server type " << service);
     }
 
-    // If the configuration does its job properly the socket-name must be
-    // specified and must be a string value.
-    std::string socket_name = socket_info->get("socket-name")->stringValue();
+    // If the configuration does its job properly the validated-socket-name
+    // should be present.
+    if (!socket_info->get("validated-socket-name")) {
+        isc_throw(Unexpected, "validated-socket-name missing from "
+                  << " socket_info: " << socket_info->str()
+                  << " for the server type " << service);
+    }
+
+    auto socket_name = socket_info->get("validated-socket-name")->stringValue();
 
     // Forward command and receive reply.
     IOServicePtr io_service(new IOService());;

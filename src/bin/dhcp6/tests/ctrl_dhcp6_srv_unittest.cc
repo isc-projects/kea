@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_config.h>
 #include <config/timeouts.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
@@ -149,16 +150,12 @@ public:
     ///
     /// Sets socket path to its default value.
     CtrlChannelDhcpv6SrvTest() : interfaces_("\"*\"") {
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path_ = string(env) + "/kea6.sock";
-        } else {
-            socket_path_ = sandbox.join("/kea6.sock");
-        }
         reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
                                                IfaceMgr::instancePtr().get(), ph::_1));
+        setSocketTestPath();
+        socket_path_ = UnixCommandConfig::getSocketPath() + "/kea6.sock";
     }
 
     /// @brief Destructor

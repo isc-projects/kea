@@ -132,6 +132,13 @@ public:
     /// @brief Resets the log path to TEST_DATA_BUILDDIR.
     void resetLogPath();
 
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    static void setSocketTestPath(const std::string explicit_path = "");
+
+    /// @brief Resets the socket path to the default.
+    static void resetSocketPath();
+
 private:
 
     /// @brief Holds the original data directory.

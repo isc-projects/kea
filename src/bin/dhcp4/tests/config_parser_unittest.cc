@@ -37,6 +37,7 @@
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
 #include <util/doubles.h>
+#include <util/filesystem.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -62,6 +63,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::test;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -237,7 +239,7 @@ const char* PARSER_CONFIGS[] = {
     "        ],"
     "    \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/tmp/kea4-ctrl-socket\","
+    "        \"socket-name\": \"kea4-ctrl-socket\","
     "        \"user-context\": { \"comment\": \"Indirect comment\" }"
     "    },"
     "    \"shared-networks\": [ {"
@@ -314,6 +316,7 @@ public:
         resetConfiguration();
 
         resetHooksPath();
+        Dhcpv4SrvTest::resetSocketPath();
     }
 
     ~Dhcp4ParserTest() {
@@ -325,6 +328,7 @@ public:
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
 
         resetHooksPath();
+        Dhcpv4SrvTest::resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -6984,6 +6988,7 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
+    Dhcpv4SrvTest::setSocketTestPath();
 
     string config = PARSER_CONFIGS[6];
     extractConfig(config);
@@ -7081,7 +7086,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-name"));
-    EXPECT_EQ("\"/tmp/kea4-ctrl-socket\"", socket->get("socket-name")->str());
+    EXPECT_EQ("\"kea4-ctrl-socket\"", socket->get("socket-name")->str());
 
     // Check control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");

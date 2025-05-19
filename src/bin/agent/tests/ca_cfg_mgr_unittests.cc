@@ -7,11 +7,13 @@
 #include <config.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
+#include <config/unix_command_config.h>
 #include <exceptions/exceptions.h>
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <http/basic_auth_config.h>
 #include <hooks/hooks_parser.h>
+#include <util/filesystem.h>
 #include <agent/tests/test_callout_libraries.h>
 #include <agent/tests/test_data_files_config.h>
 #include <boost/pointer_cast.hpp>
@@ -23,6 +25,8 @@ using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::config;
+using namespace isc::util;
 
 namespace  {
 
@@ -239,8 +243,8 @@ TEST(CtrlAgentCfgMgr, contextAuthConfigFile) {
 
     auth->setRealm("foobar");
     auth->setDirectory("/tmp");
-    auth->add("", "/tmp/foo", "", "/tmp/bar");
-    auth->add("", "/tmp/test", "", "/tmp/pwd");
+    auth->add("", "foo", "", "bar");
+    auth->add("", "test", "", "pwd");
 
     const HttpAuthConfigPtr& stored_auth = ctx.getAuthConfig();
     ASSERT_TRUE(stored_auth);
@@ -265,7 +269,7 @@ const char* AGENT_CONFIGS[] = {
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        }\n"
     "    }\n"
     "}",
@@ -276,13 +280,13 @@ const char* AGENT_CONFIGS[] = {
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        },\n"
     "        \"dhcp6\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v6\"\n"
+    "            \"socket-name\": \"socket-v6\"\n"
     "        },\n"
     "        \"d2\": {\n"
-    "            \"socket-name\": \"/tmp/socket-d2\"\n"
+    "            \"socket-name\": \"socket-d2\"\n"
     "        }\n"
     "   }\n"
     "}",
@@ -295,7 +299,7 @@ const char* AGENT_CONFIGS[] = {
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        }\n"
     "   },\n"
     "    \"hooks-libraries\": ["
@@ -314,7 +318,7 @@ const char* AGENT_CONFIGS[] = {
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"d2\": {\n"
-    "            \"socket-name\": \"/tmp/socket-d2\"\n"
+    "            \"socket-name\": \"socket-d2\"\n"
     "        }\n"
     "    }\n"
     "}",
@@ -325,7 +329,7 @@ const char* AGENT_CONFIGS[] = {
     "    \"http-port\": 8001,\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp6\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v6\"\n"
+    "            \"socket-name\": \"socket-v6\"\n"
     "        }\n"
     "    }\n"
     "}",
@@ -349,7 +353,7 @@ const char* AGENT_CONFIGS[] = {
     "    },\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        }\n"
     "    }\n"
     "}",
@@ -377,10 +381,10 @@ const char* AGENT_CONFIGS[] = {
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
     "            \"comment\": \"dhcp4 socket\",\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        },\n"
     "        \"dhcp6\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v6\",\n"
+    "            \"socket-name\": \"socket-v6\",\n"
     "            \"user-context\": { \"version\": 1 }\n"
     "        }\n"
     "    }\n"
@@ -415,7 +419,7 @@ const char* AGENT_CONFIGS[] = {
     "    },\n"
     "    \"control-sockets\": {\n"
     "        \"dhcp4\": {\n"
-    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "            \"socket-name\": \"socket-v4\"\n"
     "        }\n"
     "    }\n"
     "}"
@@ -427,11 +431,13 @@ public:
     /// @brief Constructor.
     AgentParserTest() {
         resetHooksPath();
+        setSocketTestPath();
     }
 
     /// @brief Destructor.
     virtual ~AgentParserTest() {
         resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -445,6 +451,20 @@ public:
     /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
     void resetHooksPath() {
         HooksLibrariesParser::getHooksPath(true);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        auto path = UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                     explicit_path : TEST_DATA_BUILDDIR));
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Tries to load input text as a configuration
@@ -468,6 +488,20 @@ public:
         string txt(config);
         txt.replace(txt.find("%LIBRARY%"), strlen("%LIBRARY%"), string(lib_name));
         return (txt);
+    }
+
+    /// @brief Make expected contents of socket info with socket path added.
+    ///
+    /// @param name name of the socket
+    /// @return expected string
+    std::string makeSocketStr(const std::string& name) {
+        std::ostringstream os;
+        os << "{ \"socket-name\": \""
+           << name << "\", \"socket-type\": \"unix\","
+           << " \"validated-socket-name\": \""
+           << UnixCommandConfig::getSocketPath() << "/" << name
+           << "\" }";
+        return (os.str());
     }
 
     /// Configuration Manager (used in tests)
@@ -503,8 +537,7 @@ TEST_F(AgentParserTest, configParseSocketDhcp4) {
     ASSERT_TRUE(ctx);
     ConstElementPtr socket = ctx->getControlSocketInfo("dhcp4");
     ASSERT_TRUE(socket);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v4\", \"socket-type\": \"unix\" }",
-              socket->str());
+    EXPECT_EQ(makeSocketStr("socket-v4"), socket->str());
     EXPECT_FALSE(ctx->getControlSocketInfo("dhcp6"));
     EXPECT_FALSE(ctx->getControlSocketInfo("d2"));
 }
@@ -519,9 +552,7 @@ TEST_F(AgentParserTest, configParseSocketD2) {
     ASSERT_TRUE(ctx);
     ConstElementPtr socket = ctx->getControlSocketInfo("d2");
     ASSERT_TRUE(socket);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-d2\", \"socket-type\": \"unix\" }",
-              socket->str());
-
+    EXPECT_EQ(makeSocketStr("socket-d2"), socket->str());
     EXPECT_FALSE(ctx->getControlSocketInfo("dhcp4"));
     EXPECT_FALSE(ctx->getControlSocketInfo("dhcp6"));
 }
@@ -536,8 +567,7 @@ TEST_F(AgentParserTest, configParseSocketDhcp6) {
     ASSERT_TRUE(ctx);
     ConstElementPtr socket = ctx->getControlSocketInfo("dhcp6");
     ASSERT_TRUE(socket);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v6\", \"socket-type\": \"unix\" }",
-              socket->str());
+    EXPECT_EQ(makeSocketStr("socket-v6"), socket->str());
     EXPECT_FALSE(ctx->getControlSocketInfo("dhcp4"));
     EXPECT_FALSE(ctx->getControlSocketInfo("d2"));
 }
@@ -552,14 +582,11 @@ TEST_F(AgentParserTest, configParse3Sockets) {
     ConstElementPtr socket4 = ctx->getControlSocketInfo("dhcp4");
     ConstElementPtr socket6 = ctx->getControlSocketInfo("dhcp6");
     ASSERT_TRUE(socket2);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-d2\", \"socket-type\": \"unix\" }",
-              socket2->str());
+    EXPECT_EQ(makeSocketStr("socket-d2"), socket2->str());
     ASSERT_TRUE(socket4);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v4\", \"socket-type\": \"unix\" }",
-              socket4->str());
+    EXPECT_EQ(makeSocketStr("socket-v4"), socket4->str());
     ASSERT_TRUE(socket6);
-    EXPECT_EQ("{ \"socket-name\": \"/tmp/socket-v6\", \"socket-type\": \"unix\" }",
-              socket6->str());
+    EXPECT_EQ(makeSocketStr("socket-v6"), socket6->str());
 }
 
 // This test checks that the config file with hook library specified can be

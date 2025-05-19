@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <config/unix_command_config.h>
 #include <d2/parser_context.h>
 #include <d2/tests/parser_unittest.h>
 #include <d2/tests/test_callout_libraries.h>
@@ -17,6 +18,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <test_data_files_config.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -26,6 +28,8 @@ using namespace isc;
 using namespace isc::d2;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace isc::config;
+using namespace isc::util;
 
 namespace {
 
@@ -49,11 +53,13 @@ public:
     /// @brief Constructor
     D2CfgMgrTest():cfg_mgr_(new D2CfgMgr()), d2_params_() {
         resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Destructor
     ~D2CfgMgrTest() {
         resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -67,6 +73,22 @@ public:
     /// @brief Resets the hooks path to DEFAULT_HOOKS_PATH.
     void resetHooksPath() {
         HooksLibrariesParser::getHooksPath(true);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                         explicit_path : TEST_DATA_BUILDDIR));
+
+        auto path = UnixCommandConfig::getSocketPath();
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Configuration manager instance.
@@ -477,6 +499,7 @@ TEST(D2CfgMgr, construction) {
 /// event.
 TEST_F(D2CfgMgrTest, fullConfig) {
     setHooksTestPath();
+    setSocketTestPath();
 
     // Create a configuration with all of application level parameters, plus
     // both the forward and reverse ddns managers.  Both managers have two
@@ -986,6 +1009,7 @@ TEST_F(D2CfgMgrTest, configPermutations) {
 
 /// @brief Tests comments.
 TEST_F(D2CfgMgrTest, comments) {
+    setSocketTestPath();
     std::string config = "{ "
                         "\"comment\": \"D2 config\" , "
                         "\"ip-address\" : \"192.168.1.33\" , "

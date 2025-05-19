@@ -51,6 +51,21 @@ exists(string const& path) {
     return (::stat(path.c_str(), &statbuf) == 0);
 }
 
+mode_t
+getPermissions(const std::string path) {
+    struct stat statbuf;
+    if (::stat(path.c_str(), &statbuf) < 0) {
+        return (0);
+    }
+
+    return (statbuf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+}
+
+bool
+hasPermissions(const std::string path, const mode_t& permissions) {
+    return (getPermissions(path) == permissions);
+}
+
 bool
 isDir(string const& path) {
     struct stat statbuf;
@@ -272,6 +287,11 @@ PathChecker::validatePath(const std::string input_path_str,
 
     std::string valid_path(path_ + "/" +  filename);
     return (valid_path);
+}
+
+bool
+PathChecker::pathHasPermissions(mode_t permissions) {
+    return(hasPermissions(path_, permissions));
 }
 
 }  // namespace file

@@ -2,6 +2,8 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
+control_socket_dir = @runstatedir@/@PACKAGE@
+AM_CPPFLAGS += -DCONTROL_SOCKET_DIR=\"$(control_socket_dir)\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -17,6 +19,7 @@ libkea_cfgclient_la_SOURCES += timeouts.h
 libkea_cfgclient_la_SOURCES += cmd_http_listener.cc cmd_http_listener.h
 libkea_cfgclient_la_SOURCES += cmd_response_creator.cc cmd_response_creator.h
 libkea_cfgclient_la_SOURCES += cmd_response_creator_factory.h
+libkea_cfgclient_la_SOURCES += unix_command_config.cc unix_command_config.h
 
 libkea_cfgclient_la_LIBADD  = $(top_builddir)/src/lib/http/libkea-http.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la

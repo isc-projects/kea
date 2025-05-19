@@ -311,6 +311,7 @@ class DBInitializer {
 
 void
 Dhcpv6SrvTest::checkConfigFiles() {
+    setSocketTestPath();
     DBInitializer dbi;
     IfaceMgrTestConfig test_config(true);
     string path = CFG_EXAMPLES;

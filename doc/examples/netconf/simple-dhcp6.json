@@ -58,7 +58,7 @@
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/tmp/kea6-ctrl-socket"
+                    "socket-name": "kea6-ctrl-socket"
                 },
 
                 // Comment is optional. You can put some notes here.

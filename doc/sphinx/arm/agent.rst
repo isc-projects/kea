@@ -135,6 +135,16 @@ for the DHCPv4 server and the CA (for that server) must match. Consult
 :ref:`d2-ctrl-channel` to learn how the socket configuration is
 specified for the DHCPv4, DHCPv6, and D2 services.
 
+.. note::
+
+    As of Kea 2.6.3, control sockets may only reside in the directory
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
+    this value is used in ``socket-name``, Kea will emit an error and refuse to
+    start or, if already running, log an unrecoverable error.  For ease of use in
+    simply omit the path component from ``socket-name``.
+
 User contexts can store arbitrary data as long as they are in valid JSON
 syntax and their top-level element is a map (i.e. the data must be
 enclosed in curly brackets). Some hook libraries may expect specific

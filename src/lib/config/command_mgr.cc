@@ -13,6 +13,7 @@
 #include <asiolink/unix_domain_socket_acceptor.h>
 #include <asiolink/unix_domain_socket_endpoint.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_config.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <cc/json_feed.h>
@@ -544,7 +545,11 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         isc_throw(BadSocketInfo, "'socket-name' parameter expected to be a string");
     }
 
-    socket_name_ = name->stringValue();
+    try {
+        socket_name_ = UnixCommandConfig::validatePath(name->stringValue());
+    } catch (const std::exception& ex) {
+        isc_throw(BadSocketInfo, "'socket-name' is invalid: " << ex.what());
+    }
 
     // First let's open lock file.
     std::string lock_name = getLockName();
@@ -584,6 +589,8 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         doAccept();
 
     } catch (const std::exception& ex) {
+        close(lock_fd);
+        static_cast<void>(::remove(getLockName().c_str()));
         isc_throw(SocketError, ex.what());
     }
 }
