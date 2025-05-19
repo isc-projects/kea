@@ -66,15 +66,15 @@
     "control-sockets": {
         "dhcp4": {
             "socket-type": "unix",
-            "socket-name": "/tmp/kea4-ctrl-socket"
+            "socket-name": "kea4-ctrl-socket"
         },
         "dhcp6": {
             "socket-type": "unix",
-            "socket-name": "/tmp/kea6-ctrl-socket"
+            "socket-name": "kea6-ctrl-socket"
         },
         "d2": {
             "socket-type": "unix",
-            "socket-name": "/tmp/kea-ddns-ctrl-socket"
+            "socket-name": "kea-ddns-ctrl-socket"
         }
     },
 
