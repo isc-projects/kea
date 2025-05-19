@@ -512,7 +512,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
                         "\"ncr-format\": \"JSON\", "
                         "\"control-socket\" : {"
                         " \"socket-type\" : \"unix\" ,"
-                        " \"socket-name\" : \"/tmp/d2-ctrl-channel\" "
+                        " \"socket-name\" : \"d2-ctrl-channel\" "
                         "},"
                         "\"hooks-libraries\": ["
                         "{"
@@ -599,7 +599,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     ASSERT_TRUE(ctrl_sock->get("socket-type"));
     EXPECT_EQ("\"unix\"", ctrl_sock->get("socket-type")->str());
     ASSERT_TRUE(ctrl_sock->get("socket-name"));
-    EXPECT_EQ("\"/tmp/d2-ctrl-channel\"", ctrl_sock->get("socket-name")->str());
+    EXPECT_EQ("\"d2-ctrl-channel\"", ctrl_sock->get("socket-name")->str());
 
     // Verify that the hooks libraries can be retrieved.
     const HookLibsCollection libs = context->getHooksConfig().get();
@@ -1017,7 +1017,7 @@ TEST_F(D2CfgMgrTest, comments) {
                         "\"control-socket\": {"
                         " \"comment\": \"Control channel\" , "
                         " \"socket-type\": \"unix\" ,"
-                        " \"socket-name\": \"/tmp/d2-ctrl-channel\" "
+                        " \"socket-name\": \"d2-ctrl-channel\" "
                         "},"
                         "\"tsig-keys\": ["
                         "{"

@@ -14,7 +14,7 @@ namespace isc {
 namespace config {
 
 /// @brief UNIX command config aka UNIX control socket info class.
-class UnixCommandConfig { 
+class UnixCommandConfig {
 public:
     /// @brief Defines the default permissions for unix socket parent directory.
     static const mode_t DEFAULT_SOCKET_PATH_PERMS;

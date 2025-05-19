@@ -154,7 +154,7 @@ public:
 
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
-   void setSocketTestPath(const std::string explicit_path = "") {
+    void setSocketTestPath(const std::string explicit_path = "") {
         UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
                                          explicit_path : TEST_DATA_BUILDDIR));
 

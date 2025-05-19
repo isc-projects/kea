@@ -434,5 +434,4 @@ TEST_F(FileUtilTest, hasPermissions) {
     EXPECT_FALSE(hasPermissions(path, current_permissions));
 }
 
-
 }  // namespace

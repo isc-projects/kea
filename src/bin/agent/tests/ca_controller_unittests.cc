@@ -302,7 +302,7 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"second_socket6\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
@@ -345,7 +345,7 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     EXPECT_EQ(8080, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated too.
-    testUnixSocketInfo("dhcp4", "second_socket6");
+    testUnixSocketInfo("dhcp4", "second_socket4");
     testUnixSocketInfo("dhcp6", "second_socket6");
 
     // After the shutdown the HTTP listener no longer exists.
@@ -368,7 +368,7 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"second_socket6\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
@@ -434,7 +434,7 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"second_socket6\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
@@ -476,7 +476,7 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     EXPECT_EQ(8081, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated.
-    testUnixSocketInfo("dhcp4", "second_socket6");
+    testUnixSocketInfo("dhcp4", "second_socket4");
     testUnixSocketInfo("dhcp6", "second_socket6");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
