@@ -13,6 +13,7 @@
 #include <fstream>
 #include <list>
 #include <string>
+#include <cstdlib>
 
 #include <gtest/gtest.h>
 
@@ -432,6 +433,141 @@ TEST_F(FileUtilTest, hasPermissions) {
     EXPECT_TRUE(hasPermissions(path, current_permissions));
     current_permissions = ~current_permissions;
     EXPECT_FALSE(hasPermissions(path, current_permissions));
+}
+
+// Verifies PathChecker::validateDirectory() when enforce_path is true.
+TEST(PathChecker, validateDirectoryEnforcePath) {
+    std::string def_path(TEST_DATA_BUILDDIR);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid path with slash.
+        __LINE__,
+        "/var/lib/bs/",
+        "",
+        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
+    },
+    {
+        // Invalid path without slash.
+        __LINE__,
+        "/var/lib/bs",
+        "",
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
+    },
+    {
+        // File name is just another bad path.
+        __LINE__,
+        "mylib.so",
+        "",
+        string("invalid path specified: 'mylib.so', supported path is '" + def_path + "'")
+    },
+    {
+        // Valid full path with slash.
+        __LINE__,
+        def_path + "/",
+        def_path,
+        ""
+    },
+    {
+        // Valid full path without slash.
+        __LINE__,
+        def_path,
+        def_path,
+        ""
+    },
+    {
+        // Invalid relative path.
+        __LINE__,
+        "../kea/",
+        "",
+        string("invalid path specified: '../kea/', supported path is '" +
+               def_path + "'")
+    }
+    };
+
+    // Create a PathChecker with a supported path of def_path.
+    PathChecker checker(def_path);
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                checker.validateDirectory(scenario.lib_path_));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             checker.validateDirectory(scenario.lib_path_),
+                             BadValue, scenario.exp_error_);
+        }
+    }
+}
+
+// Verifies PathChecker::validateDirectory() when enforce_path is false.
+TEST(PathChecker, validateDirectoryEnforcePathFalse) {
+    std::string def_path(TEST_DATA_BUILDDIR);
+    struct Scenario {
+        int line_;
+        std::string lib_path_;
+        std::string exp_path_;
+        std::string exp_error_;
+    };
+
+    std::list<Scenario> scenarios = {
+    {
+        // Invalid parent path but shouldn't care.
+        __LINE__,
+        "/var/lib/bs/",
+        "/var/lib/bs/",
+        ""
+    },
+    {
+        // File name only is valid.
+        __LINE__,
+        "mylib.so",
+        "mylib.so",
+        ""
+    },
+    {
+        // Valid full path.
+        __LINE__,
+        def_path + "/",
+        def_path + "/",
+        ""
+    },
+    {
+        // White space for file name.
+        __LINE__,
+        "      ",
+        "",
+        ""
+    }
+    };
+
+    // Create a PathChecker with a supported path of def_path.
+    PathChecker checker(def_path);
+    for (auto scenario : scenarios) {
+        std::ostringstream oss;
+        oss << " Scenario at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::string validated_path;
+        if (scenario.exp_error_.empty()) {
+            ASSERT_NO_THROW_LOG(validated_path =
+                                checker.validateDirectory(scenario.lib_path_, false));
+            EXPECT_EQ(validated_path, scenario.exp_path_);
+        } else {
+            ASSERT_THROW_MSG(validated_path =
+                             checker.validateDirectory(scenario.lib_path_, false),
+                             BadValue, scenario.exp_error_);
+        }
+    }
 }
 
 }  // namespace

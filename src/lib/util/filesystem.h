@@ -70,7 +70,7 @@ isFile(const std::string& path);
 void
 setUmask();
 
-/// \brief Paths on a filesystem
+/// @brief Paths on a filesystem
 struct Path {
     /// @brief Constructor
     ///
@@ -216,6 +216,26 @@ public:
     /// it the parent path does not path the supported path.
     std::string validatePath(const std::string input_path_str,
                              bool enforce_path = true) const;
+
+    /// @brief Validates a directory against a supported path.
+    ///
+    /// Used to validate a string that represents a directory that may or
+    /// may not end with a "/" (i.e "/foo/bar", bar is assumed to be the
+    /// a directory, not a file.
+    ///
+    /// If the input is empty or it matches the supported path, it returns
+    /// the supported path.  Otherwise it throws an error.
+    ///
+    /// @param input_path_str file path to validate.
+    /// @param enforce_path enables validation against the supported path. If
+    /// it simply returns the supported path.
+    ///
+    /// @return validated path
+    ///
+    /// @throw BadValue if the input directory does not match the supported
+    /// path.
+    std::string validateDirectory(const std::string input_path_str,
+                                  bool enforce_path = true) const;
 
     /// @brief Tests that the supported path has the given permissions.
     ///
