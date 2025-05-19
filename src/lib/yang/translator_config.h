@@ -144,7 +144,7 @@ namespace yang {
 ///     },
 ///         "control-socket": {
 ///             "socket-type": "unix",
-///             "socket-name": "/tmp/kea4-sock"
+///             "socket-name": "kea4-sock"
 ///         },
 ///     "subnet4":
 ///     [
@@ -180,7 +180,7 @@ namespace yang {
 ///     <interfaces>eth1</interfaces>
 ///   </interfaces-config>
 ///   <control-socket>
-///     <socket-name>/tmp/kea4-sock</socket-name>
+///     <socket-name>kea4-sock</socket-name>
 ///     <socket-type>unix</socket-type>
 ///   </control-socket>
 /// </config>
@@ -310,7 +310,7 @@ namespace yang {
 ///     },
 ///         "control-socket": {
 ///             "socket-type": "unix",
-///             "socket-name": "/tmp/kea6-sock"
+///             "socket-name": "kea6-sock"
 ///         },
 ///     "subnet6":
 ///     [
@@ -345,7 +345,7 @@ namespace yang {
 ///     <interfaces>eth1</interfaces>
 ///   </interfaces-config>
 ///   <control-socket>
-///     <socket-name>/tmp/kea6-sock</socket-name>
+///     <socket-name>kea6-sock</socket-name>
 ///     <socket-type>unix</socket-type>
 ///   </control-socket>
 /// </config>

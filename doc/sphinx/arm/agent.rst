@@ -153,12 +153,13 @@ specified for the DHCPv4, DHCPv6, and D2 services.
 .. note::
 
     As of Kea 2.7.9, control sockets may only reside in the directory
-    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
-    path may be overridden at startup by setting the environment variable
-    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
-    this value is used in ``socket-name``, Kea will emit an error and refuse to
-    start or, if already running, log an unrecoverable error.  For ease of use in
-    simply omit the path component from ``socket-name``.
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
 
 User contexts can store arbitrary data as long as they are in valid JSON
 syntax and their top-level element is a map (i.e. the data must be

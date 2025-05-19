@@ -132,7 +132,7 @@ The hook library parameters for the text file configuration are:
 
 .. note::
 
-    As of Kea 2.7.9, log files may only be written to the output directory
+    As of Kea 2.7.9, legal log files may only be written to the output directory
     determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_LEGAL_LOG_DIR`` to the desired path.  If a path other than this value

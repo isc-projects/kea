@@ -98,7 +98,7 @@ public:
     ///         "control-socket":
     ///           {
     ///              "socket-type": "unix",
-    ///              "socket-name": "/tmp/kea4-ctrl-socket"
+    ///              "socket-name": "kea4-ctrl-socket"
     ///           }
     ///       }
     ///    }

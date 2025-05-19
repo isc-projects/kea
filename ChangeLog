@@ -1,17 +1,3 @@
-2344.	[func]*		tmark
-	All files and sockets created by Kea servers have been
-	restricted to default paths determined at compile time
-	which may be overridden one enviornment varibles. This
-	incldes lease files, log files, forensic log files, control
-	channel sockets, and the output from commands such as
-	config-write, cache-write, lease4-write, and lease6-write. 
-	Use of unsupported paths will result in servers emitting
-	errors and refusing to start or rejecting commands.
-	The specifics including the supported paths and environment
-	names are in the relevant ARM sections.
-	CVE:2025-32801
-	(Gitlab #3831)
-	 
 Kea 2.7.8 (development) released on April 30, 2025
 
 2343.	[build]		wlodek

@@ -88,7 +88,7 @@
 
                 // This optional parameter can be used to specify a common
                 // prefix for files handling client credentials.
-                "directory": "/tmp/kea-creds",
+                "directory": "/usr/local/share/kea/kea-creds",
 
                 // This list specifies the user ids and passwords to
                 // use for basic HTTP authentication. If empty or not
@@ -108,11 +108,11 @@
                     // This specifies a hidden client.
                     {
                         // The user id is the content of the
-                        // file /tmp/kea-creds/hiddenu.
+                        // file /usr/local/share/kea/kea-creds/hiddenu.
                         "user-file": "hiddenu",
 
                         // The password is the content of the
-                        // file /tmp/kea-creds/hiddenp.
+                        // file /usr/local/share/kea/kea-creds/hiddenp.
                         "password-file": "hiddenp"
                     },
 
@@ -120,7 +120,7 @@
                     // in a file.
                     {
                         // The secret is the content of the file
-                        // /tmp/kea-creds/hiddens which must be in
+                        // /usr/local/share/kea/kea-creds/hiddens which must be in
                         // the <user-id>:<password> format.
                         "password-file": "hiddens"
                     }
@@ -227,7 +227,7 @@
 
             // An alternative to secret: specify a file where the secret
             // can be found. i.e. the secret is the content of the file.
-            "secret-file": "/tmp/d2-sha1-secret"
+            "secret-file": "/usr/local/share/kea/d2-sha1-secret"
         }
     ],
 

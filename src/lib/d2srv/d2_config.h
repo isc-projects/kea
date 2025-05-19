@@ -79,7 +79,7 @@ namespace d2 {
 ///  [
 ///    {
 ///     "socket-type": "unix" ,
-///     "socket-name": "/tmp/kea-ddns-ctrl-socket"
+///     "socket-name": "kea-ddns-ctrl-socket"
 ///    }
 ///  ],
 ///  "tsig-keys":

@@ -649,6 +649,8 @@ UnixCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
         doAccept(socket_info);
 
     } catch (const std::exception& ex) {
+        close(lock_fd);
+        static_cast<void>(::remove(cmd_config->getLockName().c_str()));
         isc_throw(SocketError, ex.what());
     }
 

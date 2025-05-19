@@ -169,10 +169,10 @@ example usage looks as follows:
 
    {
        "command": "cache-load",
-       "arguments": "/tmp/kea-host-cache.json"
+       "arguments": "/usr/local/share/kea/kea-host-cache.json"
    }
 
-This command stores the contents to the ``/tmp/kea-host-cache.json``
+This command stores the contents to the ``/usr/local/share/kea/kea-host-cache.json``
 file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 

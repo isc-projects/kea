@@ -38,6 +38,12 @@ protection possible:
 
 .. note::
 
+   It is recommend to use privileged ports for HTTP/HTTPS against local attacks
+   (users which are conencted to the box where Kea servers/agents run). This measure
+   also prevents against impersonation with HTTP and DoS in general.
+
+.. note::
+
    The server will issue an error when changing the socket type from HTTP to HTTPS
    or from HTTPS to HTTP using the same address and port. This action is not
    allowed as it might introduce a security issue accidentally caused by a user
@@ -280,6 +286,23 @@ For example, :iscman:`kea-dhcp-ddns` should not be run unless DNS updates are re
 Similarly, :iscman:`kea-lfc` is never triggered (and can be safely removed or never installed) if memfile is not used.
 Potential Kea security issues can be minimized by running only those processes required in the local environment.
 
+.. note::
+
+    As of Kea 2.7.9, ``data-directory`` (DHCPv6 only) is deprecated. The lease files
+    (DHCPv4 and DHCPv6) and duid file (DHCPv6 only) may only be loaded from
+    the directory determined at compilation: ``"[kea-install-dir]/var/lib/kea"``.
+    This path may be overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    this value is used in ``name`` or ``data-directory``, Kea will emit an error and
+    refuse to start or, if already running, log an unrecoverable error.
+    This restriction applies to writing lease file using ``lease4-write`` and
+    ``lease6-write`` commands. If a path other than this value is used in ``filename``,
+    Kea will emit an error and refuse to start or, if already running, log an
+    unrecoverable error.  For ease of use in specifying a custom file name simply
+    omit the path portion from ``filename``. Same restriction also applies to
+    writing cache file using ``cache-write`` command. For ease of use in
+    specifying a custom file name simply omit the path portion from ``filename``.
+
 Limiting Application Permissions
 --------------------------------
 
@@ -301,6 +324,17 @@ read from or write to this socket, root access is generally required, although i
 to run as non-root, the owner of the process can write to it. Access can be controlled using normal
 file-access control on POSIX systems (owner, group, others, read/write).
 
+.. note::
+
+    As of Kea 2.7.9, control sockets may only reside in the directory
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
+
 Since Kea version 2.7.2 DHCP servers support HTTP/HTTPS control channels so the Control Agent (CA)
 is no longer needed.
 
@@ -313,6 +347,12 @@ passwords are stored in clear text in the configuration file, so anyone with acc
 configuration file can find this information. As a practical matter, anyone with permission to edit
 the configuration file has control over Kea.
 Limiting user permission to read or write the Kea configuration file is an important security step.
+
+.. note::
+
+    As of Kea 2.7.9, the config file may only be written (using the
+    ``config-write`` command) to the same directory as the config file used
+    when starting Kea (passed as a ``-c`` argument).
 
 Securing Database Connections
 -----------------------------
@@ -340,6 +380,26 @@ Since Kea 1.9.7, this issue has been resolved by replacing the value of all entr
 
 Logs are sent to stdout, stderr, files, or syslog; system file permissions system apply to
 stdout/stderr and files. Syslog may export the logs over the network, exposing them further to possible snooping.
+
+.. note::
+
+    As of Kea 2.7.9, log files may only be written to the output directory
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
+    this value is used in ``output``, Kea will emit an error and refuse to start
+    or, if already running, log an unrecoverable error.  For ease of use simply
+    omit the path component from ``output`` and specify only the file name.
+
+.. note::
+
+    As of Kea 2.7.9, legal log files may only be written to the output directory
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_LEGAL_LOG_DIR`` to the desired path.  If a path other than this value
+    is used in ``path``, Kea will emit an error and refuse to start or if already
+    running, log an unrecoverable error. For ease of use simply omit the ``path``
+    parameter.
 
 Cryptography Components
 -----------------------
@@ -442,6 +502,16 @@ Kea 1.9.2 introduced a new ``auth`` hook point. With this new hook point, it is 
 hook library to extend the access controls, integrate with another authentication authority, or add role-based
 access control to the Control Agent. This hookpoint is also supported by the DHCP and DDNS servers since Kea
 version 2.7.2.
+
+.. note:
+
+    As of Kea 2.7.9, hook libraries may only be loaded from the default installation
+    directory determined during compilation and shown in the config report as
+    "Hooks directory".  This value may be overridden at startup by setting the
+    environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
+    than this value is used in a ``library`` element Kea will emit an error and refuse
+    to load the library. For ease of use ``library`` elements may simply omit path
+    components.
 
 Kea Security Processes
 ======================

@@ -53,14 +53,14 @@ public:
 
     /// @brief Constructor
     D2CfgMgrTest():cfg_mgr_(new D2CfgMgr()), d2_params_() {
-       resetHooksPath();
-       resetSocketPath();
+        resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Destructor
     ~D2CfgMgrTest() {
-       resetHooksPath();
-       resetSocketPath();
+        resetHooksPath();
+        resetSocketPath();
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.

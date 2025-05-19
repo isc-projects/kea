@@ -68,6 +68,7 @@ public:
         setSocketTestPath();
     }
 
+    /// @brief Destructor.
     virtual ~CtrlAgentControllerTest() {
         resetSocketPath();
     }

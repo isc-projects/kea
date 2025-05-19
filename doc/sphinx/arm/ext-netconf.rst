@@ -409,7 +409,7 @@ making them manageable. For instance, for the DHCPv4 server:
     {
         "Dhcp4": {
             "control-socket": {
-               "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
+               "socket-name": "kea-dhcp4-ctrl.sock",
                "socket-type": "unix"
             }
         }
@@ -548,7 +548,7 @@ Kea sources.
                    "control-socket":
                    {
                        "socket-type": "unix",
-                       "socket-name": "/tmp/kea4-ctrl-socket"
+                       "socket-name": "kea4-ctrl-socket"
                    }
                },
 
@@ -559,7 +559,7 @@ Kea sources.
                    "control-socket":
                    {
                        "socket-type": "unix",
-                       "socket-name": "/tmp/kea6-ctrl-socket"
+                       "socket-name": "kea6-ctrl-socket"
                    }
                },
 
@@ -726,7 +726,7 @@ DHCPv6 server:
     {
         "Dhcp6": {
             "control-socket": {
-               "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+               "socket-name": "kea-dhcp6-ctrl.sock",
                "socket-type": "unix"
             }
         }
@@ -744,7 +744,7 @@ socket by running:
 
 .. code-block:: console
 
-    # echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea-dhcp6-ctrl.sock '-,ignoreeof'
+    # echo '{ "command": "config-get" }' | socat UNIX:/opt/kea/var/run/kea/kea-dhcp6-ctrl.sock '-,ignoreeof'
 
 The following is the example ``netconf.json`` configuration for
 :iscman:`kea-netconf`, to manage the Kea DHCPv6 server:
@@ -768,7 +768,7 @@ The following is the example ``netconf.json`` configuration for
         "managed-servers": {
           "dhcp6": {
             "control-socket": {
-              "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+              "socket-name": "kea-dhcp6-ctrl.sock",
               "socket-type": "unix"
             }
           }
@@ -804,7 +804,7 @@ The following is the configuration extracted from ``startup.xml``:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
    </config>
@@ -869,7 +869,7 @@ configuration file:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
    </config>
@@ -899,7 +899,7 @@ For example, consider this ``BAD-translator.xml`` file:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
      <user-context>bad</user-context>
@@ -924,7 +924,7 @@ server and fails to validate, as in this ``BAD-config.xml`` file:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
    </config>
@@ -962,7 +962,7 @@ configuration in the ``twopools.xml`` file:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
    </config>
@@ -1005,7 +1005,7 @@ This example specifies two subnets in the ``twosubnets.xml`` file:
        <interfaces>eth1</interfaces>
      </interfaces-config>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
    </config>
@@ -1040,7 +1040,7 @@ configuration in the ``logging.xml`` file:
        <subnet>2001:db8::/64</subnet>
      </subnet6>
      <control-socket>
-       <socket-name>/tmp/kea-dhcp6-ctrl.sock</socket-name>
+       <socket-name>kea-dhcp6-ctrl.sock</socket-name>
        <socket-type>unix</socket-type>
      </control-socket>
      <logger>
@@ -1060,7 +1060,7 @@ The corresponding Kea configuration in JSON is:
    {
      "Dhcp6": {
        "control-socket": {
-         "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+         "socket-name": "kea-dhcp6-ctrl.sock",
          "socket-type": "unix"
        },
        "interfaces-config": {

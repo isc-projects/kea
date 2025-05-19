@@ -44,7 +44,7 @@ address after their device is restarted.
    to consult an external source of information about clients and alter
    Kea's behavior remains useful and of educational value.
 
-The library reads the ``/tmp/user_chk_registry.txt`` file while being loaded
+The library reads the ``/usr/local/share/kea/user_chk_registry.txt`` file while being loaded
 and each time an incoming packet is processed. Each line of the file is expected to
 contain a self-contained JSON snippet which must have the
 following two entries:
@@ -67,9 +67,9 @@ A sample user registry file is shown below:
 
 ::
 
-   { "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/tmp/v4bootfile" }
+   { "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/usr/local/share/kea/v4bootfile" }
    { "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:06", "tftp_server" : "tftp.v4.example.com" }
-   { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
+   { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/usr/local/share/kea/v6bootfile" }
    { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 
 As with any other hook libraries provided by ISC, internals of the

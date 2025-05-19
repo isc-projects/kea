@@ -46,7 +46,7 @@
       "name": "kea-dhcp6",
       "output-options": [
           {
-            "output": "/tmp/kea-dhcp6.log"
+            "output": "kea-dhcp6.log"
           }
       ],
       "severity": "DEBUG",

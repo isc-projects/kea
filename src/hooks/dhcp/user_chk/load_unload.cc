@@ -28,11 +28,11 @@ std::fstream user_chk_output;
 
 /// @brief User registry input file name.
 /// @todo Hard-coded for now, this should be configurable.
-const char* registry_fname = "/tmp/user_chk_registry.txt";
+const char* registry_fname = "/usr/local/share/kea/user_chk_registry.txt";
 
 /// @brief User check outcome file name.
 /// @todo Hard-coded for now, this should be configurable.
-const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
+const char* user_chk_output_fname = "/usr/local/share/kea/user_chk_outcome.txt";
 
 /// @brief Text label of user id in the inbound query in callout context
 const char* query_user_id_label = "query_user_id";

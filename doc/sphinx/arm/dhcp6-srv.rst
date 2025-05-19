@@ -358,13 +358,13 @@ An example configuration of the memfile backend is presented below:
        "lease-database": {
            "type": "memfile",
            "persist": true,
-           "name": "/tmp/kea-leases6.csv",
+           "name": "kea-leases6.csv",
            "lfc-interval": 1800,
            "max-row-errors": 100
        }
    }
 
-This configuration selects ``/tmp/kea-leases6.csv`` as the storage file
+This configuration selects ``kea-leases6.csv`` as the storage file
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
 of the lease file every 1800 seconds (30 minutes) and sets the maximum number of
@@ -3924,7 +3924,7 @@ ISC tested the following configuration:
        "loggers": [ {
            "name": "kea-dhcp6",
            "output-options": [ {
-               "output": "/tmp/kea-dhcp6.log"
+               "output": "kea-dhcp6.log"
            } ],
            "severity": "DEBUG",
            "debuglevel": 0
@@ -6446,7 +6446,7 @@ memory lease file into its data directory. By default this directory is
 ::
 
    "Dhcp6": {
-       "data-directory": "/var/tmp/kea-server6",
+       "data-directory": "/var/lib/kea/kea-server6",
        ...
    }
 
@@ -7745,12 +7745,13 @@ Kea supports only one ``unix`` control socket in the "control-sockets" list.
 .. note::
 
     As of Kea 2.7.9, control sockets may only reside in the directory
-    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
-    path may be overridden at startup by setting the environment variable
-    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
-    this value is used in ``socket-name``, Kea will emit an error and refuse to
-    start or, if already running, log an unrecoverable error.  For ease of use in
-    simply omit the path component from ``socket-name``.
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
 
 Communication over the control channel is conducted using JSON
 structures. See the

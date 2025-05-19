@@ -175,7 +175,6 @@ public:
         HooksLibrariesParser::getHooksPath(true);
     }
 
-
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = "") {
