@@ -2334,21 +2334,32 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, c
                 execute('kea-admin db-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
 
 
-def _check_installed_rpm_or_debs(services_list):
+def _check_installed_rpm_or_debs(services_list, log_text, expect_success_on_start=True):
+    """Check that services log the given text after stopping and starting.
+
+    :param services_list: services to check
+    :type services_list: list
+    :param log_text: text to search
+    :type log_text: str
+    :param expect_success_on_start: whether to expect success on "systemctl start", otherwise expect error.
+                                    Useful for negative checks.
+    :type expect_success_on_start: bool
+    """
     for svc in services_list:
         execute(f'sudo systemctl stop {svc}')
         now = datetime.datetime.now()
         timestamp = now.strftime('%Y-%m-%d%H:%M:%S')
-        execute(f'sudo systemctl start {svc}')
+        rc, _ = execute(f'sudo systemctl start {svc}', capture=True, raise_error=expect_success_on_start)
+        assert rc == 0 if expect_success_on_start else 2
         logs = ''
         for _ in range(10):
             _, logs = execute(f'sudo journalctl --since {timestamp} -u {svc}', capture=True)
-            if '_STARTED Kea' in logs:
+            if log_text in logs:
                 break
             time.sleep(1)
-        if '_STARTED Kea' not in logs:
+        if log_text not in logs:
             print(logs)
-            raise UnexpectedError('_STARTED Kea not in logs')
+            raise UnexpectedError(f'{log_text} not in logs')
 
 
 def _build_rpm(system, revision, features, env, check_times, dry_run,
@@ -2402,9 +2413,29 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
                 raise_error=False)
         execute(f'sudo rpm -i {rpm_root_path}/RPMS/{arch.strip()}/*rpm', check_times=check_times, dry_run=dry_run)
 
+        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
+        # implicit start from the installation of isc-kea-ctrl-agent above.
+        time.sleep(10)
+        # Reset systemd's rate limit period. Redundant, but just to be safe.
+        execute('sudo systemctl reset-failed kea-ctrl-agent.service', raise_error=False)
+
+        _check_installed_rpm_or_debs(
+            ['kea-ctrl-agent.service'],
+            "Expected a file at path '/etc/kea/kea-api-password'",
+            expect_success_on_start=False,
+        )
+
+        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
+        # implicit start from the installation of isc-kea-ctrl-agent above.
+        time.sleep(10)
+        # Reset systemd's rate limit period. Redundant, but just to be safe.
+        execute('sudo systemctl reset-failed kea-ctrl-agent.service', raise_error=False)
+
+        execute('sudo touch /etc/kea/kea-api-password')
+
         # check if kea services can be started
         services_list = ['kea-dhcp4.service', 'kea-dhcp6.service', 'kea-dhcp-ddns.service', 'kea-ctrl-agent.service']
-        _check_installed_rpm_or_debs(services_list)
+        _check_installed_rpm_or_debs(services_list, '_STARTED Kea')
 
     execute(f'mv {rpm_root_path}/RPMS/{arch.strip()}/*rpm pkgs', check_times=check_times, dry_run=dry_run)
 
@@ -2471,10 +2502,31 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
     if 'install' in features:
         # install packages
         execute('sudo dpkg -i *deb', check_times=check_times, dry_run=dry_run)
+
+        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
+        # implicit start from the installation of isc-kea-ctrl-agent above.
+        time.sleep(10)
+        # Reset systemd's rate limit period. Redundant, but just to be safe.
+        execute('sudo systemctl reset-failed isc-kea-ctrl-agent.service')
+
+        _check_installed_rpm_or_debs(
+            ['isc-kea-ctrl-agent.service'],
+            "Expected a file at path '/etc/kea/kea-api-password'",
+            expect_success_on_start=False,
+        )
+
+        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
+        # explicit start above.
+        time.sleep(10)
+        # Reset systemd's rate limit period. Redundant, but just to be safe.
+        execute('sudo systemctl reset-failed isc-kea-ctrl-agent.service')
+
+        execute('sudo touch /etc/kea/kea-api-password')
+
         # check if kea services can be started
         services_list = ['isc-kea-dhcp4-server.service', 'isc-kea-dhcp6-server.service',
                          'isc-kea-dhcp-ddns-server.service', 'isc-kea-ctrl-agent.service']
-        _check_installed_rpm_or_debs(services_list)
+        _check_installed_rpm_or_debs(services_list, '_STARTED Kea')
 
 
 def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version):
@@ -2501,6 +2553,13 @@ def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_versi
     if 'install' in features:
         # install packages
         execute('sudo apk add *.apk', cwd='kea-pkg', check_times=check_times, dry_run=dry_run)
+
+        exitcode, _ = execute('sudo rc-service kea-ctrl-agent start', capture=True, raise_error=False)
+        assert exitcode == 1
+        _, logs = execute('sudo cat /var/log/kea/kea-ctrl-agent.log', capture=True)
+        assert "Expected a file at path '/etc/kea/kea-api-password'" in logs
+
+        execute('sudo touch /etc/kea/kea-api-password')
 
         # check if kea services can be started
         for svc in ['kea-dhcp4', 'kea-dhcp6', 'kea-ctrl-agent', 'kea-dhcp-ddns']:
