@@ -245,7 +245,7 @@ public:
     std::string validateDirectory(const std::string input_path_str,
                                   bool enforce_path = true) const;
 
-    /// @brief Tests that the supported path has the given permissions. 
+    /// @brief Tests that the supported path has the given permissions.
     ///
     /// @param permissions mode_t mask of required permissions.
     /// @return True if the path's permissions exactly match the permissions

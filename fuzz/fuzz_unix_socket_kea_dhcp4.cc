@@ -11,6 +11,7 @@
 #include <asiolink/io_service.h>
 #include <cc/data.h>
 #include <config/command_mgr.h>
+#include <config/unix_command_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <testutils/unix_control_client.h>
@@ -103,6 +104,11 @@ int
 LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     CfgMgr::instance().clear();
     ControlledDhcpv4Srv server;
+    Path socket_path(SOCKET);
+    auto dir = socket_path.parentDirectory();
+    auto path = UnixCommandConfig::getSocketPath(true, dir);
+    UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+
     server.init(KEA_DHCP4_CONF);
     assert(isSocket(SOCKET));
 

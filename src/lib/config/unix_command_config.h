@@ -22,7 +22,10 @@ class UnixCommandConfig : public isc::data::UserContext,
                           public isc::data::CfgToElement {
 public:
     /// @brief Defines the default permissions for unix socket parent directory.
-    static const mode_t DEFAULT_SOCKET_PATH_PERMS = (S_IRWXU | S_IRGRP | S_IWGRP);
+    static const mode_t DEFAULT_SOCKET_PATH_PERMS;
+
+    /// @brief Stores the default permissions for unix socket parent directory.
+    static mode_t socket_path_perms_;
 
     /// @brief Constructor.
     ///

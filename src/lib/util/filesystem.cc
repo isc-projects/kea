@@ -58,7 +58,7 @@ getPermissions(const std::string path) {
         return (0);
     }
 
-    return (statbuf.st_mode & 0x01FF);
+    return (statbuf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
 }
 
 bool

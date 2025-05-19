@@ -151,7 +151,7 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     if (ctrl_sockets) {
         auto const& sockets_map = ctrl_sockets->mapValue();
         for (auto const& cs : sockets_map) {
-            // Add a validated socket name so we can suppress it in 
+            // Add a validated socket name so we can suppress it in
             // toElement() but don't have to revalidate it every time we
             // want to use it.
             auto mutable_socket_info = boost::const_pointer_cast<Element>(cs.second);

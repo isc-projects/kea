@@ -25,10 +25,13 @@ namespace isc {
 namespace config {
 
 namespace {
-    // Singleton PathChecker to set and hold valid legal log path.
+    // Singleton PathChecker to set and hold valid unix socket path.
     PathCheckerPtr socket_path_checker_;
-    mode_t socket_path_perms_ = UnixCommandConfig::DEFAULT_SOCKET_PATH_PERMS;
 };
+
+const mode_t UnixCommandConfig::DEFAULT_SOCKET_PATH_PERMS = (S_IRWXU | S_IRGRP | S_IXGRP);
+
+mode_t UnixCommandConfig::socket_path_perms_ = UnixCommandConfig::DEFAULT_SOCKET_PATH_PERMS;
 
 UnixCommandConfig::UnixCommandConfig(ConstElementPtr config)
     : socket_type_("unix"), socket_name_() {
@@ -119,7 +122,7 @@ UnixCommandConfig::validatePath(const std::string socket_path,
         isc_throw (DhcpConfigError,
                    "socket path:" << socket_path_checker_->getPath()
                    << " does not exist or does not have permssions = "
-                   << std::hex << socket_path_perms_);
+                   << std::oct << socket_path_perms_);
     }
 
     return (valid_path);
@@ -127,7 +130,7 @@ UnixCommandConfig::validatePath(const std::string socket_path,
 
 mode_t
 UnixCommandConfig::getSocketPathPerms() {
-    return(socket_path_perms_);
+    return (socket_path_perms_);
 }
 
 void

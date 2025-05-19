@@ -221,7 +221,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
     }
 
     // If the configuration does its job properly the validated-socket-name
-    // should be  present
+    // should be present.
     if (!socket_info->get("validated-socket-name")) {
         isc_throw(Unexpected, "validated-socket-name missing from "
                   << " socket_info: " << socket_info->str()
