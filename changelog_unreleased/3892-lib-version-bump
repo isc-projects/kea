@@ -1,0 +1,5 @@
+[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.7.9
+	development release.
+	(Gitlab #3892)
+
