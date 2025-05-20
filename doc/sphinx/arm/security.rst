@@ -280,7 +280,7 @@ Potential Kea security issues can be minimized by running only those processes r
 
 .. note::
 
-    As of Kea 2.6.3, the lease files (DHCPv4 and DHCPv6) and duid file (DHCPv6 only)
+    As of Kea 2.4.2, the lease files (DHCPv4 and DHCPv6) and duid file (DHCPv6 only)
     may only be loaded from the directory determined at compilation:
     ``"[kea-install-dir]/var/lib/kea"``.
     This path may be overridden at startup by setting the environment variable
@@ -316,7 +316,7 @@ file-access control on POSIX systems (owner, group, others, read/write).
 
 .. note::
 
-    As of Kea 2.6.3, control sockets may only reside in the directory
+    As of Kea 2.4.2, control sockets may only reside in the directory
     determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
     which must also have ``0750`` access rights. This path may be overridden
     at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
@@ -334,7 +334,7 @@ Limiting user permission to read or write the Kea configuration file is an impor
 
 .. note::
 
-    As of Kea 2.6.3, the config file may only be written (using the
+    As of Kea 2.4.2, the config file may only be written (using the
     ``config-write`` command) to the same directory as the config file used
     when starting Kea (passed as a ``-c`` argument).
 
@@ -368,7 +368,7 @@ stdout/stderr and files. Syslog may export the logs over the network, exposing t
 
 .. note::
 
-    As of Kea 2.7.9, log files may only be written to the output directory
+    As of Kea 2.4.2, log files may only be written to the output directory
     determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
@@ -493,7 +493,7 @@ access control to the Control Agent.
 
 .. note:
 
-    As of Kea 2.6.3, hook libraries may only be loaded from the default installation
+    As of Kea 2.4.2, hook libraries may only be loaded from the default installation
     directory determined during compilation and shown in the config report as
     "Hooks directory".  This value may be overridden at startup by setting the
     environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
