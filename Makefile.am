@@ -176,9 +176,9 @@ docs:
 
 # These steps are necessary during installation
 install-exec-hook:
-	mkdir -p $(DESTDIR)${localstatedir}/log/
-	mkdir -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
-	mkdir -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
+	mkdir -m 750 -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
+	mkdir -m 750 -p $(DESTDIR)${localstatedir}/log/${PACKAGE_NAME}
+	mkdir -m 750 -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
 
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
