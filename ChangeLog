@@ -1,3 +1,8 @@
+2172.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.4.2
+	stable release.
+	(Gitlab #3890)
+
 2171.	[sec]*		fdupont
 	Change the umask to no group write and no other access
 	at the entry of Kea server/agent binaries.

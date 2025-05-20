@@ -50,7 +50,7 @@ libkea_util_la_SOURCES += filesystem.h filesystem.cc
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_util_la_LDFLAGS  = -no-undefined -version-info 68:0:0
+libkea_util_la_LDFLAGS  = -no-undefined -version-info 69:0:0
 
 EXTRA_DIST = util.dox
 
