@@ -40,8 +40,8 @@ protection possible:
 
    It is recommend to use privileged ports for HTTP/HTTPS against local attacks
    (by users which are connected to the box where Kea servers/agents run). This
-   measure also prevents against impersonation with HTTP and Denial of Service in
-   general.
+   measure also prevents against impersonation with HTTP, and Denial of
+   Service in general.
 
 .. note::
 
