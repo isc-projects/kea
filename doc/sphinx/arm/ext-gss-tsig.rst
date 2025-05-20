@@ -275,15 +275,15 @@ file with the name ``dns.keytab``.
 
 .. code-block:: console
 
-    kadmin.local -q "ktadd -k /tmp/dns.keytab DNS/server.example.org"
+    kadmin.local -q "ktadd -k /usr/local/share/kea/dns.keytab DNS/server.example.org"
 
 If successfully exported, the following message is displayed:
 
 .. code-block:: console
 
     Authenticating as principal root/admin@EXAMPLE.ORG with password.
-    Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
-    Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/tmp/dns.keytab.
+    Entry for principal DNS/server.example.org with kvno 2, encryption type aes256-cts-hmac-sha1-96 added to keytab WRFILE:/usr/local/share/kea/dns.keytab.
+    Entry for principal DNS/server.example.org with kvno 2, encryption type aes128-cts-hmac-sha1-96 added to keytab WRFILE:/usr/local/share/kea/dns.keytab.
 
 The DHCP client principal (used by the Kea DHCP-DDNS server) is created the
 following way:
@@ -306,7 +306,7 @@ keytab file with the name ``dhcp.keytab``.
 
 .. code-block:: console
 
-    kadmin.local -q "ktadd -k /tmp/dhcp.keytab DHCP/admin.example.org"
+    kadmin.local -q "ktadd -k /usr/local/share/kea/dhcp.keytab DHCP/admin.example.org"
 
 Finally, the ``krb5-admin-server`` must be restarted:
 
@@ -910,13 +910,13 @@ This can be done manually via the command:
 
 .. code-block:: console
 
-    kinit -k -t /tmp/dhcp.keytab DHCP/admin.example.org
+    kinit -k -t /usr/local/share/kea/dhcp.keytab DHCP/admin.example.org
 
 or, when using AD:
 
 .. code-block:: console
 
-    kinit -k -t /tmp/dhcp.keytab DHCP/kea.<domain>
+    kinit -k -t /usr/local/share/kea/dhcp.keytab DHCP/kea.<domain>
 
 The credential cache can be displayed using ``klist``.
 

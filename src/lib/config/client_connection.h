@@ -50,7 +50,7 @@ class ClientConnectionImpl;
 /// IOService io_service;
 /// ClientConnection conn(io_service);
 /// bool cb_invoked = false;
-/// conn.start(ClientConnection::SocketPath("/tmp/kea.sock"),
+/// conn.start(ClientConnection::SocketPath("/opt/kea/var/run/kea/kea.sock"),
 ///            ClientConnection::ControlCommand(command),
 ///            [this, &cb_invoked](const boost::system::error_code& ec,
 ///                   const ConstJSONFeedPtr& feed) {

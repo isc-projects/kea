@@ -98,7 +98,7 @@ Currently, the library uses a hard coded pathname for the user registry defined
 in load_unload.cc:
 
 @code
-    const char* registry_fname = "/tmp/user_chk_registry.txt";
+    const char* registry_fname = "/usr/local/share/kea/user_chk_registry.txt";
 @endcode
 
 Each line in the file is a self-contained JSON snippet which must have the
@@ -117,9 +117,9 @@ and may have the zero or more of the following entries:
 Sample user registry file is shown below:
 
 @code
-{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/tmp/v4bootfile" }
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/usr/local/share/kea/v4bootfile" }
 { "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:06", "tftp_server" : "tftp.v4.example.com" }
-{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/usr/local/share/kea/v6bootfile" }
 { "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 @endcode
 
@@ -160,7 +160,7 @@ file.  Currently, the library uses a hard coded pathname for the user registry
 defined in load_unload.cc:
 
 @code
-    const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
+    const char* user_chk_output_fname = "/usr/local/share/kea/user_chk_outcome.txt";
 @endcode
 
 If the file cannot be created (or opened), the library will unload.

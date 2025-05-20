@@ -400,13 +400,13 @@ An example configuration of the memfile backend is presented below:
        "lease-database": {
            "type": "memfile",
            "persist": true,
-           "name": "/tmp/kea-leases4.csv",
+           "name": "kea-leases4.csv",
            "lfc-interval": 1800,
            "max-row-errors": 100
        }
    }
 
-This configuration selects ``/tmp/kea-leases4.csv`` as the storage
+This configuration selects ``kea-leases4.csv`` as the storage
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
 of the lease file every 1800 seconds (30 minutes) and sets the maximum number of
@@ -3034,7 +3034,7 @@ into two options, each with the code 240.
 .. note::
 
    Currently the server does not support storing long options in databases,
-   either host reservations or the configuration backend.
+   either via host reservations or the configuration backend.
 
 The server is also able to receive packets with split options (options using
 the same option code) and to fuse the data chunks into one option. This is
@@ -3394,7 +3394,7 @@ subnet, and pool, i.e. in the reverse order from the way in which
         ...
     }
 
-The first ``option-data`` entry does not hide the second one, because
+The first ``option-data`` entry does not hide the second one, because the
 vendor identifiers (1234 and 5678) are different: the responses will carry
 two instances of the ``vivco-suboptions`` option, each for a different vendor.
 
@@ -3432,7 +3432,7 @@ DDNS-related parameters are split into two groups:
     -  ``sender-port``
     -  ``max-queue-size``
     -  ``ncr-protocol``
-    -  ``ncr-format"``
+    -  ``ncr-format``
 
 2. Behavioral Parameters
 
@@ -4254,7 +4254,7 @@ ISC tested the following configuration:
            "name": "kea-dhcp4",
            "output_options": [
            {
-               "output": "/tmp/kea-dhcp4.log"
+               "output": "kea-dhcp4.log"
            }
            ],
            "severity": "DEBUG",
@@ -5045,7 +5045,7 @@ message fields:
                "hw-address": "aa:bb:cc:dd:ee:ff",
                "next-server": "10.1.1.2",
                "server-hostname": "server-hostname.example.org",
-               "boot-file-name": "/tmp/bootfile.efi"
+               "boot-file-name": "/usr/local/share/kea/bootfile.efi"
            }
            ],
            ...
@@ -7446,12 +7446,13 @@ values are 107 on Linux and 103 on FreeBSD.
 .. note::
 
     As of Kea 2.4.2, control sockets may only reside in the directory
-    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
-    path may be overridden at startup by setting the environment variable
-    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
-    this value is used in ``socket-name``, Kea will emit an error and refuse to
-    start or, if already running, log an unrecoverable error.  For ease of use in
-    simply omit the path component from ``socket-name``.
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``0750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
 
 Communication over the control channel is conducted using JSON
 structures. See the

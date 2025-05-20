@@ -138,12 +138,13 @@ specified for the DHCPv4, DHCPv6, and D2 services.
 .. note::
 
     As of Kea 2.4.2, control sockets may only reside in the directory
-    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
-    path may be overridden at startup by setting the environment variable
-    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
-    this value is used in ``socket-name``, Kea will emit an error and refuse to
-    start or, if already running, log an unrecoverable error.  For ease of use in
-    simply omit the path component from ``socket-name``.
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``0750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
 
 User contexts can store arbitrary data as long as they are in valid JSON
 syntax and their top-level element is a map (i.e. the data must be
@@ -173,7 +174,7 @@ authorized.
 When the ``clients`` authentication list is configured and not empty,
 basic HTTP authentication is required. Each element of the list
 specifies a user ID and a password. The user ID is mandatory, must
-be not empty, and must not contain the colon (:) character. The
+not be empty, and must not contain the colon (:) character. The
 password is optional; when it is not specified an empty password
 is used.
 
@@ -216,45 +217,8 @@ the example above.
 Secure Connections
 ==================
 
-The Kea Control Agent natively supports secure
-HTTP connections using TLS. This allows protection against users from
-the node where the agent runs, something that a reverse proxy cannot
-provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
-
-TLS is configured using three string parameters with file names, and
-a boolean parameter:
-
--  The ``trust-anchor`` specifies the Certification Authority file name or
-   directory path.
-
--  The ``cert-file`` specifies the server certificate file name.
-
--  The ``key-file`` specifies the private key file name. The file must not
-   be encrypted.
-
--  The ``cert-required`` specifies whether client certificates are required
-   or optional. The default is to require them and to perform mutual
-   authentication.
-
-The file format is PEM. Either all the string parameters are specified and
-HTTP over TLS (HTTPS) is used, or none is specified and plain HTTP is used.
-Configuring only one or two string parameters results in an error.
-
-.. note::
-
-   When client certificates are not required, only the server side is
-   authenticated, i.e. the communication is encrypted with an unknown
-   client. This protects only against passive attacks; active
-   attacks, such as "man-in-the-middle," are still possible.
-
-.. note::
-
-   No standard HTTP authentication scheme cryptographically binds its end
-   entity with TLS. This means that the TLS client and server can be
-   mutually authenticated, but there is no proof they are the same as
-   for the HTTP authentication.
-
-The :iscman:`kea-shell` tool also supports TLS.
+Configuration options related to Kea Control Agent security can be found in the
+:ref:`secure-control-agent` section.
 
 .. _agent-launch:
 

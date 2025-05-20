@@ -356,13 +356,13 @@ An example configuration of the memfile backend is presented below:
        "lease-database": {
            "type": "memfile",
            "persist": true,
-           "name": "/tmp/kea-leases6.csv",
+           "name": "kea-leases6.csv",
            "lfc-interval": 1800,
            "max-row-errors": 100
        }
    }
 
-This configuration selects ``/tmp/kea-leases6.csv`` as the storage file
+This configuration selects ``kea-leases6.csv`` as the storage file
 for lease information and enables persistence (writing lease updates to
 this file). It also configures the backend to perform a periodic cleanup
 of the lease file every 1800 seconds (30 minutes) and sets the maximum number of
@@ -3025,7 +3025,7 @@ DDNS-related parameters are split into two groups:
     -  ``sender-port``
     -  ``max-queue-size``
     -  ``ncr-protocol``
-    -  ``ncr-format"``
+    -  ``ncr-format``
 
 2. Behavioral Parameters
 
@@ -3608,7 +3608,7 @@ ISC tested the following configuration:
        "loggers": [ {
            "name": "kea-dhcp6",
            "output_options": [ {
-               "output": "/tmp/kea-dhcp6.log"
+               "output": "kea-dhcp6.log"
            } ],
            "severity": "DEBUG",
            "debuglevel": 0
@@ -6037,7 +6037,7 @@ memory lease file into its data directory. By default this directory is
 ::
 
    "Dhcp6": {
-       "data-directory": "/var/tmp/kea-server6",
+       "data-directory": "/var/lib/kea/kea-server6",
        ...
    }
 
@@ -7228,12 +7228,13 @@ values are 107 on Linux and 103 on FreeBSD.
 .. note::
 
     As of Kea 2.4.2, control sockets may only reside in the directory
-    determined during compilation as ``"[kea-install-dir]/var/run/kea"``. This
-    path may be overridden at startup by setting the environment variable
-    ``KEA_CONTROL_SOCKET_DIR`` to the desired path.  If a path other than
-    this value is used in ``socket-name``, Kea will emit an error and refuse to
-    start or, if already running, log an unrecoverable error.  For ease of use in
-    simply omit the path component from ``socket-name``.
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``0750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
 
 Communication over the control channel is conducted using JSON
 structures. See the
@@ -7867,7 +7868,7 @@ for prefix delegation in a subnet:
    The Free Lease Queue allocator can only be used for DHCPv6 prefix delegation.
    An attempt to use this allocator for address assignment (with the ``allocator``
    parameter) will cause a configuration error. DHCPv6 address pools are
-   typically very large and their utilization is low; in these situation, the benefits
+   typically very large and their utilization is low; in this situation, the benefits
    of using the FLQ allocator diminish. The amount of time required for the
    allocator to populate the free lease queue would cause the server to freeze
    upon startup.
