@@ -368,7 +368,7 @@ stdout/stderr and files. Syslog may export the logs over the network, exposing t
 
 .. note::
 
-    As of Kea 2.7.9, log files may only be written to the output directory
+    As of Kea 2.6.3, log files may only be written to the output directory
     determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
     path may be overridden at startup by setting the environment variable
     ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
