@@ -66,6 +66,7 @@ libkea_util_include_HEADERS = \
 	dhcp_space.h \
 	doubles.h \
 	filename.h \
+	filesystem.h \
 	hash.h \
 	io_utilities.h \
 	labeled_value.h \

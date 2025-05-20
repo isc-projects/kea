@@ -84,5 +84,6 @@ libkea_cfgclient_include_HEADERS = \
 	config_log.h \
 	config_messages.h \
 	hooked_command_mgr.h \
-	timeouts.h
+	timeouts.h \
+	unix_command_config.h
 
