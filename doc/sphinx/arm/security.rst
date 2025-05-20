@@ -369,8 +369,9 @@ in the configuration file.**
 Depending on the database configuration, it is also possible to verify whether the system user matches the
 database username. Consult the MySQL or PostgreSQL manual for details.
 
-Kea supports TLS settings for MySQL database and it must be configured explicitly for all used connections
-(configuration, reservations, leases, forensic logging).
+Kea supports client TLS settings for MySQL database and it must be
+configured explicitly for all used connections (configuration,
+reservations, leases, forensic logging).
 
 Information Leakage Through Logging
 -----------------------------------
