@@ -174,11 +174,14 @@ docs:
 	$(MAKE) -C doc/sphinx
 
 
-# These steps are necessary during installation
+# These steps are necessary during installation. chmod is for reinstallation/upgrade.
 install-exec-hook:
-	mkdir -m 750 -p $(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}
-	mkdir -m 750 -p $(DESTDIR)${localstatedir}/log/${PACKAGE_NAME}
-	mkdir -m 750 -p $(DESTDIR)${runstatedir}/${PACKAGE_NAME}
+	mkdir -m 750 -p "$(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}"
+	chmod 750 "$(DESTDIR)${localstatedir}/lib/${PACKAGE_NAME}"
+	mkdir -m 750 -p "$(DESTDIR)${localstatedir}/log/${PACKAGE_NAME}"
+	chmod 750 "$(DESTDIR)${localstatedir}/log/${PACKAGE_NAME}"
+	mkdir -m 750 -p "$(DESTDIR)${runstatedir}/${PACKAGE_NAME}"
+	chmod 750 "$(DESTDIR)${runstatedir}/${PACKAGE_NAME}"
 
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
