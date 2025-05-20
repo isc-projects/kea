@@ -165,10 +165,11 @@ else
   release='development'
 fi
 
-(echo "\
-TODO.	[build]		TODO
+author=$(git show -s --format='%ae' | cut -d '@' -f 1)
+branch=$(git branch --show-current)
+gitlab_id=$(printf '%s' "${branch}" | cut -d '-' -f 1)
+echo "\
+[build]		${author}
 	The library version numbers have been bumped up for the Kea ${major}.${middle}.${minor}
 	${release} release.
-	(Gitlab #TODO)
-" && cat ./ChangeLog) > ./ChangeLog.tmp
-mv ./ChangeLog.tmp ./ChangeLog
+	(Gitlab #${gitlab_id})" > "./changelog_unreleased/${branch}"
