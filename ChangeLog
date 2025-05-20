@@ -1,3 +1,41 @@
+Kea 2.7.9 (development) released on May 28, 2025
+
+2347.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.7.9
+	development release.
+	(Gitlab #3892)
+
+2346.	[sec]*		tmark, fdupont, razvan
+	All files and sockets created by Kea servers have been
+	restricted to default paths determined at compile time
+	which may be overridden by environment variables. This
+	includes lease files, log files, forensic log files, control
+	channel sockets, and the output from commands such as
+	cache-write, lease4-write, and lease6-write. The output
+	of config-write is restricted to the directory from which the
+	configuration file was read. Use of unsupported paths will
+	result in servers emitting errors and refusing to start
+	or rejecting commands.  The specifics including the supported
+	paths and environment variable names are in the relevant
+	ARM sections.
+	CVE:2025-32801
+	(Gitlab #3831)
+
+2345.	[sec]*		fdupont
+	Change the umask to no group write and no other access
+	at the entry of Kea server/agent binaries.
+	CVE:2025-32803
+	(Gitlab #3832)
+
+2344.	[sec]*		tmark
+	kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and kea-ctrl-agent will
+	now only load hook libraries from the default installation
+	directory.  If a path other than this is specified Kea will
+	not load the hook library.  For ease of use, the path may be
+	omitted.
+	CVE:2025-32801
+	(Gitlab #3830)
+
 Kea 2.7.8 (development) released on April 30, 2025
 
 2343.	[build]		wlodek

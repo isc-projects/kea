@@ -570,6 +570,14 @@ Logged at debug log level 40.
 A debug message issued when the server is extracting extended info and
 receives an exception processing a lease.
 
+% DHCPSRV_MEMFILE_FAILED_TO_OPEN Could not open lease file: %1
+This error is issued when the lease file could not be opened. The
+argument contains the details. The most likely cause is that the `name`
+parameter for memfile back end contains a path other than the supported
+path. The argument will contain the details. The path component may
+simply be omitted. To override the default supported path, set the
+environment variable KEA_DHCP_DATA_DIR prior to starting the server.
+
 % DHCPSRV_MEMFILE_GET4 obtaining all IPv4 leases
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain all IPv4
@@ -994,11 +1002,3 @@ included in the message.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
-
-% DHCPSRV_MEMFILE_FAILED_TO_OPEN Could not open lease file: %1
-This error is issued when the lease file could not be opened. The
-argument contains the details. The most likely cause is that the `name`
-parameter for memfile back end contains a path other than the supported
-path. The argument will contain the details. The path component may
-simply be omitted. To override the default supported path, set the
-environment variable KEA_DHCP_DATA_DIR prior to starting the server.
