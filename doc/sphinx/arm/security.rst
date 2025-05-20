@@ -403,6 +403,30 @@ stdout/stderr and files. Syslog may export the logs over the network, exposing t
     running, log an unrecoverable error. For ease of use simply omit the ``path``
     parameter.
 
+Summary of Path Restrictions
+----------------------------
+
+Path restrictions mentioned through this section can be summarized according to
+the following table:
+
++-------------------------------------+---------------------------------------+----------------------------------+
+| Restricted Element                  | Default Value                         | Environment Variable Override    |
++=====================================+=======================================+==================================+
+| Config Files (``config-write``)     | Same Directory as Initial Config File | N/A                              |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Host Cache Files (``cache-write``)  | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIRECTORY``      |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Lease Files                         | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIRECTORY``      |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Log Files                           | ``var/log/kea``                       | ``KEA_LOG_FILE_DIR``             |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Forensic Log Files                  | ``var/log/kea``                       | ``KEA_LEGAL_LOG_DIR``            |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Unix Sockets                        | ``var/run/kea``                       | ``KEA_CONTROL_SOCKET_DIR``       |
++-------------------------------------+---------------------------------------+----------------------------------+
+
+
+
 Cryptography Components
 -----------------------
 
