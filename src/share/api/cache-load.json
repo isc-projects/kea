@@ -7,7 +7,7 @@
     "cmd-syntax": [
         "{",
         "    \"command\": \"cache-load\",",
-        "    \"arguments\": \"/tmp/kea-host-cache.json\"",
+        "    \"arguments\": \"/usr/local/share/kea/kea-host-cache.json\"",
         "}"
     ],
     "description": "See <xref linkend=\"command-cache-load\"/>",

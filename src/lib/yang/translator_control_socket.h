@@ -35,7 +35,7 @@ namespace yang {
 /// An example in JSON and YANG formats:
 /// @code
 /// {
-///     "socket-name": "/tmp/kea.sock",
+///     "socket-name": "kea.sock",
 ///     "socket-type": "unix",
 ///     "user-context": { "foo": 1 }
 /// }
@@ -50,7 +50,7 @@ namespace yang {
 ///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
 ///     control-socket (container)
 ///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
-///     control-socket/socket-name = /tmp/kea.sock
+///     control-socket/socket-name = kea.sock
 ///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
 ///     control-socket/socket-type = unix
 ///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/

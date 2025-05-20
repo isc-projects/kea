@@ -145,7 +145,7 @@
 
             // An alternative to secret: specify a file where the secret
             // can be found. i.e. the secret is the content of the file.
-            "secret-file": "/tmp/d2-sha1-secret"
+            "secret-file": "/usr/local/share/kea/d2-sha1-secret"
         }
     ],
 

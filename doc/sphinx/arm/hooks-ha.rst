@@ -1598,11 +1598,11 @@ machine as the primary server. This configuration is valid for both the
        "control-sockets": {
            "dhcp4": {
                "socket-type": "unix",
-               "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
+               "socket-name": "kea-dhcp4-ctrl.sock"
            },
            "dhcp6": {
                "socket-type": "unix",
-               "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+               "socket-name": "kea-dhcp6-ctrl.sock"
            }
        }
    }

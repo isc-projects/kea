@@ -36,6 +36,13 @@ protection possible:
    the two security mechanisms, and therefore no proof that the TLS client and server
    are the same as the HTTP authentication client and server.
 
+.. note::
+
+   It is recommend to use privileged ports for HTTP/HTTPS against local attacks
+   (by users which are connected to the box where Kea servers/agents run). This
+   measure also prevents against impersonation with HTTP, and Denial of
+   Service in general.
+
 .. _tls_config:
 
 Building Kea with TLS/HTTPS Support
@@ -205,6 +212,51 @@ desired.
 It is highly recommended to read the ``openssl.cnf`` manual page,
 normally called ``config.5ssl`` and displayed using ``man config``.
 
+.. _secure-control-agent:
+
+Secure Kea Control Agent
+========================
+
+The Kea Control Agent natively supports secure
+HTTP connections using TLS. This allows protection against users from
+the node where the agent runs, something that a reverse proxy cannot
+provide. More about TLS/HTTPS support in Kea can be found in :ref:`tls`.
+
+TLS is configured using three string parameters with file names, and
+a boolean parameter:
+
+-  The ``trust-anchor`` specifies the Certification Authority file name or
+   directory path.
+
+-  The ``cert-file`` specifies the server certificate file name.
+
+-  The ``key-file`` specifies the private key file name. The file must not
+   be encrypted.
+
+-  The ``cert-required`` specifies whether client certificates are required
+   or optional. The default is to require them and to perform mutual
+   authentication.
+
+The file format is PEM. Either all the string parameters are specified and
+HTTP over TLS (HTTPS) is used, or none is specified and plain HTTP is used.
+Configuring only one or two string parameters results in an error.
+
+.. note::
+
+   When client certificates are not required, only the server side is
+   authenticated, i.e. the communication is encrypted with an unknown
+   client. This protects only against passive attacks; active
+   attacks, such as "man-in-the-middle," are still possible.
+
+.. note::
+
+   No standard HTTP authentication scheme cryptographically binds its end
+   entity with TLS. This means that the TLS client and server can be
+   mutually authenticated, but there is no proof they are the same as
+   for the HTTP authentication.
+
+The :iscman:`kea-shell` tool also supports TLS.
+
 Securing a Kea Deployment
 =========================
 
@@ -218,12 +270,28 @@ The Kea architecture is modular, with separate daemons for separate tasks.
 A Kea deployment may include DHCPv4, DHCPv6, and Dynamic DNS daemons; a Control Agent
 daemon run on each application server; the ``kea-lfc utility`` for doing periodic lease
 file cleanup; MySQL and or PostgreSQL databases, run either locally on the application
-servers or accessed over the internal network; and a Stork monitoring system.
+servers or accessed over the internal network; a Netconf daemon to perform config and stats
+monitoring of Kea servers; and a Stork monitoring system.
 This modular architecture allows the administrator to minimize the attack surface
 by minimizing the code that is loaded and running.
 For example, :iscman:`kea-dhcp-ddns` should not be run unless DNS updates are required.
 Similarly, :iscman:`kea-lfc` is never triggered (and can be safely removed or never installed) if memfile is not used.
 Potential Kea security issues can be minimized by running only those processes required in the local environment.
+
+.. note::
+
+    As of Kea 2.6.3, the lease files (DHCPv4 and DHCPv6) and duid file (DHCPv6 only)
+    may only be loaded from the directory determined at compilation:
+    ``"[kea-install-dir]/var/lib/kea"``.
+    This path may be overridden at startup by setting the environment variable
+    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    this value is used in ``name`` or ``data-directory``, Kea will emit an error and
+    refuse to start or, if already running, log an unrecoverable error.
+    This restriction applies to writing lease file using ``lease4-write`` and
+    ``lease6-write`` commands. If a path other than this value is used in ``filename``,
+    Kea will emit an error and refuse to start or, if already running, log an
+    unrecoverable error.  For ease of use in specifying a custom file name simply
+    omit the path portion from ``filename``.
 
 Limiting Application Permissions
 --------------------------------
@@ -246,12 +314,29 @@ read from or write to this socket, root access is generally required, although i
 to run as non-root, the owner of the process can write to it. Access can be controlled using normal
 file-access control on POSIX systems (owner, group, others, read/write).
 
+.. note::
+
+    As of Kea 2.6.3, control sockets may only reside in the directory
+    determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
+    which must also have ``0750`` access rights. This path may be overridden
+    at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
+    to the desired path.  If a path other than this value is used in
+    ``socket-name``, Kea will emit an error and refuse to start or, if already
+    running, log an unrecoverable error.  For ease of use in simply omit the
+    path component from ``socket-name``.
+
 Kea configuration is controlled by a JSON file on the Kea server. This file can be viewed or edited
 by anyone with file permissions (which are controlled by the operating system). Note that
 passwords are stored in clear text in the configuration file, so anyone with access to read the
 configuration file can find this information. As a practical matter, anyone with permission to edit
 the configuration file has control over Kea.
 Limiting user permission to read or write the Kea configuration file is an important security step.
+
+.. note::
+
+    As of Kea 2.6.3, the config file may only be written (using the
+    ``config-write`` command) to the same directory as the config file used
+    when starting Kea (passed as a ``-c`` argument).
 
 Securing Database Connections
 -----------------------------
@@ -267,6 +352,10 @@ in the configuration file.**
 Depending on the database configuration, it is also possible to verify whether the system user matches the
 database username. Consult the MySQL or PostgreSQL manual for details.
 
+Kea supports client TLS settings for MySQL database and it must be
+configured explicitly for all used connections (configuration,
+reservations, leases, forensic logging).
+
 Information Leakage Through Logging
 -----------------------------------
 
@@ -276,6 +365,36 @@ Since Kea 1.9.7, this issue has been resolved by replacing the value of all entr
 
 Logs are sent to stdout, stderr, files, or syslog; system file permissions system apply to
 stdout/stderr and files. Syslog may export the logs over the network, exposing them further to possible snooping.
+
+.. note::
+
+    As of Kea 2.7.9, log files may only be written to the output directory
+    determined during compilation as: ``"[kea-install-dir]/var/log/kea"``. This
+    path may be overridden at startup by setting the environment variable
+    ``KEA_LOG_FILE_DIR`` to the desired path.  If a path other than
+    this value is used in ``output``, Kea will emit an error and refuse to start
+    or, if already running, log an unrecoverable error.  For ease of use simply
+    omit the path component from ``output`` and specify only the file name.
+
+Summary of Path Restrictions
+----------------------------
+
+Path restrictions mentioned through this section can be summarized according to
+the following table:
+
++-------------------------------------+---------------------------------------+----------------------------------+
+| Restricted Element                  | Default Value                         | Environment Variable Override    |
++=====================================+=======================================+==================================+
+| Config Files (``config-write``)     | Same Directory as Initial Config File | N/A                              |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Lease Files                         | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIRECTORY``      |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Log Files                           | ``var/log/kea``                       | ``KEA_LOG_FILE_DIR``             |
++-------------------------------------+---------------------------------------+----------------------------------+
+| Unix Sockets                        | ``var/run/kea``                       | ``KEA_CONTROL_SOCKET_DIR``       |
++-------------------------------------+---------------------------------------+----------------------------------+
+
+
 
 Cryptography Components
 -----------------------
@@ -372,6 +491,16 @@ Kea 1.9.2 introduced a new ``auth`` hook point. With this new hook point, it is 
 hook library to extend the access controls, integrate with another authentication authority, or add role-based
 access control to the Control Agent.
 
+.. note:
+
+    As of Kea 2.6.3, hook libraries may only be loaded from the default installation
+    directory determined during compilation and shown in the config report as
+    "Hooks directory".  This value may be overridden at startup by setting the
+    environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
+    than this value is used in a ``library`` element Kea will emit an error and refuse
+    to load the library. For ease of use ``library`` elements may simply omit path
+    components.
+
 Kea Security Processes
 ======================
 
@@ -400,9 +529,9 @@ processes that are used to ensure adequate code quality:
 
 - Each line of code goes through a formal review before it is accepted. The review process is
   documented and available publicly.
-- Roughly 50% of the source code is dedicated to unit tests. As of December 2020, there were over 6000
+- Roughly 50% of the source code is dedicated to unit tests. As of May 2024, there were over 12000
   unit tests and the number is increasing with time. Unit tests are required to commit any new feature.
-- There are around 1500 system tests for Kea. These simulate both correct and invalid
+- There are around 2000 system tests for Kea. These simulate both correct and invalid
   situations, covering network packets (mostly DHCP, but also DNS, HTTP, HTTPS and others),
   command-line usage, API calls, database interactions, scripts, and more.
 - There are performance tests with over 80 scenarios that test Kea overall performance and
@@ -416,8 +545,10 @@ processes that are used to ensure adequate code quality:
   packets in an invalid order) and more.
 - The Kea development team uses many tools that perform automatic code quality checks, such as danger, as well as
   internally developed sanity checkers.
-- The Kea team uses the following static code analyzers: Coverity Scan, shellcheck, and danger.
-- The Kea team uses the following dynamic code analyzers: Valgrind and Thread Sanitizer (TSAN).
+- The Kea team uses the following static code analyzers: Coverity Scan, cppcheck, clang-static-analyzer, shellcheck,
+  flawfinder, semgrep and danger.
+- The Kea team uses the following dynamic code analyzers: Valgrind, Thread Sanitizer (TSAN), Address Sanitizer (ASAN),
+  Undefined Behavior Sanitizer (UBSAN).
 
 Fuzz Testing
 ------------

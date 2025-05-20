@@ -56,7 +56,7 @@ namespace netconf {
 ///      "control-socket":
 ///      {
 ///        "socket-type": "unix",
-///        "socket-name": "/tmp/server-v4.sock"
+///        "socket-name": "server-v4.sock"
 ///      }
 ///    }
 ///  }

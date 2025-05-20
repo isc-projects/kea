@@ -26,7 +26,7 @@
         "client-classes": [
             {
                 // Class-specific bootfile name to be set in the 'file' field.
-                "boot-file-name": "/tmp/bootfile.efi",
+                "boot-file-name": "/usr/local/share/kea/bootfile.efi",
 
                 // Class name.
                 "name": "phones_server1",

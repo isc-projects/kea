@@ -28,6 +28,7 @@ Other useful Kea information can be found in our
    arm/quickstart
    arm/install
    arm/admin
+   arm/security
    arm/config
    arm/keactrl
    arm/agent
@@ -46,7 +47,6 @@ Other useful Kea information can be found in our
    arm/shell
    arm/integrations
    arm/stork
-   arm/security
 
 .. toctree::
    :caption: Appendices

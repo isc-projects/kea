@@ -137,7 +137,7 @@
         {
             "name": "d2.sha256.key",
             "algorithm": "HMAC-SHA256",
-            "secret-file": "/tmp/d2-sha256-secret"
+            "secret-file": "/usr/local/share/kea/d2-sha256-secret"
         },
         {
             "name": "d2.sha512.key",
