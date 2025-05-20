@@ -1,7 +1,5 @@
 SUBDIRS = .
 
-legal_log_dir = @localstatedir@/lib/@PACKAGE@
-
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/forensic_log -I$(top_srcdir)/src/hooks/dhcp/forensic_log
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
@@ -11,7 +9,6 @@ AM_CPPFLAGS += -DINVALID_FORENSIC_PREROTATE_TEST_SH=\"$(abs_top_srcdir)/README\"
 AM_CPPFLAGS += -DFORENSIC_POSTROTATE_TEST_SH=\"$(abs_top_builddir)/src/hooks/dhcp/forensic_log/tests/forensic_postrotate_test.sh\"
 AM_CPPFLAGS += -DINVALID_FORENSIC_POSTROTATE_TEST_SH=\"$(abs_top_srcdir)/README\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
-AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding

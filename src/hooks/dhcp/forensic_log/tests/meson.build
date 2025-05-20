@@ -42,7 +42,6 @@ dhcp_forensic_log_tests = executable(
         f'-DINVALID_FORENSIC_PREROTATE_TEST_SH="@TOP_SOURCE_DIR@/README"',
         f'-DFORENSIC_POSTROTATE_TEST_SH="@current_build_dir@/forensic_postrotate_test.sh"',
         f'-DINVALID_FORENSIC_POSTROTATE_TEST_SH="@TOP_SOURCE_DIR@/README"',
-        f'-DLEGAL_LOG_DIR="@SHAREDSTATEDIR_INSTALLED@"',
     ],
     dependencies: dependencies,
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,

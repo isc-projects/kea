@@ -1,10 +1,7 @@
 SUBDIRS = . libloadtests tests
 
-legal_log_dir = @localstatedir@/lib/@PACKAGE@
-
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
 
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 

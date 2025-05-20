@@ -13,8 +13,7 @@ AM_CPPFLAGS += -DTOP_BUILDDIR="\"$(top_builddir)\""
 # Set location of the kea-lfc binary.
 AM_CPPFLAGS += -DKEA_LFC_EXECUTABLE="\"$(kea_lfc_location)\""
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(CRYPTO_CFLAGS) $(CRYPTO_INCLUDES)
-legal_log_dir = @localstatedir@/log/@PACKAGE@
-AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"$(legal_log_dir)\""
+AM_CPPFLAGS += -DLEGAL_LOG_DIR="\"@localstatedir@/log/@PACKAGE@\""
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
