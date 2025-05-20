@@ -2103,7 +2103,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"control-socket\": {\n"
-"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-name\": \"kea4-ctrl-socket\",\n"
 "            \"socket-type\": \"unix\",\n"
 "            \"user-context\": {\n"
 "                \"comment\": \"Indirect comment\"\n"
@@ -11077,7 +11077,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"control-socket\": {\n"
-"            \"socket-name\": \"/tmp/kea4-ctrl-socket\",\n"
+"            \"socket-name\": \"kea4-ctrl-socket\",\n"
 "            \"socket-type\": \"unix\",\n"
 "            \"user-context\": {\n"
 "                \"comment\": \"Indirect comment\"\n"
@@ -12280,10 +12280,12 @@ public:
         srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
+        Dhcpv4SrvTest::setSocketTestPath();
     }
 
     ~Dhcp4GetConfigTest() {
         resetConfiguration();
+        Dhcpv4SrvTest::resetSocketPath();
     };
 
     /// @brief Parse and Execute configuration

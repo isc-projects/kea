@@ -9,12 +9,14 @@
 #include <agent/simple_parser.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
+#include <config/unix_command_config.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <http/basic_auth_config.h>
-#include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::asiolink;
+using namespace isc::config;
 
 namespace isc {
 namespace agent {
@@ -146,9 +148,16 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     // Control sockets are third.
     ConstElementPtr ctrl_sockets = config->get("control-sockets");
     if (ctrl_sockets) {
-        auto sockets_map = ctrl_sockets->mapValue();
-        for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
-            ctx->setControlSocketInfo(cs->second, cs->first);
+        auto const& sockets_map = ctrl_sockets->mapValue();
+        for (auto const& cs : sockets_map) {
+            // Add a validated socket name so we can suppress it in
+            // toElement() but don't have to revalidate it every time we
+            // want to use it.
+            auto mutable_socket_info = boost::const_pointer_cast<Element>(cs.second);
+            std::string socket_name = mutable_socket_info->get("socket-name")->stringValue();
+            auto validated_name = UnixCommandConfig::validatePath(socket_name);
+            mutable_socket_info->set("validated-socket-name", Element::create(validated_name));
+            ctx->setControlSocketInfo(mutable_socket_info, cs.first);
         }
     }
 

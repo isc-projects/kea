@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <filesystem>
 #include <iostream>
 
 #include <dirent.h>
@@ -27,10 +28,51 @@ namespace isc {
 namespace util {
 namespace file {
 
+string
+getContent(string const& file_name) {
+    if (!exists(file_name)) {
+        isc_throw(BadValue, "Expected a file at path '" << file_name << "'");
+    }
+    if (!isFile(file_name)) {
+        isc_throw(BadValue, "Expected '" << file_name << "' to be a regular file");
+    }
+    ifstream file(file_name, ios::in);
+    if (!file.is_open()) {
+        isc_throw(BadValue, "Cannot open '" << file_name);
+    }
+    string content;
+    file >> content;
+    return (content);
+}
+
 bool
 exists(string const& path) {
     struct stat statbuf;
     return (::stat(path.c_str(), &statbuf) == 0);
+}
+
+mode_t
+getPermissions(const std::string path) {
+    struct stat statbuf;
+    if (::stat(path.c_str(), &statbuf) < 0) {
+        return (0);
+    }
+
+    return (statbuf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+}
+
+bool
+hasPermissions(const std::string path, const mode_t& permissions) {
+    return (getPermissions(path) == permissions);
+}
+
+bool
+isDir(string const& path) {
+    struct stat statbuf;
+    if (::stat(path.c_str(), &statbuf) < 0) {
+        return (false);
+    }
+    return ((statbuf.st_mode & S_IFMT) == S_IFDIR);
 }
 
 bool
@@ -254,6 +296,11 @@ PathChecker::validatePath(const std::string input_path_str,
 
     std::string valid_path(path_ + "/" +  filename);
     return (valid_path);
+}
+
+bool
+PathChecker::pathHasPermissions(mode_t permissions) {
+    return(hasPermissions(path_, permissions));
 }
 
 }  // namespace file

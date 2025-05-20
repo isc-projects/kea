@@ -58,6 +58,8 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::test;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -206,7 +208,7 @@ const char* PARSER_CONFIGS[] = {
     "        ],"
     "    \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/tmp/kea4-ctrl-socket\","
+    "        \"socket-name\": \"kea4-ctrl-socket\","
     "        \"user-context\": { \"comment\": \"Indirect comment\" }"
     "    },"
     "    \"shared-networks\": [ {"
@@ -279,7 +281,6 @@ protected:
     virtual void SetUp() {
         std::vector<std::string> libraries = HooksManager::getLibraryNames();
         ASSERT_TRUE(libraries.empty());
-        resetHooksPath();
     }
 
 public:
@@ -292,6 +293,7 @@ public:
         // Create fresh context.
         resetConfiguration();
         resetHooksPath();
+        Dhcpv4SrvTest::resetSocketPath();
     }
 
 public:
@@ -376,6 +378,9 @@ public:
         // ... and delete the hooks library marker files if present
         static_cast<void>(remove(LOAD_MARKER_FILE));
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
+
+        resetHooksPath();
+        Dhcpv4SrvTest::resetSocketPath();
     };
 
     /// @brief Returns an interface configuration used by the most of the
@@ -6932,6 +6937,7 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
 
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
+    Dhcpv4SrvTest::setSocketTestPath();
 
     string config = PARSER_CONFIGS[5];
     extractConfig(config);
@@ -7029,7 +7035,7 @@ TEST_F(Dhcp4ParserTest, comments) {
     ASSERT_TRUE(socket->get("socket-type"));
     EXPECT_EQ("\"unix\"", socket->get("socket-type")->str());
     ASSERT_TRUE(socket->get("socket-name"));
-    EXPECT_EQ("\"/tmp/kea4-ctrl-socket\"", socket->get("socket-name")->str());
+    EXPECT_EQ("\"kea4-ctrl-socket\"", socket->get("socket-name")->str());
 
     // Check control socket comment and user context.
     ConstElementPtr ctx_socket = socket->get("user-context");

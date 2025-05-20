@@ -35,7 +35,6 @@ run_unittests_SOURCES += dhcp_space_unittest.cc
 run_unittests_SOURCES += doubles_unittest.cc
 run_unittests_SOURCES += fd_share_tests.cc
 run_unittests_SOURCES += fd_tests.cc
-run_unittests_SOURCES += file_utilities_unittest.cc
 run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hash_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc

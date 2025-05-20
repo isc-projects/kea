@@ -10,7 +10,7 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/crypto_tls.h>
-#include <util/file_utilities.h>
+#include <util/filesystem.h>
 
 using namespace isc::cryptolink;
 using namespace isc::util;

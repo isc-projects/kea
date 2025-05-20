@@ -6,7 +6,7 @@
             "dhcp4": {
                 "boot-update": true,
                 "control-socket": {
-                    "socket-name": "/tmp/kea4-ctrl-socket",
+                    "socket-name": "kea4-ctrl-socket",
                     "socket-type": "unix",
                     "socket-url": "http://127.0.0.1:8000/"
                 },

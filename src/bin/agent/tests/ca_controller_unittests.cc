@@ -12,9 +12,15 @@
 #include <agent/ca_command_mgr.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <util/filesystem.h>
+#include <testutils/gtest_utils.h>
+
 #include <boost/pointer_cast.hpp>
+
 #include <sstream>
+
 #include <unistd.h>
 
 using namespace isc::asiolink::test;
@@ -22,6 +28,8 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::config;
+using namespace isc::util;
 using namespace boost::posix_time;
 using namespace std;
 
@@ -35,11 +43,11 @@ const char* valid_agent_config =
     "  \"control-sockets\": {"
     "    \"dhcp4\": {"
     "      \"socket-type\": \"unix\","
-    "      \"socket-name\": \"/first/dhcp4/socket\""
+    "      \"socket-name\": \"first_socket4\""
     "    },"
     "    \"dhcp6\": {"
     "      \"socket-type\": \"unix\","
-    "      \"socket-name\": \"/first/dhcp6/socket\""
+    "      \"socket-name\": \"first_socket6\""
     "    }"
     "  }"
     "}";
@@ -56,6 +64,12 @@ public:
     /// @brief Constructor.
     CtrlAgentControllerTest()
         : DControllerTest(CtrlAgentController::instance) {
+        setSocketTestPath();
+    }
+
+    /// @brief Destructor.
+    virtual ~CtrlAgentControllerTest() {
+        resetSocketPath();
     }
 
     /// @brief Returns pointer to CtrlAgentProcess instance.
@@ -81,6 +95,20 @@ public:
         return (p);
     }
 
+    /// @brief Sets the path in which the socket can be created.
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = "") {
+        auto path = UnixCommandConfig::getSocketPath(true, (!explicit_path.empty() ?
+                                                     explicit_path : TEST_DATA_BUILDDIR));
+        UnixCommandConfig::setSocketPathPerms(file::getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
+    }
+
     /// @brief Tests that socket info structure contains 'unix' socket-type
     /// value and the expected socket-name.
     ///
@@ -96,8 +124,7 @@ public:
         ASSERT_TRUE(sock_info->contains("socket-type"));
         EXPECT_EQ("unix", sock_info->get("socket-type")->stringValue());
         ASSERT_TRUE(sock_info->contains("socket-name"));
-        EXPECT_EQ(exp_socket_name,
-                  sock_info->get("socket-name")->stringValue());
+        EXPECT_EQ(exp_socket_name, sock_info->get("socket-name")->stringValue());
     }
 
     /// @brief Compares the status in the given parse result to a given value.
@@ -183,7 +210,6 @@ TEST_F(CtrlAgentControllerTest, basicInstanceTesting) {
     // Verify that the Process does NOT exist.
     EXPECT_FALSE(checkProcess());
 }
-
 
 // Tests basic command line processing.
 // Verifies that:
@@ -276,11 +302,11 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "      \"socket-name\": \"second_socket6\""
         "    }"
         "  }"
         "}";
@@ -319,8 +345,8 @@ TEST_F(CtrlAgentControllerTest, successfulConfigUpdate) {
     EXPECT_EQ(8080, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated too.
-    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
-    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "second_socket4");
+    testUnixSocketInfo("dhcp6", "second_socket6");
 
     // After the shutdown the HTTP listener no longer exists.
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
@@ -342,11 +368,11 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "      \"socket-name\": \"second_socket6\""
         "    }"
         "  }"
         "}";
@@ -385,8 +411,8 @@ TEST_F(CtrlAgentControllerTest, unsuccessfulConfigUpdate) {
     EXPECT_EQ(8081, ctx->getHttpPort());
 
     // Same for forwarding.
-    testUnixSocketInfo("dhcp4", "/first/dhcp4/socket");
-    testUnixSocketInfo("dhcp6", "/first/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "first_socket4");
+    testUnixSocketInfo("dhcp6", "first_socket6");
 
     // After the shutdown the HTTP listener no longer exists.
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
@@ -408,11 +434,11 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
         "  \"control-sockets\": {"
         "    \"dhcp4\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp4/socket\""
+        "      \"socket-name\": \"second_socket4\""
         "    },"
         "    \"dhcp6\": {"
         "      \"socket-type\": \"unix\","
-        "      \"socket-name\": \"/second/dhcp6/socket\""
+        "      \"socket-name\": \"second_socket6\""
         "    }"
         "  }"
         "}";
@@ -450,8 +476,8 @@ TEST_F(CtrlAgentControllerTest, noListenerChange) {
     EXPECT_EQ(8081, ctx->getHttpPort());
 
     // The forwarding configuration should have been updated.
-    testUnixSocketInfo("dhcp4", "/second/dhcp4/socket");
-    testUnixSocketInfo("dhcp6", "/second/dhcp6/socket");
+    testUnixSocketInfo("dhcp4", "second_socket4");
+    testUnixSocketInfo("dhcp6", "second_socket6");
 
     CtrlAgentProcessPtr process = getCtrlAgentProcess();
     ASSERT_TRUE(process);
@@ -727,7 +753,6 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
     answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
                                                            params, cmd);
 
-
     // Verify the reload was successful.
     string expected = "{ \"result\": 0, \"text\": "
         "\"Configuration applied successfully.\" }";
@@ -831,7 +856,6 @@ TEST_F(CtrlAgentControllerTest, shutdown) {
     // Now clean up after ourselves.
     ctrl->deregisterCommands();
 }
-
 
 TEST_F(CtrlAgentControllerTest, shutdownExitValue) {
     ASSERT_NO_THROW(initProcess());

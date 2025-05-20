@@ -15,6 +15,15 @@ namespace isc {
 namespace util {
 namespace file {
 
+/// @brief Get the content of a regular file.
+///
+/// @param file_name The file name.
+///
+/// @return The content of the file.
+/// @throw BadValue when the file can't be opened or is not a regular one.
+std::string
+getContent(const std::string& file_name);
+
 /// @brief Check if there is a file or directory at the given path.
 ///
 /// @param path The path being checked.
@@ -22,6 +31,31 @@ namespace file {
 /// @return True if the path points to a file or a directory, false otherwise.
 bool
 exists(const std::string& path);
+
+/// @brief Check if there is a directory at the given path.
+///
+/// @param path The path being checked.
+///
+/// @return True if the path points to a directory, false otherwise including
+/// if the pointed location does not exist.
+bool
+isDir(const std::string& path);
+
+/// @brief Fetches the file permissions mask.
+///
+/// @param path The path being checked.
+/// @return File permissios mask or 0 if the path does not exist.
+mode_t
+getPermissions(const std::string path);
+
+/// @brief Check if there if file or directory has the given permissions.
+///
+/// @param path The path being checked.
+/// @param permissions mask of expected permissions.
+///
+/// @return True if the path points to a file or a directory, false otherwise.
+bool
+hasPermissions(const std::string path, const mode_t& permissions);
 
 /// @brief Check if there is a file at the given path.
 ///
@@ -185,6 +219,13 @@ public:
     /// it the parent path does not path the supported path.
     std::string validatePath(const std::string input_path_str,
                              bool enforce_path = true) const;
+
+    /// @brief Tests that the supported path has the given permissions.
+    ///
+    /// @param permissions mode_t mask of required permissions.
+    /// @return True if the path's permissions exactly match the permissions
+    /// parameter.
+    bool pathHasPermissions(mode_t permissions);
 
     /// @brief Fetches the default path.
     std::string getDefaultPath() const {

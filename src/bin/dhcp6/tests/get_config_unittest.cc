@@ -1838,7 +1838,7 @@ const char* EXTRACTED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"control-socket\": {\n"
-"            \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"            \"socket-name\": \"kea6-ctrl-socket\",\n"
 "            \"socket-type\": \"unix\",\n"
 "            \"user-context\": {\n"
 "                \"comment\": \"Indirect comment\"\n"
@@ -9863,7 +9863,7 @@ const char* UNPARSED_CONFIGS[] = {
 "            }\n"
 "        ],\n"
 "        \"control-socket\": {\n"
-"            \"socket-name\": \"/tmp/kea6-ctrl-socket\",\n"
+"            \"socket-name\": \"kea6-ctrl-socket\",\n"
 "            \"socket-type\": \"unix\",\n"
 "            \"user-context\": {\n"
 "                \"comment\": \"Indirect comment\"\n"
@@ -10932,11 +10932,13 @@ public:
 
         // Reset configuration for each test.
         resetConfiguration();
+        BaseServerTest::setSocketTestPath();
     }
 
     ~Dhcp6GetConfigTest() {
         // Reset configuration database after each test.
         resetConfiguration();
+        BaseServerTest::resetSocketPath();
     };
 
     /// @brief Parse and Execute configuration

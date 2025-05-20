@@ -16,7 +16,7 @@
     {
         "comment": "Control channel",
         "socket-type": "unix",
-        "socket-name": "/tmp/kea-ddns-ctrl-socket"
+        "socket-name": "kea-ddns-ctrl-socket"
     },
 
     "forward-ddns":

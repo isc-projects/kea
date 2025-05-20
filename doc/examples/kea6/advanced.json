@@ -80,7 +80,7 @@
     // Guide for list of supported commands.
     "control-socket": {
         "socket-type": "unix",
-        "socket-name": "/tmp/kea6-ctrl-socket"
+        "socket-name": "kea6-ctrl-socket"
     },
 
     // Addresses will be assigned with preferred and valid lifetimes

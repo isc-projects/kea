@@ -1,4 +1,4 @@
-2262.	[sec]*		fdupont
+2171.	[sec]*		fdupont
 	Change the umask to no group write and no other access
 	at the entry of Kea server/agent binaries.
 	CVE:2025-32803

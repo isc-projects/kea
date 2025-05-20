@@ -22,6 +22,54 @@ using namespace std;
 
 namespace {
 
+/// @brief Test fixture class for testing operations on files.
+struct FileUtilTest : ::testing::Test {
+    /// @brief Destructor.
+    ///
+    /// Deletes the test file if any.
+    virtual ~FileUtilTest() {
+        string test_file_name(TEST_DATA_BUILDDIR "/fu.test");
+        static_cast<void>(remove(test_file_name.c_str()));
+    }
+};
+
+/// @brief Check that an error is returned by getContent on non-existent file.
+TEST_F(FileUtilTest, notExist) {
+    EXPECT_THROW_MSG(getContent("/does/not/exist"), BadValue,
+                     "Expected a file at path '/does/not/exist'");
+}
+
+/// @brief Check that an error is returned by getContent on not regular file.
+TEST_F(FileUtilTest, notRegular) {
+    EXPECT_THROW_MSG(getContent("/"), BadValue, "Expected '/' to be a regular file");
+}
+
+/// @brief Check getContent.
+TEST_F(FileUtilTest, getContent) {
+    string file_name(TEST_DATA_BUILDDIR "/fu.test");
+    ofstream fs(file_name.c_str(), ofstream::out | ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "abdc";
+    fs.close();
+    string content;
+    EXPECT_NO_THROW_LOG(content = getContent(file_name));
+    EXPECT_EQ("abdc", content);
+}
+
+/// @brief Check isDir.
+TEST_F(FileUtilTest, isDir) {
+    EXPECT_TRUE(isDir("/dev"));
+    EXPECT_FALSE(isDir("/dev/null"));
+    EXPECT_FALSE(isDir("/this/does/not/exist"));
+    EXPECT_FALSE(isDir("/etc/hosts"));
+}
+
+/// @brief Check isFile.
+TEST_F(FileUtilTest, isFile) {
+    EXPECT_TRUE(isFile(ABS_SRCDIR "/filesystem_unittests.cc"));
+    EXPECT_FALSE(isFile(TEST_DATA_BUILDDIR));
+}
+
 /// @brief Test fixture class for testing operations on umask.
 struct UMaskUtilTest : ::testing::Test {
     /// @brief Constructor.
@@ -374,6 +422,16 @@ TEST(PathChecker, validatePathEnforcePathFalse) {
                              BadValue, scenario.exp_error_);
         }
     }
+}
+
+/// @brief Check hasPermissions.
+TEST_F(FileUtilTest, hasPermissions) {
+    const std::string path = ABS_SRCDIR "/filesystem_unittests.cc";
+    ASSERT_TRUE(isFile(path));
+    mode_t current_permissions = getPermissions(path);
+    EXPECT_TRUE(hasPermissions(path, current_permissions));
+    current_permissions = ~current_permissions;
+    EXPECT_FALSE(hasPermissions(path, current_permissions));
 }
 
 }  // namespace
