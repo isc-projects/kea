@@ -39,8 +39,9 @@ protection possible:
 .. note::
 
    It is recommend to use privileged ports for HTTP/HTTPS against local attacks
-   (users which are conencted to the box where Kea servers/agents run). This measure
-   also prevents against impersonation with HTTP and DoS in general.
+   (by users which are connected to the box where Kea servers/agents run). This
+   measure also prevents against impersonation with HTTP and Denial of Service in
+   general.
 
 .. note::
 
@@ -328,7 +329,7 @@ file-access control on POSIX systems (owner, group, others, read/write).
 
     As of Kea 2.7.9, control sockets may only reside in the directory
     determined during compilation as ``"[kea-install-dir]/var/run/kea"``,
-    which must also have ``750`` access rights. This path may be overridden
+    which must also have ``0750`` access rights. This path may be overridden
     at startup by setting the environment variable ``KEA_CONTROL_SOCKET_DIR``
     to the desired path.  If a path other than this value is used in
     ``socket-name``, Kea will emit an error and refuse to start or, if already
@@ -500,8 +501,8 @@ using basic HTTP authentication.
 
 Kea 1.9.2 introduced a new ``auth`` hook point. With this new hook point, it is possible to develop an external
 hook library to extend the access controls, integrate with another authentication authority, or add role-based
-access control to the Control Agent. This hookpoint is also supported by the DHCP and DDNS servers since Kea
-version 2.7.2.
+access control to the Control Agent. This hookpoint was renamed as ``http_auth`` and is also supported by the DHCP
+and DDNS servers since Kea version 2.7.2.
 
 .. note:
 

@@ -10,7 +10,6 @@
 #include <util/filesystem.h>
 #include <util/str.h>
 
-#include <sys/stat.h>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>

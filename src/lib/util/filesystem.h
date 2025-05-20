@@ -7,7 +7,7 @@
 #ifndef KEA_UTIL_FILESYSTEM_H
 #define KEA_UTIL_FILESYSTEM_H
 
-#include <sys/types.h>
+#include <sys/stat.h>
 #include <string>
 #include <boost/shared_ptr.hpp>
 
