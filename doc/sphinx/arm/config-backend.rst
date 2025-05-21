@@ -137,7 +137,7 @@ structures are replaced entirely.  For example, if client classes are defined
 in the CB database, the DHCP server disregards any client classes defined in
 the JSON file.
 
-FIXME note non CB DB
+   Note that use of a database for storage of leases and/or reservations is still possible without the CB (with the ``host-databases`` and ``lease-database`` directives).  Such databases also load their config independently from the CB, and will conflict the same way JSON would.
 
 Custom Options
 ^^^^^^^^^^^^^^
