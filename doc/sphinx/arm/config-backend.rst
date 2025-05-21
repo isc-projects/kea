@@ -39,7 +39,7 @@ Potential drawbacks include:
 
 .. note::
 
-   Use of a database for storage of leases and/or reservations is still possible without the CB.  See the ``host-databases`` and ``lease-database`` directives.
+   Use of a database for storage of leases and/or reservations is still possible without the CB.  See the ``host-databases`` and ``lease-database`` config directives.
 
 Example Scenario
 ^^^^^^^^^^^^^^^^
@@ -137,7 +137,7 @@ structures are replaced entirely.  For example, if client classes are defined
 in the CB database, the DHCP server disregards any client classes defined in
 the JSON file.
 
-   Note that use of a database for storage of leases and/or reservations is still possible without the CB (with the ``host-databases`` and ``lease-database`` directives).  Such databases also load their config independently from the CB, and will conflict the same way JSON would.
+   Note that use of a database for storage of leases and/or reservations is still possible without the CB (with the ``host-databases`` and ``lease-database`` config directives).  Such databases also load their config independently from the CB, and will conflict the same way JSON would.
 
 Custom Options
 ^^^^^^^^^^^^^^
@@ -182,7 +182,7 @@ simplifies many typical operations, such as listing, adding, retrieving, and
 deleting global parameters, shared networks, subnets, pools, options, option
 definitions, and client classes. In addition, it provides essential business
 logic that ensures the logical integrity of the data.  All CB API commands
-start with ``remote-``.  See FIXME api.html#commands-cb-cmds for a complete
+start with ``remote-``.  See :ref:`commands-cb-cmds` for a complete
 list.
 
 Installation and maintenance of external database software is beyond the scope of this manual.
