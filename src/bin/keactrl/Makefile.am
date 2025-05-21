@@ -59,7 +59,7 @@ if INSTALL_CONFIGURATIONS
 # To preserve any user modifications to the old version of the file,
 # this old file is backed up as keactrl.conf.bak.
 install-data-local:
-	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
+	$(mkinstalldirs) -m 750 $(DESTDIR)/@sysconfdir@/@PACKAGE@
 	for f in $(CONFIGFILES) ; do	\
 		if test -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f && \
 		   test $$f = "keactrl.conf"; then \
