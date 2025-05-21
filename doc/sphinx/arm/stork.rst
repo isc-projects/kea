@@ -32,6 +32,16 @@ The ARM has a nice collection of screenshots that is frequently updated, to give
 an idea of what is currently available. Stork is in the midst of full development with
 monthly releases, so please check back frequently.
 
+.. note::
+
+   Stork uses Kea API calls from the :ischooklib:`libdhcp_host_cmds.so` and
+   :ischooklib:`libdhcp_subnet_cmds.so` hooks to make changes to Kea's
+   configuration.  Such usage is incompatible with the :ref:`_config-backend`
+   (CB).  Stork does not currently implement support for the
+   :ischooklib:`libdhcp_cb_cmds.so` needed to make changes to CB
+   configuration.  If using the Kea CB, Stork can only be safely used in a
+   "read-only" fashion.  Future versions of Stork will add CB support.
+
 .. _grafana:
 .. _prometheus:
 
