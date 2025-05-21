@@ -8,51 +8,45 @@ Kea Configuration Backend
 Applicability
 -------------
 
-Kea Configuration Backend (CB or config backend) gives Kea servers the ability
-to store almost all of their configuration in one or more databases.
+The Kea Configuration Backend (CB or config backend) gives Kea servers the
+ability to store almost all of their configuration in one or more databases.
 
-In small deployments, e.g. those comprising a single DHCP server
-instance with limited and infrequently changing number of subnets, it
-may be impractical to use the CB as a configuration repository because
-it requires additional third-party software to be installed and
-configured - in particular the database server, client, and libraries.
-Once the number of DHCP servers and/or the number of managed subnets in the
-network grows, the usefulness of the CB becomes obvious.
+Potential features and benefits include:
 
-One use case for the CB is a pair of Kea DHCP servers that are configured
-to support High Availability as described in
-:ref:`hooks-high-availability`. The configurations of both servers
-(including the value of the ``server-tag`` parameter)
-are almost exactly the same: they may differ by the server identifier
-and designation of the server as a primary or standby (or secondary), and/or
-by their interfaces' configuration. Typically, the
-subnets, shared networks, option definitions, and global parameters are the
-same for both servers and can be sourced from a single database instance
-to both Kea servers.
+-  Re-use of identical configuration sections across multiple Kea servers
 
-Using the database as a single source of configuration for subnets
-and/or other configuration information supported by the CB has the
-advantage that any modifications to the configuration in the database are
-automatically applied to both servers.
+-  A "single source of truth" for all Kea servers
 
-Another case when the centralized configuration repository is useful is
-in deployments including a large number of DHCP servers, possibly
-using a common lease database to provide redundancy. New servers can
-be added to the pool frequently to fulfill growing scalability
-requirements. Adding a new server does not require replicating the
-entire configuration to the new server when a common database is used.
+-  All configuration done through an API with real-time logic checks
 
-Using the database as a configuration repository for Kea servers also
-brings other benefits, such as:
+-  Easier integration with third-party tools or in-house automation
 
--  the ability to use database-specific tools to access the configuration
-   information;
+-  Database architecture provides concurrency, consistency, and atomicity
 
--  the ability to create customized statistics based on the information
-   stored in the database; and
+-  The ability to mine the database for statistics and reporting
 
--  the ability to backup the configuration information using the database's
-   built-in replication mechanisms.
+-  Use of database replication for real-time fault-tolerance
+
+Potential drawbacks include:
+
+-  Significant up-front effort to prepare integration and/or automation
+
+-  Supported scenarios require use of API for most configuration
+
+-  The API is only available to ISC customers with a paid support contract
+
+-  Incompatible with some uses, software, and scenarios
+
+.. note::
+
+   Use of a database for storage of leases and/or reservations is still possible without the CB.  See the ``host-databases`` and ``lease-database`` directives.
+
+Example Scenario
+^^^^^^^^^^^^^^^^
+
+Consider a large organization with many sites, each with a pair of Kea servers deployed in a high availability (HA) configuration.  Typically such deployments use standardized configurations, leading to similar config parameters for every site.  The members of each HA pair are often almost exactly the same, differing only by name.  Often installations of this size will feature a high level of automation, including provisioning and management systems.
+
+The CB is ideal for such deployments.  While some effort is required to integrate with the provisioning automation, once accomplished, deployment of new Kea servers can be nearly automatic.  A small "stub" JSON config, identical for every server, can be used, and all remaining configuration (interfaces, subnets, pools, etc.) loaded from the central CB database.  Any updates to the central CB database are automatically propagated to all Kea instances.  The CB becomes the "single source of truth" for DHCP throughout the organization.
 
 .. _cb-limitations:
 
@@ -142,6 +136,8 @@ use both.  For example, defining one subnet in a JSON file and a second
 structures are replaced entirely.  For example, if client classes are defined
 in the CB database, the DHCP server disregards any client classes defined in
 the JSON file.
+
+FIXME note non CB DB
 
 Custom Options
 ^^^^^^^^^^^^^^
