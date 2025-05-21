@@ -40,7 +40,8 @@ monthly releases, so please check back frequently.
    (CB).  Stork does not currently implement support for the
    :ischooklib:`libdhcp_cb_cmds.so` needed to make changes to CB
    configuration.  If using the Kea CB, Stork can only be safely used in a
-   "read-only" fashion.  Future versions of Stork will add CB support.
+   "read-only" fashion.  Support for the CB is planned for a future release of
+   Stork.
 
 .. _grafana:
 .. _prometheus:
