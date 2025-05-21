@@ -1,6 +1,6 @@
-#line 2 "d2_lexer.cc"
+#line 1 "d2_lexer.cc"
 
-#line 4 "d2_lexer.cc"
+#line 3 "d2_lexer.cc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1136,7 +1136,7 @@ unsigned int comment_start_line = 0;
 
 /* To avoid the call to exit... oops! */
 #define YY_FATAL_ERROR(msg) isc::d2::D2ParserContext::fatal(msg)
-#line 1140 "d2_lexer.cc"
+#line 1139 "d2_lexer.cc"
 /* noyywrap disables automatic rewinding for the next file to parse. Since we
    always parse only a single string, there's no need to do any wraps. And
    using yywrap requires linking with -lfl, which provides the default yywrap
@@ -1162,8 +1162,8 @@ unsigned int comment_start_line = 0;
    by moving it ahead by yyleng bytes. yyleng specifies the length of the
    currently matched token. */
 #define YY_USER_ACTION  driver.loc_.columns(yyleng);
+#line 1165 "d2_lexer.cc"
 #line 1166 "d2_lexer.cc"
-#line 1167 "d2_lexer.cc"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -1483,7 +1483,7 @@ YY_DECL
     }
 
 
-#line 1487 "d2_lexer.cc"
+#line 1486 "d2_lexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -2465,7 +2465,7 @@ YY_RULE_SETUP
 #line 816 "d2_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2469 "d2_lexer.cc"
+#line 2468 "d2_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,6 +144,13 @@ object (i.e. a top level element).
 % DHCP6_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the IPv6 DHCP server has received an
 updated configuration from the Kea configuration system.
+
+% DHCP6_DATA_DIRECTORY_DEPRECATED 'data-directory' has been deprecated and should no longer be used.
+This warning message is emitted when the configuration parsing detects
+that the `data-directory` parameter has been specified.  This parameter
+is no longer supported. This supported path, determined at compile time,
+may be overridden at runtime by setting the environment variable
+'KEA_DHCP_DATA_DIR'.
 
 % DHCP6_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
 This informational message is printed every time the IPv6 DHCP server
@@ -1003,10 +1010,3 @@ such modification. The clients will remember previous server-id, and will
 use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
-
-% DHCP6_DATA_DIRECTORY_DEPRECATED 'data-directory' has been deprecated and should no longer be used.
-This warning message is emitted when the configuration parsing detects
-that the `data-directory` parameter has been specified.  This parameter
-is no longer supported. This supported path, determined at compile time,
-may be overridden at runtime by setting the environment variable
-'KEA_DHCP_DATA_DIR'.
