@@ -338,6 +338,8 @@ where the content of "subnets.json" may be:
    }
 
 
-.. END OF SECTION - put any in-section additions above the includes
+.. put any "JSON Configuration" additions above the following includes
 
 .. include:: config-backend.rst
+
+.. do NOT put anything here unless it is another section after the includes
