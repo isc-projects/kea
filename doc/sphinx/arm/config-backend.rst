@@ -39,7 +39,9 @@ Potential drawbacks include:
 
 .. note::
 
-   Use of a database for storage of leases and/or reservations is still possible without the CB.  See the ``host-databases`` and ``lease-database`` config directives.
+   Use of a database for storage of leases and/or host reservations is
+   possible without using the CB.  See the ``host-databases`` and
+   ``lease-database`` config directives.
 
 Example Scenario
 ^^^^^^^^^^^^^^^^
@@ -68,26 +70,71 @@ Preparation is Required
 The Configuration Backend is not a "plug-and-play" solution.  Supported
 scenarios require use of the CB API commands.  Configuration information must
 be loaded into the CB database using the API for the CB to have any effect.
-The general intent is for the CB to be integrated with external software.
-Please do not define ``config-databases`` unless you have done the necessary
-preparation work.
+The general intent is for the CB to be integrated as part of a larger
+provisioning solution.  Please do not define ``config-databases`` unless you
+have done the necessary preparation work.
 
-Incompatibilities
-^^^^^^^^^^^^^^^^^
+Database Management
+^^^^^^^^^^^^^^^^^^^
 
-Use of the :ischooklib:`libdhcp_subnet_cmds.so` hook with the CB is
-contraindicated.  The API commands starting with ``subnet`` all modify the
-in-memory configuration of Kea.  The only way to save that config would be to
-write out a JSON config file.  That would conflict with any subnets defined by
-the CB.  Use :ischooklib:`libdhcp_cb_cmds.so` to manage the
-subnets information in the database instead.
+The only supported method for managing the contents of the CB database is
+through the :ischooklib:`libdhcp_cb_cmds.so` hook, which provides API commands
+for config backends.  As a practical matter, to use the CB, you must do almost
+all Kea configuration through the CB API.
 
-The Stork management suite does not currently support the CB.  Stork operates
-by direct configuration modification, with accompanying ``config-write`` of
-the JSON config file.  That would create duplicate definitions vs the CB.
-Support for the CB is planned for a future release of Stork.
+While it is theoretically possible to use the CB without the API (using tools
+such as MySQL Workbench or the command-line MySQL client), these avenues are
+neither recommended nor supported.
 
-In certain carefully-controlled scenarios, it may be possible to use these tools with the CB.  Namely, if they are used in strictly "read-only" fashion, to retrieve Kea information, but never to modify it.  However, no protection against accidental modification is provided, so this is not recommended.
+Config Conflicts
+^^^^^^^^^^^^^^^^
+
+We strongly recommend against mixing configuration information from the CB and
+JSON.  In other words, do not use both JSON config declarations and CB to
+configure the same types of objects.  Ideally, when using the CB, the Kea
+config files should contain the absolute bare minimum necessary, with
+everything else coming from the CB.
+
+Using both CB and JSON as a source of configuration risks conflicting
+definitions.  Such conflicts are confusing at best, and usually lead to
+undesired behavior or errors from Kea.
+
+In the event of a conflict, configuration instructions from the CB database
+generally take precedence over instructions from a JSON file.
+
+In certain carefully-controlled scenarios, it may be technically possible to
+use both.  For example, defining one subnet in a JSON file and a second
+(different) subnet in the CB database would not conflict.  However, other
+structures are replaced entirely.  For example, if client classes are defined
+in the CB database, the DHCP server disregards any client classes defined in
+the JSON file.
+
+In short, if you are using the CB, you should use only the CB.
+
+Incompatible Software
+^^^^^^^^^^^^^^^^^^^^^
+
+The preceding cautions about conflicting configuration information apply to software-driven configuration sources as well.
+
+Kea supports databases outside of the CB, such as with the ``host-databases``
+directive.  Such databases load their config independently from the CB, and
+will conflict the same way JSON declarations would.  If using the CB,
+such mechanisms should be avoided.
+
+Likewise, API commands which modify Kea's configuration (other than the
+CB API) are contraindicated.  This includes the
+:ischooklib:`libdhcp_subnet_cmds.so` and :ischooklib:`libdhcp_host_cmds.so`
+hooks.  These APIs modify Kea's in-memory configuration, and can only be made
+persist by using ``config-write`` to write a new JSON config file.
+
+The Stork management suite does not currently support the CB.  Stork makes all
+configuration changes through API avenues which expect to write a new JSON
+file.  Support for the CB is planned for a future release of Stork.
+
+In certain carefully-controlled scenarios, it may be possible to use these
+tools with the CB.  Namely, if they are used in strictly "read-only" fashion,
+to retrieve Kea information, but never to modify it.  However, no protection
+against accidental modification is provided, so this is not recommended.
 
 Implementation
 ^^^^^^^^^^^^^^
@@ -103,41 +150,6 @@ Currently, the Kea CB has the following limitations:
   database: global parameters, option definitions, global options, client
   classes, shared networks, and subnets. Other configuration parameters
   must be sourced from a JSON configuration file.
-
-Database Management
-^^^^^^^^^^^^^^^^^^^
-
-While it is possible to manage the configuration information in the database
-without :ischooklib:`libdhcp_cb_cmds.so` (using commonly available tools, such
-as MySQL Workbench or the command-line MySQL client), these avenues are
-neither recommended nor supported.  The supported method for managing the
-database contents is through :ischooklib:`libdhcp_cb_cmds.so`, which provides
-management commands for config backends.
-
-Duplicate Definitions
-^^^^^^^^^^^^^^^^^^^^^
-
-We strongly recommend against storing configuration information in both the
-config file and the CB database.  In other words, do not use both JSON config
-files (like ``kea-dhcp4.conf``) and CB to configure the same items.  Ideally,
-when using the CB, the Kea config files should contain the absolute bare
-minimum necessary, with everything else coming from the CB.
-
-Using both CB and JSON as a source of configuration risks conflicting
-definitions, which is confusing at best, and usually leads to undesired
-behavior.
-
-In the event of a conflict, configuration instructions from the CB database
-generally take precedence over instructions from a JSON file.
-
-In certain carefully-controlled scenarios, it may be technically possible to
-use both.  For example, defining one subnet in a JSON file and a second
-(different) subnet in the CB database would not conflict.  However, other
-structures are replaced entirely.  For example, if client classes are defined
-in the CB database, the DHCP server disregards any client classes defined in
-the JSON file.
-
-   Note that use of a database for storage of leases and/or reservations is still possible without the CB (with the ``host-databases`` and ``lease-database`` config directives).  Such databases also load their config independently from the CB, and will conflict the same way JSON would.
 
 Custom Options
 ^^^^^^^^^^^^^^
