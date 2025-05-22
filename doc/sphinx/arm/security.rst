@@ -284,7 +284,7 @@ Potential Kea security issues can be minimized by running only those processes r
     may only be loaded from the directory determined at compilation:
     ``"[kea-install-dir]/var/lib/kea"``.
     This path may be overridden at startup by setting the environment variable
-    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path.  If a path other than
+    ``KEA_DHCP_DATA_DIR`` to the desired path.  If a path other than
     this value is used in ``name`` or ``data-directory``, Kea will emit an error and
     refuse to start or, if already running, log an unrecoverable error.
     This restriction applies to writing lease file using ``lease4-write`` and
@@ -382,17 +382,17 @@ Summary of Path Restrictions
 Path restrictions mentioned through this section can be summarized according to
 the following table:
 
-+-------------------------------------+---------------------------------------+----------------------------------+
-| Restricted Element                  | Default Value                         | Environment Variable Override    |
-+=====================================+=======================================+==================================+
-| Config Files (``config-write``)     | Same Directory as Initial Config File | N/A                              |
-+-------------------------------------+---------------------------------------+----------------------------------+
-| Lease Files                         | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIRECTORY``      |
-+-------------------------------------+---------------------------------------+----------------------------------+
-| Log Files                           | ``var/log/kea``                       | ``KEA_LOG_FILE_DIR``             |
-+-------------------------------------+---------------------------------------+----------------------------------+
-| Unix Sockets                        | ``var/run/kea``                       | ``KEA_CONTROL_SOCKET_DIR``       |
-+-------------------------------------+---------------------------------------+----------------------------------+
++-------------------------------------+---------------------------------------+-------------------------------+
+| Restricted Element                  | Default Value                         | Environment Variable Override |
++=====================================+=======================================+===============================+
+| Config Files (``config-write``)     | Same Directory as Initial Config File | N/A                           |
++-------------------------------------+---------------------------------------+-------------------------------+
+| Lease Files                         | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIR``         |
++-------------------------------------+---------------------------------------+-------------------------------+
+| Log Files                           | ``var/log/kea``                       | ``KEA_LOG_FILE_DIR``          |
++-------------------------------------+---------------------------------------+-------------------------------+
+| Unix Sockets                        | ``var/run/kea``                       | ``KEA_CONTROL_SOCKET_DIR``    |
++-------------------------------------+---------------------------------------+-------------------------------+
 
 
 

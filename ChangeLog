@@ -1,9 +1,24 @@
 Kea 2.4.2 (stable) released on May 28, 2025
 
-2172.	[build]		andrei
+2173.	[build]		andrei
 	The library version numbers have been bumped up for the Kea 2.4.2
 	stable release.
 	(Gitlab #3890)
+
+2172.	[sec]*		tmark, fdupont, razvan
+	All files and sockets created by Kea servers have been
+	restricted to default paths determined at compile time
+	which may be overridden by environment variables. This
+	includes lease files, log files, control channel sockets,
+	and the output from commands such as lease4-write and
+	lease6-write. The output of config-write is restricted to
+	the directory from which the configuration file was read.
+	Use of unsupported paths will result in servers emitting
+	errors and refusing to start or rejecting commands.
+	The specifics including the supported paths and environment
+	variable names are in the relevant ARM sections.
+	CVE:2025-32801
+	(Gitlab #3831)
 
 2171.	[sec]*		fdupont
 	Change the umask to no group write and no other access
