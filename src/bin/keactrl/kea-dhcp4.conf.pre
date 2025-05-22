@@ -257,7 +257,6 @@
     //       // when they were active etc.
     //       "library": "@libdir@/kea/hooks/libdhcp_legal_log.so",
     //       "parameters": {
-    //           "path": "/var/lib/kea",
     //           "base-name": "kea-forensic4"
     //       }
     //   },
