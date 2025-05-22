@@ -85,7 +85,7 @@ configuration of the desired DHCP server modules. :ischooklib:`libdhcp_legal_log
 can save logs to a text file or to a database (created using
 :iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
-``[kea-install-dir]/var/lib/kea``, where ``kea-install-dir`` is determined
+``[kea-install-dir]/var/log/kea``, where ``kea-install-dir`` is determined
 by the ``--prefix`` meson setup option which defaults to
 ``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
 :ischooklib:`libdhcp_legal_log.so` like this:
@@ -98,7 +98,7 @@ by the ``--prefix`` meson setup option which defaults to
                 {
                     "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
                     "parameters": {
-                        "path": "/var/lib/kea/log",
+                        "path": "/var/log/kea",
                         "base-name": "kea-forensic4"
                     }
                 }
@@ -116,7 +116,7 @@ For :iscman:`kea-dhcp6`, the configuration is:
                 {
                     "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
                     "parameters": {
-                        "path": "/var/lib/kea/log",
+                        "path": "/var/log/kea",
                         "base-name": "kea-forensic6"
                     }
                 }
@@ -198,7 +198,7 @@ Examples:
                 {
                     "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
                     "parameters": {
-                        "path": "/var/lib/kea/log",
+                        "path": "/var/log/kea",
                         "base-name": "kea-forensic6",
                         "request-parser-format": "'first line' + 0x0a + 'second line'",
                         "response-parser-format": "'also second line' + 0x0a + 'third line'"
@@ -231,7 +231,7 @@ Examples:
                 {
                     "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
                     "parameters": {
-                        "path": "/var/lib/kea/log",
+                        "path": "/var/log/kea",
                         "base-name": "kea-forensic6",
                         "timestamp-format": "%H%t%w %F%%"
                     }

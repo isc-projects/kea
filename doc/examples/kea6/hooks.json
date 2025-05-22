@@ -48,7 +48,7 @@
      {
         "library": "/opt/lib/charging.so",
         "parameters": {
-             "path": "/var/lib/kea",
+             "path": "/var/log/kea",
              "base-name": "kea-forensic6"
         }
      }

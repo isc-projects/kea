@@ -93,7 +93,7 @@ public:
     /// mechanism:
     ///
     /// @b path - Directory in which the legal file(s) will be written.
-    /// The default value is "<prefix>/var/lib/kea". The directory must exist.
+    /// The default value is "<prefix>/var/log/kea". The directory must exist.
     ///
     /// @b base-name - An arbitrary value which is used in conjunction
     /// with current system date to form the current legal file name.

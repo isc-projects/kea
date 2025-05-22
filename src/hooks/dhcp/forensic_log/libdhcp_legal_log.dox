@@ -357,7 +357,7 @@ configuration:
     "hooks-libraries": [
         { "library": "/usr/local/lib/libdhcp_legal_log.so",
           "parameters": {
-            "path": "/var/lib/kea",
+            "path": "/var/log/kea",
             "base-name": "kea-legal4" } },
         ...
     ]
@@ -371,7 +371,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
     "hooks-libraries": [
         { "library": "/usr/local/lib/libdhcp_legal_log.so",
           "parameters": {
-            "path": "/var/lib/kea",
+            "path": "/var/log/kea",
             "base-name": "kea-legal6" } },
         ...
     ]
@@ -380,7 +380,7 @@ To configure it for kea-dhcp6, the commands are simply as shown below:
 
 Two string Hook Library Parameters are supported:
  - @b path - Directory in which the legal file(s) will be written.  The
- default value is "<prefix>/var/lib/kea".  The directory must exist.
+ default value is "<prefix>/var/log/kea".  The directory must exist.
  - @b base-name - An arbitrary value which is used in conjunction with
  the current system date to form the current legal file name.  It defaults
  to "kea-legal".
