@@ -149,7 +149,7 @@ processed by any other tool that is able to understand JSON format.
     As of Kea 2.7.9, the cache file may only be written to the data directory
     determined during compilation: ``"[kea-install-dir]/var/lib/kea"``. This
     path may be overridden at startup by setting the environment variable
-    ``KEA_DHCP_DATA_DIRECTORY`` to the desired path. For ease of use in
+    ``KEA_DHCP_DATA_DIR`` to the desired path. For ease of use in
     specifying a custom file name simply omit the path portion from ``filename``.
 
 .. isccmd:: cache-load
