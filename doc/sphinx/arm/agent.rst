@@ -286,7 +286,7 @@ Starting and Stopping the Control Agent
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
 -  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
-   The server will emit a warning at startup that sercurity restrctions
+   The server will emit a warning at startup that sercurity restrictions
    have been disabled. Do not use this mode of operation without careful
    consideration and taking any necessary precautions. Failure to do so can
    expose deployments to security vulnerabilities. For more information

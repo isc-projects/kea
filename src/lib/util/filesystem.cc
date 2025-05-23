@@ -327,7 +327,7 @@ PathChecker::validateDirectory(const std::string input_path_str,
 
 bool
 PathChecker::pathHasPermissions(mode_t permissions, bool enforce_perms
-                                /*  = PathChecker::shouldEnforceSecurity() */) const {
+                                /* = PathChecker::shouldEnforceSecurity() */) const {
     return((!enforce_perms) || hasPermissions(path_, permissions));
 }
 

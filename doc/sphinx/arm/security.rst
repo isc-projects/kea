@@ -431,7 +431,7 @@ the following table:
 
    As of Kea 3.0, the path and permissions restrictions may be disabled by adding ``-X``
    to command line of the Kea servers.  The server will emit a warning at startup that
-   sercurity restrctions have been disabled.  Do not use this mode of operation without
+   sercurity restrictions have been disabled.  Do not use this mode of operation without
    careful consideration and taking any necessary precautions. Failure to do so may expose
    deployments to security vulnerabilities.  This command line option is supported by
    all of the daemons: ``kea-dhcp4``, ``kea-dhcp6``, ``kea-dhcp-ddns``, and

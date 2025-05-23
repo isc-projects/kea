@@ -267,7 +267,7 @@ public:
     bool isDefaultOverridden();
 
     /// @brief Indicates security checks should be enforced.
-    static  bool shouldEnforceSecurity();
+    static bool shouldEnforceSecurity();
 
     /// @brief Enables or disables security enforcment checks.
     ///

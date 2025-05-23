@@ -87,5 +87,5 @@ This warning is emitted when internal security checks normally
 performed by kea-ctrl-agent have been disabled via command line opion '-X'.
 This means the server is not enforcing restrictions on resource
 paths or permissions.  This mode of operation may expose your
-environment to ecurity vulnerabilities and should only be used
+environment to security vulnerabilities and should only be used
 after consideration.
