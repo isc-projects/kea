@@ -42,13 +42,12 @@ HooksLibrariesParser::getHooksPath(bool reset /* = false */, const std::string e
 }
 
 std::string
-HooksLibrariesParser::validatePath(const std::string libpath,
-                                   bool enforce_path /* = true */) {
+HooksLibrariesParser::validatePath(const std::string libpath) {
     if (!hooks_path_checker_) {
         getHooksPath();
     }
 
-    return (hooks_path_checker_->validatePath(libpath, enforce_path));
+    return (hooks_path_checker_->validatePath(libpath));
 }
 
 // @todo use the flat style, split into list and item

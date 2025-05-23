@@ -237,6 +237,7 @@ public:
 
         // Clear the environment path.
         unsetenv(env_name_.c_str());
+        PathChecker::enableEnforcement(true);
     }
 
     /// @brief Destructor
@@ -247,6 +248,8 @@ public:
         } else {
             unsetenv(env_name_.c_str());
         }
+
+        PathChecker::enableEnforcement(true);
     }
 
     /// @brief Name of env variable for overriding default path.
@@ -295,7 +298,7 @@ TEST_F(PathCheckerTest, getPathExplicit) {
 }
 
 // Verifies PathChecker::validatePath() when enforce_path is true.
-TEST(PathChecker, validatePathEnforcePath) {
+TEST_F(PathCheckerTest, validatePathEnforcePath) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
         int line_;
@@ -370,7 +373,7 @@ TEST(PathChecker, validatePathEnforcePath) {
 }
 
 // Verifies PathChecker::validatePath() when enforce_path is false.
-TEST(PathChecker, validatePathEnforcePathFalse) {
+TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
         int line_;
@@ -417,6 +420,10 @@ TEST(PathChecker, validatePathEnforcePathFalse) {
     }
     };
 
+    ASSERT_TRUE(PathChecker::shouldEnforceSecurity());
+    PathChecker::enableEnforcement(false);
+    ASSERT_FALSE(PathChecker::shouldEnforceSecurity());
+
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
     for (auto scenario : scenarios) {
@@ -426,18 +433,18 @@ TEST(PathChecker, validatePathEnforcePathFalse) {
         std::string validated_path;
         if (scenario.exp_error_.empty()) {
             ASSERT_NO_THROW_LOG(validated_path =
-                                checker.validatePath(scenario.lib_path_, false));
+                                checker.validatePath(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
             ASSERT_THROW_MSG(validated_path =
-                             checker.validatePath(scenario.lib_path_, false),
+                             checker.validatePath(scenario.lib_path_),
                              BadValue, scenario.exp_error_);
         }
     }
 }
 
 // Verifies PathChecker::validateDirectory() when enforce_path is true.
-TEST(PathChecker, validateDirectoryEnforcePath) {
+TEST_F(PathCheckerTest, validateDirectoryEnforcePath) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
         int line_;
@@ -512,7 +519,7 @@ TEST(PathChecker, validateDirectoryEnforcePath) {
 }
 
 // Verifies PathChecker::validateDirectory() when enforce_path is false.
-TEST(PathChecker, validateDirectoryEnforcePathFalse) {
+TEST_F(PathCheckerTest, validateDirectoryEnforcePathFalse) {
     std::string def_path(TEST_DATA_BUILDDIR);
     struct Scenario {
         int line_;
@@ -552,6 +559,10 @@ TEST(PathChecker, validateDirectoryEnforcePathFalse) {
     }
     };
 
+    ASSERT_TRUE(PathChecker::shouldEnforceSecurity());
+    PathChecker::enableEnforcement(false);
+    ASSERT_FALSE(PathChecker::shouldEnforceSecurity());
+
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
     for (auto scenario : scenarios) {
@@ -561,14 +572,30 @@ TEST(PathChecker, validateDirectoryEnforcePathFalse) {
         std::string validated_path;
         if (scenario.exp_error_.empty()) {
             ASSERT_NO_THROW_LOG(validated_path =
-                                checker.validateDirectory(scenario.lib_path_, false));
+                                checker.validateDirectory(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
             ASSERT_THROW_MSG(validated_path =
-                             checker.validateDirectory(scenario.lib_path_, false),
+                             checker.validateDirectory(scenario.lib_path_),
                              BadValue, scenario.exp_error_);
         }
     }
+}
+
+/// @brief Check pathHasPermissions.
+TEST_F(PathCheckerTest, pathHasPermissions) {
+    PathChecker checker(TEST_DATA_BUILDDIR);
+
+    ASSERT_TRUE(PathChecker::shouldEnforceSecurity());
+    mode_t current_permissions = getPermissions(TEST_DATA_BUILDDIR);
+    EXPECT_TRUE(checker.pathHasPermissions(current_permissions));
+
+    current_permissions = ~current_permissions;
+    EXPECT_FALSE(checker.pathHasPermissions(current_permissions));
+
+    PathChecker::enableEnforcement(false);
+    ASSERT_FALSE(PathChecker::shouldEnforceSecurity());
+    EXPECT_TRUE(checker.pathHasPermissions(current_permissions));
 }
 
 }  // namespace

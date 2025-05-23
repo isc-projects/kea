@@ -392,13 +392,12 @@ LegalLogMgr::getLogPath(bool reset /* = false */, const std::string explicit_pat
 }
 
 std::string
-LegalLogMgr::validatePath(const std::string logpath,
-                          bool enforce_path /* = true */) {
+LegalLogMgr::validatePath(const std::string logpath) {
     if (!legal_log_path_checker_) {
         getLogPath();
     }
 
-    return (legal_log_path_checker_->validateDirectory(logpath, enforce_path));
+    return (legal_log_path_checker_->validateDirectory(logpath));
 }
 
 } // namespace dhcp

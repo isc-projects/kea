@@ -224,7 +224,7 @@ public:
     /// @throw BadValue if the input path does not include a file name or if the
     /// it the parent path does not path the supported path.
     std::string validatePath(const std::string input_path_str,
-                             bool enforce_path = true) const;
+                             bool enforce_path = shouldEnforceSecurity()) const;
 
     /// @brief Validates a directory against a supported path.
     ///
@@ -244,14 +244,14 @@ public:
     /// @throw BadValue if the input directory does not match the supported
     /// path.
     std::string validateDirectory(const std::string input_path_str,
-                                  bool enforce_path = true) const;
+                                  bool enforce_path = shouldEnforceSecurity()) const;
 
-    /// @brief Tests that the supported path has the given permissions.
+    /// @param enforce_perms Enables permsissions check.  If false the function
+    /// simply returns true.
     ///
-    /// @param permissions mode_t mask of required permissions.
-    /// @return True if the path's permissions exactly match the permissions
-    /// parameter.
-    bool pathHasPermissions(mode_t permissions);
+    /// @return True if the path points to a file or a directory, false otherwise.
+    bool pathHasPermissions(mode_t permissions,
+                            bool enforce_perms = shouldEnforceSecurity()) const;
 
     /// @brief Fetches the default path.
     std::string getDefaultPath() const {
@@ -263,6 +263,17 @@ public:
         return (env_name_);
     }
 
+    /// @brief Indicates if the default path has been overridden.
+    bool isDefaultOverridden();
+
+    /// @brief Indicates security checks should be enforced.
+    static  bool shouldEnforceSecurity();
+
+    /// @brief Enables or disables security enforcment checks.
+    ///
+    /// @param enable true to enable security checks, false to disable.
+    static void enableEnforcement(bool enable);
+
 private:
     /// @brief Default supported path.
     std::string default_path_;
@@ -272,6 +283,12 @@ private:
 
     /// @brief The supported path currently in effect.
     std::string path_;
+
+    /// @brief Tracks if default has been overridden.
+    bool default_overridden_;
+
+    /// @brief True if security checks should be enforced, false if not.
+    static bool enforce_security_;
 };
 
 /// @brief Defines a pointer to a PathChecker.

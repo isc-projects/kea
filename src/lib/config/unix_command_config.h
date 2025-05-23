@@ -13,6 +13,7 @@
 #include <asiolink/unix_domain_socket_acceptor.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <util/filesystem.h>
 
 namespace isc {
 namespace config {
@@ -54,13 +55,9 @@ public:
     /// sockets.
     ///
     /// @param socket_path path to validate.
-    /// @param enforce enables validation against the supported path and
-    /// permissions.
-    /// If false simply returns the input path.
     ///
     /// @return validated path
-    static std::string validatePath(const std::string socket_path,
-                                    bool enforce = true);
+    static std::string validatePath(const std::string socket_path);
 
     /// @brief Fetches the required socket path permissions mask
     ///

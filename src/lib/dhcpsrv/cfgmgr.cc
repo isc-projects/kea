@@ -37,8 +37,8 @@ CfgMgr::getDataDir(bool reset /* = false */, const std::string explicit_path /* 
 }
 
 std::string
-CfgMgr::validatePath(const std::string data_path, bool enforce_path /* = true */) const {
-    return (data_dir_checker_->validatePath(data_path, enforce_path));
+CfgMgr::validatePath(const std::string data_path) const {
+    return (data_dir_checker_->validatePath(data_path));
 }
 
 void

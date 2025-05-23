@@ -71,12 +71,9 @@ public:
     /// log files.
     ///
     /// @param logpath path to validate.
-    /// @param enforce_path enables validation against the supported path.
-    /// If false simply returns the input path.
     ///
     /// @return validated path
-    static std::string validatePath(const std::string logpath,
-                                    bool enforce_path = true);
+    static std::string validatePath(const std::string logpath);
 
     /// @brief Parse database specification.
     ///

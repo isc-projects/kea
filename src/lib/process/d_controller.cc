@@ -16,6 +16,7 @@
 #include <log/logger.h>
 #include <log/logger_support.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 #include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_controller.h>
@@ -254,7 +255,7 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
     optarg = 0;
     opterr = 0;
     optind = 1;
-    std::string opts("dvVWc:t:" + getCustomOpts());
+    std::string opts("dvVWc:t:X" + getCustomOpts());
 
     // Defer exhausting of arguments to the end.
     ExhaustOptions e(argc, argv, opts);
@@ -296,6 +297,10 @@ DControllerBase::parseArgs(int argc, char* argv[]) {
             if (ch == 't') {
                 check_only_ = true;
             }
+            break;
+
+        case 'X': // relax security checks
+            file::PathChecker::enableEnforcement(false);
             break;
 
         case '?': {
@@ -834,7 +839,8 @@ DControllerBase::usage(const std::string & text) {
               << "  -c <config file name> : mandatory,"
               << " specify name of configuration file" << std::endl
               << "  -t <config file name> : check the"
-              << " configuration file and exit" << std::endl;
+              << " configuration file and exit" << std::endl
+              << "  -X: disables security restrictions" << std::endl;
 
     // add any derivation specific usage
     std::cerr << getUsageText() << std::endl;

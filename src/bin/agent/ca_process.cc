@@ -15,6 +15,7 @@
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
 #include <config/timeouts.h>
+#include <util/filesystem.h>
 #include <boost/pointer_cast.hpp>
 
 using namespace isc::asiolink;
@@ -22,7 +23,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
-
+using namespace isc::util::file;
 
 namespace isc {
 namespace agent {
@@ -42,6 +43,10 @@ CtrlAgentProcess::init() {
 void
 CtrlAgentProcess::run() {
     LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
+
+    if (!PathChecker::shouldEnforceSecurity()) {
+        LOG_WARN(agent_logger, CTRL_AGENT_SECURITY_CHECKS_DISABLED);
+    }
 
     try {
         // Register commands.

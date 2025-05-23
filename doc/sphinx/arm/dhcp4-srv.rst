@@ -78,6 +78,13 @@ the following command-line switches:
     # from sources using libcfgrpt.a
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
+-  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
+   The server will emit a warning at startup that sercurity restrctions
+   have been disabled. Do not use this mode of operation without careful
+   consideration and takng any necessary precautions. Falure to do so can
+   expose deployments to security vulnerabilities. For more information
+   please read section :ref:`securing-a-kea-deployment`.
+
 On startup, the server detects available network interfaces and
 attempts to open UDP sockets on all interfaces listed in the
 configuration file. Since the DHCPv4 server opens privileged ports, it

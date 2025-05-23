@@ -81,3 +81,11 @@ event loop.
 This informational message indicates that the Control Agent has
 processed all configuration information and is ready to begin processing.
 The version is also printed.
+
+% CTRL_AGENT_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
+This warning is emitted when internal security checks normally
+performed by kea-ctrl-agent have been disabled via command line opion '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to ecurity vulnerabilities and should only be used
+after consideration.

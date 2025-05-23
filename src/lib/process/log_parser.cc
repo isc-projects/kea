@@ -146,13 +146,12 @@ LogConfigParser::getLogPath(bool reset /* = false */, const std::string explicit
 }
 
 std::string
-LogConfigParser::validatePath(const std::string logpath,
-                                   bool enforce_path /* = true */) {
+LogConfigParser::validatePath(const std::string logpath) {
     if (!log_path_checker_) {
         getLogPath();
     }
 
-    return (log_path_checker_->validatePath(logpath, enforce_path));
+    return (log_path_checker_->validatePath(logpath));
 }
 
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,

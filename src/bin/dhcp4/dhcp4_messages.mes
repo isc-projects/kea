@@ -1182,3 +1182,11 @@ expected: the erroneous response is dropped, the request query is displayed.
 An DHCPOFFER for the 0.0.0.0 address was generated for a client requesting
 the v6-only-preferred (108) option but the option is not in the response as
 expected: the erroneous response is dropped, the discover query is displayed.
+
+% DHCP4_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
+This warning is emitted when internal security checks normally
+performed by kea-dhcp4 have been disabled via command line opion '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to security vulnerabilities and should only be used
+after careful consideration.

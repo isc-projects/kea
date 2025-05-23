@@ -447,3 +447,11 @@ server.
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
+
+% DHCP_DDNS_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
+This warning is emitted when internal security checks normally
+performed by kea-dhcp-ddns have been disabled via command line opion '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to ecurity vulnerabilities and should only be used
+after consideration.

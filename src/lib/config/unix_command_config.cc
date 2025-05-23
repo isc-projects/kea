@@ -111,14 +111,13 @@ UnixCommandConfig::getSocketPath(bool reset /* = false */,
 }
 
 std::string
-UnixCommandConfig::validatePath(const std::string socket_path,
-                                bool enforce /* = true */) {
+UnixCommandConfig::validatePath(const std::string socket_path) {
     if (!socket_path_checker_) {
         getSocketPath();
     }
 
-    auto valid_path = socket_path_checker_->validatePath(socket_path, enforce);
-    if (enforce && !(socket_path_checker_->pathHasPermissions(socket_path_perms_))) {
+    auto valid_path = socket_path_checker_->validatePath(socket_path);
+    if (!socket_path_checker_->pathHasPermissions(socket_path_perms_)) {
         isc_throw (DhcpConfigError,
                    "socket path:" << socket_path_checker_->getPath()
                    << " does not exist or does not have permssions = "

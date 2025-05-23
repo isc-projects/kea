@@ -27,6 +27,7 @@ namespace isc {
 namespace util {
 namespace file {
 
+
 string
 getContent(string const& file_name) {
     if (!exists(file_name)) {
@@ -241,7 +242,8 @@ string TemporaryDirectory::dirName() {
 
 PathChecker::PathChecker(const std::string default_path,
                              const std::string env_name /* = "" */)
-    : default_path_(default_path), env_name_(env_name) {
+    : default_path_(default_path), env_name_(env_name),
+      default_overridden_(false) {
     getPath(true);
 }
 
@@ -263,6 +265,8 @@ PathChecker::getPath(bool reset /* = false */,
         while (!path_.empty() && path_.back() == '/') {
             path_.pop_back();
         }
+
+        default_overridden_ = (path_ != default_path_);
     }
 
     return (path_);
@@ -270,7 +274,7 @@ PathChecker::getPath(bool reset /* = false */,
 
 std::string
 PathChecker::validatePath(const std::string input_path_str,
-                          bool enforce_path /* = true */) const {
+                          bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
     Path input_path(trim(input_path_str));
     auto filename = input_path.filename();
     if (filename.empty()) {
@@ -283,7 +287,6 @@ PathChecker::validatePath(const std::string input_path_str,
             // Security set to lax, let it fly.
             return (input_path_str);
         }
-
 
         // We only allow absolute path equal to default. Catch an invalid path.
         if (parent_path != path_) {
@@ -299,7 +302,7 @@ PathChecker::validatePath(const std::string input_path_str,
 
 std::string
 PathChecker::validateDirectory(const std::string input_path_str,
-                               bool enforce_path /* = true */) const {
+                               bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
     std::string input_copy = trim(input_path_str);
     if (!enforce_path) {
         return(input_copy);
@@ -323,9 +326,25 @@ PathChecker::validateDirectory(const std::string input_path_str,
 }
 
 bool
-PathChecker::pathHasPermissions(mode_t permissions) {
-    return(hasPermissions(path_, permissions));
+PathChecker::pathHasPermissions(mode_t permissions, bool enforce_perms
+                                /*  = PathChecker::shouldEnforceSecurity() */) const {
+    return((!enforce_perms) || hasPermissions(path_, permissions));
 }
+
+bool
+PathChecker::isDefaultOverridden() {
+    return (default_overridden_);
+}
+
+bool PathChecker::shouldEnforceSecurity() {
+    return (enforce_security_);
+}
+
+void PathChecker::enableEnforcement(bool enable) {
+    enforce_security_ = enable;
+}
+
+bool PathChecker::enforce_security_ = true;
 
 }  // namespace file
 }  // namespace util

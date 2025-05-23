@@ -285,6 +285,13 @@ Starting and Stopping the Control Agent
     # from sources using libcfgrpt.a
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
+-  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
+   The server will emit a warning at startup that sercurity restrctions
+   have been disabled. Do not use this mode of operation without careful
+   consideration and takng any necessary precautions. Falure to do so can
+   expose deployments to security vulnerabilities. For more information
+   please read section :ref:`securing-a-kea-deployment`.
+
 The CA is started by running its binary and specifying the configuration
 file it should use. For example:
 

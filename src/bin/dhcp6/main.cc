@@ -27,6 +27,7 @@
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::process;
+using namespace isc::util::file;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv6 server
@@ -53,7 +54,7 @@ usage() {
          << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
+         << " -[v|V|W|X] [-d] [-{c|t|T} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
@@ -66,6 +67,7 @@ usage() {
          << "(useful for testing only)" << endl;
     cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
+    cerr << "  -X: disables security restrictions" << endl;
     exit(EXIT_FAILURE);
 }
 }  // namespace
@@ -89,7 +91,7 @@ main(int argc, char* argv[]) {
     // This is the DHCPv6 server
     CfgMgr::instance().setFamily(AF_INET6);
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:X")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -150,6 +152,10 @@ main(int argc, char* argv[]) {
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
+            break;
+
+        case 'X': // relax security checks
+            PathChecker::enableEnforcement(false);
             break;
 
         default:
@@ -238,6 +244,10 @@ main(int argc, char* argv[]) {
 
         if (string(PACKAGE_VERSION_TYPE) == "development") {
             LOG_WARN(dhcp6_logger, DHCP6_DEVELOPMENT_VERSION);
+        }
+
+        if (!PathChecker::shouldEnforceSecurity()) {
+            LOG_WARN(dhcp6_logger, DHCP6_SECURITY_CHECKS_DISABLED);
         }
 
         // Create the server instance.

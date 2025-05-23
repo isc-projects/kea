@@ -130,14 +130,6 @@ directly. It accepts the following command-line switches:
    flag is convenient for temporarily switching the server into maximum
    verbosity, e.g. when debugging.
 
--  ``-v`` - displays the Kea version and exits.
-
--  ``-V`` - displays the extended Kea version and exits.
-
--  ``-W`` - displays the Kea configuration report and exits. The report
-   is a copy of the ``config.report`` file produced by ``meson setup``;
-   it is embedded in the executable binary.
-
 -  ``-t file`` - specifies the configuration file to be tested.
    :iscman:`kea-dhcp-ddns` attempts to load it and conducts sanity checks.
    Certain checks are possible only while running the actual
@@ -145,6 +137,14 @@ directly. It accepts the following command-line switches:
    configuration looks okay, 1 = error encountered). Kea prints out log
    messages to standard output and errors to standard error when testing
    the configuration.
+
+-  ``-v`` - displays the Kea version and exits.
+
+-  ``-V`` - displays the extended Kea version and exits.
+
+-  ``-W`` - displays the Kea configuration report and exits. The report
+   is a copy of the ``config.report`` file produced by ``meson setup``;
+   it is embedded in the executable binary.
 
    The contents of the ``config.report`` file may also be accessed by examining
    certain libraries in the installation tree or in the source tree.
@@ -162,6 +162,13 @@ directly. It accepts the following command-line switches:
 
     # from sources using libcfgrpt.a
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
+
+-  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
+   The server will emit a warning at startup that sercurity restrctions
+   have been disabled. Do not use this mode of operation without careful
+   consideration and takng any necessary precautions. Falure to do so can
+   expose deployments to security vulnerabilities. For more information
+   please read section :ref:`securing-a-kea-deployment`.
 
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.

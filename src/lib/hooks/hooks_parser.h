@@ -62,12 +62,9 @@ public:
     /// @brief Validates a library path against the supported path for hooks libraries.
     ///
     /// @param libpath library path to validate.
-    /// @param enforce_path enables validation against the supported path.
-    /// If false verifies only that the path contains a file name.
     ///
     /// @return validated path
-    static std::string validatePath(const std::string libpath,
-                                    bool enforce_path = true);
+    static std::string validatePath(const std::string libpath);
 
     /// @brief Fetches the supported Hooks path.
     ///

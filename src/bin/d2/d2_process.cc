@@ -19,12 +19,14 @@
 #include <d2srv/d2_tsig_key.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
+#include <util/filesystem.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace isc::util::file;
 
 namespace {
 
@@ -93,6 +95,11 @@ D2Process::init() {
 void
 D2Process::run() {
     LOG_INFO(d2_logger, DHCP_DDNS_STARTED).arg(VERSION);
+
+    if (!PathChecker::shouldEnforceSecurity()) {
+        LOG_WARN(d2_logger, DHCP_DDNS_SECURITY_CHECKS_DISABLED);
+    }
+
     D2ControllerPtr controller =
         boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
     try {

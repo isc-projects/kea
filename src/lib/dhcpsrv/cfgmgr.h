@@ -95,12 +95,9 @@ public:
     /// @brief Validates a file path against the supported directory for DHDP data.
     ///
     /// @param data_path data path to validate.
-    /// @param enforce_path enables validation against the supported path.
-    /// If false verifies only that the path contains a file name.
     ///
     /// @return validated path
-    std::string validatePath(const std::string data_path,
-                             bool enforce_path = true) const;
+    std::string validatePath(const std::string data_path) const;
 
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///

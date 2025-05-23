@@ -10,6 +10,7 @@
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
 #include <hooks/server_hooks.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 
 #include <hooks/tests/common_test_class.h>
@@ -30,6 +31,7 @@
 using namespace isc;
 using namespace isc::hooks;
 using namespace isc::data;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -1237,6 +1239,7 @@ TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
     }
     };
 
+    PathChecker::enableEnforcement(false);
     for (auto scenario : scenarios) {
         std::ostringstream oss;
         oss << " Scenario at line: " << scenario.line_;
@@ -1244,11 +1247,11 @@ TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
         std::string validated_path;
         if (scenario.exp_error_.empty()) {
             ASSERT_NO_THROW_LOG(validated_path =
-                                HooksLibrariesParser::validatePath(scenario.lib_path_, false));
+                                HooksLibrariesParser::validatePath(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
             ASSERT_THROW_MSG(validated_path =
-                             HooksLibrariesParser::validatePath(scenario.lib_path_, false),
+                             HooksLibrariesParser::validatePath(scenario.lib_path_),
                              BadValue, scenario.exp_error_);
         }
     }
