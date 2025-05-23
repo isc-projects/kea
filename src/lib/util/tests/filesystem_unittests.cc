@@ -309,6 +309,13 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
 
     std::list<Scenario> scenarios = {
     {
+        // Invalid root parent path.
+        __LINE__,
+        "/mylib.so",
+        "",
+        string("invalid path specified: '/', supported path is '" + def_path + "'")
+    },
+    {
         // Invalid parent path.
         __LINE__,
         "/var/lib/bs/mylib.so",
@@ -383,6 +390,13 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
     };
 
     std::list<Scenario> scenarios = {
+    {
+        // Invalid root parent path.
+        __LINE__,
+        "/mylib.so",
+        "/mylib.so",
+        "",
+    },
     {
         // Invalid parent path but shouldn't care.
         __LINE__,

@@ -282,16 +282,18 @@ PathChecker::validatePath(const std::string input_path_str,
     }
 
     auto parent_path = input_path.parentPath();
-    if (!parent_path.empty()) {
+    auto parent_dir = input_path.parentDirectory();
+    if (!parent_dir.empty()) {
         if (!enforce_path) {
             // Security set to lax, let it fly.
             return (input_path_str);
         }
 
         // We only allow absolute path equal to default. Catch an invalid path.
-        if (parent_path != path_) {
+        if ((parent_path != path_) || (parent_dir == "/")) {
             isc_throw(BadValue, "invalid path specified: '"
-                      << parent_path << "', supported path is '"
+                      << (parent_path.empty() ? "/" : parent_path)
+                      << "', supported path is '"
                       << path_ << "'");
         }
     }

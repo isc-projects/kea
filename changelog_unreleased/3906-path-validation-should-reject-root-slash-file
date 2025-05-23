@@ -1,0 +1,7 @@
+[bug]		tmark
+	Fixed an issue in path validation where
+	the opening slash in a root-file path such
+	as "/myfile.log" is discarded causing the server
+	to prepend the supported path to the file name
+	rather than reject the entry.
+	(Gitlab #3906)
