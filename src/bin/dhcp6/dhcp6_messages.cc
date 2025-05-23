@@ -160,6 +160,7 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID = "DHCP6_RELEA
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL = "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL";
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED = "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED";
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA = "DHCP6_RESPONSE_DATA";
+extern const isc::log::MessageID DHCP6_SECURITY_CHECKS_DISABLED = "DHCP6_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID DHCP6_SERVER_FAILED = "DHCP6_SERVER_FAILED";
 extern const isc::log::MessageID DHCP6_SHUTDOWN = "DHCP6_SHUTDOWN";
 extern const isc::log::MessageID DHCP6_SHUTDOWN_REQUEST = "DHCP6_SHUTDOWN_REQUEST";
@@ -335,6 +336,7 @@ const char* values[] = {
     "DHCP6_REQUIRED_OPTIONS_CHECK_FAIL", "%1: %2 message received from %3 failed the following check: %4",
     "DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED", "Multi-threading is enabled and host reservations lookup is always performed first.",
     "DHCP6_RESPONSE_DATA", "%1: responding with packet %2 (type %3), packet details: %4",
+    "DHCP6_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP6_SERVER_FAILED", "server failed: %1",
     "DHCP6_SHUTDOWN", "server shutdown",
     "DHCP6_SHUTDOWN_REQUEST", "shutdown of server requested",

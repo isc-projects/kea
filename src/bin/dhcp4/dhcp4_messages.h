@@ -158,6 +158,7 @@ extern const isc::log::MessageID DHCP4_RESPONSE_DATA;
 extern const isc::log::MessageID DHCP4_RESPONSE_FQDN_DATA;
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_DATA;
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_GENERATE;
+extern const isc::log::MessageID DHCP4_SECURITY_CHECKS_DISABLED;
 extern const isc::log::MessageID DHCP4_SERVER_FAILED;
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE;
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE_ADD_FAILED;

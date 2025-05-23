@@ -81,6 +81,7 @@ extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT;
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_TIMEOUT;
 extern const isc::log::MessageID DHCP_DDNS_REV_REQUEST_IGNORED;
 extern const isc::log::MessageID DHCP_DDNS_RUN_EXIT;
+extern const isc::log::MessageID DHCP_DDNS_SECURITY_CHECKS_DISABLED;
 extern const isc::log::MessageID DHCP_DDNS_SHUTDOWN_COMMAND;
 extern const isc::log::MessageID DHCP_DDNS_STARTED;
 extern const isc::log::MessageID DHCP_DDNS_STARTING_TRANSACTION;

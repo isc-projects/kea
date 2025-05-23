@@ -80,6 +80,7 @@ extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT = "DHCP_
 extern const isc::log::MessageID DHCP_DDNS_REVERSE_REPLACE_TIMEOUT = "DHCP_DDNS_REVERSE_REPLACE_TIMEOUT";
 extern const isc::log::MessageID DHCP_DDNS_REV_REQUEST_IGNORED = "DHCP_DDNS_REV_REQUEST_IGNORED";
 extern const isc::log::MessageID DHCP_DDNS_RUN_EXIT = "DHCP_DDNS_RUN_EXIT";
+extern const isc::log::MessageID DHCP_DDNS_SECURITY_CHECKS_DISABLED = "DHCP_DDNS_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID DHCP_DDNS_SHUTDOWN_COMMAND = "DHCP_DDNS_SHUTDOWN_COMMAND";
 extern const isc::log::MessageID DHCP_DDNS_STARTED = "DHCP_DDNS_STARTED";
 extern const isc::log::MessageID DHCP_DDNS_STARTING_TRANSACTION = "DHCP_DDNS_STARTING_TRANSACTION";
@@ -167,6 +168,7 @@ const char* values[] = {
     "DHCP_DDNS_REVERSE_REPLACE_TIMEOUT", "DHCP_DDNS Request ID %1: timed out waiting for a response to reverse mapping replacement for FQDN %2 to DNS server %3",
     "DHCP_DDNS_REV_REQUEST_IGNORED", "Request ID %1: Reverse updates are disabled, the reverse portion of request will be ignored: %2",
     "DHCP_DDNS_RUN_EXIT", "application is exiting the event loop",
+    "DHCP_DDNS_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP_DDNS_SHUTDOWN_COMMAND", "application received shutdown command with args: %1",
     "DHCP_DDNS_STARTED", "Kea DHCP-DDNS server version %1 started",
     "DHCP_DDNS_STARTING_TRANSACTION", "Request ID %1:",

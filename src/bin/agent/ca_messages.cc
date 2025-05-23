@@ -22,6 +22,7 @@ extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED = "CTRL_AG
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED = "CTRL_AGENT_HTTP_SERVICE_STARTED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_UPDATED = "CTRL_AGENT_HTTP_SERVICE_UPDATED";
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT = "CTRL_AGENT_RUN_EXIT";
+extern const isc::log::MessageID CTRL_AGENT_SECURITY_CHECKS_DISABLED = "CTRL_AGENT_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID CTRL_AGENT_STARTED = "CTRL_AGENT_STARTED";
 
 } // namespace agent
@@ -45,6 +46,7 @@ const char* values[] = {
     "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTP_SERVICE_UPDATED", "reused HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_RUN_EXIT", "application is exiting the event loop",
+    "CTRL_AGENT_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "CTRL_AGENT_STARTED", "Kea Control Agent version %1 started",
     NULL
 };
