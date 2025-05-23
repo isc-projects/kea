@@ -288,7 +288,7 @@ Starting and Stopping the Control Agent
 -  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
    The server will emit a warning at startup that sercurity restrctions
    have been disabled. Do not use this mode of operation without careful
-   consideration and takng any necessary precautions. Falure to do so can
+   consideration and taking any necessary precautions. Failure to do so can
    expose deployments to security vulnerabilities. For more information
    please read section :ref:`securing-a-kea-deployment`.
 
