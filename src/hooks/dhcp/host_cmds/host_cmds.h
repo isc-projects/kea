@@ -155,7 +155,7 @@ public:
     ///         "subnet-id": 1,
     ///         "identifier-type": "hw-address",
     ///         "identifier": "00:01:02:03:04:05",
-    ///         "operation-target": "all-sources"
+    ///         "operation-target": "all"
     ///     }
     /// }";
     /// @param handle Callout context - which is expected to contain the

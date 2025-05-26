@@ -150,7 +150,7 @@ Kea 2.7.7 (development) released on March 26, 2025
 	Fixed a bug which was causing the allocation engine to reject the
 	lease if a data race caused by a different server updating the
 	shared database entries was detected. The entire packet is now
-	dropped in this particular case. This applies to both kea-dhp4
+	dropped in this particular case. This applies to both kea-dhcp4
 	and kea-dhcp6 servers.
 	(Gitlab #3648)
 
@@ -6223,7 +6223,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	(Trac #5551, git 59ef33ee17672c55cee4ec86ff59737b361a3c21)
 
 1374.	[func]		tmark
-	kea-dhp4 and kea-dhcp6 can now be configured to attempt to
+	kea-dhcp4 and kea-dhcp6 can now be configured to attempt to
 	reconnect to Postgresql backends if connectivity is lost.
 	(Trac #5477, git 8e62a058382b2245d418cfbf829776934c638e5e)
 

@@ -337,7 +337,7 @@ reservation from both the JSON configuration and the hosts database.
        "arguments": {
            "subnet-id": 1,
            "ip-address": "192.0.2.202",
-           "operation-target": "alternate"
+           "operation-target": "database"
        }
    }
 
@@ -454,7 +454,7 @@ reservation from both the JSON configuration and the hosts database.
        "command": "reservation-get-all",
        "arguments": {
            "subnet-id": 1,
-           "operation-target": "alternate"
+           "operation-target": "database"
        }
    }
 
@@ -796,7 +796,7 @@ reservation from both the JSON configuration and the hosts database.
        "arguments": {
            "ip-address": "192.0.200.181",
            "subnet-id": 1,
-           "operation-target": "alternate"
+           "operation-target": "database"
        },
        "service": [
            "dhcp4"
@@ -889,7 +889,7 @@ reservation from both the JSON configuration and the hosts database.
        "arguments": {
            "hostname": "foobar.example.org",
            "subnet-id": 1,
-           "operation-target": "alternate"
+           "operation-target": "database"
        }
    }
 
@@ -977,7 +977,7 @@ reservation from both the JSON configuration and the hosts database.
        "arguments": {
            "identifier-type": "hw-address",
            "identifier": "01:02:03:04:05:06",
-           "operation-target": "alternate"
+           "operation-target": "database"
        }
    }
 
@@ -1070,7 +1070,7 @@ the reservation from the hosts database only.
            "subnet-id": 4,
            "identifier-type": "hw-address",
            "identifier": "01:02:03:04:05:06",
-           "operation-target": "primary"
+           "operation-target": "memory"
        }
    }
 
