@@ -1118,6 +1118,22 @@ such as the system administrator adding reservations for an address
 that is currently in use by another client.  The server will fully
 recover from this situation, but clients will change their addresses.
 
+ALLOC_ENGINE_V6_REVOKED_SHARED_PREFIX_LEASE
+===========================================
+
+.. code-block:: text
+
+    %1: prefix %2/%3 was revoked from client %4 as it is reserved for %5 other clients
+
+This informational message is an indication that the specified IPv6
+prefix was used by client A but it is now reserved for multiple other
+clients. Client A has been told to stop using it so that it can be
+leased to one of the clients having the reservation for it. This is a
+normal occurrence during conflict resolution, which can occur in cases
+such as the system administrator adding reservations for an address
+that is currently in use by another client.  The server will fully
+recover from this situation, but clients will change their prefixes.
+
 *******
 ASIODNS
 *******
@@ -1202,6 +1218,17 @@ ASIODNS_UNKNOWN_ORIGIN
 An internal consistency check on the origin of a message from the
 asynchronous I/O module failed. This may indicate an internal error;
 please submit a bug report.
+
+ASIODNS_UNKNOWN_RESULT
+======================
+
+.. code-block:: text
+
+    unknown result (%1) when IOFetch::stop() was executed for I/O to %2(%3)
+
+An internal error indicating that the termination method of the resolver's
+upstream fetch class was called with an unknown result code (which is
+given in the message).  Please submit a bug report.
 
 ***
 BAD
@@ -1292,6 +1319,15 @@ can't be parsed by the buffer4_receive callout. The query will be
 dropped by the server. The first three arguments specify source IP address,
 destination IP address and the interface. The last argument provides a
 reason for failure.
+
+BOOTP_UNLOAD
+============
+
+.. code-block:: text
+
+    Bootp hooks library has been unloaded
+
+This info message indicates that the Bootp hooks library has been unloaded.
 
 ****
 BULK
@@ -2333,6 +2369,17 @@ This error message is issued to indicate that the remote-subnet6-list
 command handler failed while processing the command. The argument
 provides the reason for failure.
 
+CB_CMDS_SUBNET6_SET_HANDLER_FAILED
+==================================
+
+.. code-block:: text
+
+    remote-subnet6-set command failed: %1
+
+This error message is issued to indicate that the remote-subnet6-set command
+handler failed while processing the command. The argument provides the reason
+for failure.
+
 *****
 CLASS
 *****
@@ -2545,6 +2592,16 @@ CLASS_CMDS_INIT_FAILED
 This error message indicates an error during loading the Class Commands
 hooks library. The details of the error are provided as argument of
 the log message.
+
+CLASS_CMDS_INIT_OK
+==================
+
+.. code-block:: text
+
+    loading Class Commands hooks library successful
+
+This info message indicates that the Class Commands hooks library has been
+loaded successfully. Enjoy!
 
 *******
 COMMAND
@@ -3038,6 +3095,17 @@ Logged at debug log level 0.
 This is a debug message issued when the Control Agent exits its
 event loop.
 
+CTRL_AGENT_STARTED
+==================
+
+.. code-block:: text
+
+    Kea Control Agent version %1 started
+
+This informational message indicates that the Control Agent has
+processed all configuration information and is ready to begin processing.
+The version is also printed.
+
 ********
 DATABASE
 ********
@@ -3243,6 +3311,18 @@ This error message is printed when conversion to JSON of the internal state is r
 but the connection string contains the integer parameter with a wrong value. It is a programming
 error. The software will continue operation, but the returned JSON data will be syntactically
 valid, but incomplete. The culprit parameter will not be converted.
+
+DATABASE_TO_JSON_UNKNOWN_TYPE_ERROR
+===================================
+
+.. code-block:: text
+
+    Internal logic error: unknown element found in database connection parameters: %1=%2
+
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains unrecognized parameter. It is a programming error.
+The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The unknown parameter will not be converted.
 
 ****
 DCTL
@@ -3532,6 +3612,18 @@ a programmatic error in the server code. If it is not empty it could be
 a programmatic error in one of the hooks libraries which could lead to
 a crash during finalization.
 
+DCTL_UNSUPPORTED_SIGNAL
+=======================
+
+.. code-block:: text
+
+    ignoring reception of unsupported signal: %1
+
+This is a debug message indicating that the application received an
+unsupported signal.  This is a programming error indicating that the
+application has registered to receive the signal but no associated
+processing logic has been added.
+
 ****
 DDNS
 ****
@@ -3675,6 +3767,16 @@ DDNS_TUNING_SUBNET_EXPR_CACHED
 Logged at debug log level 40.
 The expression for this subnet has previously been used and cached. Using the
 cached version.
+
+DDNS_TUNING_UNLOAD
+==================
+
+.. code-block:: text
+
+    DDNS Tuning hooks library has been unloaded
+
+This info message indicates that the DDNS Tuning hooks library has been
+unloaded.
 
 *****
 DHCP4
@@ -5965,6 +6067,17 @@ An DHCPACK for the 0.0.0.0 address was generated for a client requesting
 the v6-only-preferred (108) option but the option is not in the response as
 expected: the erroneous response is dropped, the request query is displayed.
 
+DHCP4_V6_ONLY_PREFERRED_MISSING_IN_OFFER
+========================================
+
+.. code-block:: text
+
+    v6-only-preferred option missing in 0.0.0.0 offer to query: %1
+
+An DHCPOFFER for the 0.0.0.0 address was generated for a client requesting
+the v6-only-preferred (108) option but the option is not in the response as
+expected: the erroneous response is dropped, the discover query is displayed.
+
 *****
 DHCP6
 *****
@@ -8209,6 +8322,23 @@ That could either mean missing functionality or invalid or broken relay or clien
 The list of formally defined message types is available here:
 http://www.iana.org/assignments/dhcpv6-parameters.
 
+DHCP6_USING_SERVERID
+====================
+
+.. code-block:: text
+
+    server is using server-id %1 and stores in the file %2
+
+This info message is logged when the server reads its server-id from a
+file or generates it. This message is a notification to the administrator
+what server-id will be used and where it is persisted. Typically, there is
+no need to modify the server id. However, it is possible to do it in the
+Kea configuration file. It is important to understand the implications of
+such modification. The clients will remember previous server-id, and will
+use it to extend their leases. As a result, they will have to go through
+a rebinding phase to re-acquire their leases and associate them with a
+new server id.
+
 *******
 DHCPSRV
 *******
@@ -10214,6 +10344,16 @@ A debug message issued when one of the registered interval timers
 is unregistered from the Timer Manager. The name of the timer is
 included in the message.
 
+DHCPSRV_UNKNOWN_DB
+==================
+
+.. code-block:: text
+
+    unknown database type: %1
+
+The database access string specified a database type (given in the
+message) that is unknown to the software. This is a configuration error.
+
 ****
 DHCP
 ****
@@ -11272,6 +11412,18 @@ caught in the application's request receive completion handler.  This is a
 programmatic error that needs to be reported.  Dependent upon the nature of
 the error the application may or may not continue operating normally.
 
+DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR
+=========================================
+
+.. code-block:: text
+
+    unexpected exception thrown from the DHCP-DDNS client send completion handler: %1
+
+This is an error message that indicates that an exception was thrown but not
+caught in the application's send completion handler.  This is a programmatic
+error that needs to be reported.  Dependent upon the nature of the error the
+client may or may not continue operating normally.
+
 DHCP_DDNS_UPDATE_REQUEST_SENT
 =============================
 
@@ -11282,6 +11434,17 @@ DHCP_DDNS_UPDATE_REQUEST_SENT
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
+
+DHCP_DDNS_UPDATE_RESPONSE_RECEIVED
+==================================
+
+.. code-block:: text
+
+    Request ID %1: to server: %2 status: %3
+
+Logged at debug log level 50.
+This is a debug message issued when DHCP_DDNS receives sends a DNS update
+response from a DNS server.
 
 ****
 EVAL
@@ -11889,6 +12052,17 @@ Logged at debug log level 55.
 This debug message indicates that the expression has been evaluated and vendor
 option was found.
 
+EVAL_DEBUG_VENDOR_NO_OPTION
+===========================
+
+.. code-block:: text
+
+    %1: Option with code %2 missing, pushing result '%3'
+
+Logged at debug log level 55.
+This debug message indicates that the expression has been evaluated
+and vendor option was not found.
+
 ****
 FLEX
 ****
@@ -12111,6 +12285,20 @@ identifier based client identifier instead. The server will use this new client
 identifier for processing the packet. The original client identifier  will be
 restored in the pkt4_send callout and sent back to the client.
 
+FLEX_ID_USED_AS_DUID
+====================
+
+.. code-block:: text
+
+    using flexible identifier "%1" as DUID
+
+Logged at debug log level 40.
+This debug message is issued to indicate that the library is removing client
+supplied DUID from the received message and is inserting flexible identifier
+based DUID instead. The server will use this new DUID for processing the
+packet. The original DUID will be restored in the pkt6_send callout and
+sent back to the client.
+
 FLEX_OPTION_LOAD_ERROR
 ======================
 
@@ -12240,6 +12428,16 @@ This debug message is printed when a sub-option of a vendor option is
 processed but vendor ids do not match. The code of the vendor option
 and the two vendor ids are provided.
 
+FLEX_OPTION_UNLOAD
+==================
+
+.. code-block:: text
+
+    Flex Option hooks library has been unloaded
+
+This info message indicates that the Flex Option hooks library has been
+unloaded.
+
 ****
 FUZZ
 ****
@@ -12323,6 +12521,18 @@ A warning message that is output if the sendto() call (used to send data
 from the fuzzing thread to the main Kea processing) did not send as much
 data as that read from AFL.  This may indicate a problem in the underlying
 communications between the fuzzing thread and the main Kea processing.
+
+FUZZ_SOCKET_CREATE_FAIL
+=======================
+
+.. code-block:: text
+
+    failed to crease socket for use by fuzzing thread: %1
+
+An error message output when the fuzzing code has failed to create a socket
+through which is will copy data received on stdin from the AFL fuzzer to
+the port on which Kea is listening.  The program will most likely hang if
+this occurs.
 
 ***
 GSS
@@ -14046,6 +14256,18 @@ the restart of one of the servers was unintentional (e.g., power outage). If the
 restarted server remains in the waiting state it cannot serve DHCP clients. Moving
 to the terminated state at least allows for responding to the DHCP traffic.
 
+HA_TERMINATED_RESTART_PARTNER
+=============================
+
+.. code-block:: text
+
+    %1: waiting for the partner in the TERMINATED state to be restarted
+
+This informational message is issued when the server has been restarted after
+correcting the clock skew. The partner server is still in the terminated
+state. The partner must be restarted before the server can synchronize the
+database and start normal operation.
+
 *****
 HOOKS
 *****
@@ -14457,6 +14679,17 @@ HOOKS_UNLOAD_SUCCESS
 Logged at debug log level 40.
 This is a debug message issued when an "unload" function has been found
 in a hook library during the unload process, called, and returned success.
+
+HOOKS_VERSION_EXCEPTION
+=======================
+
+.. code-block:: text
+
+    'version' function in hook library %1 threw an exception
+
+This error message is issued if the version() function in the specified
+hooks library was called and generated an exception.  The library is
+considered unusable and will not be loaded.
 
 *****
 HOSTS
@@ -15295,6 +15528,20 @@ Logged at debug log level 40.
 This debug message is issued when the Host Manager is starting to search
 for hosts in alternate host data sources by subnet ID and IPv6 address.
 
+HOSTS_MGR_NON_UNIQUE_IP_UNSUPPORTED
+===================================
+
+.. code-block:: text
+
+    host data source %1 does not support the mode in which IP reservations are non-unique
+
+This warning message is issued when an administrator attempted to configure the
+server to allow multiple host reservations for the same IP address or prefix.
+Some host database backends may not support this mode of operation. In this
+case the administrator should stop using these backends or fall back to the
+default setting which requires that IP addresses are unique within a subnet.
+This setting is guaranteed to work for MySQL and Postgres host backends.
+
 ****
 HOST
 ****
@@ -15652,6 +15899,16 @@ Logged at debug log level 45.
 This debug message includes the details of a host cache entry found using a
 subnet id and specific host identifier.
 
+HOST_CACHE_INIT_OK
+==================
+
+.. code-block:: text
+
+    loading Host Cache hooks library successful
+
+This info message indicates that the Host Cache hooks library has been
+loaded successfully. Enjoy!
+
 HOST_CMDS_DEINIT_OK
 ===================
 
@@ -15926,6 +16183,15 @@ HOST_CMDS_RESERV_UPDATE_FAILED
 The reservation-update command has failed. Both the reason as well as the
 parameters passed are logged.
 
+HOST_CMDS_RESERV_UPDATE_SUCCESS
+===============================
+
+.. code-block:: text
+
+    reservation-update command success (parameters: %1)
+
+The reservation-update command has been successful. Parameters passed are logged.
+
 *****
 HTTPS
 *****
@@ -16058,6 +16324,16 @@ This information message is issued when the server receives a request with
 authentication header carrying not recognized credential: the user
 provided incorrect user id and/or password.
 
+HTTP_CLIENT_REQUEST_NO_AUTH_HEADER
+==================================
+
+.. code-block:: text
+
+    received HTTP request without required authentication header
+
+This information message is issued when the server receives a request without
+a required authentication header.
+
 HTTP_CLIENT_REQUEST_RECEIVED
 ============================
 
@@ -16176,6 +16452,16 @@ HTTP_COMMAND_MGR_SERVICE_STARTED
 This informational message indicates that the server has started
 HTTP/HTTPS service on the specified address and port for receiving
 control commands.
+
+HTTP_COMMAND_MGR_SERVICE_STOPPING
+=================================
+
+.. code-block:: text
+
+    Server is stopping %1 service %2
+
+This informational message indicates that the server has stopped
+HTTP/HTTPS service. When known the address and port are displayed.
 
 HTTP_CONNECTION_CLOSE_CALLBACK_FAILED
 =====================================
@@ -16376,6 +16662,21 @@ This debug message is issued when the server is starting to send a HTTP
 response to a remote endpoint. The first argument holds basic information
 about the response (HTTP version number and status code). The second
 argument specifies an address of the remote endpoint.
+
+HTTP_SERVER_RESPONSE_SEND_DETAILS
+=================================
+
+.. code-block:: text
+
+    detailed information about response sent to %1:\n%2
+
+Logged at debug log level 45.
+This debug message is issued right before the server sends a HTTP response
+to the client. It includes detailed information about the response. The
+first argument specifies an address of the remote endpoint to which the
+response is being sent. The second argument provides a response in the
+textual form. The response is truncated by the logger if it is too large
+to be printed.
 
 ***
 KEY
@@ -16826,6 +17127,16 @@ LEASE_CMDS_WIPE6_DEPRECATED
 
 The lease6-wipe command is deprecated and it will be removed in the future.
 
+LEASE_CMDS_WIPE6_FAILED
+=======================
+
+.. code-block:: text
+
+    lease6-wipe command failed (parameters: %1, reason: %2)
+
+The lease6-wipe command has failed. Both the reason as well as the
+parameters passed are logged.
+
 LEASE_QUERY_LOAD_FAILED
 =======================
 
@@ -16845,6 +17156,16 @@ LEASE_QUERY_LOAD_OK
 
 This info message indicates that the Lease Query hooks library has
 been loaded successfully.
+
+LEASE_QUERY_UNLOAD_OK
+=====================
+
+.. code-block:: text
+
+    Lease Query hooks library unloaded successfully.
+
+This info message indicates that the Lease Query hooks library has
+been unloaded successfully.
 
 *****
 LEGAL
@@ -17281,6 +17602,17 @@ This informational message is logged when a DHCP server (either V4 or
 V6) is about to open a legal syslog store. The parameters of
 the backend are logged.
 
+LEGAL_LOG_UNLOAD_ERROR
+======================
+
+.. code-block:: text
+
+    An error occurred unloading the library: %1
+
+This is an error message issued when an error occurs while unloading the
+Legal Log library.  This is unlikely to occur and normal operations of the
+library will likely resume when it is next loaded.
+
 ***
 LFC
 ***
@@ -17384,6 +17716,17 @@ LFC_TERMINATE
 
 This message is issued when the LFC process completes.  It does not
 indicate that the process was successful only that it has finished.
+
+LFC_WRITE_STATS
+===============
+
+.. code-block:: text
+
+    Leases: %1, attempts: %2, errors: %3.
+
+This message prints out the number of leases that were written, the
+number of attempts to write leases and the number of errors
+encountered while writing.
 
 ******
 LIMITS
@@ -17534,6 +17877,18 @@ Logged at debug log level 40.
 Debug message logged to indicate that the current packet has exceeded the limit configured under
 the assigned subnet ID, if any is configured
 
+LIMITS_PACKET_WITH_SUBNET_ID_RATE_LIMIT_HONORED
+===============================================
+
+.. code-block:: text
+
+    Packet under subnet with ID %1 and limit %2 is being honored.
+
+Logged at debug log level 55.
+Debug message logged to indicate that the current packet has not exceeded the limit configured
+under the assigned subnet ID. This message is also logged when no rate limit is configured for this
+subnet ID.
+
 *******
 LOGIMPL
 *******
@@ -17562,6 +17917,19 @@ A message from the interface to the underlying logger implementation
 reporting that an internally-created string used to set the debug level
 is not of the correct format (it should be of the form DEBUGn, where n
 is an integer, e.g. DEBUG22).  The appearance of this message indicates
+a programming error - please submit a bug report.
+
+LOGIMPL_BELOW_MIN_DEBUG
+=======================
+
+.. code-block:: text
+
+    debug level of %1 is too low and will be set to the minimum of %2
+
+A message from the interface to the underlying logger implementation reporting
+that the debug level (as set by an internally-created string DEBUGn, where n
+is an integer, e.g. DEBUG22) is below the minimum allowed value and has
+been increased to that value.  The appearance of this message may indicate
 a programming error - please submit a bug report.
 
 ***
@@ -17642,6 +18010,23 @@ LOG_INVALID_MESSAGE_ID
 An invalid message identification (ID) has been found during the read of
 a message file.  Message IDs should comprise only alphanumeric characters
 and the underscore, and should not start with a digit.
+
+*******
+LOGIMPL
+*******
+
+LOG_LOCK_TEST_MESSAGE
+=====================
+
+.. code-block:: text
+
+    this is a test message.
+
+This is a log message used in testing.
+
+***
+LOG
+***
 
 LOG_NAMESPACE_EXTRA_ARGS
 ========================
@@ -17793,6 +18178,16 @@ LOG_UNRECOGNIZED_DIRECTIVE
 Within a message file, a line starting with a dollar symbol was found
 (indicating the presence of a directive) but the first word on the line
 (shown in the message) was not recognized.
+
+LOG_WRITE_ERROR
+===============
+
+.. code-block:: text
+
+    error writing to %1: %2
+
+The specified error was encountered by the message compiler when writing
+to the named output file.
 
 **
 MT
@@ -19724,6 +20119,16 @@ MYSQL_CB_UNREGISTER_BACKEND_TYPE4
 Logged at debug log level 40.
 Debug message issued when triggered an action to unregister backend
 
+MYSQL_CB_UNREGISTER_BACKEND_TYPE6
+=================================
+
+.. code-block:: text
+
+    unregister backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to unregister backend
+
 MYSQL_DEINIT_OK
 ===============
 
@@ -19733,6 +20138,26 @@ MYSQL_DEINIT_OK
 
 This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
+
+*****
+LEGAL
+*****
+
+MYSQL_FB_DB
+===========
+
+.. code-block:: text
+
+    opening MySQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a MySQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+*****
+MYSQL
+*****
 
 MYSQL_HB_DB
 ===========
@@ -19808,6 +20233,17 @@ MYSQL_HB_NO_TLS
 
 This error message is issued when TLS for the connection was required but
 TLS is not used.
+
+MYSQL_HB_TLS_CIPHER
+===================
+
+.. code-block:: text
+
+    TLS cipher: %1
+
+Logged at debug log level 40.
+A debug message issued when a new MySQL connected is created with TLS.
+The TLS cipher name is logged.
 
 MYSQL_INIT_OK
 =============
@@ -20365,6 +20801,18 @@ Logged at debug log level 40.
 A debug message issued when the server failed to upgrade the extended info
 for a lease. The address of the lease and the error message are displayed.
 
+MYSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
+====================================
+
+.. code-block:: text
+
+    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv6 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
 *******
 NETCONF
 *******
@@ -20749,6 +21197,16 @@ explanation may be provided as a parameter. You may also take a look
 at earlier log messages.  The name of the server and the error are
 printed.
 
+NETCONF_VALIDATE_CONFIG_STARTED
+===============================
+
+.. code-block:: text
+
+    started validating configuration for %1 server
+
+This informational message indicates that kea-netconf is trying to validate the
+configuration with a Kea server.
+
 *******
 PERFMON
 *******
@@ -20924,6 +21382,16 @@ PERFMON_INIT_FAILED
 This error message indicates an error during loading the PerfMon
 hooks library. The details of the error are provided as argument of
 the log message.
+
+PERFMON_INIT_OK
+===============
+
+.. code-block:: text
+
+    loading PerfMon hooks library successful
+
+This info message indicates that the PerfMon hooks library has been
+loaded successfully. Enjoy!
 
 *****
 PGSQL
@@ -22818,6 +23286,16 @@ PGSQL_CB_UNREGISTER_BACKEND_TYPE4
 Logged at debug log level 40.
 Debug message issued when triggered an action to unregister backend
 
+PGSQL_CB_UNREGISTER_BACKEND_TYPE6
+=================================
+
+.. code-block:: text
+
+    unregister backend
+
+Logged at debug log level 40.
+Debug message issued when triggered an action to unregister backend
+
 PGSQL_DEINIT_OK
 ===============
 
@@ -22827,6 +23305,26 @@ PGSQL_DEINIT_OK
 
 This informational message indicates that the PostgreSQL Backend hooks
 library has been unloaded successfully.
+
+*****
+LEGAL
+*****
+
+PGSQL_FB_DB
+===========
+
+.. code-block:: text
+
+    opening PostgreSQL log database: %1
+
+This informational message is logged when a legal log hook library is
+about to open a PostgreSQL log database.  The parameters of the
+connection including database name and username needed to access it
+(but not the password if any) are logged.
+
+*****
+PGSQL
+*****
 
 PGSQL_HB_DB
 ===========
@@ -22902,6 +23400,18 @@ PGSQL_HB_NO_TLS_SUPPORT
 
 This error message is printed when TLS support was required in the Kea
 configuration: Kea was built with this feature disabled for PostgreSQL.
+The parameters of the connection are logged.
+
+PGSQL_HB_TLS_SUPPORT
+====================
+
+.. code-block:: text
+
+    Attempt to configure TLS: %1
+
+This informational message is printed when TLS support was required in
+the Kea configuration: The TLS support in PostgreSQL will be initialized but
+its configuration is fully managed outside the C API.
 The parameters of the connection are logged.
 
 PGSQL_INIT_OK
@@ -23450,6 +23960,18 @@ Logged at debug log level 40.
 A debug message issued when the server failed to upgrade the extended info
 for a lease. The address of the lease and the error message are displayed.
 
+PGSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
+====================================
+
+.. code-block:: text
+
+    upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
+
+Logged at debug log level 50.
+A debug message issued when the server upgrades IPv6 lease extended info.
+The page number and started address, and the count of already updated leases
+are displayed.
+
 ****
 PING
 ****
@@ -23913,6 +24435,16 @@ PING_CHECK_UNEXPECTED_WRITE_ERROR
 This error message occurs when initiating an asynchronous write on the ICMP
 socket failed in an unexpected fashion. The details of the error are provided
 as an argument of the log message.
+
+PING_CHECK_UNLOAD
+=================
+
+.. code-block:: text
+
+    Ping Check hooks library has been unloaded
+
+This info message indicates that the Ping Check hooks library has been
+unloaded.
 
 ******
 RADIUS
@@ -24795,6 +25327,16 @@ failed. The name of the file, the reason of the failure, the number
 of stored records before the failure and the expected number of records
 are displayed.
 
+RADIUS_THREAD_POOL_STARTED
+==========================
+
+.. code-block:: text
+
+    RADIUS thread pool started with %1 threads.
+
+This informational message is issued when the thread pool is starrted.
+The number of threads is displayed.
+
 ****
 RBAC
 ****
@@ -25104,6 +25646,16 @@ Logged at debug log level 40.
 The http_response callout has been called without request or response. The RBAC
 hooks library immediately returns. This is an error condition.
 
+RBAC_UNLOAD_OK
+==============
+
+.. code-block:: text
+
+    RBAC hooks library unloaded successfully.
+
+This info message indicates that the RBAC hooks library has been
+unloaded successfully.
+
 ***
 RUN
 ***
@@ -25126,6 +25678,15 @@ RUN_SCRIPT_LOAD_ERROR
 
 This error message indicates an error during loading the Run Script hooks
 library. The details of the error are provided as argument of the log message.
+
+RUN_SCRIPT_UNLOAD
+=================
+
+.. code-block:: text
+
+    Run Script hooks library has been unloaded
+
+This info message indicates that the RunScript hooks library has been unloaded.
 
 *****
 START
@@ -25298,6 +25859,24 @@ STAT_CMDS_LEASE6_GET_NO_SUBNETS
 The parameters submitted with stat-lease6-get were valid but excluded all
 known subnets.  The parameters supplied along with an explanation should
 be logged.
+
+STAT_CMDS_LEASE6_ORPHANED_STATS
+===============================
+
+.. code-block:: text
+
+    stat-lease6-get command omitted statistics for one or more non-existent subnets
+
+Logged at debug log level 40.
+During processing the stat-lease4-get found statistics for subnet IDs for
+non-existent subnets. These values were omitted from the command response
+returned to the user. This may occur when subnets have been removed from
+the configuration in a manner that did not also remove the statistics. While
+the existence of such statistics is not harmful, steps should be considered
+to remove them.  For memfile lease storage, the problem should disappear
+upon configuration reload or server restart. For database lease storage the
+issue is more complicated and as of Kea 2.0.0 we do not yet have a clean
+solution.
 
 ******
 SUBNET
@@ -25827,6 +26406,18 @@ contains no subnets of the specific type. This is not an error condition
 but it is unusual case for the DHCP service. The argument specifies a type
 of the subnets being listed, i.e. 'IPv4' or 'IPv6'.
 
+SUBNET_CMDS_SUBNET_UPDATE
+=========================
+
+.. code-block:: text
+
+    successfully updated subnet %1 having id %2
+
+This informational message is issued when the Subnet Commands hooks library
+successfully updates a subnet as a result of receiving a 'subnet4-update'
+or 'subnet6-update' command'. The first parameter specifies an updated subnet
+prefix. The second parameter specifies a subnet identifier.
+
 ***
 TCP
 ***
@@ -26235,6 +26826,16 @@ Logged at debug log level 40.
 This debug message indicates that GSS-TKEY exchange retrieved a TKEY valid for
 the specified time period expressed in seconds.
 
+TKEY_EXCHANGE_VERIFIED
+======================
+
+.. code-block:: text
+
+    GSS-TKEY exchange verified.
+
+Logged at debug log level 40.
+This debug message indicates that GSS-TKEY exchange is verified.
+
 ***
 TLS
 ***
@@ -26274,6 +26875,18 @@ This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
+
+TLS_SERVER_RESPONSE_SEND
+========================
+
+.. code-block:: text
+
+    sending TLS response to %1
+
+Logged at debug log level 40.
+This debug message is issued when the server is starting to send a TLS
+response to a remote endpoint. The argument specifies an address of
+the remote endpoint.
 
 ****
 USER
@@ -26333,6 +26946,17 @@ USER_CHK_SUBNET6_SELECT_ERROR
 This is an error message issued when the DHCP UserCheckHook subnet6_select hook
 encounters an unexpected error.  The message should contain a more detailed
 explanation.
+
+USER_CHK_SUBNET6_SELECT_REGISTRY_NULL
+=====================================
+
+.. code-block:: text
+
+    DHCP UserCheckHook UserRegistry has not been created.
+
+This is an error message issued when the DHCP UserCheckHook subnet6_select hook
+has been invoked but the UserRegistry has not been created.  This is a
+programmatic error and should not occur.
 
 .. _kea-debug-messages:
 
