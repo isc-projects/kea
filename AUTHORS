@@ -314,3 +314,6 @@ We have received the following contributions:
 
  - q66
    2025-01: Added support for building with Boost 1.87.
+
+ - Darwin4053
+   2025-06: Fixed arguments order in flex option hook library debug messages.

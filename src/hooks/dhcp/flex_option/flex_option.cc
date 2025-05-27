@@ -490,8 +490,8 @@ void
 FlexOptionImpl::logClass(const ClientClass& client_class, uint16_t code) {
     LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
               FLEX_OPTION_PROCESS_CLIENT_CLASS)
-        .arg(client_class)
-        .arg(code);
+        .arg(code)
+        .arg(client_class);
     return;
 }
 
@@ -550,9 +550,9 @@ FlexOptionImpl::logSubClass(const ClientClass& client_class, uint16_t code,
                             uint16_t container_code) {
     LOG_DEBUG(flex_option_logger, DBGLVL_TRACE_BASIC,
               FLEX_OPTION_PROCESS_SUB_CLIENT_CLASS)
-        .arg(client_class)
         .arg(code)
-        .arg(container_code);
+        .arg(container_code)
+        .arg(client_class);
     return;
 }
 

@@ -1,3 +1,7 @@
+2348.	[bug]		razvan, Darwin4053
+	Fix arguments order in flex option hook library debug messages.
+	(Gitlab #3875)
+
 Kea 2.7.9 (development) released on May 28, 2025
 
 2347.	[build]		andrei
