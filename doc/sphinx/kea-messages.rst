@@ -18011,10 +18011,6 @@ An invalid message identification (ID) has been found during the read of
 a message file.  Message IDs should comprise only alphanumeric characters
 and the underscore, and should not start with a digit.
 
-*******
-LOGIMPL
-*******
-
 LOG_LOCK_TEST_MESSAGE
 =====================
 
@@ -18023,10 +18019,6 @@ LOG_LOCK_TEST_MESSAGE
     this is a test message.
 
 This is a log message used in testing.
-
-***
-LOG
-***
 
 LOG_NAMESPACE_EXTRA_ARGS
 ========================
@@ -20139,10 +20131,6 @@ MYSQL_DEINIT_OK
 This informational message indicates that the MySQL Backend hooks
 library has been unloaded successfully.
 
-*****
-LEGAL
-*****
-
 MYSQL_FB_DB
 ===========
 
@@ -20154,10 +20142,6 @@ This informational message is logged when a legal log hook library is
 about to open a MySQL log database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
-
-*****
-MYSQL
-*****
 
 MYSQL_HB_DB
 ===========
@@ -23306,10 +23290,6 @@ PGSQL_DEINIT_OK
 This informational message indicates that the PostgreSQL Backend hooks
 library has been unloaded successfully.
 
-*****
-LEGAL
-*****
-
 PGSQL_FB_DB
 ===========
 
@@ -23321,10 +23301,6 @@ This informational message is logged when a legal log hook library is
 about to open a PostgreSQL log database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
-
-*****
-PGSQL
-*****
 
 PGSQL_HB_DB
 ===========
