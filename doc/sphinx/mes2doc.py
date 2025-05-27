@@ -74,6 +74,7 @@ def read_input_files(files):
                 else:
                     msg_descr.append(line)
             if msg_id is not None:
+                section = msg_id.split('_')[0]
                 messages[msg_id] = (section, msg_id, msg_text, msg_descr)
 
     return messages
