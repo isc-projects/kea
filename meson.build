@@ -896,11 +896,6 @@ endif
 
 #### Custom Targets
 
-run_target(
-    'add-changelog-entry',
-    command: [TOP_SOURCE_DIR / 'changelog_unreleased/.add-entry.sh'],
-)
-
 if cppcheck.found()
     run_target(
         'cppcheck',
