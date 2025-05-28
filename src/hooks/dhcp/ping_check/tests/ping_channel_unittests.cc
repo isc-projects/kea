@@ -284,6 +284,9 @@ public:
     bool stopped_;
 };
 
+// Test fixture used to distinguish tests that require root privileges.
+struct RootPingChannelTest : PingChannelTest {};
+
 void
 PingChannelTest::sendReceiveTest(size_t num_threads, size_t num_targets /* = 25 */,
                                  const std::function<void()>& set_error_trigger) {
@@ -516,7 +519,7 @@ PingChannelTest::ioErrorTest(const std::function<void()>& set_error_trigger,
 }
 
 // Verifies PingChannel open and close operations.
-TEST_F(PingChannelTest, openCloseST) {
+TEST_F(RootPingChannelTest, openCloseST) {
     SKIP_IF(notRoot());
 
     // Create the channel instance.
@@ -580,7 +583,7 @@ TEST_F(PingChannelTest, openCloseST) {
 }
 
 // Verifies PingChannel open and close operations.
-TEST_F(PingChannelTest, openCloseMT) {
+TEST_F(RootPingChannelTest, openCloseMT) {
     SKIP_IF(notRoot());
     MultiThreadingTest mt;
 
@@ -629,20 +632,20 @@ TEST_F(PingChannelTest, openCloseMT) {
 
 // Verifies that a PingChannel can perpetuate sending requests and receiving
 // replies when driven by a single-threaded IOService.
-TEST_F(PingChannelTest, sendReceiveST) {
+TEST_F(RootPingChannelTest, sendReceiveST) {
     sendReceiveTest(0);
 }
 
 // Verifies that a PingChannel can perpetuate sending requests and receiving
 // replies when driven by a multi-threaded IOServiceThreadPool 3 threads
-TEST_F(PingChannelTest, sendReceiveMT) {
+TEST_F(RootPingChannelTest, sendReceiveMT) {
     // Use a thread pool with 3 threads.
     sendReceiveTest(3);
 }
 
 // Verifies that an exception throw from asyncRead triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, readExceptionErrorST) {
+TEST_F(RootPingChannelTest, readExceptionErrorST) {
     ioErrorTest(
         [this]() {
             channel_->throw_on_read_number_ = 5;
@@ -651,7 +654,7 @@ TEST_F(PingChannelTest, readExceptionErrorST) {
 
 // Verifies that an exception throw from asyncRead triggers graceful channel
 // shutdown and that operations can be resumed with a multi-threaded channel.
-TEST_F(PingChannelTest, readExceptionErrorMT) {
+TEST_F(RootPingChannelTest, readExceptionErrorMT) {
     // Use a thread pool with 3 threads.
     ioErrorTest(
         [this]() {
@@ -661,7 +664,7 @@ TEST_F(PingChannelTest, readExceptionErrorMT) {
 
 // Verifies that a fatal error code passed into socketReadCallback triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, readFatalErrorST) {
+TEST_F(RootPingChannelTest, readFatalErrorST) {
     ioErrorTest(
         [this]() {
             channel_->ec_on_read_number_ = 3;
@@ -672,7 +675,7 @@ TEST_F(PingChannelTest, readFatalErrorST) {
 
 // Verifies that a fatal error code passed into socketReadCallback triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, readFatalErrorMT) {
+TEST_F(RootPingChannelTest, readFatalErrorMT) {
     ioErrorTest(
         [this]() {
             channel_->ec_on_read_number_ = 3;
@@ -683,7 +686,7 @@ TEST_F(PingChannelTest, readFatalErrorMT) {
 
 // Verifies that a non-fatal, EWOULDBLOCK error passed into socketReadCallback does
 // not disrupt reading for a single-threaded channel.
-TEST_F(PingChannelTest, readAgainErrorST) {
+TEST_F(RootPingChannelTest, readAgainErrorST) {
     sendReceiveTest(0, 10,
         [this]() {
             channel_->ec_on_read_number_ = 4;
@@ -694,7 +697,7 @@ TEST_F(PingChannelTest, readAgainErrorST) {
 
 // Verifies that a non-fatal, EWOULDBLOCK error passed into socketReadCallback does
 // not disrupt reading for a multi-threaded channel.
-TEST_F(PingChannelTest, readAgainErrorMT) {
+TEST_F(RootPingChannelTest, readAgainErrorMT) {
     sendReceiveTest(3, 10,
         [this]() {
             channel_->ec_on_read_number_ = 4;
@@ -705,7 +708,7 @@ TEST_F(PingChannelTest, readAgainErrorMT) {
 
 // Verifies that an exception throw from asyncRead triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, writeExceptionErrorST) {
+TEST_F(RootPingChannelTest, writeExceptionErrorST) {
     ioErrorTest(
         [this]() {
             channel_->throw_on_write_number_ = 5;
@@ -714,7 +717,7 @@ TEST_F(PingChannelTest, writeExceptionErrorST) {
 
 // Verifies that an exception throw from asyncRead triggers graceful channel
 // shutdown and that operations can be resumed with a multi-threaded channel.
-TEST_F(PingChannelTest, writeExceptionErrorMT) {
+TEST_F(RootPingChannelTest, writeExceptionErrorMT) {
     // Use a thread pool with 3 threads.
     ioErrorTest(
         [this]() {
@@ -724,7 +727,7 @@ TEST_F(PingChannelTest, writeExceptionErrorMT) {
 
 // Verifies that a fatal error code passed into socketReadCallback triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, writeFatalErrorST) {
+TEST_F(RootPingChannelTest, writeFatalErrorST) {
     ioErrorTest(
         [this]() {
             channel_->ec_on_write_number_ = 3;
@@ -735,7 +738,7 @@ TEST_F(PingChannelTest, writeFatalErrorST) {
 
 // Verifies that a fatal error code passed into socketReadCallback triggers graceful channel
 // shutdown and that operations can be resumed with a single-threaded channel.
-TEST_F(PingChannelTest, writeFatalErrorMT) {
+TEST_F(RootPingChannelTest, writeFatalErrorMT) {
     ioErrorTest(
         [this]() {
             channel_->ec_on_write_number_ = 3;
@@ -746,7 +749,7 @@ TEST_F(PingChannelTest, writeFatalErrorMT) {
 
 // Verifies that a non-fatal, EWOULDBLOCK error passed into socketWriteCallback does
 // not disrupt writing for a single-threaded channel.
-TEST_F(PingChannelTest, writeAgainErrorST) {
+TEST_F(RootPingChannelTest, writeAgainErrorST) {
     sendReceiveTest(0, 10,
         [this]() {
             channel_->ec_on_write_number_ = 6;
@@ -757,7 +760,7 @@ TEST_F(PingChannelTest, writeAgainErrorST) {
 
 // Verifies that a non-fatal, EWOULDBLOCK error passed into socketWriteCallback
 // does not disrupt writing for a multi-threaded channel.
-TEST_F(PingChannelTest, writeAgainErrorMT) {
+TEST_F(RootPingChannelTest, writeAgainErrorMT) {
     sendReceiveTest(3, 10,
         [this]() {
             channel_->ec_on_write_number_ = 6;
@@ -768,7 +771,7 @@ TEST_F(PingChannelTest, writeAgainErrorMT) {
 
 // Verify the recoverable write errors do not disrupt writing for a
 // single-threaded channel.
-TEST_F(PingChannelTest, writeSendFailedErrorST) {
+TEST_F(RootPingChannelTest, writeSendFailedErrorST) {
     SKIP_IF(notRoot());
 
     std::list<boost::asio::error::basic_errors> errors = {
@@ -794,7 +797,7 @@ TEST_F(PingChannelTest, writeSendFailedErrorST) {
 
 // Verify the recoverable write errors do not disrupt writing for a
 // multi-threaded channel.
-TEST_F(PingChannelTest, writeSendFailedErrorMT) {
+TEST_F(RootPingChannelTest, writeSendFailedErrorMT) {
     SKIP_IF(notRoot());
 
     std::list<boost::asio::error::basic_errors> errors = {

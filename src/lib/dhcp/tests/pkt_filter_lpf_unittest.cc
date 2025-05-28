@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,9 @@ public:
     }
 };
 
+// Test fixture used to distinguish tests that require root privileges.
+struct RootPktFilterLPFTest : PktFilterLPFTest {};
+
 // This test verifies that the PktFilterLPF class reports its capability
 // to send packets to the host having no IP address assigned.
 TEST_F(PktFilterLPFTest, isDirectResponseSupported) {
@@ -64,7 +67,7 @@ TEST_F(PktFilterLPFTest, isSocketReceivedTimeSupported) {
 
 // This test verifies that the raw AF_PACKET family socket can
 // be opened and bound to the specific interface.
-TEST_F(PktFilterLPFTest, openSocket) {
+TEST_F(RootPktFilterLPFTest, openSocket) {
     SKIP_IF(notRoot());
 
     // Create object representing loopback interface.
@@ -102,7 +105,7 @@ TEST_F(PktFilterLPFTest, openSocket) {
 
 // This test verifies correctness of sending DHCP packet through the raw
 // socket, whereby all IP stack headers are hand-crafted.
-TEST_F(PktFilterLPFTest, send) {
+TEST_F(RootPktFilterLPFTest, send) {
     SKIP_IF(notRoot());
 
     // Packet will be sent over loopback interface.
@@ -165,7 +168,7 @@ TEST_F(PktFilterLPFTest, send) {
 
 // This test verifies correctness of reception of the DHCP packet over
 // raw socket, whereby all IP stack headers are hand-crafted.
-TEST_F(PktFilterLPFTest, receive) {
+TEST_F(RootPktFilterLPFTest, receive) {
     SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.
@@ -202,7 +205,7 @@ TEST_F(PktFilterLPFTest, receive) {
 // This test verifies that if the packet is received over the raw
 // socket and its destination address doesn't match the address
 // to which the socket is "bound", the packet is dropped.
-TEST_F(PktFilterLPFTest, filterOutUnicast) {
+TEST_F(RootPktFilterLPFTest, filterOutUnicast) {
     SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.

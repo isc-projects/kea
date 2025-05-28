@@ -18,4 +18,26 @@ dhcp_ping_check_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_ping_check_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp-ping-check-tests', dhcp_ping_check_tests, protocol: 'gtest')
+
+root_tests = 'RootICMPSocketTest.*:RootPingChannelTest.*:RootPingCheckMgr.*:RootPingCheckMgrTest.*'
+
+test(
+    'dhcp-ping-check-tests',
+    dhcp_ping_check_tests,
+    args: [f'--gtest_filter=-@root_tests@'],
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)
+
+if PASSWORDLESS_SUDO_SET_UP
+    test(
+        'sudo-dhcp-ping-check-tests',
+        SUDO,
+        args: [dhcp_ping_check_tests, f'--gtest_filter=@root_tests@'],
+        protocol: 'gtest',
+        is_parallel: false,
+        priority: -1,
+        suite: 'sudo-tests',
+    )
+endif

@@ -250,9 +250,11 @@ public:
     std::vector<uint8_t> input_buf_;
 };
 
+// Test fixture used to distinguish tests that require root privileges.
+struct RootICMPSocketTest : ICMPSocketTest {};
 
 // Verifies that an ICMP socket can be opened and closed.
-TEST_F(ICMPSocketTest, openClose) {
+TEST_F(RootICMPSocketTest, openClose) {
     SKIP_IF(notRoot());
 
     // For open the endpoint is only used to determine protocol, the address is irrelevant.
@@ -286,7 +288,7 @@ TEST_F(ICMPSocketTest, openClose) {
 }
 
 // Verifies that an ICMP socket can send and receive ICMP messages.
-TEST_F(ICMPSocketTest, sendReceive) {
+TEST_F(RootICMPSocketTest, sendReceive) {
     SKIP_IF(notRoot());
 
     PingSocket socket(io_service_);

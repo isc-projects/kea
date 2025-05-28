@@ -121,6 +121,7 @@ PIP_COMPILE = find_program('pip-compile', required: false)
 PLANTUML = find_program('plantuml', required: false)
 PYTHON = find_program('python3', 'python', required: true)
 SPHINX = find_program('sphinx-build', 'sphinx-build-3', required: false)
+SUDO = find_program('sudo', required: false)
 XMLLINT = find_program('xmllint', required: false)
 
 CD_AND_RUN = find_program(TOP_SOURCE_DIR / 'scripts/cd-and-run.sh')
@@ -566,6 +567,14 @@ else
     package_version_type = 'development'
 endif
 conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
+
+PASSWORDLESS_SUDO_SET_UP = false
+if SUDO.found()
+    result = run_command(SUDO, '-n', 'true', check: false)
+    if result.returncode() == 0
+        PASSWORDLESS_SUDO_SET_UP = true
+    endif
+endif
 
 #### Compiler
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,6 +38,9 @@ public:
     }
 };
 
+// Test fixture used to distinguish tests that require root privileges.
+struct RootPktFilterBPFTest : PktFilterBPFTest {};
+
 // This test verifies that the PktFilterBPF class reports its capability
 // to send packets to the host having no IP address assigned.
 TEST_F(PktFilterBPFTest, isDirectResponseSupported) {
@@ -60,7 +63,7 @@ TEST_F(PktFilterBPFTest, isSocketReceivedTimeSupported) {
 
 // This test verifies that the raw AF_PACKET family socket can
 // be opened and bound to the specific interface.
-TEST_F(PktFilterBPFTest, openSocket) {
+TEST_F(RootPktFilterBPFTest, openSocket) {
     SKIP_IF(notRoot());
 
     // Create object representing loopback interface.
@@ -90,7 +93,7 @@ TEST_F(PktFilterBPFTest, openSocket) {
 // test over the real interface but since we don't know what interfaces
 // are present in the particular system we have to stick to local loopback
 // interface as this one is almost always present.
-TEST_F(PktFilterBPFTest, send) {
+TEST_F(RootPktFilterBPFTest, send) {
     SKIP_IF(notRoot());
 
     // Packet will be sent over loopback interface.
@@ -172,7 +175,7 @@ TEST_F(PktFilterBPFTest, send) {
 
 // This test verifies correctness of reception of the DHCP packet over
 // raw socket, whereby all IP stack headers are hand-crafted.
-TEST_F(PktFilterBPFTest, receive) {
+TEST_F(RootPktFilterBPFTest, receive) {
     SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.
@@ -211,7 +214,7 @@ TEST_F(PktFilterBPFTest, receive) {
 // This test verifies that if the packet is received over the raw
 // socket and its destination address doesn't match the address
 // to which the socket is "bound", the packet is dropped.
-TEST_F(PktFilterBPFTest, filterOutUnicast) {
+TEST_F(RootPktFilterBPFTest, filterOutUnicast) {
     SKIP_IF(notRoot());
 
     // Packet will be received over loopback interface.

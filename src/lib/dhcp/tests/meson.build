@@ -66,10 +66,26 @@ kea_dhcp_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
+
+root_tests = 'RootPktFilterBPFTest.*:RootPktFilterLPFTest.*'
+
 test(
     'kea-dhcp-tests',
     kea_dhcp_tests,
+    args: [f'--gtest_filter=-@root_tests@'],
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
 )
+
+if PASSWORDLESS_SUDO_SET_UP
+    test(
+        'sudo-kea-dhcp-tests',
+        SUDO,
+        args: [kea_dhcp_tests, f'--gtest_filter=@root_tests@'],
+        protocol: 'gtest',
+        is_parallel: false,
+        priority: -1,
+        suite: 'sudo-tests',
+    )
+endif

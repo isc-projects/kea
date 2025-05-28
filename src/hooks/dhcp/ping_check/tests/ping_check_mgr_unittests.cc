@@ -38,8 +38,11 @@ namespace ph = std::placeholders;
 
 namespace {
 
+// Test fixture used to distinguish tests that require root privileges.
+struct RootPingCheckMgr : PingCheckMgr {};
+
 // Sanity check the basics for production class, PingCheckMgr, single-threaded mode.
-TEST(PingCheckMgr, basicsST) {
+TEST(RootPingCheckMgr, basicsST) {
     SKIP_IF(IOServiceTest::notRoot());
     MultiThreadingMgr::instance().setMode(false);
 
@@ -112,7 +115,7 @@ TEST(PingCheckMgr, basicsST) {
 
 // Sanity check the basics for production class, PingCheckMgr. Bulk of testing
 // is done with test derivation, TestPingCheckMgr.
-TEST(PingCheckMgr, basicsMT) {
+TEST(RootPingCheckMgr, basicsMT) {
     SKIP_IF(IOServiceTest::notRoot());
     MultiThreadingTest mt;
 
@@ -1777,110 +1780,114 @@ public:
     LeaseQueryPairs frees_;
 };
 
-TEST_F(PingCheckMgrTest, operationalBasicsST) {
+// Test fixture used to distinguish tests that require root privileges.
+struct RootPingCheckMgrTest : PingCheckMgrTest {};
+
+
+TEST_F(RootPingCheckMgrTest, operationalBasicsST) {
     testOperationalBasics(0);
 }
 
-TEST_F(PingCheckMgrTest, operationalBasicsMT) {
+TEST_F(RootPingCheckMgrTest, operationalBasicsMT) {
     MultiThreadingTest mt;
     testOperationalBasics(3);
 }
 
-TEST_F(PingCheckMgrTest, startPingST) {
+TEST_F(RootPingCheckMgrTest, startPingST) {
     testStartPing();
 }
 
-TEST_F(PingCheckMgrTest, startPingMT) {
+TEST_F(RootPingCheckMgrTest, startPingMT) {
     MultiThreadingTest mt;
     testStartPing();
 }
 
-TEST_F(PingCheckMgrTest, nextToSendST) {
+TEST_F(RootPingCheckMgrTest, nextToSendST) {
     testNextToSend();
 }
 
-TEST_F(PingCheckMgrTest, nextToSendMT) {
+TEST_F(RootPingCheckMgrTest, nextToSendMT) {
     MultiThreadingTest mt;
     testNextToSend();
 }
 
-TEST_F(PingCheckMgrTest, setNextExpirationST) {
+TEST_F(RootPingCheckMgrTest, setNextExpirationST) {
     testSetNextExpiration();
 }
 
-TEST_F(PingCheckMgrTest, setNextExpirationMT) {
+TEST_F(RootPingCheckMgrTest, setNextExpirationMT) {
     MultiThreadingTest mt;
     testSetNextExpiration();
 }
 
-TEST_F(PingCheckMgrTest, sendCompletedST) {
+TEST_F(RootPingCheckMgrTest, sendCompletedST) {
     testSendCompleted();
 }
 
-TEST_F(PingCheckMgrTest, sendCompletedMT) {
+TEST_F(RootPingCheckMgrTest, sendCompletedMT) {
     MultiThreadingTest mt;
     testSendCompleted();
 }
 
-TEST_F(PingCheckMgrTest, replyReceivedForEchoReplyST) {
+TEST_F(RootPingCheckMgrTest, replyReceivedForEchoReplyST) {
     testReplyReceivedForEchoReply();
 }
 
-TEST_F(PingCheckMgrTest, replyReceivedForEchoReplyMT) {
+TEST_F(RootPingCheckMgrTest, replyReceivedForEchoReplyMT) {
     MultiThreadingTest mt;
     testReplyReceivedForEchoReply();
 }
 
-TEST_F(PingCheckMgrTest, replyReceivedForTargetUnreachableST) {
+TEST_F(RootPingCheckMgrTest, replyReceivedForTargetUnreachableST) {
     testReplyReceivedForTargetUnreachable();
 }
 
-TEST_F(PingCheckMgrTest, replyReceivedForTargetUnreachableMT) {
+TEST_F(RootPingCheckMgrTest, replyReceivedForTargetUnreachableMT) {
     MultiThreadingTest mt;
     testReplyReceivedForTargetUnreachable();
 }
 
-TEST_F(PingCheckMgrTest, expirationProcessingST) {
+TEST_F(RootPingCheckMgrTest, expirationProcessingST) {
     testExpirationProcessing();
 }
 
-TEST_F(PingCheckMgrTest, expirationProcessingMT) {
+TEST_F(RootPingCheckMgrTest, expirationProcessingMT) {
     MultiThreadingTest mt;
     testExpirationProcessing();
 }
 
-TEST_F(PingCheckMgrTest, multiplePingsWithReplyST) {
+TEST_F(RootPingCheckMgrTest, multiplePingsWithReplyST) {
     testMultiplePingsWithReply();
 }
 
-TEST_F(PingCheckMgrTest, multiplePingsWithReplyMT) {
+TEST_F(RootPingCheckMgrTest, multiplePingsWithReplyMT) {
     MultiThreadingTest mt;
     testMultiplePingsWithReply();
 }
 
-TEST_F(PingCheckMgrTest, multiplePingsWithReplyAndPauseST) {
+TEST_F(RootPingCheckMgrTest, multiplePingsWithReplyAndPauseST) {
     testMultiplePingsWithReplyAndPause();
 }
 
-TEST_F(PingCheckMgrTest, multiplePingsWithReplyAndPauseMT) {
+TEST_F(RootPingCheckMgrTest, multiplePingsWithReplyAndPauseMT) {
     MultiThreadingTest mt;
     testMultiplePingsWithReplyAndPause();
 }
 
-TEST_F(PingCheckMgrTest, sendCompletedSendFailedST) {
+TEST_F(RootPingCheckMgrTest, sendCompletedSendFailedST) {
     testSendCompletedSendFailed();
 }
 
-TEST_F(PingCheckMgrTest, sendCompletedSendFailedMT) {
+TEST_F(RootPingCheckMgrTest, sendCompletedSendFailedMT) {
     MultiThreadingTest mt;
     testSendCompletedSendFailed();
 }
 
-TEST_F(PingCheckMgrTest, shouldPingST) {
+TEST_F(RootPingCheckMgrTest, shouldPingST) {
     testShouldPingTest();
 }
 
-TEST_F(PingCheckMgrTest, shouldPingMT) {
+TEST_F(RootPingCheckMgrTest, shouldPingMT) {
     MultiThreadingTest mt;
     testShouldPingTest();
 }
@@ -1894,11 +1901,11 @@ TEST_F(PingCheckMgrTest, getScopedConfigMT) {
     testGetScopedConfig();
 }
 
-TEST_F(PingCheckMgrTest, checkSuspendedST) {
+TEST_F(RootPingCheckMgrTest, checkSuspendedST) {
     testCheckSuspended();
 }
 
-TEST_F(PingCheckMgrTest, checkSuspendedMT) {
+TEST_F(RootPingCheckMgrTest, checkSuspendedMT) {
     MultiThreadingTest mt;
     testCheckSuspended();
 }
