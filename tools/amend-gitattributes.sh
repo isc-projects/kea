@@ -14,7 +14,7 @@ root_path=$(cd "$(dirname "${0}")/.." && pwd)
 cd "${root_path}"
 
 # Write to .gitattributes.
-find . -type f -name '.gitattributes' -exec rm -f {} \;
+find . -mindepth 2 -type f -name '.gitattributes' -exec rm -f {} \;
 for i in $(./tools/print-generated-files.sh); do
     # We need to be lenient because we call this script in premium too. Files might not exist.
     if test ! -f "${i}"; then
