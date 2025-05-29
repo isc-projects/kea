@@ -178,7 +178,7 @@ the system:
    the unit tests requires a local MySQL server.
 
 -  The PostgreSQL client and the client development libraries, when using the
-   ``-D postgresql`` configuration flag to build the Kea PostgreSQL database
+   ``-D postgresql=enabled`` configuration flag to build the Kea PostgreSQL database
    backend. In this case an instance of the PostgreSQL server running locally
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local PostgreSQL server.
@@ -311,7 +311,7 @@ Some commonly used options are:
    Build Kea with code to allow it to store leases and host reservations
    in a MySQL database.
 
- - ``-D postgresql``
+ - ``-D postgresql=enabled``
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
 
@@ -457,7 +457,7 @@ libraries are often packaged as ``libpq``.
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code, at the
-setup step (see :ref:`setup`), the ``-D postgresql`` switch should be specified:
+setup step (see :ref:`setup`), the ``-D postgresql`` switch should be specified.
 
 If PostgreSQL was not installed in the default location, the location can be
 selected by setting ``PKG_CONFIG_PATH=/path/to/libpq.pc:${PKG_CONFIG_PATH}``
