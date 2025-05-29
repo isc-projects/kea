@@ -291,7 +291,7 @@ contributed code to be accepted by ISC.
 
 .. _setup:
 
-Set up the Build
+Set Up the Build
 ----------------
 
 Kea uses Meson to discover build environment details. To generate the ninja
@@ -311,7 +311,7 @@ Some commonly used options are:
    Build Kea with code to allow it to store leases and host reservations
    in a MySQL database.
 
- - ``-D pgsql``
+ - ``-D postgresql``
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
 
