@@ -182,23 +182,28 @@ Now it's time to publish the code.
 
 ## Marketing
 
-1. [ ] Publish links to downloads on the ISC website.
+1. [ ] Write blog article (if a major release).
+1. [ ] Check that the tarballs are available on Cloudsmith, since we are downloading from there, not downloads or ftp.
+1. [ ] Publish links to downloads on the ISC website. Update release dates. Check the modal messages and update if necessary.
 1. [ ] If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
 1. [ ] If a new Cloudsmith repository is used, make sure that the Zapier scripts are updated.
    * If those are not updated, there was an error made during preparation for new stable release. Please contact QA team and coordinate fix.
-1. [ ] Upload Premium hooks tarball to SendOwl. Create a new product if a new branch, otherwise update existing product. Send notifications to existing subscribers of the new version.
+1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
+1. [ ] Send notifications to existing subscribers of the new version.
 1. [ ] Write release email to _kea-announce_.
 1. [ ] Announce release to support subscribers using the read-only Kea Announce queue, if a major version or other significant change to stable version.
+1. [ ] Update "Release Schedule" document in RT with current versions and next planned release.
 1. [ ] Write email to _kea-users_ (if a major release).
 1. [ ] Announce on social media.
 1. [ ] Update [Wikipedia entry for Kea](https://en.wikipedia.org/wiki/Kea\_(software)).
-1. [ ] Write blog article (if a major release).
 1. [ ] Update [Kea page on website if any new hooks](https://www.isc.org/kea/).
-1. [ ] Update Kea Premium and Kea Subscription data sheets if any new hooks.
+1. [ ] Update Kea Subscription data sheet if any new hooks.
 1. [ ] Update [significant features matrix](https://kb.isc.org/docs/en/aa-01615) (if any significant new features).
 1. [ ] Contact Support team, find a person who will continue this release and assign this issue to them.
 
 ## Support
 
 1. [ ] Update tickets in case of waiting for support customers.
-1. [ ] Close this ticket
+
+## QA
+1. [ ] Close this ticket.
