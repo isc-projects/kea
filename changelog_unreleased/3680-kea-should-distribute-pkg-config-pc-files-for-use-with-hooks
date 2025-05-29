@@ -1,0 +1,3 @@
+[build]		andrei
+	Kea now generates and installs a pkg-config .pc file.
+	(Gitlab #3680)
