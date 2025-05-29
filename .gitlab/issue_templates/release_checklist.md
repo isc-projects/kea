@@ -138,6 +138,7 @@ Now it's time to publish the code.
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
        - Create Git tags `Kea-a.b.c` in Kea main and premium repositories.
        - Create Gitlab releases `Kea-a.b.c` in Kea main and premium repositories.
+ 1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-a.b.c`.
  1. [ ] Sign tarballs with the personal key by running [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh) which signs, verifies signatures and uploads them.
     - If the release engineer does NOT have a signing key, please contact the team member.
  1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
@@ -167,7 +168,10 @@ Now it's time to publish the code.
  1. [ ] Update ReadTheDocs:
     1. Trick ReadTheDocs into pulling the latest tags. Click `Build version` on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
     1. Publish the currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
-    1. If it's a stable release, change the default version to point to this stable release. `Admin -> Advanced Settings -> Default version* -> Kea-a.b.c`.
+    1. [ ] <mark>Latest Stable Release Only</mark>: change default version:
+        1. Go to `Settings` -> `Default version:` -> choose the new version as default.
+        1. Check that https://stork.readthedocs.io/ redirects to the new version.
+    1. [ ] <mark>Latest Stable Release Only</mark>: Rebuild the `stable` version. Go to [the stable build](https://app.readthedocs.org/projects/kea/builds/?version__slug=stable), click `Rebuild version`.
  1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to the next development version which could be, based on just released version `a.b.c`:
     * `a.b.z-git` where `z == c + 1` most of the time, or
     * `a.y.0-git` where `y == b + 2` if a new development series starts, or
