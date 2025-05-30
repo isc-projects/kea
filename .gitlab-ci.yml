@@ -163,24 +163,15 @@ fuzz:
   parallel:
     matrix:
       - SANITIZER: [address, undefined]
+  variables:
+    MODE: "code-change"
   rules:
     # Prevent duplicate pipelines.
     - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH == null
       when: never
-    # Make the job manual on creating of MR.
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      variables:
-        MODE: "code-change"
-      when: manual
+    # This job is always manual and allowed to fail.
+    - when: manual
       allow_failure: true
-    # Make the job manual on push to MR.
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      variables:
-        MODE: "code-change"
-      when: manual
-      allow_failure: true
-    # Run on any other event, including push to master.
-    - when: always
   before_script:
     # Get GitLab's container id.
     - export CFL_CONTAINER_ID=`docker ps -q -f "label=com.gitlab.gitlab-runner.job.id=$CI_JOB_ID" -f "label=com.gitlab.gitlab-runner.type=build"`
