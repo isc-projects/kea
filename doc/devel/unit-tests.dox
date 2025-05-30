@@ -19,7 +19,7 @@ to mimic its installation. Meson tries its best to accommodate all typical
 situations and to locate gtest on its own. If it cannot be found, linking
 /usr/src/googletest to the custom location should do the trick. If that does
 not work either, the Kea project has a gtest.wrap which instructs it how to
-fetch googletest on its own. The `-D tests` flag has to be provided.
+fetch googletest on its own. The `-D tests=enabled` flag has to be provided.
 
 @code
 meson setup build -D tests=enabled

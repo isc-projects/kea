@@ -172,7 +172,7 @@ the system:
 -  The development tools automake, libtool, and pkg-config.
 
 -  The MySQL client and the client development libraries, when using the
-   ``-D mysql`` configuration flag to build the Kea MySQL database
+   ``-D mysql=enabled`` configuration flag to build the Kea MySQL database
    backend. In this case, an instance of the MySQL server running locally
    or on a machine reachable over a network is required. Note that running
    the unit tests requires a local MySQL server.
@@ -185,17 +185,17 @@ the system:
 
 -  Sysrepo v1.4.140 and libyang v1.0.240, needed to connect to a Sysrepo
    datastore. Earlier versions are no longer supported. When compiling from
-   sources, the configure switch that can be used is ``-D netconf``.
+   sources, the configure switch that can be used is ``-D netconf=enabled``.
    If these dependencies were installed in custom paths, point PKG_CONFIG_PATH
    to them.
 
 -  The MIT Kerberos 5 or Heimdal libraries are needed by Kea DDNS server to
    sign and verify DNS updates using GSS-TSIG. The configuration switch which
-   enables this functionality is ``-D krb5``. If this dependency is installed
+   enables this functionality is ``-D krb5=enabled``. If this dependency is installed
    in a custom path, point PKG_CONFIG_PATH to the .pc file or PATH to the
    krb5-config tool.
 
--  googletest (version 1.8 or later) is required when using the ``-D tests``
+-  googletest (version 1.8 or later) is required when using the ``-D tests=enabled``
    configuration option to build the unit tests.
 
 -  The documentation generation tools `Sphinx <https://www.sphinx-doc.org/>`_,
@@ -307,7 +307,7 @@ Some commonly used options are:
  - ``--prefix``
    Define the installation location (the default is ``/usr/local``).
 
- - ``-D mysql``
+ - ``-D mysql=enabled``
    Build Kea with code to allow it to store leases and host reservations
    in a MySQL database.
 
@@ -315,11 +315,11 @@ Some commonly used options are:
    Build Kea with code to allow it to store leases and host reservations
    in a PostgreSQL database.
 
- - ``-D krb5``
+ - ``-D krb5=enabled``
    Build Kea with Kerberos5 with GSS-API support required by
    :ischooklib:`libddns_gss_tsig.so`.
 
- - ``-D netconf``
+ - ``-D netconf=enabled``
    Build Kea with libyang and sysrepo support required by
    :iscman:`kea-netconf`.
 
@@ -417,7 +417,7 @@ the creation of the lease database.
 
 .. note::
 
-   When unit tests are built with Kea (i.e. the ``-D tests`` configuration
+   When unit tests are built with Kea (i.e. the ``-D tests=enabled`` configuration
    option is specified), the databases must be manually pre-configured
    for the unit tests to run. The details of this configuration can be
    found in the `Kea Developer's
@@ -431,7 +431,7 @@ development libraries must be installed.
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the MySQL database code, at the
-setup step (see :ref:`setup`), the ``-D mysql`` switch should be specified:
+setup step (see :ref:`setup`), the ``-D mysql=enabled`` switch should be specified:
 
 .. code-block:: console
 
@@ -457,7 +457,7 @@ libraries are often packaged as ``libpq``.
 
 Build and install Kea as described in :ref:`installation`,
 with the following modification. To enable the PostgreSQL database code, at the
-setup step (see :ref:`setup`), the ``-D postgresql`` switch should be specified.
+setup step (see :ref:`setup`), the ``-D postgresql=enabled`` switch should be specified.
 
 If PostgreSQL was not installed in the default location, the location can be
 selected by setting ``PKG_CONFIG_PATH=/path/to/libpq.pc:${PKG_CONFIG_PATH}``
