@@ -1,4 +1,4 @@
-// File created from src/bin/agent/ca_messages.mes
+// File created from ../src/bin/agent/ca_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -21,6 +21,7 @@ extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_UPDATED = "CTRL_AGENT_
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED = "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED = "CTRL_AGENT_HTTP_SERVICE_STARTED";
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_UPDATED = "CTRL_AGENT_HTTP_SERVICE_UPDATED";
+extern const isc::log::MessageID CTRL_AGENT_IS_DEPRECATED = "CTRL_AGENT_IS_DEPRECATED";
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT = "CTRL_AGENT_RUN_EXIT";
 extern const isc::log::MessageID CTRL_AGENT_SECURITY_CHECKS_DISABLED = "CTRL_AGENT_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID CTRL_AGENT_STARTED = "CTRL_AGENT_STARTED";
@@ -45,6 +46,7 @@ const char* values[] = {
     "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED", "failed to reused HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTP_SERVICE_UPDATED", "reused HTTP service bound to address: %1 port: %2",
+    "CTRL_AGENT_IS_DEPRECATED", "Kea Control Agent is deprecated. Its function has been moved to Kea servers.",
     "CTRL_AGENT_RUN_EXIT", "application is exiting the event loop",
     "CTRL_AGENT_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "CTRL_AGENT_STARTED", "Kea Control Agent version %1 started",

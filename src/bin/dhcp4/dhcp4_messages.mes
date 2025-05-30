@@ -1185,7 +1185,7 @@ expected: the erroneous response is dropped, the discover query is displayed.
 
 % DHCP4_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
 This warning is emitted when internal security checks normally
-performed by kea-dhcp4 have been disabled via command line opion '-X'.
+performed by kea-dhcp4 have been disabled via command line option '-X'.
 This means the server is not enforcing restrictions on resource
 paths or permissions.  This mode of operation may expose your
 environment to security vulnerabilities and should only be used

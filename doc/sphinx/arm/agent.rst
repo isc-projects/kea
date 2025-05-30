@@ -39,9 +39,9 @@ The CA processes received commands according to the following algorithm:
 
 .. note::
 
-   The CA will be deprecated by a future Kea release: its function has
-   been moved to Kea servers since release 2.7.2, see the section about
-   migration from CA (:ref:`ctrl-channel-migration`).
+   The CA is deprecated: its function has been moved to Kea servers since
+   release 2.7.2, see the section about migration from CA
+   (:ref:`ctrl-channel-migration`).
 
 .. _agent-configuration:
 

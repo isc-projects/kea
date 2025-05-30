@@ -44,6 +44,8 @@ void
 CtrlAgentProcess::run() {
     LOG_INFO(agent_logger, CTRL_AGENT_STARTED).arg(VERSION);
 
+    LOG_WARN(agent_logger, CTRL_AGENT_IS_DEPRECATED);
+
     if (!PathChecker::shouldEnforceSecurity()) {
         LOG_WARN(agent_logger, CTRL_AGENT_SECURITY_CHECKS_DISABLED);
     }

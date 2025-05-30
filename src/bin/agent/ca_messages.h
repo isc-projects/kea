@@ -1,4 +1,4 @@
-// File created from src/bin/agent/ca_messages.mes
+// File created from ../src/bin/agent/ca_messages.mes
 
 #ifndef CA_MESSAGES_H
 #define CA_MESSAGES_H
@@ -22,6 +22,7 @@ extern const isc::log::MessageID CTRL_AGENT_HTTPS_SERVICE_UPDATED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_STARTED;
 extern const isc::log::MessageID CTRL_AGENT_HTTP_SERVICE_UPDATED;
+extern const isc::log::MessageID CTRL_AGENT_IS_DEPRECATED;
 extern const isc::log::MessageID CTRL_AGENT_RUN_EXIT;
 extern const isc::log::MessageID CTRL_AGENT_SECURITY_CHECKS_DISABLED;
 extern const isc::log::MessageID CTRL_AGENT_STARTED;
