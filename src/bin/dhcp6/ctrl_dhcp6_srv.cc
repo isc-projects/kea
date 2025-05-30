@@ -190,7 +190,7 @@ ControlledDhcpv6Srv::loadConfigFile(const std::string& file_name) {
                   << file_name << "': " << ex.what());
     }
 
-    LOG_WARN(dhcp6_logger, DHCP6_MULTI_THREADING_INFO)
+    LOG_INFO(dhcp6_logger, DHCP6_MULTI_THREADING_INFO)
         .arg(MultiThreadingMgr::instance().getMode() ? "yes" : "no")
         .arg(MultiThreadingMgr::instance().getThreadPoolSize())
         .arg(MultiThreadingMgr::instance().getPacketQueueSize());
