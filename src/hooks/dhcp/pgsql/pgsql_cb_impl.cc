@@ -82,13 +82,6 @@ PgSqlConfigBackendImpl::PgSqlConfigBackendImpl(const std::string& space,
       audit_revision_ref_count_(0), parameters_(parameters),
       last_insert_id_index_(last_insert_id_index) {
 
-    // Check TLS support.
-    size_t tls(0);
-    tls += parameters.count("trust-anchor");
-    tls += parameters.count("cert-file");
-    tls += parameters.count("key-file");
-    tls += parameters.count("cipher-list");
-
     // Create unique timer name per instance.
     timer_name_ = "PgSqlConfigBackend";
     timer_name_ += space;

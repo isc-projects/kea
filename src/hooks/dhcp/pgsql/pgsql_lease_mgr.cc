@@ -1619,13 +1619,6 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     // Check if the extended info tables are enabled.
     setExtendedInfoTablesEnabled(parameters);
 
-    // Check TLS support.
-    size_t tls(0);
-    tls += parameters.count("trust-anchor");
-    tls += parameters.count("cert-file");
-    tls += parameters.count("key-file");
-    tls += parameters.count("cipher-list");
-
     // Create unique timer name per instance.
     timer_name_ = "PgSqlLeaseMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));

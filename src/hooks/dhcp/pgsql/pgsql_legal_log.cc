@@ -180,14 +180,6 @@ PgSqlStore::PgSqlStore(const DatabaseConnection::ParameterMap& parameters)
 void PgSqlStore::open() {
     LegalLogDbLogger pushed(pgsql_legal_log_db_logger);
 
-    // Check TLS support.
-    size_t tls(0);
-    auto const& parameters = LegalLogMgr::getParameters();
-    tls += parameters.count("trust-anchor");
-    tls += parameters.count("cert-file");
-    tls += parameters.count("key-file");
-    tls += parameters.count("cipher-list");
-
     // Test schema version first.
     pair<uint32_t, uint32_t> code_version(PGSQL_SCHEMA_VERSION_MAJOR,
                                           PGSQL_SCHEMA_VERSION_MINOR);

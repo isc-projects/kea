@@ -2316,13 +2316,6 @@ PgSqlHostDataSource::PgSqlHostContextAlloc::~PgSqlHostContextAlloc() {
 PgSqlHostDataSourceImpl::PgSqlHostDataSourceImpl(const DatabaseConnection::ParameterMap& parameters)
     : parameters_(parameters), ip_reservations_unique_(true), unusable_(false) {
 
-    // Check TLS support.
-    size_t tls(0);
-    tls += parameters.count("trust-anchor");
-    tls += parameters.count("cert-file");
-    tls += parameters.count("key-file");
-    tls += parameters.count("cipher-list");
-
     // Create unique timer name per instance.
     timer_name_ = "PgSqlHostMgr[";
     timer_name_ += boost::lexical_cast<std::string>(reinterpret_cast<uint64_t>(this));
