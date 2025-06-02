@@ -2110,7 +2110,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         deferred_functions.append(install_meson)
 
         if 'docs' in features:
-            packages.extend(['py3-sphinx py3-sphinx_rtd_theme'])
+            packages.extend(['py3-sphinx', 'py3-sphinx_rtd_theme', 'texlive-full'])
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-dev'])
