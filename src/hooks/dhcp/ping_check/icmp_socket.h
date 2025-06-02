@@ -233,7 +233,7 @@ ICMPSocket<C>::open(const asiolink::IOEndpoint* endpoint, C&) {
             socket_.set_option(rcv_size);
         }
 
-        boost::asio::socket_base::do_not_route option(true);
+        boost::asio::socket_base::do_not_route option(false);
         socket_.set_option(option);
     }
 }
