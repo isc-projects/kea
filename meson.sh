@@ -8,6 +8,8 @@
 
 set -eu
 
+meson_version=1.8.1
+
 # Check if ${1} <= ${2}.
 le() {
     # Sort numerically and check the first item.
@@ -27,17 +29,19 @@ print_usage() {
 'Usage: %s {{options}}
 Options:
     [-i|--install]                 install meson and ninja to gobal scope. attempts to acquire root privileges
-    [-p|--venv]                    use venv instead of pyinstaller
+    [-l|--latest]                  use latest meson instead of %s
+    [-v|--venv]                    use venv instead of pyinstaller
     [-h|--help]                    print usage (this text)
 ' \
-    "$(basename "${0}")"
+    "$(basename "${0}")" "${meson_version}"
 }
 
 # Parse parameters.
 while test ${#} -gt 0; do
     case "${1}" in
         '-i'|'--install') install=true ;;
-        '-p'|'--venv') use_venv=true ;;
+        '-l'|'--latest') latest=true ;;
+        '-v'|'--venv') use_venv=true ;;
         '-h'|'--help') print_usage; exit 0 ;;
         *) break ;;
     esac; shift
@@ -45,6 +49,7 @@ done
 
 # Default parameters
 test -z "${install+x}" && install=false
+test -z "${latest+x}" && latest=false
 test -z "${use_venv+x}" && use_venv=false
 
 if "${install}" &&  "${use_venv}"; then
@@ -59,8 +64,8 @@ fi
 top_level=$(cd "$(dirname "${0}")" && pwd)
 cd "${top_level}" || exit 1
 
-if command -v meson > /dev/null 2>&1 && le 1.8.0 "$(meson --version)"; then
-    # Good to be used. Does not suffer from endless transitional dependency iteration.
+if command -v meson > /dev/null 2>&1 && ! "${latest}" && le "${meson_version}" "$(meson --version)"; then
+    # Good to be used. Does not suffer from endless transitional dependency iteration fixed in 1.8.0.
     meson='meson'
 else
     meson='.meson/meson'
@@ -90,21 +95,22 @@ else
         ${sudo} cp "${venv}/bin/ninja" .meson/ninja
 
         if "${use_venv}"; then
-            # TODO: change to this when 1.8.0 gets released.
-            # ${sudo} "${venv}/bin/pip" install meson==1.8.0
-            ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
+            if "${latest}"; then
+                ${sudo} "${venv}/bin/pip" install git+https://github.com/mesonbuild/meson.git
+            else
+                ${sudo} "${venv}/bin/pip" install "meson==${meson_version}"
+            fi
             ${sudo} cp "${venv}/bin/meson" .meson/meson
         else
             if test ! -d .meson-src; then
                 git clone https://github.com/mesonbuild/meson .meson-src
             fi
-            (
-                cd .meson-src || exit 1
-                # TODO: always checkout when 1.8.0 gets released.
-                if git tag -l | grep -E '^1.8.0$' > /dev/null 2>&1; then
-                    git checkout 1.8.0
-                fi
-            )
+            if ! "${latest}"; then
+                (
+                    cd .meson-src || exit 1
+                    git checkout "${meson_version}"
+                )
+            fi
             ${sudo} "${venv}/bin/pip" install pyinstaller
             (
                 cd .meson-src || exit 1
@@ -118,6 +124,7 @@ fi
 if "${install}"; then
     sudo cp .meson/meson /usr/local/bin/meson
     sudo cp .meson/ninja /usr/local/bin/ninja
+    rm -fr .meson
     exit 0
 fi
 

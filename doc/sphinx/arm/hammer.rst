@@ -107,21 +107,6 @@ operating system, without the build:
 
 This way, a system can be prepared for our own use.
 
-.. note::
-
-   Currently, when this command is run, the latest version of Meson is installed.
-   This is because, at the time of writing, three different bugs that affect
-   building Kea with Meson in different processes were fixed in the latest
-   version, but not in any released version as of yet:
-
-   - https://github.com/mesonbuild/meson/issues/11322
-   - https://github.com/mesonbuild/meson/issues/14412
-   - https://github.com/mesonbuild/meson/issues/14470
-
-   Maintenance Meson release 1.7.2 contains two of the fixes, but arguably, not
-   the most impactful of them. When Meson 1.8.0 is released, Hammer will bind to
-   that version.
-
 To prepare such a system using SSH, invoke:
 
 .. code-block:: console

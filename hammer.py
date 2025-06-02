@@ -476,6 +476,8 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     :type mode: str
     """
 
+    meson_version = '1.8.1'
+
     exit_code = execute('meson --version', quiet=True, raise_error=False)
     if exit_code == 0:
         return
@@ -485,10 +487,7 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     execute('sudo /usr/local/share/.venv/bin/pip install ninja')
     if mode == 'pyinstaller':
         execute('git clone https://github.com/mesonbuild/meson .meson-src')
-        # TODO: always checkout when 1.8.0 gets released.
-        _, output = execute('git tag -l', cwd='.meson-src', capture=True, quiet=True)
-        if '1.8.0' in output.splitlines():
-            execute('git checkout 1.8.0', cwd='.meson-src')
+        execute(f'git checkout {meson_version}', cwd='.meson-src')
         execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
         execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
                 '--dist ../.meson --onefile ./meson.py',
@@ -497,9 +496,7 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
         execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
 
     elif mode == 'venv':
-        # TODO: change to this when 1.8.0 gets released.
-        # execute('/usr/local/share/.venv/bin/pip install meson==1.8.0')
-        execute('sudo /usr/local/share/.venv/bin/pip install git+https://github.com/mesonbuild/meson.git')
+        execute(f'sudo /usr/local/share/.venv/bin/pip install meson=={meson_version}')
         execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
         execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
     else:
