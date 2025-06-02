@@ -1,3 +1,9 @@
+2349.	[func]		razvan
+	The kea-ctrl-agent has been deprecated and it issues a warning
+	log message on startup. Its function has been moved to Kea servers
+	since release 2.7.2.
+	(Gitlab #3916)
+
 2348.	[bug]		razvan, Darwin4053
 	Fix arguments order in flex option hook library debug messages.
 	(Gitlab #3875)
