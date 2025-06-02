@@ -1605,11 +1605,11 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         {"valid", 0.0, ""},
         {"negative", -.25,
          "subnet configuration failed: cache-threshold:"
-         " -0.25 is invalid, it must be greater than 0.0 and less than 1.0"
+         " -0.25 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
         },
         {"too big", 1.05,
          "subnet configuration failed: cache-threshold:"
-         " 1.05 is invalid, it must be greater than 0.0 and less than 1.0"
+         " 1.05 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
         }
     };
 
