@@ -39,9 +39,9 @@ The CA processes received commands according to the following algorithm:
 
 .. note::
 
-   The CA is deprecated: its function has been moved to Kea servers since
-   release 2.7.2, see the section about migration from CA
-   (:ref:`ctrl-channel-migration`).
+   The kea-ctrl-agent is deprecated. As of Kea 2.7.2 the Kea servers:
+   kea-dhcp4, kea-dhcp6, and kea-dhcp-ddns directly support command API
+   connections over HTTPS/HTTP. (:ref:`ctrl-channel-migration`).
 
 .. _agent-configuration:
 

@@ -1,7 +1,8 @@
 2349.	[func]		razvan
 	The kea-ctrl-agent has been deprecated and it issues a warning
-	log message on startup. Its function has been moved to Kea servers
-	since release 2.7.2.
+	log message on startup. As of Kea 2.7.2 the Kea servers:
+	kea-dhcp4, kea-dhcp6, and kea-dhcp-ddns directly support command
+	API connections over HTTPS/HTTP.
 	(Gitlab #3916)
 
 2348.	[bug]		razvan, Darwin4053
