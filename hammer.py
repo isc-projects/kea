@@ -1097,7 +1097,6 @@ class VagrantEnv():
         # install python3 on some systems
         if self.system == 'centos':
             if self.revision == '7':
-                self.execute("sudo yum remove -y python-devel")
                 self.execute("sudo yum install -y python36 rpm-build python3-virtualenv", attempts=3)
             else:
                 self.execute("sudo dnf install -y python36 rpm-build python3-virtualenv", attempts=3)
@@ -1781,7 +1780,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            execute('sudo dnf remove -y postgresql-private-devel', raise_error=False)
             packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
 
         if 'gssapi' in features:
@@ -1896,7 +1894,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            execute('sudo dnf remove -y postgresql-private-devel', raise_error=False)
             packages.extend(['libpq-devel', 'postgresql', 'postgresql-server'])
 
         if 'gssapi' in features:
