@@ -1,6 +1,4 @@
 [bug]		tmark
-	Corrected an issue in logging configuration parsing
-	which added the supported to path to output
-	destinations "syslog:<facility name>" rather than
-	logging the specified syslog facility.
+	Corrected an issue in logging configuration when
+	parsing "syslog:<facility name>".
 	(Gitlab #3921)
