@@ -510,13 +510,13 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
         return (CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE);
     }
 
-    // If there's a previous lease that belongs to this client and
-    // it was touched by the client less than ping-cltt-secs ago then
+    // If there's a previous lease that belongs to this client and it either
+    // active or was touched by the client less than ping-cltt-secs ago then
     // no check is needed.  Drop the query from parking and release the
     // offer to the client,
     if (old_lease && (old_lease->addr_ == lease->addr_)) {
         if (old_lease->belongsToClient(lease->hwaddr_, lease->client_id_)) {
-            if (!old_lease->expired() || 
+            if (!old_lease->expired() ||
                 ((time(0) - old_lease->cltt_) < config->getPingClttSecs())) {
                 return (CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE);
             }

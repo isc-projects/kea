@@ -1152,7 +1152,7 @@ public:
     /// Old lease returned in the lease4_offer callout
     static Lease4Ptr callback_old_lease_;
 
-    /// Currenth host returned in the lease4_offer callout
+    /// Current host returned in the lease4_offer callout
     static ConstHostPtr callback_current_host_;
 
     /// Hostname argument returned in ddns4_update callout.

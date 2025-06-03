@@ -752,7 +752,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create manager with thread-pool size of 3, min_echos 2, reply_timeout 250 ms.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         ASSERT_NO_THROW_LOG(createMgr(3, 2, 250));
         ASSERT_TRUE(mgr_);
 
@@ -839,7 +839,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 2 echos, 250 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 2, 250, true);
 
         // Calling nextToSend() should return false.
@@ -901,7 +901,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 2 echos, 500 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 2, 500, true);
 
         // Should not have an expiration time, timer should not be running.
@@ -1009,7 +1009,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 2 echos, 500 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 2, 500, true);
 
         // Start a ping for an address so we have a context.
@@ -1069,7 +1069,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 2 echos, 500 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 2, 500, true);
 
         // Install a post reply received callback to stop the test if we're done.
@@ -1140,7 +1140,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 2 echos, 500 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 2, 500, true);
 
         // Install a post reply received callback to stop the test if we're done.
@@ -1205,7 +1205,7 @@ public:
         SKIP_IF(notRoot());
 
         // Create a paused manager. 3 threads, 1 echos, 250 ms timeout.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         createMgr(3, 1, 250, true);
 
         // Start four ping checks, then stage them so:
@@ -1290,7 +1290,7 @@ public:
         // Create manager with thread-pool size of 3, min_echos 1,
         // reply_timeout 1000 milliseconds.  Larger time out for this test
         // avoids sporadic expirations which leads to unaccounted for UNPARKs.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         ASSERT_NO_THROW_LOG(createMgr(3, 1, 1000));
         ASSERT_TRUE(mgr_);
 
@@ -1341,7 +1341,7 @@ public:
         // Create manager with thread-pool size of 3, min_echos 1,
         // reply_timeout 1000 milliseconds.  Larger time out for this test
         // avoids sporadic expirations which leads to unaccounted for UNPARKs.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         ASSERT_NO_THROW_LOG(createMgr(3, 1, 1000));
         ASSERT_TRUE(mgr_);
 
@@ -1436,7 +1436,7 @@ public:
 
         // Create manager with thread-pool size of 3, min_echos 1,
         // reply_timeout 250 milliseconds.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         ASSERT_NO_THROW_LOG(createMgr(3, 1, 250));
         ASSERT_TRUE(mgr_);
 
@@ -1488,7 +1488,7 @@ public:
 
         // Create manager with thread-pool size of 3, min_echos 1,
         // reply_timeout 250 milliseconds.
-        // ST mode should ingore requested thread number.
+        // ST mode should ignore requested thread number.
         ASSERT_NO_THROW_LOG(createMgr(3, 1, 250));
         ASSERT_TRUE(mgr_);
 
