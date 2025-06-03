@@ -632,6 +632,82 @@ TEST_F(LoggingTest, maxsize) {
     testMaxSize(1000000LL * std::numeric_limits<int32_t>::max(), 1000000LL * std::numeric_limits<int32_t>::max());
 }
 
+// Verifies syslog destination
+TEST_F(LoggingTest, syslogDestination) {
+    // Note the backslash must be doubled in the pattern definition.
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output-options\": ["
+    "            {"
+    "                \"output\": \"syslog\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    EXPECT_NO_THROW(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    // The destination output should NOT include the validated path.
+    EXPECT_EQ("syslog" , storage->getLoggingInfo()[0].destinations_[0].output_);
+}
+
+// Verifies syslog destination
+TEST_F(LoggingTest, syslogPlusFacility) {
+    // Note the backslash must be doubled in the pattern definition.
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output-options\": ["
+    "            {"
+    "                \"output\": \"syslog:daemon\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    EXPECT_NO_THROW(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    // The destination output should NOT include the validated path.
+    EXPECT_EQ("syslog:daemon" , storage->getLoggingInfo()[0].destinations_[0].output_);
+}
+
 /// @todo Add tests for malformed logging configuration
 
 /// @todo There is no easy way to test applyConfiguration() and defaultLogging().

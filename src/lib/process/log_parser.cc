@@ -173,7 +173,8 @@ void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destin
         auto output_str = output->stringValue();
         if ((output_str == "stdout") ||
             (output_str == "stderr") ||
-            (output_str == "syslog")) {
+            (output_str == "syslog") ||
+            (output_str.find("syslog:") == 0)) {
             dest.output_ = output_str;
         } else {
             try {
