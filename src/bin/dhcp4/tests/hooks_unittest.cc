@@ -833,7 +833,7 @@ public:
 
         callout_handle.getArgument("offer_lifetime", callback_offer_lft_);
         callout_handle.getArgument("old_lease", callback_old_lease_);
-        callout_handle.getArgument("current_host", callback_current_host_);
+        callout_handle.getArgument("host", callback_host_);
 
         callback_argument_names_ = callout_handle.getArgumentNames();
         sort(callback_argument_names_.begin(), callback_argument_names_.end());
@@ -876,7 +876,7 @@ public:
 
         callout_handle.getArgument("offer_lifetime", callback_offer_lft_);
         callout_handle.getArgument("old_lease", callback_old_lease_);
-        callout_handle.getArgument("current_host", callback_current_host_);
+        callout_handle.getArgument("host", callback_host_);
         callback_argument_names_ = callout_handle.getArgumentNames();
         sort(callback_argument_names_.begin(), callback_argument_names_.end());
 
@@ -1087,7 +1087,7 @@ public:
         callback_resp_options_copy_ = false;
         callback_offer_lft_ = 0;
         callback_old_lease_.reset();
-        callback_current_host_.reset();
+        callback_host_.reset();
     }
 
     /// @brief Fetches the current value of the given statistic.
@@ -1153,7 +1153,7 @@ public:
     static Lease4Ptr callback_old_lease_;
 
     /// Current host returned in the lease4_offer callout
-    static ConstHostPtr callback_current_host_;
+    static ConstHostPtr callback_host_;
 
     /// Hostname argument returned in ddns4_update callout.
     static std::string callback_hostname_;
@@ -1185,7 +1185,7 @@ bool HooksDhcpv4SrvTest::callback_qry_options_copy_;
 bool HooksDhcpv4SrvTest::callback_resp_options_copy_;
 uint32_t HooksDhcpv4SrvTest::callback_offer_lft_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_old_lease_;
-ConstHostPtr HooksDhcpv4SrvTest::callback_current_host_;
+ConstHostPtr HooksDhcpv4SrvTest::callback_host_;
 std::string HooksDhcpv4SrvTest::callback_hostname_;
 bool HooksDhcpv4SrvTest::callback_fwd_update_;
 bool HooksDhcpv4SrvTest::callback_rev_update_;
@@ -3701,7 +3701,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscover) {
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
-    expected_argument_names.push_back("current_host");
+    expected_argument_names.push_back("host");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -3856,7 +3856,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkRequests) {
     expected_argument_names.push_back("leases4");
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
-    expected_argument_names.push_back("current_host");
+    expected_argument_names.push_back("host");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
@@ -4075,7 +4075,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferDiscoverDecline) {
     expected_argument_names.push_back("offer_lifetime");
     expected_argument_names.push_back("old_lease");
     expected_argument_names.push_back("offer_address_in_use");
-    expected_argument_names.push_back("current_host");
+    expected_argument_names.push_back("host");
 
     sort(expected_argument_names.begin(), expected_argument_names.end());
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);

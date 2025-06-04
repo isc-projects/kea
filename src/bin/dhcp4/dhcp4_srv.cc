@@ -1753,7 +1753,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
                 // Arguments required only for lease4_offer callout.
                 callout_handle->setArgument("offer_lifetime", ctx->offer_lft_);
                 callout_handle->setArgument("old_lease", ctx->old_lease_);
-                callout_handle->setArgument("current_host", ctx->currentHost());
+                callout_handle->setArgument("host", ctx->currentHost());
             } else {
                 // Arguments required only for leases4_committed callout.
                 Lease4CollectionPtr deleted_leases(new Lease4Collection());
