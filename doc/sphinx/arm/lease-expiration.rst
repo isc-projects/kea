@@ -290,7 +290,7 @@ Consider the following configuration:
        ...
    }
 
-The ``hold-reclaim-time`` specifies how many seconds after an expiration
+The ``hold-reclaimed-time`` specifies how many seconds after an expiration
 a reclaimed lease should be held in the database for reassignment to
 the same client. In the example given above, reclaimed leases are
 held for 30 minutes (1800 seconds) after their expiration. During this time,
@@ -299,14 +299,14 @@ returning client, unless another client specifically requests this lease and the
 server assigns it.
 
 The server must periodically remove reclaimed leases for which the time
-indicated by ``hold-reclaim-time`` has elapsed. The
+indicated by ``hold-reclaimed-time`` has elapsed. The
 ``flush-reclaimed-timer-wait-time`` parameter controls how often the
 server removes such leases. In the example provided above, the server
 initiates removal of such leases five seconds after the previous
 removal attempt was completed. Setting this value to 0 disables lease
 affinity, meaning leases are removed from the lease database
 when they are reclaimed. If lease affinity is enabled, it is recommended
-that the ``hold-reclaim-time`` be set to a value significantly higher than
+that the ``hold-reclaimed-time`` be set to a value significantly higher than
 the ``reclaim-timer-wait-time``, as timely removal of expired-reclaimed
 leases is less critical than the removal process, which may impact
 server responsiveness.
