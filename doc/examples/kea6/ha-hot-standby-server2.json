@@ -85,7 +85,11 @@
                             // channel can be reached. The Control Agent is required
                             // to run on the partner's machine with "http-host" and
                             // "http-port" values set to the corresponding values.
-                            "url": "http://192.168.56.33:8000/",
+                            // For security reasons, Kea should be run as non root
+                            // user, a port lower than 1024 should be used (e.g. 897)
+                            // and, on Linux systems, the process should have
+                            // 'CAP_NET_BIND_SERVICE' capabilities.
+                            "url": "http://192.168.56.33:8007",
                             // The partner is primary. This server is standby.
                             "role": "primary"
                         },
@@ -96,7 +100,11 @@
                             // Control Agent must run along with this DHCPv6 server
                             // instance and the "http-host" and "http-port" must be
                             // set to the corresponding values.
-                            "url": "http://192.168.56.66:8000/",
+                            // For security reasons, Kea should be run as non root
+                            // user, a port lower than 1024 should be used (e.g. 897)
+                            // and, on Linux systems, the process should have
+                            // 'CAP_NET_BIND_SERVICE' capabilities.
+                            "url": "http://192.168.56.66:8007",
                             // This server is standby. The other one must be
                             // primary.
                             "role": "standby"

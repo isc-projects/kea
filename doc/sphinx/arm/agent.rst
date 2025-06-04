@@ -114,6 +114,10 @@ provided above, the RESTful service will be available at the URL
 ``https://10.20.30.40:8000/``. If these parameters are not specified, the
 default URL is ``http://127.0.0.1:8000/``.
 
+For security reasons, Kea should be run as non root user, a port lower
+than 1024 should be used (e.g. 890) and, on Linux systems, the process
+should have 'CAP_NET_BIND_SERVICE' capabilities.
+
 When using Kea's HA hook library with multi-threading,
 the address:port combination used for CA must be
 different from the HA peer URLs, which are strictly

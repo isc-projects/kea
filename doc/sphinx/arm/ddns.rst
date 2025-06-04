@@ -403,6 +403,10 @@ TLS is required). The ``socket-address`` (default ``127.0.0.1``) and
 ``socket-port`` (default 8000) specify an IP address and port to which
 the HTTP service will be bound.
 
+For security reasons, Kea should be run as non root user, a port lower
+than 1024 should be used (e.g. 892) and, on Linux systems, the process
+should have 'CAP_NET_BIND_SERVICE' capabilities.
+
 The ``trust-anchor``, ``cert-file``, ``key-file``, and ``cert-required``
 parameters specify the TLS setup for HTTP, i.e. HTTPS. If these parameters
 are not specified, HTTP is used. The TLS/HTTPS support in Kea is

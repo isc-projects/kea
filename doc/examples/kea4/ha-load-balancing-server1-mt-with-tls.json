@@ -162,7 +162,10 @@
                             // instance if multi-threading is enabled.
                             // The "http-host" and "http-port" values must be set to different
                             // values then the ones used by the Control Agent.
-                            "url": "http://192.168.56.33:8000/",
+                            // For security reasons, Kea should be run as non root user, a port lower
+                            // than 1024 should be used (e.g. 895) and, on Linux systems, the process
+                            // should have 'CAP_NET_BIND_SERVICE' capabilities.
+                            "url": "http://192.168.56.33:8005",
                             // Trust anchor aka certificate authority file or directory.
                             "trust-anchor": "/usr/lib/kea/CA.pem",
                             // Client certificate file name.
@@ -182,8 +185,11 @@
                             // channel can be reached. The Control Agent is not required
                             // to run on the partner's machine if multi-threading is enabled.
                             // The "http-host" and "http-port" values must be set to different
-                            // values then the ones used by the Control Agent.
-                            "url": "http://192.168.56.66:8000/",
+                            // values then the ones used by the Control Agent
+                            // For security reasons, Kea should be run as non root user, a port lower
+                            // than 1024 should be used (e.g. 895) and, on Linux systems, the process
+                            // should have 'CAP_NET_BIND_SERVICE' capabilities.
+                            "url": "http://192.168.56.66:8005",
                             // Trust anchor aka certificate authority file or directory.
                             "trust-anchor": "/usr/lib/kea/CA.pem",
                             // Client certificate file name.

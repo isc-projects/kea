@@ -6,7 +6,7 @@
 // do. Comments in this configuration file sometimes refer to sections for more
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
-// in ISC's Knowledgebase (https://kea.readthedocs.io; the direct link for
+// in ISC's Knowledge base (https://kea.readthedocs.io; the direct link for
 // the stable version is https://kea.readthedocs.io/).
 //
 // This configuration file contains only Control Agent's configuration.
@@ -24,6 +24,9 @@
     // listener is different (e.g. 8001) than the one used by CA. Note
     // the commands should still be sent via CA. The dedicated listener
     // is specifically for HA updates only.
+    // For security reasons, Kea should be run as non root user, a port lower
+    // than 1024 should be used (e.g. 890) and, on Linux systems, the process
+    // should have 'CAP_NET_BIND_SERVICE' capabilities.
     "http-port": 8000,
 
     // Allow access only to kea-api user.

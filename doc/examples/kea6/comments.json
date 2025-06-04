@@ -62,7 +62,7 @@
            "comment": "HTTP control socket",
            "socket-type": "http",
            "socket-address": "127.0.0.1",
-           "socket-port": 8000,
+           "socket-port": 8006,
 
            // In authentication
            "authentication": {

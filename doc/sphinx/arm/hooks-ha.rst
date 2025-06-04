@@ -261,12 +261,12 @@ Server 1:
                    "max-unacked-clients": 5,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8000/",
+                       "url": "http://192.168.56.33:8005",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8000/",
+                       "url": "http://192.168.56.66:8005",
                        "role": "standby",
                        "auto-failover": true
                    }]
@@ -308,12 +308,12 @@ Server 2:
                    "max-unacked-clients": 5,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8000/",
+                       "url": "http://192.168.56.33:8005",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8000/",
+                       "url": "http://192.168.56.66:8005",
                        "role": "standby",
                        "auto-failover": true
                    }]
@@ -687,17 +687,17 @@ only difference that ``this-server-name`` should be set to "server2" and
                    "delayed-updates-limit": 100,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8000/",
+                       "url": "http://192.168.56.33:8005",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8000/",
+                       "url": "http://192.168.56.66:8005",
                        "role": "secondary",
                        "auto-failover": true
                    }, {
                        "name": "server3",
-                       "url": "http://192.168.56.99:8000/",
+                       "url": "http://192.168.56.99:8005",
                        "role": "backup",
                        "basic-auth-user": "foo",
                        "basic-auth-password": "1234",
@@ -1084,17 +1084,17 @@ The following is an example configuration of the primary server in a
                    "max-rejected-lease-updates": 10,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8000/",
+                       "url": "http://192.168.56.33:8005",
                        "role": "primary",
                        "auto-failover": true
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8000/",
+                       "url": "http://192.168.56.66:8005",
                        "role": "standby",
                        "auto-failover": true
                    }, {
                        "name": "server3",
-                       "url": "http://192.168.56.99:8000/",
+                       "url": "http://192.168.56.99:8005",
                        "basic-auth-user": "foo",
                        "basic-auth-password": "1234",
                        "role": "backup",
@@ -1165,15 +1165,15 @@ The following is an example configuration file for the primary server in a
                    "wait-backup-ack": false,
                    "peers": [{
                        "name": "server1",
-                       "url": "http://192.168.56.33:8000/",
+                       "url": "http://192.168.56.33:8005",
                        "role": "primary"
                    }, {
                        "name": "server2",
-                       "url": "http://192.168.56.66:8000/",
+                       "url": "http://192.168.56.66:8005",
                        "role": "backup"
                    }, {
                        "name": "server3",
-                       "url": "http://192.168.56.99:8000/",
+                       "url": "http://192.168.56.99:8005",
                        "basic-auth-user": "foo",
                        "basic-auth-password": "1234",
                        "role": "backup"
@@ -1287,12 +1287,12 @@ default to ``true``:
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8000/",
+                               "url": "http://192.168.56.33:8005",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8000/",
+                               "url": "http://192.168.56.66:8005",
                                "role": "secondary"
                            }
                        ]
@@ -1379,12 +1379,12 @@ single page of leases from 60 seconds to 90 seconds:
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8000/",
+                               "url": "http://192.168.56.33:8005",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8000/",
+                               "url": "http://192.168.56.66:8005",
                                "role": "secondary"
                            }
                        ]
@@ -1457,12 +1457,12 @@ the HA state machine to pause in the ``waiting`` state after server startup.
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8000/",
+                               "url": "http://192.168.56.33:8005",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8000/",
+                               "url": "http://192.168.56.66:8005",
                                "role": "secondary"
                            }
                        ],
@@ -1512,12 +1512,12 @@ Consider the following configuration:
                        "peers": [
                            {
                                "name": "server1",
-                               "url": "http://192.168.56.33:8000/",
+                               "url": "http://192.168.56.33:8005",
                                "role": "primary"
                            },
                            {
                                "name": "server2",
-                               "url": "http://192.168.56.66:8000/",
+                               "url": "http://192.168.56.66:8005",
                                "role": "secondary"
                            }
                        ],
@@ -1593,6 +1593,9 @@ machine as the primary server. This configuration is valid for both the
         // listener is different (e.g. 8001) than the one used by CA. Note
         // the commands should still be sent via CA. The dedicated listener
         // is specifically for HA updates only.
+        // For security reasons, Kea should be run as non root user, a port
+        // lower than 1024 should be used (e.g. 890) and, on Linux systems,
+        // the process should have 'CAP_NET_BIND_SERVICE' capabilities.
        "http-port": 8000,
 
        "control-sockets": {
@@ -1683,8 +1686,12 @@ as illustrated below:
                              // Since the HA+MT uses a direct connection, the
                              // DHCPv4 server open its own socket. Note that it
                              // must be different than the one used by the CA
-                             // (typically 8000). In this example, 8001 is used.
-                             "url": "http://192.0.2.1:8001/",
+                             // (typically 8000). In this example, 8005 is used.
+                             // For security reasons, Kea should be run as non root
+                             // user, a port lower than 1024 should be used (e.g. 895)
+                             // and, on Linux systems, the process should have
+                             // 'CAP_NET_BIND_SERVICE' capabilities.
+                             "url": "http://192.0.2.1:8005",
                              // This server is primary. The other one must be
                              // secondary.
                              "role": "primary"
@@ -1696,8 +1703,12 @@ as illustrated below:
                              // Since the HA+MT uses a direct connection, the
                              // DHCPv4 server open its own socket. Note that it
                              // must be different than the one used by the CA
-                             // (typically 8000). In this example, 8001 is used.
-                             "url": "http://192.0.2.2:8001/",
+                             // (typically 8000). In this example, 8005 is used.
+                             // For security reasons, Kea should be run as non root
+                             // user, a port lower than 1024 should be used (e.g. 895)
+                             // and, on Linux systems, the process should have
+                             // 'CAP_NET_BIND_SERVICE' capabilities.
+                             "url": "http://192.0.2.2:8005",
                              // The partner is a secondary. This server is a
                              // primary as specified in the previous "peers"
                              // entry and in "this-server-name" before that.
@@ -2461,13 +2472,13 @@ grouped into relationships as in the snippet below:
                                 "peers": [
                                     {
                                         "name": "server1",
-                                        "url": "http://192.168.56.66:8000/",
+                                        "url": "http://192.168.56.66:8007",
                                         "role": "primary",
                                         "auto-failover": true
                                     },
                                     {
                                         "name": "server2",
-                                        "url": "http://192.168.56.33:8000/",
+                                        "url": "http://192.168.56.33:8007",
                                         "role": "standby",
                                         "auto-failover": true
                                     }
@@ -2485,13 +2496,13 @@ grouped into relationships as in the snippet below:
                                 "peers": [
                                     {
                                         "name": "server3",
-                                        "url": "http://192.168.57.99:8000/",
+                                        "url": "http://192.168.57.99:8007",
                                         "role": "primary",
                                         "auto-failover": true
                                     },
                                     {
                                         "name": "server4",
-                                        "url": "http://192.168.57.33:8000/",
+                                        "url": "http://192.168.57.33:8007",
                                         "role": "standby",
                                         "auto-failover": true
                                     }
@@ -2565,13 +2576,13 @@ branch ``server3``:
                                 "peers": [
                                     {
                                         "name": "server3",
-                                        "url": "http://192.168.57.99:8000/",
+                                        "url": "http://192.168.57.99:8007",
                                         "role": "primary",
                                         "auto-failover": true
                                     },
                                     {
                                         "name": "server4",
-                                        "url": "http://192.168.57.33:8000/",
+                                        "url": "http://192.168.57.33:8007",
                                         "role": "standby",
                                         "auto-failover": true
                                     }

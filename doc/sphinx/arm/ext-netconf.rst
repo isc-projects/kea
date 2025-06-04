@@ -563,15 +563,14 @@ Kea sources.
                    }
                },
 
-               // Currently the DHCP-DDNS (nicknamed D2) server does not support
-               // a command channel.
                "d2":
                {
                    "model": "kea-dhcp-ddns",
                    "control-socket":
                    {
-                       "socket-type": "stdout",
-                       "user-context": { "in-use": false }
+                       "socket-type": "unix",
+                       "socket-name": "kea-ddns-ctrl-socket",
+                       "user-context": { "in-use": true }
                    }
                },
 
