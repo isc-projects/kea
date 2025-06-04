@@ -4424,9 +4424,9 @@ configuration of the DHCPv4 side (the DHCPv6 side is described in
 
 .. note::
 
-   DHCPv4-over-DHCPv6 support is experimental and the details of the
-   inter-process communication may change; for instance, the
-   support of port relay (RFC 8357) introduced an incompatible change.
+   The DHCPv4-over-DHCPv6 details of the inter-process communication may change;
+   for instance, the support of port relay (RFC 8357) introduced an incompatible
+   change.
    Both the DHCPv4 and DHCPv6 sides should be running the same version of Kea.
 
 The ``dhcp4o6-port`` global parameter specifies the first of the two

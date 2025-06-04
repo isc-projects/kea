@@ -829,8 +829,7 @@ datastore, i.e. changes are not permanent.
 
     :iscman:`kea-netconf` fetches the entire configuration from any Sysrepo datastore in a
     single ``get-config`` NETCONF operation. Prior to Kea 2.3.2, a ``get-config`` operation
-    was done for each leaf and leaf-list node. Because of the significant changes,
-    :iscman:`kea-netconf` is considered experimental.
+    was done for each leaf and leaf-list node.
 
 .. _operation-example-errors:
 

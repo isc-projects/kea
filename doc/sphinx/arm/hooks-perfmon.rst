@@ -9,11 +9,6 @@ the ability to track and report performance-related data.
 
 .. note::
 
-    This library is experimental and not recommended for use in production
-    environments.
-
-.. note::
-
     :ischooklib:`libdhcp_perfmon.so` is part of the open source code and is
     available to every Kea user.
 
