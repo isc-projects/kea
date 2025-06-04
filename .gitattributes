@@ -12,6 +12,7 @@
 /changelog_unreleased/.add-entry.sh           export-ignore
 /changelog_unreleased/.template               export-ignore
 /Dangerfile                                   export-ignore
+/hammer.py                                    export-ignore
 /tools/add-config-h.sh                        export-ignore
 /tools/bump-lib-versions.sh                   export-ignore
 /tools/check-for-duplicate-includes.sh        export-ignore
