@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -155,8 +155,9 @@ TEST_F(TranslatorSharedNetworksTestKeaV6, getList) {
         "\"subnet\": \"2001:db8:101::/48\" }, "
         "{ \"id\": 102, \"subnet\": \"2001:db8:102::/48\" } ] }";
 
+    // Since v3, lists seem to be ordered by keys. Shouldn't be too big of a problem.
     const string exp_both =
-        "[ " + exp_net1 + ", " + exp_net2 + " ]";
+        "[ " + exp_net2 + ", " + exp_net1 + " ]";
 
     // Create the subnet1: 2001:db8:1::/48 #1 in shared network foo.
     const string& xsubnet1 = xnetwork1 + "/subnet6[id='1']/subnet";

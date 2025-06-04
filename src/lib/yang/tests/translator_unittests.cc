@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -344,13 +344,17 @@ TEST_F(TranslatorTest, getItem) {
 
     // Not existing.
     xpath = "/keatest-module:main/no_such_node";
-    EXPECT_NO_THROW_LOG(element = translator->getItemFromAbsoluteXpath(xpath));
+    EXPECT_THROW_MSG(element = translator->getItemFromAbsoluteXpath(xpath), NetconfError,
+                     "getting item at '/keatest-module:main/no_such_node': Session::getData: "
+                     "Couldn't get '/keatest-module:main/no_such_node': SR_ERR_NOT_FOUND");
     EXPECT_FALSE(element);
     element.reset();
 
     // Check error.
     xpath = "null";
-    EXPECT_NO_THROW_LOG(element = translator->getItemFromAbsoluteXpath(xpath));
+    EXPECT_THROW_MSG(element = translator->getItemFromAbsoluteXpath(xpath), NetconfError,
+                     "getting item at 'null': Session::getData: Couldn't get 'null': "
+                     "SR_ERR_NOT_FOUND");
     EXPECT_FALSE(element);
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -183,15 +183,18 @@ TEST_F(TranslatorOptionDataListTestv4, set) {
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/code", s_code), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp4-server:config/option-data[code='100'][space='dns'][data='12121212']/code' to "
-                     "'15': SR_ERR_INVAL_ARG");
+                     "'15': SR_ERR_INVAL_ARG\n Editing list key \"code\" is not supported, edit list instances "
+                     "instead. (SR_ERR_INVAL_ARG)");
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/space", s_space), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp4-server:config/option-data[code='100'][space='dns'][data='12121212']/space' to "
-                     "'dhcp4': SR_ERR_INVAL_ARG");
+                     "'dhcp4': SR_ERR_INVAL_ARG\n Editing list key \"space\" is not supported, edit list instances "
+                     "instead. (SR_ERR_INVAL_ARG)");
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/data", s_data), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp4-server:config/option-data[code='100'][space='dns'][data='12121212']/data' to "
-                     "'12121212': SR_ERR_INVAL_ARG");
+                     "'12121212': SR_ERR_INVAL_ARG\n Editing list key \"data\" is not supported, edit list "
+                     "instances instead. (SR_ERR_INVAL_ARG)");
 
     // Setting the list element directly should work.
     EXPECT_NO_THROW_LOG(sess_->setItem(xoption, std::nullopt));
@@ -228,15 +231,18 @@ TEST_F(TranslatorOptionDataListTestv6, set) {
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/code", s_code), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp6-server:config/option-data[code='100'][space='dns'][data='12121212']/code' to "
-                     "'15': SR_ERR_INVAL_ARG");
+                     "'15': SR_ERR_INVAL_ARG\n Editing list key \"code\" is not supported, edit list instances "
+                     "instead. (SR_ERR_INVAL_ARG)");
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/space", s_space), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp6-server:config/option-data[code='100'][space='dns'][data='12121212']/space' to "
-                     "'dhcp6': SR_ERR_INVAL_ARG");
+                     "'dhcp6': SR_ERR_INVAL_ARG\n Editing list key \"space\" is not supported, edit list instances "
+                     "instead. (SR_ERR_INVAL_ARG)");
     EXPECT_THROW_MSG(sess_->setItem(xoption + "/data", s_data), sysrepo::Error,
                      "Session::setItem: Couldn't set "
                      "'/kea-dhcp6-server:config/option-data[code='100'][space='dns'][data='12121212']/data' to "
-                     "'12121212': SR_ERR_INVAL_ARG");
+                     "'12121212': SR_ERR_INVAL_ARG\n Editing list key \"data\" is not supported, edit list instances "
+                     "instead. (SR_ERR_INVAL_ARG)");
 
     // Setting the list element directly should work.
     EXPECT_NO_THROW_LOG(sess_->setItem(xoption, std::nullopt));

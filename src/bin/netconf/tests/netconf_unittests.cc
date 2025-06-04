@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1164,7 +1164,7 @@ TEST_F(NetconfAgentTest, noValidate) {
           "BOGUS", LeafBaseType::String, true }
     });
     EXPECT_THROW_MSG(repr.set(tree1, *agent_->running_sess_), sysrepo::Error,
-                     "Session::applyChanges: Couldn't apply changes: SR_ERR_CALLBACK_FAILED");
+                     "Session::applyChanges: Couldn't apply changes: SR_ERR_VALIDATION_FAILED\n Validation failed (SR_ERR_VALIDATION_FAILED)");
 }
 
 }  // namespace

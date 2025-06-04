@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ YangRepr::YangReprItem::getUnionType(Value const& value) {
     static_assert(
         std::is_same<
             Value, std::variant<int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t,
-                                uint64_t, bool, Empty, Binary, string, optional<DataNode>,
+                                uint64_t, bool, Empty, Binary, string, InstanceIdentifier,
                                 Decimal64, vector<Bit>, Enum, IdentityRef>>::value,
         "Value type has changed. The if statement needs to be adjusted to include all alternatives "
         "of the std::variant.");
@@ -56,7 +56,7 @@ YangRepr::YangReprItem::getUnionType(Value const& value) {
         return LeafBaseType::Binary;
     } else if (holds_alternative<string>(value)) {
         return LeafBaseType::String;
-    } else if (holds_alternative<optional<DataNode>>(value)) {
+    } else if (holds_alternative<InstanceIdentifier>(value)) {
         return LeafBaseType::InstanceIdentifier;
     } else if (holds_alternative<Decimal64>(value)) {
         return LeafBaseType::Dec64;

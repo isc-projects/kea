@@ -22,21 +22,10 @@ Installing NETCONF
 To get its NETCONF capabilities, Kea requires the v2 versions of libyang and
 Sysrepo. The specific versions that have been thoroughly tested with Kea are:
 
-* libyang v2.1.4
-* sysrepo v2.2.12
-* libyang-cpp v1.1.0 (ae7d649ea75da081725c119dd553b2ef3121a6f8)
-* sysrepo-cpp v1.1.0 (02634174ffc60568301c3d9b9b7cf710cff6a586)
-
-.. note::
-
-    For users who are unable to upgrade to one of the versions of libyang
-    and Sysrepo listed above, these are the oldest versions known to work
-    reliably with current Kea releases:
-
-    * libyang v2.0.256 (56d4e07ef1cdeab3eb2e6700247f83ec9148edcc)
-    * sysrepo v2.1.84
-    * libyang-cpp v1.1.0 (7824d9a862f2dc1d8ad4f6a90ab6cee9200f7c81)
-    * sysrepo-cpp v1.1.0 (e66b2f0c53a428eeb743d355cf86fb30e8e491f1)
+* libyang v3.12.2 (da7272e19d9e27d1bfdd68108fa9dce25fbdf5e8)
+* sysrepo v3.6.11 (b2d60c137aa5179af2af0ce1243d4147c4e5f974)
+* libyang-cpp v3 (f3cd4e05462a16e81d6bfd0c4a5b385cf88a8549)
+* sysrepo-cpp v3 (fe4edfa3998fdf312099ee1fb08a06983b6907f6)
 
 .. note::
 
