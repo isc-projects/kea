@@ -1,6 +1,6 @@
 [bug]		tmark
 	Ping check hook library will now route
-	pings across relays. Prior to this it
+	pings across routers. Prior to this it
 	only sent pings to directly connected
 	networks.
 	(Gitlab #3827)
