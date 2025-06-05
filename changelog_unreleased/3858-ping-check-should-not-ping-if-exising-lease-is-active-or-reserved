@@ -1,4 +1,4 @@
 [bug]		tmark
 	Ping check hook library was corrected to skip
 	ping checks when the lease is active or reserved.
-	(Gitlab #3858)
+	(Gitlab #3858, #3932)
