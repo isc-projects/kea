@@ -533,6 +533,8 @@ public:
     /// response from server.
     void printRTTStats() const {
         using namespace std;
+        // Save cout fmtflags.
+        auto flags(cout.flags());
         try {
             cout << fixed << setprecision(3)
                  << "min delay: " << getMinDelay() * 1e3 << " ms" << endl
@@ -549,6 +551,8 @@ public:
                  << "std deviation: n/a" << endl
                  << "collected packets: 0" << endl;
         }
+        // Restore cout fmtflags.
+        cout.flags(flags);
     }
 
     //// \brief Print timestamps for sent and received packets.

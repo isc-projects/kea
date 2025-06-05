@@ -3320,7 +3320,7 @@ void AllocEngine::reclaimLeaseInDatabase(const LeasePtrType& lease,
     // Reclaim the lease - depending on the configuration, set the
     // expired-reclaimed state or simply remove it.
     if (remove_lease) {
-        lease_mgr.deleteLease(lease);
+        static_cast<void>(lease_mgr.deleteLease(lease));
     } else if (lease_update_fun) {
         // Clear FQDN information as we have already sent the
         // name change request to remove the DNS record.

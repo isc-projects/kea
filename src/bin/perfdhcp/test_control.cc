@@ -656,6 +656,8 @@ TestControl::printTemplate(const uint8_t packet_type) const {
     std::cout << "contents: " << std::endl;
     int line_len = 32;
     int i = 0;
+    // Save cout fmtflags.
+    auto flags(std::cout.flags());
     while (line_len == 32) {
         if (hex_buf.length() - i < 32) {
             line_len = hex_buf.length() - i;
@@ -666,6 +668,8 @@ TestControl::printTemplate(const uint8_t packet_type) const {
         }
         i += 32;
     }
+    // Restore cout fmtflags.
+    std::cout.flags(flags);
     std::cout << std::endl;
 }
 

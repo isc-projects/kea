@@ -218,10 +218,10 @@ CSVLeaseFile6::readValid(const CSVRow& row) {
 
 uint32_t
 CSVLeaseFile6::readCltt(const CSVRow& row) {
-    time_t cltt =
-        static_cast<time_t>(row.readAndConvertAt<uint64_t>(getColumnIndex("expire"))
-                            - readValid(row));
-    return (static_cast<uint32_t>(cltt));
+    uint32_t cltt =
+        static_cast<uint32_t>(row.readAndConvertAt<uint64_t>(getColumnIndex("expire"))
+                              - readValid(row));
+    return (cltt);
 }
 
 SubnetID

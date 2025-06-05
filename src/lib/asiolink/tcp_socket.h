@@ -110,9 +110,10 @@ public:
 
             // Use receive with message peek flag to avoid removing the data awaiting
             // to be read.
-            socket_.receive(boost::asio::buffer(data, sizeof(data)),
-                            boost::asio::socket_base::message_peek,
-                            ec);
+            static_cast<void>(
+                socket_.receive(boost::asio::buffer(data, sizeof(data)),
+                                boost::asio::socket_base::message_peek,
+                                ec));
 
             // Revert the original non_blocking flag on the socket.
             socket_.non_blocking(non_blocking_orig);
