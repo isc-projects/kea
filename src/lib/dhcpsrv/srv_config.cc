@@ -145,7 +145,7 @@ SrvConfig::copy(SrvConfig& new_config) const {
     new_config.hooks_config_.clear();
     using namespace isc::hooks;
     for (auto const& it : hooks_config_.get()) {
-        new_config.hooks_config_.add(it.first, it.second);
+        new_config.hooks_config_.add(it.libname_, it.parameters_, it.cfgname_);
     }
 }
 
@@ -171,6 +171,7 @@ SrvConfig::equals(const SrvConfig& other) const {
     if (hooks_config_.get().size() != other.hooks_config_.get().size()) {
         return (false);
     }
+
     // Pass through all configured hooks libraries.
     return (hooks_config_.equal(other.hooks_config_));
 }

@@ -79,7 +79,7 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
     for (auto const& lib : libs) {
-        s << lib.first << " ";
+        s << lib.cfgname_ << " ";
     }
 
     return (s.str());

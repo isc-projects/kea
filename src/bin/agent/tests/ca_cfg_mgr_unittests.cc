@@ -181,9 +181,9 @@ TEST(CtrlAgentCfgMgr, contextSocketInfoCopy) {
     // Check hook libs
     const HookLibsCollection& libs2 = copy->getHooksConfig().get();
     ASSERT_EQ(1, libs2.size());
-    EXPECT_EQ(exp_name, libs2[0].first);
-    ASSERT_TRUE(libs2[0].second);
-    EXPECT_EQ(exp_param->str(), libs2[0].second->str());
+    EXPECT_EQ(exp_name, libs2[0].libname_);
+    ASSERT_TRUE(libs2[0].parameters_);
+    EXPECT_EQ(exp_param->str(), libs2[0].parameters_->str());
 
     // Check authentication
     const HttpAuthConfigPtr& auth2 = copy->getAuthConfig();
@@ -608,9 +608,9 @@ TEST_F(AgentParserTest, configParseHooks) {
     CtrlAgentCfgContextPtr ctx = cfg_mgr_.getCtrlAgentCfgContext();
     const HookLibsCollection libs = ctx->getHooksConfig().get();
     ASSERT_EQ(1, libs.size());
-    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].first);
-    ASSERT_TRUE(libs[0].second);
-    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
+    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].libname_);
+    ASSERT_TRUE(libs[0].parameters_);
+    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].parameters_->str());
 }
 
 // This test checks that the config file with basic HTTP authentication can be

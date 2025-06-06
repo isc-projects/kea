@@ -350,7 +350,7 @@ TEST_F(CloseHATest, close4) {
 
     // Load the library.
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    libraries.push_back(HookLibInfo(LIBDHCP_HA_SO, params));
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Prepare objects.
@@ -496,7 +496,7 @@ TEST_F(CloseHATest, close4Backup) {
 
     // Load the library.
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    libraries.push_back(HookLibInfo(LIBDHCP_HA_SO, params));
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Prepare objects.
@@ -587,7 +587,7 @@ TEST_F(CloseHATest, close6) {
 
     // Load the library.
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    libraries.push_back(HookLibInfo(LIBDHCP_HA_SO, params));
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Prepare objects.
@@ -733,7 +733,7 @@ TEST_F(CloseHATest, close6Backup) {
 
     // Load the library.
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(LIBDHCP_HA_SO, params));
+    libraries.push_back(HookLibInfo(LIBDHCP_HA_SO, params));
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
     // Prepare objects.

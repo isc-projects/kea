@@ -2384,7 +2384,7 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to a single library.
-    const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1);
+    const string config = setHooksLibrariesConfig("libco1.so");
 
     // Verify that the configuration string parses.
     const int rcode = parseConfiguration(config);
@@ -2402,7 +2402,8 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
     // Check that the parser recorded a single library.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(1, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ("libco1.so", libraries[0].cfgname_);
 
     // Check that the change was propagated to the hooks manager.
     hooks_libraries = HooksManager::getLibraryNames();
@@ -2418,8 +2419,9 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     EXPECT_TRUE(hooks_libraries.empty());
 
     // Configuration with hooks-libraries set to two libraries.
+    // Library 1 uses full path, library 2 just the file name.
     const string config = setHooksLibrariesConfig(CALLOUT_LIBRARY_1,
-                                                  CALLOUT_LIBRARY_2);
+                                                  "libco2.so");
 
     // Verify that the configuration string parses.
     const int rcode = parseConfiguration(config);
@@ -2437,8 +2439,10 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
     // Check that the parser recorded two libraries in the expected order.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].cfgname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
+    EXPECT_EQ("libco2.so", libraries[1].cfgname_);
 
     // Verify that the change was propagated to the hooks manager.
     hooks_libraries = HooksManager::getLibraryNames();
@@ -2487,8 +2491,8 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
     runToElementTest<HooksConfig>(expected, cfg2);
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
 
     // ... and check that the same two libraries are still loaded in the
     // HooksManager.
@@ -2527,8 +2531,8 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
     // The list has changed, and this is what we should see.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(2, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].libname_);
 
     // ... and check that this was propagated to the HooksManager.
     hooks_libraries = HooksManager::getLibraryNames();
@@ -2607,9 +2611,9 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
     // does not flag them as changed.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].libname_);
 
     // ...and check it did not alter the libraries in the hooks manager.
     hooks_libraries = HooksManager::getLibraryNames();
@@ -2650,9 +2654,9 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     // incorrect, did not mark the configuration as changed.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].libname_);
 
     // ... but check that the hooks manager was not updated with the incorrect
     // names.
@@ -2768,20 +2772,20 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
     // Check that the parser recorded the names.
     isc::hooks::HookLibsCollection libraries = getLibraries();
     ASSERT_EQ(3, libraries.size());
-    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].first);
-    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].first);
-    EXPECT_EQ(CALLOUT_PARAMS_LIBRARY, libraries[2].first);
+    EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
+    EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
+    EXPECT_EQ(CALLOUT_PARAMS_LIBRARY, libraries[2].libname_);
 
     // Also, check that the third library has its parameters specified.
     // They were set by setHooksLibrariesConfig. The first has no
     // parameters, the second one has an empty map and the third
     // one has actual parameters.
-    EXPECT_FALSE(libraries[0].second);
-    EXPECT_TRUE(libraries[1].second);
-    ASSERT_TRUE(libraries[2].second);
+    EXPECT_FALSE(libraries[0].parameters_);
+    EXPECT_TRUE(libraries[1].parameters_);
+    ASSERT_TRUE(libraries[2].parameters_);
 
     // Ok, get the parameter for the third library.
-    ConstElementPtr params = libraries[2].second;
+    ConstElementPtr params = libraries[2].parameters_;
 
     // It must be a map.
     ASSERT_EQ(Element::map, params->getType());

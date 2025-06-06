@@ -74,7 +74,7 @@ public:
     /// @param params Pointer to the parameters with which library should
     /// be configured.
     void addLib(const std::string& lib, const isc::data::ConstElementPtr& params) {
-        libraries_.push_back(make_pair(lib, params));
+        libraries_.push_back(isc::hooks::HookLibInfo(lib, params));
     }
 
     /// @brief Load all specified libraries.

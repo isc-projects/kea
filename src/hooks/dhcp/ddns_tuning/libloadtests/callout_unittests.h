@@ -82,7 +82,7 @@ public:
     /// @param lib name of the library.
     /// @param params Element map containing the library's configuration parameters.
     void addLib(const std::string& lib, ConstElementPtr params) {
-        libraries_.push_back(make_pair(lib, params));
+        libraries_.push_back(HookLibInfo(lib, params));
     }
 
     /// @brief Loads the collection of libraries via HooksManager.

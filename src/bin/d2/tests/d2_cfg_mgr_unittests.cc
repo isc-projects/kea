@@ -608,9 +608,9 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     // Verify that the hooks libraries can be retrieved.
     const HookLibsCollection libs = context->getHooksConfig().get();
     ASSERT_EQ(1, libs.size());
-    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].first);
-    ASSERT_TRUE(libs[0].second);
-    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
+    EXPECT_EQ(string(CALLOUT_LIBRARY), libs[0].libname_);
+    ASSERT_TRUE(libs[0].parameters_);
+    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].parameters_->str());
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();

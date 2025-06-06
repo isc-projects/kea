@@ -76,6 +76,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
         // whether we have found a library element.
         bool lib_found = false;
 
+        string cfgname = "";
         string libname = "";
 
         // Let's explicitly reset the parameters, so we won't cover old
@@ -94,7 +95,8 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
                 // Get the name of the library and add it to the list after
                 // removing quotes.
                 try {
-                    libname = validatePath((entry_item.second)->stringValue());
+                    cfgname = (entry_item.second)->stringValue();
+                    libname = validatePath(cfgname);
                 } catch  (const std::exception& ex) {
                     isc_throw(DhcpConfigError, "hooks library configuration"
                         " error: " << ex.what() << " ("
@@ -125,7 +127,7 @@ HooksLibrariesParser::parse(HooksConfig& libraries, ConstElementPtr value) {
                 " (" << library_entry->getPosition() << ")");
         }
 
-        libraries.add(libname, parameters);
+        libraries.add(libname, parameters, cfgname);
     }
 }
 

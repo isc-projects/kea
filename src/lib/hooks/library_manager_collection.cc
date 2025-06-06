@@ -43,7 +43,7 @@ LibraryManagerCollection::LibraryManagerCollection(const HookLibsCollection& lib
 
     // We need to split hook libs into library names and library parameters.
     for (auto const& it : libraries) {
-        library_names_.push_back(it.first);
+        library_names_.push_back(it.libname_);
     }
 }
 

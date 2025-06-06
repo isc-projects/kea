@@ -3383,10 +3383,10 @@ TEST_F(LoadUnloadDhcpv4SrvTest, unloadLibraries) {
 
     // Load the test libraries
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_1),
-                                  ConstElementPtr()));
-    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
-                                  ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(CALLOUT_LIBRARY_1),
+                                    ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(CALLOUT_LIBRARY_2),
+                                    ConstElementPtr()));
 
     ASSERT_TRUE(HooksManager::loadLibraries(libraries));
 
@@ -3421,8 +3421,8 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
 
     // Load the test libraries
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_2),
-                                  ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(CALLOUT_LIBRARY_2),
+                                    ConstElementPtr()));
 
     ASSERT_FALSE(HooksManager::loadLibraries(libraries, true));
 
@@ -3432,8 +3432,8 @@ TEST_F(LoadUnloadDhcpv4SrvTest, failLoadIncompatibleLibraries) {
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     libraries.clear();
-    libraries.push_back(make_pair(std::string(CALLOUT_LIBRARY_3),
-                                  ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(CALLOUT_LIBRARY_3),
+                                    ConstElementPtr()));
 
     ASSERT_FALSE(HooksManager::loadLibraries(libraries, true));
 

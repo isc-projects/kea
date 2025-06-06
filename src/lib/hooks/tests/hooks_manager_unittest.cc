@@ -190,10 +190,10 @@ TEST_F(HooksManagerTest, LoadLibraries) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -243,12 +243,12 @@ TEST_F(HooksManagerTest, LoadLibrariesWithError) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(INCORRECT_VERSION_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(INCORRECT_VERSION_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.  We expect a failure return because one of the
     // libraries fails to load.
@@ -262,8 +262,8 @@ TEST_F(HooksManagerTest, CalloutHandleUnloadLibrary) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -301,8 +301,8 @@ TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -325,8 +325,8 @@ TEST_F(HooksManagerTest, CalloutHandleLoadLibrary) {
     //
     // r3 = (10 + d1) * d2 - d3
     HookLibsCollection new_library_names;
-    new_library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                          data::ConstElementPtr()));
+    new_library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                            data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_THROW(HooksManager::loadLibraries(new_library_names),
@@ -351,10 +351,10 @@ TEST_F(HooksManagerTest, ReloadSameLibraries) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -379,10 +379,10 @@ TEST_F(HooksManagerTest, ReloadLibrariesReverseOrder) {
 
     // Set up the list of libraries to be loaded and load them.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                       data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Execute the callouts.  The first library implements the calculation.
@@ -443,8 +443,8 @@ TEST_F(HooksManagerTest, PrePostCalloutTest) {
 
     // Load a single library.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Load the pre- and post- callouts.
@@ -499,8 +499,8 @@ TEST_F(HooksManagerTest, TestModeEnabledPrePostSurviveLoad) {
 
     // Load a single library.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -553,8 +553,8 @@ TEST_F(HooksManagerTest, TestModeDisabledPrePostDoNotSurviveLoad) {
 
     // Load a single library.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -606,8 +606,8 @@ TEST_F(HooksManagerTest, TestModeEnabledTooLatePrePostDoNotSurvive) {
 
     // Load a single library.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the pre- and post- callouts.
     HooksManager::preCalloutsLibraryHandle().registerCallout("hookpt_two",
@@ -714,10 +714,10 @@ TEST_F(HooksManagerTest, LibraryNames) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Check the names before the libraries are loaded.
     std::vector<std::string> loaded_names = HooksManager::getLibraryNames();
@@ -815,8 +815,8 @@ TEST_F(HooksManagerTest, prepareUnload) {
 
     // Set up the list of libraries to be loaded and load them.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(UNLOAD_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(UNLOAD_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     // Check that the marker file is not present.
@@ -840,10 +840,10 @@ TEST_F(HooksManagerTest, LibraryParameters) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(CALLOUT_PARAMS_LIBRARY),
-                                      params));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(CALLOUT_PARAMS_LIBRARY),
+                                        params));
 
     // Load the libraries. Note that callout params library checks if
     // all mandatory parameters are there, so if anything is missing, its
@@ -865,10 +865,10 @@ TEST_F(HooksManagerTest, Parking) {
     // Load the same library twice. Both installed callouts will trigger
     // asynchronous operation.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Load the libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
@@ -931,10 +931,10 @@ TEST_F(HooksManagerTest, ServerUnpark) {
     // Load the same library twice. Both installed callouts will trigger
     // asynchronous operation.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     // Load libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
@@ -982,8 +982,8 @@ TEST_F(HooksManagerTest, ServerUnpark) {
 TEST_F(HooksManagerTest, ServerDropParked) {
     // Load library.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
     CalloutHandlePtr handle = HooksManager::createCalloutHandle();
@@ -1036,10 +1036,10 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
     // Load the same library twice. Both installed callouts will trigger
     // asynchronous operation.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(ASYNC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(ASYNC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
     // Load libraries.
     EXPECT_TRUE(HooksManager::loadLibraries(library_names));
 
@@ -1255,6 +1255,37 @@ TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
                              BadValue, scenario.exp_error_);
         }
     }
+}
+
+// Verifies output of HooksConfig::toElement().
+TEST(HooksConfig, toElementTest) {
+    HooksConfig cfg;
+
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    params->set("svalue", Element::create("string value"));
+    params->set("ivalue", Element::create(42));
+    params->set("bvalue", Element::create(true));
+
+    cfg.add(BASIC_CALLOUT_LIBRARY, ConstElementPtr(), "libbc1.so");
+    cfg.add(FULL_CALLOUT_LIBRARY, params, "libfc1.so");
+    auto to_elem = cfg.toElement();
+
+    std::string exp_cfg = R"([
+  {
+    "library": "libbc1.so"
+  },
+  {
+    "library": "libfc1.so",
+    "parameters": {
+      "bvalue": true,
+      "ivalue": 42,
+      "svalue": "string value"
+    }
+  }
+])";
+
+    EXPECT_EQ(data::prettyPrint(cfg.toElement()), exp_cfg);
 }
 
 } // Anonymous namespace

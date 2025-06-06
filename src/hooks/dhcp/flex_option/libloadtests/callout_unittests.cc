@@ -72,7 +72,7 @@ public:
     }
 
     void addLib(const std::string& lib, ConstElementPtr params) {
-        libraries_.push_back(make_pair(lib, params));
+        libraries_.push_back(HookLibInfo(lib, params));
     }
 
     void loadLibs() {

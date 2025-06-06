@@ -20,12 +20,32 @@ namespace hooks {
 
 /// @brief Entity that holds information about hook libraries and their
 /// parameters.
-///
-/// The first parameter is a full filename with path to the library.
-/// The second parameter is a map of parameters that configure the
-/// library. There's always at least one parameter: "library", which
-/// contains the library name.
-typedef std::pair<std::string, data::ConstElementPtr> HookLibInfo;
+struct HookLibInfo {
+    HookLibInfo(const std::string& libname,
+                isc::data::ConstElementPtr parameters,
+                const std::string& cfgname = "");
+
+    /// @brief Full file path of the library.
+    std::string libname_;
+
+    /// @brief Set of configured parameters (if any)
+    data::ConstElementPtr parameters_;
+
+    /// @brief Configured library name (e.g. rom 'library')
+    std::string cfgname_;
+
+    /// @brief Compare two HookLibInfos for equality
+    ///
+    /// @param other HookLibInfo object with which to compare
+    bool operator==(const HookLibInfo& other) const;
+
+    /// @brief Compare two HookLibInfos for inequality
+    ///
+    /// @param other lease6 object with which to compare
+    bool operator!=(const HookLibInfo& other) const {
+        return (!operator==(other));
+    }
+};
 
 /// @brief A storage for information about hook libraries.
 typedef std::vector<HookLibInfo> HookLibsCollection;

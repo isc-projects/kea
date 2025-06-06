@@ -67,7 +67,7 @@ public:
 
     /// @brief Adds library/parameters to list of libraries to be loaded
     void addLib(const std::string& lib, isc::data::ConstElementPtr params) {
-        libraries_.push_back(make_pair(lib, params));
+        libraries_.push_back(isc::hooks::HookLibInfo(lib, params));
     }
 
     /// @brief Load all specified libraries.

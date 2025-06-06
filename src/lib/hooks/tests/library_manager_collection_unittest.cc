@@ -80,10 +80,10 @@ TEST_F(LibraryManagerCollectionTest, LoadLibraries) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -131,12 +131,12 @@ TEST_F(LibraryManagerCollectionTest, LoadLibrariesWithError) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection library_names;
-    library_names.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                       data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(INCORRECT_VERSION_LIBRARY),
-                                      data::ConstElementPtr()));
-    library_names.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                      data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(INCORRECT_VERSION_LIBRARY),
+                                        data::ConstElementPtr()));
+    library_names.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                        data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -175,10 +175,10 @@ TEST_F(LibraryManagerCollectionTest, LibraryNames) {
 
     // Set up the list of libraries to be loaded.
     HookLibsCollection libraries;
-    libraries.push_back(make_pair(std::string(FULL_CALLOUT_LIBRARY),
-                                  data::ConstElementPtr()));
-    libraries.push_back(make_pair(std::string(BASIC_CALLOUT_LIBRARY),
-                                  data::ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(FULL_CALLOUT_LIBRARY),
+                                    data::ConstElementPtr()));
+    libraries.push_back(HookLibInfo(std::string(BASIC_CALLOUT_LIBRARY),
+                                    data::ConstElementPtr()));
 
     // Set up the library manager collection and get the callout manager we'll
     // be using.
@@ -297,8 +297,8 @@ TEST_F(LibraryManagerCollectionTest, libraryGet) {
     HookLibsCollection libs;
     ElementPtr param1(Element::fromJSON("{ \"param1\": \"foo\" }"));
     ElementPtr param2(Element::fromJSON("{ \"param2\": \"bar\" }"));
-    libs.push_back(make_pair("libone", param1));
-    libs.push_back(make_pair("libtwo", param2));
+    libs.push_back(HookLibInfo("libone", param1));
+    libs.push_back(HookLibInfo("libtwo", param2));
 
     boost::shared_ptr<LibraryManagerCollection> mgr;
     EXPECT_NO_THROW(mgr.reset(new LibraryManagerCollection(libs)));

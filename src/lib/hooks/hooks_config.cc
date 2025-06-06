@@ -17,6 +17,14 @@ namespace isc {
 namespace hooks {
 
 void
+HooksConfig::add(const std::string& libname,
+                 isc::data::ConstElementPtr parameters,
+                 const std::string& cfgname /* = "" */) {
+    HookLibInfo info(libname, parameters, cfgname);
+    libraries_.push_back(info);
+}
+
+void
 HooksConfig::verifyLibraries(const Element::Position& position,
                              bool multi_threading_enabled) const {
     // The code used to follow this logic:
@@ -76,26 +84,18 @@ HooksConfig::equal(const HooksConfig& other) const {
     for (auto const& this_it : libraries_) {
         bool match = false;
         for (auto const& other_it : other.libraries_) {
-            if (this_it.first != other_it.first) {
-                continue;
-            }
-            if (isNull(this_it.second) && isNull(other_it.second)) {
-                match = true;
-                break;
-            }
-            if (isNull(this_it.second) || isNull(other_it.second)) {
-                continue;
-            }
-            if (this_it.second->equals(*other_it.second)) {
+            if (this_it == other_it) {
                 match = true;
                 break;
             }
         }
+
         // No match found for the particular hooks library so return false.
         if (!match) {
-            return (false);
+            return(false);
         }
     }
+
     return (true);
 }
 
@@ -108,10 +108,10 @@ HooksConfig::toElement() const {
         // Entries are maps
         ElementPtr map = Element::createMap();
         // Set the library name
-        map->set("library", Element::create(hl.first));
+        map->set("library", Element::create(hl.cfgname_));
         // Set parameters (not set vs set empty map)
-        if (!isNull(hl.second)) {
-            map->set("parameters", hl.second);
+        if (!isNull(hl.parameters_)) {
+            map->set("parameters", hl.parameters_);
         }
         // Push to the list
         result->add(map);

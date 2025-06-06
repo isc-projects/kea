@@ -43,9 +43,11 @@ public:
     ///
     /// @param libname full filename with path to the library.
     /// @param parameters map of parameters that configure the library.
-    void add(std::string libname, isc::data::ConstElementPtr parameters) {
-        libraries_.push_back(make_pair(libname, parameters));
-    }
+    /// @param cfgname original value of `library` parameter from this
+    /// library's configuration.
+    void add(const std::string& libname,
+             isc::data::ConstElementPtr parameters,
+             const std::string& cfgname = "");
 
     /// @brief Provides access to the configured hooks libraries.
     ///

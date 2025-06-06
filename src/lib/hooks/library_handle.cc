@@ -94,7 +94,7 @@ LibraryHandle::getParameters() {
     // * 1 -> numlib - indexes for actual libraries
     // * INT_MAX     - post-user library callout
 
-    return (libinfo[index - 1].second);
+    return (libinfo[index - 1].parameters_);
 }
 
 isc::data::ConstElementPtr

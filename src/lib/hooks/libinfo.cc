@@ -11,6 +11,13 @@
 namespace isc {
 namespace hooks {
 
+HookLibInfo::HookLibInfo(const std::string& libname,
+                         isc::data::ConstElementPtr parameters,
+                         const std::string& cfgname /* = "" */)
+    : libname_(libname), parameters_(parameters),
+     cfgname_ (cfgname.empty() ? libname : cfgname) {
+}
+
 /// @brief Extracts names from HookLibsCollection
 ///
 /// @param libraries Hook libraries collection
@@ -20,10 +27,19 @@ extractNames(const isc::hooks::HookLibsCollection& libraries) {
     std::vector<std::string> names;
 
     for (auto const& it : libraries) {
-        names.push_back(it.first);
+        names.push_back(it.libname_);
     }
     return (names);
 }
 
+bool
+HookLibInfo::operator==(const HookLibInfo& other) const {
+    return ((libname_ == other.libname_) &&
+            (cfgname_ == other.cfgname_) &&
+            ((!parameters_ && !other.parameters_) ||
+             (parameters_ && other.parameters_ &&
+              parameters_->equals(*(other.parameters_)))));
 }
-}
+
+};
+};
