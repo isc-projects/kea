@@ -20,7 +20,7 @@
 
 EvalContext::EvalContext(const Option::Universe& option_universe,
                          CheckDefined check_defined)
-    : trace_scanning_(false), trace_parsing_(false),
+    : label_(0), trace_scanning_(false), trace_parsing_(false),
       option_universe_(option_universe), check_defined_(check_defined)
 {
 }
