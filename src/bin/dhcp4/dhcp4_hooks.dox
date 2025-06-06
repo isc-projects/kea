@@ -333,6 +333,7 @@ called before "subnet4_select".
    - name: @b leases4, type: isc::dhcp::Lease4CollectionPtr, direction: <b>in</b>
    - name: @b offer_lifetime, type: uint32_t, direction: <b>in</b>
    - name: @b old_lease, type: isc::dhcp::Lease4Ptr, direction: <b>in</b>
+   - name: @b host, type: isc::dhcp::HostPtr, direction: <b>in</b>
 
  - @b Description: this callout is executed when the server has received
    DHCPDISCOVER from the client and the DHCPOFFER has been constructed but not
@@ -346,7 +347,8 @@ called before "subnet4_select".
    allocation on DHCPDISCOVER is enabled and the lease to be offered already exists in
    the lease store. The "old_lease" argument also comes from the context information
    for the DHCPv4 lease allocation. If not Null, it is a pointer to an old lease that
-   the client had before.
+   the client had before.  The "host" argument is a pointer to the host reserveration
+   associated with the lease. If there is no such reservation the argument is Null.
 
  - <b>Next step status</b>: If any callout installed on the "lease4_offer" hook point
    sets the next step action to DROP, the server will drop the processed query
