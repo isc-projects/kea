@@ -163,4 +163,25 @@ TEST_F(UnixCommandConfigTest, securityEnforcmentFalse) {
     EXPECT_EQ(1, countFile(oss.str()));
 }
 
+// This test verifies security warning of invalid
+// socket path permissions.
+TEST_F(UnixCommandConfigTest, securityEnforcmentFalsePermissions) {
+    setSocketTestPath("/tmp");
+    UnixCommandConfig::setSocketPathPerms(0);
+    file::PathChecker::enableEnforcement(false);
+    std::string config = R"( { "socket-name": "/tmp/mysocket" } )";
+
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(unix_config_.reset(new UnixCommandConfig(json)));
+
+    std::ostringstream oss;
+    oss << "COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING"
+        << " unix socket permissions are NOT SECURE: socket path:/tmp"
+        << " does not exist or does not have permssions = 0";
+
+    EXPECT_EQ(1, countFile(oss.str()));
+}
+
+
 } // end of anonymous namespace

@@ -186,3 +186,9 @@ This warning message is issued when security enforcement is disabled
 and the path specified for a control channel unix socket-name does
 not comply with the supported path. The server will still use the
 specified path but is warning that doing so may pose a security risk.
+
+% COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING unix socket permissions are NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not have the required socket permissions. The server will still use the
+specified path but is warning that doing so may pose a security risk.

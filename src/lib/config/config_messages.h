@@ -33,6 +33,7 @@ extern const isc::log::MessageID COMMAND_SOCKET_READ_FAIL;
 extern const isc::log::MessageID COMMAND_SOCKET_WRITE;
 extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL;
 extern const isc::log::MessageID COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING;
+extern const isc::log::MessageID COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR;
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR;

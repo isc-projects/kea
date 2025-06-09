@@ -32,6 +32,7 @@ extern const isc::log::MessageID COMMAND_SOCKET_READ_FAIL = "COMMAND_SOCKET_READ
 extern const isc::log::MessageID COMMAND_SOCKET_WRITE = "COMMAND_SOCKET_WRITE";
 extern const isc::log::MessageID COMMAND_SOCKET_WRITE_FAIL = "COMMAND_SOCKET_WRITE_FAIL";
 extern const isc::log::MessageID COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING = "COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING";
+extern const isc::log::MessageID COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING = "COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLEAR_ERROR = "COMMAND_WATCH_SOCKET_CLEAR_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_CLOSE_ERROR = "COMMAND_WATCH_SOCKET_CLOSE_ERROR";
 extern const isc::log::MessageID COMMAND_WATCH_SOCKET_MARK_READY_ERROR = "COMMAND_WATCH_SOCKET_MARK_READY_ERROR";
@@ -73,6 +74,7 @@ const char* values[] = {
     "COMMAND_SOCKET_WRITE", "Sent response of %1 bytes (%2 bytes left to send) over command socket %3",
     "COMMAND_SOCKET_WRITE_FAIL", "Error while writing to command socket %1 : %2",
     "COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING", "unix socket path is NOT SECURE: %1",
+    "COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING", "unix socket permissions are NOT SECURE: %1",
     "COMMAND_WATCH_SOCKET_CLEAR_ERROR", "watch socket failed to clear: %1",
     "COMMAND_WATCH_SOCKET_CLOSE_ERROR", "watch socket failed to close: %1",
     "COMMAND_WATCH_SOCKET_MARK_READY_ERROR", "watch socket failed to mark ready: %1",

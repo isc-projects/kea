@@ -127,11 +127,19 @@ UnixCommandConfig::validatePath(const std::string socket_path) {
         return(socket_path);
     }
 
-    if (!socket_path_checker_->pathHasPermissions(socket_path_perms_)) {
-        isc_throw (DhcpConfigError,
-                   "socket path:" << socket_path_checker_->getPath()
-                   << " does not exist or does not have permssions = "
-                   << std::oct << socket_path_perms_);
+    auto parent_path = socket_path_checker_->getPath();
+    if (!hasPermissions(parent_path, socket_path_perms_)) {
+        std::ostringstream oss;
+        oss << "socket path:" << parent_path
+            << " does not exist or does not have permssions = "
+            << std::oct << socket_path_perms_;
+
+        if (PathChecker::shouldEnforceSecurity()) {
+            isc_throw (DhcpConfigError, oss.str());
+        }
+
+        LOG_WARN(command_logger, COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING)
+                .arg(oss.str());
     }
 
     return (valid_path);
