@@ -18,8 +18,10 @@
 #include <cc/data.h>
 #include <process/daemon.h>
 #include <stats/stats_mgr.h>
+#include <util/filesystem.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
+#include <testutils/log_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -40,7 +42,7 @@ constexpr uint32_t HIGH_VALID_LIFETIME = 0xFFFFFFFE;
 constexpr time_t DEC_2030_TIME = 1923222072;
 
 /// @brief Test fixture for testing loading and unloading the flex-id library
-class LibLoadTest : public ::testing::Test {
+class LibLoadTest : public isc::dhcp::test::LogContentTest {
 public:
     /// @brief Constructor
     LibLoadTest(std::string lib_filename)
@@ -282,6 +284,7 @@ public:
         enableD2();
         lmptr_ = 0;
         isc::stats::StatsMgr::instance().removeAll();
+        isc::util::file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Destructor
@@ -295,6 +298,7 @@ public:
         unloadLibs();
         lmptr_ = 0;
         isc::stats::StatsMgr::instance().removeAll();
+        isc::util::file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Creates an IPv4 lease

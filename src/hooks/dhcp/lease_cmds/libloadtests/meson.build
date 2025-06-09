@@ -2,6 +2,10 @@ if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
+libs_testutils = [
+    kea_testutils_lib
+]
+
 dhcp_lease_cmds_libload_tests = executable(
     'dhcp-lease-cmds-libload-tests',
     'lease_cmds4_unittest.cc',
@@ -15,6 +19,7 @@ dhcp_lease_cmds_libload_tests = executable(
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: LIBS_BUILT_SO_FAR,
+    link_with: [libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
     'dhcp-lease-cmds-libload-tests',

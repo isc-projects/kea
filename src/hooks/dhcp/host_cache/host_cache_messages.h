@@ -43,6 +43,7 @@ extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6_HOST;
 extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER;
 extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST;
 extern const isc::log::MessageID HOST_CACHE_INIT_OK;
+extern const isc::log::MessageID HOST_CACHE_PATH_SECURITY_WARNING;
 
 } // namespace host_cache
 } // namespace isc

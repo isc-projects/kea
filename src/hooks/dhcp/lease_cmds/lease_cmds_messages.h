@@ -27,6 +27,7 @@ extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_CONFLICT;
 extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR;
 extern const isc::log::MessageID LEASE_CMDS_LOAD_ERROR;
+extern const isc::log::MessageID LEASE_CMDS_PATH_SECURITY_WARNING;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6;

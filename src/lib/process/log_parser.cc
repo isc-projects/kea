@@ -151,7 +151,13 @@ LogConfigParser::validatePath(const std::string logpath) {
         getLogPath();
     }
 
-    return (log_path_checker_->validatePath(logpath));
+    try {
+        return (log_path_checker_->validatePath(logpath));
+    } catch (const SecurityWarn& ex) {
+        LOG_WARN(dctl_logger, DCTL_LOG_PATH_SECURITY_WARNING)
+                .arg(ex.what());
+        return (logpath);
+    }
 }
 
 void LogConfigParser::parseOutputOptions(std::vector<LoggingDestination>& destination,

@@ -15,6 +15,10 @@ configure_file(
     configuration: kea_hooks_conf_data,
 )
 
+libs_testutils = [
+    kea_testutils_lib
+]
+
 nvl = shared_library(
     'nvl',
     'no_version_library.cc',
@@ -112,7 +116,7 @@ kea_hooks_tests = executable(
     dependencies: [GTEST_DEP],
     cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
+    link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
     'kea-hooks-tests',

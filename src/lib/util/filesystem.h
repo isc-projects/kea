@@ -7,6 +7,7 @@
 #ifndef KEA_UTIL_FILESYSTEM_H
 #define KEA_UTIL_FILESYSTEM_H
 
+#include <exceptions/exceptions.h>
 #include <sys/stat.h>
 #include <string>
 #include <boost/shared_ptr.hpp>
@@ -14,6 +15,25 @@
 namespace isc {
 namespace util {
 namespace file {
+
+/// @brief A generic exception that is thrown if a parameter given
+/// violates security check but enforcement is lax.
+class SecurityWarn : public Exception {
+public:
+    SecurityWarn(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief A generic exception that is thrown if a parameter given
+/// violates security and enforcement is true.
+class SecurityError : public Exception {
+public:
+    SecurityError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief A generic exception that is thrown if a parameter given
+/// violates security check but enfordement is lax.
 
 /// @brief Get the content of a regular file.
 ///
@@ -216,13 +236,14 @@ public:
     /// returns valid path using the supported path and the input path name.
     ///
     /// @param input_path_str file path to validate.
-    /// @param enforce_path enables validation against the supported path.  If false
-    /// verifies only that the path contains a file name.
+    /// @param enforce_path If true throw SecurityError when validation against the
+    /// supported path fails, if false throw SecurityWarn.
     ///
     /// @return validated path as a string (supported path + input file name)
     ///
-    /// @throw BadValue if the input path does not include a file name or if the
-    /// it the parent path does not path the supported path.
+    /// @throw BadValue if the input path does not include a file name.
+    /// SecurityError if the parent path does not path the supported path and
+    /// security is being enforced, SecurityWarn if it is not being enforced.
     std::string validatePath(const std::string input_path_str,
                              bool enforce_path = shouldEnforceSecurity()) const;
 
@@ -236,13 +257,13 @@ public:
     /// the supported path.  Otherwise it throws an error.
     ///
     /// @param input_path_str file path to validate.
-    /// @param enforce_path enables validation against the supported path. If
-    /// it simply returns the supported path.
+    /// @param enforce_path If true throw SecurityError when validation against the
+    /// supported path fails, if false throw SecurityWarn.
     ///
     /// @return validated path
     ///
-    /// @throw BadValue if the input directory does not match the supported
-    /// path.
+    /// @throw SecurityError if the path does not match the supported path and
+    /// security is being enforced, SecurityWarn if it is not being enforced.
     std::string validateDirectory(const std::string input_path_str,
                                   bool enforce_path = shouldEnforceSecurity()) const;
 

@@ -14,6 +14,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <testutils/env_var_wrapper.h>
 #include <testutils/multi_threading_utils.h>
+#include <testutils/log_utils.h>
 #include <gtest/gtest.h>
 #include <fstream>
 #include <functional>
@@ -28,16 +29,19 @@ using namespace isc::hooks;
 using namespace isc::host_cache;
 using namespace isc::test;
 using namespace isc::util;
+using namespace isc::dhcp::test;
 using namespace std;
 namespace ph = std::placeholders;
 
 namespace {
 
 /// @brief Test fixture for testing commands for the host-cache library
-class CommandTest : public ::testing::Test {
+//class CommandTest : public ::testing::Test {
+class CommandTest : public LogContentTest {
 public:
     /// @brief Constructor
     CommandTest() {
+        file::PathChecker::enableEnforcement(true);
         // Save the pre-test data dir and set it to the test directory.
         CfgMgr::instance().clear();
         original_datadir_ = CfgMgr::instance().getDataDir();
@@ -54,6 +58,7 @@ public:
 
         // Revert to original data directory.
         CfgMgr::instance().getDataDir(true, original_datadir_);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Creates a sample IPv4 host
@@ -282,6 +287,9 @@ public:
 
     /// @brief Test cache-write command.
     void testWriteCommand();
+
+    /// @brief Test cache-write command with security disabled.
+    void testWriteCommandSecurityWarning();
 
     /// @brief Test cache-load command.
     void testLoadCommand();
@@ -758,6 +766,31 @@ CommandTest::testWriteCommand() {
     checkCommand(write_handler, badpath_cmd, 1, 1, exp_error);
 }
 
+// Verifies that cache-write really writes the expected file.
+void
+CommandTest::testWriteCommandSecurityWarning() {
+    // Prepare
+    handlerType write_handler = std::bind(&writeHandler, hcptr_, ph::_1);
+    file::PathChecker::enableEnforcement(false);
+    string badpath = "/tmp/kea-host-cache-test.txt";
+    string write_cmd =
+        "{ \"command\": \"cache-write\", \"arguments\": \"" + badpath + "\" }";
+
+    // Insert an entry.
+    EXPECT_EQ(0, hcptr_->insert(createHost4(), false));
+    EXPECT_EQ(1, hcptr_->size());
+
+    // Write file
+    checkCommand(write_handler, write_cmd, 0, 0,
+                 "1 entries dumped to '" + badpath + "'.");
+
+    std::ostringstream oss;
+    oss << "HOST_CACHE_PATH_SECURITY_WARNING Cache file path specified"
+        << " is NOT SECURE: invalid path specified: '/tmp', supported path is '"
+        << CfgMgr::instance().getDataDir() << "'";
+    EXPECT_EQ(1, countFile(oss.str()));
+}
+
 // Verifies that cache-load can load a dump file.
 void
 CommandTest::testLoadCommand() {
@@ -1140,6 +1173,10 @@ TEST_F(CommandTest, insertMultiThreading) {
 
 TEST_F(CommandTest, write) {
     testWriteCommand();
+}
+
+TEST_F(CommandTest, writeSecurityWarning) {
+    testWriteCommandSecurityWarning();
 }
 
 TEST_F(CommandTest, writeMultiThreading) {

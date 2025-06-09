@@ -12,6 +12,7 @@
 #include <hooks/server_hooks.h>
 #include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/log_utils.h>
 
 #include <hooks/tests/common_test_class.h>
 #define TEST_ASYNC_CALLOUT
@@ -32,6 +33,7 @@ using namespace isc;
 using namespace isc::hooks;
 using namespace isc::data;
 using namespace isc::util::file;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
@@ -1083,7 +1085,7 @@ TEST_F(HooksManagerTest, UnloadBeforeUnpark) {
 }
 
 /// @brief Test fixture for hooks parsing.
-class HooksParserTest : public ::testing::Test {
+class HooksParserTest : public LogContentTest {
 public:
     /// @brief Constructor
     HooksParserTest() {
@@ -1098,7 +1100,7 @@ public:
     }
 
     /// @brief Destructor
-    ~HooksParserTest() {
+    virtual ~HooksParserTest() {
         // Restore the original environment path.
         if (!original_path_.empty()) {
             setenv("KEA_HOOKS_PATH", original_path_.c_str(), 1);
@@ -1139,6 +1141,7 @@ TEST_F(HooksParserTest, validatePathEnforcePath) {
         std::string lib_path_;
         std::string exp_path_;
         std::string exp_error_;
+        bool exp_security_err_;
     };
 
     std::list<Scenario> scenarios = {
@@ -1147,28 +1150,32 @@ TEST_F(HooksParserTest, validatePathEnforcePath) {
         __LINE__,
         "/var/lib/bs/mylib.so",
         "",
-        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'"),
+        true
     },
     {
         // No file name.
         __LINE__,
         def_path + "/",
         "",
-        string ("path: '" + def_path + "/' has no filename")
+        string ("path: '" + def_path + "/' has no filename"),
+        false
     },
     {
         // File name only is valid.
         __LINE__,
         "mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // Valid full path.
         __LINE__,
         def_path + "/mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // Invalid relative path.
@@ -1176,7 +1183,8 @@ TEST_F(HooksParserTest, validatePathEnforcePath) {
         "../kea/mylib.so",
         "",
         string("invalid path specified: '../kea', supported path is '" +
-               def_path + "'")
+               def_path + "'"),
+        true
     }
     };
 
@@ -1190,9 +1198,15 @@ TEST_F(HooksParserTest, validatePathEnforcePath) {
                                 HooksLibrariesParser::validatePath(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
-            ASSERT_THROW_MSG(validated_path =
-                             HooksLibrariesParser::validatePath(scenario.lib_path_),
-                             BadValue, scenario.exp_error_);
+            if (scenario.exp_security_err_)  {
+                ASSERT_THROW_MSG(validated_path =
+                                 HooksLibrariesParser::validatePath(scenario.lib_path_),
+                                 SecurityError, scenario.exp_error_);
+            } else {
+                ASSERT_THROW_MSG(validated_path =
+                                 HooksLibrariesParser::validatePath(scenario.lib_path_),
+                                 BadValue, scenario.exp_error_);
+            }
         }
     }
 }
@@ -1255,6 +1269,12 @@ TEST_F(HooksParserTest, validatePathEnforcePathFalse) {
                              BadValue, scenario.exp_error_);
         }
     }
+
+    std::ostringstream oss;
+    oss  << "HOOKS_LIBPATH_SECURITY_WARNING Library path specified is NOT SECURE:"
+         << " invalid path specified: '/var/lib/bs', supported path is '"
+         << def_path << "'";
+    EXPECT_EQ(1, countFile(oss.str()));
 }
 
 // Verifies output of HooksConfig::toElement().
@@ -1288,4 +1308,4 @@ TEST(HooksConfig, toElementTest) {
     EXPECT_EQ(data::prettyPrint(cfg.toElement()), exp_cfg);
 }
 
-} // Anonymous namespace
+} // Anonymous namespae

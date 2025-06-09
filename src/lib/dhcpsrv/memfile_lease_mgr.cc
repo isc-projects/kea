@@ -18,6 +18,7 @@
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
+#include <util/filesystem.h>
 
 #include <boost/foreach.hpp>
 #include <cstdio>
@@ -45,6 +46,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::util;
 using namespace isc::stats;
+using namespace isc::util::file;
 
 namespace isc {
 namespace dhcp {
@@ -2321,8 +2323,13 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
         return (getDefaultLeaseFilePath(u));
     }
 
-    // If path is invalid this will throw.
-    lease_file = CfgMgr::instance().validatePath(lease_file);
+    try {
+        lease_file = CfgMgr::instance().validatePath(lease_file);
+    } catch (const SecurityWarn& ex) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_PATH_SECURITY_WARNING)
+                .arg(ex.what());
+    }
+
     return (lease_file);
 }
 

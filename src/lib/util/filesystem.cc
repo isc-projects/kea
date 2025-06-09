@@ -284,17 +284,19 @@ PathChecker::validatePath(const std::string input_path_str,
     auto parent_path = input_path.parentPath();
     auto parent_dir = input_path.parentDirectory();
     if (!parent_dir.empty()) {
-        if (!enforce_path) {
-            // Security set to lax, let it fly.
-            return (input_path_str);
-        }
-
         // We only allow absolute path equal to default. Catch an invalid path.
         if ((parent_path != path_) || (parent_dir == "/")) {
-            isc_throw(BadValue, "invalid path specified: '"
-                      << (parent_path.empty() ? "/" : parent_path)
-                      << "', supported path is '"
-                      << path_ << "'");
+            std::ostringstream oss;
+            oss << "invalid path specified: '"
+                << (parent_path.empty() ? "/" : parent_path)
+                << "', supported path is '"
+                << path_ << "'";
+
+            if (enforce_path) {
+                isc_throw(SecurityError, oss.str());
+            } else {
+                isc_throw(SecurityWarn, oss.str());
+            }
         }
     }
 
@@ -306,10 +308,6 @@ std::string
 PathChecker::validateDirectory(const std::string input_path_str,
                                bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
     std::string input_copy = trim(input_path_str);
-    if (!enforce_path) {
-        return(input_copy);
-    }
-
     // We only allow absolute path equal to default. Catch an invalid path.
     if (!input_path_str.empty()) {
         std::string input_copy = input_path_str;
@@ -318,9 +316,16 @@ PathChecker::validateDirectory(const std::string input_path_str,
         }
 
         if (input_copy != path_) {
-            isc_throw(BadValue, "invalid path specified: '"
-                      << input_path_str << "', supported path is '"
-                      << path_ << "'");
+            std::ostringstream oss;
+            oss << "invalid path specified: '"
+                << input_path_str << "', supported path is '"
+                << path_ << "'";
+
+            if (enforce_path) {
+                isc_throw(SecurityError, oss.str());
+            } else {
+                isc_throw(SecurityWarn, oss.str());
+            }
         }
     }
 

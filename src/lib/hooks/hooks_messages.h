@@ -20,6 +20,7 @@ extern const isc::log::MessageID HOOKS_CALLOUT_REGISTRATION;
 extern const isc::log::MessageID HOOKS_CLOSE_ERROR;
 extern const isc::log::MessageID HOOKS_HOOK_LIST_RESET;
 extern const isc::log::MessageID HOOKS_INCORRECT_VERSION;
+extern const isc::log::MessageID HOOKS_LIBPATH_SECURITY_WARNING;
 extern const isc::log::MessageID HOOKS_LIBRARY_CLOSED;
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADED;
 extern const isc::log::MessageID HOOKS_LIBRARY_LOADING;

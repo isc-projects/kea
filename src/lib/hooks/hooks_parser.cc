@@ -9,6 +9,7 @@
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
+#include <hooks/hooks_log.h>
 #include <boost/algorithm/string.hpp>
 #include <util/filesystem.h>
 #include <util/str.h>
@@ -71,7 +72,13 @@ HooksLibrariesParser::validatePath(const std::string libpath) {
         getHooksPath();
     }
 
-    return (hooks_path_checker_->validatePath(libpath));
+    try {
+        return (hooks_path_checker_->validatePath(libpath));
+    } catch (const SecurityWarn& ex) {
+        LOG_WARN(hooks_logger, HOOKS_LIBPATH_SECURITY_WARNING)
+                .arg(ex.what());
+        return (libpath);
+    }
 }
 
 // @todo use the flat style, split into list and item

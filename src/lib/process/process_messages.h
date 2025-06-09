@@ -22,6 +22,7 @@ extern const isc::log::MessageID DCTL_DEPRECATED_OUTPUT_OPTIONS;
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION;
 extern const isc::log::MessageID DCTL_INIT_PROCESS;
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL;
+extern const isc::log::MessageID DCTL_LOG_PATH_SECURITY_WARNING;
 extern const isc::log::MessageID DCTL_NOT_RUNNING;
 extern const isc::log::MessageID DCTL_OPEN_CONFIG_DB;
 extern const isc::log::MessageID DCTL_PARSER_FAIL;

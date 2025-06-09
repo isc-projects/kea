@@ -27,6 +27,8 @@
 #include <util/range_utilities.h>
 #include <util/stopwatch.h>
 #include <testutils/env_var_wrapper.h>
+#include <util/filesystem.h>
+#include <testutils/log_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -139,6 +141,7 @@ public:
             setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
 
         MultiThreadingMgr::instance().setMode(false);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Reopens the connection to the backend.
@@ -176,6 +179,7 @@ public:
 
         // Revert to original data directory.
         CfgMgr::instance().getDataDir(true, original_datadir_);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Remove files being products of Lease File Cleanup.
@@ -477,7 +481,7 @@ TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
        << CfgMgr::instance().getDataDir() << "'";
 
     ASSERT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)),
-                     BadValue, os.str());
+                     file::SecurityError, os.str());
 }
 
 /// @brief Verifies that the supported path may be overridden with
@@ -4507,6 +4511,73 @@ TEST_F(MemfileLeaseMgrTest, recreateWithoutCallbacks) {
 TEST_F(MemfileLeaseMgrTest, bigStats) {
     startBackend(V4);
     testBigStats();
+}
+
+/// @brief Test fixture which allows log content to be tested.
+class MemfileLeaseMgrLogTest : public LogContentTest {
+public:
+    /// @brief memfile lease mgr test constructor
+    ///
+    /// Creates memfile and stores it in lmptr_ pointer
+    MemfileLeaseMgrLogTest() :
+        data_dir_env_var_("KEA_DHCP_DATA_DIR") {
+
+        // Reset the env variable.
+        data_dir_env_var_.setValue();
+
+        // Save the pre-test data dir and set it to the test directory.
+        CfgMgr::instance().clear();
+        original_datadir_ = CfgMgr::instance().getDataDir();
+        CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
+
+        MultiThreadingMgr::instance().setMode(false);
+        file::PathChecker::enableEnforcement(true);
+    }
+
+    /// @brief destructor
+    ///
+    /// destroys lease manager backend.
+    virtual ~MemfileLeaseMgrLogTest() {
+        LeaseMgrFactory::destroy();
+
+        // Disable multi-threading.
+        MultiThreadingMgr::instance().setMode(false);
+
+        // Revert to original data directory.
+        CfgMgr::instance().getDataDir(true, original_datadir_);
+        file::PathChecker::enableEnforcement(true);
+    }
+
+    /// @brief RAII wrapper for KEA_DHCP_DATA_DIR env variable.
+    EnvVarWrapper data_dir_env_var_;
+
+    /// @brief Stores the pre-test DHCP data directory.
+    std::string original_datadir_;
+};
+
+/// @brief Verifies that a warning is logged when given
+/// an invalid path and enforcement is disabled.
+TEST_F(MemfileLeaseMgrLogTest, warnWhenSecurityDisabled) {
+    ASSERT_TRUE(data_dir_env_var_.getValue().empty());
+    file::PathChecker::enableEnforcement(false);
+
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = "/tmp/leasefile6_1.csv";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
+              "/tmp/leasefile6_1.csv");
+
+    std::ostringstream oss;
+    oss << "DHCPSRV_MEMFILE_PATH_SECURITY_WARNING Lease file path specified is NOT SECURE:"
+        << " invalid path specified: '/tmp', supported path is '"
+        << CfgMgr::instance().getDataDir() << "'";
+
+    EXPECT_EQ(1, countFile(oss.str()));
 }
 
 }  // namespace

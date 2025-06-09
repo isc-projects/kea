@@ -11,6 +11,7 @@
 
 #include <database/database_connection.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <eval/eval_context.h>
 #include <util/reconnect_ctl.h>
 #include <util/filesystem.h>
@@ -32,6 +33,7 @@ using namespace isc::dhcp;
 using namespace isc::eval;
 using namespace isc::hooks;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -173,8 +175,14 @@ LegalLogMgr::parseFile(const ConstElementPtr& parameters, DatabaseConnection::Pa
         ConstElementPtr const value(parameters->get(key));
         if (value) {
             if (key == std::string("path")) {
-                auto valid_path = validatePath(value->stringValue());
-                file_parameters.emplace(key, valid_path);
+                try {
+                    auto valid_path = validatePath(value->stringValue());
+                    file_parameters.emplace(key, valid_path);
+                } catch (const SecurityWarn& ex) {
+                    LOG_WARN(dhcpsrv_logger, LEGAL_LOG_PATH_SECURITY_WARNING)
+                            .arg(ex.what());
+                    file_parameters.emplace(key, value->stringValue());
+                }
             }
 
             file_parameters.emplace(key, value->stringValue());

@@ -21,6 +21,7 @@ extern const isc::log::MessageID DCTL_DEPRECATED_OUTPUT_OPTIONS = "DCTL_DEPRECAT
 extern const isc::log::MessageID DCTL_DEVELOPMENT_VERSION = "DCTL_DEVELOPMENT_VERSION";
 extern const isc::log::MessageID DCTL_INIT_PROCESS = "DCTL_INIT_PROCESS";
 extern const isc::log::MessageID DCTL_INIT_PROCESS_FAIL = "DCTL_INIT_PROCESS_FAIL";
+extern const isc::log::MessageID DCTL_LOG_PATH_SECURITY_WARNING = "DCTL_LOG_PATH_SECURITY_WARNING";
 extern const isc::log::MessageID DCTL_NOT_RUNNING = "DCTL_NOT_RUNNING";
 extern const isc::log::MessageID DCTL_OPEN_CONFIG_DB = "DCTL_OPEN_CONFIG_DB";
 extern const isc::log::MessageID DCTL_PARSER_FAIL = "DCTL_PARSER_FAIL";
@@ -54,6 +55,7 @@ const char* values[] = {
     "DCTL_DEVELOPMENT_VERSION", "This software is a development branch of Kea. It is not recommended for production use.",
     "DCTL_INIT_PROCESS", "%1 initializing the application",
     "DCTL_INIT_PROCESS_FAIL", "%1 application initialization failed: %2",
+    "DCTL_LOG_PATH_SECURITY_WARNING", "Log output path specified is NOT SECURE: %1",
     "DCTL_NOT_RUNNING", "%1 application instance is not running",
     "DCTL_OPEN_CONFIG_DB", "Opening configuration database: %1",
     "DCTL_PARSER_FAIL", "Parser error: %1",

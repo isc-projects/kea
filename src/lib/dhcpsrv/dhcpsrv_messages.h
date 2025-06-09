@@ -139,6 +139,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_UNREGISTER_TIMER_FAILED;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_NEEDS_DOWNGRADING;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_NEEDS_UPGRADING;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_NO_STORAGE;
+extern const isc::log::MessageID DHCPSRV_MEMFILE_PATH_SECURITY_WARNING;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_READ_HWADDR_FAIL;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_ROLLBACK;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_UPDATE_ADDR4;
@@ -177,6 +178,7 @@ extern const isc::log::MessageID DHCPSRV_TIMERMGR_STOP_TIMER;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS;
 extern const isc::log::MessageID DHCPSRV_TIMERMGR_UNREGISTER_TIMER;
 extern const isc::log::MessageID DHCPSRV_UNKNOWN_DB;
+extern const isc::log::MessageID LEGAL_LOG_PATH_SECURITY_WARNING;
 
 } // namespace dhcp
 } // namespace isc

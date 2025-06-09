@@ -9,6 +9,7 @@
 #include <asiolink/io_asio_socket.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <config/config_log.h>
 #include <config/unix_command_config.h>
 #include <util/filesystem.h>
 #include <limits>
@@ -116,7 +117,16 @@ UnixCommandConfig::validatePath(const std::string socket_path) {
         getSocketPath();
     }
 
-    auto valid_path = socket_path_checker_->validatePath(socket_path);
+    std::string valid_path;
+    try {
+        valid_path = socket_path_checker_->validatePath(socket_path);
+    } catch (const SecurityWarn& ex) {
+        LOG_WARN(command_logger, COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING)
+                .arg(ex.what());
+        // Skip checking permissions.
+        return(socket_path);
+    }
+
     if (!socket_path_checker_->pathHasPermissions(socket_path_perms_)) {
         isc_throw (DhcpConfigError,
                    "socket path:" << socket_path_checker_->getPath()

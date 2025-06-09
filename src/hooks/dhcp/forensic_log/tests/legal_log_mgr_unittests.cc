@@ -17,7 +17,9 @@
 #include <hooks/hooks_parser.h>
 #include <legal_log_log.h>
 #include <rotating_file.h>
+#include <util/filesystem.h>
 #include <testutils/env_var_wrapper.h>
+#include <testutils/log_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -30,6 +32,8 @@ using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::legal_log;
 using namespace isc::test;
+using namespace isc::dhcp::test;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -40,7 +44,8 @@ const DbLogger::MessageMap legal_log_db_message_map = {
 DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
 
 /// @brief Test fixture
-struct LegalLogMgrTest : ::testing::Test {
+class LegalLogMgrTest : public LogContentTest {
+public:
     /// @brief Constructor.
     LegalLogMgrTest() : legal_log_dir_env_var_("KEA_LEGAL_LOG_DIR") {
         HookLibraryScriptsChecker::getHookScriptsPath(true, TEST_DATA_BUILDDIR);
@@ -66,6 +71,7 @@ struct LegalLogMgrTest : ::testing::Test {
 
     /// @brief Removes files that may be left over from previous tests
     void reset() {
+        PathChecker::enableEnforcement(true);
         std::ostringstream stream;
         stream << "rm " << TEST_DATA_BUILDDIR << "/" << "*-legal"
                << ".*.txt 2>/dev/null";
@@ -184,7 +190,7 @@ TEST_F(LegalLogMgrTest, pathValidation) {
     std::ostringstream os;
     os << "invalid path specified: '/tmp', supported path is '"
        << LegalLogMgr::getLogPath() << "'";
-    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), BadValue, os.str());
+    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), SecurityError, os.str());
 }
 
 // Verify env variable path override.
@@ -212,7 +218,28 @@ TEST_F(LegalLogMgrTest, pathEnvVarOverride) {
     std::ostringstream os;
     os << "invalid path specified: '/bogus', supported path is '"
        << LegalLogMgr::getLogPath() << "'";
-    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), BadValue, os.str());
+    ASSERT_THROW_MSG(LegalLogMgr::parseFile(params, map), SecurityError, os.str());
+}
+
+// Verify path validation when security is disabled.
+TEST_F(LegalLogMgrTest, pathValidationSecurityDisabled) {
+    PathChecker::enableEnforcement(false);
+    isc::db::DatabaseConnection::ParameterMap map;
+    EXPECT_NO_THROW(LegalLogMgr::parseConfig(ConstElementPtr(), map));
+    EXPECT_NO_THROW(LegalLogMgrFactory::addBackend(map));
+    EXPECT_TRUE(LegalLogMgrFactory::instance());
+
+    // Invalid path should be OK but we should get warning.
+    ElementPtr params = Element::createMap();
+    params->set("path", Element::create("/tmp"));
+    ASSERT_NO_THROW_LOG(LegalLogMgr::parseFile(params, map));
+
+    std::ostringstream os;
+    os << "LEGAL_LOG_PATH_SECURITY_WARNING Forensic log path specified is NOT SECURE:"
+       << " invalid path specified: '/tmp', supported path is '"
+       << LegalLogMgr::getLogPath() << "'";
+
+    EXPECT_EQ(1, countFile(os.str()));
 }
 
 // Verify that parsing extra parameters for rotate file works

@@ -9,17 +9,21 @@
 #include <cc/data.h>
 #include <process/log_parser.h>
 #include <process/process_messages.h>
+#include <process/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
 #include <process/d_log.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
+#include <testutils/log_utils.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc;
 using namespace isc::process;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace {
 
@@ -29,8 +33,8 @@ namespace {
 /// each test.  Strictly speaking this only resets the testing root logger (which
 /// has the name "kea") but as the only other logger mentioned here ("wombat")
 /// is not used elsewhere, that is sufficient.
-class LoggingTest : public ::testing::Test {
-    public:
+class LoggingTest : public dhcp::test::LogContentTest {
+   public:
         /// @brief Constructor
         LoggingTest() {
             resetLogPath();
@@ -77,6 +81,7 @@ class LoggingTest : public ::testing::Test {
     /// @brief Resets the log path to default.
     void resetLogPath() {
         LogConfigParser::getLogPath(true);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Name of the log file
@@ -706,6 +711,86 @@ TEST_F(LoggingTest, syslogPlusFacility) {
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     // The destination output should NOT include the validated path.
     EXPECT_EQ("syslog:daemon" , storage->getLoggingInfo()[0].destinations_[0].output_);
+}
+
+// Verifies that an invalid output path results in an
+// error security enforcement is enabled.
+TEST_F(LoggingTest, enforceSecurityTrue) {
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output-options\": ["
+    "            {"
+    "                \"output\": \"/tmp/myfile.log\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    std::ostringstream oss;
+    oss << "invalid path in `output`: invalid path specified: '/tmp', supported path is '"
+        << LogConfigParser::getLogPath()
+        << "' (<string>:1:82)";
+
+    ASSERT_THROW_MSG(parser.parseConfiguration(config), BadValue,
+                     oss.str());
+}
+
+// Verifies that an invalid output path results in a
+// warning when security enforcement is disabled.
+TEST_F(LoggingTest, enforceSecurityFalse) {
+    file::PathChecker::enableEnforcement(false);
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output-options\": ["
+    "            {"
+    "                \"output\": \"/tmp/myfile.log\""
+    "            }"
+    "        ],"
+    "        \"severity\": \"INFO\""
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    ASSERT_NO_THROW_LOG(parser.parseConfiguration(config));
+
+    ASSERT_EQ(1, storage->getLoggingInfo().size());
+
+    EXPECT_EQ("kea", storage->getLoggingInfo()[0].name_);
+    EXPECT_EQ(isc::log::INFO, storage->getLoggingInfo()[0].severity_);
+
+    ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
+    EXPECT_EQ("/tmp/myfile.log" , storage->getLoggingInfo()[0].destinations_[0].output_);
+
+    std::ostringstream oss;
+    oss << "DCTL_LOG_PATH_SECURITY_WARNING Log output path specified is NOT SECURE:"
+        << " invalid path specified: '/tmp', supported path is '"
+        << LogConfigParser::getLogPath() <<  "'";
+
+    EXPECT_EQ(1, countFile(oss.str()));
 }
 
 /// @todo Add tests for malformed logging configuration

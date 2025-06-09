@@ -42,6 +42,7 @@ extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_ADDRESS6_HOST = "H
 extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER = "HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER";
 extern const isc::log::MessageID HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST = "HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST";
 extern const isc::log::MessageID HOST_CACHE_INIT_OK = "HOST_CACHE_INIT_OK";
+extern const isc::log::MessageID HOST_CACHE_PATH_SECURITY_WARNING = "HOST_CACHE_PATH_SECURITY_WARNING";
 
 } // namespace host_cache
 } // namespace isc
@@ -84,6 +85,7 @@ const char* values[] = {
     "HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER", "get one host with %1 reservation for subnet id %2, identified by %3",
     "HOST_CACHE_GET_ONE_SUBNET_ID_IDENTIFIER_HOST", "using subnet id %1 and identifier %2, found host: %3",
     "HOST_CACHE_INIT_OK", "loading Host Cache hooks library successful",
+    "HOST_CACHE_PATH_SECURITY_WARNING", "Cache file path specified is NOT SECURE: %1",
     NULL
 };
 

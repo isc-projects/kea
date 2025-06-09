@@ -305,6 +305,7 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
         std::string lib_path_;
         std::string exp_path_;
         std::string exp_error_;
+        bool exp_security_err_;
     };
 
     std::list<Scenario> scenarios = {
@@ -313,42 +314,48 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
         __LINE__,
         "/mylib.so",
         "",
-        string("invalid path specified: '/', supported path is '" + def_path + "'")
+        string("invalid path specified: '/', supported path is '" + def_path + "'"),
+        true
     },
     {
         // Invalid parent path.
         __LINE__,
         "/var/lib/bs/mylib.so",
         "",
-        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'")
+        string("invalid path specified: '/var/lib/bs', supported path is '" + def_path + "'"),
+        true
     },
     {
         // No file name.
         __LINE__,
         def_path + "/",
         "",
-        string ("path: '" + def_path + "/' has no filename")
+        string ("path: '" + def_path + "/' has no filename"),
+        false
     },
     {
         // File name only is valid.
         __LINE__,
         "mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // Valid full path.
         __LINE__,
         def_path + "/mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // White space for file name.
         __LINE__,
         "      ",
         "",
-        string("path: '' has no filename")
+        string("path: '' has no filename"),
+        false
     },
     {
         // Invalid relative path.
@@ -356,7 +363,8 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
         "../kea/mylib.so",
         "",
         string("invalid path specified: '../kea', supported path is '" +
-               def_path + "'")
+               def_path + "'"),
+        true
     }
     };
 
@@ -372,9 +380,15 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
                                 checker.validatePath(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
-            ASSERT_THROW_MSG(validated_path =
-                             checker.validatePath(scenario.lib_path_),
-                             BadValue, scenario.exp_error_);
+            if (scenario.exp_security_err_) {
+                ASSERT_THROW_MSG(validated_path =
+                                 checker.validatePath(scenario.lib_path_),
+                                 SecurityError, scenario.exp_error_);
+            } else {
+                ASSERT_THROW_MSG(validated_path =
+                                 checker.validatePath(scenario.lib_path_),
+                                 BadValue, scenario.exp_error_);
+            }
         }
     }
 }
@@ -387,6 +401,7 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
         std::string lib_path_;
         std::string exp_path_;
         std::string exp_error_;
+        bool exp_security_warn_;
     };
 
     std::list<Scenario> scenarios = {
@@ -395,42 +410,49 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
         __LINE__,
         "/mylib.so",
         "/mylib.so",
-        "",
+        string("invalid path specified: '/', supported path is '" + def_path + "'"),
+        true
     },
     {
-        // Invalid parent path but shouldn't care.
+        // Invalid parent path.
         __LINE__,
         "/var/lib/bs/mylib.so",
         "/var/lib/bs/mylib.so",
-        ""
+        string("invalid path specified: '/var/lib/bs', supported path is '"
+               + def_path + "'"),
+        true
     },
     {
         // No file name.
         __LINE__,
         def_path + "/",
         "",
-        string ("path: '" + def_path + "/' has no filename")
+        string ("path: '" + def_path + "/' has no filename"),
+        false
     },
     {
         // File name only is valid.
         __LINE__,
         "mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // Valid full path.
         __LINE__,
         def_path + "/mylib.so",
         def_path + "/mylib.so",
-        ""
+        "",
+        false
     },
     {
         // White space for file name.
         __LINE__,
         "      ",
         "",
-        string("path: '' has no filename")
+        string("path: '' has no filename"),
+        false
     }
     };
 
@@ -450,9 +472,15 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
                                 checker.validatePath(scenario.lib_path_));
             EXPECT_EQ(validated_path, scenario.exp_path_);
         } else {
-            ASSERT_THROW_MSG(validated_path =
-                             checker.validatePath(scenario.lib_path_),
-                             BadValue, scenario.exp_error_);
+            if (scenario.exp_security_warn_) {
+                ASSERT_THROW_MSG(validated_path =
+                                 checker.validatePath(scenario.lib_path_),
+                                 SecurityWarn, scenario.exp_error_);
+            } else {
+                ASSERT_THROW_MSG(validated_path =
+                                 checker.validatePath(scenario.lib_path_),
+                                 BadValue, scenario.exp_error_);
+            }
         }
     }
 }
@@ -527,7 +555,7 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePath) {
         } else {
             ASSERT_THROW_MSG(validated_path =
                              checker.validateDirectory(scenario.lib_path_),
-                             BadValue, scenario.exp_error_);
+                             SecurityError, scenario.exp_error_);
         }
     }
 }
@@ -547,21 +575,21 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePathFalse) {
         // Invalid parent path but shouldn't care.
         __LINE__,
         "/var/lib/bs/",
-        "/var/lib/bs/",
-        ""
+        "",
+        string("invalid path specified: '/var/lib/bs/', supported path is '" + def_path + "'")
     },
     {
-        // File name only is valid.
+        // File name only is invalid.
         __LINE__,
         "mylib.so",
-        "mylib.so",
-        ""
+        "",
+        string("invalid path specified: 'mylib.so', supported path is '" + def_path + "'")
     },
     {
         // Valid full path.
         __LINE__,
         def_path + "/",
-        def_path + "/",
+        def_path,
         ""
     },
     {
@@ -569,7 +597,7 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePathFalse) {
         __LINE__,
         "      ",
         "",
-        ""
+        string("invalid path specified: '      ', supported path is '" + def_path + "'")
     }
     };
 
@@ -591,7 +619,7 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePathFalse) {
         } else {
             ASSERT_THROW_MSG(validated_path =
                              checker.validateDirectory(scenario.lib_path_),
-                             BadValue, scenario.exp_error_);
+                             SecurityWarn, scenario.exp_error_);
         }
     }
 }

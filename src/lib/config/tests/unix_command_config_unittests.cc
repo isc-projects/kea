@@ -13,6 +13,7 @@
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <testutils/env_var_wrapper.h>
+#include <testutils/log_utils.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -22,12 +23,14 @@ using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::test;
 using namespace isc::util;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
 
 /// @brief Test fixture for UNIX control socket configuration.
-class UnixCommandConfigTest : public ::testing::Test {
+//class UnixCommandConfigTest : public ::testing::Test {
+class UnixCommandConfigTest : public LogContentTest {
 public:
     /// @brief Constructor.
     UnixCommandConfigTest() : unix_config_() {
@@ -140,6 +143,24 @@ TEST_F(UnixCommandConfigTest, errors) {
         EXPECT_THROW_MSG(unix_config_.reset(new UnixCommandConfig(json)),
                          DhcpConfigError, s.msg);
     }
+}
+
+// This test verifies security warning of invalid
+// socket paths.
+TEST_F(UnixCommandConfigTest, securityEnforcmentFalse) {
+    file::PathChecker::enableEnforcement(false);
+    std::string config = R"( { "socket-name": "/tmp/mysocket" } )";
+
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_NO_THROW_LOG(unix_config_.reset(new UnixCommandConfig(json)));
+
+    std::ostringstream oss;
+    oss << "COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING unix socket path is NOT SECURE:"
+        << " invalid path specified: '/tmp', supported path is '"
+        << UnixCommandConfig::getSocketPath() <<  "'";
+
+    EXPECT_EQ(1, countFile(oss.str()));
 }
 
 } // end of anonymous namespace

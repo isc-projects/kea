@@ -13,6 +13,7 @@
 #include <database/db_exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
 #include <util/str.h>
 #include <string>
@@ -26,6 +27,7 @@ using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
+using namespace isc::util::file;
 
 namespace isc {
 namespace host_cache {
@@ -753,6 +755,10 @@ HostCache::cacheWriteHandler(hooks::CalloutHandle& handle) {
 
         try {
             filename = CfgMgr::instance().validatePath(cmd_args_->stringValue());
+        } catch (const SecurityWarn& ex) {
+            LOG_WARN(host_cache_logger, HOST_CACHE_PATH_SECURITY_WARNING)
+                    .arg(ex.what());
+            filename = cmd_args_->stringValue();
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "parameter is invalid: " << ex.what());
         }

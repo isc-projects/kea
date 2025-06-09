@@ -19,6 +19,7 @@
 #include <lease_cmds.h>
 #include <lease_cmds_unittest.h>
 #include <stats/stats_mgr.h>
+#include <util/filesystem.h>
 #include <testutils/user_context_utils.h>
 #include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>
@@ -37,6 +38,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp_ddns;
 using namespace isc::asiolink;
 using namespace isc::stats;
+using namespace isc::util::file;
 using namespace isc::test;
 using namespace isc::lease_cmds;
 
@@ -52,6 +54,9 @@ public:
     Lease4CmdsTest() {
         setFamily(AF_INET);
     }
+
+    /// @brief Destructor.
+    virtual ~Lease4CmdsTest(){};
 
     /// @brief Checks if specified response contains IPv4 lease
     ///
@@ -447,6 +452,10 @@ public:
 
     /// @brief Check that lease4-write works as expected.
     void testLease4Write();
+
+    /// @brief Check that lease4-write works as expected when security 
+    /// is disabled.
+    void testLease4WriteSecurityWarn();
 };
 
 void Lease4CmdsTest::testLease4AddMissingParams() {
@@ -3496,6 +3505,31 @@ void Lease4CmdsTest::testLease4Write() {
     testCommand(txt, CONTROL_RESULT_ERROR, os.str());
 }
 
+void Lease4CmdsTest::testLease4WriteSecurityWarn() {
+    PathChecker::enableEnforcement(false);
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Filename must use supported path.
+    std::string cmd =
+        "{\n"
+        "    \"command\": \"lease4-write\",\n"
+        "    \"arguments\": {"
+        "        \"filename\": \"/tmp/kea-lease-write-test.txt\"\n"
+        "    }\n"
+        "}";
+
+    std::ostringstream os;
+    os << "LEASE_CMDS_PATH_SECURITY_WARNING lease file path specified is NOT SECURE:"
+       << " invalid path specified: '/tmp', supported path is '"
+       << CfgMgr::instance().getDataDir() << "'";
+
+    testCommand(cmd, CONTROL_RESULT_SUCCESS,
+                "IPv4 lease database into '/tmp/kea-lease-write-test.txt'.");
+
+    EXPECT_EQ(1, countFile(os.str()));
+}
+
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {
     testLease4AddMissingParams();
 }
@@ -4222,6 +4256,10 @@ TEST_F(Lease4CmdsTest, lease4Write) {
 TEST_F(Lease4CmdsTest, lease4WriteMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4Write();
+}
+
+TEST_F(Lease4CmdsTest, lease4WriteSecurityWarn) {
+    testLease4WriteSecurityWarn();
 }
 
 } // end of anonymous namespace

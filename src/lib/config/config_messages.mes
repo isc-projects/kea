@@ -180,3 +180,9 @@ control commands.
 % HTTP_COMMAND_MGR_SERVICE_STOPPING Server is stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
+
+% COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING unix socket path is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not comply with the supported path. The server will still use the
+specified path but is warning that doing so may pose a security risk.

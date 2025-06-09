@@ -28,6 +28,7 @@
 #include <lease_cmds_log.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -43,6 +44,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::stats;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace isc::log;
 using namespace std;
 
@@ -2755,6 +2757,10 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
         std::string filename;
         try {
           filename = CfgMgr::instance().validatePath(file->stringValue());
+        } catch (const SecurityWarn& ex) {
+            LOG_WARN(lease_cmds_logger, LEASE_CMDS_PATH_SECURITY_WARNING)
+                    .arg(ex.what());
+            filename = file->stringValue();
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "'filename' parameter is invalid: " << ex.what());
         }
