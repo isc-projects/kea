@@ -16,7 +16,11 @@ configure_file(
 
 pgsql_scripts_conf_data = configuration_data()
 pgsql_scripts_conf_data.set('prefix', PREFIX)
-pgsql_scripts_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+if TESTS_OPT.enabled()
+    pgsql_scripts_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+else
+    pgsql_scripts_conf_data.set('abs_top_builddir', 'XXX-tests-builddir-XXX')
+endif
 pgsql_scripts_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
 pgsql_scripts_conf_data.set('PACKAGE_NAME', 'kea')
 configure_file(

@@ -16,7 +16,11 @@ configure_file(
 
 mysql_scripts_conf_data = configuration_data()
 mysql_scripts_conf_data.set('prefix', PREFIX)
-mysql_scripts_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+if TESTS_OPT.enabled()
+    mysql_scripts_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+else
+    mysql_scripts_conf_data.set('abs_top_builddir', 'XXX-tests-builddir-XXX')
+endif
 mysql_scripts_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
 mysql_scripts_conf_data.set('PACKAGE_NAME', 'kea')
 configure_file(

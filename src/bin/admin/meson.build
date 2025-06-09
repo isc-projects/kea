@@ -9,7 +9,11 @@ kea_admin_conf_data.set(
     'EXTENDED_VERSION',
     PROJECT_VERSION + f' (@SOURCE_OF_INSTALLATION@)',
 )
-kea_admin_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+if TESTS_OPT.enabled()
+    kea_admin_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+else
+    kea_admin_conf_data.set('abs_top_builddir', 'XXX-tests-builddir-XXX')
+endif
 kea_admin_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 kea_admin_conf_data.set('sbindir', f'${prefix}/@SBINDIR@')
 kea_admin_conf_data.set('variables', 'variables')
