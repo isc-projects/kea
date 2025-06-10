@@ -16,6 +16,7 @@
 #include <http/response.h>
 #include <http/response_parser.h>
 #include <http/testutils/test_http_client.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
@@ -57,6 +58,7 @@ public:
     HttpCommandMgrTest()
         : io_service_(new IOService()), test_timer_(io_service_), client_(),
           http_config_() {
+        file::PathChecker::enableEnforcement(false);
         resetState(io_service_);
         test_timer_.setup(std::bind(&HttpCommandMgrTest::timeoutHandler, this, true),
                           TEST_TIMEOUT, IntervalTimer::ONE_SHOT);
@@ -83,6 +85,7 @@ public:
         resetState();
         IfaceMgr::instance().deleteAllExternalSockets();
         io_service_->stopAndPoll();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Resets state.

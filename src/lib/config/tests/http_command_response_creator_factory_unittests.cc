@@ -7,19 +7,35 @@
 #include <config.h>
 
 #include <config/http_command_response_creator_factory.h>
+#include <util/filesystem.h>
 #include <boost/pointer_cast.hpp>
 
 #include <gtest/gtest.h>
 
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::util;
 using namespace std;
 
 namespace {
 
+/// @brief Test fixture class for @ref class HttpCommandResponseCreatorFactory
+class HttpCommandResponseCreatorFactoryTest : public ::testing::Test {
+public:
+    /// @brief Constructor.
+    HttpCommandResponseCreatorFactoryTest() {
+        file::PathChecker::enableEnforcement(false);
+    }
+
+    /// @brief Desstructor.
+    virtual ~HttpCommandResponseCreatorFactoryTest() {
+        file::PathChecker::enableEnforcement(true);
+    }
+};
+
 // This test verifies the default factory constructor and
 // the create() method.
-TEST(HttpCommandResponseCreatorFactory, create) {
+TEST_F(HttpCommandResponseCreatorFactoryTest, create) {
     // Configure the HTTP control socket.
     string config = R"(
         {

@@ -8,8 +8,10 @@
 
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <config/config_log.h>
 #include <config/http_command_config.h>
 #include <http/basic_auth_config.h>
+#include <util/filesystem.h>
 #include <limits>
 
 using namespace isc;
@@ -18,6 +20,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
+using namespace isc::util;
 using namespace std;
 
 namespace isc {
@@ -174,7 +177,19 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     }
 
     // Check the TLS setup.
-    checkTlsSetup(socket_type_ == "https");
+    bool has_tls = checkTlsSetup(socket_type_ == "https");
+    if (!auth_config_ && !has_tls) {
+        if (file::PathChecker::shouldEnforceSecurity()) {
+            isc_throw(DhcpConfigError, "Unsecured HTTP control channel ("
+                      << config->getPosition() << ")");
+
+        }
+
+        std::ostringstream oss;
+        config->toJSON(oss);
+        LOG_WARN(command_logger, COMMAND_HTTP_SOCKET_SECURITY_WARN)
+                .arg(oss.str());
+    }
 
     // Get user context.
     ConstElementPtr user_context = config->get("user-context");
@@ -183,7 +198,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     }
 }
 
-void
+bool
 HttpCommandConfig::checkTlsSetup(bool require_tls) const {
     bool have_ca = !trust_anchor_.empty();
     bool have_cert = !cert_file_.empty();
@@ -193,7 +208,7 @@ HttpCommandConfig::checkTlsSetup(bool require_tls) const {
             isc_throw(DhcpConfigError,
                       "no TLS setup for a HTTPS control socket");
         }
-        return;
+        return (false);
     }
     // TLS is used: all 3 parameters are required.
     if (!have_ca) {
@@ -209,6 +224,8 @@ HttpCommandConfig::checkTlsSetup(bool require_tls) const {
         isc_throw(DhcpConfigError, "key-file parameter is missing or empty:"
                   " all or none of TLS parameters must be set");
     }
+
+    return (true);
 }
 
 ElementPtr

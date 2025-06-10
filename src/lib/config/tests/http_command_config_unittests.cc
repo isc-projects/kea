@@ -8,8 +8,10 @@
 
 #include <config/http_command_config.h>
 #include <http/basic_auth_config.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <testutils/log_utils.h>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -18,18 +20,21 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::test;
+using namespace isc::util;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
 
 /// @brief Test fixture for HTTP control socket configuration.
-class HttpCommandConfigTest : public ::testing::Test {
+class HttpCommandConfigTest : public LogContentTest {
 public:
     /// @brief Constructor.
     HttpCommandConfigTest() : http_config_() {
         HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("127.0.0.1");
         HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
         HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Destructor.
@@ -37,6 +42,7 @@ public:
         HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("127.0.0.1");
         HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
         HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief HTTP control socket configuration.
@@ -45,7 +51,14 @@ public:
 
 // This test verifies the default HTTP control socket configuration.
 TEST_F(HttpCommandConfigTest, default) {
+    // "Default" config should throw since security is enabled.
     ElementPtr json = Element::createMap();
+    ASSERT_THROW_MSG(http_config_.reset(new HttpCommandConfig(json)),
+                     DhcpConfigError, "Unsecured HTTP control channel (:0:0)");
+
+    // Turn off security enforcment. Configuration will succeed but we
+    // should see WARN logs.
+    file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
 
     // Check default values.
@@ -70,12 +83,18 @@ TEST_F(HttpCommandConfigTest, default) {
     )";
     runToElementTest(expected, *http_config_);
 
+    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+                           " configuration is NOT SECURE: {  }"));
+
     // Change class defaults.
     HttpCommandConfig::DEFAULT_SOCKET_ADDRESS = IOAddress("::1");
     HttpCommandConfig::DEFAULT_SOCKET_PORT = 8080;
     ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
     EXPECT_EQ("::1", http_config_->getSocketAddress().toText());
     EXPECT_EQ(8080, http_config_->getSocketPort());
+
+    ASSERT_EQ(2, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+                           " configuration is NOT SECURE: {  }"));
 }
 
 // This test verifies direct error cases.
@@ -221,6 +240,8 @@ TEST_F(HttpCommandConfigTest, errors) {
 // This test verifies a HTTP control socket configuration with HTTP headers
 // can be parsed and unparsed.
 TEST_F(HttpCommandConfigTest, headers) {
+    // Disable security enforcement.
+    file::PathChecker::enableEnforcement(false);
     // Configure with HTTP headers.
     string config = R"(
     {
@@ -265,6 +286,13 @@ TEST_F(HttpCommandConfigTest, headers) {
         ]
     })";
     runToElementTest(expected, *http_config_);
+
+    // Should have security WARN log.
+    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+                           " configuration is NOT SECURE: { \"http-headers\": "
+                           "[ { \"name\": \"Strict-Transport-Security\", \"value\":"
+                           " \"max-age=31536000\" }, { \"name\": \"Foo\", \"value\": \"bar\""
+                           " } ] }"));
 }
 
 // This test verifies a HTTP control socket configuration with authentication
@@ -334,6 +362,9 @@ TEST_F(HttpCommandConfigTest, authentication) {
         }
     })";
     runToElementTest(expected, *http_config_);
+
+    // Should be no security warnings.
+    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN")); 
 }
 
 // This test verifies a HTTP control socket configuration with TLS can

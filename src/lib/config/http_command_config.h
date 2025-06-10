@@ -196,7 +196,13 @@ private:
     /// @brief Check TLS configuration.
     ///
     /// @param require_tls When true TLS is required.
-    void checkTlsSetup(bool require_tls) const;
+    /// @return true if TLS parameters are all present, false
+    /// otherwise.
+    /// @throw DhcpConfigError if socket type is https and
+    /// TLS is missing or incomplete, or if socket type is 
+    /// http and some TLS parameters are specified but not
+    /// all. 
+    bool checkTlsSetup(bool require_tls) const;
 
     /// @brief Socket type ("http" or "https").
     std::string socket_type_;

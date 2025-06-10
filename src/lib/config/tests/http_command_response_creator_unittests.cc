@@ -13,6 +13,7 @@
 #include <http/post_request.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
+#include <util/filesystem.h>
 
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
@@ -22,6 +23,7 @@ using namespace isc;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
+using namespace isc::util;
 using namespace std;
 namespace ph = std::placeholders;
 
@@ -46,6 +48,7 @@ public:
     /// create "empty" request. It also removes registered commands from the
     /// command manager.
     HttpCommandResponseCreatorTest() {
+        file::PathChecker::enableEnforcement(false);
         // Deregisters commands.
         config::CommandMgr::instance().deregisterAll();
         // Register our "foo" command.
@@ -59,6 +62,7 @@ public:
     /// Removes registered commands from the command manager.
     virtual ~HttpCommandResponseCreatorTest() {
         config::CommandMgr::instance().deregisterAll();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Create HTTP control socket configuration (from text).
