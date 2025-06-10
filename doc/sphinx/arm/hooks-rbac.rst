@@ -249,9 +249,7 @@ in the Kea source and is copied below.
         // listener is different (e.g. 8001) than the one used by CA. Note
         // the commands should still be sent via CA. The dedicated listener
         // is specifically for HA updates only.
-        // For security reasons, Kea should be run as non root user, a port lower
-        // than 1024 should be used (e.g. 890) and, on Linux systems, the process
-        // should have 'CAP_NET_BIND_SERVICE' capabilities.
+        // For security reasons, a port lower than 1024 should be used (e.g. 890).
         "http-port": 8000,
 
         // TLS trust anchor (Certificate Authority). This is a file name or

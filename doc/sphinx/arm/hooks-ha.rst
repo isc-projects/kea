@@ -1593,9 +1593,7 @@ machine as the primary server. This configuration is valid for both the
         // listener is different (e.g. 8001) than the one used by CA. Note
         // the commands should still be sent via CA. The dedicated listener
         // is specifically for HA updates only.
-        // For security reasons, Kea should be run as non root user, a port
-        // lower than 1024 should be used (e.g. 890) and, on Linux systems,
-        // the process should have 'CAP_NET_BIND_SERVICE' capabilities.
+        // For security reasons, a port lower than 1024 should be used (e.g. 890).
        "http-port": 8000,
 
        "control-sockets": {
@@ -1687,10 +1685,7 @@ as illustrated below:
                              // DHCPv4 server open its own socket. Note that it
                              // must be different than the one used by the CA
                              // (typically 8000). In this example, 8005 is used.
-                             // For security reasons, Kea should be run as non root
-                             // user, a port lower than 1024 should be used (e.g. 895)
-                             // and, on Linux systems, the process should have
-                             // 'CAP_NET_BIND_SERVICE' capabilities.
+                             // For security reasons, a port lower than 1024 should be used (e.g. 895).
                              "url": "http://192.0.2.1:8005",
                              // This server is primary. The other one must be
                              // secondary.
@@ -1704,10 +1699,7 @@ as illustrated below:
                              // DHCPv4 server open its own socket. Note that it
                              // must be different than the one used by the CA
                              // (typically 8000). In this example, 8005 is used.
-                             // For security reasons, Kea should be run as non root
-                             // user, a port lower than 1024 should be used (e.g. 895)
-                             // and, on Linux systems, the process should have
-                             // 'CAP_NET_BIND_SERVICE' capabilities.
+                             // For security reasons, a port lower than 1024 should be used (e.g. 895).
                              "url": "http://192.0.2.2:8005",
                              // The partner is a secondary. This server is a
                              // primary as specified in the previous "peers"
