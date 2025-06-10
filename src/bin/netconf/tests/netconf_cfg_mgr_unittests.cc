@@ -707,9 +707,9 @@ TEST_F(NetconfParserTest, configParseHooks) {
     NetconfConfigPtr ctx = cfg_mgr_.getNetconfConfig();
     const HookLibsCollection libs = ctx->getHooksConfig().get();
     ASSERT_EQ(1, libs.size());
-    EXPECT_EQ(string(BASIC_CALLOUT_LIBRARY), libs[0].first);
-    ASSERT_TRUE(libs[0].second);
-    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
+    EXPECT_EQ(string(BASIC_CALLOUT_LIBRARY), libs[0].libname_);
+    ASSERT_TRUE(libs[0].parameters_);
+    EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].parameters_->str());
 }
 
 // This test checks comments.

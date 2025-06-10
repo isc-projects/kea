@@ -80,7 +80,7 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     const HookLibsCollection libs = ctx->getHooksConfig().get();
     s << ", " << libs.size() << " lib(s):";
     for (HookLibInfo const& lib : libs) {
-        s << lib.first << " ";
+        s << lib.cfgname_ << " ";
     }
 
     return (s.str());
