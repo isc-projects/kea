@@ -1997,8 +1997,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         deferred_functions.append(install_meson)
 
         if 'docs' in features:
-            packages.extend(['doxygen', 'graphviz', 'tex-gyre', 'texlive', 'texlive-latex-extra'])
-            deferred_functions.append(install_sphinx)
+            packages.extend(['doxygen', 'graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
+                             'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             packages.append('googletest')
