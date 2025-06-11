@@ -17,6 +17,7 @@
 #include <log/logger_support.h>
 #include <process/log_parser.h>
 #include <stats/stats_mgr.h>
+#include <util/filesystem.h>
 #include <util/pointer_util.h>
 #include <cstdio>
 #include <sstream>
@@ -44,6 +45,7 @@ BaseServerTest::BaseServerTest() {
     CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
     resetLogPath();
     resetSocketPath();
+    file::PathChecker::enableEnforcement(true);
 }
 
 BaseServerTest::~BaseServerTest() {
@@ -64,6 +66,7 @@ BaseServerTest::~BaseServerTest() {
     isc::log::initLogger();
     resetLogPath();
     resetSocketPath();
+    file::PathChecker::enableEnforcement(true);
 }
 
 void

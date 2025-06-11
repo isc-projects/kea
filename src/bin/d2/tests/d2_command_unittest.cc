@@ -129,6 +129,7 @@ public:
         : server_(NakedD2Controller::instance()) {
         setSocketTestPath();
         ::remove(socket_path_.c_str());
+        file::PathChecker::enableEnforcement(false);
     }
 
     /// @brief Destructor.
@@ -144,6 +145,7 @@ public:
         CommandMgr::instance().deregisterAll();
         UnixCommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
         resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Returns pointer to the server's IO service.

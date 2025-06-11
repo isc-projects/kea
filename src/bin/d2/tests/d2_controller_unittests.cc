@@ -11,6 +11,7 @@
 #include <d2srv/testutils/nc_test_utils.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
+#include <util/filesystem.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
 
@@ -22,6 +23,7 @@
 
 using namespace isc::asiolink::test;
 using namespace isc::process;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace isc {
@@ -45,6 +47,12 @@ public:
     /// Note the constructor passes in the static D2Controller instance
     /// method.
     D2ControllerTest() : DControllerTest(D2Controller::instance) {
+        file::PathChecker::enableEnforcement(false);
+    }
+
+    /// @brief Destructor
+    virtual ~D2ControllerTest() {
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Fetches the D2Controller's D2Process

@@ -30,6 +30,7 @@
 #include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
+#include <util/filesystem.h>
 
 #include "marker_file.h"
 
@@ -102,6 +103,7 @@ public:
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
                                                IfaceMgr::instancePtr().get(), ph::_1));
         setLogTestPath("/dev");
+        file::PathChecker::enableEnforcement(false);
     }
 
     /// @brief Destructor
@@ -121,6 +123,7 @@ public:
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().detectIfaces();
         resetLogPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Sets the log path where log output may be written.

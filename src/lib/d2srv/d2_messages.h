@@ -87,6 +87,7 @@ extern const isc::log::MessageID DHCP_DDNS_STARTED;
 extern const isc::log::MessageID DHCP_DDNS_STARTING_TRANSACTION;
 extern const isc::log::MessageID DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR;
 extern const isc::log::MessageID DHCP_DDNS_TRANS_SEND_ERROR;
+extern const isc::log::MessageID DHCP_DDNS_TSIG_SECRET_SECURITY_WARN;
 extern const isc::log::MessageID DHCP_DDNS_UPDATE_REQUEST_SENT;
 extern const isc::log::MessageID DHCP_DDNS_UPDATE_RESPONSE_RECEIVED;
 

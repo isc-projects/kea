@@ -16,6 +16,7 @@
 #include <http/post_request.h>
 #include <http/post_request_json.h>
 #include <http/response_json.h>
+#include <util/filesystem.h>
 #include <process/testutils/d_test_stubs.h>
 #include <agent/tests/test_basic_auth_libraries.h>
 #include <gtest/gtest.h>
@@ -29,6 +30,7 @@ using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace {
@@ -46,6 +48,7 @@ public:
         : DControllerTest(CtrlAgentController::instance),
           response_creator_(),
           request_(response_creator_.createNewHttpRequest()) {
+        file::PathChecker::enableEnforcement(true);
         // Deregisters commands.
         CtrlAgentCommandMgr::instance().deregisterAll();
         CtrlAgentCommandMgr::instance().
@@ -76,6 +79,7 @@ public:
         CtrlAgentCommandMgr::instance().deregisterAll();
         HooksManager::prepareUnloadLibraries();
         static_cast<void>(HooksManager::unloadLibraries());
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Fills request context with required data to create new request.
@@ -435,6 +439,7 @@ TEST_F(CtrlAgentResponseCreatorTest, basicAuth) {
 // required but not provided by request using the hook.
 TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
     setBasicContext(request_);
+    file::PathChecker::enableEnforcement(false);
 
     // Body: "list-commands" is natively supported by the command manager.
     // We add a random value in the extra entry: see next unit test
@@ -493,6 +498,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
 // auth response provided by the hool.
 TEST_F(CtrlAgentResponseCreatorTest, hookNoAuthHeaders) {
     setBasicContext(request_);
+    file::PathChecker::enableEnforcement(false);
 
     // Body: "list-commands" is natively supported by the command manager.
     // We add a random value in the extra entry: see next unit test
@@ -548,6 +554,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuthHeaders) {
 // Test successful server response when the client is authenticated.
 TEST_F(CtrlAgentResponseCreatorTest, hookBasicAuth) {
     setBasicContext(request_);
+    file::PathChecker::enableEnforcement(false);
 
     // Body: "list-commands" is natively supported by the command manager.
     // We add a random value in the extra entry:

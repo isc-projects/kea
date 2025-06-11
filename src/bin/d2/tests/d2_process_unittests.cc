@@ -15,6 +15,7 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <hooks/hooks_manager.h>
 #include <hooks/hooks_parser.h>
+#include <util/filesystem.h>
 #include <process/testutils/d_test_stubs.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -29,6 +30,7 @@ using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace isc::util;
 using namespace boost::posix_time;
 
 namespace {
@@ -71,12 +73,14 @@ public:
         HooksManager::setTestMode(false);
         D2Controller::instance();
         init();
+        file::PathChecker::enableEnforcement(false);
     }
 
     /// @brief Destructor
     virtual ~D2ProcessTest() {
         D2Controller::instance().reset();
         resetHooksPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.

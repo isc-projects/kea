@@ -340,6 +340,7 @@ public:
 
         resetHooksPath();
         Dhcpv4SrvTest::resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     ~Dhcp4ParserTest() {
@@ -352,6 +353,7 @@ public:
 
         resetHooksPath();
         Dhcpv4SrvTest::resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     };
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -6924,6 +6926,7 @@ TEST_F(Dhcp4ParserTest, hostsDatabases) {
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp4ParserTest, comments) {
     Dhcpv4SrvTest::setSocketTestPath();
+    file::PathChecker::enableEnforcement(false);
 
     string config = PARSER_CONFIGS[6];
     extractConfig(config);

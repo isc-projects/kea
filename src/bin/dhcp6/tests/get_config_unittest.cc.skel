@@ -16,6 +16,7 @@
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/get_config_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
 
@@ -33,6 +34,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -171,11 +173,15 @@ public:
 
         // Reset configuration for each test.
         resetConfiguration();
+        BaseServerTest::setSocketTestPath();
+        file::PathChecker::enableEnforcement(false);
     }
 
     ~Dhcp6GetConfigTest() {
         // Reset configuration database after each test.
         resetConfiguration();
+        BaseServerTest::resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     };
 
     /// @brief Parse and Execute configuration

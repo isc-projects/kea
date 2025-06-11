@@ -16,6 +16,7 @@
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
 
@@ -33,6 +34,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -172,11 +174,15 @@ public:
         srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
+        Dhcpv4SrvTest::setSocketTestPath();
+        file::PathChecker::enableEnforcement(false);
     }
 
     ~Dhcp4GetConfigTest() {
         resetConfiguration();
-    };
+        Dhcpv4SrvTest::resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
+    }
 
     /// @brief Parse and Execute configuration
     ///

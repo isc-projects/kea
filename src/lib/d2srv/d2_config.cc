@@ -21,6 +21,7 @@
 
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::util;
 
 namespace isc {
 namespace d2 {
@@ -423,7 +424,16 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
         }
     } else {
         secret = getString(key_config, "secret");
+        if (file::PathChecker::shouldEnforceSecurity()) {
+            isc_throw(D2CfgError, "use of clear text TSIG 'secret' is NOT SECURE ("
+                      << " (" << getPosition("secret", key_config)
+                      << ")");
+        } else {
+            LOG_WARN(dhcp_to_d2_logger, DHCP_DDNS_TSIG_SECRET_SECURITY_WARN)
+                     .arg(getPosition("secret", key_config).str());
+        }
     }
+
     ConstElementPtr user_context = key_config->get("user-context");
 
     // Algorithm must be valid.

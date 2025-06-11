@@ -61,6 +61,7 @@ BaseServerTest::~BaseServerTest() {
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
     : rcode_(-1), srv_(new NakedDhcpv4Srv(0)), multi_threading_(false), start_time_(PktEvent::now()) {
+    file::PathChecker::enableEnforcement(true);
 
     // Wipe any existing statistics
     isc::stats::StatsMgr::instance().removeAll();
@@ -92,6 +93,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
     resetSocketPath();
+    file::PathChecker::enableEnforcement(true);
     // Make sure that we revert to default value
     CfgMgr::instance().clear();
 

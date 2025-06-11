@@ -701,8 +701,8 @@ start_kea() {
         test_lib_error "binary name must be specified for start_kea"
         clean_exit 1
     fi
-    printf "Running command %s.\n" "\"${bin} -c ${CFG_FILE}\""
-    "${bin}" -c "${CFG_FILE}" &
+    printf "Running command %s.\n" "\"${bin} -X -c ${CFG_FILE}\""
+    "${bin}" -X -c "${CFG_FILE}" &
 }
 
 # Waits with timeout for Kea to start.
@@ -1096,9 +1096,9 @@ password_redact_test() {
     # Instruct Control Agent to log to the specific file.
     set_logger
     # Check it
-    printf "Running command %s.\n" "\"${bin_path}/${bin} -d -t ${CFG_FILE}\""
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -X -d -t ${CFG_FILE}\""
     run_command \
-        "${bin_path}/${bin}" -d -t "${CFG_FILE}"
+        "${bin_path}/${bin}" -X -d -t "${CFG_FILE}"
     if [ "${EXIT_CODE}" -ne "${expected_code}" ]; then
         printf 'ERROR: expected exit code %s, got %s\n' "${expected_code}" "${EXIT_CODE}"
         clean_exit 1

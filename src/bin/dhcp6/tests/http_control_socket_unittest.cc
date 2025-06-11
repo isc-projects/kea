@@ -92,6 +92,7 @@ public:
         : BaseServerTest() {
         reset();
         setLogTestPath("/dev");
+        file::PathChecker::enableEnforcement(false);
     }
 
     virtual ~HttpCtrlDhcpv6Test() {

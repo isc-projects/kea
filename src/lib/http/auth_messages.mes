@@ -22,3 +22,15 @@ provided incorrect user id and/or password.
 % HTTP_CLIENT_REQUEST_NO_AUTH_HEADER received HTTP request without required authentication header
 This information message is issued when the server receives a request without
 a required authentication header.
+
+% HTTP_CLIENT_PASSWORD_SECURITY_WARN use of clear text 'password' is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and command socket configuration uses clear text 'password' rather
+than 'password-file'. The server will still use the socket as configured
+but is warning that doing so may pose a security risk.
+
+% HTTP_CLIENT_USER_SECURITY_WARN use of clear text 'user' is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and command socket configuration uses clear text 'user' rather
+than 'user-file'. The server will still use the socket as configured
+but is warning that doing so may pose a security risk.

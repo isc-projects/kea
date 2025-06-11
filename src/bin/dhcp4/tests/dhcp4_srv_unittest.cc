@@ -2965,6 +2965,7 @@ class DBInitializer {
 void
 Dhcpv4SrvTest::checkConfigFiles() {
     setSocketTestPath();
+    file::PathChecker::enableEnforcement(false);
 #if defined (HAVE_MYSQL)
     MySqlHostDataSourceInit mysql_init;
 #endif

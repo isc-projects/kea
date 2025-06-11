@@ -232,6 +232,14 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                           "password must not be a default one ("
                           << password_cfg->getPosition() << ")");
             }
+
+            if (file::PathChecker::shouldEnforceSecurity()) {
+                isc_throw(DhcpConfigError, "use of clear text 'password' is NOT SECURE ("
+                                           << password_cfg->getPosition() << ")");
+            } else {
+                LOG_INFO(auth_logger, HTTP_CLIENT_PASSWORD_SECURITY_WARN)
+                        .arg(password_cfg->getPosition().str());
+            }
         }
 
         // password file.
@@ -285,6 +293,14 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
             if (user.find(':') != string::npos) {
                 isc_throw(DhcpConfigError, "user must not contain a ':': '"
                           << user << "' (" << user_cfg->getPosition() << ")");
+            }
+
+            if (file::PathChecker::shouldEnforceSecurity()) {
+                isc_throw(DhcpConfigError, "use of clear text 'user' is NOT SECURE ("
+                                           << user_cfg->getPosition() << ")");
+            } else {
+                LOG_INFO(auth_logger, HTTP_CLIENT_USER_SECURITY_WARN)
+                        .arg(user_cfg->getPosition().str());
             }
         }
 

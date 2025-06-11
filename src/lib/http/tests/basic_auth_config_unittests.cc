@@ -8,6 +8,8 @@
 #include <http/basic_auth_config.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <testutils/log_utils.h>
+#include <util/filesystem.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
@@ -15,6 +17,8 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::http;
 using namespace isc::test;
+using namespace isc::util;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
@@ -86,8 +90,24 @@ TEST(BasicHttpAuthClientTest, basicOneFile) {
     runToElementTest<BasicHttpAuthClient>(expected, client);
 }
 
+
+/// @brief Test fixture for testing BasicHttpAuthConfig.
+class BasicHttpAuthConfigTest : public LogContentTest {
+public:
+
+    /// @brief Constructor.
+    BasicHttpAuthConfigTest() {
+        file::PathChecker::enableEnforcement(true);
+    }
+
+    /// @brief Desstructor.
+    virtual ~BasicHttpAuthConfigTest() {
+        file::PathChecker::enableEnforcement(true);
+    }
+};
+
 // Test that basic auth configuration works as expected.
-TEST(BasicHttpAuthConfigTest, basic) {
+TEST_F(BasicHttpAuthConfigTest, basic) {
     // Create a configuration.
     BasicHttpAuthConfig config;
 
@@ -173,7 +193,7 @@ TEST(BasicHttpAuthConfigTest, basic) {
 }
 
 // Test that basic auth configuration with files works as expected.
-TEST(BasicHttpAuthConfigTest, basicFiles) {
+TEST_F(BasicHttpAuthConfigTest, basicFiles) {
     // Create a configuration.
     BasicHttpAuthConfig config;
 
@@ -247,7 +267,8 @@ TEST(BasicHttpAuthConfigTest, basicFiles) {
 }
 
 // Test that basic auth configuration parses.
-TEST(BasicHttpAuthConfigTest, parse) {
+TEST_F(BasicHttpAuthConfigTest, parse) {
+    file::PathChecker::enableEnforcement(false);
     BasicHttpAuthConfig config;
     ElementPtr cfg;
 
@@ -535,6 +556,7 @@ TEST(BasicHttpAuthConfigTest, parse) {
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
+    std::cout << "TKM config: " << prettyPrint(config.toElement()) << std::endl;
 
     // Check a working not empty config with files.
     config.clear();
@@ -547,6 +569,66 @@ TEST(BasicHttpAuthConfigTest, parse) {
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
+
+    EXPECT_EQ(4, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARN"
+                           " use of clear text 'password' is NOT SECURE: :0:0"));
+}
+
+// Test that basic auth configuration catches use of 'user'
+// and warns if security is disabled or throws if enabled.
+TEST_F(BasicHttpAuthConfigTest, clearUser) {
+    BasicHttpAuthConfig auth;
+
+    std::string json = R"(
+    {
+        "type": "basic",
+        "clients": [
+        {
+            "user": "foo"
+        }]
+    }
+    )";
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+    ASSERT_THROW_MSG(auth.parse(config), DhcpConfigError,
+                     "use of clear text 'user' is NOT SECURE (<string>:6:21)");
+
+    // Disable security.
+    file::PathChecker::enableEnforcement(false);
+    ASSERT_NO_THROW_LOG(auth.parse(config));
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARN "
+                           "use of clear text 'user' is NOT SECURE: <string>:6:21"));
+}
+
+// Test that basic auth configuration catches use of 'password'
+// and warns if security is disabled or throws if enabled.
+TEST_F(BasicHttpAuthConfigTest, clearPassword) {
+    BasicHttpAuthConfig auth;
+
+    std::string json = R"(
+    {
+        "type": "basic",
+        "clients": [
+        {
+            "user": "foo",
+            "password": "bar"
+        }]
+    }
+    )";
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+    ASSERT_THROW_MSG(auth.parse(config), DhcpConfigError,
+                     "use of clear text 'password' is NOT SECURE (<string>:7:25)");
+
+    // Disable security.
+    file::PathChecker::enableEnforcement(false);
+    ASSERT_NO_THROW_LOG(auth.parse(config));
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARN "
+                           "use of clear text 'password' is NOT SECURE: <string>:7:25"));
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARN "
+                           "use of clear text 'user' is NOT SECURE: <string>:6:21"));
 }
 
 } // end of anonymous namespace

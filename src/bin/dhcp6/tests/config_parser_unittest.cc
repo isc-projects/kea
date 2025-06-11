@@ -38,6 +38,7 @@
 #include <testutils/log_utils.h>
 #include <testutils/test_to_element.h>
 #include <util/chrono_time_utils.h>
+#include <util/filesystem.h>
 #include <util/doubles.h>
 
 #include <boost/foreach.hpp>
@@ -64,6 +65,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::test;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -425,6 +427,7 @@ public:
         resetConfiguration();
 
         resetHooksPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     ~Dhcp6ParserTest() {
@@ -436,6 +439,7 @@ public:
         static_cast<void>(remove(UNLOAD_MARKER_FILE));
 
         resetHooksPath();
+        file::PathChecker::enableEnforcement(true);
     };
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -7700,6 +7704,7 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
     setSocketTestPath();
+    file::PathChecker::enableEnforcement(false);
 
     string config = PARSER_CONFIGS[9];
     extractConfig(config);

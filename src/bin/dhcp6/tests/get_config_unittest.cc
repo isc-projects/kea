@@ -9,7 +9,6 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <config/unix_command_config.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -14809,12 +14808,14 @@ public:
         // Reset configuration for each test.
         resetConfiguration();
         BaseServerTest::setSocketTestPath();
+        file::PathChecker::enableEnforcement(false);
     }
 
     ~Dhcp6GetConfigTest() {
         // Reset configuration database after each test.
         resetConfiguration();
         BaseServerTest::resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     };
 
     /// @brief Parse and Execute configuration

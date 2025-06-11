@@ -153,6 +153,7 @@ public:
         resetConfiguration();
         // Fill test secret file.
         fillSecretFile();
+        file::PathChecker::enableEnforcement(false);
     }
 
     ~D2GetConfigTest() {
@@ -160,6 +161,7 @@ public:
         resetConfiguration();
         resetHooksPath();
         resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.

@@ -146,12 +146,14 @@ public:
         // Create fresh context.
         resetConfiguration();
         setSocketTestPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     ~CtrlAgentGetCfgTest() {
         resetConfiguration();
         resetHooksPath();
         resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -287,6 +289,7 @@ public:
 /// Test a configuration
 TEST_F(CtrlAgentGetCfgTest, simple) {
     setHooksTestPath();
+    file::PathChecker::enableEnforcement(false);
 
     // get the simple configuration
     std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple.json";

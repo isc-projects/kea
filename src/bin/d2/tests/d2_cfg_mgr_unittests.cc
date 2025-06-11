@@ -55,12 +55,14 @@ public:
     D2CfgMgrTest():cfg_mgr_(new D2CfgMgr()), d2_params_() {
         resetHooksPath();
         resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Destructor
     ~D2CfgMgrTest() {
         resetHooksPath();
         resetSocketPath();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Sets the Hooks path from which hooks can be loaded.
@@ -501,6 +503,7 @@ TEST(D2CfgMgr, construction) {
 TEST_F(D2CfgMgrTest, fullConfig) {
     setHooksTestPath();
     setSocketTestPath();
+    file::PathChecker::enableEnforcement(false);
 
     // Create a configuration with all of application level parameters, plus
     // both the forward and reverse ddns managers.  Both managers have two
@@ -958,6 +961,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 TEST_F(D2CfgMgrTest, configPermutations) {
     std::string test_file = testDataFile("d2_cfg_tests.json");
     isc::data::ConstElementPtr tests;
+    file::PathChecker::enableEnforcement(false);
 
     // Read contents of the file and parse it as JSON. Note it must contain
     // all valid JSON, we aren't testing JSON parsing.
@@ -1013,6 +1017,7 @@ TEST_F(D2CfgMgrTest, configPermutations) {
 /// @brief Tests comments.
 TEST_F(D2CfgMgrTest, comments) {
     setSocketTestPath();
+    file::PathChecker::enableEnforcement(false);
     std::string config = "{ "
                         "\"comment\": \"D2 config\" , "
                         "\"ip-address\" : \"192.168.1.33\" , "

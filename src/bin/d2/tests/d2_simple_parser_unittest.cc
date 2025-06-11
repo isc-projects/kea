@@ -10,6 +10,7 @@
 #include <d2/tests/parser_unittest.h>
 #include <d2srv/d2_simple_parser.h>
 #include <testutils/test_to_element.h>
+#include <util/filesystem.h>
 
 #include <boost/lexical_cast.hpp>
 #include <fstream>
@@ -18,6 +19,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::d2;
 using namespace isc::test;
+using namespace isc::util;
 
 namespace {
 
@@ -163,11 +165,13 @@ public:
                        parser_type = D2ParserContext::PARSER_JSON)
         : parser_type_(parser_type) {
         reset();
+        file::PathChecker::enableEnforcement(false);
     }
 
     /// @brief Destructor
     virtual ~D2SimpleParserTest() {
         reset();
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Parses JSON text and compares the results against an expected

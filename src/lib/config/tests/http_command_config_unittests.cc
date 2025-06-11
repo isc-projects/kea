@@ -298,6 +298,7 @@ TEST_F(HttpCommandConfigTest, headers) {
 // This test verifies a HTTP control socket configuration with authentication
 // can be parsed and unparsed.
 TEST_F(HttpCommandConfigTest, authentication) {
+    file::PathChecker::enableEnforcement(false);
     // Configure with authentication.
     string config = R"(
     {

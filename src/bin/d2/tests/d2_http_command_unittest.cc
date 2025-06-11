@@ -19,6 +19,7 @@
 #include <http/response.h>
 #include <http/response_parser.h>
 #include <http/testutils/test_http_client.h>
+#include <util/filesystem.h>
 #include <gtest/gtest.h>
 #include <boost/pointer_cast.hpp>
 #include <atomic>
@@ -36,6 +37,7 @@ using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::util;
 namespace ph = std::placeholders;
 
 namespace isc {
@@ -105,6 +107,7 @@ public:
     /// Sets socket path to its default value.
     BaseCtrlChannelD2Test()
         : server_(NakedD2Controller::instance()) {
+        file::PathChecker::enableEnforcement(false);
     }
 
     /// @brief Destructor.
@@ -118,6 +121,7 @@ public:
         // Reset command manager.
         CommandMgr::instance().deregisterAll();
         HttpCommandMgr::instance().setConnectionTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Returns pointer to the server's IO service.
