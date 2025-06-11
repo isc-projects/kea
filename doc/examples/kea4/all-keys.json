@@ -173,7 +173,6 @@
                 // commands should still be sent to a control socket.
                 // The dedicated listener is specifically for HA
                 // updates only.
-                // For security reasons, a port lower than 1024 should be used (e.g. 894).
                 "socket-port": 8004,
 
                 // TLS trust anchor (Certificate Authority). This is a

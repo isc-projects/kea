@@ -249,7 +249,6 @@ in the Kea source and is copied below.
         // listener is different (e.g. 8001) than the one used by CA. Note
         // the commands should still be sent via CA. The dedicated listener
         // is specifically for HA updates only.
-        // For security reasons, a port lower than 1024 should be used (e.g. 890).
         "http-port": 8000,
 
         // TLS trust anchor (Certificate Authority). This is a file name or

@@ -317,8 +317,6 @@ capabilities mechanism on Linux systems, Kea can run from an unprivileged accoun
 The Control Agent (CA) can accept incoming HTTP or HTTPS connections. The default port is 8000, which
 does not require privileged access.
 
-For security reasons, a port lower than 1024 should be used (e.g. 890).
-
 Securing Kea Administrative Access
 ----------------------------------
 
