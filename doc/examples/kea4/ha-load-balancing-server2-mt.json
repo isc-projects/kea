@@ -161,7 +161,7 @@
                             // to run on the partner's machine if multi-threading is enabled.
                             // The "http-host" and "http-port" values must be set to different
                             // values then the ones used by the Control Agent.
-                            "url": "http://192.168.56.33:8005",
+                            "url": "http://192.168.56.33:8005/",
                             // The partner is primary. This server is secondary.
                             "role": "primary"
                         },
@@ -173,7 +173,7 @@
                             // instance if multi-threading is enabled.
                             // The "http-host" and "http-port" values must be set to different
                             // values then the ones used by the Control Agent.
-                            "url": "http://192.168.56.66:8005",
+                            "url": "http://192.168.56.66:8005/",
                             // This server is secondary. The other one must be
                             // primary.
                             "role": "secondary"

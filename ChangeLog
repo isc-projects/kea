@@ -1,3 +1,10 @@
+2350.	[doc]		razvan
+	Updated documentation and examples related to HTTP/HTTPS socket
+	ports used by kea-ctrl-agent, kea-dhcp4, kea-dhcp6, kea-dhcp-ddns
+	and High Availability hook library in order to avoid possible
+	conflicts.
+	(Gitlab #3541)
+
 2349.	[func]		razvan
 	The kea-ctrl-agent has been deprecated and it issues a warning
 	log message on startup. As of Kea 2.7.2 the Kea servers:
