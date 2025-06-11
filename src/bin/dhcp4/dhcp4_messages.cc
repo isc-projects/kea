@@ -157,6 +157,7 @@ extern const isc::log::MessageID DHCP4_RESPONSE_DATA = "DHCP4_RESPONSE_DATA";
 extern const isc::log::MessageID DHCP4_RESPONSE_FQDN_DATA = "DHCP4_RESPONSE_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_DATA = "DHCP4_RESPONSE_HOSTNAME_DATA";
 extern const isc::log::MessageID DHCP4_RESPONSE_HOSTNAME_GENERATE = "DHCP4_RESPONSE_HOSTNAME_GENERATE";
+extern const isc::log::MessageID DHCP4_ROOT_USER_SECURITY_WARN = "DHCP4_ROOT_USER_SECURITY_WARN";
 extern const isc::log::MessageID DHCP4_SECURITY_CHECKS_DISABLED = "DHCP4_SECURITY_CHECKS_DISABLED";
 extern const isc::log::MessageID DHCP4_SERVER_FAILED = "DHCP4_SERVER_FAILED";
 extern const isc::log::MessageID DHCP4_SERVER_INITIATED_DECLINE = "DHCP4_SERVER_INITIATED_DECLINE";
@@ -337,6 +338,7 @@ const char* values[] = {
     "DHCP4_RESPONSE_FQDN_DATA", "%1: including FQDN option in the server's response: %2",
     "DHCP4_RESPONSE_HOSTNAME_DATA", "%1: including Hostname option in the server's response: %2",
     "DHCP4_RESPONSE_HOSTNAME_GENERATE", "%1: server has generated hostname %2 for the client",
+    "DHCP4_ROOT_USER_SECURITY_WARN", "kea-dhcp4 running as root user!",
     "DHCP4_SECURITY_CHECKS_DISABLED", "Invoked with command line option -X, Security checks are disabled!!",
     "DHCP4_SERVER_FAILED", "server failed: %1",
     "DHCP4_SERVER_INITIATED_DECLINE", "%1: Lease for addr %2 has been found to be already in use. The lease will be unavailable for %3 seconds.",

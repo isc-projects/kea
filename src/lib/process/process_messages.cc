@@ -27,6 +27,7 @@ extern const isc::log::MessageID DCTL_OPEN_CONFIG_DB = "DCTL_OPEN_CONFIG_DB";
 extern const isc::log::MessageID DCTL_PARSER_FAIL = "DCTL_PARSER_FAIL";
 extern const isc::log::MessageID DCTL_PID_FILE_ERROR = "DCTL_PID_FILE_ERROR";
 extern const isc::log::MessageID DCTL_PROCESS_FAILED = "DCTL_PROCESS_FAILED";
+extern const isc::log::MessageID DCTL_ROOT_USER_SECURITY_WARN = "DCTL_ROOT_USER_SECURITY_WARN";
 extern const isc::log::MessageID DCTL_RUN_PROCESS = "DCTL_RUN_PROCESS";
 extern const isc::log::MessageID DCTL_SHUTDOWN = "DCTL_SHUTDOWN";
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD = "DCTL_SHUTDOWN_SIGNAL_RECVD";
@@ -61,6 +62,7 @@ const char* values[] = {
     "DCTL_PARSER_FAIL", "Parser error: %1",
     "DCTL_PID_FILE_ERROR", "%1 could not create a PID file: %2",
     "DCTL_PROCESS_FAILED", "%1 application execution failed: %2",
+    "DCTL_ROOT_USER_SECURITY_WARN", "%1 running as root user!",
     "DCTL_RUN_PROCESS", "%1 starting application event loop",
     "DCTL_SHUTDOWN", "%1 has shut down, pid: %2, version: %3",
     "DCTL_SHUTDOWN_SIGNAL_RECVD", "OS signal %1 received, starting shutdown",

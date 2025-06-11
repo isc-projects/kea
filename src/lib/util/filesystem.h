@@ -99,6 +99,13 @@ isSocket(const std::string& path);
 void
 setUmask();
 
+/// @brief Indicates if current user is root
+///
+/// @return True if either the uid or the effective
+/// uid is root.
+bool
+amRoot();
+
 /// @brief Paths on a filesystem
 struct Path {
     /// @brief Constructor

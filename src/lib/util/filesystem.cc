@@ -104,6 +104,10 @@ setUmask() {
     }
 }
 
+bool amRoot() {
+    return (getuid() == 0 || geteuid() == 0);
+}
+
 Path::Path(string const& full_name) {
     dir_present_ = false;
     if (!full_name.empty()) {

@@ -127,10 +127,17 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         .arg(getpid())
         .arg(VERSION)
         .arg(PACKAGE_VERSION_TYPE);
+
     // When it is not a stable version dissuade use in production.
     if (std::string(PACKAGE_VERSION_TYPE) == "development") {
         LOG_WARN(dctl_logger, DCTL_DEVELOPMENT_VERSION);
     }
+
+    if (file::amRoot()) {
+        LOG_WARN(dctl_logger, DCTL_ROOT_USER_SECURITY_WARN)
+                .arg(app_name_);
+    }
+
     try {
         // Step 2 is to create and initialize the application process object.
         initProcess();

@@ -246,6 +246,10 @@ main(int argc, char* argv[]) {
             LOG_WARN(dhcp4_logger, DHCP4_DEVELOPMENT_VERSION);
         }
 
+        if (amRoot()) {
+            LOG_WARN(dhcp4_logger, DHCP4_ROOT_USER_SECURITY_WARN);
+        }
+
         if (!PathChecker::shouldEnforceSecurity()) {
             LOG_WARN(dhcp4_logger, DHCP4_SECURITY_CHECKS_DISABLED);
         }
