@@ -10,6 +10,7 @@
 #include <mysql/testutils/mysql_schema.h>
 #include <mysql/mysql_connection.h>
 #include <exceptions/exceptions.h>
+#include <util/str.h>
 
 #include <fstream>
 #include <iostream>
@@ -115,10 +116,57 @@ string getMySQLTlsServerVariable(string variable) {
         }
         MYSQL_ROW row = mysql_fetch_row(result);
         if (!row) {
-            isc_throw(DbOperationError, sql << " returned row is null");
+            // This means the variable does not exist.
+            mysql_free_result(result);
+            return ("");
         }
-        // first column is 'have_ssl', second is the status.
+        // first column is variable name e.g. 'have_ssl', second is the status.
         string name(row[0]);
+        if (name != variable) {
+            isc_throw(DbOperationError,
+                      sql << " returned a wrong name '" << name
+                      << "', expected '" << variable << "'");
+        }
+        string value(row[1]);
+        mysql_free_result(result);
+        return (value);
+    } catch (...) {
+        if (result) {
+            mysql_free_result(result);
+        }
+        throw;
+    }
+}
+
+string getMySQLTlsStatusVariable(string variable) {
+    MYSQL_RES* result(0);
+    try {
+        DatabaseConnection::ParameterMap parameters =
+            DatabaseConnection::parse(validMySQLConnectionString());
+        MySqlConnection conn(parameters);
+        conn.openDatabase();
+        string sql("SHOW STATUS LIKE '");
+        sql += variable;
+        sql += "'";
+        if (mysql_query(conn.mysql_, sql.c_str())) {
+            isc_throw(DbOperationError,
+                      sql << ": " << mysql_error(conn.mysql_));
+        }
+        result = mysql_use_result(conn.mysql_);
+        size_t count = mysql_num_fields(result);
+        if (count != 2) {
+            isc_throw(DbOperationError,
+                      sql << " returned " << count << " rows, expecting 2");
+        }
+        MYSQL_ROW row = mysql_fetch_row(result);
+        if (!row) {
+            // This means the variable does not exist.
+            mysql_free_result(result);
+            return ("");
+        }
+        // first column is variable name e.g. 'Ssl_cipher', second is the status.
+        string name(row[0]);
+        util::str::lowercase(name);
         if (name != variable) {
             isc_throw(DbOperationError,
                       sql << " returned a wrong name '" << name
@@ -150,8 +198,17 @@ bool isMySQLTlsConfigured() {
 
 string getMySQLTlsServer() {
     string value = getMySQLTlsServerVariable("have_ssl");
-    if (value == "YES" && !isMySQLTlsConfigured()) {
-        value = "UNCONFIGURED";
+    if (value == "YES") {
+        if (!isMySQLTlsConfigured()) {
+            value = "UNCONFIGURED";
+        }
+    } else if (value.empty()) {
+        value = getMySQLTlsStatusVariable("ssl_cipher");
+        if (value.empty() || !isMySQLTlsConfigured()) {
+            value = "UNCONFIGURED";
+        } else {
+            value = "YES";
+        }
     }
     const string env("KEA_MYSQL_HAVE_SSL");
     static_cast<void>(setenv(env.c_str(), value.c_str(), 1));

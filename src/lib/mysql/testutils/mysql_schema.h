@@ -116,6 +116,11 @@ bool isMySQLTlsConfigured();
 /// @param variable The server global variable name
 std::string getMySQLTlsServerVariable(std::string variable);
 
+/// @brief Get the status variable value
+///
+/// @param variable The server global variable name
+std::string getMySQLTlsStatusVariable(std::string variable);
+
 }
 }
 }
