@@ -10,6 +10,7 @@
 #include <cryptolink/crypto_hmac.h>
 
 #include <botan/mac.h>
+#include <botan/mem_ops.h>
 #include <botan/exceptn.h>
 
 #include <cryptolink/botan_common.h>

@@ -72,7 +72,7 @@ public:
                   const std::string&,
                   const std::string&) override
   {
-        return (key_);
+    return (key_);
   }
 
   std::vector<Botan::Certificate_Store*> stores_;
