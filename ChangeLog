@@ -1,3 +1,13 @@
+2352.	[bug]		razvan
+	Fix error handling when detecting a global reservation for the
+	client and global reservatons are explicitly disabled in the
+	configuration.
+	(Gitlab #3911)
+
+2351.	[doc]		razvan
+	Updated documentation and examples related to 4over6 port.
+	(Gitlab #3851)
+
 2350.	[doc]		razvan
 	Updated documentation and examples related to HTTP/HTTPS socket
 	ports used by kea-ctrl-agent, kea-dhcp4, kea-dhcp6, kea-dhcp-ddns

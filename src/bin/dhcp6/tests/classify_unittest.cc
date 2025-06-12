@@ -101,7 +101,8 @@ namespace {
 ///   - Used for the early global reservations lookup / select subnet.
 ///   - 2 subnets: 2001:db8:1::/48 (guarded) and 2001:db8:2::/48
 ///   - 2 pools: 2001:db8:1:1::/64 and 2001:db8:2:1::/64
-///   - 1 global reservation setting the first class
+///   - 1 global reservation with IP address outside the pool, setting
+///     the first class
 ///   - the following class defined: first
 ///
 /// - Configuration 7:
@@ -419,6 +420,7 @@ const char* CONFIGS[] = {
     "\"reservations\": ["
     "{"
     "    \"duid\": \"01:02:03:04\","
+    "    \"ip-addresses\": [ \"2001:db8:1:cafe::1\" ],"
     "    \"client-classes\": [ \"first\" ]"
     "}"
     "],"

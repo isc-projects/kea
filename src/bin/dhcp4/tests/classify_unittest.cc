@@ -115,7 +115,7 @@ namespace {
 ///   - 2 subnets: 10.0.0.0/24 guarded by first and 10.0.1.0/24
 ///   - 2 pools: 10.0.0.10-10.0.0.100 and 10.0.1.10-10.0.1.100
 ///   - 1 global reservation for HW address 'aa:bb:cc:dd:ee:ff'
-///     setting the first class
+///     with IP address outside the pool, setting the first class
 ///   - the following class defined: first
 ///
 /// - Configuration 9:
@@ -415,6 +415,7 @@ const char* CONFIGS[] = {
         "}],"
         "\"reservations\": [ {"
         "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "    \"ip-address\": \"10.0.1.200\","
         "    \"client-classes\": [ \"first\" ] } ]"
     "}",
 
