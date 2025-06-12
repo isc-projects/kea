@@ -1,3 +1,8 @@
+2354.	[doc]		razvan
+	The DHCPv4-over-DHCPv6 implementation, perfmon hook library and
+	sysrepo features are no longer considered experimental.
+	(Gitlab #3920)
+
 2353.	[func]		razvan
 	Restricted location of configured scripts in loaded hook
 	libraries.

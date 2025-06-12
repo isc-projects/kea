@@ -654,7 +654,7 @@ loaded by the correct process per the table below.
    |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` and              |
-   | CURRENTLY EXPERIMENTAL                                    | source       | :iscman:`kea-dhcp6` servers can track and report performance |
+   |                                                           | source       | :iscman:`kea-dhcp6` servers can track and report performance |
    |                                                           |              | data.                                                        |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`Ping Check <hooks-ping-check>`                      | Kea open     | With this hook library, the :iscman:`kea-dhcp4` server can   |
