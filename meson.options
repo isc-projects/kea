@@ -1,3 +1,12 @@
+# Missing in meson, default 'var/run', can be set to 'run'
+# Note if/when meson will implement it the 'runstatedir' option name
+# will be reserved and meson will raise an error...
+option(
+    'runstatedir',
+    type: 'string',
+    description: 'The directory for installing data files which the programs modify while they run.',
+)
+
 # Dependency-related options
 option(
     'crypto',
