@@ -4479,7 +4479,7 @@ ISC tested the following configuration:
        }
        ],
 
-       "dhcp4o6-port": 6767,
+       "dhcp4o6-port": 786,
 
        "loggers": [
        {

@@ -3917,7 +3917,7 @@ ISC tested the following configuration:
            "pools": [ { "pool": "2001:db8:1:1::1:0/112" } ]
        } ],
 
-       "dhcp4o6-port": 6767,
+       "dhcp4o6-port": 786,
 
        "option-data": [ {
            "name": "dhcp4o6-server-addr",
