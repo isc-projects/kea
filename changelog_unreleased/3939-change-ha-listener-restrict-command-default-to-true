@@ -1,0 +1,5 @@
+[func]		fdupont
+	Changed the default value of the HA listener 'restrict-commands'
+	configuration flag to true so commands which are not used by
+	the hook are rejected.
+	(Gitlab #3639)
