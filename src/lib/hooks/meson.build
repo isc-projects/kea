@@ -13,7 +13,10 @@ kea_hooks_lib = shared_library(
     'library_manager.cc',
     'library_manager_collection.cc',
     'server_hooks.cc',
-    cpp_args: [f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'],
+    cpp_args: [
+        f'-DDEFAULT_HOOK_SCRIPTS_PATH="@PREFIX@/@DATADIR@/kea/scripts"',
+        f'-DDEFAULT_HOOKS_PATH="@DEFAULT_HOOKS_PATH@"'
+    ],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,
     install_dir: LIBDIR,

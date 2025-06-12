@@ -165,6 +165,10 @@ script and are configured with the following settings:
 -  ``postrotate`` - an external executable or script called with the name of the
    file that was opened. Kea does not wait for the process to finish.
 
+These executables must be stored in the ``"[kea-install-dir]/share/kea/scripts/"``
+directory which can be overridden at startup by setting the environment variable
+``KEA_HOOK_SCRIPTS_PATH`` to a different path.
+
 Custom formatting can be enabled for logging information that can be extracted
 either from the client's request packet or from the server's response packet.
 Use with caution as this might affect server performance.

@@ -1,3 +1,8 @@
+2353.	[func]		razvan
+	Restricted location of configured scripts in loaded hook
+	libraries.
+	(Gitlab #3849)
+
 2352.	[bug]		razvan
 	Fix error handling when detecting a global reservation for the
 	client and global reservatons are explicitly disabled in the

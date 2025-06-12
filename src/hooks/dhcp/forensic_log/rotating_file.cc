@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/process_spawn.h>
+#include <hooks/hooks_parser.h>
 #include <legal_log_log.h>
 #include <rotating_file.h>
 #include <util/multi_threading_mgr.h>
@@ -25,6 +26,7 @@ using namespace isc::util;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::hooks;
 using namespace std;
 
 namespace isc {
@@ -104,6 +106,7 @@ RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
 
     if (!prerotate_.empty()) {
         try {
+            HookLibraryScriptsChecker::validatePath(prerotate_);
             ProcessSpawn process(ProcessSpawn::ASYNC, prerotate_);
         } catch (const isc::Exception& ex) {
             isc_throw(LegalLogMgrError, "Invalid 'prerotate' parameter: " << ex.what());
@@ -112,6 +115,7 @@ RotatingFile::apply(const DatabaseConnection::ParameterMap& parameters) {
 
     if (!postrotate_.empty()) {
         try {
+            HookLibraryScriptsChecker::validatePath(postrotate_);
             ProcessSpawn process(ProcessSpawn::ASYNC, postrotate_);
         } catch (const isc::Exception& ex) {
             isc_throw(LegalLogMgrError, "Invalid 'postrotate' parameter: " << ex.what());

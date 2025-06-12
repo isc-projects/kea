@@ -13,6 +13,7 @@
 #include <config.h>
 
 #include <dhcpsrv/testutils/lib_load_test_fixture.h>
+#include <hooks/hooks_parser.h>
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
@@ -32,6 +33,7 @@ class RunScriptLibLoadTest : public isc::test::LibLoadTest {
 public:
     /// @brief Constructor
     RunScriptLibLoadTest() : LibLoadTest(LIBRUN_SCRIPT_SO) {
+        HookLibraryScriptsChecker::getHookScriptsPath(true, TEST_DATA_BUILDDIR);
     }
 
     /// @brief Destructor

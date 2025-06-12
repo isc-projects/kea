@@ -824,6 +824,7 @@ public:
     /// @brief Constructor.
     RunScriptTest() :
         co_manager_(new CalloutManager(1)), io_service_(new IOService()) {
+        HookLibraryScriptsChecker::getHookScriptsPath(true, TEST_DATA_BUILDDIR);
         ProcessSpawn::setIOService(io_service_);
         clearLogFile();
     }

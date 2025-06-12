@@ -16,6 +16,7 @@ dhcp_run_script_lib_tests = executable(
     'run_script_unittests.cc',
     'run_unittests.cc',
     cpp_args: [
+        f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DRUN_SCRIPT_LIB_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/run_script/libdhcp_run_script.so"',
         f'-DTEST_LOG_FILE="@current_build_dir@/test.log"',
         f'-DRUN_SCRIPT_TEST_SH="@current_build_dir@/run_script_test.sh"',

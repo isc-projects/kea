@@ -27,7 +27,31 @@ namespace hooks {
 namespace {
     // Singleton PathChecker to set and hold valid hooks library path.
     PathCheckerPtr hooks_path_checker_;
+
+    // Singleton PathChecker to set and hold valid scripts path (scripts loaded by hook libraries).
+    PathCheckerPtr hook_scripts_path_checker_;
 };
+
+std::string
+HookLibraryScriptsChecker::getHookScriptsPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {
+    if (!hook_scripts_path_checker_ || reset) {
+        hook_scripts_path_checker_.reset(new PathChecker(DEFAULT_HOOK_SCRIPTS_PATH, "KEA_HOOK_SCRIPTS_PATH"));
+        if (!explicit_path.empty()) {
+            hook_scripts_path_checker_->getPath(true, explicit_path);
+        }
+    }
+
+    return (hook_scripts_path_checker_->getPath());
+}
+
+std::string
+HookLibraryScriptsChecker::validatePath(const std::string libpath) {
+    if (!hook_scripts_path_checker_) {
+        getHookScriptsPath();
+    }
+
+    return (hook_scripts_path_checker_->validatePath(libpath));
+}
 
 std::string
 HooksLibrariesParser::getHooksPath(bool reset /* = false */, const std::string explicit_path /* = "" */) {

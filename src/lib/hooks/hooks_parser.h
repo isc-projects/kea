@@ -83,6 +83,33 @@ public:
                                     const std::string explicit_path = "");
 };
 
+class HookLibraryScriptsChecker {
+public:
+    /// @brief Validates a script path (script loaded by a hook) against the
+    /// supported path.
+    ///
+    /// @param libpath script path to validate.
+    ///
+    /// @return validated path
+    static std::string validatePath(const std::string libpath);
+
+    /// @brief Fetches the supported script path.
+    ///
+    /// The first call to this function with no arguments will set the default
+    /// hooks path to either the value of DEFAULT_HOOK_SCRIPTS_PATH or the environment
+    /// variable KEA_HOOK_SCRIPTS_PATH if it is defined.  Subsequent calls with no
+    /// arguments will simply return this value.
+    ///
+    /// @param reset recalculate when true, defaults to false. This is for
+    /// testing purposes only.
+    /// @param explicit_path set default hooks path to this value. This is
+    /// for testing purposes only.
+    ///
+    /// @return String containing the default script path.
+    static std::string getHookScriptsPath(bool reset = false,
+                                          const std::string explicit_path = "");
+};
+
 }  // namespace isc::hooks
 }  // namespace isc
 

@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/callout_manager.h>
+#include <hooks/hooks_parser.h>
 #include <dhcpsrv/legal_log_mgr.h>
 #include <rotating_file.h>
 #include <util/reconnect_ctl.h>
@@ -147,6 +148,7 @@ public:
 
     /// @brief Constructor
     RotatingFileTest() : time_(RotatingFileTest::getTime()) {
+        HookLibraryScriptsChecker::getHookScriptsPath(true, TEST_DATA_BUILDDIR);
     }
 
     /// @brief Destructor

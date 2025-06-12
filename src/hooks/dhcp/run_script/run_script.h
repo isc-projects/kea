@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/library_handle.h>
+#include <hooks/hooks_parser.h>
 #include <string>
 
 namespace isc {
@@ -217,6 +218,7 @@ public:
     ///
     /// @param name The name of the target script.
     void setName(const std::string& name) {
+        isc::hooks::HookLibraryScriptsChecker::validatePath(name);
         name_ = name;
     }
 

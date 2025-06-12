@@ -14,6 +14,7 @@
 #include <testutils/gtest_utils.h>
 #include <dhcpsrv/legal_log_mgr_factory.h>
 #include <dhcpsrv/legal_log_db_log.h>
+#include <hooks/hooks_parser.h>
 #include <legal_log_log.h>
 #include <rotating_file.h>
 #include <testutils/env_var_wrapper.h>
@@ -26,6 +27,7 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::legal_log;
 using namespace isc::test;
 using namespace std;
@@ -41,6 +43,7 @@ DbLogger legal_log_db_logger(legal_log_logger, legal_log_db_message_map);
 struct LegalLogMgrTest : ::testing::Test {
     /// @brief Constructor.
     LegalLogMgrTest() : legal_log_dir_env_var_("KEA_LEGAL_LOG_DIR") {
+        HookLibraryScriptsChecker::getHookScriptsPath(true, TEST_DATA_BUILDDIR);
     }
 
     /// @brief Destructor.

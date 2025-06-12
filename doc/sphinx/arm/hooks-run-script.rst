@@ -38,6 +38,10 @@ If the ``sync`` parameter is ``false``, then the script will launch and Kea
 will not wait for the execution to finish, causing all the OUT parameters of
 the script (including the next step) to be ignored.
 
+The external script must be stored in the ``"[kea-install-dir]/share/kea/scripts/"``
+directory which can be overridden at startup by setting the environment variable
+``KEA_HOOK_SCRIPTS_PATH`` to a different path.
+
 .. note::
 
    The script inherits all privileges from the server which calls it.
