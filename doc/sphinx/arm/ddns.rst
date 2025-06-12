@@ -163,12 +163,10 @@ directly. It accepts the following command-line switches:
     # from sources using libcfgrpt.a
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
--  ``-X`` - As of Kea 3.0, disables path and permissions restrictions.
-   The server will emit a warning at startup that sercurity restrictions
-   have been disabled. Do not use this mode of operation without careful
-   consideration and taking any necessary precautions. Failure to do so can
-   expose deployments to security vulnerabilities. For more information
-   please read section :ref:`securing-a-kea-deployment`.
+-  ``-X`` - As of Kea 3.0, disables secruity restrictions.  The server will 
+   still check for violations but will emit warning logs when they are found
+   rather than fail with an error. Please see 
+   :ref:`sec-kea-runtime-security-risk-checking` for details.
 
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.

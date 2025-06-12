@@ -405,6 +405,8 @@ stdout/stderr and files. Syslog may export the logs over the network, exposing t
     running, log an unrecoverable error. For ease of use simply omit the ``path``
     parameter.
 
+.. _sec-summary-of-path-restrictions:
+
 Summary of Path Restrictions
 ----------------------------
 
@@ -550,6 +552,40 @@ and DDNS servers since Kea version 2.7.2.
     than this value is used in a ``library`` element Kea will emit an error and refuse
     to load the library. For ease of use ``library`` elements may simply omit path
     components.
+
+The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
+channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default;
+
+.. _sec-kea-runtime-security-risk-checking:
+
+Kea Runtime Security Risk Checking
+==================================
+
+Runtime security risk checking was initially added to Kea daemons :iscman:`kea-dhcp4`,
+:iscman:`kea-dhcp6`, :iscman:`kea-dhcp-ddns`, :iscman:`kea-ctrl-agent`. in 2.7.9.
+In Kea 3.0 additional checks were added. By default, when a daemon detects a security
+risk it emits an error log and exits. The following checks are performed:
+
+- Use of unsupported file paths or permissions as detailed in :ref:`sec-summary-of-path-restrictions`
+
+- Use of clear text 'user' or 'password' in HTTP authentication  (Kea 3.0)
+
+- Use of clear text 'secret' in TSIG key configuration  (Kea 3.0)
+
+- Use of HTTP API channels without authentication  (Kea 3.0)
+
+- Kea server running as root user. (Note this only causes a warning log and is never fatal)
+
+As of Kea 3.0, starting the daemons with the command line option, '-X',
+instructs them to warn about security risks but continue operating anyway.
+The message IDs for all such warnings are suffixed with "_SECURITY_WARN".
+
+.. warning::
+
+   Do not run servers with the '-X' option without careful consideration and taking
+   any necessary precautions. Failure to do so can expose deployments to security
+   vulnerabilities.
+
 
 Kea Security Processes
 ======================
