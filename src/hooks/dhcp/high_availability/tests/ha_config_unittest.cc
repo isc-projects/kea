@@ -1430,7 +1430,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
         "        \"cert-file\": \"!CA!/kea-client.crt\","
         "        \"key-file\": \"!CA!/kea-client.key\","
         "        \"require-client-certs\": false,"
-        "        \"restrict-commands\": true,"
+        "        \"restrict-commands\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"my-server\","
@@ -1479,7 +1479,7 @@ TEST_F(HAConfigTest, tlsParameterInheritance) {
     expected += "/kea-client.key";
     EXPECT_EQ(expected, impl->getConfig()->getKeyFile().get());
     EXPECT_FALSE(impl->getConfig()->getRequireClientCerts());
-    EXPECT_TRUE(impl->getConfig()->getRestrictCommands());
+    EXPECT_FALSE(impl->getConfig()->getRestrictCommands());
 
     // Check the first peer parameters: it inherits them from the global level.
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();

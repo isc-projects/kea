@@ -34,7 +34,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "max-unacked-clients",        Element::integer, "10" },
     { "max-rejected-lease-updates", Element::integer, "10" },
     { "require-client-certs",       Element::boolean, "true" },
-    { "restrict-commands",          Element::boolean, "false" },
+    { "restrict-commands",          Element::boolean, "true" },
     { "send-lease-updates",         Element::boolean, "true" },
     { "sync-leases",                Element::boolean, "true" },
     { "sync-timeout",               Element::integer, "60000" },

@@ -232,7 +232,7 @@ Since Kea 2.1.7 the HTTPS server side is supported:
 
 Kea 2.1.7 added a new security feature with the ``restrict-commands`` HA config
 parameter: when set to ``true``, commands which are not used by the hook are
-rejected. The default is ``false``.
+rejected. The default is ``true`` since Kea 3.0.0.
 
 The following is an example of an HA server pair and Control Agent configuration
 for ``hot-standby`` with TLS.

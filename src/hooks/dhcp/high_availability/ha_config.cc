@@ -170,7 +170,7 @@ HAConfig::HAConfig()
       wait_backup_ack_(false), enable_multi_threading_(false),
       http_dedicated_listener_(false), http_listener_threads_(0), http_client_threads_(0),
       trust_anchor_(), cert_file_(), key_file_(), require_client_certs_(true),
-      restrict_commands_(false), peers_(),
+      restrict_commands_(true), peers_(),
       state_machine_(new StateMachineConfig()) {
 }
 

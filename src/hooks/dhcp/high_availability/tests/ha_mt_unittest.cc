@@ -165,7 +165,7 @@ TEST_F(HAMtServiceTest, multiThreadingBasics) {
         "        \"this-server-name\": \"server1\","
         "        \"mode\": \"passive-backup\","
         "        \"wait-backup-ack\": true,"
-        "        \"restrict-commands\": true,"
+        "        \"restrict-commands\": false,"
         "        \"peers\": ["
         "            {"
         "                \"name\": \"server1\","

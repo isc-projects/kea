@@ -90,5 +90,5 @@ int stringToState(const std::string& state_name) {
     isc_throw(BadValue, "unknown state " << state_name);
 }
 
-} // end of namespace isc::ha 
+} // end of namespace isc::ha
 } // end of namespace isc
