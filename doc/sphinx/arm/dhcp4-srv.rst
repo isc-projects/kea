@@ -2151,19 +2151,19 @@ manually.
    | subnet-selection               | 118   | ipv4-address                          | if present in client's messages, will be used in the subnet       |
    |                                |       |                                       | selection process.                                                |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | status-code                    | 151   | record (uint8, string)                | set by server in its responses.                                   |
+   | status-code                    | 151   | record (uint8, string)                | set by server in bulk leasequery responses.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | base-time                      | 152   | uint32                                | set by server in its responses.                                   |
+   | base-time                      | 152   | uint32                                | set by server in bulk leasequery responses.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | start-time-of-state            | 153   | uint32                                | set by server in its responses.                                   |
+   | start-time-of-state            | 153   | uint32                                | set by server in bulk leasequery responses.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | query-start-time               | 154   | uint32                                | set by requestor using prior information from the server.         |
+   | query-start-time               | 154   | uint32                                | set by requestor during bulk leasequery.                          |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | query-end-time                 | 155   | uint32                                | set by requestor using prior information from the server.         |
+   | query-end-time                 | 155   | uint32                                | set by requestor during bulk leasequery.                          |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | dhcp-state                     | 156   | uint8                                 | set by server in its responses.                                   |
+   | dhcp-state                     | 156   | uint8                                 | set by server in bulk leasequery responses.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
-   | data-source                    | 157   | uint8                                 | set by server in its responses.                                   |
+   | data-source                    | 157   | uint8                                 | set by server in bulk leasequery responses.                       |
    +--------------------------------+-------+---------------------------------------+-------------------------------------------------------------------+
 
 The following table lists all option types used in the previous two tables with a description of
