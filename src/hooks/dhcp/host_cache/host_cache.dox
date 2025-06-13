@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea Host Cache Hooks Library
+@page libdhcp_host_cache Kea Host Cache Hooks Library
 
 Welcome to Kea Host Cache Hooks Library. This documentation is
 addressed at developers who are interested in internal operation of the

@@ -201,7 +201,7 @@ protected:
     /// @brief Initiates an asynchronous socket read.
     ///
     /// If the channel is able to read (is open, not stopping and not
-    /// currently reading) it invokes @ref PingSocket::asyncReceive()
+    /// currently reading) it invokes isc::ping_check::ICMPSocket<SocketCallback>::asyncReceive()
     /// otherwise it simply returns.  If the call to asyncReceive() fails
     /// it calls @c stopChannel() otherwise, when it completes it will
     /// invoke @c socketReadCallback().

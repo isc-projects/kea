@@ -109,7 +109,7 @@ bool isPrefix(ConstElementPtr arguments) {
 ///
 /// Looks for either a lease valid lifetime or expiry from which to
 /// generate the duration text using @ref
-/// isc::legal_log::LegalLogMgr::genDurationString().
+/// isc::dhcp::LegalLogMgr::genDurationString().
 ///
 /// @param handle CalloutHandle which provides access to context.
 /// @param os output stream to which the text is output

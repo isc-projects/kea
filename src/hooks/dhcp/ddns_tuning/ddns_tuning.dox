@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea DDNS Tuning Hooks Library
+@page libdhcp_ddns_tuning Kea DDNS Tuning Hooks Library
 
 Welcome to Kea DDNS Tuning Hooks Library. This documentation is
 addressed at developers who are interested in internal operation of the

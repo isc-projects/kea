@@ -227,7 +227,7 @@ public:
 
     /// @brief Class/static version of sendNextResponse.
     ///
-    /// @brief wptr Weak pointer to a lease query connection.
+    /// @param wptr Weak pointer to a lease query connection.
     static void doSendNextResponse(LeaseQueryConnectionWPtr wptr) {
         LeaseQueryConnectionPtr ptr = wptr.lock();
         if (!ptr) {
@@ -338,7 +338,7 @@ public:
 
     /// @brief Class/static version of pushToSend.
     ///
-    /// @brief wptr Weak pointer to a lease query connection.
+    /// @param wptr Weak pointer to a lease query connection.
     /// @param response Pointer to the response to send.
     /// @return True if the response can be sent, False otherwise.
     static bool doPushToSend(LeaseQueryConnectionWPtr wptr,
@@ -357,7 +357,7 @@ public:
 
     /// @brief Class/static version of post.
     ///
-    /// @brief wptr Weak pointer to a lease query connection.
+    /// @param wptr Weak pointer to a lease query connection.
     /// @param callback The callback to post.
     static void doPost(LeaseQueryConnectionWPtr wptr,
                        const BlqPostCbArg& callback) {
@@ -376,7 +376,7 @@ public:
 
     /// @brief Class/static version of queryComplete.
     ///
-    /// @brief wptr Weak pointer to a lease query connection.
+    /// @param wptr Weak pointer to a lease query connection.
     /// @param xid Xid of the query that has finished.
     static void doQueryComplete(LeaseQueryConnectionWPtr wptr, const Xid& xid) {
         LeaseQueryConnectionPtr ptr = wptr.lock();

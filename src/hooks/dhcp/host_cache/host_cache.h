@@ -378,7 +378,8 @@ public:
                       const uint8_t* identifier_begin,
                       const size_t identifier_len);
 
-    /// @brief Implements @ref BaseHostDataSource::update() for HostCache.
+    /// @brief Implements @ref isc::dhcp::BaseHostDataSource::update() for
+    /// HostCache.
     ///
     /// Attempts to update an existing host entry.
     ///

@@ -117,8 +117,6 @@ public:
     /// was opened. Kea does not wait for the process to finish.
     ///
     /// @param parameters The library parameters.
-    ///
-    /// @return The RotatingFile forensic log backend.
     void apply(const isc::db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Opens the current file for writing.

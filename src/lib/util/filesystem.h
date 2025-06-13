@@ -246,6 +246,9 @@ public:
     std::string validateDirectory(const std::string input_path_str,
                                   bool enforce_path = shouldEnforceSecurity()) const;
 
+    /// @brief Check if the path has expected permissions.
+    ///
+    /// @param permissions The expected permissions.
     /// @param enforce_perms Enables permsissions check.  If false the function
     /// simply returns true.
     ///

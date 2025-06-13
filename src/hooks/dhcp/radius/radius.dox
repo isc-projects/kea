@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea RADIUS Hook Library
+@page libdhcp_radius Kea RADIUS Hook Library
 
 Welcome to the Kea RADIUS Hook Library. This documentation is
 addressed at developers who are interested in the internal operation of the

@@ -946,12 +946,25 @@ INPUT                  = ../../src/bin/agent \
                          ../../src/bin/lfc \
                          ../../src/bin/netconf \
                          ../../src/bin/perfdhcp \
+                         ../../src/hooks/d2/gss_tsig \
                          ../../src/hooks/dhcp/bootp \
+                         ../../src/hooks/dhcp/class_cmds \
+                         ../../src/hooks/dhcp/ddns_tuning \
+                         ../../src/hooks/dhcp/flex_id \
                          ../../src/hooks/dhcp/flex_option \
+                         ../../src/hooks/dhcp/forensic_log \
                          ../../src/hooks/dhcp/high_availability \
+                         ../../src/hooks/dhcp/host_cache \
+                         ../../src/hooks/dhcp/host_cmds \
                          ../../src/hooks/dhcp/lease_cmds \
+                         ../../src/hooks/dhcp/lease_query \
+                         ../../src/hooks/dhcp/limits \
                          ../../src/hooks/dhcp/perfmon \
+                         ../../src/hooks/dhcp/ping_check \
+                         ../../src/hooks/dhcp/radius \
+                         ../../src/hooks/dhcp/run_script \
                          ../../src/hooks/dhcp/stat_cmds \
+                         ../../src/hooks/dhcp/subnet_cmds \
                          ../../src/hooks/dhcp/user_chk \
                          ../../src/lib/asiodns \
                          ../../src/lib/asiolink \

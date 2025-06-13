@@ -49,8 +49,9 @@ enum UpdateType {
 /// It uses an internal representation of the subnet parameters hierarchy to
 /// traverse the JSON tree, and functions to detect elements that match the same
 /// configuration element or to detect if the element itself is a key identifier
-/// of another configuration element. For more details, see @ref mergeDiffAdd
-/// @ref mergeDiffDel and @ref extend.
+/// of another configuration element. For more details, see
+/// @ref isc::data::mergeDiffAdd @ref isc::data::mergeDiffDel and
+/// @ref isc::data::extend.
 ///
 /// @tparam SubnetConfigParserType One of the @c Subnet4ConfigParser or
 /// @c Subnet6ConfigParser.

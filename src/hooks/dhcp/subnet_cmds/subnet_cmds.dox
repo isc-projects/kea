@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea Subnet Commands Hooks Library
+@page libdhcp_subnet_cmds Kea Subnet Commands Hooks Library
 
 Welcome to Kea Subnet Commands Hooks Library. This documentation is
 addressed at developers who are interested in internal operation of the
@@ -19,7 +19,7 @@ Developer's Guide</a> and in particular its section about hooks: <a
 href="https://reports.kea.isc.org/dev_guide/df/d46/hooksdgDevelopersGuide.html">
 Hooks Developer's Guide</a>.
 
-@section host_cmds Overview
+@section subnet_cmds Overview
 ## Introduction
 
 @todo

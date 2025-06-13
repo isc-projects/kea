@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea Limits Hook Library
+@page libdhcp_limits Kea Limits Hook Library
 
 Welcome to Kea's limits hook library. This documentation is addressed at developers who are
 interested in the internal workings of the library. This file provides information needed to

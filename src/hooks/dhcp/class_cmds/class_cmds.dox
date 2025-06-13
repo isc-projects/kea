@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea Class Commands Hooks Library
+@page libdhcp_class_cmds Kea Class Commands Hooks Library
 
 Welcome to Kea Class Commands Hooks Library. This documentation is
 addressed at developers who are interested in internal operation of the

@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea GSS-TSIG Hooks Library
+@page libddns_gss_tsig Kea GSS-TSIG Hooks Library
 
 Welcome to Kea GSS-TSIG Hooks Library. This documentation is addressed
 at developers who are interested in internal operation of the

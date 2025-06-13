@@ -35,6 +35,7 @@ public:
 
     /// @brief Extract boolean data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -45,6 +46,7 @@ public:
 
     /// @brief Extract integer data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -55,6 +57,7 @@ public:
 
     /// @brief Extract string data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param value The value to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -65,6 +68,7 @@ public:
 
     /// @brief Extract HWAddr data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param hwaddr The hwaddr to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -75,6 +79,7 @@ public:
 
     /// @brief Extract ClientId data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param client_id The client id to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -85,6 +90,7 @@ public:
 
     /// @brief Extract DUID data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param duid The duid to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -95,6 +101,7 @@ public:
 
     /// @brief Extract Option data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param option The option to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -105,6 +112,7 @@ public:
 
     /// @brief Extract Option SubOption data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param option The parent option of the suboption to be exported to
     /// target script environment.
     /// @param code The code of the suboption.
@@ -118,6 +126,7 @@ public:
 
     /// @brief Extract Option6IA data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param option6IA The option6IA to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -128,6 +137,7 @@ public:
 
     /// @brief Extract Subnet4 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param subnet4 The subnet4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -138,6 +148,7 @@ public:
 
     /// @brief Extract Subnet6 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param subnet6 The subnet6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -148,6 +159,7 @@ public:
 
     /// @brief Extract Lease4 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param lease4 The lease4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -158,6 +170,7 @@ public:
 
     /// @brief Extract Lease6 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param lease6 The lease6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -168,6 +181,7 @@ public:
 
     /// @brief Extract Lease4Collection data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param leases4 The leases4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -178,6 +192,7 @@ public:
 
     /// @brief Extract Lease6Collection data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param leases6 The leases6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -188,6 +203,7 @@ public:
 
     /// @brief Extract Pkt4 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param pkt4 The pkt4 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -198,6 +214,7 @@ public:
 
     /// @brief Extract Pkt6 data and append to environment.
     ///
+    /// @param vars The process environment variables.
     /// @param pkt6 The pkt6 to be exported to target script environment.
     /// @param prefix The prefix for the name of the environment variable.
     /// @param suffix The suffix for the name of the environment variable.
@@ -231,7 +248,7 @@ public:
 
     /// @brief Set the synchronous call mode for the target script.
     ///
-    /// @param name The synchronous call mode for the target script.
+    /// @param sync The synchronous call mode for the target script.
     void setSync(const bool sync) {
         sync_ = sync;
     }

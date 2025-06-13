@@ -144,7 +144,7 @@ public:
     /// @note As a side effect prepend the current config file path
     /// when the name does not contain a slash.
     ///
-    /// @param[in][out] file Reference to the TBW configuration file name.
+    /// @param file [in/out] Reference to the TBW configuration file name.
     /// @throw BadValue when not in the same directory.
     void checkWriteConfigFile(std::string& file);
 

@@ -226,7 +226,8 @@ public:
     /// @return number of conflicts limited to one if overwrite is false.
     size_t insert(const dhcp::ConstHostPtr& host, bool overwrite);
 
-    /// @brief Implements @ref BaseHostDataSource::update() for HostCacheImpl.
+    /// @brief Implements @ref isc::dhcp::BaseHostDataSource::update() for
+    /// HostCacheImpl.
     ///
     /// Attempts to update an existing host entry.
     ///

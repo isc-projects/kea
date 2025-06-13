@@ -6,7 +6,7 @@
 
 /**
 
-@mainpage Kea Legal Log Hooks Library
+@page libdhcp_legal_log Kea Legal Log Hooks Library
 
 Welcome to Kea Legal Log Hooks Library. This documentation is
 addressed at developers who are interested in internal operation of the

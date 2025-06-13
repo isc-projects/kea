@@ -1326,7 +1326,7 @@ public:
 
     /// @note Does not define its own representation type:
     /// simply use the @c TokenOption::RepresentationType
-
+    ///
     /// @brief Constructor that takes an option and sub-option codes as parameter
     ///
     /// Note: There is no constructor that takes names.
