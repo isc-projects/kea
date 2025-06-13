@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
-@page libkea_tcp libkea-kea_tcp - TCP Listener Library
+@page libtcp libkea-kea_tcp - TCP Listener Library
 
 @section libkea_tcpIntro Introduction
 

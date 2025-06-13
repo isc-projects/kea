@@ -59,10 +59,6 @@
  * - @subpage d2Hooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
- * - @subpage libdhcp_ha
- * - @subpage libdhcp_user_chk
- * - @subpage libdhcp_lease_cmds
- * - @subpage libdhcp_stat_cmds
  *
  * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4
@@ -143,6 +139,29 @@
  *   - @subpage cplSignals
  * - @subpage libyang
  * - @subpage libhttp
+ * - @subpage libd2srv
+ * - @subpage libtcp
+ * @section hooks Kea hook libraries
+ * - @subpage libddns_gss_tsig
+ * - @subpage libdhcp_bootp
+ * - @subpage libdhcp_class_cmds
+ * - @subpage libdhcp_ddns_tuning
+ * - @subpage libdhcp_flex_id
+ * - @subpage libdhcp_flex_option
+ * - @subpage libdhcp_ha
+ * - @subpage libdhcp_host_cache
+ * - @subpage libdhcp_host_cmds
+ * - @subpage libdhcp_lease_cmds
+ * - @subpage libdhcp_lease_query
+ * - @subpage libdhcp_legal_log
+ * - @subpage libdhcp_limits
+ * - @subpage libdhcp_perfmon
+ * - @subpage libdhcp_ping_check
+ * - @subpage libdhcp_radius
+ * - @subpage libdhcp_run_script
+ * - @subpage libdhcp_stat_cmds
+ * - @subpage libdhcp_subnet_cmds
+ * - @subpage libdhcp_user_chk
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology
