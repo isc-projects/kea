@@ -662,8 +662,6 @@ public:
     /// This rather dangerous method is able to remove all leases from specified
     /// subnet.
     ///
-    /// @todo: Not implemented yet.
-    ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
     virtual size_t wipeLeases4(const SubnetID& subnet_id) override;
@@ -672,8 +670,6 @@ public:
     ///
     /// This rather dangerous method is able to remove all leases from specified
     /// subnet.
-    ///
-    /// @todo: Not implemented yet.
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.

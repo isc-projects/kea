@@ -1,4 +1,4 @@
-// File created from ../src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
+// File created from src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -73,8 +73,8 @@ const char* values[] = {
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "PGSQL_LB_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
-    "PGSQL_LB_DELETED_SUBNET4_ID", "deleted %1 leases that match Subnet ID %2.",
-    "PGSQL_LB_DELETED_SUBNET6_ID", "deleted %1 leases that match Subnet ID %2.",
+    "PGSQL_LB_DELETED_SUBNET4_ID", "deleted %1 leases that match subnet ID %2.",
+    "PGSQL_LB_DELETED_SUBNET6_ID", "deleted %1 leases that match subnet ID %2.",
     "PGSQL_LB_DELETE_ADDR4", "deleting lease for address %1",
     "PGSQL_LB_DELETE_ADDR6", "deleting lease for address %1",
     "PGSQL_LB_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
@@ -91,7 +91,7 @@ const char* values[] = {
     "PGSQL_LB_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
     "PGSQL_LB_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
     "PGSQL_LB_GET_IAID_DUID", "obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3",
-    "PGSQL_LB_GET_IAID_SUBID_DUID", "obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4",
+    "PGSQL_LB_GET_IAID_SUBID_DUID", "obtaining IPv4 leases for IAID %1, subnet ID %2, DUID %3, and lease type %4",
     "PGSQL_LB_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
     "PGSQL_LB_GET_PAGE6", "obtaining at most %1 IPv6 leases starting from address %2",
     "PGSQL_LB_GET_RELAYID4", "obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5",

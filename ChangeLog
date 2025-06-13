@@ -1,3 +1,8 @@
+2355.	[func]		razvan
+	Implemented lease4-wipe and lease6-wipe for database backends.
+	The commands are no longer deprecated.
+	(Gitlab #3814)
+
 2354.	[doc]		razvan
 	The DHCPv4-over-DHCPv6 implementation, perfmon hook library and
 	sysrepo features are no longer considered experimental.

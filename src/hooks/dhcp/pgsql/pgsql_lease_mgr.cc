@@ -2998,7 +2998,7 @@ PgSqlLeaseMgr::wipeLeasesCommon(const SubnetID& subnet_id, StatementIndex statem
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
-    // Delete leases.
+    // Delete leases and return the number of deleted leases.
     return (deleteLeaseCommon(ctx, statement_index, bind_array));
 }
 

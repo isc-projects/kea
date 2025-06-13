@@ -78,15 +78,15 @@ leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
 
-% MYSQL_LB_DELETED_SUBNET4_ID deleted %1 leases that match Subnet ID %2.
+% MYSQL_LB_DELETED_SUBNET4_ID deleted %1 leases that match subnet ID %2.
 Logged at debug log level 50.
 A debug message issued when the server is removing leases which match
-respective Subnet ID.
+respective subnet ID.
 
-% MYSQL_LB_DELETED_SUBNET6_ID deleted %1 leases that match Subnet ID %2.
+% MYSQL_LB_DELETED_SUBNET6_ID deleted %1 leases that match subnet ID %2.
 Logged at debug log level 50.
 A debug message issued when the server is removing leases which match
-respective Subnet ID.
+respective subnet ID.
 
 % MYSQL_LB_GET4 obtaining all IPv4 leases
 Logged at debug log level 50.
@@ -155,11 +155,11 @@ A debug message issued when the server is attempting to obtain a set of IPv6
 leases from the MySQL database for a client with the specified IAID (Identity
 Association ID) and DUID (DHCP Unique Identifier).
 
-% MYSQL_LB_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
+% MYSQL_LB_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, subnet ID %2, DUID %3, lease type %4
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
-(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+(Identity Association ID), subnet ID and DUID (DHCP Unique Identifier).
 
 % MYSQL_LB_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
 Logged at debug log level 50.

@@ -3847,7 +3847,7 @@ MySqlLeaseMgr::wipeLeasesCommon(const SubnetID& subnet_id, StatementIndex statem
     MySqlLeaseContextAlloc get_context(*this);
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
-    // Get the number of deleted leases and log it.
+    // Delete leases and return the number of deleted leases.
     return (deleteLeaseCommon(ctx, statement_index, inbind));
 }
 
