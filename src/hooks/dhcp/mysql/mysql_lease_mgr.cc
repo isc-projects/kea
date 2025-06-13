@@ -92,11 +92,15 @@ boost::array<TaggedStatement, MySqlLeaseMgr::NUM_STATEMENTS>
 tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE4,
                     "DELETE FROM lease4 WHERE address = ? AND expire = ?"},
+    {MySqlLeaseMgr::DELETE_LEASE4_SUBID,
+                    "DELETE FROM lease4 WHERE subnet_id = ?"},
     {MySqlLeaseMgr::DELETE_LEASE4_STATE_EXPIRED,
                     "DELETE FROM lease4 "
                         "WHERE state = ? AND expire < ?"},
     {MySqlLeaseMgr::DELETE_LEASE6,
                     "DELETE FROM lease6 WHERE address = ? AND expire = ?"},
+    {MySqlLeaseMgr::DELETE_LEASE6_SUBID,
+                    "DELETE FROM lease6 WHERE subnet_id = ?"},
     {MySqlLeaseMgr::DELETE_LEASE6_STATE_EXPIRED,
                     "DELETE FROM lease6 "
                         "WHERE state = ? AND expire < ?"},
@@ -3828,13 +3832,39 @@ MySqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
 }
 
 size_t
-MySqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases4 is not implemented for MySQL backend");
+MySqlLeaseMgr::wipeLeasesCommon(const SubnetID& subnet_id, StatementIndex statement_index) {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Subnet ID.
+    uint32_t subnet = static_cast<uint32_t>(subnet_id);
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Get the number of deleted leases and log it.
+    return (deleteLeaseCommon(ctx, statement_index, inbind));
 }
 
 size_t
-MySqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases6 is not implemented for MySQL backend");
+MySqlLeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+    uint64_t deleted_leases = wipeLeasesCommon(subnet_id, DELETE_LEASE4_SUBID);
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_DELETED_SUBNET4_ID)
+        .arg(deleted_leases).arg(subnet_id);
+    return (deleted_leases);
+}
+
+size_t
+MySqlLeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+    uint64_t deleted_leases = wipeLeasesCommon(subnet_id, DELETE_LEASE6_SUBID);
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_DELETED_SUBNET6_ID)
+        .arg(deleted_leases).arg(subnet_id);;
+    return (deleted_leases);
 }
 
 // Miscellaneous database methods.

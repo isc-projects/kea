@@ -952,23 +952,23 @@ TEST_F(MySqlLeaseMgrTest, recountLeaseStats6MultiThreading) {
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
+TEST_F(MySqlLeaseMgrTest, wipeLeases4) {
     testWipeLeases4();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4MultiThreading) {
+TEST_F(MySqlLeaseMgrTest, wipeLeases4MultiThreading) {
     MultiThreadingTest mt(true);
     testWipeLeases4();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
+TEST_F(MySqlLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6MultiThreading) {
+TEST_F(MySqlLeaseMgrTest, wipeLeases6MultiThreading) {
     MultiThreadingTest mt(true);
     testWipeLeases6();
 }

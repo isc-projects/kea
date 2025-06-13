@@ -70,10 +70,10 @@ The following commands are currently supported:
 The ``subnet4-list`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to list all currently configured subnets. Each
-subnet is returned with a subnet identifier and
-subnet prefix. To retrieve
-detailed information about the subnet, use the :isccmd:`subnet4-get` command.
+This command is used to list all currently configured subnets. Each subnet
+is returned with a subnet identifier, subnet prefix and shared network name,
+if available. To retrieve detailed information about the subnet, use the
+:isccmd:`subnet4-get` command.
 
 This command has a simple structure:
 
@@ -115,10 +115,10 @@ error description.
 The ``subnet6-list`` Command
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This command is used to list all currently configured subnets. Each
-subnet is returned with a subnet identifier and
-subnet prefix. To retrieve
-detailed information about the subnet, use the :isccmd:`subnet6-get` command.
+This command is used to list all currently configured subnets. Each subnet
+is returned with a subnet identifier, subnet prefix and shared network name,
+if available. To retrieve detailed information about the subnet, use the
+:isccmd:`subnet6-get` command.
 
 This command has a simple structure:
 

@@ -919,23 +919,23 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6MultiThreading) {
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
+TEST_F(PgSqlLeaseMgrTest, wipeLeases4) {
     testWipeLeases4();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4MultiThreading) {
+TEST_F(PgSqlLeaseMgrTest, wipeLeases4MultiThreading) {
     MultiThreadingTest mt(true);
     testWipeLeases4();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
+TEST_F(PgSqlLeaseMgrTest, wipeLeases6) {
     testWipeLeases6();
 }
 
 /// @brief Tests that leases from specific subnet can be removed.
-TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6MultiThreading) {
+TEST_F(PgSqlLeaseMgrTest, wipeLeases6MultiThreading) {
     MultiThreadingTest mt(true);
     testWipeLeases6();
 }

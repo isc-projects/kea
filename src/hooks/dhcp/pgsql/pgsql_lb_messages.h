@@ -1,4 +1,4 @@
-// File created from src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
+// File created from ../src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
 
 #ifndef PGSQL_LB_MESSAGES_H
 #define PGSQL_LB_MESSAGES_H
@@ -17,6 +17,8 @@ extern const isc::log::MessageID PGSQL_LB_DB;
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED;
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_FAILED;
+extern const isc::log::MessageID PGSQL_LB_DELETED_SUBNET4_ID;
+extern const isc::log::MessageID PGSQL_LB_DELETED_SUBNET6_ID;
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR4;
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR6;
 extern const isc::log::MessageID PGSQL_LB_DELETE_EXPIRED_RECLAIMED4;

@@ -48,6 +48,11 @@ PgSqlTaggedStatement tagged_statements[] = {
       "delete_lease4",
       "DELETE FROM lease4 WHERE address = $1 AND expire = $2" },
 
+    // DELETE_LEASE4_SUBID
+    { 1, { OID_INT8 },
+      "delete_lease4_subid",
+      "DELETE FROM lease4 WHERE subnet_id = $1" },
+
     // DELETE_LEASE4_STATE_EXPIRED
     { 2, { OID_INT8, OID_TIMESTAMP },
       "delete_lease4_state_expired",
@@ -57,7 +62,12 @@ PgSqlTaggedStatement tagged_statements[] = {
     // DELETE_LEASE6
     { 2, { OID_VARCHAR, OID_TIMESTAMP },
       "delete_lease6",
-      "DELETE FROM lease6 WHERE address = cast($1 as inet) AND expire = $2"},
+      "DELETE FROM lease6 WHERE address = cast($1 as inet) AND expire = $2" },
+
+    // DELETE_LEASE6_SUBID
+    { 1, { OID_INT8 },
+      "delete_lease6_subid",
+      "DELETE FROM lease6 WHERE subnet_id = $1" },
 
     // DELETE_LEASE6_STATE_EXPIRED
     { 2, { OID_INT8, OID_TIMESTAMP },
@@ -301,7 +311,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "ORDER BY address "},
+      "ORDER BY address" },
 
     // GET_LEASE6_ADDR
     { 2, { OID_VARCHAR, OID_INT2 },
@@ -312,7 +322,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "hwaddr, hwtype, hwaddr_source, "
         "state, user_context, pool_id "
       "FROM lease6 "
-      "WHERE address = cast($1 as inet) AND lease_type = $2"},
+      "WHERE address = cast($1 as inet) AND lease_type = $2" },
 
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
@@ -348,7 +358,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE address > cast($1 as inet) "
       "ORDER BY address "
-      "LIMIT $2"},
+      "LIMIT $2" },
 
     // GET_LEASE6_UCTX_PAGE
     { 2, { OID_VARCHAR, OID_INT8 },
@@ -2977,13 +2987,35 @@ PgSqlLeaseMgr::startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
 }
 
 size_t
-PgSqlLeaseMgr::wipeLeases4(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases4 is not implemented for PostgreSQL backend");
+PgSqlLeaseMgr::wipeLeasesCommon(const SubnetID& subnet_id, StatementIndex statement_index) {
+    PsqlBindArray bind_array;
+
+    // Subnet ID.
+    std::string subnet_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_str);
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Delete leases.
+    return (deleteLeaseCommon(ctx, statement_index, bind_array));
 }
 
 size_t
-PgSqlLeaseMgr::wipeLeases6(const SubnetID& /*subnet_id*/) {
-    isc_throw(NotImplemented, "wipeLeases6 is not implemented for PostgreSQL backend");
+PgSqlLeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
+    uint64_t deleted_leases = wipeLeasesCommon(subnet_id, DELETE_LEASE4_SUBID);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_DELETED_SUBNET4_ID)
+        .arg(deleted_leases).arg(subnet_id);
+    return (deleted_leases);
+}
+
+size_t
+PgSqlLeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
+    uint64_t deleted_leases = wipeLeasesCommon(subnet_id, DELETE_LEASE6_SUBID);
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_DELETED_SUBNET6_ID)
+        .arg(deleted_leases).arg(subnet_id);
+    return (deleted_leases);
 }
 
 std::string

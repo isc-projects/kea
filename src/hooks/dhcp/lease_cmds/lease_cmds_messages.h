@@ -38,10 +38,8 @@ extern const isc::log::MessageID LEASE_CMDS_UPDATE6;
 extern const isc::log::MessageID LEASE_CMDS_UPDATE6_CONFLICT;
 extern const isc::log::MessageID LEASE_CMDS_UPDATE6_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_WIPE4;
-extern const isc::log::MessageID LEASE_CMDS_WIPE4_DEPRECATED;
 extern const isc::log::MessageID LEASE_CMDS_WIPE4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_WIPE6;
-extern const isc::log::MessageID LEASE_CMDS_WIPE6_DEPRECATED;
 extern const isc::log::MessageID LEASE_CMDS_WIPE6_FAILED;
 
 #endif // LEASE_CMDS_MESSAGES_H

@@ -1,4 +1,4 @@
-// File created from src/hooks/dhcp/mysql/mysql_lb_messages.mes
+// File created from ../src/hooks/dhcp/mysql/mysql_lb_messages.mes
 
 #ifndef MYSQL_LB_MESSAGES_H
 #define MYSQL_LB_MESSAGES_H
@@ -18,6 +18,8 @@ extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED;
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE;
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_FAILED;
 extern const isc::log::MessageID MYSQL_LB_DELETED_EXPIRED_RECLAIMED;
+extern const isc::log::MessageID MYSQL_LB_DELETED_SUBNET4_ID;
+extern const isc::log::MessageID MYSQL_LB_DELETED_SUBNET6_ID;
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR4;
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR6;
 extern const isc::log::MessageID MYSQL_LB_DELETE_EXPIRED_RECLAIMED4;

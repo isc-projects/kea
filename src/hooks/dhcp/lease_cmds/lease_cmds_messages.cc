@@ -37,10 +37,8 @@ extern const isc::log::MessageID LEASE_CMDS_UPDATE6 = "LEASE_CMDS_UPDATE6";
 extern const isc::log::MessageID LEASE_CMDS_UPDATE6_CONFLICT = "LEASE_CMDS_UPDATE6_CONFLICT";
 extern const isc::log::MessageID LEASE_CMDS_UPDATE6_FAILED = "LEASE_CMDS_UPDATE6_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_WIPE4 = "LEASE_CMDS_WIPE4";
-extern const isc::log::MessageID LEASE_CMDS_WIPE4_DEPRECATED = "LEASE_CMDS_WIPE4_DEPRECATED";
 extern const isc::log::MessageID LEASE_CMDS_WIPE4_FAILED = "LEASE_CMDS_WIPE4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_WIPE6 = "LEASE_CMDS_WIPE6";
-extern const isc::log::MessageID LEASE_CMDS_WIPE6_DEPRECATED = "LEASE_CMDS_WIPE6_DEPRECATED";
 extern const isc::log::MessageID LEASE_CMDS_WIPE6_FAILED = "LEASE_CMDS_WIPE6_FAILED";
 
 namespace {
@@ -79,10 +77,8 @@ const char* values[] = {
     "LEASE_CMDS_UPDATE6_CONFLICT", "lease6-update command failed due to conflict (parameters: %1, reason: %2)",
     "LEASE_CMDS_UPDATE6_FAILED", "lease6-add command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_WIPE4", "lease4-wipe command successful (parameters: %1)",
-    "LEASE_CMDS_WIPE4_DEPRECATED", "lease4-wipe command is deprecated and it will be removed in the future.",
     "LEASE_CMDS_WIPE4_FAILED", "lease4-wipe command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_WIPE6", "lease6-wipe command successful (parameters: %1)",
-    "LEASE_CMDS_WIPE6_DEPRECATED", "lease6-wipe command is deprecated and it will be removed in the future.",
     "LEASE_CMDS_WIPE6_FAILED", "lease6-wipe command failed (parameters: %1, reason: %2)",
     NULL
 };

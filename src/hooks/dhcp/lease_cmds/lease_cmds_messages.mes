@@ -155,9 +155,6 @@ parameters passed are logged.
 The lease4-wipe command has been successful. Parameters of the command
 are logged.
 
-% LEASE_CMDS_WIPE4_DEPRECATED lease4-wipe command is deprecated and it will be removed in the future.
-The lease4-wipe command is deprecated and it will be removed in the future.
-
 % LEASE_CMDS_WIPE4_FAILED lease4-wipe command failed (parameters: %1, reason: %2)
 The lease4-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
@@ -165,9 +162,6 @@ parameters passed are logged.
 % LEASE_CMDS_WIPE6 lease6-wipe command successful (parameters: %1)
 The lease6-wipe command has been successful. Parameters of the command
 are logged.
-
-% LEASE_CMDS_WIPE6_DEPRECATED lease6-wipe command is deprecated and it will be removed in the future.
-The lease6-wipe command is deprecated and it will be removed in the future.
 
 % LEASE_CMDS_WIPE6_FAILED lease6-wipe command failed (parameters: %1, reason: %2)
 The lease6-wipe command has failed. Both the reason as well as the

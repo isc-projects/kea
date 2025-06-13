@@ -734,8 +734,10 @@ public:
     /// statements
     enum StatementIndex {
         DELETE_LEASE4,               // Delete from lease4 by address
+        DELETE_LEASE4_SUBID,         // Delete from lease4 by subnet ID
         DELETE_LEASE4_STATE_EXPIRED, // Delete expired lease4 in a given state
         DELETE_LEASE6,               // Delete from lease6 by address
+        DELETE_LEASE6_SUBID,         // Delete from lease6 by subnet ID
         DELETE_LEASE6_STATE_EXPIRED, // Delete expired lease6 in a given state
         GET_LEASE4,                  // Get all IPv4 leases
         GET_LEASE4_ADDR,             // Get lease4 by address
@@ -984,6 +986,17 @@ private:
     uint64_t deleteLeaseCommon(MySqlLeaseContextPtr& ctx,
                                StatementIndex stindex,
                                MYSQL_BIND* bind);
+
+    /// @brief Removes all leases matching subnet ID.
+    ///
+    /// This rather dangerous method is able to remove all leases from specified
+    /// subnet.
+    ///
+    /// @param subnet_id identifier of the subnet
+    /// @param statement_index One of the @c DELETE_LEASE4_SUBID or
+    ///        @c DELETE_LEASE6_SUBID.
+    /// @return number of leases removed.
+    virtual size_t wipeLeasesCommon(const SubnetID& subnet_id, StatementIndex statement_index);
 
     /// @brief Delete expired-reclaimed leases.
     ///

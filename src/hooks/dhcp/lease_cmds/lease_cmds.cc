@@ -2373,8 +2373,7 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s)" << ids.str()
-            << " WARNING: lease4-wipe is deprecated!";
+        tmp << "Deleted " << num << " IPv4 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -2382,14 +2381,12 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE4_FAILED)
             .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
-        LOG_WARN(lease_cmds_logger, LEASE_CMDS_WIPE4_DEPRECATED);
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE4)
         .arg(cmd_args_ ? cmd_args_->str() : "<no args>");
-    LOG_WARN(lease_cmds_logger, LEASE_CMDS_WIPE4_DEPRECATED);
     return (0);
 }
 
@@ -2529,8 +2526,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         }
 
         stringstream tmp;
-        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s)" << ids.str()
-            << " WARNING: lease6-wipe is deprecated!";
+        tmp << "Deleted " << num << " IPv6 lease(s) from subnet(s)" << ids.str();
         ConstElementPtr response = createAnswer(num ? CONTROL_RESULT_SUCCESS
                                                     : CONTROL_RESULT_EMPTY, tmp.str());
         setResponse(handle, response);
@@ -2538,14 +2534,12 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         LOG_ERROR(lease_cmds_logger, LEASE_CMDS_WIPE6_FAILED)
             .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
-        LOG_WARN(lease_cmds_logger, LEASE_CMDS_WIPE6_DEPRECATED);
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
     LOG_INFO(lease_cmds_logger, LEASE_CMDS_WIPE6)
         .arg(cmd_args_ ? cmd_args_->str() : "<no args>");
-    LOG_WARN(lease_cmds_logger, LEASE_CMDS_WIPE6_DEPRECATED);
     return (0);
 }
 

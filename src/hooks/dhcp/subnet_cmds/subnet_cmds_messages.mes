@@ -225,7 +225,7 @@ but no subnet was found.
 
 % SUBNET_CMDS_SUBNET6_LIST_FAILED failed to return a list of IPv6 subnets: %1
 This error message is issued when the Subnet Commands hooks library fails
-to return a list of IPv4 subnets requested with 'subnet6-list' command. The
+to return a list of IPv6 subnets requested with 'subnet6-list' command. The
 reason for failure is provided within the error message. The error message
 will be returned to the controlling client with the error status code.
 

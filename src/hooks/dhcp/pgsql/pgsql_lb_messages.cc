@@ -1,4 +1,4 @@
-// File created from src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
+// File created from ../src/hooks/dhcp/pgsql/pgsql_lb_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -16,6 +16,8 @@ extern const isc::log::MessageID PGSQL_LB_DB = "PGSQL_LB_DB";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED = "PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE = "PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID PGSQL_LB_DB_RECONNECT_FAILED = "PGSQL_LB_DB_RECONNECT_FAILED";
+extern const isc::log::MessageID PGSQL_LB_DELETED_SUBNET4_ID = "PGSQL_LB_DELETED_SUBNET4_ID";
+extern const isc::log::MessageID PGSQL_LB_DELETED_SUBNET6_ID = "PGSQL_LB_DELETED_SUBNET6_ID";
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR4 = "PGSQL_LB_DELETE_ADDR4";
 extern const isc::log::MessageID PGSQL_LB_DELETE_ADDR6 = "PGSQL_LB_DELETE_ADDR6";
 extern const isc::log::MessageID PGSQL_LB_DELETE_EXPIRED_RECLAIMED4 = "PGSQL_LB_DELETE_EXPIRED_RECLAIMED4";
@@ -71,6 +73,8 @@ const char* values[] = {
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_FAILED", "database reconnect failed: %1",
     "PGSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "PGSQL_LB_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
+    "PGSQL_LB_DELETED_SUBNET4_ID", "deleted %1 leases that match Subnet ID %2.",
+    "PGSQL_LB_DELETED_SUBNET6_ID", "deleted %1 leases that match Subnet ID %2.",
     "PGSQL_LB_DELETE_ADDR4", "deleting lease for address %1",
     "PGSQL_LB_DELETE_ADDR6", "deleting lease for address %1",
     "PGSQL_LB_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",

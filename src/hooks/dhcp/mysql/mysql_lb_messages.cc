@@ -1,4 +1,4 @@
-// File created from src/hooks/dhcp/mysql/mysql_lb_messages.mes
+// File created from ../src/hooks/dhcp/mysql/mysql_lb_messages.mes
 
 #include <cstddef>
 #include <log/message_types.h>
@@ -17,6 +17,8 @@ extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_FAILED = "MYSQL_L
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE = "MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE";
 extern const isc::log::MessageID MYSQL_LB_DB_RECONNECT_FAILED = "MYSQL_LB_DB_RECONNECT_FAILED";
 extern const isc::log::MessageID MYSQL_LB_DELETED_EXPIRED_RECLAIMED = "MYSQL_LB_DELETED_EXPIRED_RECLAIMED";
+extern const isc::log::MessageID MYSQL_LB_DELETED_SUBNET4_ID = "MYSQL_LB_DELETED_SUBNET4_ID";
+extern const isc::log::MessageID MYSQL_LB_DELETED_SUBNET6_ID = "MYSQL_LB_DELETED_SUBNET6_ID";
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR4 = "MYSQL_LB_DELETE_ADDR4";
 extern const isc::log::MessageID MYSQL_LB_DELETE_ADDR6 = "MYSQL_LB_DELETE_ADDR6";
 extern const isc::log::MessageID MYSQL_LB_DELETE_EXPIRED_RECLAIMED4 = "MYSQL_LB_DELETE_EXPIRED_RECLAIMED4";
@@ -75,6 +77,8 @@ const char* values[] = {
     "MYSQL_LB_DB_RECONNECT_ATTEMPT_SCHEDULE", "scheduling attempt %1 of %2 in %3 milliseconds",
     "MYSQL_LB_DB_RECONNECT_FAILED", "maximum number of database reconnect attempts: %1, has been exhausted without success",
     "MYSQL_LB_DELETED_EXPIRED_RECLAIMED", "deleted %1 reclaimed leases from the database",
+    "MYSQL_LB_DELETED_SUBNET4_ID", "deleted %1 leases that match Subnet ID %2.",
+    "MYSQL_LB_DELETED_SUBNET6_ID", "deleted %1 leases that match Subnet ID %2.",
     "MYSQL_LB_DELETE_ADDR4", "deleting lease for address %1",
     "MYSQL_LB_DELETE_ADDR6", "deleting lease for address %1",
     "MYSQL_LB_DELETE_EXPIRED_RECLAIMED4", "deleting reclaimed IPv4 leases that expired more than %1 seconds ago",
