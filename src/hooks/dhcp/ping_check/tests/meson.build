@@ -21,10 +21,15 @@ dhcp_ping_check_tests = executable(
 
 root_tests = 'RootICMPSocketTest.*:RootPingChannelTest.*:RootPingCheckMgr.*:RootPingCheckMgrTest.*'
 
+args_filter_out = []
+if PASSWORDLESS_SUDO_SET_UP
+    args_filter_out = [f'--gtest_filter=-@root_tests@']
+endif
+
 test(
     'dhcp-ping-check-tests',
     dhcp_ping_check_tests,
-    args: [f'--gtest_filter=-@root_tests@'],
+    args: args_filter_out,
     protocol: 'gtest',
     is_parallel: false,
     priority: -1,
