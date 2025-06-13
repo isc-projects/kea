@@ -14,9 +14,9 @@ Text client for Kea servers over HTTP/HTTPS.
 # Only the python 3.x is supported.
 # Sadly, there's no unified way to handle http connections. The recommended
 # way is to use Requests (http://docs.python-requests.org/en/master/), but
-# that's a stand alone package that requires separate installation. One of
+# that's a standalone package that requires separate installation. One of
 # the design requirements was to not require any additional packages, so
-# the code uses standard libraries available in python. Hence two versions.
+# the code uses standard libraries available in python. Hence, two versions.
 import argparse
 import signal
 import sys
@@ -76,7 +76,13 @@ def shell_body():
     parser.add_argument('--auth-user', type=str, default='',
                         help='Basic HTTP authentication user')
     parser.add_argument('--auth-password', type=str, default='',
-                        help='Basic HTTP authentication password')
+                        help='Basic HTTP authentication password. If used '
+                             'together with --auth-password-file, '
+                             'it is disregarded.')
+    parser.add_argument('--auth-password-file', type=str, default='',
+                        help='A file which first line will be read to retrieve '
+                             'the password for basic HTTP authentication. This flag '
+                             'takes precedence over --auth-password.')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',
                         help='command to be executed. If not specified, '
@@ -118,7 +124,16 @@ def shell_body():
         params.key = cmd_args.key
     if cmd_args.auth_user != '':
         user = cmd_args.auth_user
-        password = cmd_args.auth_password
+        if cmd_args.auth_password_file != '':
+            try:
+                file = open(cmd_args.auth_password_file, 'r')
+                password = file.readline()
+                file.close()
+            except Exception as exc:
+                print("Failed to run: " + str(exc))
+                sys.exit(1)
+        else:
+            password = cmd_args.auth_password
         secret = b':'.join((user.encode('utf-8'), password.encode('utf-8')))
         params.auth = b64encode(secret).strip().decode('ascii')
     params.timeout = cmd_args.timeout
