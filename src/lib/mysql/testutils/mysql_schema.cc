@@ -206,7 +206,7 @@ string getMySQLTlsServer() {
         // MySQL 9.x does not support the 'have_ssl' global variable
         // so trying the 'ssl_ciper' status which returns the cipher name
         // or the empty value. It is also on the long term a good
-        // candidate for remplacing the 'have_ssl' check...
+        // candidate for replacing the 'have_ssl' check...
         value = getMySQLTlsStatusVariable("ssl_cipher");
         if (value.empty() || !isMySQLTlsConfigured()) {
             value = "UNCONFIGURED";
