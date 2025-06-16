@@ -187,11 +187,13 @@ The best way to avoid this problem is simply to abandon JSON comments and
 use user context.
 
 Kea supports user contexts at the following levels: global scope,
-interfaces configuration, shared networks,
-subnets, client classes, option data and definitions, host
-reservations, control socket, DHCP-DDNS, loggers, leases, and server ID. These
-are supported in both DHCPv4 and DHCPv6, with the exception of server ID,
-which is DHCPv6 only.
+interfaces configuration, multi-threading, shared networks, subnets,
+client classes, option data and definitions, pools, prefix delegation pools,
+host reservations, control socket, HTTP header, authentication, clients,
+queue control, DHCP-DDNS, loggers, leases, and server ID. These are supported
+in both DHCPv4 and DHCPv6, with the exception of prefix delegation pools and
+server ID, which are DHCPv6 only.
+
 
 User context can be added and edited in structures supported by commands.
 
