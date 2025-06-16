@@ -199,8 +199,8 @@ shell_command_test "shell.authorized" \
     "--auth-user pet --auth-password meow" "list-commands" "" \
     "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"status-get\", \"version-get\" ], \"result\": 0 } ]"
 shell_command_test "shell.bad-auth-password-file" \
-    "--auth-user foo --auth-password-file test" "list-commands" "fail" \
-    "Failed to run: [Errno 2] No such file or directory: 'test'"
+    "--auth-user foo --auth-password-file foobar" "list-commands" "fail" \
+    "Failed to run: [Errno 2] No such file or directory: 'foobar'"
 shell_command_test "shell.bad-auth-password-file-content" \
     "--auth-user foo --auth-password-file ${tmpfile_path}/auth_bad_password_file" "list-commands" "fail" \
     "Failed to run: HTTP Error 401: Unauthorized"
