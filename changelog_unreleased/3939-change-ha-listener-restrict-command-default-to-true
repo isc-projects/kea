@@ -1,4 +1,4 @@
-[func]%		fdupont
+[func]*		fdupont
 	Changed the default value of the High Availability listener
 	'restrict-commands' configuration flag to true so commands
 	which are not used by the High Availability hook are rejected.
