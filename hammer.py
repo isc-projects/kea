@@ -1668,10 +1668,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                              'texlive', 'texlive-collection-latexextra'])
 
         if 'mysql' in features:
-            execute('sudo dnf remove -y community-mysql-devel || true')
+            execute('sudo dnf remove -y community-mysql-devel', raise_error=False)
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
+            execute('sudo dnf remove -y libpq-devel', raise_error=False)
             if int(revision) >= 30:
                 packages.extend(['postgresql-server-devel'])
             if int(revision) <= 34:
@@ -1779,11 +1780,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
-            if int(revision) <= 8:
-                packages.append('libpq-devel')
-            else:
-                packages.append('postgresql-private-devel')
+            execute('sudo dnf remove -y libpq-devel', raise_error=False)
+            packages.extend(['postgresql', 'postgresql-devel', 'postgresql-server', 'postgresql-server-devel'])
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
