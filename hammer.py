@@ -65,8 +65,9 @@ SYSTEMS = {
         '37': False,
         '38': False,
         '39': False,
-        '40': True,
+        '40': False,
         '41': True,
+        '42': True,
     },
     'centos': {
         '7': False,
@@ -76,9 +77,11 @@ SYSTEMS = {
     'rhel': {
         '8': True,
         '9': True,
+        '10': True,
     },
     'rocky': {
         '9': True,
+        '10': True,
     },
     'ubuntu': {
         '16.04': False,
@@ -116,10 +119,11 @@ SYSTEMS = {
         '3.15': False,
         '3.16': False,
         '3.17': False,
-        '3.18': True,
+        '3.18': False,
         '3.19': True,
         '3.20': True,
         '3.21': True,
+        '3.22': True,
     },
     'arch': {},
 }
@@ -1943,6 +1947,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             deferred_functions.append(_install_gtest_sources)
 
         execute('sudo dnf config-manager --set-enabled crb')
+        execute('sudo dnf config-manager --set-enabled devel')
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
     # prepare ubuntu
