@@ -1,5 +1,5 @@
 ---
-name: a.b.c release checklist
+name: A.B.C release checklist
 about: Create a new issue using this checklist for each release.
 ---
 
@@ -7,33 +7,42 @@ about: Create a new issue using this checklist for each release.
 
 This is thoroughly documented in [the Kea Release Process guide](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess).
 
+#### Legend
+
+- `A.B.C`: the version being released
+
+#### General Guidelines
+
+- <mark>Stable and Maintenance Releases Only</mark>: Use dedicated Jenkins folder `kea-A-B` instead of `kea-dev`.
+
+- <mark>Stable and Maintenance Releases Only</mark>: Run QA scripts from branch `vA_B` of `qa-dhcp` instead of `master`.
+
 ## Pre-Release Preparation
 
-Some of these checks and updates can be made before the actual freeze. For new stable releases or maintenance releases, please don't use the `kea-dev` build farm; use a dedicated build farm for each release cycle.
+Some of these checks and updates can be made before the actual freeze.
 
 1. [ ] Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
    1. [ ] Check [Jenkins Tests Report](https://jenkins.aws.isc.org/job/kea-dev/job/jenkins-tests-report/).
    1. [ ] Check [tarball check report](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/Kea_20Build_20Checks/)
-1. If this is a maintenance release of a stable branch:
-   1. [ ] Check if any changes in kea-packaging repository should be backported to the corresponding stable branch
-      1. [ ] Backport changes and link merge request with this issue
-   1. [ ] Check if any changes in Kea Docker repository should be backported to the corresponding stable branch
-      1. [ ] Backport changes and link merge request with this issue
+1. [ ] <mark>Maintenance Releases Only</mark>: Check if any changes in [kea-packaging repository](https://gitlab.isc.org/isc-projects/kea-packaging/) should be backported to the corresponding stable branch.
+   1. [ ] Backport changes and link merge request with this issue.
+1. [ ] <mark>Maintenance Releases Only</mark>: Check if any changes in [Kea Docker repository](https://gitlab.isc.org/isc-projects/kea-docker) should be backported to the corresponding stable branch.
+   1. [ ] Backport changes and link merge request with this issue.
 1. [ ] Check [Performance Test Results](https://jenkins.aws.isc.org/job/kea-dev/job/performance/lastSuccessfulBuild/artifact/qa-dhcp/kea/performance-jenkins/report.html) in Jenkins for drops in performance.
 1. [ ] Create a Gitlab issue for bumping up library versions and `KEA_HOOKS_VERSION` and notify developers.
-   * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh) Kea-q.w.e Kea-a.b.c (where `a.b.c` is the version to be released and `q.w.e` is the version previous to that).
-1. [ ] If this is stable release:
-   * Check SECURITY.md file create ticket if changes are required.
+   * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh).
+   * Example command: `./tools/bump-lib-versions.sh`
+   * <mark>Stable Release Only</mark>: The target version needs to be provided. Call `./tools/bump-lib-versions.sh Kea-A.B.C` instead.
+1. [ ] <mark>Stable Release Only</mark>: Check SECURITY.md file create ticket if changes are required.
 1. [ ] Look at the issue numbers in the commit descriptions. Add to ChangeLog a mention of any change with visible impact that had not been mentioned already.
 1. [ ] If any changes have been made to database schemas, then:
    1. [ ] Check that a previously released schema has not been changed.
    1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
 1. [ ] Prepare release notes.
-   1. [ ] Create a release note on the Kea GitLab wiki and notify @tomek. It should be created under the `Release-Notes` directory, like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes/release-notes-2.3.4
-   1. [ ] Finish release notes and conduct its review.
-   1. [ ] Notify support that release notes are ready for review. To avoid conflicts in edits wait with next step after review is done.
-   1. [ ] Notify @sgoldlust or @vicky that release notes are ready for review. Due to the time difference, please do this at least 36 hours before the planned release.
+   1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Releases directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Releases), like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/Releases/Release-notes-2.3.4.
+   1. [ ] Notify @tomek that the draft is ready to be redacted. Wait for that to be done.
+   1. [ ] Notify support that release notes are ready for review. To avoid conflicts in edits wait with next step after review is done. Due to the time difference, please do this at least 36 hours before the planned release.
 1. [ ] Check that packages can be uploaded to Cloudsmith.
    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
    1. Click `Build with Parameters`.
@@ -45,10 +54,10 @@ Some of these checks and updates can be made before the actual freeze. For new s
 
 The following steps may involve changing files in the repository.
 
-1. [ ] Run [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+1. [ ] Run QA script [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
    Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 2.3.4 --repo-dir ~/isc/repos/kea/`. \
    Help: `GITLAB_TOKEN='...' ./update-code-for-release.py --help`. \
-   The script requires an explicit flag for stable and maintenance releases, e.g. `--repo-branch v2_4`. \
+   <mark>Stable and Maintenance Releases Only</mark>: Run from branch `v*_*` of `qa-dhcp`. \
    The script makes the following changes and actions:
    1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/prepare_kea_release.sh) that:
       1. Adds release entries in ChangeLogs.
@@ -125,7 +134,7 @@ This is the last moment to freeze the code! :snowflake:
 Now it's time to publish the code.
 
  1. [ ] Update Release Notes with ChangeLog entries.
- 1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released kea (e.g. `Kea-2.3.4`).
+ 1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
     1. Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
        1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
        1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
@@ -136,9 +145,9 @@ Now it's time to publish the code.
     1. In the field `Pkg`, select the corresponding pkg job.
     1. In the field `Release_Candidate`, pick `final`. This job will also:
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
-       - Create Git tags `Kea-a.b.c` in Kea main and premium repositories.
-       - Create Gitlab releases `Kea-a.b.c` in Kea main and premium repositories.
- 1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-a.b.c`.
+       - Create Git tags `Kea-A.B.C` in Kea main and premium repositories.
+       - Create Gitlab releases `Kea-A.B.C` in Kea main and premium repositories.
+ 1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
  1. [ ] Sign tarballs with the personal key by running [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh) which signs, verifies signatures and uploads them.
     - If the release engineer does NOT have a signing key, please contact the team member.
  1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
@@ -156,26 +165,26 @@ Now it's time to publish the code.
     1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
        - This step also verifies sign files.
     1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
- 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
+ 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
     * Make sure the right package job is selected under `Packages`.
     * Tick `Upload`.
     * Leave `TestProdRepos` to `testing`.
     * Leave `versionTag` ticked.
-    * Tick `latestTag` if this is a stable or a maintenance release.
-    * If this is a stable or maintenance release, change `KeaDockerBranch` to the appropriate branch.
+    * <mark>Stable and Maintenance Releases Only</mark>: Tick `latestTag`.
+    * <mark>Stable and Maintenance Releases Only</mark>: Change `KeaDockerBranch` to the appropriate branch.
     * Press `Build`.
- 1. [ ] Build and upload Docker images to Cloudsmith. Run [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
- 1. [ ] Update ReadTheDocs:
-    1. Trick ReadTheDocs into pulling the latest tags. Click `Build version` on [readthedocs.org](https://readthedocs.org/projects/kea/builds).
-    1. Publish the currently released version. On the `Versions` tab, scroll down to `Activate a version`, search for `kea-a.b.c` and click `Activate`.
+ 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
+1. [ ] Update docs on https://app.readthedocs.org/projects/kea/.
+    1. Click the triple dot button on the `latest` build -> click `Rebuild version`. This is really a workaround for RTD to pull the repo and discover the new tag.
+    1. Go to `Versions` -> `Add version` -> find the tag name in the dropdown menu -> check `Active` -> click `Update version`. Wait for the build to complete.
     1. [ ] <mark>Latest Stable Release Only</mark>: change default version:
         1. Go to `Settings` -> `Default version:` -> choose the new version as default.
-        1. Check that https://stork.readthedocs.io/ redirects to the new version.
+        1. Check that https://kea.readthedocs.io/ redirects to the new version.
     1. [ ] <mark>Latest Stable Release Only</mark>: Rebuild the `stable` version. Go to [the stable build](https://app.readthedocs.org/projects/kea/builds/?version__slug=stable), click `Rebuild version`.
- 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to the next development version which could be, based on just released version `a.b.c`:
-    * `a.b.z-git` where `z == c + 1` most of the time, or
-    * `a.y.0-git` where `y == b + 2` if a new development series starts, or
-    * `x.1.0-git` where `x == a + 1` when the released minor version `b` is 9 and `a.b.c` was the last version in the development series and a new development version is coming up next.
+ 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to the next development version which could be, based on just released version `A.B.C`:
+    * `A.B.z-git` where `z == C + 1` most of the time, or
+    * `A.y.0-git` where `y == B + 2` if a new development series starts, or
+    * `x.1.0-git` where `x == A + 1` when the released minor version `b` is 9 and `A.B.C` was the last version in the development series and a new development version is coming up next.
 1. [ ] Contact the Marketing team, and find a member who will continue work on this release:
     1. [ ] Assign this ticket to the person who will continue.
     1. [ ] Share the link to signing the ticket either directly or as a comment in this issue.
@@ -185,7 +194,7 @@ Now it's time to publish the code.
 1. [ ] Write blog article (if a major release).
 1. [ ] Check that the tarballs are available on Cloudsmith, since we are downloading from there, not downloads or ftp.
 1. [ ] Publish links to downloads on the ISC website. Update release dates. Check the modal messages and update if necessary.
-1. [ ] If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
+1. [ ] <mark>Stable Releases Only</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
 1. [ ] If a new Cloudsmith repository is used, make sure that the Zapier scripts are updated.
    * If those are not updated, there was an error made during preparation for new stable release. Please contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
@@ -206,4 +215,5 @@ Now it's time to publish the code.
 1. [ ] Update tickets in case of waiting for support customers.
 
 ## QA
+
 1. [ ] Close this ticket.
