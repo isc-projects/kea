@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,7 @@ namespace {
 
 static pid_t const PID(getpid());
 static string const PID_STR(to_string(PID));
-static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".conf");
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR() + "/kea-dhcp4-" + PID_STR + ".conf");
 
 }  // namespace
 

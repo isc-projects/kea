@@ -33,9 +33,9 @@ namespace {
 
 static pid_t const PID(getpid());
 static string const PID_STR(to_string(PID));
-static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".conf");
-static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR + "/kea-dhcp6-" + PID_STR + ".csv");
-static string const SOCKET(KEA_FUZZ_DIR + "/kea-dhcp6-ctrl-" + PID_STR + ".sock");
+static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".conf");
+static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".csv");
+static string const SOCKET(KEA_FUZZ_DIR() + "/kea-dhcp6-ctrl-" + PID_STR + ".sock");
 
 static UnixControlClient TEST_CLIENT;
 

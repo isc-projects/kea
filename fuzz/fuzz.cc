@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,12 +21,12 @@ using namespace isc::util::encode;
 using namespace isc::util::file;
 using namespace std;
 
-extern "C" {
+string KEA_FUZZ_DIR() {
+    static TemporaryDirectory TEMP_DIR = TemporaryDirectory();
+    return TEMP_DIR.dirName();
+}
 
-string KEA_LFC = isFile(KEA_LFC_INSTALLATION) ? KEA_LFC_INSTALLATION : KEA_LFC_SOURCES;
-// string KEA_FUZZ_DIR = isFile(KEA_FUZZ_DIR_INSTALLATION) ? KEA_FUZZ_DIR_INSTALLATION : KEA_FUZZ_DIR_SOURCES;
-TemporaryDirectory TEMP_DIR = TemporaryDirectory();
-string KEA_FUZZ_DIR = TEMP_DIR.dirName();
+extern "C" {
 
 bool
 DoInitialization() {
@@ -34,12 +34,12 @@ DoInitialization() {
 
     // Spoof the logger just enough to not get LoggingNotInitialized thrown.
     // We explicitly don't want any logging during fuzzing for performance reasons.
-    setenv("KEA_LOCKFILE_DIR", KEA_FUZZ_DIR.c_str(), 0);
+    setenv("KEA_LOCKFILE_DIR", KEA_FUZZ_DIR().c_str(), 0);
     setenv("KEA_LFC_EXECUTABLE", "/bin/true", 0);
     if (!getenv("DEBUG")) {
         setenv("KEA_LOGGER_DESTINATION", "/dev/null", 0);
     }
-    setenv("KEA_PIDFILE_DIR", KEA_FUZZ_DIR.c_str(), 0);
+    setenv("KEA_PIDFILE_DIR", KEA_FUZZ_DIR().c_str(), 0);
     if (!isc::log::isLoggingInitialized()) {
         isc::log::initLogger("fuzzer");
         Daemon::loggerInit("fuzzer", /* verbose = */ false);

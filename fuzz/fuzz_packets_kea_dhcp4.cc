@@ -28,7 +28,7 @@ using namespace std;
 
 namespace {
 
-static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4.conf");
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR() + "/kea-dhcp4.conf");
 static string KEA_DHCP4_FUZZING_INTERFACE;
 static string KEA_DHCP4_FUZZING_ADDRESS;
 

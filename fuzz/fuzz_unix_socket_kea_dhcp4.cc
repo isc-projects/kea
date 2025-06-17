@@ -14,17 +14,20 @@
 #include <config/unix_command_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <testutils/env_var_wrapper.h>
 #include <testutils/unix_control_client.h>
 
 #include <util/filesystem.h>
 
 #include <cassert>
+#include <cstdlib>
 
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 using namespace isc::util;
 using namespace isc::util::file;
 using namespace std;
@@ -33,9 +36,9 @@ namespace {
 
 static pid_t const PID(getpid());
 static string const PID_STR(to_string(PID));
-static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".conf");
-static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR + "/kea-dhcp4-" + PID_STR + ".csv");
-static string const SOCKET(KEA_FUZZ_DIR + "/kea-dhcp4-ctrl-" + PID_STR + ".sock");
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR() + "/kea-dhcp4-" + PID_STR + ".conf");
+static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR() + "/kea-dhcp4-" + PID_STR + ".csv");
+static string const SOCKET(KEA_FUZZ_DIR() + "/kea-dhcp4-ctrl-" + PID_STR + ".sock");
 
 static UnixControlClient TEST_CLIENT;
 
