@@ -655,7 +655,7 @@ case, so the code for the first callout (used to classify the client's
 hardware address) is:
 
 @code
-// pkt_receive4.cc
+// pkt4_receive.cc
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
@@ -876,31 +876,30 @@ configuration derived from the root logger.
 
 Building the code requires building a sharable library.  This requires
 the code be compiled as position-independent code (using the
-compiler's "-fpic" switch) and linked as a shared library (with the
-linker's "-shared" switch).  The build command also needs to point to
+compiler's ``-fpic`` switch) and linked as a shared library (with the
+linker's ``-shared`` switch).  The build command also needs to point to
 the Kea include directory and link in the appropriate libraries.
+Fortunately, the Kea installation holds a kea.pc pkg-config file
+that provides the necessary include flags ``-I``, library flags ``-L``,
+and link flags ``-l``.
 
 Assuming that Kea has been installed in the default location, the
-command line needed to create the library using the Gnu C++ compiler on a
-Linux system is:
+command line needed to create the library on a Linux system is:
 
 @code
-g++ -I <install-dir>/include/kea -L <install-dir>/lib -fpic -shared -o example.so \
-    load_unload.cc pkt4_receive.cc pkt4_send.cc version.cc \
-    -lkea-dhcpsrv -lkea-dhcp++ -lkea-hooks -lkea-log -lkea-util -lkea-exceptions
+c++ \
+    $(pkg-config --cflags --libs /usr/local/lib/pkgconfig/kea.pc) \
+    -fpic -shared -o example.so \
+    load_unload.cc multi_threading_compatible.cc pkt4_receive.cc pkt4_send.cc version.cc
 @endcode
 
 Notes:
-- Replace "<install-dir>" with the location in which you installed Kea. Unless
-you specified the "--prefix" switch on the "meson setup" command line when
-building Kea, it will be installed in the default location, usually /usr/local.
 - The compilation command and switches required may vary depending on
 your operating system and compiler - consult the relevant documentation
 for details.
 - The list of libraries that need to be included in the command line
 depends on the functionality used by the hook code and the module to
-which they are attached. Depending on operating system, you may also need
-to explicitly list libraries on which the Kea libraries you link against depend.
+which they are attached.
 
 
 @subsection hooksdgConfiguration Configuring the Hooks Library
