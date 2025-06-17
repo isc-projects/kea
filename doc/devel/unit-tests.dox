@@ -416,6 +416,26 @@ settings which are not allowed by default Kerberos system configuration.
 A simple workaround is to set the KRB5_CONFIG environment variable to
 a random value that doesn't match a file (e.g. KRB5_CONFIG=).
 
+@section unitTestsRootPrivileges Running Unit Tests with Root Privileges
+
+Some unit tests require root privileges to run, including:
+
+- some packet filtering unit tests
+- some ping check unit tests
+
+To maximize the chance that these tests are always run during development,
+there is an attempt done to run them automatically with elevated privileges
+when ``meson test`` is run. In order to do that, at setup-time, Meson checks if
+sudo can be run non-interactively. If not, the tests that require root
+privileges are part of the regular targets ``dhcp-ping-check-tests`` and
+``kea-dhcp-tests``. If the check passes, then the tests are included in special
+targets ``sudo-dhcp-ping-check-tests`` and ``sudo-kea-dhcp-tests``. These
+targets run the unit test binaries prefixed with sudo which per the check done
+priorly, should be possible in a non-interactive manner. The tests requiring
+root privileges are also part of a special suite called ``sudo-tests`` which
+can be run exclusively with the ``--suite`` flag, or can be excluded with the
+``--no-suite`` flag.
+
 @section writingShellScriptsAndTests Writing shell scripts and tests
 
 Shell tests are `shellcheck`ed. But there are other writing practices that are
