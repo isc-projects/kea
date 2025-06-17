@@ -36,7 +36,6 @@ namespace ph = std::placeholders;
 namespace {
 
 /// @brief Test fixture for testing commands for the host-cache library
-//class CommandTest : public ::testing::Test {
 class CommandTest : public LogContentTest {
 public:
     /// @brief Constructor

@@ -554,7 +554,7 @@ and DDNS servers since Kea version 2.7.2.
     components.
 
 The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
-channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default;
+channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default.
 
 .. _sec-kea-runtime-security-risk-checking:
 
@@ -562,9 +562,9 @@ Kea Runtime Security Risk Checking
 ==================================
 
 Runtime security risk checking was initially added to Kea daemons :iscman:`kea-dhcp4`,
-:iscman:`kea-dhcp6`, :iscman:`kea-dhcp-ddns`, :iscman:`kea-ctrl-agent`. in 2.7.9.
-In Kea 3.0 additional checks were added. By default, when a daemon detects a security
-risk it emits an error log and exits. The following checks are performed:
+:iscman:`kea-dhcp6`, :iscman:`kea-dhcp-ddns`, :iscman:`kea-ctrl-agent`. in Kea 2.7.9
+release.  In Kea 3.0 additional checks were added. By default, when a daemon detects
+a security risk it emits an error log and exits. The following checks are performed:
 
 - Use of unsupported file paths or permissions as detailed in :ref:`sec-summary-of-path-restrictions`
 

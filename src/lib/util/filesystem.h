@@ -32,9 +32,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief A generic exception that is thrown if a parameter given
-/// violates security check but enfordement is lax.
-
 /// @brief Get the content of a regular file.
 ///
 /// @param file_name The file name.
@@ -104,7 +101,7 @@ setUmask();
 /// @return True if either the uid or the effective
 /// uid is root.
 bool
-amRoot();
+amRunningAsRoot();
 
 /// @brief Paths on a filesystem
 struct Path {
@@ -249,7 +246,7 @@ public:
     /// @return validated path as a string (supported path + input file name)
     ///
     /// @throw BadValue if the input path does not include a file name.
-    /// SecurityError if the parent path does not path the supported path and
+    /// @trhow SecurityError if the parent path does not path the supported path and
     /// security is being enforced, SecurityWarn if it is not being enforced.
     std::string validatePath(const std::string input_path_str,
                              bool enforce_path = shouldEnforceSecurity()) const;

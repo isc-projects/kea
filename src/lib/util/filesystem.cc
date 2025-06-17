@@ -18,6 +18,7 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 using namespace isc;
 using namespace isc::util::str;
@@ -104,7 +105,7 @@ setUmask() {
     }
 }
 
-bool amRoot() {
+bool amRunningAsRoot() {
     return (getuid() == 0 || geteuid() == 0);
 }
 

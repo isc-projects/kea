@@ -1308,4 +1308,4 @@ TEST(HooksConfig, toElementTest) {
     EXPECT_EQ(data::prettyPrint(cfg.toElement()), exp_cfg);
 }
 
-} // Anonymous namespae
+} // Anonymous namespace

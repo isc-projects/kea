@@ -425,7 +425,7 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
     } else {
         secret = getString(key_config, "secret");
         if (file::PathChecker::shouldEnforceSecurity()) {
-            isc_throw(D2CfgError, "use of clear text TSIG 'secret' is NOT SECURE ("
+            isc_throw(D2CfgError, "use of clear text TSIG 'secret' is NOT SECURE"
                       << " (" << getPosition("secret", key_config)
                       << ")");
         } else {

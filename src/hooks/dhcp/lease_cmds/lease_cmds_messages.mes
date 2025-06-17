@@ -167,7 +167,7 @@ are logged.
 The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% LEASE_CMDS_PATH_SECURITY_WARNING lease file path specified is NOT SECURE: %1
+% LEASE_CMDS_PATH_SECURITY_WARN lease file path specified is NOT SECURE: %1
 This warning message is issued when security enforcement is disabled
 and the path portion of the `filename` parameter of the lease4-write
 or lease6-write command does not comply with the supported path. The

@@ -100,7 +100,7 @@ public:
         file::PathChecker::enableEnforcement(true);
     }
 
-    /// @brief Desstructor.
+    /// @brief Destructor.
     virtual ~BasicHttpAuthConfigTest() {
         file::PathChecker::enableEnforcement(true);
     }

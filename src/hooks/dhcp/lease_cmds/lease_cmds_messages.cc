@@ -26,7 +26,7 @@ extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_CONFLICT = "LEASE_
 extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_FAILED = "LEASE_CMDS_LEASES6_COMMITTED_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR = "LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR";
 extern const isc::log::MessageID LEASE_CMDS_LOAD_ERROR = "LEASE_CMDS_LOAD_ERROR";
-extern const isc::log::MessageID LEASE_CMDS_PATH_SECURITY_WARNING = "LEASE_CMDS_PATH_SECURITY_WARNING";
+extern const isc::log::MessageID LEASE_CMDS_PATH_SECURITY_WARN = "LEASE_CMDS_PATH_SECURITY_WARN";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4 = "LEASE_CMDS_RESEND_DDNS4";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS4_FAILED = "LEASE_CMDS_RESEND_DDNS4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_RESEND_DDNS6 = "LEASE_CMDS_RESEND_DDNS6";
@@ -67,7 +67,7 @@ const char* values[] = {
     "LEASE_CMDS_LEASES6_COMMITTED_FAILED", "reason: %1",
     "LEASE_CMDS_LEASES6_COMMITTED_LEASE_ERROR", "evaluating binding-variables for lease: %1 for: %2, reason: %3",
     "LEASE_CMDS_LOAD_ERROR", "loading Lease Commands hooks library failed: %1",
-    "LEASE_CMDS_PATH_SECURITY_WARNING", "lease file path specified is NOT SECURE: %1",
+    "LEASE_CMDS_PATH_SECURITY_WARN", "lease file path specified is NOT SECURE: %1",
     "LEASE_CMDS_RESEND_DDNS4", "lease4-resend-ddns command successful: %1",
     "LEASE_CMDS_RESEND_DDNS4_FAILED", "lease4-resend-ddns command failed: %1",
     "LEASE_CMDS_RESEND_DDNS6", "lease6-resend-ddns command successful: %1",

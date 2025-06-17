@@ -133,7 +133,7 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
         LOG_WARN(dctl_logger, DCTL_DEVELOPMENT_VERSION);
     }
 
-    if (file::amRoot()) {
+    if (file::amRunningAsRoot()) {
         LOG_WARN(dctl_logger, DCTL_ROOT_USER_SECURITY_WARN)
                 .arg(app_name_);
     }
