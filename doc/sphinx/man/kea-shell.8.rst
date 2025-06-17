@@ -16,7 +16,7 @@
 Synopsis
 ~~~~~~~~
 
-:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-password**] [**--timeout**] [**--service**] [command]
+:program:`kea-shell` [**-h**] [**-v**] [**--host**] [**--port**] [**--path**] [**--ca**] [**--cert**] [**--key**] [**--auth-user**] [**--auth-password**] [**--auth-password-file**] [**--timeout**] [**--service**] [command]
 
 Description
 ~~~~~~~~~~~
@@ -73,6 +73,12 @@ The arguments are as follows:
 ``--auth-password``
    Specifies the password for basic HTTP authentication. If not specified
    but the user ID is specified, an empty password is used.
+   If used together with ``--auth-password-file``, it is disregarded.
+
+``--auth-password-file``
+   Specifies a file which first line will be read to retrieve
+   the password for basic HTTP authentication. This flag takes precedence
+   over ``--auth-password`` flag.
 
 ``--timeout``
    Specifies the connection timeout, in seconds. The default is 10.
