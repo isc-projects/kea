@@ -32,12 +32,6 @@ foreach i : [
     endforeach
 
 endforeach
-foreach i : ['kea-dhcp4.conf', 'kea-dhcp6.conf']
-    run_command(
-        ['cp', f'input/@i@', f'@TOP_BUILD_DIR@/fuzz/input/@i@'],
-        check: true,
-    )
-endforeach
 
 fuzz_sources = ['fuzz.cc', 'fuzz.h', 'main.cc']
 cpp_flags = [
