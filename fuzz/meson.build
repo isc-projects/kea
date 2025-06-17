@@ -77,6 +77,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp4_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -89,6 +91,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp6_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -101,6 +105,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp4_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -113,6 +119,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp6_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -125,6 +133,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp4_lib, kea_dhcpsrv_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -137,6 +147,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp6_lib, kea_dhcpsrv_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -149,6 +161,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp4_lib, kea_testutils_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 FUZZER_EXECUTABLES += executable(
@@ -161,6 +175,8 @@ FUZZER_EXECUTABLES += executable(
     link_with: [dhcp6_lib, kea_testutils_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
     install: true,
     install_dir: SBINDIR,
+    install_rpath: INSTALL_RPATH,
+    build_rpath: BUILD_RPATH,
 )
 
 subdir('tests')
