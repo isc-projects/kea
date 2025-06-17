@@ -20,7 +20,7 @@ namespace yang {
 /// {
 ///     "name": <name>,
 ///     "test": <test expression>,
-///     "only-if-required": <only if required flag>,
+///     "only-in-additional-list": <only in additional list flag>,
 ///     "option-data": <option data list>,
 ///     (DHCPv4 only)
 ///     "option-def": <option definition list>,
@@ -35,18 +35,18 @@ namespace yang {
 /// YANG syntax for kea-dhcp[46] is with the name as the list key:
 /// @code
 /// +--rw client-class* [name]
-///    +--rw name                  string
-///    +--rw test?                 string
-///    +--rw only-if-required?     boolean
+///    +--rw name                       string
+///    +--rw test?                      string
+///    +--rw only-in-additional-list?   boolean
 ///    +--rw option-def* [code space]
 ///    +--rw option-data* [code space]
-///    +--rw next-server?          inet:ipv4-address
-///    +--rw server-hostname?      string
-///    +--rw boot-file-name?       string
-///    +--rw valid-lifetime?       uint32
-///    +--rw min-valid-lifetime?   uint32
-///    +--rw max-valid-lifetime?   uint32
-///    +--rw user-context?         user-context
+///    +--rw next-server?               inet:ipv4-address
+///    +--rw server-hostname?           string
+///    +--rw boot-file-name?            string
+///    +--rw valid-lifetime?            uint32
+///    +--rw min-valid-lifetime?        uint32
+///    +--rw max-valid-lifetime?        uint32
+///    +--rw user-context?              user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats:
@@ -55,7 +55,7 @@ namespace yang {
 ///     {
 ///         "name": "foo",
 ///         "test": "''==''",
-///         "only-if-required": false
+///         "only-in-additional-list": false
 ///     }
 /// ]
 /// @endcode
@@ -64,7 +64,7 @@ namespace yang {
 ///  /kea-dhcp6-server:config/client-class[name='foo'] (list instance)
 ///  /kea-dhcp6-server:config/client-class[name='foo']/name = foo
 ///  /kea-dhcp6-server:config/client-class[name='foo']/test = ''==''
-///  /kea-dhcp6-server:config/client-class[name='foo']/only-if-required = false
+///  /kea-dhcp6-server:config/client-class[name='foo']/only-in-additional-list = false
 /// @endcode
 
 /// @brief A translator class for converting a client class between

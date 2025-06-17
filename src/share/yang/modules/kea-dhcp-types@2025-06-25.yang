@@ -16,6 +16,13 @@ module kea-dhcp-types {
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
 
+  revision 2025-06-25 {
+    description "Renamed only-if-required to only-in-additional-list, renamed
+                 require-client-classes to evaluate-additional-classes, removed
+                 client-class and added client-classes list, and added ddns-ttl,
+                 ddns-ttl-min, ddns-ttl-max.";
+  }
+
   revision 2024-05-29 {
     description "Removed qualifying-suffix, override-no-update,
                  override-client-update, replace-client-name, generated-prefix,
@@ -530,76 +537,86 @@ module kea-dhcp-types {
     }
   }
 
-  grouping client-class {
-    description "Client class grouping.";
-    leaf client-class {
-      type string;
-      description "Client class entry.";
-    }
-  }
-
-  grouping pool-client-class {
-    description "Client class grouping for a pool.";
-    uses client-class {
-      refine client-class {
-        description "Pool client class guard (only clients belonging
-                     to this class will be allowed in this pool).";
-      }
-    }
-  }
-
-  grouping subnet-client-class {
-    description "Client class grouping for a subnet.";
-    uses client-class {
-      refine client-class {
-        description "Subnet client class guard (only clients belonging to this
-                     class will be allowed in this subnet).";
-      }
-    }
-  }
-
-  grouping network-client-class {
-    description "Client class grouping for a shared network.";
-    uses client-class {
-      refine client-class {
-        description "Shared network client class guard (only clients
-                     belonging to this class will be allowed in this
-                     shared network).";
-      }
-    }
-  }
-
-  grouping require-client-classes {
-    description "Require client classes grouping.";
-    leaf-list require-client-classes {
+  grouping client-classes {
+    description "Client classes grouping.";
+    leaf-list client-classes {
       type string;
       description "List of client classes.";
     }
   }
 
-  grouping pool-require-client-classes {
-    description "Require client classes grouping for a pool.";
-    uses require-client-classes {
-      refine require-client-classes {
-        description "Pool require client classes.";
+  grouping option-data-client-classes {
+    description "Client classes grouping for option data.";
+    uses client-classes {
+      refine client-classes {
+        description "Option data client classes guard (this option will be
+                     assigned only to clients belonging to one of these classes).";
       }
     }
   }
 
-  grouping subnet-require-client-classes {
-    description "Require client classes grouping for a subnet.";
-    uses require-client-classes {
-      refine require-client-classes {
-        description "Subnet require client classes.";
+  grouping pool-client-classes {
+    description "Client classes grouping for a pool.";
+    uses client-classes {
+      refine client-classes {
+        description "Pool client classes guard (only clients belonging
+                     to one of these classes will be allowed in this pool).";
       }
     }
   }
 
-  grouping network-require-client-classes {
-    description "Require client classes grouping for a shared network.";
-    uses require-client-classes {
-      refine require-client-classes {
-        description "Shared network require client classes.";
+  grouping subnet-client-classes {
+    description "Client classes grouping for a subnet.";
+    uses client-classes {
+      refine client-classes {
+        description "Subnet client classes guard (only clients belonging to one
+                     of these classes will be allowed in this subnet).";
+      }
+    }
+  }
+
+  grouping network-client-classes {
+    description "Client classes grouping for a shared network.";
+    uses client-classes {
+      refine client-classes {
+        description "Shared network client class guard (only clients
+                     belonging to one of these classes will be allowed in this
+                     shared network).";
+      }
+    }
+  }
+
+  grouping evaluate-additional-classes {
+    description "Evaluate additional client classes grouping.";
+    leaf-list evaluate-additional-classes {
+      type string;
+      description "List of client classes.";
+    }
+  }
+
+  grouping pool-evaluate-additional-classes {
+    description "Evaluate additional client classes grouping for a pool.";
+    uses evaluate-additional-classes {
+      refine evaluate-additional-classes {
+        description "Pool evaluate additional client classes.";
+      }
+    }
+  }
+
+  grouping subnet-evaluate-additional-classes {
+    description "Evaluate additional client classes grouping for a subnet.";
+    uses evaluate-additional-classes {
+      refine evaluate-additional-classes {
+        description "Subnet evaluate additional client classes.";
+      }
+    }
+  }
+
+  grouping network-evaluate-additional-classes {
+    description "Evaluate additional client classes grouping for a shared network.";
+    uses evaluate-additional-classes {
+      refine evaluate-additional-classes {
+        description "Shared network evaluate additional client classes.";
       }
     }
   }
@@ -675,7 +692,7 @@ module kea-dhcp-types {
     leaf-list client-classes {
       type string;
       description "Host client classes (if host identifier matches, a
-                   client's packet will be added to the classes liste
+                   client's packet will be added to the classes listed
                    here.)";
     }
   }
@@ -754,11 +771,11 @@ module kea-dhcp-types {
     }
   }
 
-  grouping class-only-if-required {
-    description "Client class only-if-required grouping.";
-    leaf only-if-required {
+  grouping class-only-in-additional-list {
+    description "Client class only-in-additional-list grouping.";
+    leaf only-in-additional-list {
       type boolean;
-      description "Client class only if required flag.";
+      description "Client class only in additional list flag.";
     }
   }
 
@@ -1083,6 +1100,30 @@ module kea-dhcp-types {
       }
       description
         "the percentage of the leases's lifetime to use for the DNS TTL";
+    }
+  }
+
+  grouping ddns-ttl {
+    leaf ddns-ttl {
+      type uint32;
+      description
+        "the DDNS TTL.";
+    }
+  }
+
+  grouping ddns-ttl-min {
+    leaf ddns-ttl-min {
+      type uint32;
+      description
+        "the minimum DDNS TTL.";
+    }
+  }
+
+  grouping ddns-ttl-max {
+    leaf ddns-ttl-max {
+      type uint32;
+      description
+        "the maximum DDNS TTL.";
     }
   }
 

@@ -78,13 +78,13 @@ TranslatorPdPool::getPdPoolIetf6(DataNode const& data_node) {
     getMandatoryDivergingLeaf(result, data_node, "prefix-len", "prefix-length");
 
     checkAndGetLeaf(result, data_node, "preferred-lifetime");
-    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "client-classes");
     checkAndGetLeaf(result, data_node, "valid-lifetime");
 
     checkAndGetDivergingLeaf(result, data_node, "rebind-timer", "rebind-time");
     checkAndGetDivergingLeaf(result, data_node, "renew-timer", "renew-time");
 
-    // no require-client-classes nor user-context.
+    // no evaluate-additional-classes nor user-context.
     // Skip max-pd-space-utilization.
     // Skip rapid-commit.
     // @todo: option-data
@@ -147,9 +147,24 @@ TranslatorPdPool::getPdPoolKea(DataNode const& data_node) {
         }
     }
 
-    checkAndGetLeaf(result, data_node, "client-class");
+    checkAndGetLeaf(result, data_node, "ddns-generated-prefix");
+    checkAndGetLeaf(result, data_node, "ddns-override-client-update");
+    checkAndGetLeaf(result, data_node, "ddns-override-no-update");
+    checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
+    checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
+    checkAndGetLeaf(result, data_node, "ddns-ttl");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-min");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-max");
+    checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
+    checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
+    checkAndGetLeaf(result, data_node, "hostname-char-replacement");
+    checkAndGetLeaf(result, data_node, "hostname-char-set");
+    checkAndGetLeaf(result, data_node, "client-classes");
     checkAndGetLeaf(result, data_node, "delegated-len");
-    checkAndGetLeaf(result, data_node, "require-client-classes");
+    checkAndGetLeaf(result, data_node, "evaluate-additional-classes");
 
     checkAndGetLeaf(result, data_node, "pool-id");
 
@@ -195,7 +210,7 @@ TranslatorPdPool::setPdPoolIetf6(string const& xpath, ConstElementPtr elem) {
     setItem(xpath + "/prefix", Element::create(prefix.str()), LeafBaseType::String);
     setItem(xpath + "/prefix-length", length, LeafBaseType::Uint8);
 
-    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
 
@@ -215,10 +230,25 @@ TranslatorPdPool::setPdPoolKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
-    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "delegated-len", LeafBaseType::Uint8);
 
-    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-min", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-max", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);
 
     checkAndSetLeaf(elem, xpath, "pool-id", LeafBaseType::Dec64);
 

@@ -191,28 +191,37 @@ protected:
                                              const std::string& space,
                                              const OptionCodes& codes);
 
-    /// @brief Process require client classes in a pool list.
+    /// @brief Process empty lists in a pool list.
     ///
-    /// Remove empty require client class list.
+    /// Remove empty lists in a pool list.
+    /// removing:
+    ///  - evaluate-additional-classes
+    ///  - client-classes
     ///
     /// @param pools The pool list.
-    static void sanitizeRequireClassesPools(isc::data::ConstElementPtr pools);
+    static void sanitizeEmptyListPools(isc::data::ConstElementPtr pools);
 
-    /// @brief Process require client classes in a subnet list.
+    /// @brief Process empty lists in a subnet list.
     ///
-    /// Remove empty require client class lists.
+    /// Remove empty lists in a subnet list.
+    /// removing:
+    ///  - evaluate-additional-classes
+    ///  - client-classes
     ///
     /// @param subnets The subnet list.
-    static void sanitizeRequireClassesSubnets(isc::data::ConstElementPtr subnets);
+    static void sanitizeEmptyListSubnets(isc::data::ConstElementPtr subnets);
 
-    /// @brief Process require client classes in a shared network list.
+    /// @brief Process empty lists in a shared-network list.
     ///
-    /// Remove empty require client class lists.
+    /// Remove empty lists in a shared network list.
+    /// removing:
+    ///  - evaluate-additional-classes
+    ///  - client-classes
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
-    static void requireClassesSharedNetworks(isc::data::ConstElementPtr networks,
-                                             const std::string& subsel);
+    static void sanitizeEmptyListSharedNetworks(isc::data::ConstElementPtr networks,
+                                                const std::string& subsel);
 
     /// @brief Process host reservation list.
     ///

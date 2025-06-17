@@ -75,7 +75,7 @@ TranslatorPool::getPoolIetf6(DataNode const& data_node) {
     // Skip rapid-commit.
     // Skip start-address - end-address as prefix form is mandatory?
     // @todo: option-data
-    // No require-client-classes.
+    // No evaluate-additional-classes.
     // No user-context.
 
     return (result->empty() ? ElementPtr() : result);
@@ -103,9 +103,24 @@ TranslatorPool::getPoolKea(DataNode const& data_node) {
     if (options) {
         result->set("option-data", options);
     }
+    checkAndGetLeaf(result, data_node, "ddns-generated-prefix");
+    checkAndGetLeaf(result, data_node, "ddns-override-client-update");
+    checkAndGetLeaf(result, data_node, "ddns-override-no-update");
+    checkAndGetLeaf(result, data_node, "ddns-qualifying-suffix");
+    checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
+    checkAndGetLeaf(result, data_node, "ddns-send-updates");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
+    checkAndGetLeaf(result, data_node, "ddns-ttl");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-min");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-max");
+    checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
+    checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
+    checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
+    checkAndGetLeaf(result, data_node, "hostname-char-replacement");
+    checkAndGetLeaf(result, data_node, "hostname-char-set");
 
-    checkAndGetLeaf(result, data_node, "client-class");
-    checkAndGetLeaf(result, data_node, "require-client-classes");
+    checkAndGetLeaf(result, data_node, "client-classes");
+    checkAndGetLeaf(result, data_node, "evaluate-additional-classes");
 
     checkAndGetLeaf(result, data_node, "pool-id");
 
@@ -190,9 +205,23 @@ TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
-    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
-
-    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-qualifying-suffix", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-min", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-max", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
+    checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);
 
     checkAndSetLeaf(elem, xpath, "pool-id", LeafBaseType::Dec64);
 

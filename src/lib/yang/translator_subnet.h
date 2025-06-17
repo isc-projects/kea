@@ -33,8 +33,8 @@ namespace yang {
 ///     "subnet": "<subnet prefix>",
 ///     "interface": "<interface>",
 ///     "id": <id>,
-///     "client-class": "<guard class name>",
-///     "require-client-classes": [ <list of required class names> ],
+///     "client-classes": [ <list of guard class names> ],
+///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "reservations": [ <list of host reservations> ],
 ///     "relay": <relay ip address(es)>,
 ///     "match-client-id": <match client id flag>,
@@ -72,8 +72,8 @@ namespace yang {
 ///     "interface-id": "<interface id>",
 ///     "id": <id>,
 ///     "rapid-commit": <rapid commit flag>,
-///     "client-class": "<guard class name>",
-///     "require-client-classes": [ <list of required class names> ],
+///     "client-classes": [ <list of guard class names> ],
+///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "reservations": [ <list of host reservations> ],
 ///     "relay": <relay ip address(es)>,
 ///     "user-context": { <json map> },
@@ -109,8 +109,8 @@ namespace yang {
 ///     +--rw subnet                          inet:ipv4-prefix
 ///     +--rw interface?                      string
 ///     +--rw id                              uint32
-///     +--rw client-class?                   string
-///     +--rw require-client-classes*         string
+///     +--rw client-classes*                 string
+///     +--rw evaluate-additional-classes*    string
 ///     +--rw host* [identifier-type identifier]
 ///     +--rw relay
 ///     +--rw cache-max-age?                  uint32

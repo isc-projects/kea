@@ -80,7 +80,7 @@ public:
         tc.setConfig(json);
     }
 
-    /// @brief Load a cofiguration from a string containing JSON.
+    /// @brief Load a configuration from a string containing JSON.
     ///
     /// @param config The JSON tree to load in textual format.
     void load(const string& config) {
@@ -278,14 +278,14 @@ TEST_F(ConfigTestKeaV4, examples4) {
         "all-keys-netconf.json",
         "all-options.json",
         "backends.json",
-        //"classify.json",
-        //"classify2.json",
+        "classify.json",
+        "classify2.json",
         //"comments.json",
         "config-backend.json",
         "dhcpv4-over-dhcpv6.json",
         "global-reservations.json",
-        //"ha-load-balancing-server1-mt-with-tls.json",
-        //"ha-load-balancing-server2-mt.json",
+        "ha-load-balancing-server1-mt-with-tls.json",
+        "ha-load-balancing-server2-mt.json",
         "hooks.json",
         //"hooks-radius.json",
         "leases-expiration.json",
@@ -298,7 +298,7 @@ TEST_F(ConfigTestKeaV4, examples4) {
         "single-subnet.json",
         "vendor-specific.json",
         "vivso.json",
-        //"with-ddns.json",
+        "with-ddns.json",
     };
     for (auto const& file : examples) {
         resetSession();
@@ -319,7 +319,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         "all-options.json",
         "backends.json",
         "classify.json",
-        //"classify2.json",
+        "classify2.json",
         //"comments.json",
         "config-backend.json",
         "dhcpv4-over-dhcpv6.json",
@@ -340,7 +340,7 @@ TEST_F(ConfigTestKeaV6, examples6) {
         "softwire46.json",
         "stateless.json",
         "tee-times.json",
-        //"with-ddns.json",
+        "with-ddns.json",
     };
     for (auto const& file : examples) {
         resetSession();

@@ -6,7 +6,7 @@
 // list of parameters supported by the Kea DHCPv6 server along with the brief
 // description of each parameter.
 //
-// This stable version is used for YANG as we do not want to update code
+// This stable version is used for YANG, as we do not want to update code
 // and models each time a keyword is added to the syntax.
 {
     // Kea DHCPv6 server configuration begins here.
@@ -67,10 +67,10 @@
 
                 // Boolean flag indicating whether the class expression is only evaluated
                 // when the class is required, e.g. the selected address pool configuration
-                // includes this class name in its "require-client-classes" list. The
+                // includes this class name in its "evaluate-additional-classes" list. The
                 // default value false means that the class test expression must
                 // always be evaluated.
-                "only-if-required": true,
+                "only-in-additional-list": true,
 
                 // Class selection expression.
                 "test": "member('ALL')"
@@ -95,12 +95,12 @@
 
         // Command control socket configuration parameters for the Kea DHCPv6 server.
         "control-socket": {
-            // Location of the UNIX domain socket file the DHCPv6 server uses
+            // Location of the UNIX domain socket file the DHCPv4 server uses
             // to receive control commands from the Kea Control Agent or the
             // local server administrator.
             "socket-name": "kea6-ctrl-socket",
 
-            // Control socket type used by the Kea DHCPv6 server. The 'unix'
+            // Control socket type used by the Kea DHCPv4 server. The 'unix'
             // socket is currently the only supported type.
             "socket-type": "unix"
         },
@@ -185,6 +185,19 @@
         // When greater than 0.0, it is the percent of the lease's lifetime
         // to use for the DNS TTL.
         "ddns-ttl-percent": 0.75,
+
+        // When greater than 0 it will be used as the DNS TTL. Specified in seconds.
+        // Cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min or
+        // ddns-ttl-max. They are mutually exclusive.
+        // "ddns-ttl": 500,
+
+        // When greater than 0 it used as the lower boundary for calculated DNS TTL values.
+        // Specified in seconds.
+        "ddns-ttl-min": 24000,
+
+        // When greater than 0 it used as the upper boundary for calculated DNS TTL values.
+        // Specified in seconds.
+        "ddns-ttl-max": 64000,
 
         // Time in seconds specifying how long a declined lease should be
         // excluded from DHCP assignments. The default value is 24 hours.
@@ -507,6 +520,13 @@
                 // requested.
                 "always-send": false,
 
+                // An optional list of classes for which this option applies.
+                // If the the client matches any of the classes in this list the
+                // option will be applied. If the list is empty or is
+                // omitted this option will be applied regardless of class
+                // membership.
+                "client-classes": [ "class1", "class2" ],
+
                 // Option code. It is not required if the option name is
                 // provided.
                 "code": 23,
@@ -687,9 +707,9 @@
                 "pd-allocator": "iterative",
 
                 // Restricts this shared network to allow only clients
-                // that belong to a particular client class. If an
-                // empty string is provided, no restriction is applied.
-                "client-class": "",
+                // that belong to at least one class in this list. If omitted
+                // or an empty list is provided, no restriction is applied.
+                "client-classes": [],
 
                 // Shared-network level value. See description at the global level.
                 "ddns-generated-prefix": "myhost",
@@ -722,6 +742,17 @@
 
                 // Shared-network level value. See description at the global level.
                 "ddns-ttl-percent": 0.65,
+
+                // Shared-network level value. See description at the global level.
+                // Cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min or
+                // ddns-ttl-max. They are mutually exclusive.
+                // "ddns-ttl": 500,
+
+                // Shared-network level value. See description at the global level.
+                "ddns-ttl-min": 10000,
+
+                // Shared-network level value. See description at the global level.
+                "ddns-ttl-max": 20000,
 
                 // Shared-network level value. See description at the global level.
                 "hostname-char-replacement": "x",
@@ -801,7 +832,7 @@
 
                 // List of client classes which must be evaluated when this shared
                 // network is selected for client assignments.
-                "require-client-classes": [ "late" ],
+                "evaluate-additional-classes": [ "late" ],
 
                 // Turn off storage of extended information (e.g. relay agent
                 // information) with each lease for this shared network.
@@ -818,10 +849,10 @@
                         // for the subnet.
                         "pd-allocator": "iterative",
 
-                        // Restricts this subnet to allow only clients that belong
-                        // to a particular client class. If an empty string is
-                        // provided, no restriction is applied.
-                        "client-class": "",
+                        // Restricts this subnet to allow only clients
+                        // that belong to at least one class in this list. If omitted
+                        // or an empty list is provided, no restriction is applied.
+                        "client-classes": [],
 
                         // Subnet-level value. See description at the global level.
                         "ddns-generated-prefix": "myhost",
@@ -853,7 +884,18 @@
                         "ddns-conflict-resolution-mode": "check-with-dhcid",
 
                         // Subnet-level value. See description at the global level.
-                        "ddns-ttl-percent": 0.55,
+                        // "ddns-ttl-percent": 0.55,
+
+                        // "ddns-ttl": 0,
+                        // Cannot specify both ddns-ttl and any of ddns-ttl-percent, ddns-ttl-min or
+                        // ddns-ttl-max. They are mutually exclusive.
+                        "ddns-ttl": 500,
+
+                        // Subnet-evel value. See description at the global level.
+                        // "ddns-ttl-min": 10000,
+
+                        // Subnet-level value. See description at the global level.
+                        // "ddns-ttl-max": 20000,
 
                         // Subnet-level value. See description at the global level.
                         "hostname-char-replacement": "x",
@@ -884,6 +926,13 @@
                                 // should be always sent or sent only when requested.
                                 "always-send": false,
 
+                                // An optional list of classes for which this option applies.
+                                // If the the client matches any of the classes in this list the
+                                // option will be applied. If the list is empty or is
+                                // omitted this option will be applied regardless of class
+                                // membership.
+                                "client-classes": [],
+
                                 // Option code.
                                 "code": 7,
 
@@ -912,9 +961,10 @@
                         // clients.
                         "pd-pools": [
                             {
-                                // Restricts this prefix pool to be used only for the client
-                                // requests belonging to a particular client class.
-                                "client-class": "phones_server1",
+                                // Restricts this prefix pool subnet to allow only clients
+                                // that belong to at least one class in this list. If omitted
+                                // or an empty list is provided, no restriction is applied.
+                                "client-classes": [ "phones_server1" ],
 
                                 // Length of prefixes delegated to clients.
                                 "delegated-len": 64,
@@ -936,7 +986,7 @@
 
                                 // List of client classes which must be evaluated
                                 // when this prefix pool is selected for client assignments.
-                                "require-client-classes": [],
+                                "evaluate-additional-classes": [],
 
                                 // PD-pool identifier used to enable statistics for this pd-pool.
                                 // The pd-pool ID does not need to be unique within the subnet
@@ -961,9 +1011,10 @@
                         // List of IP address pools belonging to the subnet.
                         "pools": [
                             {
-                                // Restricts this pool to only be used for client
-                                // requests belonging to a particular client class.
-                                "client-class": "phones_server1",
+                                // Restricts this pool subnet to allow only clients
+                                // that belong to at least one class in this list. If omitted
+                                // or an empty list is provided, no restriction is applied.
+                                "client-classes": [ "phones_server1" ],
 
                                 // Pool-level list of DHCP options.
                                 "option-data": [],
@@ -973,12 +1024,57 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "require-client-classes": [ "late" ]
+                                "evaluate-additional-classes": [ "late" ],
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-generated-prefix": "mypool",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-override-client-update": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-override-no-update": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-qualifying-suffix": "pool.example.com.",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-replace-client-name": "always",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-send-updates": true,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-update-on-renew": false,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-conflict-resolution-mode": "check-with-dhcid",
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-ttl-percent": 0.55,
+
+                                // Pool-level value. See description at the global level.
+                                // You cannot specify both ddns-ttl and any of ddns-ttl-percent,
+                                // ddns-ttl-min, or ddns-ttl-max. They are mutually exclusive.
+                                // "ddns-ttl": 500,
+
+                                // Pool-evel value. See description at the global level.
+                                "ddns-ttl-min": 10000,
+
+                                // Pool-level value. See description at the global level.
+                                "ddns-ttl-max": 20000,
+
+                                // Pool-level value. See description at the global level.
+                                "hostname-char-replacement": "x",
+
+                                // Pool-level value. See description at the global level.
+                                "hostname-char-set": "[^A-Za-z0-9.-]"
                             },
                             {
-                                // Restricts this pool to only be used for client
-                                // requests belonging to a particular client class.
-                                "client-class": "phones_server2",
+                                // Restricts this pool subnet to allow only clients
+                                // that belong to at least one class in this list. If omitted
+                                // or an empty list is provided, no restriction is applied.
+                                "client-classes": [ "phones_server2" ],
 
                                 // Pool-level list of DHCP options.
                                 "option-data": [],
@@ -988,7 +1084,7 @@
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
-                                "require-client-classes": [],
+                                "evaluate-additional-classes": [],
 
                                 // Pool identifier used to enable statistics for this pool.
                                 // The pool ID does not need to be unique within the subnet
@@ -1067,6 +1163,9 @@
                                 // List of reserved IPv6 prefixes.
                                 "prefixes": [ "2001:db8:2:abcd::/64" ],
 
+                                // List of excluded IPv6 prefixes.
+                                "excluded-prefixes": [ "2001:db8:2:abcd:1::/80" ],
+
                                 // Reserved hostname.
                                 "hostname": "foo.example.com",
 
@@ -1085,7 +1184,7 @@
 
                         // List of client classes which must be evaluated when this subnet
                         // is selected for client assignments.
-                        "require-client-classes": [ "late" ],
+                        "evaluate-additional-classes": [ "late" ],
 
                         // Subnet prefix.
                         "subnet": "2001:db8::/32",

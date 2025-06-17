@@ -30,8 +30,8 @@ namespace yang {
 ///     "t2-percent": <T2 percent>,
 ///     "option-data": [ <list of option data> ],
 ///     "interface": "<interface>",
-///     "client-class": "<guard class name>",
-///     "require-client-classes": [ <list of required class names> ],
+///     "client-classes": [ <list of guard class names> ],
+///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "relay": <relay ip address(es)>,
 ///     "match-client-id": <match client id flag>,
 ///     "next-server": "<next server>",
@@ -63,8 +63,8 @@ namespace yang {
 ///     "interface": "<interface>",
 ///     "interface-id": "<interface id>",
 ///     "rapid-commit": <rapid commit flag>,
-///     "client-class": "<guard class name>",
-///     "require-client-classes": [ <list of required class names> ],
+///     "client-classes": [ <list of guard class names> ],
+///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "relay": <relay ip address(es)>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
@@ -79,8 +79,8 @@ namespace yang {
 ///    +--rw renew-timer?                    uint32
 ///    +--rw rebind-timer?                   uint32
 ///    +--rw option-data* [code space]
-///    +--rw client-class?                   string
-///    +--rw require-client-classes*         string
+///    +--rw client-classes*                 string
+///    +--rw evaluate-additional-classes*    string
 ///    +--rw valid-lifetime?                 uint32
 ///    +--rw min-valid-lifetime?             uint32
 ///    +--rw max-valid-lifetime?             uint32

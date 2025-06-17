@@ -78,6 +78,7 @@ TranslatorHost::getHostKea(DataNode const& data_node) {
     } else {
         checkAndGetLeaf(result, data_node, "ip-addresses");
         checkAndGetLeaf(result, data_node, "prefixes");
+        checkAndGetLeaf(result, data_node, "excluded-prefixes");
     }
 
     return (result->empty() ? ElementPtr() : result);
@@ -125,6 +126,7 @@ TranslatorHost::setHostKea(string const& xpath, ConstElementPtr elem) {
     } else {
         checkAndSetLeafList(elem, xpath, "ip-addresses", LeafBaseType::String);
         checkAndSetLeafList(elem, xpath, "prefixes", LeafBaseType::String);
+        checkAndSetLeafList(elem, xpath, "excluded-prefixes", LeafBaseType::String);
     }
 
     // User context is supported in both kea-dhcp4-server and kea-dhcp6-server.

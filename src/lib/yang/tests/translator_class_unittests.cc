@@ -107,7 +107,7 @@ TEST_F(TranslatorClassesTestv6, set) {
     ElementPtr cclass = Element::createMap();
     cclass->set("name", Element::create("foo"));
     cclass->set("test", Element::create("''==''"));
-    cclass->set("only-if-required", Element::create(false));
+    cclass->set("only-in-additional-list", Element::create(false));
     classes->add(cclass);
     EXPECT_NO_THROW_LOG(translator_->setClasses(xpath, classes));
 

@@ -192,6 +192,9 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "ddns-replace-client-name");
     checkAndGetLeaf(result, data_node, "ddns-send-updates");
     checkAndGetLeaf(result, data_node, "ddns-ttl-percent");
+    checkAndGetLeaf(result, data_node, "ddns-ttl");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-min");
+    checkAndGetLeaf(result, data_node, "ddns-ttl-max");
     checkAndGetLeaf(result, data_node, "ddns-update-on-renew");
     checkAndGetLeaf(result, data_node, "ddns-use-conflict-resolution");
     checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
@@ -511,6 +514,9 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
     checkAndSetLeaf(elem, xpath, "ddns-replace-client-name", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-send-updates", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-ttl-percent", LeafBaseType::Dec64);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-min", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "ddns-ttl-max", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "ddns-update-on-renew", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-use-conflict-resolution", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);

@@ -187,6 +187,10 @@ AdaptorConfig::sanitizeOptionDataList(ConstElementPtr options,
         ElementPtr option = options->getNonConst(i);
         setSpace(option, space);
         setCode(option, codes);
+        ConstElementPtr classes = option->get("client-classes");
+        if (classes && classes->empty()) {
+            option->remove("client-classes");
+        }
     }
 }
 
@@ -370,7 +374,7 @@ AdaptorConfig::sanitizeOptionSharedNetworks(ConstElementPtr networks,
 }
 
 void
-AdaptorConfig::sanitizeRequireClassesPools(ConstElementPtr pools) {
+AdaptorConfig::sanitizeEmptyListPools(ConstElementPtr pools) {
     if (!pools || pools->empty()) {
         // nothing to do here.
         return;
@@ -378,15 +382,19 @@ AdaptorConfig::sanitizeRequireClassesPools(ConstElementPtr pools) {
 
     for (size_t i = 0; i < pools->size(); ++i) {
         ElementPtr pool = pools->getNonConst(i);
-        ConstElementPtr require = pool->get("require-client-classes");
+        ConstElementPtr require = pool->get("evaluate-additional-classes");
         if (require && require->empty()) {
-            pool->remove("require-client-classes");
+            pool->remove("evaluate-additional-classes");
+        }
+        ConstElementPtr classes = pool->get("client-classes");
+        if (classes && classes->empty()) {
+            pool->remove("client-classes");
         }
     }
 }
 
 void
-AdaptorConfig::sanitizeRequireClassesSubnets(ConstElementPtr subnets) {
+AdaptorConfig::sanitizeEmptyListSubnets(ConstElementPtr subnets) {
     if (!subnets || subnets->empty()) {
         // nothing to do here.
         return;
@@ -394,18 +402,22 @@ AdaptorConfig::sanitizeRequireClassesSubnets(ConstElementPtr subnets) {
 
     for (size_t i = 0; i < subnets->size(); ++i) {
         ElementPtr subnet = subnets->getNonConst(i);
-        sanitizeRequireClassesPools(subnet->get("pools"));
-        sanitizeRequireClassesPools(subnet->get("pd-pools"));
-        ConstElementPtr require = subnet->get("require-client-classes");
+        sanitizeEmptyListPools(subnet->get("pools"));
+        sanitizeEmptyListPools(subnet->get("pd-pools"));
+        ConstElementPtr require = subnet->get("evaluate-additional-classes");
         if (require && require->empty()) {
-            subnet->remove("require-client-classes");
+            subnet->remove("evaluate-additional-classes");
+        }
+        ConstElementPtr classes = subnet->get("client-classes");
+        if (classes && classes->empty()) {
+            subnet->remove("client-classes");
         }
     }
 }
 
 void
-AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
-                                            const string& subsel) {
+AdaptorConfig::sanitizeEmptyListSharedNetworks(ConstElementPtr networks,
+                                               const string& subsel) {
     if (!networks || networks->empty()) {
         // nothing to do here.
         return;
@@ -413,10 +425,14 @@ AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
 
     for (size_t i = 0; i < networks->size(); ++i) {
         ElementPtr network = networks->getNonConst(i);
-        sanitizeRequireClassesSubnets(network->get(subsel));
-        ConstElementPtr require = network->get("require-client-classes");
+        sanitizeEmptyListSubnets(network->get(subsel));
+        ConstElementPtr require = network->get("evaluate-additional-classes");
         if (require && require->empty()) {
-            network->remove("require-client-classes");
+            network->remove("evaluate-additional-classes");
+        }
+        ConstElementPtr classes = network->get("client-classes");
+        if (classes && classes->empty()) {
+            network->remove("client-classes");
         }
     }
 }
@@ -599,8 +615,8 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     sanitizeRelaySubnets(subnets);
     sanitizeRelayInSharedNetworks(networks, subsel);
 
-    sanitizeRequireClassesSubnets(subnets);
-    requireClassesSharedNetworks(networks, subsel);
+    sanitizeEmptyListSubnets(subnets);
+    sanitizeEmptyListSharedNetworks(networks, subsel);
 
     sanitizeDatabase(dhcp);
 

@@ -21,8 +21,8 @@ namespace yang {
 /// {
 ///     "pool": "<pool prefix or start - end addresses>",
 ///     "option-data": [ <list of option data> ],
-///     "client-class": "<guard class name>",
-///     "require-client-classes": [ <list of required class names> ],
+///     "client-classes": [ <list of guard class names> ],
+///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
 /// }
@@ -39,7 +39,7 @@ namespace yang {
 ///  +--rw rebind-time           yang:timeticks
 ///  +--rw preferred-lifetime    yang:timeticks
 ///  +--rw rapid-commit?         boolean
-///  +--rw client-class?         string
+///  +--rw client-classes*       string
 ///  +--rw max-address-count     threshold
 ///  +--rw option-set-id
 ///     /server/server-config/option-sets/option-set/option-set-id
@@ -49,13 +49,13 @@ namespace yang {
 /// as the keys:
 /// @code
 /// +--rw pool* [start-address end-address]
-///    +--rw prefix?                   inet:ipv[46]-prefix
-///    +--rw start-address             inet:ipv[46]-address
-///    +--rw end-address               inet:ipv[46]-address
+///    +--rw prefix?                        inet:ipv[46]-prefix
+///    +--rw start-address                  inet:ipv[46]-address
+///    +--rw end-address                    inet:ipv[46]-address
 ///    +--rw option-data* [code space]
-///    +--rw client-class?             string
-///    +--rw require-client-classes*   string
-///    +--rw user-context?             user-context
+///    +--rw client-classes*                string
+///    +--rw evaluate-additional-classes*   string
+///    +--rw user-context?                  user-context
 /// @endcode
 ///
 /// An example in JSON and YANG formats for the IETF model:
