@@ -66,7 +66,8 @@ fuzz_lib = static_library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 
-executable(
+FUZZER_EXECUTABLES = []
+FUZZER_EXECUTABLES += executable(
     'fuzz_config_kea_dhcp4',
     'fuzz_config_kea_dhcp4.cc',
     fuzz_sources,
@@ -78,7 +79,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_config_kea_dhcp6',
     'fuzz_config_kea_dhcp6.cc',
     fuzz_sources,
@@ -90,7 +91,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_http_endpoint_kea_dhcp4',
     'fuzz_http_endpoint_kea_dhcp4.cc',
     fuzz_sources,
@@ -102,7 +103,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_http_endpoint_kea_dhcp6',
     'fuzz_http_endpoint_kea_dhcp6.cc',
     fuzz_sources,
@@ -114,7 +115,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_packets_kea_dhcp4',
     'fuzz_packets_kea_dhcp4.cc',
     fuzz_sources,
@@ -126,7 +127,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_packets_kea_dhcp6',
     'fuzz_packets_kea_dhcp6.cc',
     fuzz_sources,
@@ -138,7 +139,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_unix_socket_kea_dhcp4',
     'fuzz_unix_socket_kea_dhcp4.cc',
     fuzz_sources,
@@ -150,7 +151,7 @@ executable(
     install_dir: SBINDIR,
 )
 
-executable(
+FUZZER_EXECUTABLES += executable(
     'fuzz_unix_socket_kea_dhcp6',
     'fuzz_unix_socket_kea_dhcp6.cc',
     fuzz_sources,

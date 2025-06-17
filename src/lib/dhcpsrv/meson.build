@@ -94,7 +94,7 @@ kea_dhcpsrv_lib = shared_library(
     cpp_args: [
         f'-DDHCP_DATA_DIR="@SHAREDSTATEDIR_INSTALLED@"',
         f'-DKEA_LFC_EXECUTABLE="@KEA_LFC_INSTALLED@"',
-        f'-DLEGAL_LOG_DIR="@LOGDIR_INSTALLED@"'
+        f'-DLEGAL_LOG_DIR="@LOGDIR_INSTALLED@"',
     ],
     dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,

@@ -14,7 +14,7 @@ kea_process_lib = shared_library(
     'redact_config.cc',
     cpp_args: [
         f'-DPIDFILE_DIR="@RUNSTATEDIR_INSTALLED@"',
-        f'-DLOGFILE_DIR="@LOGDIR_INSTALLED@"'
+        f'-DLOGFILE_DIR="@LOGDIR_INSTALLED@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,
     install: true,

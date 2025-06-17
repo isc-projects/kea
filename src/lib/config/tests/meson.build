@@ -22,7 +22,7 @@ kea_config_tests = executable(
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
-        f'-DCONTROL_SOCKET_DIR="@RUNSTATEDIR_INSTALLED@"'
+        f'-DCONTROL_SOCKET_DIR="@RUNSTATEDIR_INSTALLED@"',
     ],
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
