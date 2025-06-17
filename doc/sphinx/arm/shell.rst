@@ -62,9 +62,10 @@ where:
    If not specified but the user ID is specified, an empty password is used.
    If used together with ``--auth-password-file``, it is disregarded.
 
--  ``--auth-password-file`` specifies a file which first line will be read to
-   retrieve the password for basic HTTP authentication. This flag takes precedence
-   over ``--auth-password`` flag. Caution is advised when setting file permissions
+-  ``--auth-password-file`` specifies a text file whose first line contains
+   the password to be used for basic HTTP authentication. This flag takes
+   precedence over ``--auth-password`` flag.
+   Caution is advised when setting file permissions
    for the file containing the password. Access to the file should be as strict as
    possible and limited only to the Kea administrators.
 

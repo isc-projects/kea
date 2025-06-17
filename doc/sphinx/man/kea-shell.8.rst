@@ -78,8 +78,8 @@ The arguments are as follows:
    If used together with ``--auth-password-file``, it is disregarded.
 
 ``--auth-password-file``
-   Specifies a file which first line will be read to retrieve
-   the password for basic HTTP authentication. This flag takes precedence
+   Specifies a text file whose first line contains the password to be used
+   for basic HTTP authentication. This flag takes precedence
    over ``--auth-password`` flag.
 
 ``--timeout``

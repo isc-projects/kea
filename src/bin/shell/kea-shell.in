@@ -77,12 +77,12 @@ def shell_body():
                         help='Basic HTTP authentication user')
     parser.add_argument('--auth-password', type=str, default='',
                         help='Basic HTTP authentication password. If used '
-                             'together with --auth-password-file, '
+                             'together with "--auth-password-file", '
                              'it is disregarded.')
     parser.add_argument('--auth-password-file', type=str, default='',
-                        help='A file which first line will be read to retrieve '
-                             'the password for basic HTTP authentication. This flag '
-                             'takes precedence over --auth-password.')
+                        help='A text file whose first line contains the password '
+                             'to be used for basic HTTP authentication. This flag '
+                             'takes precedence over "--auth-password" flag.')
     parser.add_argument('command', type=str, nargs="?",
                         default='list-commands',
                         help='command to be executed. If not specified, '
