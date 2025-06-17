@@ -239,3 +239,6 @@ shell_command_test "shell.bad-auth-password-file-content" \
 shell_command_test "shell.good-auth-password-file-content" \
     "--auth-user pet --auth-password-file ${tmpfile_path}/auth_password_file" "list-commands" "" \
     "[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet4-select-test\", \"subnet4o6-select-test\", \"version-get\" ], \"result\": 0 } ]"
+shell_command_test "shell.flag-precedence" \
+    "--auth-user pet --auth-password meow --auth-password-file ${tmpfile_path}/auth_bad_password_file" "list-commands" "fail" \
+    "Failed to run: HTTP Error 401: Unauthorized"
