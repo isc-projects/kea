@@ -129,6 +129,19 @@ ENV = find_program(TOP_SOURCE_DIR / 'scripts/env.sh')
 GRABBER = find_program(TOP_SOURCE_DIR / 'scripts/grabber.py')
 KEA_MSG_COMPILER = disabler()
 
+#### sudo
+
+PASSWORDLESS_SUDO_SET_UP = false
+if SUDO.found()
+    result = run_command(SUDO, '-k', check: false)
+    if result.returncode() == 0
+        result = run_command(SUDO, '-n', 'true', check: false)
+        if result.returncode() == 0
+            PASSWORDLESS_SUDO_SET_UP = true
+        endif
+    endif
+endif
+
 #### Configuration Data
 
 # TODO: Remaining define macros used in code, but not handled by meson:
@@ -567,14 +580,6 @@ else
     package_version_type = 'development'
 endif
 conf_data.set('PACKAGE_VERSION_TYPE', f'"@package_version_type@"')
-
-PASSWORDLESS_SUDO_SET_UP = false
-if SUDO.found()
-    result = run_command(SUDO, '-n', 'true', check: false)
-    if result.returncode() == 0
-        PASSWORDLESS_SUDO_SET_UP = true
-    endif
-endif
 
 #### Compiler
 
