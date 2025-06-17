@@ -11,7 +11,7 @@
 .. iscman:: kea-shell
 
 ``kea-shell`` - Text client for kea-dhcp4, kea-dhcp6 and kea-dhcp-ddns servers
------------------------------------------------------
+------------------------------------------------------------------------------
 
 Synopsis
 ~~~~~~~~
