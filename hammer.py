@@ -1780,8 +1780,12 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
+            execute(f'sudo yum-config-manager --enable codeready-builder-for-rhel-{revision}-rhui-rpms')
+            execute(f'sudo yum-config-manager --enable codeready-builder-for-rhel-{revision}-rhui-source-rpms')
             execute('sudo dnf remove -y libpq-devel', raise_error=False)
-            packages.extend(['postgresql', 'postgresql-devel', 'postgresql-server', 'postgresql-server-devel'])
+            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+            if int(revision) <= 8:
+                packages.append('libpq-devel')
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
