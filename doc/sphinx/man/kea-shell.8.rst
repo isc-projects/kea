@@ -10,7 +10,7 @@
 
 .. iscman:: kea-shell
 
-``kea-shell`` - Text client for Control Agent process
+``kea-shell`` - Text client for kea-dhcp4, kea-dhcp6 and kea-dhcp-ddns servers
 -----------------------------------------------------
 
 Synopsis
@@ -21,8 +21,10 @@ Synopsis
 Description
 ~~~~~~~~~~~
 
-The ``kea-shell`` provides a REST client for the Kea Control Agent (CA).
-It takes commands as a command-line parameter that is sent to the CA
+The ``kea-shell`` provides a REST client for the Kea ``kea-dhcp4``,
+``kea-dhcp6`` and ``kea-dhcp-ddns`` servers. Previously it was meant
+for the Control Agent (CA) daemon, which is deprecated.
+It takes commands as a command-line parameter that is sent to the Kea server
 with proper JSON encapsulation. Optional arguments may be specified on
 the standard input. The request is sent via HTTP and a response is
 retrieved, displayed on the standard output. Basic HTTP authentication
@@ -41,16 +43,16 @@ The arguments are as follows:
    Displays the Kea version.
 
 ``--host``
-   Specifies the host to connect to. The Control Agent must be running at the
+   Specifies the host to connect to. The Kea server must be running at the
    specified host. If not specified, 127.0.0.1 is used.
 
 ``--port``
-   Specifies the TCP port to connect to. Control Agent must be listening
+   Specifies the TCP port to connect to. The server must be listening
    at the specified port. If not specified, 8000 is used.
 
 ``--path``
    Specifies the path in the URL to connect to. If not specified, an empty
-   path is used. As Control Agent listens at the empty path, this
+   path is used. As Kea servers listen at the empty path, this
    parameter is useful only with a reverse proxy.
 
 ``--ca``
@@ -84,12 +86,16 @@ The arguments are as follows:
    Specifies the connection timeout, in seconds. The default is 10.
 
 ``--service``
-   Specifies the service that is the target of a command. If not
-   specified, the Control Agent itself is targeted. May be used more than once
+   (Obsolete) Kea ``kea-dhcp4``, ``kea-dhcp6`` and ``kea-dhcp-ddns`` servers
+   ignore this argument. It was meant for communication with deprecated Control
+   Agent daemon.
+   If used with Kea version < 2.7.2:
+   specifies the service that is the target of a command. If not specified,
+   the Control Agent itself is targeted. May be used more than once
    to specify multiple targets.
 
 ``command``
-   Specifies the command to be sent to the CA. If not specified,
+   Specifies the command to be sent to the server. If not specified,
    ``list-commands`` is used.
 
 Documentation
