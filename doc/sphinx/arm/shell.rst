@@ -64,7 +64,9 @@ where:
 
 -  ``--auth-password-file`` specifies a file which first line will be read to
    retrieve the password for basic HTTP authentication. This flag takes precedence
-   over ``--auth-password`` flag.
+   over ``--auth-password`` flag. Caution is advised when setting file permissions
+   for the file containing the password. Access to the file should be as strict as
+   possible and limited only to the Kea administrators.
 
 -  ``--timeout seconds`` specifies the timeout (in seconds) for the
    connection. If not given, 10 seconds is used.
