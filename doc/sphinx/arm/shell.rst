@@ -40,7 +40,7 @@ Shell Usage
 
 .. code-block:: console
 
-   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-password] [--timeout seconds] [--service service-name] [command]
+   $ kea-shell [--host hostname] [--port number] [--path path] [--auth-user] [--auth-password] [--auth-password-file] [--timeout seconds] [--service service-name] [command]
 
 where:
 
@@ -60,6 +60,11 @@ where:
 
 -  ``--auth-password`` specifies the password for basic HTTP authentication.
    If not specified but the user ID is specified, an empty password is used.
+   If used together with ``--auth-password-file``, it is disregarded.
+
+-  ``--auth-password-file`` specifies a file which first line will be read to
+   retrieve the password for basic HTTP authentication. This flag takes precedence
+   over ``--auth-password`` flag.
 
 -  ``--timeout seconds`` specifies the timeout (in seconds) for the
    connection. If not given, 10 seconds is used.
@@ -95,7 +100,7 @@ The following shows a simple example of usage:
 
 .. code-block:: console
 
-   $ kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-commands
+   $ kea-shell --host 192.0.2.1 --port 8001 --auth-user foo --auth-password-file secret_file --service dhcp4 list-commands
    ^D
 
 After the command line is entered, the program waits for command
