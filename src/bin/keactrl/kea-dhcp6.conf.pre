@@ -273,7 +273,7 @@
             ],
 
             // This is one of the subnet selectors. Uncomment the "interface"
-            // parameter and specify appropriate interface name if the DHCPv6
+            // parameter and specify the appropriate interface name if the DHCPv6
             // server will receive requests from local clients (connected to the
             // same subnet as the server). The DHCPv6 server must be able to
             // operate while only using link-local addresses.
