@@ -1,0 +1,3 @@
+[doc]		marcin
+	Added example subnet selectors to default DHCP configs.
+	(Gitlab #3628)
