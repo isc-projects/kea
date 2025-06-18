@@ -1042,21 +1042,21 @@ endif
 
 #### pkg-config
 
-additional_requires = []
-foreach i : [KRB5_DEP, MYSQL_DEP, POSTGRESQL_DEP]
+requires = []
+foreach i : [CRYPTO_DEP, KRB5_DEP, LOG4CPLUS_DEP, MYSQL_DEP, POSTGRESQL_DEP]
     if i.found() and i.type_name() == 'pkgconfig'
-        additional_requires += i
+        requires += i
     endif
 endforeach
 if NETCONF_DEP.found()
-    additional_requires += ['libyang', 'sysrepo', 'libyang-cpp', 'sysrepo-cpp']
+    requires += ['libyang', 'sysrepo', 'libyang-cpp', 'sysrepo-cpp']
 endif
 pkg.generate(
     description: 'High-performance, extensible DHCP server engine',
     filebase: 'kea',
     libraries: LIBS_BUILT_SO_FAR,
     name: 'Kea',
-    requires: [CRYPTO_DEP, LOG4CPLUS_DEP] + additional_requires,
+    requires: requires,
     subdirs: 'kea',
     version: meson.project_version(),
 )
