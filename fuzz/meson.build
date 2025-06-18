@@ -39,16 +39,6 @@ foreach i : ['kea-dhcp4.conf', 'kea-dhcp6.conf']
     )
 endforeach
 
-
-install_input = configure_file(
-    input: 'install-input.sh.in',
-    output: 'install-input.sh',
-    configuration: configuration_data(
-        {'PREFIX': PREFIX, 'current_build_dir': current_build_dir},
-    ),
-)
-meson.add_install_script(install_input)
-
 fuzz_sources = ['fuzz.cc', 'fuzz.h', 'main.cc']
 cpp_flags = [
     f'-DKEA_LFC_INSTALLATION="@KEA_LFC_INSTALLED@"',
