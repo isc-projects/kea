@@ -1,4 +1,4 @@
- .. _config-backend:
+.. _config-backend:
 
 Kea Configuration Backend
 =========================
@@ -194,8 +194,8 @@ simplifies many typical operations, such as listing, adding, retrieving, and
 deleting global parameters, shared networks, subnets, pools, options, option
 definitions, and client classes. In addition, it provides essential business
 logic that ensures the logical integrity of the data.  All CB API commands
-start with ``remote-``.  See :ref:`commands-cb-cmds` for a complete
-list.
+start with ``remote-``.  See
+:ref:`libdhcp-cb-cmds-so-configuration-backend-commands` for more information.
 
 Installation and maintenance of external database software is beyond the scope of this manual.
 
@@ -240,6 +240,8 @@ and :ref:`dhcp6-cb`, respectively.
 
 Once installation is completed, the CB commands API can be used to populate
 the database with Kea configuration information.
+
+.. _cb-sharing:
 
 Configuration Sharing and Server Tags
 -------------------------------------
