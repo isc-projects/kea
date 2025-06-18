@@ -464,7 +464,7 @@ paths or permissions.  This mode of operation may expose your
 environment to security vulnerabilities and should only be used
 after consideration.
 
-% DHCP_DDNS_TSIG_SECRET_SECURITY_WARN use of clear text TSIG 'secret' is NOT SECURE: %1 
+% DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING use of clear text TSIG 'secret' is NOT SECURE: %1 
 This warning message is issued when security enforcement is disabled
 and TSIG key configuration uses clear text 'secret' rather
 than 'secret-file'. The server will still use the key as configured

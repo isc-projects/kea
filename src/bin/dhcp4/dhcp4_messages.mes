@@ -1199,7 +1199,7 @@ paths or permissions.  This mode of operation may expose your
 environment to security vulnerabilities and should only be used
 after careful consideration.
 
-% DHCP4_ROOT_USER_SECURITY_WARN kea-dhcp4 running as root user!
+% DHCP4_ROOT_USER_SECURITY_WARNING kea-dhcp4 running as root user!
 This warning is emitted when kea-dhcp4 is running as a root user.
 While the server will function fully, this mode of operation may
 expose your environment to security vulnerabilities and should

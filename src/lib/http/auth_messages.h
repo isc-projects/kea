@@ -8,12 +8,12 @@
 namespace isc {
 namespace http {
 
-extern const isc::log::MessageID HTTP_CLIENT_PASSWORD_SECURITY_WARN;
+extern const isc::log::MessageID HTTP_CLIENT_PASSWORD_SECURITY_WARNING;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_AUTHORIZED;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_BAD_AUTH_HEADER;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NOT_AUTHORIZED;
 extern const isc::log::MessageID HTTP_CLIENT_REQUEST_NO_AUTH_HEADER;
-extern const isc::log::MessageID HTTP_CLIENT_USER_SECURITY_WARN;
+extern const isc::log::MessageID HTTP_CLIENT_USER_SECURITY_WARNING;
 
 } // namespace http
 } // namespace isc

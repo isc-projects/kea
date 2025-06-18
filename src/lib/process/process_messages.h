@@ -28,7 +28,7 @@ extern const isc::log::MessageID DCTL_OPEN_CONFIG_DB;
 extern const isc::log::MessageID DCTL_PARSER_FAIL;
 extern const isc::log::MessageID DCTL_PID_FILE_ERROR;
 extern const isc::log::MessageID DCTL_PROCESS_FAILED;
-extern const isc::log::MessageID DCTL_ROOT_USER_SECURITY_WARN;
+extern const isc::log::MessageID DCTL_ROOT_USER_SECURITY_WARNING;
 extern const isc::log::MessageID DCTL_RUN_PROCESS;
 extern const isc::log::MessageID DCTL_SHUTDOWN;
 extern const isc::log::MessageID DCTL_SHUTDOWN_SIGNAL_RECVD;

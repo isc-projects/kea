@@ -153,7 +153,7 @@ not comply with the supported path. The server will still
 use the specified path but is warning that doing so may pose a
 security risk.
 
-% DCTL_ROOT_USER_SECURITY_WARN %1 running as root user!
+% DCTL_ROOT_USER_SECURITY_WARNING %1 running as root user!
 This warning is emitted when the server is running as a root user.
 While the server will function fully, this mode of operation may
 expose your environment to security vulnerabilities and should

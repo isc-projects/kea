@@ -86,7 +86,7 @@ extern const isc::log::MessageID DHCP_DDNS_STARTED = "DHCP_DDNS_STARTED";
 extern const isc::log::MessageID DHCP_DDNS_STARTING_TRANSACTION = "DHCP_DDNS_STARTING_TRANSACTION";
 extern const isc::log::MessageID DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR = "DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR";
 extern const isc::log::MessageID DHCP_DDNS_TRANS_SEND_ERROR = "DHCP_DDNS_TRANS_SEND_ERROR";
-extern const isc::log::MessageID DHCP_DDNS_TSIG_SECRET_SECURITY_WARN = "DHCP_DDNS_TSIG_SECRET_SECURITY_WARN";
+extern const isc::log::MessageID DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING = "DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING";
 extern const isc::log::MessageID DHCP_DDNS_UPDATE_REQUEST_SENT = "DHCP_DDNS_UPDATE_REQUEST_SENT";
 extern const isc::log::MessageID DHCP_DDNS_UPDATE_RESPONSE_RECEIVED = "DHCP_DDNS_UPDATE_RESPONSE_RECEIVED";
 
@@ -175,7 +175,7 @@ const char* values[] = {
     "DHCP_DDNS_STARTING_TRANSACTION", "Request ID %1:",
     "DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR", "Request ID %1: application encountered an unexpected error while carrying out a NameChangeRequest: %2",
     "DHCP_DDNS_TRANS_SEND_ERROR", "Request ID %1: application encountered an unexpected error while attempting to send a DNS update: %2",
-    "DHCP_DDNS_TSIG_SECRET_SECURITY_WARN", "use of clear text TSIG 'secret' is NOT SECURE: %1",
+    "DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING", "use of clear text TSIG 'secret' is NOT SECURE: %1",
     "DHCP_DDNS_UPDATE_REQUEST_SENT", "Request ID %1: %2 to server: %3",
     "DHCP_DDNS_UPDATE_RESPONSE_RECEIVED", "Request ID %1: to server: %2 status: %3",
     NULL

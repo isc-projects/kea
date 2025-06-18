@@ -578,7 +578,7 @@ a security risk it emits an error log and exits. The following checks are perfor
 
 As of Kea 3.0, starting the daemons with the command line option, '-X',
 instructs them to warn about security risks but continue operating anyway.
-The message IDs for all such warnings are suffixed with "_SECURITY_WARN".
+The message IDs for all such warnings are suffixed with "_SECURITY_WARNING".
 
 .. warning::
 

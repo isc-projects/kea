@@ -161,7 +161,7 @@ extern const isc::log::MessageID DHCP6_RELEASE_PD_FAIL_WRONG_IAID;
 extern const isc::log::MessageID DHCP6_REQUIRED_OPTIONS_CHECK_FAIL;
 extern const isc::log::MessageID DHCP6_RESERVATIONS_LOOKUP_FIRST_ENABLED;
 extern const isc::log::MessageID DHCP6_RESPONSE_DATA;
-extern const isc::log::MessageID DHCP6_ROOT_USER_SECURITY_WARN;
+extern const isc::log::MessageID DHCP6_ROOT_USER_SECURITY_WARNING;
 extern const isc::log::MessageID DHCP6_SECURITY_CHECKS_DISABLED;
 extern const isc::log::MessageID DHCP6_SERVER_FAILED;
 extern const isc::log::MessageID DHCP6_SHUTDOWN;

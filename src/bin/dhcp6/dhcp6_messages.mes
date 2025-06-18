@@ -1176,7 +1176,7 @@ paths or permissions.  This mode of operation may expose your
 environment to security vulnerabilities and should only be used
 after careful consideration.
 
-% DHCP6_ROOT_USER_SECURITY_WARN kea-dhcp6 running as root user!
+% DHCP6_ROOT_USER_SECURITY_WARNING kea-dhcp6 running as root user!
 This warning is emitted when kea-dhcp6 is running as a root user.
 While the server will function fully, this mode of operation may
 expose your environment to security vulnerabilities and should

@@ -14,7 +14,7 @@ extern const isc::log::MessageID COMMAND_HTTP_LISTENER_COMMAND_REJECTED = "COMMA
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STARTED = "COMMAND_HTTP_LISTENER_STARTED";
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPED = "COMMAND_HTTP_LISTENER_STOPPED";
 extern const isc::log::MessageID COMMAND_HTTP_LISTENER_STOPPING = "COMMAND_HTTP_LISTENER_STOPPING";
-extern const isc::log::MessageID COMMAND_HTTP_SOCKET_SECURITY_WARN = "COMMAND_HTTP_SOCKET_SECURITY_WARN";
+extern const isc::log::MessageID COMMAND_HTTP_SOCKET_SECURITY_WARNING = "COMMAND_HTTP_SOCKET_SECURITY_WARNING";
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR1 = "COMMAND_PROCESS_ERROR1";
 extern const isc::log::MessageID COMMAND_PROCESS_ERROR2 = "COMMAND_PROCESS_ERROR2";
 extern const isc::log::MessageID COMMAND_RECEIVED = "COMMAND_RECEIVED";
@@ -57,7 +57,7 @@ const char* values[] = {
     "COMMAND_HTTP_LISTENER_STARTED", "Command HTTP listener started with %1 threads, listening on address: %2 port: %3, use TLS: %4",
     "COMMAND_HTTP_LISTENER_STOPPED", "Command HTTP listener for address: %1 port: %2 stopped.",
     "COMMAND_HTTP_LISTENER_STOPPING", "Stopping Command HTTP listener for address: %1 port: %2",
-    "COMMAND_HTTP_SOCKET_SECURITY_WARN", "command socket configuration is NOT SECURE: %1",
+    "COMMAND_HTTP_SOCKET_SECURITY_WARNING", "command socket configuration is NOT SECURE: %1",
     "COMMAND_PROCESS_ERROR1", "Error while processing command: %1",
     "COMMAND_PROCESS_ERROR2", "Error while processing command: %1",
     "COMMAND_RECEIVED", "Received command '%1'",
