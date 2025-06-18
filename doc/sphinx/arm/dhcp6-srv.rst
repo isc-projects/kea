@@ -78,9 +78,9 @@ the following command-line switches:
     # from sources using libcfgrpt.a
     $ strings src/lib/process/cfgrpt/.libs/libcfgrpt.a | sed -n 's/;;;; //p'
 
--  ``-X`` - As of Kea 3.0, disables security restrictions. The server will 
+-  ``-X`` - As of Kea 3.0, disables security restrictions. The server will
    still check for violations but will emit warning logs when they are found
-   rather than fail with an error. Please see 
+   rather than fail with an error. Please see
    :ref:`sec-kea-runtime-security-risk-checking` for details.
 
 On startup, the server detects available network interfaces and
