@@ -570,7 +570,7 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
 
-    EXPECT_EQ(4, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARN"
+    EXPECT_EQ(4, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING"
                            " use of clear text 'password' is NOT SECURE: :0:0"));
 }
 
@@ -597,7 +597,7 @@ TEST_F(BasicHttpAuthConfigTest, clearUser) {
     // Disable security.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(auth.parse(config));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARN "
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
                            "use of clear text 'user' is NOT SECURE: <string>:6:21"));
 }
 
@@ -625,9 +625,9 @@ TEST_F(BasicHttpAuthConfigTest, clearPassword) {
     // Disable security.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(auth.parse(config));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARN "
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_PASSWORD_SECURITY_WARNING "
                            "use of clear text 'password' is NOT SECURE: <string>:7:25"));
-    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARN "
+    EXPECT_EQ(1, countFile("HTTP_CLIENT_USER_SECURITY_WARNING "
                            "use of clear text 'user' is NOT SECURE: <string>:6:21"));
 }
 

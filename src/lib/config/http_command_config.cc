@@ -187,7 +187,7 @@ HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
 
         std::ostringstream oss;
         config->toJSON(oss);
-        LOG_WARN(command_logger, COMMAND_HTTP_SOCKET_SECURITY_WARN)
+        LOG_WARN(command_logger, COMMAND_HTTP_SOCKET_SECURITY_WARNING)
                 .arg(oss.str());
     }
 

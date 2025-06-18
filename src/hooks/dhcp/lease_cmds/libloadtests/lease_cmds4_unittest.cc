@@ -3520,7 +3520,7 @@ void Lease4CmdsTest::testLease4WriteSecurityWarn() {
         "}";
 
     std::ostringstream os;
-    os << "LEASE_CMDS_PATH_SECURITY_WARN lease file path specified is NOT SECURE:"
+    os << "LEASE_CMDS_PATH_SECURITY_WARNING lease file path specified is NOT SECURE:"
        << " invalid path specified: '/tmp', supported path is '"
        << CfgMgr::instance().getDataDir() << "'";
 

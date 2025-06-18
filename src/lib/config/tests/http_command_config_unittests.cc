@@ -57,7 +57,7 @@ TEST_F(HttpCommandConfigTest, default) {
                      DhcpConfigError, "Unsecured HTTP control channel (:0:0)");
 
     // Turn off security enforcment. Configuration will succeed but we
-    // should see WARN logs.
+    // should see WARNING logs.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
 
@@ -83,7 +83,7 @@ TEST_F(HttpCommandConfigTest, default) {
     )";
     runToElementTest(expected, *http_config_);
 
-    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
                            " configuration is NOT SECURE: {  }"));
 
     // Change class defaults.
@@ -93,7 +93,7 @@ TEST_F(HttpCommandConfigTest, default) {
     EXPECT_EQ("::1", http_config_->getSocketAddress().toText());
     EXPECT_EQ(8080, http_config_->getSocketPort());
 
-    ASSERT_EQ(2, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+    ASSERT_EQ(2, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
                            " configuration is NOT SECURE: {  }"));
 }
 
@@ -287,8 +287,8 @@ TEST_F(HttpCommandConfigTest, headers) {
     })";
     runToElementTest(expected, *http_config_);
 
-    // Should have security WARN log.
-    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN command socket"
+    // Should have security WARNING log.
+    ASSERT_EQ(1, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket"
                            " configuration is NOT SECURE: { \"http-headers\": "
                            "[ { \"name\": \"Strict-Transport-Security\", \"value\":"
                            " \"max-age=31536000\" }, { \"name\": \"Foo\", \"value\": \"bar\""
@@ -365,7 +365,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
     runToElementTest(expected, *http_config_);
 
     // Should be no security warnings.
-    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARN")); 
+    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING")); 
 }
 
 // This test verifies a HTTP control socket configuration with TLS can

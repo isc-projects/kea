@@ -237,7 +237,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                 isc_throw(DhcpConfigError, "use of clear text 'password' is NOT SECURE ("
                                            << password_cfg->getPosition() << ")");
             } else {
-                LOG_INFO(auth_logger, HTTP_CLIENT_PASSWORD_SECURITY_WARN)
+                LOG_INFO(auth_logger, HTTP_CLIENT_PASSWORD_SECURITY_WARNING)
                         .arg(password_cfg->getPosition().str());
             }
         }
@@ -299,7 +299,7 @@ BasicHttpAuthConfig::parse(const ConstElementPtr& config) {
                 isc_throw(DhcpConfigError, "use of clear text 'user' is NOT SECURE ("
                                            << user_cfg->getPosition() << ")");
             } else {
-                LOG_INFO(auth_logger, HTTP_CLIENT_USER_SECURITY_WARN)
+                LOG_INFO(auth_logger, HTTP_CLIENT_USER_SECURITY_WARNING)
                         .arg(user_cfg->getPosition().str());
             }
         }

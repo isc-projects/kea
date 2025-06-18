@@ -2758,7 +2758,7 @@ LeaseCmdsImpl::leaseWriteHandler(CalloutHandle& handle) {
         try {
           filename = CfgMgr::instance().validatePath(file->stringValue());
         } catch (const SecurityWarn& ex) {
-            LOG_WARN(lease_cmds_logger, LEASE_CMDS_PATH_SECURITY_WARN)
+            LOG_WARN(lease_cmds_logger, LEASE_CMDS_PATH_SECURITY_WARNING)
                     .arg(ex.what());
             filename = file->stringValue();
         } catch (const std::exception& ex) {

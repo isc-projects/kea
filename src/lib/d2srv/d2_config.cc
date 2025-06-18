@@ -429,7 +429,7 @@ TSIGKeyInfoParser::parse(ConstElementPtr key_config) {
                       << " (" << getPosition("secret", key_config)
                       << ")");
         } else {
-            LOG_WARN(dhcp_to_d2_logger, DHCP_DDNS_TSIG_SECRET_SECURITY_WARN)
+            LOG_WARN(dhcp_to_d2_logger, DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING)
                      .arg(getPosition("secret", key_config).str());
         }
     }

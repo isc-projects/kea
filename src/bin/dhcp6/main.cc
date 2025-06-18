@@ -247,7 +247,7 @@ main(int argc, char* argv[]) {
         }
 
         if (amRunningAsRoot()) {
-            LOG_WARN(dhcp6_logger, DHCP6_ROOT_USER_SECURITY_WARN);
+            LOG_WARN(dhcp6_logger, DHCP6_ROOT_USER_SECURITY_WARNING);
         }
 
         if (!PathChecker::shouldEnforceSecurity()) {
