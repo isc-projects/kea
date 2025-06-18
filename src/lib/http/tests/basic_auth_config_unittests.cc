@@ -556,7 +556,6 @@ TEST_F(BasicHttpAuthConfigTest, parse) {
     cfg->set("clients", clients_cfg);
     EXPECT_NO_THROW(config.parse(cfg));
     runToElementTest<BasicHttpAuthConfig>(cfg, config);
-    std::cout << "TKM config: " << prettyPrint(config.toElement()) << std::endl;
 
     // Check a working not empty config with files.
     config.clear();

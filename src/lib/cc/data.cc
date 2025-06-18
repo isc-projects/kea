@@ -1421,19 +1421,21 @@ copy(ConstElementPtr from, int level) {
     if (!from) {
         isc_throw(BadValue, "copy got a null pointer");
     }
+
+    auto pos = from->getPosition();
     int from_type = from->getType();
     if (from_type == Element::integer) {
-        return (ElementPtr(new IntElement(from->intValue())));
+        return (ElementPtr(new IntElement(from->intValue(), pos)));
     } else if (from_type == Element::real) {
-        return (ElementPtr(new DoubleElement(from->doubleValue())));
+        return (ElementPtr(new DoubleElement(from->doubleValue(), pos)));
     } else if (from_type == Element::boolean) {
-        return (ElementPtr(new BoolElement(from->boolValue())));
+        return (ElementPtr(new BoolElement(from->boolValue(), pos)));
     } else if (from_type == Element::null) {
         return (ElementPtr(new NullElement()));
     } else if (from_type == Element::string) {
-        return (ElementPtr(new StringElement(from->stringValue())));
+        return (ElementPtr(new StringElement(from->stringValue(), pos)));
     } else if (from_type == Element::list) {
-        ElementPtr result = ElementPtr(new ListElement());
+        ElementPtr result = ElementPtr(new ListElement(pos));
         for (auto const& elem : from->listValue()) {
             if (level == 0) {
                 result->add(elem);
@@ -1443,7 +1445,7 @@ copy(ConstElementPtr from, int level) {
         }
         return (result);
     } else if (from_type == Element::map) {
-        ElementPtr result = ElementPtr(new MapElement());
+        ElementPtr result = ElementPtr(new MapElement(pos));
         for (auto const& kv : from->mapValue()) {
             auto key = kv.first;
             auto value = kv.second;

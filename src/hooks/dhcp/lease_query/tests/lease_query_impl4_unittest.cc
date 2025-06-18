@@ -1224,7 +1224,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, addRelayAgentInfo) {
     // Pass lease and response into addRelayAgentInfo().
     ASSERT_THROW_MSG(LeaseQueryImpl4::addRelayAgentInfo(response, lease),
                      Unexpected, "Error creating relay-agent-info option:"
-                     " stringValue() called on non-string Element");
+                     " stringValue() called on non-string Element in (<string>:1:32)");
 
     // Verify relay-agent-info is not in the response
     checkRelayAgentInfo(response, "");

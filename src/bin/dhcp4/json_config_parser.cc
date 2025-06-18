@@ -412,7 +412,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
         ConstElementPtr control_socket = mutable_cfg->get("control-socket");
         if (control_socket) {
             mutable_cfg->remove("control-socket");
-            ElementPtr l = Element::createList();
+            ElementPtr l = Element::createList(control_socket->getPosition());
             l->add(UserContext::toElement(control_socket));
             mutable_cfg->set("control-sockets", l);
         }
