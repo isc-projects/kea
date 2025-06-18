@@ -288,7 +288,7 @@ Starting and Stopping the Control Agent
 -  ``-X`` - As of Kea 3.0, disables security restrictions. The server will
    still check for violations but will emit warning logs when they are found
    rather than fail with an error. Please see
-   :ref:`sec-kea-runtime-security-risk-checking` for details.
+   :ref:`sec-kea-runtime-security-policy-checking` for details.
 
 The CA is started by running its binary and specifying the configuration
 file it should use. For example:

@@ -166,7 +166,7 @@ directly. It accepts the following command-line switches:
 -  ``-X`` - As of Kea 3.0, disables security restrictions. The server will
    still check for violations but will emit warning logs when they are found
    rather than fail with an error. Please see
-   :ref:`sec-kea-runtime-security-risk-checking` for details.
+   :ref:`sec-kea-runtime-security-policy-checking` for details.
 
 Upon startup, the module loads its configuration and begins listening
 for NCRs based on that configuration.
