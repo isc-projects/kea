@@ -271,6 +271,24 @@
                     // "excluded-prefix-len": 72
                 }
             ],
+
+            // This is one of the subnet selectors. Uncomment the "interface"
+            // parameter and specify appropriate interface name if the DHCPv6
+            // server will receive requests from local clients (connected to the
+            // same subnet as the server). The DHCPv6 server must be able to
+            // operate while only using link-local addresses.
+            // When this parameter is used, the "relay" parameter is typically unused.
+            // "interface": "eth0",
+
+            // This is another subnet selector. Uncomment the "relay" parameter
+            // and specify a list of the relay addresses. The server will select
+            // this subnet for lease assignments when it receives queries over one
+            // of these relays. When this parameter is used, the "interface" parameter
+            // is typically unused.
+            // "relay": {
+            //    "ip-addresses": [ "2001:db8:2:34::1" ]
+            // },
+
             "option-data": [
                 // You can specify additional options here that are subnet
                 // specific. Also, you can override global options here.

@@ -306,6 +306,27 @@
             // host reservations defined for them.
             "pools": [ { "pool": "192.0.2.1 - 192.0.2.200" } ],
 
+            // This is one of the subnet selectors. Uncomment the "interface"
+            // parameter and specify appropriate interface name if the DHCPv4
+            // server will receive requests from local clients (connected to the
+            // same subnet as the server). This subnet will be selected for the
+            // requests received by the server over the specified interface.
+            // This rule applies to the DORA exchanges and rebinding clients.
+            // Renewing clients unicast their messages and the renewed addresses
+            // are used by the server to determine the subnet they belong to.
+            // When this parameter is used, the "relay" parameter is typically
+            // unused.
+            // "interface": "eth0",
+
+            // This is another subnet selector. Uncomment the "relay" parameter
+            // and specify a list of the relay addresses. The server will select
+            // this subnet for lease assignments when it receives queries over one
+            // of these relays. When this parameter is used, the "interface" parameter
+            // is typically unused.
+            // "relay": {
+            //    "ip-addresses": [ "10.0.0.1" ]
+            // },
+
             // These are options that are subnet specific. In most cases,
             // you need to define at least routers option, as without this
             // option your clients will not be able to reach their default
