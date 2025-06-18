@@ -125,7 +125,7 @@ Likewise, API commands which modify Kea's configuration (other than the
 CB API) are contraindicated.  This includes the
 :ischooklib:`libdhcp_subnet_cmds.so` and :ischooklib:`libdhcp_host_cmds.so`
 hooks.  These APIs modify Kea's in-memory configuration, and can only be made
-persist by using ``config-write`` to write a new JSON config file.
+persistent by using ``config-write`` to write a new JSON config file.
 
 The Stork management suite does not currently support the CB.  Stork makes all
 configuration changes through API avenues which expect to write a new JSON
@@ -199,7 +199,8 @@ list.
 
 Installation and maintenance of external database software is beyond the scope of this manual.
 
-The database schema is typically installed via the  tool.  See :ref:`cb-install` for more information.  The raw schema creation scripts are
+The database schema is typically installed via the :iscman:`kea-admin` tool.
+See :ref:`cb-install` for more information. The raw schema creation scripts are
 `dhcpdb_create.mysql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/mysql/dhcpdb_create.mysql>`__
 and
 `dhcpdb_create.pgsql <https://gitlab.isc.org/isc-projects/kea/blob/master/src/share/database/scripts/pgsql/dhcpdb_create.pgsql>`__.
