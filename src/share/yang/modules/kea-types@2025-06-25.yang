@@ -7,6 +7,11 @@ module kea-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea types and groupings.";
 
+  revision 2025-06-25 {
+    description "Added trust-anchor, cert-file, key-file, cert-required
+                 authentication and http-headers parameters to control sockets.";
+  }
+
   revision 2019-08-12 {
     description "Initial revision";
   }
@@ -52,13 +57,94 @@ module kea-types {
     }
   }
 
-  grouping control-socket {
-    description "Control socket grouping.";
-    container control-socket {
-      presence "Have control socket.";
-      description "Control socket container.";
-      uses control-socket-info;
+  grouping control-socket-data {
+    description "Control socket parameters.";
+    leaf trust-anchor {
+      type string;
+      description "TLS trust anchor (Certificate Authority).";
     }
+    leaf cert-file {
+      type string;
+      description "TLS server certificate file name.";
+    }
+    leaf key-file {
+      type string;
+      description "TLS server private key file name.";
+    }
+    leaf cert-required {
+      type boolean;
+      description "TLS require client certificates flag.";
+    }
+  }
+
+  grouping http-headers {
+    description "HTTP headers grouping.";
+    list http-headers {
+      key name;
+      description "List of HTTP headers.";
+      leaf name {
+        type string;
+        mandatory true;
+        description "HTTP header name.";
+      }
+      leaf value {
+        type string;
+        description "Value (JSON value).";
+      }
+      leaf user-context {
+        type user-context;
+        description "HTTP header user context.";
+      }
+    }
+  }
+
+  grouping clients {
+    description "HTTP client authentication.";
+    list clients {
+      leaf user {
+        type string;
+        description "HTTP user.";
+      }
+      leaf password {
+        type string;
+        description "HTTP password.";
+      }
+      leaf user-file {
+        type string;
+        description "HTTP user file.";
+      }
+      leaf password-file {
+        type string;
+        description "HTTP password file.";
+      }
+      key "user password user-file password-file";
+    }
+  }
+
+  grouping authentication {
+    description "HTTP authentication.";
+    container authentication {
+      grouping auth-type {
+        leaf auth-type {
+          type enumeration {
+            enum "basic" {
+              description "Basic HTTP authentication";
+            }
+          }
+          description "HTTP authentication type.";
+          mandatory true;
+        }
+      }
+      leaf realm {
+        type string;
+        description "HTTP authentication realm.";
+      }
+      leaf directory {
+        type string;
+        description "HTTP authentication directory.";
+      }
+    }
+    uses clients;
   }
 
   grouping hooks-libraries {

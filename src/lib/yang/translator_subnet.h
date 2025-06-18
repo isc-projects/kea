@@ -33,7 +33,9 @@ namespace yang {
 ///     "subnet": "<subnet prefix>",
 ///     "interface": "<interface>",
 ///     "id": <id>,
+///     "client-class": "<guard class name>",
 ///     "client-classes": [ <list of guard class names> ],
+///     "require-client-classes": [ <list of required class names> ],
 ///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "reservations": [ <list of host reservations> ],
 ///     "relay": <relay ip address(es)>,
@@ -72,7 +74,9 @@ namespace yang {
 ///     "interface-id": "<interface id>",
 ///     "id": <id>,
 ///     "rapid-commit": <rapid commit flag>,
+///     "client-class": "<guard class name>",
 ///     "client-classes": [ <list of guard class names> ],
+///     "require-client-classes": [ <list of required class names> ],
 ///     "evaluate-additional-classes": [ <list of evaluate additional class names> ],
 ///     "reservations": [ <list of host reservations> ],
 ///     "relay": <relay ip address(es)>,
@@ -95,60 +99,62 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46]-server is with id as the key:
 /// @code
-///  +--rw subnet[46]* [id]
-///     +--rw valid-lifetime?                 uint32
-///     +--rw min-valid-lifetime?             uint32
-///     +--rw max-valid-lifetime?             uint32
-///     +--rw renew-timer?                    uint32
-///     +--rw rebind-timer?                   uint32
-///     +--rw calculate-tee-times?            boolean
-///     +--rw t1-percent?                     decimal64
-///     +--rw t2-percent?                     decimal64
-///     +--rw option-data* [code space]
-///     +--rw pool* [start-address end-address]
-///     +--rw subnet                          inet:ipv4-prefix
-///     +--rw interface?                      string
-///     +--rw id                              uint32
-///     +--rw client-classes*                 string
-///     +--rw evaluate-additional-classes*    string
-///     +--rw host* [identifier-type identifier]
-///     +--rw relay
-///     +--rw cache-max-age?                  uint32
-///     +--rw cache-threshold?                decimal64
-///     +--rw ddns-generated-prefix?          string
-///     +--rw ddns-override-client-update?    boolean
-///     +--rw ddns-override-no-update?        boolean
-///     +--rw ddns-qualifying-suffix?         string
-///     +--rw ddns-replace-client-name?       string
-///     +--rw ddns-send-updates?              boolean
-///     +--rw ddns-update-on-renew?           boolean
-///     +--rw ddns-use-conflict-resolution?   boolean
-///     +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
-///     +--rw hostname-char-replacement?      string
-///     +--rw hostname-char-set?              string
-///     +--rw reservations-global?            boolean
-///     +--rw reservations-in-subnet?         boolean
-///     +--rw reservations-out-of-pool?       boolean
-///     +--rw store-extended-info?            boolean
-///     +--rw user-context?                   user-context
+/// +--rw subnet[46]* [id]
+///    +--rw valid-lifetime?                 uint32
+///    +--rw min-valid-lifetime?             uint32
+///    +--rw max-valid-lifetime?             uint32
+///    +--rw renew-timer?                    uint32
+///    +--rw rebind-timer?                   uint32
+///    +--rw calculate-tee-times?            boolean
+///    +--rw t1-percent?                     decimal64
+///    +--rw t2-percent?                     decimal64
+///    +--rw option-data* [code space]
+///    +--rw pool* [start-address end-address]
+///    +--rw subnet                          inet:ipv4-prefix
+///    +--rw interface?                      string
+///    +--rw id                              uint32
+///    +--rw client-class?                    string
+///    +--rw client-classes*                  string
+///    +--rw require-client-classes*          string
+///    +--rw evaluate-additional-classes* client    string
+///    +--rw host* [identifier-type identifier]
+///    +--rw relay
+///    +--rw cache-max-age?                  uint32
+///    +--rw cache-threshold?                decimal64
+///    +--rw ddns-generated-prefix?          string
+///    +--rw ddns-override-client-update?    boolean
+///    +--rw ddns-override-no-update?        boolean
+///    +--rw ddns-qualifying-suffix?         string
+///    +--rw ddns-replace-client-name?       string
+///    +--rw ddns-send-updates?              boolean
+///    +--rw ddns-update-on-renew?           boolean
+///    +--rw ddns-use-conflict-resolution?   boolean
+///    +--rw ddns-conflict-resolution-mode?  conflict-resolution-mode
+///    +--rw hostname-char-replacement?      string
+///    +--rw hostname-char-set?              string
+///    +--rw reservations-global?            boolean
+///    +--rw reservations-in-subnet?         boolean
+///    +--rw reservations-out-of-pool?       boolean
+///    +--rw store-extended-info?            boolean
+///    +--rw user-context?                   user-context
 ///
-///  DHCPv4 only:
-///  +--rw match-client-id?          boolean
-///  +--rw next-server?              inet:ipv4-address
-///  +--rw server-hostname?          string
-///  +--rw boot-file-name?           string
-///  +--rw subnet-4o6-interface?     string
-///  +--rw subnet-4o6-interface-id?  string
-///  +--rw subnet-4o6-subnet?        inet:ipv6-prefix
-///  +--rw authoritative?            boolean
+/// DHCPv4 only:
+/// +--rw match-client-id?          boolean
+/// +--rw next-server?              inet:ipv4-address
+/// +--rw server-hostname?          string
+/// +--rw boot-file-name?           string
+/// +--rw subnet-4o6-interface?     string
+/// +--rw subnet-4o6-interface-id?  string
+/// +--rw subnet-4o6-subnet?        inet:ipv6-prefix
+/// +--rw authoritative?            boolean
 ///
-///  DHCPv6 only:
-///  +--rw preferred-lifetime?       uint32
-///  +--rw min-preferred-lifetime?   uint32
-///  +--rw max-preferred-lifetime?   uint32
-///  +--rw pd-pool*
-///  +--rw interface-id?             string
-///  +--rw rapid-commit?             boolean
+/// DHCPv6 only:
+/// +--rw preferred-lifetime?       uint32
+/// +--rw min-preferred-lifetime?   uint32
+/// +--rw max-preferred-lifetime?   uint32
+/// +--rw pd-pool*
+/// +--rw interface-id?             string
+/// +--rw rapid-commit?             boolean
 /// @endcode
 ///
 /// An example in JSON and YANG formats for the IETF model:

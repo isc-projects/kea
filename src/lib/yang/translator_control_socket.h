@@ -16,17 +16,18 @@ namespace yang {
 ///
 /// JSON syntax for all Kea servers with command channel is:
 /// @code
-/// "control-socket": {
+/// "control-sockets": [ {
 ///     "socket-type": "<socket type>",
 ///     "socket-name": "<socket name>",
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
-/// }
+/// } ]
 /// @endcode
 ///
 /// YANG syntax is:
 /// @code
 /// +--rw control-socket!
+/// +--rw control-sockets*
 /// +--rw socket-name     string
 /// +--rw socket-type     enumeration
 /// +--rw user-context?   user-context
@@ -79,6 +80,15 @@ public:
 
     /// @brief Translate a control socket from YANG to JSON.
     ///
+    /// @param data_node the YANG node representing the control sockets
+    ///
+    /// @return the JSON representation of the control socket
+    ///
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSockets(libyang::DataNode const& data_node);
+
+    /// @brief Translate a control socket from YANG to JSON.
+    ///
     /// @param data_node the YANG node representing the control socket
     ///
     /// @return the JSON representation of the control socket
@@ -100,6 +110,13 @@ public:
     /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getControlSocketFromAbsoluteXpath(std::string const& xpath);
 
+    /// @brief Translate and set control sockets from JSON to YANG.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    void setControlSockets(const std::string& xpath,
+                           isc::data::ConstElementPtr elem);
+
     /// @brief Translate and set control socket from JSON to YANG.
     ///
     /// @param xpath The xpath of the control socket.
@@ -113,7 +130,42 @@ protected:
     /// @param data_node the YANG node representing the control socket
     /// @return JSON representation of the control socket.
     /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocketsKea(libyang::DataNode const& data_node);
+
+    /// @brief getControlSocket JSON for kea models.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    /// @return JSON representation of the control socket.
+    /// @throw NetconfError when sysrepo raises an error.
     isc::data::ElementPtr getControlSocketKea(libyang::DataNode const& data_node);
+
+    /// @brief getControlSocketsAuthenticationClients JSON for kea models.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    /// @return JSON representation of the control socket.
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocketAuthenticationClients(libyang::DataNode const& data_node);
+
+    /// @brief getControlSocketsAuthenticationClients JSON for kea models.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    /// @return JSON representation of the control socket.
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocketAuthenticationClient(libyang::DataNode const& data_node);
+
+    /// @brief getControlSocketsAuthenticationClients JSON for kea models.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    /// @return JSON representation of the control socket.
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocketHttpHeaders(libyang::DataNode const& data_node);
+
+    /// @brief getControlSocketsAuthenticationClients JSON for kea models.
+    ///
+    /// @param data_node the YANG node representing the control socket
+    /// @return JSON representation of the control socket.
+    /// @throw NetconfError when sysrepo raises an error.
+    isc::data::ElementPtr getControlSocketHttpHeader(libyang::DataNode const& data_node);
 
     /// @brief setControlSocket for kea models.
     ///
@@ -124,8 +176,78 @@ protected:
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
     /// @throw BadValue on control socket without socket type or name.
+    void setControlSocketsKea(const std::string& xpath,
+                              isc::data::ConstElementPtr elem);
+
+    /// @brief setControlSocket for kea models.
+    ///
+    /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    /// @param skip The skip type field flag.
+    /// @throw BadValue on control socket without socket type or name.
     void setControlSocketKea(const std::string& xpath,
-                             isc::data::ConstElementPtr elem);
+                             isc::data::ConstElementPtr elem,
+                             bool skip);
+
+    /// @brief setControlSocketAuthenticationClients for kea models.
+    ///
+    /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    /// @param skip The skip type field flag.
+    /// @throw BadValue on control socket without socket type or name.
+    void setControlSocketAuthenticationClients(const std::string& xpath,
+                                               isc::data::ConstElementPtr elem,
+                                               bool skip);
+
+    /// @brief setControlSocketAuthenticationClient for kea models.
+    ///
+    /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    /// @param skip The skip type field flag.
+    /// @throw BadValue on control socket without socket type or name.
+    void setControlSocketAuthenticationClient(const std::string& xpath,
+                                              isc::data::ConstElementPtr elem,
+                                              bool skip);
+
+    /// @brief setControlSocketHttpHeaders for kea models.
+    ///
+    /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    /// @param skip The skip type field flag.
+    /// @throw BadValue on control socket without socket type or name.
+    void setControlSocketHttpHeaders(const std::string& xpath,
+                                     isc::data::ConstElementPtr elem,
+                                     bool skip);
+
+    /// @brief setControlSocketHttpHeader for kea models.
+    ///
+    /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
+    ///
+    /// @param xpath The xpath of the control socket.
+    /// @param elem The JSON element.
+    /// @param skip The skip type field flag.
+    /// @throw BadValue on control socket without socket type or name.
+    void setControlSocketHttpHeader(const std::string& xpath,
+                                    isc::data::ConstElementPtr elem,
+                                    bool skip);
 };  // TranslatorControlSocket
 
 }  // namespace yang

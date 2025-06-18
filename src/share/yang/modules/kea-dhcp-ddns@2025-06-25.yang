@@ -8,13 +8,23 @@ module kea-dhcp-ddns {
   }
   import kea-types {
     prefix kea;
-    revision-date 2019-08-12;
+    revision-date 2025-06-25;
+  }
+  import kea-dhcp-types {
+    prefix dhcp;
+    revision-date 2025-06-25;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
+
+  revision 2025-06-25 {
+    description "Added HTTP/HTTPS control socket types.
+                 Added trust-anchor, cert-file, key-file, cert-required
+                 authentication and http-headers parameters to control sockets.";
+  }
 
   revision 2022-07-27 {
     description "Added GSS-TSIG key-name configration parameter for DNS
@@ -131,7 +141,11 @@ module kea-dhcp-ddns {
       description "Packet format to use when sending requests to the server.";
     }
 
-    uses kea:control-socket;
+    container control-socket {
+      description "Control socket.";
+      uses dhcp:control-socket;
+    }
+    uses dhcp:control-sockets;
 
     container forward-ddns {
       description "Forward DNS zones.";

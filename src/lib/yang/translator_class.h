@@ -20,6 +20,7 @@ namespace yang {
 /// {
 ///     "name": <name>,
 ///     "test": <test expression>,
+///     "only-if-required": <only if required flag>,
 ///     "only-in-additional-list": <only in additional list flag>,
 ///     "option-data": <option data list>,
 ///     (DHCPv4 only)
@@ -37,6 +38,7 @@ namespace yang {
 /// +--rw client-class* [name]
 ///    +--rw name                       string
 ///    +--rw test?                      string
+///    +--rw only-if-required?          boolean
 ///    +--rw only-in-additional-list?   boolean
 ///    +--rw option-def* [code space]
 ///    +--rw option-data* [code space]

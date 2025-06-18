@@ -6,9 +6,10 @@ module kea-dhcp-types {
   import ietf-inet-types {
     prefix inet;
   }
+
   import kea-types {
     prefix kea;
-    revision-date 2019-08-12;
+    revision-date 2025-06-25;
   }
 
   organization "Internet Systems Consortium";
@@ -17,10 +18,10 @@ module kea-dhcp-types {
                groupings.";
 
   revision 2025-06-25 {
-    description "Renamed only-if-required to only-in-additional-list, renamed
-                 require-client-classes to evaluate-additional-classes, removed
-                 client-class and added client-classes list, and added ddns-ttl,
-                 ddns-ttl-min, ddns-ttl-max.";
+    description "Added only-in-additional-list, evaluate-additional-classes,
+                 client-classes list, ddns-ttl, ddns-ttl-min and ddns-ttl-max.
+                 Added trust-anchor, cert-file, key-file, cert-required
+                 authentication and http-headers parameters to control sockets.";
   }
 
   revision 2024-05-29 {
@@ -127,6 +128,57 @@ module kea-dhcp-types {
   /*
   * Grouping
   */
+  grouping control-socket {
+    description "Control socket grouping.";
+    leaf socket-type {
+      type enumeration {
+        enum "unix" {
+          description "Unix socket type.";
+        }
+        enum "http" {
+          description "HTTP socket type.";
+        }
+        enum "https" {
+          description "HTTPS socket type.";
+        }
+      }
+      description "Socket type.";
+      mandatory true;
+    }
+    leaf socket-name {
+      type string;
+      description "Path to the UNIX socket.";
+    }
+    leaf socket-address {
+      type string;
+      description "HTTP/HTTPS socket address.";
+    }
+    leaf socket-port {
+      type string;
+      description "HTTP/HTTPS socket port.";
+    }
+
+    container control-socket {
+      presence "Have control socket.";
+      description "Control socket container.";
+      uses kea:control-socket-data;
+      uses kea:http-headers;
+      uses kea:authentication;
+    }
+  }
+
+  grouping control-sockets {
+    description "Control sockets grouping.";
+    container control-sockets {
+      description "Control sockets.";
+      list control-socket {
+        key "socket-type";
+        description "List of control sockets.";
+        uses control-socket;
+      }
+    }
+  }
+
   grouping valid-lifetime {
     description "Valid lifetime grouping.";
     leaf valid-lifetime {
@@ -537,6 +589,45 @@ module kea-dhcp-types {
     }
   }
 
+  grouping client-class {
+    description "Client class grouping.";
+    leaf client-class {
+      type string;
+      description "Client class entry.";
+    }
+  }
+
+  grouping pool-client-class {
+    description "Client class grouping for a pool.";
+    uses client-class {
+      refine client-class {
+        description "Pool client class guard (only clients belonging
+                     to this class will be allowed in this pool).";
+      }
+    }
+  }
+
+  grouping subnet-client-class {
+    description "Client class grouping for a subnet.";
+    uses client-class {
+      refine client-class {
+        description "Subnet client class guard (only clients belonging to this
+                     class will be allowed in this subnet).";
+      }
+    }
+  }
+
+  grouping network-client-class {
+    description "Client class grouping for a shared network.";
+    uses client-class {
+      refine client-class {
+        description "Shared network client class guard (only clients
+                     belonging to this class will be allowed in this
+                     shared network).";
+      }
+    }
+  }
+
   grouping client-classes {
     description "Client classes grouping.";
     leaf-list client-classes {
@@ -582,6 +673,41 @@ module kea-dhcp-types {
         description "Shared network client class guard (only clients
                      belonging to one of these classes will be allowed in this
                      shared network).";
+      }
+    }
+  }
+
+  grouping require-client-classes {
+    description "Require client classes grouping.";
+    leaf-list require-client-classes {
+      type string;
+      description "List of client classes.";
+    }
+  }
+
+  grouping pool-require-client-classes {
+    description "Require client classes grouping for a pool.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Pool require client classes.";
+      }
+    }
+  }
+
+  grouping subnet-require-client-classes {
+    description "Require client classes grouping for a subnet.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Subnet require client classes.";
+      }
+    }
+  }
+
+  grouping network-require-client-classes {
+    description "Require client classes grouping for a shared network.";
+    uses require-client-classes {
+      refine require-client-classes {
+        description "Shared network require client classes.";
       }
     }
   }
@@ -768,6 +894,14 @@ module kea-dhcp-types {
       type string;
       description
         "The test expression for a template class.";
+    }
+  }
+
+  grouping class-only-if-required {
+    description "Client class only-if-required grouping.";
+    leaf only-if-required {
+      type boolean;
+      description "Client class only if required flag.";
     }
   }
 

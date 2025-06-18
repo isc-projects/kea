@@ -71,6 +71,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "cache-max-age");
     checkAndGetLeaf(result, data_node, "cache-threshold");
     checkAndGetLeaf(result, data_node, "calculate-tee-times");
+    checkAndGetLeaf(result, data_node, "client-class");
     checkAndGetLeaf(result, data_node, "client-classes");
     checkAndGetLeaf(result, data_node, "ddns-generated-prefix");
     checkAndGetLeaf(result, data_node, "ddns-override-client-update");
@@ -92,6 +93,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(DataNode const& data_node,
     checkAndGetLeaf(result, data_node, "min-valid-lifetime");
     checkAndGetLeaf(result, data_node, "rebind-timer");
     checkAndGetLeaf(result, data_node, "renew-timer");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
     checkAndGetLeaf(result, data_node, "evaluate-additional-classes");
     checkAndGetLeaf(result, data_node, "reservations-global");
     checkAndGetLeaf(result, data_node, "reservations-in-subnet");
@@ -173,6 +175,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "cache-max-age", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "cache-threshold", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "calculate-tee-times", LeafBaseType::Bool);
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
@@ -200,8 +203,8 @@ TranslatorSharedNetwork::setSharedNetworkKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "t1-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "t2-percent", LeafBaseType::Dec64);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
-
     checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);
 
     checkAndSetUserContext(elem, xpath);

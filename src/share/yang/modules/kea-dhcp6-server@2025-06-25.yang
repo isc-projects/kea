@@ -8,7 +8,7 @@ module kea-dhcp6-server {
   }
   import kea-types {
     prefix kea;
-    revision-date 2019-08-12;
+    revision-date 2025-06-25;
   }
   import kea-dhcp-types {
     prefix dhcp;
@@ -21,15 +21,16 @@ module kea-dhcp6-server {
                used to configure and manage a Kea DHCPv6 server.";
 
   revision 2025-06-25 {
-    description "Renamed only-if-required to only-in-additional-list, renamed
-                 require-client-classes to evaluate-additional-classes, removed
-                 client-class and added client-classes list, added ddns-ttl,
-                 ddns-ttl-min, ddns-ttl-max, added ddns-generated-prefix,
-                 ddns-override-client-update, ddns-override-no-update,
-                 ddns-qualifying-suffix, ddns-replace-client-name, ddns-send-updates,
-                 ddns-update-on-renew, ddns-conflict-resolution-mode,
-                 hostname-char-replacement and hostname-char-set at pool and pd-pool
-                 level, and added excluded-prefixes at pd-pool level.";
+    description "Added only-in-additional-list, evaluate-additional-classes,
+                 client-classes list, ddns-ttl, ddns-ttl-min, ddns-ttl-max,
+                 ddns-generated-prefix, ddns-override-client-update,
+                 ddns-override-no-update, ddns-qualifying-suffix,
+                 ddns-replace-client-name, ddns-send-updates, ddns-update-on-renew,
+                 ddns-conflict-resolution-mode, hostname-char-replacement and
+                 hostname-char-set at pool and pd-pool level, added
+                 excluded-prefixes at pd-pool level.
+                 Added trust-anchor, cert-file, key-file, cert-required
+                 authentication and http-headers parameters to control sockets.";
   }
 
   revision 2024-05-29 {
@@ -266,7 +267,9 @@ module kea-dhcp6-server {
         uses dhcp:ddns-conflict-resolution-mode;
         uses dhcp:hostname-char-replacement;
         uses dhcp:hostname-char-set;
+        uses dhcp:pool-client-class;
         uses dhcp:pool-client-classes;
+        uses dhcp:pool-require-client-classes;
         uses dhcp:pool-evaluate-additional-classes;
         uses dhcp:pool-id;
         uses dhcp:pool-user-context;
@@ -300,11 +303,23 @@ module kea-dhcp6-server {
         uses dhcp:ddns-conflict-resolution-mode;
         uses dhcp:hostname-char-replacement;
         uses dhcp:hostname-char-set;
+        uses dhcp:client-class {
+          refine client-class {
+            description "Prefix pool client class guard. (only
+                         clients belonging to this class will be
+                         allowed in this pool).";
+          }
+        }
         uses dhcp:client-classes {
           refine client-classes {
             description "Prefix pool client class guard. (only clients
                          belonging to any of these class will be
                          allowed in this pool).";
+          }
+        }
+        uses dhcp:require-client-classes {
+          refine require-client-classes {
+            description "Prefix pool require client classes.";
           }
         }
         uses dhcp:evaluate-additional-classes {
@@ -341,7 +356,9 @@ module kea-dhcp6-server {
           description "Subnet rapid commit flag.";
         }
       }
+      uses dhcp:subnet-client-class;
       uses dhcp:subnet-client-classes;
+      uses dhcp:subnet-require-client-classes;
       uses dhcp:subnet-evaluate-additional-classes;
       uses reservations {
         refine host {
@@ -386,6 +403,7 @@ module kea-dhcp6-server {
       uses dhcp:class-name;
       uses dhcp:class-test;
       uses dhcp:template-test;
+      uses dhcp:class-only-if-required;
       uses dhcp:class-only-in-additional-list;
       uses option-data-list;
       uses preferred-lifetime;
@@ -490,7 +508,9 @@ module kea-dhcp6-server {
         description "Optional information about relay agent.";
         uses relay;
       }
+      uses dhcp:network-client-class;
       uses dhcp:network-client-classes;
+      uses dhcp:network-require-client-classes;
       uses dhcp:network-evaluate-additional-classes;
       uses preferred-lifetime;
       uses min-preferred-lifetime;
@@ -611,7 +631,11 @@ module kea-dhcp6-server {
     }
 
     uses dhcp:dhcp4o6-port;
-    uses kea:control-socket;
+    container control-socket {
+      description "Control socket.";
+      uses dhcp:control-socket;
+    }
+    uses dhcp:control-sockets;
     uses dhcp:hostname-char-set;
     uses dhcp:hostname-char-replacement;
     uses dhcp:dhcp-ddns;

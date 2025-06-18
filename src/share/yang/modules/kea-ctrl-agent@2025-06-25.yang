@@ -8,13 +8,19 @@ module kea-ctrl-agent {
   }
   import kea-types {
     prefix kea;
-    revision-date 2019-08-12;
+    revision-date 2025-06-25;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea control agent.";
+
+  revision 2025-06-25 {
+    description "Added HTTP/HTTPS control socket types.
+                 Added trust-anchor, cert-file, key-file, cert-required
+                 authentication and http-headers parameters to control sockets.";
+  }
 
   revision 2019-08-12 {
     description "Initial revision";
@@ -65,6 +71,12 @@ module kea-ctrl-agent {
         }
       }
     }
+
+    uses kea:control-socket-data;
+
+    uses kea:http-headers;
+
+    uses kea:authentication;
 
     uses kea:hooks-libraries;
 

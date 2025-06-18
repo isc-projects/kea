@@ -93,6 +93,7 @@ namespace yang {
 /// +--rw expired-leases-processing
 /// +--rw dhcp4o6-port?                     uint16
 /// +--rw control-socket!
+/// +--rw control-sockets*
 /// +--rw hostname-char-set?                string
 /// +--rw hostname-char-replacement?        string
 /// +--rw dhcp-ddns
@@ -142,10 +143,10 @@ namespace yang {
 ///     {
 ///         "interfaces": [ "eth1" ]
 ///     },
-///         "control-socket": {
+///         "control-sockets": [ {
 ///             "socket-type": "unix",
 ///             "socket-name": "kea4-sock"
-///         },
+///         } ],
 ///     "subnet4":
 ///     [
 ///         {
@@ -179,10 +180,10 @@ namespace yang {
 ///   <interfaces-config>
 ///     <interfaces>eth1</interfaces>
 ///   </interfaces-config>
-///   <control-socket>
+///   <control-sockets>
 ///     <socket-name>kea4-sock</socket-name>
 ///     <socket-type>unix</socket-type>
-///   </control-socket>
+///   </control-sockets>
 /// </config>
 /// @endcode
 
@@ -219,7 +220,7 @@ namespace yang {
 ///     <expired-leases-processing>,
 ///     <server-id>,
 ///     <dhcp4o6-port>,
-///     <control-socket>,
+///     <control-sockets>,
 ///     <hostname-char-set": <hostname character set>,
 ///     <hostname-char-replacement": <hostname character replacement>,
 ///     <dhcp-ddns>,
@@ -265,6 +266,7 @@ namespace yang {
 /// +--rw server-id!
 /// +--rw dhcp4o6-port?                     uint16
 /// +--rw control-socket!
+/// +--rw control-sockets*
 /// +--rw hostname-char-set?                string
 /// +--rw hostname-char-replacement?        string
 /// +--rw dhcp-ddns
@@ -308,10 +310,10 @@ namespace yang {
 ///     {
 ///         "interfaces": [ "eth1" ]
 ///     },
-///         "control-socket": {
+///         "control-sockets": [ {
 ///             "socket-type": "unix",
 ///             "socket-name": "kea6-sock"
-///         },
+///         } ],
 ///     "subnet6":
 ///     [
 ///         {
@@ -344,10 +346,10 @@ namespace yang {
 ///   <interfaces-config>
 ///     <interfaces>eth1</interfaces>
 ///   </interfaces-config>
-///   <control-socket>
+///   <control-sockets>
 ///     <socket-name>kea6-sock</socket-name>
 ///     <socket-type>unix</socket-type>
-///   </control-socket>
+///   </control-sockets>
 /// </config>
 /// @endcode
 

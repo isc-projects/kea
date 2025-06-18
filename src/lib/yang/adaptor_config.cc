@@ -382,11 +382,19 @@ AdaptorConfig::sanitizeEmptyListPools(ConstElementPtr pools) {
 
     for (size_t i = 0; i < pools->size(); ++i) {
         ElementPtr pool = pools->getNonConst(i);
-        ConstElementPtr require = pool->get("evaluate-additional-classes");
+        ConstElementPtr require = pool->get("require-client-classes");
+        if (require && require->empty()) {
+            pool->remove("require-client-classes");
+        }
+        require = pool->get("evaluate-additional-classes");
         if (require && require->empty()) {
             pool->remove("evaluate-additional-classes");
         }
-        ConstElementPtr classes = pool->get("client-classes");
+        ConstElementPtr classes = pool->get("client-class");
+        if (classes && classes->empty()) {
+            pool->remove("client-class");
+        }
+        classes = pool->get("client-classes");
         if (classes && classes->empty()) {
             pool->remove("client-classes");
         }
@@ -404,11 +412,19 @@ AdaptorConfig::sanitizeEmptyListSubnets(ConstElementPtr subnets) {
         ElementPtr subnet = subnets->getNonConst(i);
         sanitizeEmptyListPools(subnet->get("pools"));
         sanitizeEmptyListPools(subnet->get("pd-pools"));
-        ConstElementPtr require = subnet->get("evaluate-additional-classes");
+        ConstElementPtr require = subnet->get("require-client-classes");
+        if (require && require->empty()) {
+            subnet->remove("require-client-classes");
+        }
+        require = subnet->get("evaluate-additional-classes");
         if (require && require->empty()) {
             subnet->remove("evaluate-additional-classes");
         }
-        ConstElementPtr classes = subnet->get("client-classes");
+        ConstElementPtr classes = subnet->get("client-class");
+        if (classes && classes->empty()) {
+            subnet->remove("client-class");
+        }
+        classes = subnet->get("client-classes");
         if (classes && classes->empty()) {
             subnet->remove("client-classes");
         }
@@ -426,11 +442,19 @@ AdaptorConfig::sanitizeEmptyListSharedNetworks(ConstElementPtr networks,
     for (size_t i = 0; i < networks->size(); ++i) {
         ElementPtr network = networks->getNonConst(i);
         sanitizeEmptyListSubnets(network->get(subsel));
-        ConstElementPtr require = network->get("evaluate-additional-classes");
+        ConstElementPtr require = network->get("require-client-classes");
+        if (require && require->empty()) {
+            network->remove("require-client-classes");
+        }
+        require = network->get("evaluate-additional-classes");
         if (require && require->empty()) {
             network->remove("evaluate-additional-classes");
         }
-        ConstElementPtr classes = network->get("client-classes");
+        ConstElementPtr classes = network->get("client-class");
+        if (classes && classes->empty()) {
+            network->remove("client-class");
+        }
+        classes = network->get("client-classes");
         if (classes && classes->empty()) {
             network->remove("client-classes");
         }

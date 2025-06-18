@@ -118,8 +118,9 @@ TranslatorPool::getPoolKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
     checkAndGetLeaf(result, data_node, "hostname-char-replacement");
     checkAndGetLeaf(result, data_node, "hostname-char-set");
-
+    checkAndGetLeaf(result, data_node, "client-class");
     checkAndGetLeaf(result, data_node, "client-classes");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
     checkAndGetLeaf(result, data_node, "evaluate-additional-classes");
 
     checkAndGetLeaf(result, data_node, "pool-id");
@@ -220,7 +221,9 @@ TranslatorPool::setPoolKea(string const& xpath, ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "ddns-conflict-resolution-mode", LeafBaseType::Enum);
     checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);
 
     checkAndSetLeaf(elem, xpath, "pool-id", LeafBaseType::Dec64);

@@ -284,7 +284,7 @@ public:
             for (libyang::DataNode const& i : nodes) {
                 result->add((t.*f)(i));
             }
-            return result;
+            return (result);
         } catch (libyang::Error const& ex) {
             isc_throw(NetconfError, "getting item: " << ex.what());
         }

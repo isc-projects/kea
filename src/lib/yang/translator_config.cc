@@ -242,10 +242,15 @@ TranslatorConfig::getServerKeaDhcpCommon(DataNode const& data_node) {
                     return getConfigControlKea(node);
                 });
 
-    checkAndGet(result, data_node, "control-socket",
-                [&](DataNode const& node) -> ElementPtr const {
-                    return getControlSocket(node);
-                });
+    ConstElementPtr control_sockets = getControlSockets(data_node);
+    if (control_sockets && !control_sockets->empty()) {
+        result->set("control-sockets", control_sockets);
+    } else {
+        checkAndGet(result, data_node, "control-socket",
+                    [&](DataNode const& node) -> ElementPtr const {
+                        return getControlSocket(node);
+                    });
+    }
 
     checkAndGet(result, data_node, "dhcp-ddns",
                 [&](DataNode const& node) -> ElementPtr const {
@@ -569,9 +574,14 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
         }
     }
 
-    ConstElementPtr socket = elem->get("control-socket");
-    if (socket && !socket->empty()) {
-        setControlSocket(xpath + "/control-socket", socket);
+    ConstElementPtr control_sockets = elem->get("control-sockets");
+    if (control_sockets && !control_sockets->empty()) {
+        setControlSockets(xpath + "/control-sockets", control_sockets);
+    } else {
+        ConstElementPtr control_socket = elem->get("control-socket");
+        if (control_socket && !control_socket->empty()) {
+            setControlSocket(xpath + "/control-socket", control_socket);
+        }
     }
 
     ConstElementPtr ddns = elem->get("dhcp-ddns");

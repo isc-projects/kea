@@ -785,6 +785,7 @@ TEST(ParserTest, mapEntries) {
     string sample_dir(CFG_EXAMPLES);
     sample_dir += "/";
     ElementPtr sample_json = Element::createList();
+    loadFile(sample_dir + "advanced.json", sample_json);
     loadFile(sample_dir + "all-keys.json", sample_json);
     loadFile(sample_dir + "reservations.json", sample_json);
     loadFile(sample_dir + "all-keys-netconf.json", sample_json);

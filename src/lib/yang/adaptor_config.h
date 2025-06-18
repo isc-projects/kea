@@ -195,7 +195,9 @@ protected:
     ///
     /// Remove empty lists in a pool list.
     /// removing:
+    ///  - require-client-classes
     ///  - evaluate-additional-classes
+    ///  - client-class
     ///  - client-classes
     ///
     /// @param pools The pool list.
@@ -205,7 +207,9 @@ protected:
     ///
     /// Remove empty lists in a subnet list.
     /// removing:
+    ///  - require-client-classes
     ///  - evaluate-additional-classes
+    ///  - client-class
     ///  - client-classes
     ///
     /// @param subnets The subnet list.
@@ -215,7 +219,9 @@ protected:
     ///
     /// Remove empty lists in a shared network list.
     /// removing:
+    ///  - require-client-classes
     ///  - evaluate-additional-classes
+    ///  - client-class
     ///  - client-classes
     ///
     /// @param networks The shared network list.

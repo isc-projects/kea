@@ -78,7 +78,7 @@ TranslatorPdPool::getPdPoolIetf6(DataNode const& data_node) {
     getMandatoryDivergingLeaf(result, data_node, "prefix-len", "prefix-length");
 
     checkAndGetLeaf(result, data_node, "preferred-lifetime");
-    checkAndGetLeaf(result, data_node, "client-classes");
+    checkAndGetLeaf(result, data_node, "client-class");
     checkAndGetLeaf(result, data_node, "valid-lifetime");
 
     checkAndGetDivergingLeaf(result, data_node, "rebind-timer", "rebind-time");
@@ -162,12 +162,12 @@ TranslatorPdPool::getPdPoolKea(DataNode const& data_node) {
     checkAndGetLeaf(result, data_node, "ddns-conflict-resolution-mode");
     checkAndGetLeaf(result, data_node, "hostname-char-replacement");
     checkAndGetLeaf(result, data_node, "hostname-char-set");
+    checkAndGetLeaf(result, data_node, "client-class");
     checkAndGetLeaf(result, data_node, "client-classes");
     checkAndGetLeaf(result, data_node, "delegated-len");
+    checkAndGetLeaf(result, data_node, "require-client-classes");
     checkAndGetLeaf(result, data_node, "evaluate-additional-classes");
-
     checkAndGetLeaf(result, data_node, "pool-id");
-
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
 
     ConstElementPtr options = getOptionDataList(data_node);
@@ -210,7 +210,7 @@ TranslatorPdPool::setPdPoolIetf6(string const& xpath, ConstElementPtr elem) {
     setItem(xpath + "/prefix", Element::create(prefix.str()), LeafBaseType::String);
     setItem(xpath + "/prefix-length", length, LeafBaseType::Uint8);
 
-    checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "preferred-lifetime", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "valid-lifetime", LeafBaseType::Uint32);
 
@@ -230,8 +230,8 @@ TranslatorPdPool::setPdPoolKea(string const& xpath, ConstElementPtr elem) {
     // Keys are set by setting the list itself.
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
+    checkAndSetLeaf(elem, xpath, "client-class", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "delegated-len", LeafBaseType::Uint8);
-
     checkAndSetLeaf(elem, xpath, "ddns-generated-prefix", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "ddns-override-client-update", LeafBaseType::Bool);
     checkAndSetLeaf(elem, xpath, "ddns-override-no-update", LeafBaseType::Bool);
@@ -248,10 +248,9 @@ TranslatorPdPool::setPdPoolKea(string const& xpath, ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "hostname-char-replacement", LeafBaseType::String);
     checkAndSetLeaf(elem, xpath, "hostname-char-set", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "client-classes", LeafBaseType::String);
+    checkAndSetLeafList(elem, xpath, "require-client-classes", LeafBaseType::String);
     checkAndSetLeafList(elem, xpath, "evaluate-additional-classes", LeafBaseType::String);
-
     checkAndSetLeaf(elem, xpath, "pool-id", LeafBaseType::Dec64);
-
     checkAndSetUserContext(elem, xpath);
 
     ConstElementPtr xprefix = elem->get("excluded-prefix");

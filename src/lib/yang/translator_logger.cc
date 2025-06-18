@@ -27,9 +27,7 @@ ElementPtr
 TranslatorLogger::getLogger(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER) ||
-            (model_ == KEA_DHCP_DDNS) ||
-            (model_ == KEA_CTRL_AGENT)) {
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getLoggerKea(data_node));
         }
     } catch (Error const& ex) {
@@ -83,9 +81,7 @@ void
 TranslatorLogger::setLogger(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER) ||
-            (model_ == KEA_DHCP_DDNS) ||
-            (model_ == KEA_CTRL_AGENT)) {
+            (model_ == KEA_DHCP6_SERVER)) {
             setLoggerKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -151,9 +147,7 @@ ConstElementPtr
 TranslatorLoggers::getLoggers(DataNode const& data_node) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER) ||
-            (model_ == KEA_DHCP_DDNS) ||
-            (model_ == KEA_CTRL_AGENT)) {
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getLoggersKea(data_node));
         }
     } catch (Error const& ex) {
@@ -183,9 +177,7 @@ void
 TranslatorLoggers::setLoggers(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
-            (model_ == KEA_DHCP6_SERVER) ||
-            (model_ == KEA_DHCP_DDNS) ||
-            (model_ == KEA_CTRL_AGENT)) {
+            (model_ == KEA_DHCP6_SERVER)) {
             setLoggersKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
