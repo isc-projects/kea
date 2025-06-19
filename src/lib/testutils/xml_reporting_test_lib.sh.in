@@ -14,12 +14,6 @@ set -eu
 
 # Add an entry to the XML test report.
 report_test_result_in_xml() {
-    # TODO: Remove this if-statemenet when autotools are removed.
-    if test ! -d "@TOP_BUILD_DIR@"; then
-        # There is nowhere to report.
-        return
-    fi
-
     # Declarations
     local test_name="${1}"; shift
     local exit_code="${1}"; shift

@@ -251,8 +251,8 @@ void LoggerManagerImpl::initRootLogger(isc::log::Severity severity,
 {
     log4cplus::Logger::getDefaultHierarchy().resetConfiguration();
 
-    // Disable log4cplus' own logging, unless --enable-debug was
-    // specified to configure. Note that this does not change
+    // Disable log4cplus' own logging, unless "-D tests=enabled" was
+    // pass to "meson setup". Note that this does not change
     // LogLog's levels (that is still just INFO).
 #ifndef ENABLE_DEBUG
     log4cplus::helpers::LogLog::getLogLog()->setQuietMode(true);

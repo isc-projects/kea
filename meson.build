@@ -1006,7 +1006,6 @@ CONFIG_REPORT = configure_file(
     command: [TOP_BUILD_DIR / 'config-report.sh'],
 )
 
-# TODO: Change to config.h.in when autotools are removed.
 configure_file(
     input: 'config.h.in',
     output: 'config.h',
@@ -1015,7 +1014,6 @@ configure_file(
     install_dir: INCLUDEDIR / 'kea',
 )
 
-# TODO: Change to kea_version.h.in when autotools are removed.
 configure_file(
     input: 'kea_version.h.in',
     output: 'kea_version.h',
