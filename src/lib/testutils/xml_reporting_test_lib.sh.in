@@ -287,7 +287,7 @@ _create_xml() {
     # *_test.sh to another. The consensus that need to be kept so that this
     # works correctly are:
     #   * Needless to say, don't set this variable on your own.
-    #   * Always call these scripts directly or through `make check`.
+    #   * Always call these scripts directly or through `meson test`.
     # Never source test files e.g. `source memfile_tests.sh` or
     # `. memfile_tests.sh`.
     #   * The ${xml} passed here must be deterministically and uniquely

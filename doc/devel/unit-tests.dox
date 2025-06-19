@@ -203,7 +203,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
   Bye
   %@endverbatim
 
-  The unit tests are run automatically when "make check" is executed (providing
+  The unit tests are run automatically when "meson test" is executed (providing
   that Kea has been built with the "-D mysql" switch (see the installation
   section in the <a href="https://kea.readthedocs.io/">Kea Administrator
   Reference Manual</a>).
@@ -400,7 +400,7 @@ local   all             postgres                                trust
   In general case, it is a poor idea to run anything of value on a system
   that runs tests. Use caution!
 
-  The unit tests are run automatically when "make check" is executed (providing
+  The unit tests are run automatically when "meson test" is executed (providing
   that Kea has been build with the "-D postgresql" switch (see the installation
   section in the <a href="https://kea.readthedocs.io">Kea Administrator
   Reference Manual</a>).
