@@ -78,14 +78,11 @@ Config fuzzers also have all the files in `doc/examples/kea[46]` symlinked.
 stdin, just like the old fuzzer did. In this mode, a fuzzer engine can be run on
 it. This is the mode used in CI.
 
-After compiling, all the fuzzers can be run with `make check` in the `fuzz`
-directory. The reasoning behind this is that while writing code, developers can
-quickly check if anything is broken. Obviously, this is not real fuzzing as long
-since the input from the `fuzz/input` directory is the same, but it rather tests
-if the fuzzers were broken during development.
-
-`make check` runs these fuzzers with `sudo`. It may interrupt the process asking
-for a password on systems that don't have passwordless root set up.
+After compiling, all the fuzzers can be run with static input using
+`meson test -C build fuzz_*`.  The reasoning behind this is that while writing
+code, developers can quickly check if anything is broken in fuzzers. Obviously,
+this is not real fuzzing since the input from the `fuzz/input` directory is
+static, but it rather tests if the fuzzers were broken during development.
 
 @subsection FuzzingStructure The Code Structure of the LLVM Fuzzer
 
@@ -176,12 +173,12 @@ for this are:
    For example:
    @code
    CXX=afl-clang-fast meson setup build -D fuzz=enabled --prefix=$HOME/installed
-   make
+   meson compile -C build
    @endcode
 
 -# Install Kea to the directory specified by "--prefix":
    @code
-   make install
+   meson install -C build
    @endcode
    This step is not strictly necessary, but makes running AFL easier.
    "libtool", used by the Kea build procedure to build executable images, puts
