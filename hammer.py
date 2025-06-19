@@ -1658,10 +1658,11 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['python3-sphinx_rtd_theme'])
 
         if 'mysql' in features:
-            execute('sudo dnf remove -y community-mysql-devel || true')
+            execute('sudo dnf remove -y community-mysql-devel', raise_error=False)
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
+            execute('sudo dnf remove -y libpq-devel', raise_error=False)
             if int(revision) >= 30:
                 packages.extend(['postgresql-server-devel'])
             if int(revision) <= 34:
@@ -1769,11 +1770,12 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['mariadb-connector-c-devel'])
 
         if 'pgsql' in features:
-            packages.extend(['postgresql', 'postgresql-server'])
-            if revision == '9':
-                packages.append('postgresql-server-devel ')
-            else:
-                packages.append('postgresql-devel')
+            execute(f'sudo yum-config-manager --enable codeready-builder-for-rhel-{revision}-rhui-rpms')
+            execute(f'sudo yum-config-manager --enable codeready-builder-for-rhel-{revision}-rhui-source-rpms')
+            execute('sudo dnf remove -y libpq-devel', raise_error=False)
+            packages.extend(['postgresql', 'postgresql-server', 'postgresql-server-devel'])
+            if int(revision) <= 8:
+                packages.append('libpq-devel')
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1824,16 +1826,16 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.extend(['dh-python'])
 
         if 'mysql' in features:
-            if revision == '16.04':
-                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+            if int(revision.split(".")[0]) < 24:
+                if revision == '16.04':
+                    packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+                else:
+                    packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
             else:
-                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+                packages.extend(['mariadb-client', 'mariadb-server', 'libmariadb-dev-compat'])
 
         if 'pgsql' in features:
-            if revision == '16.04':
-                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql', 'postgresql-server-dev-all'])
-            else:
-                packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+            packages.extend(['libpq-dev', 'postgresql', 'postgresql-all', 'postgresql-client', 'postgresql-server-dev-all'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
@@ -1895,11 +1897,7 @@ def prepare_system_local(features, check_times, ignore_errors_for):
                 packages.append('mariadb-server')
 
         if 'pgsql' in features:
-            packages.extend(['postgresql-client', 'libpq-dev'])
-            if revision == '8':
-                packages.extend(['postgresql', 'postgresql-client'])
-            else:
-                packages.append('postgresql-all')
+            packages.extend(['postgresql', 'postgresql-all', 'postgresql-client', 'postgresql-server-dev-all'])
 
         if 'radius' in features:
             packages.extend(['freeradius', 'git'])
