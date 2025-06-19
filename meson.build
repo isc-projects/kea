@@ -1043,7 +1043,16 @@ endif
 #### pkg-config
 
 requires = []
-foreach i : [CRYPTO_DEP, KRB5_DEP, LOG4CPLUS_DEP, MYSQL_DEP, POSTGRESQL_DEP]
+foreach i : [
+    boost_dep,
+    dl_dep,
+    threads_dep,
+    CRYPTO_DEP,
+    KRB5_DEP,
+    LOG4CPLUS_DEP,
+    MYSQL_DEP,
+    POSTGRESQL_DEP,
+]
     if i.found() and i.type_name() == 'pkgconfig'
         requires += i
     endif
