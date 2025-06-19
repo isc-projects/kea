@@ -16,7 +16,7 @@ CFG_FILE="@abs_top_builddir@/src/bin/d2/tests/test_config.json"
 LOG_FILE="@abs_top_builddir@/src/bin/d2/tests/test.log"
 
 # Set env KEA_HOOKS_PATH  to override DEFAULT_HOOKS_PATH
-export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/d2/tests/@dotlibs@"
+export KEA_HOOKS_PATH="@abs_top_builddir@/src/bin/d2/tests"
 
 # Set env KEA_LOG_FILE_DIR to override default log path
 export KEA_LOG_FILE_DIR="@abs_top_builddir@/src/bin/d2/tests"

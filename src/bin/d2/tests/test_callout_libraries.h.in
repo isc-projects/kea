@@ -20,7 +20,7 @@ namespace {
 static const char* CALLOUT_LIBRARY = "@abs_builddir@/libcallout.so";
 
 // Test path to use for in place of DEFAULT_HOOKS_PATH
-static const char* D2_HOOKS_TEST_PATH = "@abs_builddir@/@dotlibs@";
+static const char* D2_HOOKS_TEST_PATH = "@abs_builddir@";
 
 } // anonymous namespace
 

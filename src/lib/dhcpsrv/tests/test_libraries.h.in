@@ -30,7 +30,7 @@ static const char* CALLOUT_PARAMS_LIBRARY = "@abs_builddir@/libco3.so";
 static const char* NOT_PRESENT_LIBRARY = "@abs_builddir@/libnothere.so";
 
 // Test path to use for in place of DEFAULT_HOOKS_PATH
-static const char* DHCPSRV_HOOKS_TEST_PATH = "@abs_builddir@/@dotlibs@";
+static const char* DHCPSRV_HOOKS_TEST_PATH = "@abs_builddir@";
 
 } // anonymous namespace
 
