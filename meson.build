@@ -260,16 +260,41 @@ POSTGRESQL_DEP = dependency(
 )
 
 # NETCONF
-NETCONF_DEP = dependency(
-    'yang+yang-cpp+sysrepo+sysrepo-cpp',
-    fallback: ['netconf', 'netconf'],
-    required: netconf_opt,
-)
-if netconf_opt.enabled() and NETCONF_DEP.get_variable(
-    'yang-prefix',
-    default_value: 'unknown',
-) == 'unknown'
-    error('Dependency not found: NETCONF.')
+NETCONF_DEP = disabler()
+YANG_DEP = disabler()
+YANGCPP_DEP = disabler()
+SYSREPO_DEP = disabler()
+SYSREPOCPP_DEP = disabler()
+if netconf_opt.enabled()
+    netconf_deps = {}
+
+    all_deps_found = true
+    foreach dep : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
+        netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
+        if not netconf_deps[dep].found()
+            # Try adding lib to it. yang and yang-cpp define the wrong pkg-config.
+            netconf_deps = netconf_deps + {
+                dep: dependency('lib' + dep, required: false),
+            }
+        endif
+
+        if not netconf_deps[dep].found()
+            all_deps_found = false
+            break
+        endif
+    endforeach
+
+    if all_deps_found
+        YANG_DEP = netconf_deps['yang']
+        YANGCPP_DEP = netconf_deps['yang-cpp']
+        SYSREPO_DEP = netconf_deps['sysrepo']
+        SYSREPOCPP_DEP = netconf_deps['sysrepo-cpp']
+        NETCONF_DEP = declare_dependency(
+            dependencies: [YANG_DEP, YANGCPP_DEP, SYSREPO_DEP, SYSREPOCPP_DEP],
+        )
+    else
+        error('Dependency not found: NETCONF.')
+    endif
 endif
 
 # Google Test
@@ -607,7 +632,7 @@ if NETCONF_DEP.found()
     endif
 
     foreach i : ['yang', 'yang-cpp', 'sysrepo', 'sysrepo-cpp']
-        libdir = NETCONF_DEP.get_variable(f'@i@-libdir')
+        libdir = netconf_deps[i].get_variable('libdir')
         BUILD_RPATH += f':@libdir@'
         INSTALL_RPATH += f':@libdir@'
     endforeach
@@ -811,49 +836,25 @@ else
 endif
 if NETCONF_DEP.found()
     report_conf_data.set('HAVE_NETCONF', 'yes')
-    report_conf_data.set(
-        'YANG_VERSION',
-        NETCONF_DEP.get_variable(
-            'yang-version',
-            default_value: 'unknown version',
-        ),
-    )
+    report_conf_data.set('YANG_VERSION', YANG_DEP.version())
     report_conf_data.set(
         'YANG_PREFIX',
-        NETCONF_DEP.get_variable('yang-prefix', default_value: 'unknown'),
+        YANG_DEP.get_variable('prefix', default_value: 'unknown'),
     )
-    report_conf_data.set(
-        'YANGCPP_VERSION',
-        NETCONF_DEP.get_variable(
-            'yang-cpp-version',
-            default_value: 'unknown version',
-        ),
-    )
+    report_conf_data.set('YANGCPP_VERSION', YANGCPP_DEP.version())
     report_conf_data.set(
         'YANGCPP_PREFIX',
-        NETCONF_DEP.get_variable('yang-cpp-prefix', default_value: 'unknown'),
+        YANGCPP_DEP.get_variable('prefix', default_value: 'unknown'),
     )
-    report_conf_data.set(
-        'SYSREPO_VERSION',
-        NETCONF_DEP.get_variable(
-            'sysrepo-version',
-            default_value: 'unknown version',
-        ),
-    )
+    report_conf_data.set('SYSREPO_VERSION', SYSREPO_DEP.version())
     report_conf_data.set(
         'SYSREPO_PREFIX',
-        NETCONF_DEP.get_variable('sysrepo-prefix', default_value: 'unknown'),
+        SYSREPO_DEP.get_variable('prefix', default_value: 'unknown'),
     )
-    report_conf_data.set(
-        'SYSREPOCPP_VERSION',
-        NETCONF_DEP.get_variable(
-            'sysrepo-cpp-version',
-            default_value: 'unknown version',
-        ),
-    )
+    report_conf_data.set('SYSREPOCPP_VERSION', SYSREPOCPP_DEP.version())
     report_conf_data.set(
         'SYSREPOCPP_PREFIX',
-        NETCONF_DEP.get_variable('sysrepo-cpp-prefix', default_value: 'unknown'),
+        SYSREPOCPP_DEP.get_variable('prefix', default_value: 'unknown'),
     )
 else
     report_conf_data.set('HAVE_NETCONF', 'no')
@@ -1052,14 +1053,15 @@ foreach i : [
     LOG4CPLUS_DEP,
     MYSQL_DEP,
     POSTGRESQL_DEP,
+    YANG_DEP,
+    YANGCPP_DEP,
+    SYSREPO_DEP,
+    SYSREPOCPP_DEP,
 ]
     if i.found() and i.type_name() == 'pkgconfig'
         requires += i
     endif
 endforeach
-if NETCONF_DEP.found()
-    requires += ['libyang', 'sysrepo', 'libyang-cpp', 'sysrepo-cpp']
-endif
 pkg.generate(
     description: 'High-performance, extensible DHCP server engine',
     filebase: 'kea',

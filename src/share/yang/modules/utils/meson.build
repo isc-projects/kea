@@ -6,14 +6,8 @@ yang_utils_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
 yang_utils_conf_data.set('top_srcdir', '../../../../..')
 yang_utils_conf_data.set('datarootdir', '${prefix}/' + DATADIR)
 yang_utils_conf_data.set('prefix', PREFIX)
-yang_utils_conf_data.set(
-    'LIBYANG_PREFIX',
-    NETCONF_DEP.get_variable('yang-prefix'),
-)
-yang_utils_conf_data.set(
-    'SYSREPO_PREFIX',
-    NETCONF_DEP.get_variable('sysrepo-prefix'),
-)
+yang_utils_conf_data.set('LIBYANG_PREFIX', YANG_DEP.get_variable('prefix'))
+yang_utils_conf_data.set('SYSREPO_PREFIX', SYSREPO_DEP.get_variable('prefix'))
 
 check_hashes_sh = configure_file(
     input: 'check-hashes.sh.in',
