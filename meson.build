@@ -265,7 +265,7 @@ YANG_DEP = disabler()
 YANGCPP_DEP = disabler()
 SYSREPO_DEP = disabler()
 SYSREPOCPP_DEP = disabler()
-if netconf_opt.enabled()
+if netconf_opt.allowed()
     netconf_deps = {}
 
     all_deps_found = true
@@ -292,7 +292,7 @@ if netconf_opt.enabled()
         NETCONF_DEP = declare_dependency(
             dependencies: [YANG_DEP, YANGCPP_DEP, SYSREPO_DEP, SYSREPOCPP_DEP],
         )
-    else
+    elif netconf_opt.enabled()
         error('Dependency not found: NETCONF.')
     endif
 endif
