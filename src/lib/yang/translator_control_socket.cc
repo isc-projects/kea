@@ -214,26 +214,27 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath, ConstElementPt
     }
 
     checkAndSetLeaf(elem, xpath, "socket-name", LeafBaseType::String);
-
-    checkAndSetLeaf(elem, xpath, "socket-address", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint32);
-    checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
-    checkAndSetLeaf(elem, xpath, "cert-required", LeafBaseType::Bool);
-    ConstElementPtr authentication = elem->get("authentication");
-    if (authentication && !authentication->empty()) {
-        setMandatoryDivergingLeaf(authentication, xpath , "type", "auth-type", LeafBaseType::String);
-        checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
-        checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
-        ConstElementPtr clients = authentication->get("clients");
-        setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
-    }
-    ConstElementPtr http_headers = elem->get("http-headers");
-    if (http_headers && !http_headers->empty()) {
-        for (size_t i = 0; i < http_headers->size(); ++i) {
-            ElementPtr header = elem->getNonConst(i);
-            // setHeader
+    if (model_ != KEA_CTRL_AGENT) {
+        checkAndSetLeaf(elem, xpath, "socket-address", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
+        checkAndSetLeaf(elem, xpath, "cert-required", LeafBaseType::Bool);
+        ConstElementPtr authentication = elem->get("authentication");
+        if (authentication && !authentication->empty()) {
+            setMandatoryDivergingLeaf(authentication, xpath , "type", "auth-type", LeafBaseType::String);
+            checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
+            checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
+            ConstElementPtr clients = authentication->get("clients");
+            setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
+        }
+        ConstElementPtr http_headers = elem->get("http-headers");
+        if (http_headers && !http_headers->empty()) {
+            for (size_t i = 0; i < http_headers->size(); ++i) {
+                ElementPtr header = elem->getNonConst(i);
+                // setHeader
+            }
         }
     }
     setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
@@ -304,6 +305,8 @@ TranslatorControlSocket::setControlSocketHttpHeaders(const std::string& xpath,
 void
 TranslatorControlSocket::setControlSocketHttpHeader(const std::string& xpath,
                                                     isc::data::ConstElementPtr elem) {
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+
     checkAndSetLeaf(elem, xpath, "value", LeafBaseType::String);
     checkAndSetUserContext(elem, xpath);
     setMandatoryLeaf(elem, xpath, "name", LeafBaseType::Enum);

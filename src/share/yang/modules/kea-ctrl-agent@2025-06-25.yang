@@ -47,7 +47,7 @@ module kea-ctrl-agent {
 
     container control-sockets {
       description "Control sockets.";
-      list socket {
+      list control-sockets {
         key server-type;
         description "List of server control socket.";
         leaf server-type {

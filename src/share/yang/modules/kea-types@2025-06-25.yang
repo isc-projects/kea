@@ -35,15 +35,6 @@ module kea-types {
     }
   }
 
-  grouping control-sockets {
-    description "Control sockets grouping.";
-      list control-sockets {
-        key socket-type;
-        description "List of control sockets.";
-        uses control-socket-data;
-      }
-  }
-
   grouping control-socket-tls {
     description "Control socket TLS parameters.";
     leaf trust-anchor {
