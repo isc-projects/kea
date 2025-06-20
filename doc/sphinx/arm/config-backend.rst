@@ -212,7 +212,7 @@ Installation
 To use either Configuration Backend, the appropriate module library
 (:ischooklib:`libdhcp_mysql.so` or :ischooklib:`libdhcp_pgsql.so`) must be
 compiled during the Kea build.  The ``-D`` switch specifies which database
-module to build, if any: ``-D mysql=enabled`` or ``-D pgsql=enabled``.  The
+module to build, if any: ``-D mysql=enabled`` or ``-D postgresql=enabled``.  The
 appropriate database client libraries and header files must be installed prior
 to build.  See :ref:`dhcp-install-configure` for more information on building
 Kea with database support.  ISC's Kea packaging, as well as some third-party
