@@ -31,6 +31,9 @@ Starting with the Kea 1.7 release, all Kea versions with an odd minor
 version number are development releases, and become EOL as soon as the
 following stable release is published.
 
+Starting with the Kea 3.0 release, we are introducing LTS, a Long Time
+Support series.
+
 Limited past EOL support may be available to higher-tier customers.
 Please contact ISC sales, using this form: https://www.isc.org/contact/
 
