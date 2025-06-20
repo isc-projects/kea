@@ -109,7 +109,7 @@ TEST_F(TranslatorControlSocketTestv6, get) {
 TEST_F(TranslatorControlSocketTestCtrlAgent, set) {
     // Set a value.
     const string& xpath =
-        "/kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/control-socket";
+        "/kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/control-socket";
     ElementPtr sock = Element::createMap();
     sock->set("socket-name", Element::create("/tmp/kea.sock"));
     sock->set("socket-type", Element::create("unix"));

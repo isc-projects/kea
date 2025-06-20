@@ -45,16 +45,16 @@ namespace yang {
 ///  /kea-ctrl-agent:config (container)
 ///  /kea-ctrl-agent:config/control-sockets (container)
 ///  /kea-ctrl-agent:config/control-sockets/
-///     socket[server-type='dhcp4'] (list instance)
-///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+///     control-sockets[server-type='dhcp4'] (list instance)
+///  /kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/
 ///     server-type = dhcp4
-///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+///  /kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/
 ///     control-socket (container)
-///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+///  /kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/
 ///     control-socket/socket-name = kea.sock
-///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+///  /kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/
 ///     control-socket/socket-type = unix
-///  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+///  /kea-ctrl-agent:config/control-sockets/control-sockets[server-type='dhcp4']/
 ///     control-socket/user-context = { \"foo\": 1 }
 /// @endcode
 

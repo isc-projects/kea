@@ -109,6 +109,10 @@ module kea-types {
     uses control-socket-tls;
     uses http-headers;
     uses authentication;
+    leaf user-context {
+      type user-context;
+      description "Control socket user context.";
+    }
   }
 
   grouping http-headers {
