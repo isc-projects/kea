@@ -631,11 +631,8 @@ module kea-dhcp6-server {
     }
 
     uses dhcp:dhcp4o6-port;
-    container control-socket {
-      description "Control socket.";
-      uses dhcp:control-socket;
-    }
     uses dhcp:control-sockets;
+    uses dhcp:deprecated-control-socket;
     uses dhcp:hostname-char-set;
     uses dhcp:hostname-char-replacement;
     uses dhcp:dhcp-ddns;

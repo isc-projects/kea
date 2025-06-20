@@ -35,6 +35,22 @@ module kea-types {
     }
   }
 
+  grouping deprecated-control-socket {
+    container control-socket {
+      presence "";
+      uses control-socket-info;
+    }
+  }
+
+  grouping control-sockets {
+    description "Control sockets grouping.";
+      list control-sockets {
+        key "socket-type";
+        description "List of control sockets.";
+        uses control-socket-data;
+      }
+  }
+
   grouping control-socket-info {
     description "Control socket parameters.";
     leaf socket-name {
@@ -59,6 +75,33 @@ module kea-types {
 
   grouping control-socket-data {
     description "Control socket parameters.";
+    leaf socket-type {
+      type enumeration {
+        enum "unix" {
+          description "Unix socket type.";
+        }
+        enum "http" {
+          description "HTTP socket type.";
+        }
+        enum "https" {
+          description "HTTPS socket type.";
+        }
+      }
+      description "Socket type.";
+      mandatory true;
+    }
+    leaf socket-name {
+      type string;
+      description "Path to the UNIX socket.";
+    }
+    leaf socket-address {
+      type string;
+      description "HTTP/HTTPS socket address.";
+    }
+    leaf socket-port {
+      type string;
+      description "HTTP/HTTPS socket port.";
+    }
     leaf trust-anchor {
       type string;
       description "TLS trust anchor (Certificate Authority).";
@@ -75,6 +118,8 @@ module kea-types {
       type boolean;
       description "TLS require client certificates flag.";
     }
+    uses http-headers;
+    uses authentication;
   }
 
   grouping http-headers {

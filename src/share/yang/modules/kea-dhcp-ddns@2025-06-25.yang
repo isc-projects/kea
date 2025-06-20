@@ -141,11 +141,8 @@ module kea-dhcp-ddns {
       description "Packet format to use when sending requests to the server.";
     }
 
-    container control-socket {
-      description "Control socket.";
-      uses dhcp:control-socket;
-    }
     uses dhcp:control-sockets;
+    uses dhcp:deprecated-control-socket;
 
     container forward-ddns {
       description "Forward DNS zones.";

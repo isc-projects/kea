@@ -72,11 +72,7 @@ module kea-ctrl-agent {
       }
     }
 
-    uses kea:control-socket-data;
-
-    uses kea:http-headers;
-
-    uses kea:authentication;
+    uses kea:deprecated-control-socket;
 
     uses kea:hooks-libraries;
 
