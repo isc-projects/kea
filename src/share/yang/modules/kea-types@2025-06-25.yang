@@ -35,13 +35,6 @@ module kea-types {
     }
   }
 
-  grouping deprecated-control-socket {
-    container control-socket {
-      presence "";
-      uses control-socket-info;
-    }
-  }
-
   grouping control-sockets {
     description "Control sockets grouping.";
       list control-sockets {
@@ -91,9 +84,6 @@ module kea-types {
       type user-context;
       description "Control socket user context.";
     }
-    uses control-socket-tls;
-    uses http-headers;
-    uses authentication;
   }
 
   grouping control-socket-data {
