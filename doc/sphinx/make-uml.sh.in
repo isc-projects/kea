@@ -2,7 +2,7 @@
 
 set -eu
 
-cd '@srcdir@'
+cd '@srcdir@/uml'
 
 if test '@HAVE_PLANTUML@' = 'no'; then
     exit 0

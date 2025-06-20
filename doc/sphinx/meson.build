@@ -100,7 +100,7 @@ if XMLLINT.found()
 else
     doc_conf.set('HAVE_XMLLINT', 'no')
 endif
-tumls = ['uml/tkey.uml', 'uml/update.uml']
+tumls = ['tkey.uml', 'update.uml']
 doc_conf.set('tumls', ' '.join(tumls))
 doc_conf.set('txts', ' '.join(txts))
 if PIP_COMPILE.found()
