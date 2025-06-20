@@ -138,9 +138,28 @@ module kea-types {
 
   grouping clients {
     description "HTTP client authentication.";
-    leaf clients {
-      type string;
-      description "Clients (JSON value).";
+    list clients {
+      leaf user {
+        type string;
+        description "HTTP user.";
+      }
+      leaf password {
+        type string;
+        description "HTTP password.";
+      }
+      leaf user-file {
+        type string;
+        description "HTTP user file.";
+      }
+      leaf password-file {
+        type string;
+        description "HTTP password file.";
+      }
+      leaf user-context {
+        type user-context;
+        description "Logger user context.";
+      }
+      key "user password user-file password-file";
     }
   }
 
