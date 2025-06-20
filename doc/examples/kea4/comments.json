@@ -70,7 +70,6 @@
                "type": "basic",
                // In basic HTTP authentication clients
                "clients": [ {
-                   "comment": "admin is authorized",
                    "user": "admin",
                    "password": "1234"
                } ]

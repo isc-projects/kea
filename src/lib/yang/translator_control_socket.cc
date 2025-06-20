@@ -89,11 +89,12 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
                         checkAndGetDivergingLeaf(authentication, node, "type", "auth-type");
                         checkAndGetLeaf(authentication, node, "realm");
                         checkAndGetLeaf(authentication, node, "directory");
+                        checkAndGetAndJsonifyLeaf(authentication, node, "clients");
                         checkAndGetAndJsonifyLeaf(authentication, node, "user-context");
-                        ConstElementPtr clients = getControlSocketAuthenticationClients(node);
-                        if (clients) {
-                            authentication->set("clients", clients);
-                        }
+                        // ConstElementPtr clients = getControlSocketAuthenticationClients(node);
+                        // if (clients) {
+                        //     authentication->set("clients", clients);
+                        // }
                         return (authentication);
                     });
         ConstElementPtr headers = getControlSocketHttpHeaders(data_node);
@@ -134,7 +135,6 @@ TranslatorControlSocket::getControlSocketAuthenticationClient(DataNode const& da
     getMandatoryLeaf(result, data_node, "user-file");
     getMandatoryLeaf(result, data_node, "password-file");
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
-
     return (result->empty() ? ElementPtr() : result);
 }
 
@@ -239,8 +239,9 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath,
             checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
             checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
             checkAndSetUserContext(authentication, xpath + "/authentication");
-            ConstElementPtr clients = authentication->get("clients");
-            setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
+            checkAndStringifyAndSetLeaf(authentication, xpath + "/authentication", "clients");
+            // ConstElementPtr clients = authentication->get("clients");
+            // setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
         }
         ConstElementPtr http_headers = elem->get("http-headers");
         if (http_headers && !http_headers->empty()) {
@@ -259,7 +260,6 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
     }
     for (size_t i = 0; i < elem->size(); ++i) {
         ElementPtr client = elem->getNonConst(i);
-        ostringstream key;
         auto user = client->get("user");
         string user_str;
         if (user) {
@@ -280,6 +280,7 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
         if (password_file) {
             password_file_str = password_file->stringValue();
         }
+        ostringstream key;
         key << xpath << "[user='" << user_str << "'][password='" << password_str
                      << "'][user-file='" << user_file_str << "'][password-file='"
                      << password_file_str << "']";
