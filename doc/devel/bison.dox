@@ -115,8 +115,6 @@ meson setup build
 meson compile -C build grammar
 @endcode
 
-Kea also maintains a lis
-
 Strictly speaking, the comment "make parser" is not necessary. If you updated the .ll or .yy file,
 the regular "make" command should pick those changes up. However, since one source file generates
 multiple output files and you are likely to be using a multi-process build (by specifying the "-j"
