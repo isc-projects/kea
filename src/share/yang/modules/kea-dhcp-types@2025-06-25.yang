@@ -131,14 +131,14 @@ module kea-dhcp-types {
   grouping deprecated-control-socket {
     container control-socket {
       presence "";
-      uses kea:control-socket-info;
+      uses kea:control-socket-data;
     }
   }
 
   grouping control-sockets {
     description "Control sockets grouping.";
       list control-sockets {
-        key "socket-type";
+        key socket-type;
         description "List of control sockets.";
         uses kea:control-socket-data;
       }

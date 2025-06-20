@@ -45,10 +45,30 @@ module kea-types {
   grouping control-sockets {
     description "Control sockets grouping.";
       list control-sockets {
-        key "socket-type";
+        key socket-type;
         description "List of control sockets.";
         uses control-socket-data;
       }
+  }
+
+  grouping control-socket-tls {
+    description "Control socket TLS parameters.";
+    leaf trust-anchor {
+      type string;
+      description "TLS trust anchor (Certificate Authority).";
+    }
+    leaf cert-file {
+      type string;
+      description "TLS server certificate file name.";
+    }
+    leaf key-file {
+      type string;
+      description "TLS server private key file name.";
+    }
+    leaf cert-required {
+      type boolean;
+      description "TLS require client certificates flag.";
+    }
   }
 
   grouping control-socket-info {
@@ -71,6 +91,9 @@ module kea-types {
       type user-context;
       description "Control socket user context.";
     }
+    uses control-socket-tls;
+    uses http-headers;
+    uses authentication;
   }
 
   grouping control-socket-data {
@@ -102,22 +125,7 @@ module kea-types {
       type string;
       description "HTTP/HTTPS socket port.";
     }
-    leaf trust-anchor {
-      type string;
-      description "TLS trust anchor (Certificate Authority).";
-    }
-    leaf cert-file {
-      type string;
-      description "TLS server certificate file name.";
-    }
-    leaf key-file {
-      type string;
-      description "TLS server private key file name.";
-    }
-    leaf cert-required {
-      type boolean;
-      description "TLS require client certificates flag.";
-    }
+    uses control-socket-tls;
     uses http-headers;
     uses authentication;
   }
