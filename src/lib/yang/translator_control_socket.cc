@@ -106,10 +106,16 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
 
 ElementPtr
 TranslatorControlSocket::getControlSocketHttpHeaders(DataNode const& data_node) {
+    return getList(data_node, "http-headers", *this,
+                   &TranslatorControlSocket::getControlSocketHttpHeader);
+}
+
+ElementPtr
+TranslatorControlSocket::getControlSocketHttpHeader(DataNode const& data_node) {
     ElementPtr result(Element::createMap());
     checkAndGetLeaf(result, data_node, "name");
     checkAndGetLeaf(result, data_node, "value");
-    checkAndGetLeaf(result, data_node, "user-context");
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
     return (result->empty() ? ElementPtr() : result);
 }
 
