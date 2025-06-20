@@ -187,9 +187,7 @@
 
                             // If password is not specified an empty
                             // password is used.
-                            "password": "1234",
-                            "password-file": "",
-                            "user-file": ""
+                            "password": "1234"
                         },
 
                         // This specifies a hidden client.
@@ -197,12 +195,10 @@
                             // The user id is the content of the
                             // file /usr/local/share/kea/kea-creds/hiddenu.
                             "user-file": "hiddenu",
-                            "user": "",
 
                             // The password is the content of the
                             // file /usr/local/share/kea/kea-creds/hiddenp.
-                            "password-file": "hiddenp",
-                            "password": ""
+                            "password-file": "hiddenp"
                         },
 
                         // This specifies a hidden client using a
@@ -211,10 +207,7 @@
                             // The secret is the content of the file
                             // /usr/local/share/kea/kea-creds/hiddens which must be in
                             // the <user-id>:<password> format.
-                            "password-file": "hiddens",
-                            "user-file": "",
-                            "user": "",
-                            "password": ""
+                            "password-file": "hiddens"
                         }
                     ]
                 }

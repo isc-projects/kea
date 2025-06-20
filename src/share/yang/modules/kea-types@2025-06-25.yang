@@ -155,6 +155,10 @@ module kea-types {
         type string;
         description "HTTP password file.";
       }
+      leaf user-context {
+        type user-context;
+        description "Logger user context.";
+      }
       key "user password user-file password-file";
     }
   }
@@ -181,6 +185,10 @@ module kea-types {
         description "HTTP authentication directory.";
       }
       uses clients;
+      leaf user-context {
+        type user-context;
+        description "Logger user context.";
+      }
     }
   }
 

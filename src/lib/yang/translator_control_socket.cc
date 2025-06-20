@@ -89,6 +89,7 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
                         checkAndGetDivergingLeaf(authentication, node, "type", "auth-type");
                         checkAndGetLeaf(authentication, node, "realm");
                         checkAndGetLeaf(authentication, node, "directory");
+                        checkAndGetAndJsonifyLeaf(authentication, node, "user-context");
                         ConstElementPtr clients = getControlSocketAuthenticationClients(node);
                         if (clients) {
                             authentication->set("clients", clients);
@@ -132,6 +133,8 @@ TranslatorControlSocket::getControlSocketAuthenticationClient(DataNode const& da
     getMandatoryLeaf(result, data_node, "password");
     getMandatoryLeaf(result, data_node, "user-file");
     getMandatoryLeaf(result, data_node, "password-file");
+    checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+
     return (result->empty() ? ElementPtr() : result);
 }
 
@@ -235,6 +238,7 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath,
             setMandatoryDivergingLeaf(authentication, xpath +"/authentication" , "type", "auth-type", LeafBaseType::String);
             checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
             checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
+            checkAndSetUserContext(authentication, xpath + "/authentication");
             ConstElementPtr clients = authentication->get("clients");
             setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
         }
@@ -285,8 +289,9 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
 
 void
 TranslatorControlSocket::setControlSocketAuthenticationClient(string const& xpath,
-                                                              ConstElementPtr /* elem */) {
+                                                              ConstElementPtr elem) {
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+    checkAndSetUserContext(elem, xpath);
 }
 
 void
