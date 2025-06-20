@@ -1,3 +1,17 @@
+2356.	[func]		razvan
+	Updated YANG modules by adding only-in-additional-list,
+	evaluate-additional-classes, client-classes list, ddns-ttl,
+	ddns-ttl-min, ddns-ttl-max, ddns-generated-prefix,
+	ddns-override-client-update, ddns-override-no-update,
+	ddns-qualifying-suffix, ddns-replace-client-name,
+	ddns-send-updates, ddns-update-on-renew,
+	ddns-conflict-resolution-mode, hostname-char-replacement and
+	hostname-char-set at pool and pd-pool level, added
+	excluded-prefixes at pd-pool level. Added trust-anchor,
+	cert-file, key-file, cert-required authentication and
+	http-headers parameters to control sockets.
+	(Gitlab #3907)
+
 2355.	[func]		razvan
 	Implemented lease4-wipe and lease6-wipe for database backends.
 	The commands are no longer deprecated.
