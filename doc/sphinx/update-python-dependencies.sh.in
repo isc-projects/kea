@@ -7,4 +7,5 @@ if test '@HAVE_PIP_COMPILE@' = 'no'; then
 fi
 
 cd '@srcdir@'
-@PIP_COMPILE@ --no-strip-extras --rebuild --upgrade ./src/requirements.in
+@PIP_COMPILE@ --no-strip-extras --output-file=./src/requirements.txt \
+    --rebuild --upgrade ./src/requirements.in
