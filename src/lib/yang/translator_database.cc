@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,8 +51,6 @@ ElementPtr
 TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
 
-    getMandatoryDivergingLeaf(result, data_node, "type", "database-type");
-
     checkAndGetLeaf(result, data_node, "cert-file");
     checkAndGetLeaf(result, data_node, "cipher-list");
     checkAndGetLeaf(result, data_node, "connect-timeout");
@@ -81,13 +79,11 @@ TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
 }
 
 void
-TranslatorDatabase::setDatabase(string const& xpath,
-                                ConstElementPtr elem,
-                                bool skip) {
+TranslatorDatabase::setDatabase(string const& xpath, ConstElementPtr elem) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            setDatabaseKea(xpath, elem, skip);
+            setDatabaseKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
                       "setDatabase not implemented for the model: " << model_);
@@ -100,13 +96,8 @@ TranslatorDatabase::setDatabase(string const& xpath,
 }
 
 void
-TranslatorDatabase::setDatabaseKea(string const& xpath,
-                                   ConstElementPtr elem,
-                                   bool skip) {
-    if (!elem) {
-        deleteItem(xpath);
-        return;
-    }
+TranslatorDatabase::setDatabaseKea(string const& xpath, ConstElementPtr elem) {
+    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 
     checkAndSetLeaf(elem, xpath, "connect-timeout", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
@@ -131,10 +122,6 @@ TranslatorDatabase::setDatabaseKea(string const& xpath,
     checkAndSetLeaf(elem, xpath, "write-timeout", LeafBaseType::Uint32);
 
     checkAndSetUserContext(elem, xpath);
-
-    if (!skip) {
-        setMandatoryDivergingLeaf(elem, xpath, "type", "database-type", LeafBaseType::String);
-    }
 }
 
 TranslatorDatabases::TranslatorDatabases(Session session,
@@ -207,7 +194,7 @@ TranslatorDatabases::setDatabasesKea(string const& xpath,
         string type = database->get("type")->stringValue();
         ostringstream key;
         key << xpath << "[database-type='" << type << "']";
-        setDatabase(key.str(), database, true);
+        setDatabase(key.str(), database);
     }
 }
 

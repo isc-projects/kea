@@ -153,7 +153,7 @@ TranslatorControlSocket::setControlSockets(string const& xpath,
             (model_ == KEA_DHCP_DDNS)) {
             setControlSocketsKea(xpath, elem);
         } else if (model_ == KEA_CTRL_AGENT) {
-            setControlSocketKea(xpath, elem, false);
+            setControlSocketKea(xpath, elem);
         } else {
           isc_throw(NotImplemented,
                     "setControlSocket not implemented for the model: "
@@ -174,7 +174,7 @@ TranslatorControlSocket::setControlSocket(string const& xpath,
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            setControlSocketKea(xpath, elem, true);
+            setControlSocketKea(xpath, elem);
         } else {
           isc_throw(NotImplemented,
                     "setControlSocket not implemented for the model: "
@@ -202,14 +202,12 @@ TranslatorControlSocket::setControlSocketsKea(string const& xpath,
         string type = control_socket->get("socket-type")->stringValue();
         ostringstream key;
         key << xpath << "[socket-type='" << type << "']";
-        setControlSocketKea(key.str(), control_socket, true);
+        setControlSocketKea(key.str(), control_socket);
     }
 }
 
 void
-TranslatorControlSocket::setControlSocketKea(string const& xpath,
-                                             ConstElementPtr elem,
-                                             bool skip) {
+TranslatorControlSocket::setControlSocketKea(string const& xpath, ConstElementPtr elem) {
     if (!elem) {
         deleteItem(xpath);
         return;
@@ -217,41 +215,34 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath,
 
     checkAndSetLeaf(elem, xpath, "socket-name", LeafBaseType::String);
 
-    if (model_ == KEA_CTRL_AGENT) {
-        setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
-    } else {
-        checkAndSetLeaf(elem, xpath, "socket-address", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint32);
-        checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "cert-required", LeafBaseType::Bool);
-        ConstElementPtr authentication = elem->get("authentication");
-        if (authentication && !authentication->empty()) {
-            setMandatoryDivergingLeaf(authentication, xpath , "type", "auth-type", LeafBaseType::String);
-            checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
-            checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
-            ConstElementPtr clients = authentication->get("clients");
-            setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients, skip);
-        }
-        ConstElementPtr http_headers = elem->get("http-headers");
-        if (http_headers && !http_headers->empty()) {
-            for (size_t i = 0; i < http_headers->size(); ++i) {
-                ElementPtr header = elem->getNonConst(i);
-                // setHeader
-            }
-        }
-        if (!skip) {
-            setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
+    checkAndSetLeaf(elem, xpath, "socket-address", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint32);
+    checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
+    checkAndSetLeaf(elem, xpath, "cert-required", LeafBaseType::Bool);
+    ConstElementPtr authentication = elem->get("authentication");
+    if (authentication && !authentication->empty()) {
+        setMandatoryDivergingLeaf(authentication, xpath , "type", "auth-type", LeafBaseType::String);
+        checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
+        checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
+        ConstElementPtr clients = authentication->get("clients");
+        setControlSocketAuthenticationClients(xpath + "/authentication/clients", clients);
+    }
+    ConstElementPtr http_headers = elem->get("http-headers");
+    if (http_headers && !http_headers->empty()) {
+        for (size_t i = 0; i < http_headers->size(); ++i) {
+            ElementPtr header = elem->getNonConst(i);
+            // setHeader
         }
     }
+    setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
     checkAndSetUserContext(elem, xpath);
 }
 
 void
 TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpath,
-                                                               ConstElementPtr elem,
-                                                               bool skip) {
+                                                               ConstElementPtr elem) {
     if (!elem) {
         deleteItem(xpath);
         return;
@@ -282,21 +273,19 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
         key << xpath << "[user='" << user_str << "'][password=']" << password_str
                      << "'][user-file='" << user_file_str << "'][password-file='"
                      << password_file_str << "']";
-        setControlSocketAuthenticationClient(key.str(), client, skip);
+        setControlSocketAuthenticationClient(key.str(), client);
     }
 }
 
 void
 TranslatorControlSocket::setControlSocketAuthenticationClient(string const& xpath,
-                                                              ConstElementPtr /* elem */,
-                                                              bool /* skip */) {
+                                                              ConstElementPtr /* elem */) {
     setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
 }
 
 void
 TranslatorControlSocket::setControlSocketHttpHeaders(const std::string& xpath,
-                            isc::data::ConstElementPtr elem,
-                            bool skip) {
+                                                     isc::data::ConstElementPtr elem) {
     if (!elem) {
         deleteItem(xpath);
         return;
@@ -308,19 +297,16 @@ TranslatorControlSocket::setControlSocketHttpHeaders(const std::string& xpath,
             isc_throw(BadValue, "http header without name: " << header->str());
         }
         key << xpath << "[name='" << header->stringValue() << "']";
-        setControlSocketHttpHeader(key.str(), header, skip);
+        setControlSocketHttpHeader(key.str(), header);
     }
 }
 
 void
 TranslatorControlSocket::setControlSocketHttpHeader(const std::string& xpath,
-                                                    isc::data::ConstElementPtr elem,
-                                                    bool skip) {
+                                                    isc::data::ConstElementPtr elem) {
     checkAndSetLeaf(elem, xpath, "value", LeafBaseType::String);
     checkAndSetUserContext(elem, xpath);
-    if (!skip) {
-        setMandatoryLeaf(elem, xpath, "name", LeafBaseType::Enum);
-    }
+    setMandatoryLeaf(elem, xpath, "name", LeafBaseType::Enum);
 }
 
 }  // namespace yang

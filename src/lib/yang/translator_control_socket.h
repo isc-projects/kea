@@ -187,11 +187,8 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on control socket without socket type or name.
-    void setControlSocketKea(const std::string& xpath,
-                             isc::data::ConstElementPtr elem,
-                             bool skip);
+    void setControlSocketKea(const std::string& xpath, isc::data::ConstElementPtr elem);
 
     /// @brief setControlSocketAuthenticationClients for kea models.
     ///
@@ -201,11 +198,9 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on control socket without socket type or name.
     void setControlSocketAuthenticationClients(const std::string& xpath,
-                                               isc::data::ConstElementPtr elem,
-                                               bool skip);
+                                               isc::data::ConstElementPtr elem);
 
     /// @brief setControlSocketAuthenticationClient for kea models.
     ///
@@ -215,11 +210,9 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on control socket without socket type or name.
-    void setControlSocketAuthenticationClient(const std::string& xpath,
-                                              isc::data::ConstElementPtr elem,
-                                              bool skip);
+    void
+    setControlSocketAuthenticationClient(const std::string& xpath, isc::data::ConstElementPtr elem);
 
     /// @brief setControlSocketHttpHeaders for kea models.
     ///
@@ -229,11 +222,8 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on control socket without socket type or name.
-    void setControlSocketHttpHeaders(const std::string& xpath,
-                                     isc::data::ConstElementPtr elem,
-                                     bool skip);
+    void setControlSocketHttpHeaders(const std::string& xpath, isc::data::ConstElementPtr elem);
 
     /// @brief setControlSocketHttpHeader for kea models.
     ///
@@ -243,11 +233,8 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on control socket without socket type or name.
-    void setControlSocketHttpHeader(const std::string& xpath,
-                                    isc::data::ConstElementPtr elem,
-                                    bool skip);
+    void setControlSocketHttpHeader(const std::string& xpath, isc::data::ConstElementPtr elem);
 };  // TranslatorControlSocket
 
 }  // namespace yang

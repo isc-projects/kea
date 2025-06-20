@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,10 +141,7 @@ public:
     ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
-    void setDatabase(const std::string& xpath,
-                     isc::data::ConstElementPtr elem,
-                     bool skip = false);
+    void setDatabase(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
     /// @brief getDatabase JSON for kea-dhcp[46]-server models.
@@ -160,11 +157,8 @@ protected:
     ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
-    /// @param skip The skip type field flag.
     /// @throw BadValue on database without type,
-    void setDatabaseKea(const std::string& xpath,
-                        isc::data::ConstElementPtr elem,
-                        bool skip);
+    void setDatabaseKea(const std::string& xpath, isc::data::ConstElementPtr elem);
 };  // TranslatorDatabase
 
 /// @brief A translator class for converting a database access list between
