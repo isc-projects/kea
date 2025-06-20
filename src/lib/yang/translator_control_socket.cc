@@ -19,8 +19,7 @@ using namespace sysrepo;
 namespace isc {
 namespace yang {
 
-TranslatorControlSocket::TranslatorControlSocket(Session session,
-                                                 const string& model)
+TranslatorControlSocket::TranslatorControlSocket(Session session, const string& model)
     : Translator(session, model) {
 }
 
@@ -102,6 +101,15 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
         }
     }
     checkAndGetAndJsonifyLeaf(result, data_node, "user-context");
+    return (result->empty() ? ElementPtr() : result);
+}
+
+ElementPtr
+TranslatorControlSocket::getControlSocketHttpHeaders(DataNode const& data_node) {
+    ElementPtr result(Element::createMap());
+    checkAndGetLeaf(result, data_node, "name");
+    checkAndGetLeaf(result, data_node, "value");
+    checkAndGetLeaf(result, data_node, "user-context");
     return (result->empty() ? ElementPtr() : result);
 }
 
