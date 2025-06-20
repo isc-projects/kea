@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2022 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,7 +92,7 @@ TEST_F(TranslatorDatabaseTestv4, set) {
     ElementPtr database = Element::createMap();
     database->set("type", Element::create("memfile"));
     database->set("lfc-interval", Element::create(3600));
-    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, database));
+    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, database, /* has_mandatory_key = */ false));
 
     // Get it back.
     ConstElementPtr got;
@@ -125,7 +125,7 @@ TEST_F(TranslatorDatabaseTestv4, setEmpty) {
     sess_->applyChanges();
 
     // Reset to empty.
-    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, ConstElementPtr()));
+    ASSERT_NO_THROW_LOG(translator_->setDatabase(xpath, ConstElementPtr(), /* has_mandatory_key = */ false));
 
     // Get it back.
     ConstElementPtr database;
@@ -280,7 +280,7 @@ TEST_F(TranslatorDatabasesTestv4, setEmpty) {
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW_LOG(translator_->setDatabase(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(translator_->setDatabase(xdatabase, ConstElementPtr(), /* has_mandatory_key = */ true));
 
     // Get empty.
     ConstElementPtr databases;
@@ -313,7 +313,7 @@ TEST_F(TranslatorDatabasesTestv4, setEmpties) {
     sess_->applyChanges();
 
     // Reset to empty.
-    EXPECT_NO_THROW_LOG(translator_->setDatabases(xdatabase, ConstElementPtr()));
+    EXPECT_NO_THROW_LOG(translator_->setDatabase(xdatabase, ConstElementPtr(), /* has_mandatory_key = */ true));
 
     // Get empty.
     ConstElementPtr databases;

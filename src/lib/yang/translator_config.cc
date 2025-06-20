@@ -632,7 +632,7 @@ TranslatorConfig::setServerKeaDhcpCommon(string const& xpath,
 
     ConstElementPtr database = elem->get("lease-database");
     if (database && !database->empty()) {
-        setDatabase(xpath + "/lease-database", database);
+        setDatabase(xpath + "/lease-database", database, /* has_mandatory_key = */ false);
     }
 
     ConstElementPtr loggers = elem->get("loggers");

@@ -51,6 +51,7 @@ ElementPtr
 TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
     ElementPtr result = Element::createMap();
 
+    checkAndGetDivergingLeaf(result, data_node, "type", "database-type");
     checkAndGetLeaf(result, data_node, "cert-file");
     checkAndGetLeaf(result, data_node, "cipher-list");
     checkAndGetLeaf(result, data_node, "connect-timeout");
@@ -79,11 +80,11 @@ TranslatorDatabase::getDatabaseKea(DataNode const& data_node) {
 }
 
 void
-TranslatorDatabase::setDatabase(string const& xpath, ConstElementPtr elem) {
+TranslatorDatabase::setDatabase(string const& xpath, ConstElementPtr elem, bool has_mandatory_key) {
     try {
         if ((model_ == KEA_DHCP4_SERVER) ||
             (model_ == KEA_DHCP6_SERVER)) {
-            setDatabaseKea(xpath, elem);
+            setDatabaseKea(xpath, elem, has_mandatory_key);
         } else {
             isc_throw(NotImplemented,
                       "setDatabase not implemented for the model: " << model_);
@@ -96,8 +97,18 @@ TranslatorDatabase::setDatabase(string const& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorDatabase::setDatabaseKea(string const& xpath, ConstElementPtr elem) {
-    setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+TranslatorDatabase::setDatabaseKea(string const& xpath, ConstElementPtr elem, bool has_mandatory_key) {
+    if (!elem) {
+        deleteItem(xpath);
+        return;
+    }
+
+    if (has_mandatory_key) {
+        // Set the list element. This is important in case we have no other elements except the key.
+        setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+    } else {
+        checkAndSetDivergingLeaf(elem, xpath, "type", "database-type", LeafBaseType::String);
+    }
 
     checkAndSetLeaf(elem, xpath, "connect-timeout", LeafBaseType::Uint32);
     checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
@@ -194,7 +205,7 @@ TranslatorDatabases::setDatabasesKea(string const& xpath,
         string type = database->get("type")->stringValue();
         ostringstream key;
         key << xpath << "[database-type='" << type << "']";
-        setDatabase(key.str(), database);
+        setDatabase(key.str(), database, /* has_mandatory_key = */ true);
     }
 }
 

@@ -187,8 +187,9 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
+    /// @param has_mandatory_key Whether this specific database instance has a mandatory key.
     /// @throw BadValue on control socket without socket type or name.
-    void setControlSocketKea(const std::string& xpath, isc::data::ConstElementPtr elem);
+    void setControlSocketKea(const std::string& xpath, isc::data::ConstElementPtr elem, bool has_mandatory_key);
 
     /// @brief setControlSocketAuthenticationClients for kea models.
     ///

@@ -66,8 +66,8 @@ TranslatorControlSocket::getControlSocketsKea(DataNode const& data_node) {
 ElementPtr
 TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
     ElementPtr result(Element::createMap());
-    getMandatoryLeaf(result, data_node, "socket-type");
     checkAndGetLeaf(result, data_node, "socket-name");
+    checkAndGetLeaf(result, data_node, "socket-type");
     if (model_ != KEA_CTRL_AGENT) {
         checkAndGetLeaf(result, data_node, "socket-address");
         checkAndGetLeaf(result, data_node, "socket-port");
@@ -86,7 +86,7 @@ TranslatorControlSocket::getControlSocketKea(DataNode const& data_node) {
                             authentication = Element::createMap();
                         }
 
-                        getMandatoryDivergingLeaf(authentication, node, "type", "auth-type");
+                        checkAndGetDivergingLeaf(authentication, node, "type", "auth-type");
                         checkAndGetLeaf(authentication, node, "realm");
                         checkAndGetLeaf(authentication, node, "directory");
                         ConstElementPtr clients = getControlSocketAuthenticationClients(node);
@@ -153,7 +153,7 @@ TranslatorControlSocket::setControlSockets(string const& xpath,
             (model_ == KEA_DHCP_DDNS)) {
             setControlSocketsKea(xpath, elem);
         } else if (model_ == KEA_CTRL_AGENT) {
-            setControlSocketKea(xpath, elem);
+            setControlSocketKea(xpath, elem, /* has_mandatory_key = */ true);
         } else {
           isc_throw(NotImplemented,
                     "setControlSocket not implemented for the model: "
@@ -174,7 +174,7 @@ TranslatorControlSocket::setControlSocket(string const& xpath,
             (model_ == KEA_DHCP6_SERVER) ||
             (model_ == KEA_DHCP_DDNS) ||
             (model_ == KEA_CTRL_AGENT)) {
-            setControlSocketKea(xpath, elem);
+            setControlSocketKea(xpath, elem, /* has_mandatory_key = */ false);
         } else {
           isc_throw(NotImplemented,
                     "setControlSocket not implemented for the model: "
@@ -202,28 +202,37 @@ TranslatorControlSocket::setControlSocketsKea(string const& xpath,
         string type = control_socket->get("socket-type")->stringValue();
         ostringstream key;
         key << xpath << "[socket-type='" << type << "']";
-        setControlSocketKea(key.str(), control_socket);
+        setControlSocketKea(key.str(), control_socket, /* has_mandatory_key = */ true);
     }
 }
 
 void
-TranslatorControlSocket::setControlSocketKea(string const& xpath, ConstElementPtr elem) {
+TranslatorControlSocket::setControlSocketKea(string const& xpath,
+                                             ConstElementPtr elem,
+                                             bool has_mandatory_key) {
     if (!elem) {
         deleteItem(xpath);
         return;
     }
 
+    if (has_mandatory_key) {
+        // Set the list element. This is important in case we have no other elements except the key.
+        setItem(xpath, ElementPtr(), LeafBaseType::Unknown);
+    } else {
+        checkAndSetLeaf(elem, xpath, "socket-type", LeafBaseType::String);
+    }
+
     checkAndSetLeaf(elem, xpath, "socket-name", LeafBaseType::String);
     if (model_ != KEA_CTRL_AGENT) {
         checkAndSetLeaf(elem, xpath, "socket-address", LeafBaseType::String);
-        checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint32);
+        checkAndSetLeaf(elem, xpath, "socket-port", LeafBaseType::Uint16);
         checkAndSetLeaf(elem, xpath, "trust-anchor", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "cert-file", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "key-file", LeafBaseType::String);
         checkAndSetLeaf(elem, xpath, "cert-required", LeafBaseType::Bool);
         ConstElementPtr authentication = elem->get("authentication");
         if (authentication && !authentication->empty()) {
-            setMandatoryDivergingLeaf(authentication, xpath , "type", "auth-type", LeafBaseType::String);
+            setMandatoryDivergingLeaf(authentication, xpath +"/authentication" , "type", "auth-type", LeafBaseType::String);
             checkAndSetLeaf(authentication, xpath + "/authentication", "realm", LeafBaseType::String);
             checkAndSetLeaf(authentication, xpath + "/authentication", "directory", LeafBaseType::String);
             ConstElementPtr clients = authentication->get("clients");
@@ -231,13 +240,9 @@ TranslatorControlSocket::setControlSocketKea(string const& xpath, ConstElementPt
         }
         ConstElementPtr http_headers = elem->get("http-headers");
         if (http_headers && !http_headers->empty()) {
-            for (size_t i = 0; i < http_headers->size(); ++i) {
-                ElementPtr header = elem->getNonConst(i);
-                // setHeader
-            }
+            setControlSocketHttpHeaders(xpath + "/http-headers", http_headers);
         }
     }
-    setMandatoryLeaf(elem, xpath, "socket-type", LeafBaseType::Enum);
     checkAndSetUserContext(elem, xpath);
 }
 
@@ -271,7 +276,7 @@ TranslatorControlSocket::setControlSocketAuthenticationClients(string const& xpa
         if (password_file) {
             password_file_str = password_file->stringValue();
         }
-        key << xpath << "[user='" << user_str << "'][password=']" << password_str
+        key << xpath << "[user='" << user_str << "'][password='" << password_str
                      << "'][user-file='" << user_file_str << "'][password-file='"
                      << password_file_str << "']";
         setControlSocketAuthenticationClient(key.str(), client);
@@ -291,13 +296,13 @@ TranslatorControlSocket::setControlSocketHttpHeaders(const std::string& xpath,
         deleteItem(xpath);
         return;
     }
-    for (size_t i = 0; i < elem->size(); ++i) {
-        ElementPtr header = elem->getNonConst(i);
-        ostringstream key;
-        if (!header->contains("name")) {
+    for (ConstElementPtr header : elem->listValue()) {
+        ConstElementPtr name(header->get("name"));
+        if (!name) {
             isc_throw(BadValue, "http header without name: " << header->str());
         }
-        key << xpath << "[name='" << header->stringValue() << "']";
+        ostringstream key;
+        key << xpath << "[name='" << name->stringValue() << "']";
         setControlSocketHttpHeader(key.str(), header);
     }
 }
@@ -309,7 +314,6 @@ TranslatorControlSocket::setControlSocketHttpHeader(const std::string& xpath,
 
     checkAndSetLeaf(elem, xpath, "value", LeafBaseType::String);
     checkAndSetUserContext(elem, xpath);
-    setMandatoryLeaf(elem, xpath, "name", LeafBaseType::Enum);
 }
 
 }  // namespace yang

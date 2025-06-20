@@ -141,7 +141,10 @@ public:
     ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
-    void setDatabase(const std::string& xpath, isc::data::ConstElementPtr elem);
+    /// @param has_mandatory_key Whether this specific database instance has a mandatory key.
+    void setDatabase(const std::string& xpath,
+                     isc::data::ConstElementPtr elem,
+                     bool has_mandatory_key);
 
 protected:
     /// @brief getDatabase JSON for kea-dhcp[46]-server models.
@@ -157,8 +160,11 @@ protected:
     ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
+    /// @param has_mandatory_key Whether this specific database instance has a mandatory key.
     /// @throw BadValue on database without type,
-    void setDatabaseKea(const std::string& xpath, isc::data::ConstElementPtr elem);
+    void setDatabaseKea(const std::string& xpath,
+                        isc::data::ConstElementPtr elem,
+                        bool has_mandatory_key);
 };  // TranslatorDatabase
 
 /// @brief A translator class for converting a database access list between

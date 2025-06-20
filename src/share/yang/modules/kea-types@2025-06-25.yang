@@ -103,7 +103,7 @@ module kea-types {
       description "HTTP/HTTPS socket address.";
     }
     leaf socket-port {
-      type string;
+      type uint16;
       description "HTTP/HTTPS socket port.";
     }
     uses control-socket-tls;
@@ -162,16 +162,15 @@ module kea-types {
   grouping authentication {
     description "HTTP authentication.";
     container authentication {
-      grouping auth-type {
-        leaf auth-type {
-          type enumeration {
-            enum "basic" {
-              description "Basic HTTP authentication";
-            }
+      presence "";
+      leaf auth-type {
+        type enumeration {
+          enum "basic" {
+            description "Basic HTTP authentication";
           }
-          description "HTTP authentication type.";
-          mandatory true;
         }
+        description "HTTP authentication type.";
+        mandatory true;
       }
       leaf realm {
         type string;
@@ -181,8 +180,8 @@ module kea-types {
         type string;
         description "HTTP authentication directory.";
       }
+      uses clients;
     }
-    uses clients;
   }
 
   grouping hooks-libraries {
