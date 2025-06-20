@@ -48,7 +48,7 @@ Example Scenario
 
 Consider a large organization with many sites, each with a pair of Kea servers deployed in a high availability (HA) configuration.  Typically such deployments use standardized configurations, leading to similar config parameters for every site.  The members of each HA pair are often almost exactly the same, differing only by name.  Often installations of this size will feature a high level of automation, including provisioning and management systems.
 
-The CB is ideal for such deployments.  While some effort is required to integrate with the provisioning automation, once accomplished, deployment of new Kea servers can be nearly automatic.  A small "stub" JSON config, identical for every server, can be used, and all remaining configuration (interfaces, subnets, pools, etc.) loaded from the central CB database.  Any updates to the central CB database are automatically propagated to all Kea instances.  The CB becomes the "single source of truth" for DHCP throughout the organization.
+The CB is ideal for such deployments.  While some effort is required to integrate with the provisioning automation, once accomplished, deployment of new Kea servers can be nearly automatic.  A small "stub" JSON config, identical for every server, can be used, and all remaining configuration (shared networks, subnets, pools, etc.) loaded from the central CB database.  Any updates to the central CB database are automatically propagated to all Kea instances.  The CB becomes the "single source of truth" for DHCP throughout the organization.
 
 .. _cb-limitations:
 
@@ -90,7 +90,7 @@ Config Conflicts
 ^^^^^^^^^^^^^^^^
 
 We strongly recommend against mixing configuration information from the CB and
-JSON.  In other words, do not use both JSON config declarations and CB to
+JSON config file. In other words, do not use both JSON config declarations and CB to
 configure the same types of objects.  Ideally, when using the CB, the Kea
 config files should contain the absolute bare minimum necessary, with
 everything else coming from the CB.
@@ -114,30 +114,23 @@ In short, if you are using the CB, you should use only the CB.
 Incompatible Software
 ^^^^^^^^^^^^^^^^^^^^^
 
-The preceding cautions about conflicting configuration information apply to software-driven configuration sources as well.
+API commands which modify Kea's configuration (other than the CB API) are contraindicated.
+This includes the :ischooklib:`libdhcp_subnet_cmds.so` hook.  Its APIs modify Kea's
+in-memory configuration, and the modifications can only be made persistent by using
+``config-write`` to write a new JSON config file.
 
-Kea supports databases outside of the CB, such as with the ``host-databases``
-directive.  Such databases load their config independently from the CB, and
-will conflict the same way JSON declarations would.  If using the CB,
-such mechanisms should be avoided.
-
-Likewise, API commands which modify Kea's configuration (other than the
-CB API) are contraindicated.  This includes the
-:ischooklib:`libdhcp_subnet_cmds.so` and :ischooklib:`libdhcp_host_cmds.so`
-hooks.  These APIs modify Kea's in-memory configuration, and can only be made
-persistent by using ``config-write`` to write a new JSON config file.
-
-The Stork management suite does not currently support the CB.  Stork makes all
-configuration changes through API avenues which expect to write a new JSON
-file.  Support for the CB is planned for a future release of Stork.
+The `Stork <https://stork.readthedocs.io>`_ management suite does not currently
+support the CB. Stork makes all configuration changes through API avenues which
+expect to write changes into JSON config file. Support for the CB is planned
+for a future release of Stork.
 
 In certain carefully-controlled scenarios, it may be possible to use these
-tools with the CB.  Namely, if they are used in strictly "read-only" fashion,
+tools with the CB. Namely, if they are used in strictly "read-only" fashion,
 to retrieve Kea information, but never to modify it.  However, no protection
 against accidental modification is provided, so this is not recommended.
 
-Implementation
-^^^^^^^^^^^^^^
+Limitations
+^^^^^^^^^^^
 
 Currently, the Kea CB has the following limitations:
 
