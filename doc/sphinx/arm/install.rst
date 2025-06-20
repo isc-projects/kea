@@ -157,6 +157,8 @@ various development include headers and program development tools.
 Building from source code requires the following software installed on
 the system:
 
+-  The development tools meson, ninja, and pkg-config.
+
 -  Boost C++ libraries (https://www.boost.org/). The oldest Boost version
    used for testing is 1.67 (although Kea may also work with older
    versions e.g. 1.66). The Boost system library must also be installed.
@@ -168,8 +170,6 @@ the system:
 -  log4cplus (at least version 1.0.3) development include headers.
 
 -  A C++ compiler (with C++14 support) and standard development headers.
-
--  The development tools automake, libtool, and pkg-config.
 
 -  The MySQL client and the client development libraries, when using the
    ``-D mysql=enabled`` configuration flag to build the Kea MySQL database

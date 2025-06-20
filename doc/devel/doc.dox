@@ -19,7 +19,7 @@ $ meson setup build
 $ meson compile -C build doc
 @endcode
 
-The output files will be generated in the ./build/doc/sphinx/_build directory.
+The output files will be generated in the `./build/doc/sphinx/_build` directory.
 
 The ARM has an appendix that lists all Kea commands. The commands are integrated
 into RST using the tool located at doc/sphinx/api2doc.py. The basic principle
@@ -30,12 +30,20 @@ Those JSON files are loaded by the api2doc.py tool that will generate api.txt
 that will be used by sphinx. There is no need to call this tool explicitly.
 It is called automatically when building the ARM.
 
-The ARM has an appendix with the grammar. If there were new parameters added,
-you can regenerate the grammars and the appendix with the following procedure:
+The ARM has an appendix that lists all Kea messages.
+
+The ARM has an appendix with the grammar.
+
+The ARM has an appendix with various UML diagrams.
+
+If either commands, messages, grammar, or UMLs changed, you can regenerate the
+documentation for each of them with the following procedure:
 
 @code
 $ meson setup build
 $ meson compile -C build grammar
+$ meson compile -C build mes-doc
+$ meson compile -C build uml
 $ meson compile -C build doc
 @endcode
 
@@ -43,6 +51,17 @@ After that, inspect the HTML output and make sure it's ok, review changes in
 \c doc/sphinx/grammar/ and then check in those that are something more than a date
 update. The date is there, so we (and users) can determine if the grammar
 is or isn't out of date.
+
+Sphinx is a Python tool that whas several Python packages. To ensure reproduceability of the
+documentation that it generates, a file named requirements.txt is used to lock the version for
+Sphinx and its dependencies. The file is located at `doc/sphinx/src/requirements.txt`. It can be
+regenerated based on input from `doc/sphinx/src/requirements.in` as long as you have `pip-compile`
+installed with the following procedure:
+
+@code
+$ meson setup build
+$ meson compile -C build update-python-dependencies
+@endcode
 
 @section docsNewCommand Documenting new command
 

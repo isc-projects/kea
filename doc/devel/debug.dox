@@ -10,9 +10,9 @@
 
 @section debugSymbols Enabling debug symbols
 
-The --enable-debug flag can be useful when developing, since it
-makes the compiler produce more abundant debugging information that
-can be read by a debugger.
+There are flags that make the compiler produce more abundant debugging
+information that can be read by a debugger. When `--buildtype=debug` is added
+to `meson setup`, it passes one of these flags to the compiler: `-g`.
 
 Some compilers don't document some of the flags, such as clang for
 -g3. However, practice shows that clang behaves the same way as g++
@@ -20,7 +20,12 @@ in that regard. As an experiment, providing -g4 results in
 `error: unknown argument: '-g4'`, but providing -g3 succesfully
 compiles, and supposedly puts it into effect.
 
-On top of that, the flag enables log4cplus's own logging, and adds
-more sanity checks in DNS code.
+Disabling optimizations via `-O0` is also recommended for debugging.
+
+g++ also provides `-ggdb`.
+
+The `-D tests=enabled` flag besides enabling unit tests, also enables useful
+debugging functionality: log4cplus's own logging, and adds more sanity checks
+in DNS code.
 
 */

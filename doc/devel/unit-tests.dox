@@ -632,4 +632,23 @@ do-something --some --other --optional --parameters "${@}"
 - Never use `eval`. It doesn't preserve original quoting. Have faith that there
 are always good alternatives.
 
+@section regeneratingConfigUnitTests Regenerating configuration unit tests
+
+There are two sets of unit tests that when changed require a bit more laborious procedure for
+regenerating.
+
+- `src/bin/dhcp4/tests/get_config_unittest.cc` generated from `src/bin/dhcp4/tests/get_config_unittest.cc.skel`
+- `src/bin/dhcp6/tests/get_config_unittest.cc` generated from `src/bin/dhcp6/tests/get_config_unittest.cc.skel`
+
+To regenerate, for the DHCPv6 example, start by running `./build/src/bin/dhcp6/tests/make-rebuild.sh`
+and you will be presented with a set of instructions. It does the following:
+
+1. Copies the contents of the `get_config_unittest.cc.skel` file into a temporary `get_config_unittest_rebuild.cc` file.
+2. Instructs you to recompile `kea-dhcp6-tests-extract` which can be done with `meson compile -C build kea-dhcp6-tests-extract`.
+3. Runs `kea-dhcp6-tests-extract` which populates the `x` file.
+4. Instructs you to copy the contents of the `x` file into the `EXTRACTED_CONFIGS` section of `get_config_unittest_rebuild.cc`.
+5. Runs `kea-dhcp6-tests-generate` which populates the `u` file.
+6. Instructs you to copy the contents of the `u` file into the `UNPARSED_CONFIGS` section of `get_config_unittest_rebuild.cc`.
+7. Finally copies `get_config_unittest_rebuild.cc` into `get_config_unittest.cc`.
+
  */

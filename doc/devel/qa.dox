@@ -1,4 +1,4 @@
-// Copyright (C) 2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,19 +28,25 @@ logged in members of the isc-projects organization.
 
 @section ciGitlab Running CI pipeline on Gitlab
 
-There are several jobs configure on gitlab CI:
+There are several jobs configured with Gitlab CI:
 
-- shellcheck
+- are-database-scripts-in-sync
+- bandit
+- check-for-json-errors-in-doc
 - danger
-- dhcpdb_create-upgrade-consistency
 - duplicate-includes
+- duplicate-log-messages
 - missing-api-commands
 - missing-config-h-include
 - missing-git-attribute
+- pycodestyle
+- pylint
+- shellcheck
+- uninstalled-headers
 - sast-analyzer
 - flawfinder-sast
 
-The pipeline can be inspected and configure here:
+The pipeline can be inspected and configured here:
 https://gitlab.isc.org/isc-projects/kea/-/ci/editor
 
 @section ciJenkins Running CI pipeline on Jenkins
@@ -48,5 +54,32 @@ https://gitlab.isc.org/isc-projects/kea/-/ci/editor
 Jenkins is the primary CI environment. It is hosted on AWS. For details,
 see internal QA-DHCP wiki, ask on QA channel on mattermost or take a look at the
 internal `qa-dhcp` repository.
+
+@section ciCppcheck Running Cppcheck locally
+
+There are targets that run the cppcheck static analyzer on the Kea codebase.
+After running the following procedure, you should get an HTML report at `build/report/index.html`:
+
+@code
+$ meson setup build
+$ meson compile -C build cppcheck
+$ meson compile -C build cppcheck-report
+@endcode
+
+@section ciValgrind Running Valgrind locally
+
+To detect memory leaks, you can run unit tests under valgrind locally with the following procedure:
+
+@code
+$ meson setup build
+$ meson test -C build -v --setup valgrind
+@endcode
+
+Alternatively, you can customize the valgrind command with:
+
+@code
+$ meson setup build
+$ meson test -C build -v --wrapper='valgrind --leak-check=full'
+@endcode
 
 */
