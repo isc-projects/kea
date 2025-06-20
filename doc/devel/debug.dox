@@ -17,7 +17,7 @@ to `meson setup`, it passes one of these flags to the compiler: `-g`.
 Some compilers don't document some of the flags, such as clang for
 -g3. However, practice shows that clang behaves the same way as g++
 in that regard. As an experiment, providing -g4 results in
-`error: unknown argument: '-g4'`, but providing -g3 succesfully
+`error: unknown argument: '-g4'`, but providing -g3 successfully
 compiles, and supposedly puts it into effect.
 
 Disabling optimizations via `-O0` is also recommended for debugging.

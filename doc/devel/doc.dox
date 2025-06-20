@@ -52,7 +52,7 @@ After that, inspect the HTML output and make sure it's ok, review changes in
 update. The date is there, so we (and users) can determine if the grammar
 is or isn't out of date.
 
-Sphinx is a Python tool that whas several Python packages. To ensure reproduceability of the
+Sphinx is a Python tool that was several Python packages. To ensure reproducibility of the
 documentation that it generates, a file named requirements.txt is used to lock the version for
 Sphinx and its dependencies. The file is located at `doc/sphinx/src/requirements.txt`. It can be
 regenerated based on input from `doc/sphinx/src/requirements.in` as long as you have `pip-compile`
