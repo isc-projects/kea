@@ -1,4 +1,0 @@
-[build]		andrei
-	Unit tests that require root privileges are now run automatically
-	on "meson test" by having privileges elevated via sudo.
-	(Gitlab #3493)

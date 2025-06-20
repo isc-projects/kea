@@ -48,6 +48,16 @@ is attempting to reconnect automatically.
 An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
+% PGSQL_LB_DELETED_SUBNET4_ID deleted %1 leases that match subnet ID %2.
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
+
+% PGSQL_LB_DELETED_SUBNET6_ID deleted %1 leases that match subnet ID %2.
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
+
 % PGSQL_LB_DELETE_ADDR4 deleting lease for address %1
 Logged at debug log level 50.
 A debug message issued when the server is attempting to delete a lease for
@@ -71,16 +81,6 @@ A debug message issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
-
-% PGSQL_LB_DELETED_SUBNET4_ID deleted %1 leases that match subnet ID %2.
-Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
-respective subnet ID.
-
-% PGSQL_LB_DELETED_SUBNET6_ID deleted %1 leases that match subnet ID %2.
-Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
-respective subnet ID.
 
 % PGSQL_LB_GET4 obtaining all IPv4 leases
 Logged at debug log level 50.

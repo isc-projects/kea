@@ -1,6 +1,0 @@
-[bug]		tmark
-	Corrected an issue which caused config-get to return
-	the full hook library pathname instead of the
-	original configuration value of the `library`
-	parameter.
-	(Gitlab #3937)

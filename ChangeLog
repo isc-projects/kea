@@ -1,3 +1,114 @@
+Kea 3.0.0 (stable) released on June 25, 2025
+
+2375.	[build]		wlodek
+	The library version numbers have been bumped up for the Kea 3.0.0
+	stable release.
+	(Gitlab #3968)
+
+2374.	[doc]		bscott
+	Clarified applicability of Kea Configuration Backend in
+	the ARM.
+	(Gitlab #3881)
+
+2373.	[doc]		marcin
+	Added example subnet selectors to default DHCP configs.
+	(Gitlab #3628)
+
+2372.	[build]		andrei
+	Kea now generates and installs a pkg-config .pc file.
+	(Gitlab #3680)
+
+2371.	[func]		piotrek
+	Added a new argument, '--auth-password-file', which provides
+	a secure method for supplying a password for basic HTTP
+	authentication in kea-shell.
+	(Gitlab #3940)
+
+2370.	[build]		andrei
+	Unit tests that require root privileges are now run automatically
+	on "meson test" by having privileges elevated via sudo.
+	(Gitlab #3493)
+
+2369.	[doc]		tmark
+	Updated list of elements supporting user-context in ARM.
+	(Gitlab #3855)
+
+2368.	[build]		fdupont
+	Added the 'runstatedir' configuration option so by
+	giving '-D runstatedir=run' one can override the 'var/run'
+	default. This variable and its usage are described in
+	GNU Coding Standards or autoconf doc since version 2.70.
+	Note this variable is not in meson built-in options.
+	(Gitlab #3624)
+
+2367.	[func]*		fdupont
+	Changed the default value of the High Availability listener
+	'restrict-commands' configuration flag to true so commands
+	which are not used by the High Availability hook are rejected.
+	(Gitlab #3639)
+
+2366.	[doc]		slawek
+	Described a new shared network name parameter of the subnetX-list
+	commands in ARM.
+	(Gitlab #3926)
+
+2365.	[bug]		fdupont
+	Removed all references to the build directory from
+	scripts when tests configuration option is not enabled.
+	(Gitlab #3007)
+
+2364.	[bug]		tmark
+	Ping check hook library was corrected to skip
+	ping checks when the lease is active or reserved.
+	(Gitlab #3858, #3932)
+
+2363.	[bug]		tmark
+	Corrected an issue which caused config-get to return
+	the full hook library pathname instead of the
+	original configuration value of the `library`
+	parameter.
+	(Gitlab #3937)
+
+2362.	[bug]		tmark
+	Ping check hook library will now route
+	pings across routers. Prior to this it
+	only sent pings to directly connected
+	networks.
+	(Gitlab #3827)
+
+2361.	[bug]		tmark
+	Corrected an issue in logging configuration when
+	parsing "syslog:<facility name>".
+	(Gitlab #3921)
+
+2360.	[func]*		tmark
+	Lease caching is now enabled by default.  The default
+	value for ``cache-threshold`` is 0.25,``cache-max-age``
+	is left unspecified. It may be disabled at the desired
+	scope either by setting ``cache-threshold`` to 0.0 or
+	setting ``cache-max-age`` to 0.
+	(Gitlab #3659)
+
+2359.	[build]		andrei
+	The Autootols build system has been removed and superseded by
+	Meson.
+	(Gitlab #3734)
+
+2358.	[bug]		tmark
+	Fixed an issue in path validation where
+	the opening slash in a root-file path such
+	as "/myfile.log" is discarded causing the server
+	to prepend the supported path to the file name
+	rather than reject the entry.
+	(Gitlab #3906)
+
+2357.	[func]		tmark
+	Security restrictions may now be disabled by adding
+	command line option -X to Kea server invocations.
+	Supported by kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and
+	kea-ctrl-agent.
+	(Gitlab #3902)
+
 2356.	[func]		razvan
 	Updated YANG modules by adding only-in-additional-list,
 	evaluate-additional-classes, client-classes list, ddns-ttl,

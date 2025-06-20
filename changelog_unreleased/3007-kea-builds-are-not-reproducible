@@ -1,4 +1,0 @@
-[bug]		fdupont
-	Removed all references to the build directory from
-	scripts when tests configuration option is not enabled.
-	(Gitlab #3007)

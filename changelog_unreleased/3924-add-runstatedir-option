@@ -1,7 +1,0 @@
-[build]		fdupont
-	Added the 'runstatedir' configuration option so by
-	giving '-D runstatedir=run' one can override the 'var/run'
-	default. This variable and its usage are described in
-	GNU Coding Standards or autoconf doc since version 2.70.
-	Note this variable is not in meson built-in options.
-	(Gitlab #3624)

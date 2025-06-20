@@ -1,4 +1,0 @@
-[doc]		slawek
-	Described a new shared network name parameter of the subnetX-list
-	commands in ARM.
-	(Gitlab #3926)

@@ -1,7 +1,0 @@
-[func]*		tmark
-	Lease caching is now enabled by default.  The default
-	value for ``cache-threshold`` is 0.25,``cache-max-age``
-	is left unspecified. It may be disabled at the desired
-	scope either by setting ``cache-threshold`` to 0.0 or
-	setting ``cache-max-age`` to 0.
-	(Gitlab #3659)

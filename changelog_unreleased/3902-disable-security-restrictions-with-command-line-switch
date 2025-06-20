@@ -1,6 +1,0 @@
-[func]		tmark
-	Security restrictions may now be disabled by adding
-	command line option -X to Kea server invocations.
-	Supported by kea-dhcp4, kea-dhcp6, kea-dhcp-ddns, and
-	kea-ctrl-agent.
-	(Gitlab #3902)

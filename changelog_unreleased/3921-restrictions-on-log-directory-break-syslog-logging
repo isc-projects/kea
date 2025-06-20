@@ -1,4 +1,0 @@
-[bug]		tmark
-	Corrected an issue in logging configuration when
-	parsing "syslog:<facility name>".
-	(Gitlab #3921)

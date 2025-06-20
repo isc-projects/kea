@@ -3084,6 +3084,16 @@ CTRL_AGENT_HTTP_SERVICE_UPDATED
 This informational message indicates that the server has reused existing
 HTTP service on the specified address and port.
 
+CTRL_AGENT_IS_DEPRECATED
+========================
+
+.. code-block:: text
+
+    Kea Control Agent is deprecated. Its function has been moved to Kea servers.
+
+This warning message indicates that the Control Agent has been deprecated.
+All its function has been moved to Kea servers.
+
 CTRL_AGENT_RUN_EXIT
 ===================
 
@@ -3094,6 +3104,20 @@ CTRL_AGENT_RUN_EXIT
 Logged at debug log level 0.
 This is a debug message issued when the Control Agent exits its
 event loop.
+
+CTRL_AGENT_SECURITY_CHECKS_DISABLED
+===================================
+
+.. code-block:: text
+
+    Invoked with command line option -X, Security checks are disabled!!
+
+This warning is emitted when internal security checks normally
+performed by kea-ctrl-agent have been disabled via command line option '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to security vulnerabilities and should only be used
+after consideration.
 
 CTRL_AGENT_STARTED
 ==================
@@ -5805,6 +5829,20 @@ supplied its hostname. The first argument includes the client and the
 transaction identification information. The second argument holds the
 generated hostname.
 
+DHCP4_SECURITY_CHECKS_DISABLED
+==============================
+
+.. code-block:: text
+
+    Invoked with command line option -X, Security checks are disabled!!
+
+This warning is emitted when internal security checks normally
+performed by kea-dhcp4 have been disabled via command line option '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to security vulnerabilities and should only be used
+after careful consideration.
+
 DHCP4_SERVER_FAILED
 ===================
 
@@ -8148,6 +8186,20 @@ to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the
 packet name and type respectively. The fourth argument contains detailed
 packet information.
+
+DHCP6_SECURITY_CHECKS_DISABLED
+==============================
+
+.. code-block:: text
+
+    Invoked with command line option -X, Security checks are disabled!!
+
+This warning is emitted when internal security checks normally
+performed by kea-dhcp6 have been disabled via command line option '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to security vulnerabilities and should only be used
+after careful consideration.
 
 DHCP6_SERVER_FAILED
 ===================
@@ -11330,6 +11382,20 @@ DHCP_DDNS_RUN_EXIT
 Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
 event lo
+
+DHCP_DDNS_SECURITY_CHECKS_DISABLED
+==================================
+
+.. code-block:: text
+
+    Invoked with command line option -X, Security checks are disabled!!
+
+This warning is emitted when internal security checks normally
+performed by kea-dhcp-ddns have been disabled via command line option '-X'.
+This means the server is not enforcing restrictions on resource
+paths or permissions.  This mode of operation may expose your
+environment to security vulnerabilities and should only be used
+after consideration.
 
 DHCP_DDNS_SHUTDOWN_COMMAND
 ==========================
@@ -17089,15 +17155,6 @@ LEASE_CMDS_WIPE4
 The lease4-wipe command has been successful. Parameters of the command
 are logged.
 
-LEASE_CMDS_WIPE4_DEPRECATED
-===========================
-
-.. code-block:: text
-
-    lease4-wipe command is deprecated and it will be removed in the future.
-
-The lease4-wipe command is deprecated and it will be removed in the future.
-
 LEASE_CMDS_WIPE4_FAILED
 =======================
 
@@ -17117,15 +17174,6 @@ LEASE_CMDS_WIPE6
 
 The lease6-wipe command has been successful. Parameters of the command
 are logged.
-
-LEASE_CMDS_WIPE6_DEPRECATED
-===========================
-
-.. code-block:: text
-
-    lease6-wipe command is deprecated and it will be removed in the future.
-
-The lease6-wipe command is deprecated and it will be removed in the future.
 
 LEASE_CMDS_WIPE6_FAILED
 =======================
@@ -17492,17 +17540,6 @@ and the attempt ended in error.  The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
-LEGAL_LOG_PGSQL_NO_TLS_SUPPORT
-==============================
-
-.. code-block:: text
-
-    Attempt to configure TLS (unsupported for PostgreSQL): %1
-
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
 LEGAL_LOG_PGSQL_ROLLBACK
 ========================
 
@@ -17527,18 +17564,6 @@ transactions in this case. This message is issued when data is
 inserted into multiple tables with multiple INSERT statements
 and there may be a need to rollback the whole transaction if
 any of these INSERT statements fail.
-
-LEGAL_LOG_PGSQL_TLS_SUPPORT
-===========================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
 
 LEGAL_LOG_STORE_CLOSED
 ======================
@@ -20327,6 +20352,28 @@ A debug message issued when the server has removed a number of reclaimed
 leases from the database. The number of removed leases is included in the
 message.
 
+MYSQL_LB_DELETED_SUBNET4_ID
+===========================
+
+.. code-block:: text
+
+    deleted %1 leases that match subnet ID %2.
+
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
+
+MYSQL_LB_DELETED_SUBNET6_ID
+===========================
+
+.. code-block:: text
+
+    deleted %1 leases that match subnet ID %2.
+
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
+
 MYSQL_LB_DELETE_ADDR4
 =====================
 
@@ -20519,12 +20566,12 @@ MYSQL_LB_GET_IAID_SUBID_DUID
 
 .. code-block:: text
 
-    obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
+    obtaining IPv6 leases for IAID %1, subnet ID %2, DUID %3, lease type %4
 
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
-(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+(Identity Association ID), subnet ID and DUID (DHCP Unique Identifier).
 
 MYSQL_LB_GET_PAGE4
 ==================
@@ -23157,17 +23204,6 @@ PGSQL_CB_GET_TYPE6
 Logged at debug log level 40.
 Debug message issued when triggered an action to retrieve type
 
-PGSQL_CB_NO_TLS_SUPPORT
-=======================
-
-.. code-block:: text
-
-    Attempt to configure TLS (unsupported for PostgreSQL): %1
-
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
 PGSQL_CB_RECONNECT_ATTEMPT_FAILED4
 ==================================
 
@@ -23247,18 +23283,6 @@ PGSQL_CB_REGISTER_BACKEND_TYPE6
 
 Logged at debug log level 40.
 Debug message issued when triggered an action to register backend
-
-PGSQL_CB_TLS_SUPPORT
-====================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
 
 PGSQL_CB_UNREGISTER_BACKEND_TYPE4
 =================================
@@ -23367,29 +23391,6 @@ PGSQL_HB_DB_RECONNECT_FAILED
 An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
 
-PGSQL_HB_NO_TLS_SUPPORT
-=======================
-
-.. code-block:: text
-
-    Attempt to configure TLS (unsupported for PostgreSQL): %1
-
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
-PGSQL_HB_TLS_SUPPORT
-====================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
-
 PGSQL_INIT_OK
 =============
 
@@ -23475,6 +23476,28 @@ PGSQL_LB_DB_RECONNECT_FAILED
 
 An error message issued when the server failed to reconnect. Loss of connectivity
 is typically a network or database server issue.
+
+PGSQL_LB_DELETED_SUBNET4_ID
+===========================
+
+.. code-block:: text
+
+    deleted %1 leases that match subnet ID %2.
+
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
+
+PGSQL_LB_DELETED_SUBNET6_ID
+===========================
+
+.. code-block:: text
+
+    deleted %1 leases that match subnet ID %2.
+
+Logged at debug log level 50.
+A debug message issued when the server is removing leases which match
+respective subnet ID.
 
 PGSQL_LB_DELETE_ADDR4
 =====================
@@ -23668,12 +23691,12 @@ PGSQL_LB_GET_IAID_SUBID_DUID
 
 .. code-block:: text
 
-    obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
+    obtaining IPv4 leases for IAID %1, subnet ID %2, DUID %3, and lease type %4
 
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for a client with the specified IAID
-(Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+(Identity Association ID), subnet ID and DUID (DHCP Unique Identifier).
 
 PGSQL_LB_GET_PAGE4
 ==================
@@ -23824,17 +23847,6 @@ in the PostgreSQL database returned a negative value. This shows a problem
 which can be fixed only by an offline direct recount on the database.
 This message is issued only once.
 
-PGSQL_LB_NO_TLS_SUPPORT
-=======================
-
-.. code-block:: text
-
-    Attempt to configure TLS (unsupported for PostgreSQL): %1
-
-This error message is printed when TLS support was required in the Kea
-configuration: Kea was built with this feature disabled for PostgreSQL.
-The parameters of the connection are logged.
-
 PGSQL_LB_ROLLBACK
 =================
 
@@ -23845,18 +23857,6 @@ PGSQL_LB_ROLLBACK
 Logged at debug log level 50.
 The code has issued a rollback call. All outstanding transaction will
 be rolled back and not committed to the database.
-
-PGSQL_LB_TLS_SUPPORT
-====================
-
-.. code-block:: text
-
-    Attempt to configure TLS: %1
-
-This informational message is printed when TLS support was required in
-the Kea configuration: The TLS support in PostgreSQL will be initialized but
-its configuration is fully managed outside the C API.
-The parameters of the connection are logged.
 
 PGSQL_LB_UPDATE_ADDR4
 =====================
@@ -26293,7 +26293,7 @@ SUBNET_CMDS_SUBNET6_LIST_FAILED
     failed to return a list of IPv6 subnets: %1
 
 This error message is issued when the Subnet Commands hooks library fails
-to return a list of IPv4 subnets requested with 'subnet6-list' command. The
+to return a list of IPv6 subnets requested with 'subnet6-list' command. The
 reason for failure is provided within the error message. The error message
 will be returned to the controlling client with the error status code.
 

@@ -1,4 +1,4 @@
-// File created from ../src/bin/agent/ca_messages.mes
+// File created from src/bin/agent/ca_messages.mes
 
 #ifndef CA_MESSAGES_H
 #define CA_MESSAGES_H
