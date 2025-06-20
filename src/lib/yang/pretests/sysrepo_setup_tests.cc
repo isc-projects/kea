@@ -36,7 +36,7 @@ string missingModuleText(const string& name, const string& revision) {
         << "Please install the module " << name << ":" << endl
         << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << revision << ".yang" << endl
         << "Or reinstall all modules:" << endl
-        << "$ ./src/share/yang/modules/utils/reinstall.sh -u" << endl
+        << "$ ./build/src/share/yang/modules/utils/reinstall.sh -u" << endl
         << endl;
     return (tmp.str());
 }
@@ -57,7 +57,7 @@ string badRevisionModuleText(const string& name, const string& expected,
         << "$ sysrepoctl -u " << name << endl
         << "$ sysrepoctl -i ./src/share/yang/modules/" << name << "@" << expected << ".yang" << endl
         << "Or reinstall all modules:" << endl
-        << "$ ./src/share/yang/modules/utils/reinstall.sh -u" << endl
+        << "$ ./build/src/share/yang/modules/utils/reinstall.sh -u" << endl
         << endl;
     return (tmp.str());
 }

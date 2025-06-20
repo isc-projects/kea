@@ -205,7 +205,7 @@ flag can also be used to specify a path:
 
 .. code-block:: console
 
-    $ ./src/share/yang/modules/utils/reinstall.sh -s /path/to/sysrepo
+    $ ./build/src/share/yang/modules/utils/reinstall.sh -s /path/to/sysrepo
 
 To individually install all modules:
 
@@ -221,7 +221,7 @@ The installation should look similar to the following:
 
 .. code-block:: console
 
-    $ ./src/share/yang/modules/utils/reinstall.sh
+    $ ./build/src/share/yang/modules/utils/reinstall.sh
     [INF] Connection 2 created.
     [INF] Module "keatest-module" was installed.
     [INF] File "keatest-module@2022-11-30.yang" was installed.
