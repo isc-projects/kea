@@ -456,14 +456,6 @@ Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
 
-% DHCP_DDNS_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
-This warning is emitted when internal security checks normally
-performed by kea-dhcp-ddns have been disabled via command line option '-X'.
-This means the server is not enforcing restrictions on resource
-paths or permissions.  This mode of operation may expose your
-environment to security vulnerabilities and should only be used
-after consideration.
-
 % DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING use of clear text TSIG 'secret' is NOT SECURE: %1 
 This warning message is issued when security enforcement is disabled
 and TSIG key configuration uses clear text 'secret' rather
