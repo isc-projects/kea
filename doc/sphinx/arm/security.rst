@@ -279,7 +279,7 @@ Component-Based Design
 
 The Kea architecture is modular, with separate daemons for separate tasks.
 A Kea deployment may include DHCPv4, DHCPv6, and Dynamic DNS daemons; a Control Agent
-daemon run on each application server; the ``kea-lfc utility`` for doing periodic lease
+daemon run on each application server; the :iscman:`kea-lfc` utility for doing periodic lease
 file cleanup; MySQL and or PostgreSQL databases, run either locally on the application
 servers or accessed over the internal network; a Netconf daemon to perform config and stats
 monitoring of Kea servers; and a Stork monitoring system.
