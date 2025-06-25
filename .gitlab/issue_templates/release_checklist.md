@@ -34,7 +34,7 @@ Some of these checks and updates can be made before the actual freeze.
    * In case of no developers available, it can be done by running: [./tools/bump-lib-versions.sh](https://gitlab.isc.org/isc-projects/kea/-/blob/master/tools/bump-lib-versions.sh).
    * Example command: `./tools/bump-lib-versions.sh`
    * <mark>Stable Release Only</mark>: The target version needs to be provided. Call `./tools/bump-lib-versions.sh Kea-A.B.C` instead.
-1. [ ] <mark>Stable Release Only</mark>: Check SECURITY.md file create ticket if changes are required.
+1. [ ] <mark>Stable, and first of Dev Release</mark>: Check SECURITY.md file create ticket if changes are required.
 1. [ ] Look at the issue numbers in the commit descriptions. Add to ChangeLog a mention of any change with visible impact that had not been mentioned already.
 1. [ ] If any changes have been made to database schemas, then:
    1. [ ] Check that a previously released schema has not been changed.
@@ -181,7 +181,7 @@ Now it's time to publish the code.
         1. Go to `Settings` -> `Default version:` -> choose the new version as default.
         1. Check that https://kea.readthedocs.io/ redirects to the new version.
     1. [ ] <mark>Latest Stable Release Only</mark>: Rebuild the `stable` version. Go to [the stable build](https://app.readthedocs.org/projects/kea/builds/?version__slug=stable), click `Rebuild version`.
- 1. [ ] Create an issue and a merge request to bump up Kea version in `configure.ac` to the next development version which could be, based on just released version `A.B.C`:
+ 1. [ ] Create an issue and a merge request to bump up Kea version in `meson.build` to the next development version which could be, based on just released version `A.B.C`:
     * `A.B.z-git` where `z == C + 1` most of the time, or
     * `A.y.0-git` where `y == B + 2` if a new development series starts, or
     * `x.1.0-git` where `x == A + 1` when the released minor version `b` is 9 and `A.B.C` was the last version in the development series and a new development version is coming up next.
