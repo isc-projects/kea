@@ -194,7 +194,7 @@ Now it's time to publish the code.
 1. [ ] Write blog article (if a major release).
 1. [ ] Check that the tarballs are available on Cloudsmith, since we are downloading from there, not downloads or ftp.
 1. [ ] Publish links to downloads on the ISC website. Update release dates. Check the modal messages and update if necessary.
-1. [ ] <mark>Stable Releases Only</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated, then update the Kea document in the SF portal and notify support customers that this new private repo exists.
+1. [ ] <mark>Stable Releases Only</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated.
 1. [ ] If a new Cloudsmith repository is used, make sure that the Zapier scripts are updated.
    * If those are not updated, there was an error made during preparation for new stable release. Please contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
