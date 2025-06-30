@@ -312,6 +312,8 @@ Type "help" for help.
 
 postgres=# CREATE USER keatest_readonly WITH PASSWORD 'keatest';
 CREATE ROLE
+postgres=# CREATE USER keatest_secure WITH ENCRYPTED PASSWORD 'keatest';
+CREATE ROLE
 postgres=# \q
 
 $ psql -U keatest
@@ -320,6 +322,8 @@ psql (9.1.12)
 Type "help" for help.
 
 keatest=> ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;
+ALTER DEFAULT PRIVILEGES
+keatest=> ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_secure;
 ALTER DEFAULT PRIVILEGES
 keatest=> \q
 @endverbatim
@@ -341,6 +345,8 @@ SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, bits: 256, co
 Type "help" for help.
 
 keatest=> GRANT SELECT ON ALL TABLES IN SCHEMA public TO keatest_readonly;
+GRANT
+keatest=> GRANT SELECT ON ALL TABLES IN SCHEMA public TO keatest_secure;
 GRANT
 keatest=> \q
 @endverbatim
@@ -404,6 +410,49 @@ local   all             postgres                                trust
   that Kea has been build with the "-D postgresql" switch (see the installation
   section in the <a href="https://kea.readthedocs.io">Kea Administrator
   Reference Manual</a>).
+
+ @subsection pgsqlUnitTestsTLS PostgreSQL Database with SSL/TLS
+
+  PostgreSQL can be configured with SSL/TLS support using OpenSSL.
+  This is easy to verify using the:
+
+@verbatim
+postgres=# select name, setting from pg_settings where name like 'ssl';
+                  name                  |                    setting
+----------------------------------------+-----------------------------------------------
+ ssl                                    | on
+@endverbatim
+
+The value of this PostgreSQL global variable is reflected by the
+KEA_PGSQL_HAVE_SSL environment variable.
+
+The keatest_secure user requires X509 so a client certificate. Of course
+in production a stricter requirement should be used, in particular when
+a client certificate should be bound to a particular user.
+
+PostgreSQL unit tests reuse the asiolink library setup. This postgresql.conf
+configuration file works with PostgreSQL 16.9:
+
+@verbatim
+# - SSL -
+
+ssl = on
+ssl_ca_file = '/etc/postgresql/16/main/conf.d/kea-ca.crt'
+ssl_cert_file = '/etc/postgresql/16/main/conf.d/kea-server.crt'
+ssl_key_file = '/etc/postgresql/16/main/conf.d/kea-server.key'
+@endverbatim
+
+
+Files must have right permissions for PostgreSQL the server to start.
+
+@verbatim
+chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-ca.crt
+chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-server.crt
+chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-server.key
+chmod og-rwx /etc/postgresql/16/main/conf.d/kea-ca.crt
+chmod og-rwx /etc/postgresql/16/main/conf.d/kea-server.crt
+chmod og-rwx /etc/postgresql/16/main/conf.d/kea-server.key
+@endverbatim
 
 @section unitTestsKerberos Kerberos Configuration for Unit Tests
 

@@ -284,6 +284,20 @@ public:
     }
 };
 
+/// @brief Test fixture class for secure connection.
+class PgSqlSecureConnectionTest : public ::testing::Test {
+public:
+
+    /// @brief Check if SSL/TLS support is available and configured.
+    bool hasPgSQLTls() {
+        std::string tls = getPgSQLTlsEnv();
+        if (tls.empty()) {
+            tls = getPgSQLTlsServer();
+        }
+        return (tls == "YES");
+    }
+};
+
 /// @brief Verifies basics of input parameter sanity checking and statement
 /// execution enforced by executePreparedStatement.  Higher order tests
 /// verify actual data CRUD results.
@@ -658,6 +672,162 @@ TEST_F(PgSqlConnectionTest, tcpUserTimeoutInvalid) {
                                             INVALID_TIMEOUT_1);
     PgSqlConnection conn(DatabaseConnection::parse(conn_str));
     EXPECT_THROW(conn.getConnParameters(), DbInvalidTimeout);
+}
+
+/// @brief Check the SSL/TLS protected connection.
+TEST_F(PgSqlSecureConnectionTest, Tls) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+    ASSERT_NO_THROW_LOG(conn.openDatabase());
+}
+
+/// @brief Check the SSL/TLS protected connection still requires the password.
+TEST_F(PgSqlSecureConnectionTest, TlsInvalidPassword) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            INVALID_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            "connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  "
+            "password authentication failed for user \"keatest_secure\"",
+        };
+        for (string const& i : expected) {
+            if (message.find(i) != string::npos) {
+                return;
+            }
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection refuse default passwords.
+TEST_F(PgSqlSecureConnectionTest, TlsDefaultPassword) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            DEFAULT_PASSWORD, 0, 0,
+                                            VALID_CERT, VALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (isc::data::DefaultCredential const& exception) {
+        string const message(exception.what());
+        if (message == "illegal use of a default value as credential") {
+            return;
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection refuse default passwords.
+TEST_F(PgSqlSecureConnectionTest, noTlsDefaultPassword) {
+    SKIP_IF(hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_USER,
+                                            DEFAULT_PASSWORD);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (isc::data::DefaultCredential const& exception) {
+        string const message(exception.what());
+        if (message == "illegal use of a default value as credential") {
+            return;
+        }
+        ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection requires crypto parameters.
+TEST_F(PgSqlSecureConnectionTest, TlsNoCrypto) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            VALID_PASSWORD);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        string const expected("Access denied for user 'keatest_secure'");
+        if (message.find(expected) == string::npos) {
+            ADD_FAILURE()
+                << "Expected exception message '" << expected << ".*', got '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection requires valid key.
+TEST_F(PgSqlSecureConnectionTest, TlsInvalidKey) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, INVALID_KEY, VALID_CA,
+                                            VALID_CIPHER);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        vector<string> const expected{
+            string("connection to server at \"127.0.0.1\", port 5432 failed: could not load private key file \"") +
+                   TEST_CA_DIR "/kea-other.key\": key values mismatch\n",
+        };
+        if (!std::count(expected.begin(), expected.end(), message)) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
+}
+
+/// @brief Check the SSL/TLS protected connection requires a key.
+TEST_F(PgSqlSecureConnectionTest, TlsNoKey) {
+    SKIP_IF(!hasPgSQLTls());
+    std::string conn_str = connectionString(PGSQL_VALID_TYPE, VALID_NAME,
+                                            VALID_HOST_TCP, VALID_SECURE_USER,
+                                            VALID_PASSWORD, 0, 0,
+                                            VALID_CERT, 0, VALID_CA,
+                                            VALID_CIPHER);
+    PgSqlConnection conn(DatabaseConnection::parse(conn_str));
+
+    try {
+        conn.openDatabase();
+    } catch (DbOpenError const& exception) {
+        string const message(exception.what());
+        string expected("connection to server at \"127.0.0.1\", port 5432 failed: certificate present, but not private key file ");
+        if (message.find(expected) == string::npos) {
+            ADD_FAILURE() << "Unexpected exception message '" << message << "'";
+        }
+    } catch (exception const& exception) {
+        ADD_FAILURE() << exception.what();
+    }
 }
 
 /// @brief Check ensureSchemaVersion when schema is not created.

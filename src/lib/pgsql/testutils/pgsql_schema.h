@@ -98,6 +98,24 @@ bool wipePgSQLData(bool show_err = false);
 void runPgSQLScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
+/// @brief Get the SSL/TLS support status from the environment
+///
+/// The environment variable is KEA_PGSQL_HAVE_SSL
+std::string getPgSQLTlsEnv();
+
+/// @brief Get the SSL/TLS support status from the server
+/// @note the returned value is set in the environment
+std::string getPgSQLTlsServer();
+
+/// @brief Return true if the server has been configured with proper SSL/TLS
+/// credentials, false otherwise
+bool isPgSQLTlsConfigured();
+
+/// @brief Get the server global variable value
+///
+/// @param variable The server global variable name
+std::string getPgSQLTlsServerVariable(std::string variable);
+
 };
 };
 };

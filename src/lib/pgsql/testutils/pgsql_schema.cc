@@ -98,6 +98,66 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
     }
 }
 
+string getPgSQLTlsEnv() {
+    const string name("KEA_PGSQL_HAVE_SSL");
+    const char* val = getenv(name.c_str());
+    return (val ? string(val) : "");
+}
+
+string getPgSQLTlsServerVariable(string variable) {
+    DatabaseConnection::ParameterMap parameters =
+        DatabaseConnection::parse(validPgSQLConnectionString());
+    PgSqlConnection conn(parameters);
+    conn.openDatabase();
+    string sql("select name, setting from pg_settings where name like '");
+    sql += variable;
+    sql += "';";
+    PgSqlResult r(PQexec(conn, sql.c_str()));
+    if (PQresultStatus(r) != PGRES_TUPLES_OK) {
+        isc_throw(DbOperationError, sql << ": " << PQerrorMessage(conn));
+    }
+    if (r.getRows() != 1) {
+        isc_throw(DbOperationError, sql << " returned " << r.getRows() << " rows, expected one row");
+    }
+    string fetched_str;
+    PgSqlExchange::getColumnValue(r, 0, 0, fetched_str);
+    // first column is variable name e.g. 'ssl', second is the value.
+    if (fetched_str != variable) {
+        isc_throw(DbOperationError,
+                  sql << " returned a wrong name '" << fetched_str
+                  << "', expected '" << variable << "'");
+    }
+    PgSqlExchange::getColumnValue(r, 0, 1, fetched_str);
+    return (fetched_str);
+}
+
+bool isPgSQLTlsConfigured() {
+    if (getPgSQLTlsServerVariable("ssl_ca_file").find("kea-ca.crt") == string::npos) {
+        return (false);
+    }
+    if (getPgSQLTlsServerVariable("ssl_cert_file").find("kea-server.crt") == string::npos) {
+        return (false);
+    }
+    if (getPgSQLTlsServerVariable("ssl_key_file").find("kea-server.key") == string::npos) {
+        return (false);
+    }
+    return (true);
+}
+
+string getPgSQLTlsServer() {
+    string value = getPgSQLTlsServerVariable("ssl");
+    if (value == "on") {
+        if (!isPgSQLTlsConfigured()) {
+            value = "UNCONFIGURED";
+        } else {
+            value = "YES";
+        }
+    }
+    const string env("KEA_PGSQL_HAVE_SSL");
+    static_cast<void>(setenv(env.c_str(), value.c_str(), 1));
+    return (value);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

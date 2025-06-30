@@ -94,9 +94,9 @@ public:
     ///       - password
     ///       - port
     ///       - user
-    ///       - trust-anchor (MySQL only)
-    ///       - cert-file (MySQL only)
-    ///       - key-file (MySQL only)
+    ///       - trust-anchor
+    ///       - cert-file
+    ///       - key-file
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries

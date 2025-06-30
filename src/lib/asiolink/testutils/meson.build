@@ -47,3 +47,9 @@ elif CRYPTO_DEP.name() == botan.name()
         link_with: LIBS_BUILT_SO_FAR,
     )
 endif
+
+# PostgreSQL requires restricted permissions on the key files.
+configure_file(
+    command: ['chmod', 'og-rwx', f'@TEST_CA_DIR@/kea-other.key'],
+    output: f'kea-other.key',
+)

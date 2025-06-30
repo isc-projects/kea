@@ -634,6 +634,18 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 }
 
+\"key-password\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
+        return isc::dhcp::Dhcp4Parser::make_KEY_PASSWORD(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("key-password", driver.loc_);
+    }
+}
+
 \"cipher-list\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:

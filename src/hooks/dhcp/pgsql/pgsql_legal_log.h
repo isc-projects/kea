@@ -93,6 +93,10 @@ public:
     ///       - password
     ///       - port
     ///       - user
+    ///       - trust-anchor
+    ///       - cert-file
+    ///       - key-file
+    ///       - key-password (PostgreSQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries
     ///       - on-fail

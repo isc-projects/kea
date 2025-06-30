@@ -112,6 +112,7 @@ using namespace std;
   TRUST_ANCHOR "trust-anchor"
   CERT_FILE "cert-file"
   KEY_FILE "key-file"
+  KEY_PASSWORD "key-password"
   CIPHER_LIST "cipher-list"
 
   VALID_LIFETIME "valid-lifetime"
@@ -1136,6 +1137,7 @@ database_map_param: database_type
                   | trust_anchor
                   | cert_file
                   | key_file
+                  | key_password
                   | cipher_list
                   | unknown_map_entry
                   ;
@@ -1294,6 +1296,15 @@ key_file: KEY_FILE {
 } COLON STRING {
     ElementPtr key(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("key-file", key);
+    ctx.leave();
+};
+
+key_password: KEY_PASSWORD {
+    ctx.unique("key-password", ctx.loc2pos(@1));
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr key_pass(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("key-password", key_pass);
     ctx.leave();
 };
 

@@ -59,6 +59,15 @@ public:
         isc::db::test::destroyPgSQLSchema();
     }
 
+    /// @brief Check if SSL/TLS support is available and configured.
+    bool hasPgSQLTls() {
+        std::string tls = getPgSQLTlsEnv();
+        if (tls.empty()) {
+            tls = getPgSQLTlsServer();
+        }
+        return (tls == "YES");
+    }
+
     /// @brief Process output
     ///
     /// Remove heading and trailing lines, trim column, etc
@@ -179,6 +188,54 @@ TEST_F(PgSqlTest, open) {
     params["name"] = "keatest";
     params["user"] = "keatest";
     params["password"] = "keatest";
+    ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
+
+    // Check the type is postgresql
+    EXPECT_EQ("postgresql", store_->getType());
+
+    // Open the database
+    ASSERT_NO_THROW_LOG(store_->open());
+
+    // Close does nothing
+    EXPECT_NO_THROW_LOG(store_->close());
+
+    // Destructor close the database
+    EXPECT_NO_THROW_LOG(store_.reset());
+}
+
+/// @brief Tests opening PgSqlStore with invalid SSL/TLS
+TEST_F(PgSqlTest, invalidTls) {
+    // Construct the store_
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest_secure";
+    params["password"] = "keatest";
+    params["cert-file"] = TEST_CA_DIR "/kea-client.crt";
+    params["key-file"] = TEST_CA_DIR "/kea-other.key";
+    params["trust-anchor"] = TEST_CA_DIR ;
+    ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
+
+    // Check the type is postgresql
+    EXPECT_EQ("postgresql", store_->getType());
+
+    // Open the database
+    EXPECT_THROW(store_->open(), DbOpenError);
+}
+
+/// @brief Tests opening and closing PgSqlStore with SSL/TLS
+TEST_F(PgSqlTest, tls) {
+    SKIP_IF(!hasPgSQLTls());
+
+    // Construct the store_
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["user"] = "keatest_secure";
+    params["password"] = "keatest";
+    // Some PgSQL versions require to enforce TCP
+    params["host"] = "127.0.0.1";
+    params["cert-file"] = TEST_CA_DIR "/kea-client.crt";
+    params["key-file"] = TEST_CA_DIR "/kea-client.key";
+    params["trust-anchor"] = TEST_CA_DIR "/kea-ca.crt";
     ASSERT_NO_THROW_LOG(store_.reset(new PgSqlStore(params)));
 
     // Check the type is postgresql

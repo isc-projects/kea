@@ -502,7 +502,19 @@
 
                 // TCP user timeout while communicating with the database.
                 // It is specified in seconds.
-                "tcp-user-timeout": 100
+                "tcp-user-timeout": 100,
+
+                // Trust anchor aka certificate authority file or directory.
+                "trust-anchor": "my-ca",
+
+                // Client certificate file name.
+                "cert-file": "my-cert",
+
+                // Private key file name.
+                "key-file": "my-key",
+
+                // Private key password.
+                "key-password": "my-key-pass"
             }
         ],
 

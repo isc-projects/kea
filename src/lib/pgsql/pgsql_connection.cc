@@ -395,6 +395,48 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     }
     dbconnparameters += oss.str();
 
+    bool tls = false;
+
+    string sca;
+    try {
+        sca = getParameter("trust-anchor");
+        tls = true;
+        dbconnparameters += " sslrootcert = " + sca;
+    } catch (...) {
+        // No trust anchor
+    }
+
+    string scert;
+    try {
+        scert = getParameter("cert-file");
+        tls = true;
+        dbconnparameters += " sslcert = " + scert;
+    } catch (...) {
+        // No client certificate file
+    }
+
+    string skey;
+    try {
+        skey = getParameter("key-file");
+        tls = true;
+        dbconnparameters += " sslkey = " + skey;
+    } catch (...) {
+        // No private key file
+    }
+
+    string skeypassword;
+    try {
+        skeypassword = getParameter("key-password");
+        tls = true;
+        dbconnparameters += " sslpassword = " + skeypassword;
+    } catch (...) {
+        // No password.
+    }
+
+    if (tls) {
+        dbconnparameters += " sslmode = require";
+    }
+
     return (dbconnparameters);
 }
 
@@ -406,7 +448,7 @@ PgSqlConnection::openDatabase() {
 void
 PgSqlConnection::openDatabaseInternal(bool logging) {
     std::string dbconnparameters = getConnParametersInternal(logging);
-    // Connect to Postgres, saving the low level connection pointer
+    // Connect to PostgreSQL, saving the low level connection pointer
     // in the holder object
     PGconn* new_conn = PQconnectdb(dbconnparameters.c_str());
     if (!new_conn) {

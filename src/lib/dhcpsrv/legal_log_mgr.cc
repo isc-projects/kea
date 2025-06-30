@@ -67,7 +67,7 @@ LegalLogMgr::parseDatabase(const ConstElementPtr& parameters, DatabaseConnection
     // Strings
     for (char const* const& key : {
          "type", "user", "password", "host", "name", "trust-anchor",
-         "cert-file", "key-file", "cipher-list" }) {
+         "cert-file", "key-file", "key-password", "cipher-list" }) {
         ConstElementPtr const value(parameters->get(key));
         if (value) {
             db_parameters.emplace(key, value->stringValue());

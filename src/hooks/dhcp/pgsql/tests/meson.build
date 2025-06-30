@@ -20,6 +20,7 @@ dhcp_pgsql_lib_tests = executable(
     'pgsql_lease_extended_info_unittest.cc',
     'pgsql_lease_mgr_unittest.cc',
     'run_unittests.cc',
+    cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP, POSTGRESQL_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_pgsql_archive, libs_testutils, kea_testutils_lib] + LIBS_BUILT_SO_FAR,
