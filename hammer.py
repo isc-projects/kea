@@ -2420,7 +2420,7 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
 
         _check_installed_rpm_or_debs(
             ['kea-ctrl-agent.service'],
-            "Expected a file at path '/etc/kea/kea-api-password'",
+            "Expected a file at path '/etc/kea/kea-api-user'",
             expect_success_on_start=False,
         )
 
@@ -2430,6 +2430,7 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
         # Reset systemd's rate limit period. Redundant, but just to be safe.
         execute('sudo systemctl reset-failed kea-ctrl-agent.service', raise_error=False)
 
+        execute('echo kea-api-user | sudo tee /etc/kea/kea-api-user > /dev/null')
         execute('sudo touch /etc/kea/kea-api-password')
 
         # check if kea services can be started
@@ -2510,7 +2511,7 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
 
         _check_installed_rpm_or_debs(
             ['isc-kea-ctrl-agent.service'],
-            "Expected a file at path '/etc/kea/kea-api-password'",
+            "Expected a file at path '/etc/kea/kea-api-user'",
             expect_success_on_start=False,
         )
 
@@ -2520,6 +2521,7 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
         # Reset systemd's rate limit period. Redundant, but just to be safe.
         execute('sudo systemctl reset-failed isc-kea-ctrl-agent.service')
 
+        execute('echo kea-api-user | sudo tee /etc/kea/kea-api-user > /dev/null')
         execute('sudo touch /etc/kea/kea-api-password')
 
         # check if kea services can be started
@@ -2556,8 +2558,9 @@ def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_versi
         exitcode, _ = execute('sudo rc-service kea-ctrl-agent start', capture=True, raise_error=False)
         assert exitcode == 1
         _, logs = execute('sudo cat /var/log/kea/kea-ctrl-agent.log', capture=True)
-        assert "Expected a file at path '/etc/kea/kea-api-password'" in logs
+        assert "Expected a file at path '/etc/kea/kea-api-user'" in logs
 
+        execute('echo kea-api-user | sudo tee /etc/kea/kea-api-user > /dev/null')
         execute('sudo touch /etc/kea/kea-api-password')
 
         # check if kea services can be started
