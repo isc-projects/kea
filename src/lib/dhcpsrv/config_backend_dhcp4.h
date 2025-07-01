@@ -570,11 +570,14 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const uint16_t code,
-                  const std::string& space) = 0;
+                  const std::string& space,
+                  ClientClassesPtr client_classes = ClientClassesPtr()) = 0;
 
     /// @brief Deletes shared network level option.
     ///
@@ -585,12 +588,15 @@ public:
     /// @param shared_network_name Name of the shared network which option
     /// belongs to.
     /// @param code Code of the option to be deleted.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @param space Option space of the option to be deleted.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
-                  const std::string& space) = 0;
+                  const std::string& space,
+                  ClientClassesPtr client_classes = ClientClassesPtr()) = 0;
 
     /// @brief Deletes subnet level option.
     ///
@@ -602,12 +608,15 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const SubnetID& subnet_id,
                   const uint16_t code,
-                  const std::string& space) = 0;
+                  const std::string& space,
+                  ClientClassesPtr client_classes = ClientClassesPtr()) = 0;
 
     /// @brief Deletes pool level option.
     ///
@@ -621,13 +630,16 @@ public:
     /// deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const asiolink::IOAddress& pool_start_address,
                   const asiolink::IOAddress& pool_end_address,
                   const uint16_t code,
-                  const std::string& space) = 0;
+                  const std::string& space,
+                  ClientClassesPtr client_classes = ClientClassesPtr()) = 0;
 
     /// @brief Deletes global parameter.
     ///

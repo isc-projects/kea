@@ -1175,13 +1175,15 @@ TestConfigBackendDHCPv4::deleteAllOptionDefs4(const db::ServerSelector& server_s
 uint64_t
 TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto tag = getServerTag(server_selector);
     uint64_t erased = 0;
     for (auto option_it = options_.begin(); option_it != options_.end(); ) {
         if ((option_it->option_->getType() == code) &&
             (option_it->space_name_ == space) &&
-            (option_it->hasServerTag(ServerTag(tag)))) {
+            (option_it->hasServerTag(ServerTag(tag))) &&
+            (!client_classes || (option_it->client_classes_ == *client_classes))) {
             option_it = options_.erase(option_it);
             ++erased;
         } else {
@@ -1195,7 +1197,8 @@ uint64_t
 TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network_name);
 
@@ -1223,10 +1226,16 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
             }
         }
     }
+
+
     if (!found) {
         isc_throw(BadValue, "attempted to delete option in a "
                   "shared network " << shared_network_name
                   << " not present in a selected server");
+    }
+
+    if (client_classes) {
+        return (shared_network->getCfgOption()->del(space, code, *client_classes));
     }
 
     return (shared_network->getCfgOption()->del(space, code));
@@ -1236,7 +1245,8 @@ uint64_t
 TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
 
@@ -1270,6 +1280,10 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                   << " not present in a selected server");
     }
 
+    if (client_classes) {
+        return (subnet->getCfgOption()->del(space, code, *client_classes));
+    }
+
     return (subnet->getCfgOption()->del(space, code));
 }
 
@@ -1278,7 +1292,8 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                                        const asiolink::IOAddress& pool_start_address,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto not_in_selected_servers = false;
     for (auto const& subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
@@ -1308,6 +1323,10 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                 not_in_selected_servers = true;
                 continue;
             }
+        }
+
+        if (client_classes) {
+            return (pool->getCfgOption()->del(space, code, *client_classes));
         }
 
         return (pool->getCfgOption()->del(space, code));

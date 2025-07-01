@@ -1692,6 +1692,7 @@ public:
         in_bindings.add(tag);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1761,6 +1762,7 @@ public:
         in_bindings.add(subnet_id);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1853,6 +1855,7 @@ public:
         in_bindings.add(pool_id);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1924,6 +1927,7 @@ public:
         in_bindings.add(shared_network_name);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // Start transaction.
         PgSqlTransaction transaction(conn_);
@@ -1991,6 +1995,7 @@ public:
         in_bindings.add(class_name);
         in_bindings.add(option->option_->getType());
         in_bindings.addOptional(option->space_name_);
+        addClientClassesBinding(in_bindings, option->client_classes_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -2093,13 +2098,16 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(code);
         in_bindings.add(space);
+        addClientClassesForWhereClause(in_bindings, client_classes);
 
         // Run DELETE.
         return (deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
@@ -2117,15 +2125,18 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const SubnetID& subnet_id,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(subnet_id);
         in_bindings.add(code);
         in_bindings.add(space);
+        addClientClassesForWhereClause(in_bindings, client_classes);
 
         // Run DELETE.
         return (deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SUBNET_ID,
@@ -2143,17 +2154,20 @@ public:
     /// @param pool_end_address Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption4(const db::ServerSelector& server_selector,
                            const IOAddress& pool_start_address,
                            const IOAddress& pool_end_address,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.addInet4(pool_start_address);
         in_bindings.addInet4(pool_end_address);
         in_bindings.add(code);
         in_bindings.add(space);
+        addClientClassesForWhereClause(in_bindings, client_classes);
 
         // Run DELETE.
         return (deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_POOL_RANGE,
@@ -2171,15 +2185,18 @@ public:
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption4(const db::ServerSelector& server_selector,
                            const std::string& shared_network_name,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(shared_network_name);
         in_bindings.add(code);
         in_bindings.add(space);
+        addClientClassesForWhereClause(in_bindings, client_classes);
 
         // Run DELETE.
         return (deleteTransactional(PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
@@ -4013,7 +4030,7 @@ TaggedStatementArray tagged_statements = { {
     // Update existing global option.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4032,15 +4049,16 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 15 server_tag
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
+            OID_VARCHAR     // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4",
-        PGSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
     },
 
     // Update existing subnet level option.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SUBNET_ID,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4058,16 +4076,17 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 14 client_classes
             OID_INT8,       // 15 subnet_id (of option to update)
             OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_VARCHAR,    // 17 space (of option to update)
+            OID_VARCHAR     // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_SUBNET_ID",
-        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 1 AND o.dhcp4_subnet_id = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 1 AND o.dhcp4_subnet_id = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
     },
 
     // Update existing pool level option.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_POOL_ID,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4085,16 +4104,17 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 14 client_classes
             OID_INT8,       // 15 pool_id (of option to update)
             OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_VARCHAR,    // 17 space (of option to update)
+            OID_VARCHAR     // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_POOL_ID",
-        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 5 AND o.pool_id = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 5 AND o.pool_id = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
     },
 
     // Update existing shared network level option.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SHARED_NETWORK,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4112,16 +4132,17 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT,       // 14 client_classes
             OID_VARCHAR,    // 15 shared_network_name (of option to update)
             OID_INT2,       // 16 code (of option to update)
-            OID_VARCHAR     // 17 space (of option to update)
+            OID_VARCHAR,    // 17 space (of option to update)
+            OID_VARCHAR     // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_SHARED_NETWORK",
-        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
     },
 
     // Update existing client class level option.
     {
         // PgSqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_CLIENT_CLASS,
-        17,
+        18,
         {
             OID_INT2,       //  1 code
             OID_BYTEA,      //  2 value
@@ -4140,9 +4161,10 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 15 dhcp_client_class (of option to update)
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
+            OID_VARCHAR     // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_CLIENT_CLASS",
-        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $15 AND o.code = $16 AND o.space = $17)
+        PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
     },
 
     // Update existing client class with specifying its position.
@@ -4450,14 +4472,16 @@ TaggedStatementArray tagged_statements = { {
     // Delete single global option.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
-        3,
+        4,
         {
             OID_VARCHAR,    // 1 server_tag
             OID_INT2,       // 2 code
-            OID_VARCHAR     // 3 space
+            OID_VARCHAR,    // 3 space
+            OID_TEXT        // 4 client_classes
         },
         "DELETE_OPTION4",
-        PGSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0 AND o.code = $2 AND o.space = $3)
+        PGSQL_DELETE_OPTION_WITH_TAG(dhcp4, AND o.scope_id = 0 AND o.code = $2 AND o.space = $3
+                                     AND o.client_classes LIKE $4)
     },
 
     // Delete all global options which are unassigned to any servers.
@@ -4474,43 +4498,49 @@ TaggedStatementArray tagged_statements = { {
     // Delete single option from a subnet.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SUBNET_ID,
-        3,
+        4,
         {
-            OID_INT8,   // 1 subnet_id
-            OID_INT2,   // 2 code
-            OID_VARCHAR // 3 space
+            OID_INT8,       // 1 subnet_id
+            OID_INT2,       // 2 code
+            OID_VARCHAR,    // 3 space
+            OID_TEXT        // 4 client_classes
         },
         "DELETE_OPTION4_SUBNET_ID",
         PGSQL_DELETE_OPTION_NO_TAG(dhcp4,
-            WHERE o.scope_id = 1 AND o.dhcp4_subnet_id = $1 AND o.code = $2 AND o.space = $3)
+            WHERE o.scope_id = 1 AND o.dhcp4_subnet_id = $1 AND o.code = $2 AND o.space = $3
+                  AND o.client_classes LIKE $4)
     },
 
     // Delete single option from a pool.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_POOL_RANGE,
-        4,
+        5,
         {
-            OID_TEXT,   // 1 start_address - cast as inet
-            OID_TEXT,   // 2 start_address - cast as inet
-            OID_INT2,   // 3 code
-            OID_VARCHAR // 4 space
+            OID_TEXT,       // 1 start_address - cast as inet
+            OID_TEXT,       // 2 start_address - cast as inet
+            OID_INT2,       // 3 code
+            OID_VARCHAR,    // 4 space
+            OID_TEXT        // 5 client_classes
         },
         "DELETE_OPTION4_POOL_RANGE",
-        PGSQL_DELETE_OPTION_POOL_RANGE(dhcp4, o.scope_id = 5 AND o.code = $3 AND o.space = $4)
+        PGSQL_DELETE_OPTION_POOL_RANGE(dhcp4, o.scope_id = 5 AND o.code = $3 AND o.space = $4
+                                       AND o.client_classes LIKE $5)
     },
 
     // Delete single option from a shared network.
     {
         // PgSqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
-        3,
+        4,
         {
             OID_VARCHAR,    // 1 shared_network_name
             OID_INT2,       // 2 code
-            OID_VARCHAR     // 3 space
+            OID_VARCHAR,    // 3 space
+            OID_TEXT        // 4 client_classes
         },
         "DELETE_OPTION4_SHARED_NETWORK",
         PGSQL_DELETE_OPTION_NO_TAG(dhcp4,
-            WHERE o.scope_id = 4 AND o.shared_network_name = $1 AND o.code = $2 AND o.space = $3)
+            WHERE o.scope_id = 4 AND o.shared_network_name = $1 AND o.code = $2 AND o.space = $3
+                  AND o.client_classes LIKE $4)
     },
 
     // Delete options belonging to a subnet.
@@ -5163,10 +5193,11 @@ PgSqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_sele
 uint64_t
 PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        ClientClassesPtr client_classes) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4)
         .arg(code).arg(space);
-    uint64_t result = impl_->deleteOption4(server_selector, code, space);
+    uint64_t result = impl_->deleteOption4(server_selector, code, space, client_classes);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4_RESULT)
         .arg(result);
     return (result);
@@ -5176,14 +5207,15 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4)
         .arg(shared_network_name).arg(code).arg(space);
     uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), shared_network_name,
-                                           code, space);
+                                           code, space, client_classes);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_SHARED_NETWORK_OPTION4_RESULT)
         .arg(result);
     return (result);
@@ -5193,13 +5225,15 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4)
         .arg(subnet_id).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), subnet_id, code, space);
+    uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), subnet_id, code, space,
+                                           client_classes);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_SUBNET_ID_OPTION4_RESULT)
         .arg(result);
     return (result);
@@ -5210,14 +5244,15 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const asiolink::IOAddress& pool_start_address,
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION4)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
     uint64_t result = impl_->deleteOption4(ServerSelector::ANY(), pool_start_address,
-                                           pool_end_address, code, space);
+                                           pool_end_address, code, space, client_classes);
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_BY_POOL_OPTION4_RESULT)
         .arg(result);
     return (result);

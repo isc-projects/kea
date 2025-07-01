@@ -1454,4 +1454,201 @@ TEST_F(CfgOptionTest, allowedForClientClasses) {
     }
 }
 
+TEST_F(CfgOptionTest, optionsWithClientClasses) {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint16_t value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 777,  1, "cc-one"   },
+        { 777,  3, ""         },
+        { 777,  2, "cc-two"   }
+    };
+
+    // Populate a CfgOption with test options.
+    CfgOption cfg;
+    OptionDescriptorList reference_options;
+    for (const auto& opt_to_make : opts_to_make) {
+        OptionUint16Ptr opt(new OptionUint16(Option::V6, opt_to_make.code_,
+                                             opt_to_make.value_));
+        OptionDescriptor desc(opt, false, false);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ASSERT_NO_THROW(cfg.add(desc, desc.space_name_));
+        reference_options.push_back(desc);
+    }
+
+    // Verify we have the expected option counts.
+    auto options = cfg.getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(options->size(), reference_options.size());
+
+    // Access them by sequence index (i.e order of insertion).
+    auto reference_desc = reference_options.begin();
+    auto const& idx = options->get<0>();
+    for (auto& returned_desc : idx) {
+        ASSERT_EQ(*reference_desc, returned_desc);
+        ++reference_desc;
+    }
+
+    // Verify that CfgOption::get() (code only) returns the
+    // last one inserted.
+    OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777);
+    ASSERT_EQ(options->size(), reference_options.size());
+    ASSERT_TRUE(found_desc.option_);
+    ASSERT_EQ(found_desc, *(reference_options.rbegin()));
+
+    // Verify that CfgOption::getList() returns all three.
+    // Note this returns them in reverse sequence order.
+    OptionDescriptorList list_options = cfg.getList(DHCP6_OPTION_SPACE, 777);
+    ASSERT_EQ(options->size(), reference_options.size());
+    auto reference_rdesc = reference_options.rbegin();
+    for (auto &returned_desc : list_options ){
+        ASSERT_EQ(*reference_rdesc, returned_desc);
+        ++reference_rdesc;
+    }
+
+    // Verify that CfgOption::get() with client classes returns
+    // each one correctly.
+    for (auto &reference_desc : reference_options ){
+        OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
+                                                reference_desc.client_classes_);
+        ASSERT_TRUE(found_desc.option_);
+        ASSERT_EQ(found_desc, reference_desc);
+    }
+}
+
+TEST_F(CfgOptionTest, replaceWithClientClasses) {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint16_t value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 777,  1, "cc-one"   },
+        { 777,  3, ""         },
+        { 777,  2, "cc-two"   }
+    };
+
+    // Populate a CfgOption with test options.
+    CfgOption cfg;
+    OptionDescriptorList reference_options;
+    for (const auto& opt_to_make : opts_to_make) {
+        OptionUint16Ptr opt(new OptionUint16(Option::V6, opt_to_make.code_,
+                                             opt_to_make.value_));
+
+        OptionDescriptor desc(opt, false, false);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ASSERT_NO_THROW(cfg.add(desc, desc.space_name_));
+        reference_options.push_back(desc);
+    }
+
+    // Replace the first reference option.
+    auto& replacement = reference_options[0];
+    (boost::dynamic_pointer_cast<OptionUint16>(replacement.option_))->setValue(100);
+    ASSERT_NO_THROW(cfg.replace(replacement, DHCP6_OPTION_SPACE));
+
+    // Make sure we can the updated option.
+    OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
+                                          replacement.client_classes_);
+    ASSERT_TRUE(found_desc.option_);
+    ASSERT_EQ(found_desc, replacement);
+
+    // Replace the second reference option.
+    auto& replacement2 = reference_options[1];
+    (boost::dynamic_pointer_cast<OptionUint16>(replacement2.option_))->setValue(300);
+    ASSERT_NO_THROW(cfg.replace(replacement2, DHCP6_OPTION_SPACE));
+
+    // Make sure we can the updated option.
+    found_desc = cfg.get(DHCP6_OPTION_SPACE, 777, replacement2.client_classes_);
+    ASSERT_TRUE(found_desc.option_);
+    ASSERT_EQ(found_desc, replacement2);
+
+    // Verify we still have all the expected options in sequence order.
+    auto options = cfg.getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(options->size(), reference_options.size());
+
+    // Access them by sequence index (i.e order of insertion).
+    auto reference_desc = reference_options.begin();
+    auto const& idx = options->get<0>();
+    for (auto& returned_desc : idx) {
+        ASSERT_EQ(*reference_desc, returned_desc);
+        ++reference_desc;
+    }
+}
+
+TEST_F(CfgOptionTest, deleteWithClientClasses) {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint16_t value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 777,  1, "cc-one"   },
+        { 777,  3, ""         },
+        { 777,  2, "cc-two"   }
+    };
+
+    // Populate a CfgOption with test options.
+    CfgOption cfg;
+    OptionDescriptorList reference_options;
+    for (const auto& opt_to_make : opts_to_make) {
+        OptionUint16Ptr opt(new OptionUint16(Option::V6, opt_to_make.code_,
+                                             opt_to_make.value_));
+
+        OptionDescriptor desc(opt, false, false);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ASSERT_NO_THROW(cfg.add(desc, desc.space_name_));
+        reference_options.push_back(desc);
+    }
+
+    // Delete the third reference option.
+    ASSERT_NO_THROW(cfg.del(DHCP6_OPTION_SPACE, 777, reference_options[2].client_classes_));
+
+    // Make sure we can no longer find the deleted option.
+    OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
+                                          reference_options[2].client_classes_);
+    ASSERT_FALSE(found_desc.option_);
+    reference_options.pop_back();
+
+    // Delete the secon reference option.
+    ASSERT_NO_THROW(cfg.del(DHCP6_OPTION_SPACE, 777, reference_options[1].client_classes_));
+
+    // Make sure we can no longer find the deleted option.
+    found_desc = cfg.get(DHCP6_OPTION_SPACE, 777, reference_options[1].client_classes_);
+    ASSERT_FALSE(found_desc.option_);
+    reference_options.pop_back();
+
+    // Verify we still have one option.
+    auto options = cfg.getAll(DHCP6_OPTION_SPACE);
+    ASSERT_EQ(options->size(), reference_options.size());
+    auto reference_desc = reference_options.begin();
+    auto const& idx = options->get<0>();
+    for (auto& returned_desc : idx) {
+        ASSERT_EQ(*reference_desc, returned_desc);
+        ++reference_desc;
+    }
+}
+
+
 } // end of anonymous namespace

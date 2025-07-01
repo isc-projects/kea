@@ -48,7 +48,9 @@ OptionDescriptor::equals(const OptionDescriptor& other) const {
             (cancelled_ == other.cancelled_) &&
             (formatted_value_ == other.formatted_value_) &&
             (space_name_ == other.space_name_) &&
-            option_->equals(other.option_));
+            ((option_ && other.option_) &&
+             option_->equals(other.option_)) &&
+            (client_classes_ == other.client_classes_));
 }
 
 void
@@ -128,15 +130,16 @@ CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space
     }
 
     // Find the option we want to replace.
-    OptionContainerTypeIndex& idx = options->get<1>();
-    auto const& od_itr = idx.find(desc.option_->getType());
-    if (od_itr == idx.end()) {
+    auto& idx6 = options->get<6>();
+    auto const& od_itr = idx6.find(boost::make_tuple(desc.option_->getType(), desc.client_classes_));
+    if (od_itr == idx6.end()) {
         isc_throw(isc::BadValue, "cannot replace option: "
                   << option_space << ":" << desc.option_->getType()
+                  << " , client-classes: " << desc.client_classes_.toText()
                   << ", it does not exist");
     }
 
-    idx.replace(od_itr, desc);
+    idx6.replace(od_itr, desc);
 }
 
 std::list<std::string>
@@ -407,6 +410,48 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code) {
 
     auto& idx = options->get<1>();
     return (idx.erase(option_code));
+}
+
+size_t
+CfgOption::del(const std::string& option_space, const uint16_t option_code,
+               const ClientClasses& client_classes) {
+    // Check for presence of options.
+    OptionContainerPtr options = getAll(option_space);
+    if (!options || options->empty()) {
+        // There are no options, so there is nothing to do.
+        return (0);
+    }
+
+    // If this is not top level option we may also need to delete the
+    // option instance from options encapsulating the particular option
+    // space.
+    if ((option_space != DHCP4_OPTION_SPACE) &&
+        (option_space != DHCP6_OPTION_SPACE)) {
+        // For each option space name iterate over the existing options.
+        auto option_space_names = getOptionSpaceNames();
+        for (auto const& option_space_from_list : option_space_names) {
+            // Get all options within the particular option space.
+            auto const& options_in_space = getAll(option_space_from_list);
+            for (auto const& option_it : *options_in_space) {
+
+                // Check if the option encapsulates our option space and
+                // it does, try to delete our option.
+                if (option_it.option_ &&
+                    (option_it.option_->getEncapsulatedSpace() == option_space)) {
+                    option_it.option_->delOption(option_code);
+                }
+            }
+        }
+    }
+
+    auto& idx6 = options->get<6>();
+    auto range = idx6.equal_range(boost::make_tuple(option_code, client_classes));
+    auto count = std::distance(range.first, range.second);
+    if (count) {
+        idx6.erase(range.first, range.second);
+    }
+
+    return(count);
 }
 
 size_t

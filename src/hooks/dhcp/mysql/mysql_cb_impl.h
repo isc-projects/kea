@@ -627,6 +627,13 @@ public:
     /// @param client_classes ClientClasses collection containing the class names
     /// @return Pointer to the binding (possibly null binding if there are no
     /// classes specified).
+    db::MySqlBindingPtr createClientClassesForWhereClause(ClientClassesPtr client_classes);
+
+    /// @brief Creates input binding from a list of client classes
+    ///
+    /// @param client_classes ClientClasses collection containing the class names
+    /// @return Pointer to the binding (possibly null binding if there are no
+    /// classes specified).
     db::MySqlBindingPtr createInputClientClassesBinding(const ClientClasses& client_classes);
 
     /// @brief Populates a ClientClasses container from a binding

@@ -1160,5 +1160,17 @@ PgSqlConfigBackendImpl::addClientClassesBinding(db::PsqlBindArray& bindings,
     bindings.add(client_classes_element);
 }
 
+void
+PgSqlConfigBackendImpl::addClientClassesForWhereClause(db::PsqlBindArray& bindings,
+                                                       const ClientClassesPtr client_classes
+                                                       /* = ClientClassePtr() */) {
+    if (client_classes) {
+        addClientClassesBinding(bindings, *client_classes);
+    } else {
+        // Wildcard for LIKE expression.
+        bindings.add("%");
+    }
+}
+
 } // end of namespace isc::dhcp
 } // end of namespace isc

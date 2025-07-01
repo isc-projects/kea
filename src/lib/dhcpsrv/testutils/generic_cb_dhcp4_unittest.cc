@@ -4717,3 +4717,155 @@ GenericConfigBackendDHCPv4Test::multipleAuditEntriesTest() {
         distance--;
     }
 }
+
+void
+GenericConfigBackendDHCPv4Test::subnetOption4WithClienClassesTest() {
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24,
+                                  30, 40, 60, 1024));
+
+    // Add several options to the subnet.
+    std::vector<OptionDescriptor> options;
+    OptionDescriptor desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                                       true, false, false, "boot-file-one");
+    desc.space_name_ = DHCP4_OPTION_SPACE;
+    desc.addClientClass("class3");
+    options.push_back(desc);
+
+    desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                      true, false, false, "boot-file-two");
+    desc.space_name_ = DHCP4_OPTION_SPACE;
+    desc.addClientClass("class1");
+    desc.addClientClass("class2");
+    options.push_back(desc);
+
+    desc = createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                      true, false, false, "boot-file-three");
+    desc.space_name_ = DHCP4_OPTION_SPACE;
+    options.push_back(desc);
+
+    subnet->getCfgOption()->add(options[2], options[0].space_name_);
+    subnet->getCfgOption()->add(options[0], options[1].space_name_);
+    subnet->getCfgOption()->add(options[1], options[2].space_name_);
+
+    auto found_opts = subnet->getCfgOption()->getList(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_EQ(3, found_opts.size());
+
+    // Add the subnet to config back end.
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    {
+        SCOPED_TRACE("CREATE audit entry for a new subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set");
+    }
+
+    // The inserted subnet contains three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+#if 0
+    auto first_opt = subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    EXPECT_EQ(options[0].option_->toText(), first_opt.option_->toText());
+#endif
+
+    found_opts = returned_subnet->getCfgOption()->getList(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_EQ(3, found_opts.size());
+    for (auto fo : found_opts) {
+        std::cout << "FO cclient_classes: " << fo.client_classes_.toText()
+                  << ", opt: " << fo.option_->toText() << std::endl;
+    }
+#if 0
+    EXPECT_EQ(options[0].option_->toText(), found_opts[0].option_->toText());
+    EXPECT_EQ(options[1].option_->toText(), found_opts[1].option_->toText());
+    EXPECT_EQ(options[2].option_->toText(), found_opts[2].option_->toText());
+#endif
+
+#if 0
+    OptionDescriptorPtr opt_boot_file_name = test_options_[0];
+    cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
+                                opt_boot_file_name);
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    OptionDescriptor returned_opt_boot_file_name =
+        returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
+    }
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for an added subnet option");
+        // Instead of adding an audit entry for an option we add an audit
+        // entry for the entire subnet so as the server refreshes the
+        // subnet with the new option. Note that the server doesn't
+        // have means to retrieve only the newly added option.
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "subnet specific option set");
+    }
+
+    // We have added one option to the existing subnet. We should now have
+    // three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+
+    opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
+    cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
+                                opt_boot_file_name);
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    returned_opt_boot_file_name =
+        returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+
+    {
+        SCOPED_TRACE("verify returned option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "subnet specific option set");
+    }
+
+    // Updating the option should replace the existing instance with the new
+    // instance. Therefore, we should still have three options.
+    ASSERT_EQ(3, countRows("dhcp4_options"));
+
+    // It should succeed for any server.
+    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(), subnet->getID(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_FALSE(returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for a deleted subnet option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "subnet specific option deleted");
+    }
+
+    // We should have only two options after deleting one of them.
+    ASSERT_EQ(2, countRows("dhcp4_options"));
+#endif
+}

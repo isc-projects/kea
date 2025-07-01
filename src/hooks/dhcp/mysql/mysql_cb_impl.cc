@@ -1115,11 +1115,13 @@ MySqlConfigBackendImpl::getPort() const {
 }
 
 db::MySqlBindingPtr
-MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& client_classes) {
-    if (client_classes.empty()) {
-        return(db::MySqlBinding::createNull());
-    }
+MySqlConfigBackendImpl::createClientClassesForWhereClause(ClientClassesPtr client_classes) {
+    return (client_classes ?  createInputClientClassesBinding(*client_classes)
+                           :  MySqlBinding::createString("%"));
+}
 
+db::MySqlBindingPtr
+MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& client_classes) {
     // Create JSON list of client classes.
     data::ElementPtr client_classes_element = data::Element::createList();
     for (auto const& client_class : client_classes) {

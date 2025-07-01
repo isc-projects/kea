@@ -255,6 +255,9 @@ private:
     ClientClassContainer container_;
 };
 
+/// @brief Smart pointer to ClientClasses object.
+typedef boost::shared_ptr<ClientClasses> ClientClassesPtr;
+
 }
 }
 

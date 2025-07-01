@@ -628,9 +628,22 @@ public:
     /// Creates an Element tree of client class names and adds that to the end
     /// of the given bind array.
     ///
+    /// @param bindings PsqlBindArray to which the option value should be added.
     /// @param client_classes ClientClasses collection containing the class names
-    void addClientClassesBinding(db::PsqlBindArray& bindings, 
+    void addClientClassesBinding(db::PsqlBindArray& bindings,
                                  const ClientClasses& client_classes);
+
+    /// @brief Adds 'client-classes' to a bind array as a where clause argument.
+    ///
+    /// If client_classes parameter is not an empty pointer, it creates an Element
+    /// tree of client class names and adds that to the end of the given bind array.
+    /// Otherwise it adds a the LIKE operator wild-card string value, "%".
+    ///
+    /// @param bindings PsqlBindArray to which the option value should be added.
+    /// @param client_classes ClientClasses collection containing the class names.
+    void addClientClassesForWhereClause(db::PsqlBindArray& bindings,
+                                        const ClientClassesPtr client_classes
+                                        = ClientClassesPtr());
 
     /// @brief Iterates over the class names in a JSON list element at a
     /// given column, adding each name to the given ClientClasses instance.

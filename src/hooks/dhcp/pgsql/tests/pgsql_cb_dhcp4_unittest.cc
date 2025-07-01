@@ -401,6 +401,10 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, subnetOption4WithClienClassesTest) {
+    subnetOption4WithClienClassesTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv4DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

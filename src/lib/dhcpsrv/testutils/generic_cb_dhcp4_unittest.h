@@ -369,6 +369,8 @@ public:
     /// event and it does not matter).
     void multipleAuditEntriesTest();
 
+    void subnetOption4WithClienClassesTest();
+
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;
 

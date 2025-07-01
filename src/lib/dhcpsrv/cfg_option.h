@@ -22,6 +22,7 @@
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/member.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <list>
@@ -315,6 +316,27 @@ typedef boost::multi_index_container<
                 bool,
                 &OptionDescriptor::cancelled_
             >
+        >,
+        // Start definition of index #6.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::composite_key<
+                OptionDescriptor,
+                KeyFromKeyExtractor<
+                    boost::multi_index::const_mem_fun<
+                        Option,
+                        uint16_t,
+                        &Option::getType
+                    >,
+                    boost::multi_index::member<
+                        OptionDescriptor,
+                        OptionPtr,
+                        &OptionDescriptor::option_
+                    >
+                >,
+                boost::multi_index::member<OptionDescriptor,
+                                           ClientClasses,
+                                           &OptionDescriptor::client_classes_>
+            >
         >
     >
 > OptionContainer;
@@ -342,6 +364,11 @@ typedef OptionContainer::nth_index<5>::type OptionContainerCancelIndex;
 /// the beginning of the range, the second element represents the end.
 typedef std::pair<OptionContainerCancelIndex::const_iterator,
                   OptionContainerCancelIndex::const_iterator> OptionContainerCancelRange;
+
+/// Type of the index #6 - option type + client_classes.
+typedef OptionContainer::nth_index<6>::type OptionContainerTypeClassesIndex;
+typedef std::pair<OptionContainerTypeClassesIndex::const_iterator,
+                  OptionContainerTypeClassesIndex::const_iterator> OptionContainerTypeClassesRange;
 
 /// @brief Represents option data configuration for the DHCP server.
 ///
@@ -674,6 +701,41 @@ public:
         return (list);
     }
 
+    /// @brief Returns option for the specified key, option code and client classes tag.
+    ///
+    /// The key should be a string, in which case it specifies an option space
+    /// name, or an uint32_t value, in which case it specifies a vendor
+    /// identifier.
+    ///
+    /// @param key Option space name or vendor identifier.
+    /// @param option_code Code of the option to be returned.
+    /// @param client_classes client classes tag of the option to be returned.
+    /// @tparam Selector one of: @c std::string or @c uint32_t
+    ///
+    /// @return Descriptor of the option. If option hasn't been found, the
+    /// descriptor holds null option.
+    template<typename Selector>
+    OptionDescriptor get(const Selector& key,
+                         const uint16_t option_code,
+                         ClientClasses& client_classes) const {
+
+        // Check for presence of options.
+        OptionContainerPtr options = getAll(key);
+        if (!options || options->empty()) {
+            return (OptionDescriptor(false, false));
+        }
+
+        // Some options present, locate the one we are interested in
+        // using code + client_classes index.
+        auto& idx6 = options->get<6>();
+        auto const& od_itr6 = idx6.find(boost::make_tuple(option_code, client_classes));
+        if (od_itr6 == idx6.end()) {
+            return (OptionDescriptor(false, false));
+        }
+
+        return (*od_itr6);
+    }
+
     /// @brief Fetches an option for a given code if it is allowed for the given list
     /// of client classes.
     ///
@@ -696,7 +758,7 @@ public:
 
         // We treat the empty client-classes case (if present) as a default.
         // If we encounter it before we reach the end of the list of options
-        // remember it but keep checking the list for an actual match. We do 
+        // remember it but keep checking the list for an actual match. We do
         // it this way to avoid expecting the entries in any particular order.
         auto & index = options->get<1>();
         auto range = index.equal_range(option_code);
@@ -708,8 +770,8 @@ public:
                 return (*range.first);
             }
             break;
-        default: 
-        {   
+        default:
+        {
             auto default_opt = index.end();
             auto otr = range.first;
             while (otr != range.second) {
@@ -717,18 +779,18 @@ public:
                     if (!(*otr).client_classes_.empty()) {
                         return (*otr);
                     }
-                    
+
                     default_opt = otr;
                 }
-                
+
                 ++otr;
             }
-            
+
             // If we have a default return it.
             if (default_opt != index.end()) {
                 return (*default_opt);
             }
-        }}  
+        }}
 
         // None allowed.
         return (OptionDescriptor(false, false));
@@ -745,6 +807,20 @@ public:
     ///
     /// @return Number of deleted options.
     size_t del(const std::string& option_space, const uint16_t option_code);
+
+    /// @brief Deletes option for the specified option space and option code.
+    ///
+    /// If the option is encapsulated within some non top level option space,
+    /// it is also deleted from all option instances encapsulating this
+    /// option space.
+    ///
+    /// @param option_space Option space name.
+    /// @param option_code Code of the option to be returned.
+    /// @param client_classes client classes tag of the option to be deleted.
+    ///
+    /// @return Number of deleted options.
+    size_t del(const std::string& option_space, const uint16_t option_code,
+               const ClientClasses& client_classes);
 
     /// @brief Deletes vendor option for the specified vendor id.
     ///
