@@ -28,9 +28,9 @@
 
     // Allow access only to kea-api user.
     // To make it work, please store your user name in kea-api-user file.
-    // and store your password in kea-api-password file.
+    // and store your password in the kea-api-password file.
     // Make sure the user and password files have sufficiently restrictive
-    // access permissions, in particular it is not world-readable.
+    // access permissions, in particular that they are not world-readable.
     // The basic HTTP auth offers poor security for unencrypted channels.
     // If possible, a better, stronger HTTPS mechanism should be deployed,
     // in particular when the client authentication is enabled by setting the
@@ -43,7 +43,7 @@
         "directory": "/etc/kea",
         "clients": [
             {
-                "user": "kea-api-user",
+                "user-file": "kea-api-user",
                 "password-file": "kea-api-password"
             }
         ]
