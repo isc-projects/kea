@@ -9,7 +9,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <list>
 
 #include <fuzz.h>
 
@@ -37,6 +36,7 @@ using namespace isc::process;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::util;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -104,6 +104,10 @@ LLVMFuzzerInitialize() {
     assert(initialized);
 
     setenv("KEA_DHCP4_FUZZING_ROTATE_PORT", "true", 0);
+
+    // The main focus is on fuzzing the raw HTTP endpoint without the authorization header.
+    // So bypass the enforcement.
+    PathChecker::enableEnforcement(false);
 
     return 0;
 }
