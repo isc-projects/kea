@@ -1,3 +1,8 @@
+2269.	[bug]		tmark
+	Corrected an issue in logging configuration when
+	parsing "syslog:<facility name>".
+	(Gitlab #3992, #3921)
+
 2268.	[bug]		razvan
 	Fix error handling when detecting a global reservation for the
 	client and global reservatons are explicitly disabled in the
