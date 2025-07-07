@@ -371,7 +371,8 @@ TestConfigBackendDHCPv4::getModifiedOptionDefs4(const db::ServerSelector& server
 OptionDescriptorPtr
 TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
                                     const uint16_t code,
-                                    const std::string& space) const {
+                                    const std::string& space,
+                                    const ClientClassesPtr client_classes) const {
     auto tags = server_selector.getTags();
     auto candidate = OptionDescriptorPtr();
     auto const& index = options_.get<1>();
@@ -379,11 +380,16 @@ TestConfigBackendDHCPv4::getOption4(const db::ServerSelector& server_selector,
 
     BOOST_FOREACH(auto const& option_it, option_it_pair) {
         if (option_it.space_name_ == space) {
+            if (client_classes && (option_it.client_classes_ != *client_classes)) {
+                continue;
+            }
+
             for (auto const& tag : tags) {
                 if (option_it.hasServerTag(ServerTag(tag))) {
                     return (OptionDescriptorPtr(new OptionDescriptor(option_it)));
                 }
             }
+
             if (option_it.hasAllServerTag()) {
                 candidate = OptionDescriptorPtr(new OptionDescriptor(option_it));
             }

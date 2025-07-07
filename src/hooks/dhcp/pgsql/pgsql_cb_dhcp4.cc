@@ -2103,7 +2103,7 @@ public:
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(code);
         in_bindings.add(space);
@@ -2131,7 +2131,7 @@ public:
                            const SubnetID& subnet_id,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(subnet_id);
         in_bindings.add(code);
@@ -2161,7 +2161,7 @@ public:
                            const IOAddress& pool_end_address,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.addInet4(pool_start_address);
         in_bindings.addInet4(pool_end_address);
@@ -2191,7 +2191,7 @@ public:
                            const std::string& shared_network_name,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         PsqlBindArray in_bindings;
         in_bindings.add(shared_network_name);
         in_bindings.add(code);
@@ -3186,14 +3186,16 @@ TaggedStatementArray tagged_statements = { {
     // Retrieves global option by code and space.
     {
         // PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-        3,
+        4,
         {
             OID_VARCHAR,    // 1 server_tag
             OID_INT2,       // 2 code
-            OID_VARCHAR     // 3 space
+            OID_VARCHAR,    // 3 space
+            OID_TEXT        // 4 client_classes
         },
         "GET_OPTION4_CODE_SPACE",
-        PGSQL_GET_OPTION4(AND o.scope_id = 0 AND o.code = $2 AND o.space = $3)
+        PGSQL_GET_OPTION4(AND o.scope_id = 0 AND o.code = $2 AND o.space = $3
+                          AND o.client_classes LIKE $4)
     },
 
     // Retrieves all global options.
@@ -4841,11 +4843,12 @@ PgSqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& server_se
 OptionDescriptorPtr
 PgSqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
                                      const uint16_t code,
-                                     const std::string& space) const {
+                                     const std::string& space,
+                                     const ClientClassesPtr client_classes) const {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_GET_OPTION4)
         .arg(code).arg(space);
     return (impl_->getOption(PgSqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-                             Option::V4, server_selector, code, space));
+                             Option::V4, server_selector, code, space, client_classes));
 }
 
 OptionContainer
@@ -5194,7 +5197,7 @@ uint64_t
 PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     LOG_DEBUG(pgsql_cb_logger, DBGLVL_TRACE_BASIC, PGSQL_CB_DELETE_OPTION4)
         .arg(code).arg(space);
     uint64_t result = impl_->deleteOption4(server_selector, code, space, client_classes);
@@ -5208,7 +5211,7 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
@@ -5226,7 +5229,7 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
@@ -5245,7 +5248,7 @@ PgSqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.

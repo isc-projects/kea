@@ -403,6 +403,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
 }
 
+TEST_F(MySqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
+    globalOption4WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOption4WithClientClassesTest) {
+    sharedNetworkOption4WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4Test, subnetOption4WithClientClassesTest) {
+    subnetOption4WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4Test, poolOption4WithClientClassesTest) {
+    poolOption4WithClientClassesTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class MySqlConfigBackendDHCPv4DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

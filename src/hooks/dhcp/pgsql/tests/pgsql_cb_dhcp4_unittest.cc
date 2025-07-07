@@ -401,8 +401,20 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
 }
 
-TEST_F(PgSqlConfigBackendDHCPv4Test, subnetOption4WithClienClassesTest) {
-    subnetOption4WithClienClassesTest();
+TEST_F(PgSqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
+    globalOption4WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, sharedNetworkOption4WithClientClassesTest) {
+    sharedNetworkOption4WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, subnetOption4WithClientClassesTest) {
+    subnetOption4WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, poolOption4WithClientClassesTest) {
+    poolOption4WithClientClassesTest();
 }
 
 /// @brief Test fixture for verifying database connection loss-recovery

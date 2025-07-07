@@ -369,7 +369,32 @@ public:
     /// event and it does not matter).
     void multipleAuditEntriesTest();
 
-    void subnetOption4WithClienClassesTest();
+    /// @brief Creates a list of string options with and without client_class tags.
+    /// It creates 3 DHO_TCODE options and 2 DHO_PCODE options.
+    std::list<OptionDescriptorPtr> makeClassTaggedOptions();
+
+    /// @brief Updates the value of each string option in the list.
+    void updateClassTaggedOptions(std::list<OptionDescriptorPtr>& options);
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to global scope and be distinguished from one another
+    /// by their client-classes content.
+    void globalOption4WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a shared-network and be distinguished from one another
+    /// by their client-classes content.
+    void sharedNetworkOption4WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a subnet and be distinguished from one another
+    /// by their client-classes content.
+    void subnetOption4WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a pool and be distinguished from one another
+    /// by their client-classes content.
+    void poolOption4WithClientClassesTest();
 
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;

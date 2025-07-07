@@ -547,8 +547,9 @@ PgSqlConfigBackendImpl::getOption(const int index,
                                   const Option::Universe& universe,
                                   const ServerSelector& server_selector,
                                   const uint16_t code,
-                                  const std::string& space) {
-
+                                  const std::string& space,
+                                  const ClientClassesPtr client_classes 
+                                  /* = ClientClassesPtr() */) {
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
                                   " (unassigned) is unsupported at the moment");
@@ -561,6 +562,10 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.add(tag);
     in_bindings.add(code);
     in_bindings.add(space);
+    /// @todo TKM remove if when v6 is ready.
+    if (universe == Option::V4) {
+        addClientClassesForWhereClause(in_bindings, client_classes);
+    }
 
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :

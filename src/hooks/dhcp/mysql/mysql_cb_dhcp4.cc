@@ -2241,7 +2241,7 @@ public:
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space),
@@ -2269,7 +2269,7 @@ public:
                            const SubnetID& subnet_id,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(code),
@@ -2299,13 +2299,13 @@ public:
                            const IOAddress& pool_end_address,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes),
             MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
-            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32()),
-            createClientClassesForWhereClause(client_classes)
+            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
         };
 
         // Run DELETE.
@@ -2329,7 +2329,7 @@ public:
                            const std::string& shared_network_name,
                            const uint16_t code,
                            const std::string& space,
-                           ClientClassesPtr client_classes) {
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(code),
@@ -3162,9 +3162,10 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_OPTION_DEF(dhcp4, AND d.modification_ts >= ?)
     },
 
-    // Retrieves global option by code and space.
+    // Retrieves global option by code, space and client-classes.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.code = ? AND o.space = ?
+                        AND o.client_classes LIKE ?)
     },
 
     // Retrieves all global options.
@@ -3677,18 +3678,21 @@ TaggedStatementArray tagged_statements = { {
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SUBNET_ID,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp4,
-                          WHERE o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
+                          WHERE (o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?
+                                 AND o.client_classes LIKE ?))
     },
 
     // Delete single option from a pool.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_POOL_RANGE,
-      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp4, o.scope_id = 5 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp4, o.scope_id = 5 AND o.code = ? AND o.space = ?
+                                     AND o.client_classes LIKE ?)
     },
 
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp4,
-                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+                          WHERE (o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
+                                AND o.client_classes LIKE ?))
     },
 
     // Delete options belonging to a subnet.
@@ -3897,11 +3901,12 @@ MySqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& server_se
 OptionDescriptorPtr
 MySqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
                                      const uint16_t code,
-                                     const std::string& space) const {
+                                     const std::string& space,
+                                     const ClientClassesPtr client_classes) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_OPTION4)
         .arg(code).arg(space);
     return (impl_->getOption(MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-                             Option::V4, server_selector, code, space));
+                             Option::V4, server_selector, code, space, client_classes));
 }
 
 OptionContainer
@@ -4249,7 +4254,7 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION4)
         .arg(code).arg(space);
     uint64_t result = impl_->deleteOption4(server_selector, code, space, client_classes);
@@ -4263,7 +4268,7 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
@@ -4281,7 +4286,7 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
@@ -4300,7 +4305,7 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
                                         const std::string& space,
-                                        ClientClassesPtr client_classes) {
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.

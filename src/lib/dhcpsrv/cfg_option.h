@@ -717,7 +717,7 @@ public:
     template<typename Selector>
     OptionDescriptor get(const Selector& key,
                          const uint16_t option_code,
-                         ClientClasses& client_classes) const {
+                         const ClientClasses& client_classes) const {
 
         // Check for presence of options.
         OptionContainerPtr options = getAll(key);

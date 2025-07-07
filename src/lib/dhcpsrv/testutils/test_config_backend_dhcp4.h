@@ -168,11 +168,16 @@ public:
     /// @brief Retrieves single option by code and space.
     ///
     /// @param server_selector Server selector.
+    /// @param code Code of the option to be deleted.
+    /// @param space Option space of the option to be deleted.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
     getOption4(const db::ServerSelector& server_selector, const uint16_t code,
-               const std::string& space) const;
+               const std::string& space,
+               const ClientClassesPtr client_classes = ClientClassesPtr()) const;
 
     /// @brief Retrieves all global options.
     ///

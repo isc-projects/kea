@@ -166,13 +166,16 @@ public:
     /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
     getOption4(const db::BackendSelector& backend_selector,
                const db::ServerSelector& server_selector,
                const uint16_t code,
-               const std::string& space) const;
+               const std::string& space,
+               const ClientClassesPtr client_classes = ClientClassesPtr()) const;
 
     /// @brief Retrieves all global options.
     ///
@@ -506,7 +509,7 @@ public:
                   const db::ServerSelector& server_selector,
                   const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes shared network level option.
     ///
@@ -524,7 +527,7 @@ public:
                   const std::string& shared_network_name,
                   const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes subnet level option.
     ///
@@ -542,7 +545,7 @@ public:
                   const db::ServerSelector& server_selector,
                   const SubnetID& subnet_id,
                   const uint16_t code, const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes pool level option.
     ///
@@ -564,7 +567,7 @@ public:
                   const asiolink::IOAddress& pool_end_address,
                   const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes global parameter.
     ///

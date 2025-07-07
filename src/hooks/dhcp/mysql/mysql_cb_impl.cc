@@ -561,7 +561,8 @@ MySqlConfigBackendImpl::getOption(const int index,
                                   const Option::Universe& universe,
                                   const ServerSelector& server_selector,
                                   const uint16_t code,
-                                  const std::string& space) {
+                                  const std::string& space,
+                                  const ClientClassesPtr client_classes) {
 
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -579,10 +580,16 @@ MySqlConfigBackendImpl::getOption(const int index,
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
     }
     in_bindings.push_back(MySqlBinding::createString(space));
+
+    /// @todo Remove the if when v6 is ready for this.
+    if (universe == Option::V4) {
+        in_bindings.push_back(createClientClassesForWhereClause(client_classes));
+    }
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
+
 
 OptionContainer
 MySqlConfigBackendImpl::getAllOptions(const int index,
@@ -1115,7 +1122,7 @@ MySqlConfigBackendImpl::getPort() const {
 }
 
 db::MySqlBindingPtr
-MySqlConfigBackendImpl::createClientClassesForWhereClause(ClientClassesPtr client_classes) {
+MySqlConfigBackendImpl::createClientClassesForWhereClause(const ClientClassesPtr client_classes) {
     return (client_classes ?  createInputClientClassesBinding(*client_classes)
                            :  MySqlBinding::createString("%"));
 }

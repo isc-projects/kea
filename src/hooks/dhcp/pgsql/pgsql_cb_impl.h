@@ -379,6 +379,8 @@ public:
     /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space name.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     ///
     /// @return Pointer to the returned option or NULL if such option
     /// doesn't exist.
@@ -386,7 +388,8 @@ public:
                                   const Option::Universe& universe,
                                   const db::ServerSelector& server_selector,
                                   const uint16_t code,
-                                  const std::string& space);
+                                  const std::string& space,
+                                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Sends query to retrieve all global options.
     ///
