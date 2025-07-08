@@ -123,6 +123,7 @@ DbAccessParser::parse(std::string& access_string,
                 // cert-file
                 // key-file
                 // key-password
+                // ssl-mode
                 // cipher-list
                 values_copy[param.first] = param.second->stringValue();
             }

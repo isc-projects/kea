@@ -97,6 +97,7 @@ public:
     ///       - cert-file
     ///       - key-file
     ///       - key-password (PostgreSQL only)
+    ///       - ssl-mode
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries
     ///       - on-fail

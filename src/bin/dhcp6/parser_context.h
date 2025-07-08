@@ -255,6 +255,9 @@ public:
         /// Used while parsing Dhcp6/*-database/on-fail.
         DATABASE_ON_FAIL,
 
+        /// Used while parsing Dhcp6/*-database/ssl-mode.
+        SSL_MODE,
+
         /// Used while parsing Dhcp6/mac-sources structures.
         MAC_SOURCES,
 

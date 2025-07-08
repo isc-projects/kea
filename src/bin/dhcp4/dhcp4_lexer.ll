@@ -639,10 +639,65 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-    case isc::dhcp::Parser4Context::CONTROL_SOCKET:
         return isc::dhcp::Dhcp4Parser::make_KEY_PASSWORD(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("key-password", driver.loc_);
+    }
+}
+
+\"ssl-mode\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_SSL_MODE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("ssl-mode", driver.loc_);
+    }
+}
+
+\"disable\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SSL_MODE:
+        return isc::dhcp::Dhcp4Parser::make_DISABLE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("disable", driver.loc_);
+    }
+}
+
+\"prefer\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SSL_MODE:
+        return isc::dhcp::Dhcp4Parser::make_PREFER(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("prefer", driver.loc_);
+    }
+}
+
+\"require\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SSL_MODE:
+        return isc::dhcp::Dhcp4Parser::make_REQUIRE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("require", driver.loc_);
+    }
+}
+
+\"verify-ca\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SSL_MODE:
+        return isc::dhcp::Dhcp4Parser::make_VERIFY_CA(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("verify-ca", driver.loc_);
+    }
+}
+
+\"verify-full\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::SSL_MODE:
+        return isc::dhcp::Dhcp4Parser::make_VERIFY_FULL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("verify-full", driver.loc_);
     }
 }
 

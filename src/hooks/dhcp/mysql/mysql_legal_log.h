@@ -97,6 +97,7 @@ public:
     ///       - trust-anchor
     ///       - cert-file
     ///       - key-file
+    ///       - ssl-mode
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries

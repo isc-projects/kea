@@ -20,4 +20,10 @@ dhcp_host_cache_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_host_cache_tests_libs] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp-host-cache-tests', dhcp_host_cache_tests, protocol: 'gtest')
+test(
+    'dhcp-host-cache-tests',
+    dhcp_host_cache_tests,
+    is_parallel: false,
+    priority: -1,
+    protocol: 'gtest',
+)

@@ -106,6 +106,7 @@ public:
     ///       - cert-file (MySQL only)
     ///       - key-file (MySQL only)
     ///       - key-password (PostgreSQL only)
+    ///       - ssl-mode
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries
@@ -138,6 +139,7 @@ public:
     ///       - cert-file (MySQL only)
     ///       - key-file (MySQL only)
     ///       - key-password (PostgreSQL only)
+    ///       - ssl-mode
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries

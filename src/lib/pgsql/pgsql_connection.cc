@@ -264,14 +264,29 @@ PgSqlConnection::toKeaAdminParameters(ParameterMap const& params) {
         }
 
         // These Kea parameters do not have a direct kea-admin equivalent.
+        // But they do have a psql client flag equivalent.
+        // We pass them to kea-admin using the --extra flag.
+        static unordered_map<string, string> conversions{
+            {"cert-file", "sslcert"},
+            {"key-file", "sslkey"},
+            {"trust-anchor", "sslrootcert"},
+            {"key-password", "sslpassword"},
+            {"ssl-mode", "sslmode"},
+        };
+        if (conversions.count(keyword)) {
+            result.push_back("--extra");
+            result.push_back(conversions.at(keyword) + "=" + value);
+        }
+
+        // These Kea parameters do not have a direct kea-admin equivalent.
         // But they do have a psql client environment variable equivalent.
         // We pass them to kea-admin.
-        static unordered_map<string, string> conversions{
+        static unordered_map<string, string> env_conversions{
             {"connect-timeout", "PGCONNECT_TIMEOUT"},
             // {"tcp-user-timeout", "N/A"},
         };
-        if (conversions.count(keyword)) {
-            vars.push_back(conversions.at(keyword) + "=" + value);
+        if (env_conversions.count(keyword)) {
+            vars.push_back(env_conversions.at(keyword) + "=" + value);
         }
     }
     return make_tuple(result, vars);
@@ -397,10 +412,21 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
 
     bool tls = false;
 
+    string ssslmode;
+    try {
+        ssslmode = getParameter("ssl-mode");
+        tls = true;
+    } catch (...) {
+        // No strict ssl mode
+    }
+
     string sca;
     try {
         sca = getParameter("trust-anchor");
         tls = true;
+        if (ssslmode.empty()) {
+            ssslmode = "verify-ca";
+        }
         dbconnparameters += " sslrootcert = " + sca;
     } catch (...) {
         // No trust anchor
@@ -430,12 +456,21 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         tls = true;
         dbconnparameters += " sslpassword = " + skeypassword;
     } catch (...) {
-        // No password.
+        // No password
     }
 
     if (tls) {
-        dbconnparameters += " sslmode = require";
+        if (ssslmode.empty()) {
+            ssslmode = "require";
+        }
+        dbconnparameters += " gssencmode = disable";
+    } else {
+        if (ssslmode.empty()) {
+            ssslmode = "disable";
+        }
     }
+
+    dbconnparameters += " sslmode = " + ssslmode;
 
     return (dbconnparameters);
 }

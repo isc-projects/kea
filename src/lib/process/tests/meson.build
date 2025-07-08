@@ -30,4 +30,10 @@ kea_process_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_util_unittests_lib, libs_testutils] + LIBS_BUILT_SO_FAR,
 )
-test('kea-process-tests', kea_process_tests, protocol: 'gtest')
+test(
+    'kea-process-tests',
+    kea_process_tests,
+    is_parallel: false,
+    priority: -1,
+    protocol: 'gtest'
+)

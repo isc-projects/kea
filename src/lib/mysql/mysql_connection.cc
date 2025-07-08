@@ -131,6 +131,15 @@ MySqlConnection::openDatabase() {
         isc_throw(DbInvalidTimeout, ex.what());
     }
 
+    int ssl_mode(SSL_MODE_DISABLED);
+    string ssslmode;
+    try {
+        ssslmode = getParameter("ssl-mode");
+        tls_ = true;
+    } catch (...) {
+        // No strict ssl mode
+    }
+
     const char* ca_file(0);
     const char* ca_dir(0);
     string sca;
@@ -141,6 +150,9 @@ MySqlConnection::openDatabase() {
             ca_dir = sca.c_str();
         } else {
             ca_file = sca.c_str();
+        }
+        if (ssslmode.empty()) {
+            ssslmode = "verify-ca";
         }
     } catch (...) {
         // No trust anchor
@@ -267,6 +279,27 @@ MySqlConnection::openDatabase() {
         if (result != 0) {
             isc_throw(DbOpenError, "unable to set cipher: " << mysql_error(mysql_));
         }
+
+        if (ssslmode.empty()) {
+            ssslmode = "require";
+        }
+    }
+
+    if (ssslmode == "disable") {
+        ssl_mode = SSL_MODE_DISABLED;
+    } else if (ssslmode == "prefer") {
+        ssl_mode = SSL_MODE_PREFERRED;
+    } else if (ssslmode == "require") {
+        ssl_mode = SSL_MODE_REQUIRED;
+    } else if (ssslmode == "verify-ca") {
+        ssl_mode = SSL_MODE_VERIFY_CA;
+    } else if (ssslmode == "verify-full") {
+        ssl_mode = SSL_MODE_VERIFY_IDENTITY;
+    }
+
+    result = mysql_options(mysql_, MYSQL_OPT_SSL_MODE, &ssl_mode);
+    if (result != 0) {
+        isc_throw(DbOpenError, "unable to set SSL mode: " << mysql_error(mysql_));
     }
 
     // Open the database.
@@ -493,7 +526,7 @@ MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
     vector<string> result{"mysql"};
     for (auto const& p : params) {
         string const& keyword(p.first);
-        string const& value(p.second);
+        string value(p.second);
 
         // These Kea parameters are the same as the kea-admin parameters.
         if (keyword == "user" ||
@@ -504,6 +537,20 @@ MySqlConnection::toKeaAdminParameters(ParameterMap const& params) {
             result.push_back("--" + keyword);
             result.push_back(value);
             continue;
+        }
+
+        if (keyword == "ssl-mode") {
+            if (value == "disable") {
+                value = "DISABLED";
+            } else if (value == "prefer") {
+                value = "PREFERRED";
+            } else if (value == "require") {
+                value = "REQUIRED";
+            } else if (value == "verify-ca") {
+                value = "VERIFY_CA";
+            } else if (value == "verify-full") {
+                value = "VERIFY_IDENTITY";
+            }
         }
 
         // These Kea parameters do not have a direct kea-admin equivalent.

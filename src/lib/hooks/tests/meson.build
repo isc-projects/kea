@@ -122,6 +122,8 @@ test(
     'kea-hooks-tests',
     kea_hooks_tests,
     depends: [nvl, ivl, fxl, bcl, lcl, lecl, ucl, fcl, pcl, acl],
+    is_parallel: false,
+    priority: -1,
     protocol: 'gtest',
 )
 

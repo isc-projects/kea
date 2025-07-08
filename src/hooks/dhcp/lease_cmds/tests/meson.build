@@ -12,4 +12,10 @@ dhcp_lease_cmds_lib_tests = executable(
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
     link_with: [dhcp_lease_cmds_archive] + LIBS_BUILT_SO_FAR,
 )
-test('dhcp-lease-cmds-lib-tests', dhcp_lease_cmds_lib_tests, protocol: 'gtest')
+test(
+    'dhcp-lease-cmds-lib-tests',
+    dhcp_lease_cmds_lib_tests,
+    is_parallel: false,
+    priority: -1,
+    protocol: 'gtest',
+)

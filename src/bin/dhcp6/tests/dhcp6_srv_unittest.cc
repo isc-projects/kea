@@ -233,7 +233,8 @@ void removeTlsParameters(ConstElementPtr elem) {
             "trust-anchor",
             "cert-file",
             "key-file",
-            "cipher-list"
+            "cipher-list",
+            "ssl-mode"
         };
         for (auto const& parameter : tls_parameters) {
             mutable_elem->remove(parameter);

@@ -166,6 +166,8 @@ Parser4Context::contextName() {
         return ("hosts-database");
     case DATABASE_ON_FAIL:
         return ("database-on-fail");
+    case SSL_MODE:
+        return ("ssl-mode");
     case HOST_RESERVATION_IDENTIFIERS:
         return ("host-reservation-identifiers");
     case HOOKS_LIBRARIES:

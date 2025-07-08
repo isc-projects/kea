@@ -927,8 +927,10 @@ TEST_F(PgSqlConnectionTest, toKeaAdminParameters) {
     kea_admin_parameters = get<0>(tupl);
     kea_admin_env_vars = get<1>(tupl);
     EXPECT_EQ(kea_admin_parameters,
-              vector<string>({"pgsql", "--host", "127.0.0.1", "--name", "keatest", "--password",
-                              "keatest", "--user", "keatest_secure"}));
+              vector<string>({"pgsql", "--extra", "sslcert=" TEST_CA_DIR "/kea-client.crt",
+                              "--host", "127.0.0.1", "--extra", "sslkey=" TEST_CA_DIR "/kea-client.key",
+                              "--name", "keatest", "--password", "keatest", "--extra",
+                              "sslrootcert=" TEST_CA_DIR "/kea-ca.crt", "--user", "keatest_secure"}));
     EXPECT_EQ(kea_admin_env_vars, vector<string>({ "PGCONNECT_TIMEOUT=10" }));
 }
 

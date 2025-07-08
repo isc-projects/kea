@@ -81,6 +81,9 @@ Corresponding database configuration parameters for Kea servers are:
 
 -  The ``key-password`` specifies the private key password.
 
+-  The ``ssl-mode`` specifies the SSL mode: ``disable``, ``prefer``,
+   ``require``, ``verify-ca`` or ``verify-full``.
+
 -  The ``cipher-list`` specifies the list of TLS ciphers (the syntax of
    the content of this parameter is described in the OpenSSL ciphers
    manual).
@@ -97,6 +100,9 @@ Currently the support for each database is:
    version, mutual authentication, etc.
    When a TLS connection was required but the actual connection is in
    clear text an error log is emitted.
+   The ``ssl-mode`` values correspond to the MySQL values ``DISABLED``,
+   ``PREFERRED``, ``REQUIRED``, ``VERIFY_CA`` and ``VERIFY_IDENTITY``
+   respectively.
 
 -  PostgreSQL supports the whole set, additional configuration must be
    done in the client library (libpq). Anything else must be done in the

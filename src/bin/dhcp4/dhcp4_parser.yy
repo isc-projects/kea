@@ -113,6 +113,12 @@ using namespace std;
   CERT_FILE "cert-file"
   KEY_FILE "key-file"
   KEY_PASSWORD "key-password"
+  SSL_MODE "ssl-mode"
+  DISABLE "disable"
+  PREFER "prefer"
+  REQUIRE "require"
+  VERIFY_CA "verify-ca"
+  VERIFY_FULL "verify-full"
   CIPHER_LIST "cipher-list"
 
   VALID_LIFETIME "valid-lifetime"
@@ -312,6 +318,7 @@ using namespace std;
 %type <ElementPtr> socket_type
 %type <ElementPtr> outbound_interface_value
 %type <ElementPtr> on_fail_mode
+%type <ElementPtr> ssl_mode
 %type <ElementPtr> ncr_protocol_value
 %type <ElementPtr> ddns_replace_client_name_value
 %type <ElementPtr> ddns_conflict_resolution_mode_value
@@ -1138,6 +1145,7 @@ database_map_param: database_type
                   | cert_file
                   | key_file
                   | key_password
+                  | ssl_mode
                   | cipher_list
                   | unknown_map_entry
                   ;
@@ -1307,6 +1315,21 @@ key_password: KEY_PASSWORD {
     ctx.stack_.back()->set("key-password", key_pass);
     ctx.leave();
 };
+
+ssl_mode: SSL_MODE {
+    ctx.unique("ssl-mode", ctx.loc2pos(@1));
+    ctx.enter(ctx.SSL_MODE);
+} COLON ssl_mode {
+    ctx.stack_.back()->set("ssl-mode", $4);
+    ctx.leave();
+};
+
+ssl_mode: DISABLE { $$ = ElementPtr(new StringElement("disable", ctx.loc2pos(@1))); }
+        | PREFER { $$ = ElementPtr(new StringElement("prefer", ctx.loc2pos(@1))); }
+        | REQUIRE { $$ = ElementPtr(new StringElement("require", ctx.loc2pos(@1))); }
+        | VERIFY_CA { $$ = ElementPtr(new StringElement("verify-ca", ctx.loc2pos(@1))); }
+        | VERIFY_FULL { $$ = ElementPtr(new StringElement("verify-full", ctx.loc2pos(@1))); }
+        ;
 
 cipher_list: CIPHER_LIST {
     ctx.unique("cipher-list", ctx.loc2pos(@1));
