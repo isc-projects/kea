@@ -50,6 +50,10 @@ endif
 
 # PostgreSQL requires restricted permissions on the key files.
 configure_file(
+    command: ['chmod', 'og-rwx', f'@TEST_CA_DIR@/kea-client.key'],
+    output: f'kea-client.key',
+)
+configure_file(
     command: ['chmod', 'og-rwx', f'@TEST_CA_DIR@/kea-other.key'],
     output: f'kea-other.key',
 )
