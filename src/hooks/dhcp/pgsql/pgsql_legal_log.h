@@ -96,7 +96,7 @@ public:
     ///       - trust-anchor
     ///       - cert-file
     ///       - key-file
-    ///       - ssl-mode
+    ///       - ssl-mode (PostgreSQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries
     ///       - on-fail

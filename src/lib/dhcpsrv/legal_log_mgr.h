@@ -105,7 +105,7 @@ public:
     ///       - trust-anchor
     ///       - cert-file
     ///       - key-file
-    ///       - ssl-mode
+    ///       - ssl-mode (PostgreSQL only)
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries
@@ -137,7 +137,7 @@ public:
     ///       - trust-anchor
     ///       - cert-file
     ///       - key-file
-    ///       - ssl-mode
+    ///       - ssl-mode (PostgreSQL only)
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
     ///       - max-reconnect-tries

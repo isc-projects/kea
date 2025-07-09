@@ -92,15 +92,12 @@ configurations too.
 
 Currently the support for each database is:
 
--  MySQL supports the whole set, additional configuration must be done
-   in the MySQL local setup, for instance certificate revocation list,
-   choice of a specific TLS version, mutual authentication, etc.
+-  MySQL supports the whole set, except ``ssl-mode``, additional configuration
+   must be done in the MySQL local setup, for instance certificate revocation
+   list, choice of a specific TLS version, mutual authentication, etc.
    When a TLS connection was required but the actual connection is in
    clear text an error log is emitted.
-   The ``ssl-mode`` values correspond to the MySQL values ``DISABLED``,
-   ``PREFERRED``, ``REQUIRED``, ``VERIFY_CA`` and ``VERIFY_IDENTITY``
-   respectively.
 
--  PostgreSQL supports the whole set, additional configuration must be
-   done in the client library (libpq). Anything else must be done in the
-   PostgreSQL local configuration.
+-  PostgreSQL supports the whole set, except ``cipher-list``, additional
+   configuration must be done in the client library (libpq). Anything else must
+   be done in the PostgreSQL local configuration.

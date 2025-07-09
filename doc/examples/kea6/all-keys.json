@@ -451,9 +451,6 @@
                 // Private key file name.
                 "key-file": "my-key",
 
-                // SSL mode.
-                "ssl-mode": "verify-ca",
-
                 // Cipher list (see the OpenSSL ciphers command manual).
                 "cipher-list": "AES",
 
@@ -514,7 +511,10 @@
                 "cert-file": "my-cert",
 
                 // Private key file name.
-                "key-file": "my-key"
+                "key-file": "my-key",
+
+                // SSL mode.
+                "ssl-mode": "verify-ca"
             }
         ],
 
