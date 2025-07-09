@@ -411,9 +411,9 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
 
     bool tls = false;
 
-    string ssslmode;
+    string sslmode;
     try {
-        ssslmode = getParameter("ssl-mode");
+        sslmode = getParameter("ssl-mode");
         tls = true;
     } catch (...) {
         // No strict ssl mode
@@ -423,8 +423,8 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     try {
         sca = getParameter("trust-anchor");
         tls = true;
-        if (ssslmode.empty()) {
-            ssslmode = "verify-ca";
+        if (sslmode.empty()) {
+            sslmode = "verify-ca";
         }
         dbconnparameters += " sslrootcert = " + sca;
     } catch (...) {
@@ -450,17 +450,17 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
     }
 
     if (tls) {
-        if (ssslmode.empty()) {
-            ssslmode = "require";
+        if (sslmode.empty()) {
+            sslmode = "require";
         }
         dbconnparameters += " gssencmode = disable";
     } else {
-        if (ssslmode.empty()) {
-            ssslmode = "disable";
+        if (sslmode.empty()) {
+            sslmode = "prefer";
         }
     }
 
-    dbconnparameters += " sslmode = " + ssslmode;
+    dbconnparameters += " sslmode = " + sslmode;
 
     return (dbconnparameters);
 }
