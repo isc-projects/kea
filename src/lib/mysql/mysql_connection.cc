@@ -131,7 +131,7 @@ MySqlConnection::openDatabase() {
         isc_throw(DbInvalidTimeout, ex.what());
     }
 
-    int ssl_mode(SSL_MODE_DISABLED);
+    int ssl_mode(SSL_MODE_PREFERRED);
     string ssslmode;
     try {
         ssslmode = getParameter("ssl-mode");
