@@ -3466,7 +3466,7 @@ hasAddressReservation(AllocEngine::ClientContext4& ctx) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
                   ALLOC_ENGINE_IGNORING_UNSUITABLE_GLOBAL_ADDRESS)
             .arg(ctx.query_->getLabel())
-            .arg(ctx.currentHost()->getIPv4Reservation().toText())
+            .arg(global_host_address.toText())
             .arg(AllocEngine::labelNetworkOrSubnet(ctx.subnet_));
     }
 

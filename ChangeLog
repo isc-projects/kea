@@ -1,3 +1,9 @@
+2368.	[bug]		razvan
+	Fix error handling when detecting a global reservation for the
+	client and global reservatons are explicitly disabled in the
+	configuration.
+	(Gitlab #4001)
+
 Kea 2.6.3 (stable) released on May 28, 2025
 
 2267.	[build]		andrei
