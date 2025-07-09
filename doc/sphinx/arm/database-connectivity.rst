@@ -101,3 +101,5 @@ Currently the support for each database is:
 -  PostgreSQL supports the whole set, except ``cipher-list``, additional
    configuration must be done in the client library (libpq). Anything else must
    be done in the PostgreSQL local configuration.
+
+For more details about securing the database connection, see :ref:`sec-database-connection`.
