@@ -430,8 +430,12 @@ The keatest_secure user requires X509 so a client certificate. Of course
 in production a stricter requirement should be used, in particular when
 a client certificate should be bound to a particular user.
 
-PostgreSQL unit tests reuse the asiolink library setup. This postgresql.conf
-configuration file works with PostgreSQL 16.9:
+PostgreSQL unit tests reuse the asiolink library setup.
+
+The default server configuration path is specific for each system.
+
+This postgresql.conf configuration file works with PostgreSQL 16.9 on
+Ubuntu 24.04:
 
 @verbatim
 # - SSL -
@@ -445,12 +449,12 @@ ssl_key_file = '/etc/postgresql/16/main/conf.d/kea-server.key'
 
 Files must have right permissions for PostgreSQL the server to start.
 
+The file owner and group is specific for each system.
+
+The following example works on Ubuntu 24.04.
+
 @verbatim
-chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-ca.crt
-chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-server.crt
 chown postgres:postgres /etc/postgresql/16/main/conf.d/kea-server.key
-chmod og-rwx /etc/postgresql/16/main/conf.d/kea-ca.crt
-chmod og-rwx /etc/postgresql/16/main/conf.d/kea-server.crt
 chmod og-rwx /etc/postgresql/16/main/conf.d/kea-server.key
 @endverbatim
 

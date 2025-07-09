@@ -102,10 +102,9 @@ public:
     ///       - password
     ///       - port
     ///       - user
-    ///       - trust-anchor (MySQL only)
-    ///       - cert-file (MySQL only)
-    ///       - key-file (MySQL only)
-    ///       - key-password (PostgreSQL only)
+    ///       - trust-anchor
+    ///       - cert-file
+    ///       - key-file
     ///       - ssl-mode
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time
@@ -135,10 +134,9 @@ public:
     ///       - password
     ///       - port
     ///       - user
-    ///       - trust-anchor (MySQL only)
-    ///       - cert-file (MySQL only)
-    ///       - key-file (MySQL only)
-    ///       - key-password (PostgreSQL only)
+    ///       - trust-anchor
+    ///       - cert-file
+    ///       - key-file
     ///       - ssl-mode
     ///       - cipher-list (MySQL only)
     ///       - reconnect-wait-time

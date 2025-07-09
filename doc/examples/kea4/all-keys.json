@@ -572,10 +572,7 @@
                 "cert-file": "my-cert",
 
                 // Private key file name.
-                "key-file": "my-key",
-
-                // Private key password.
-                "key-password": "my-key-pass"
+                "key-file": "my-key"
             }
         ],
 

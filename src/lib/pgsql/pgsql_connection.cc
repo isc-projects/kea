@@ -270,7 +270,6 @@ PgSqlConnection::toKeaAdminParameters(ParameterMap const& params) {
             {"cert-file", "sslcert"},
             {"key-file", "sslkey"},
             {"trust-anchor", "sslrootcert"},
-            {"key-password", "sslpassword"},
             {"ssl-mode", "sslmode"},
         };
         if (conversions.count(keyword)) {
@@ -448,15 +447,6 @@ PgSqlConnection::getConnParametersInternal(bool logging) {
         dbconnparameters += " sslkey = " + skey;
     } catch (...) {
         // No private key file
-    }
-
-    string skeypassword;
-    try {
-        skeypassword = getParameter("key-password");
-        tls = true;
-        dbconnparameters += " sslpassword = " + skeypassword;
-    } catch (...) {
-        // No password
     }
 
     if (tls) {

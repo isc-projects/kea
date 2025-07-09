@@ -264,7 +264,6 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "trust-anchor") ||
                    (keyword == "cert-file") ||
                    (keyword == "key-file") ||
-                   (keyword == "key-password") ||
                    (keyword == "ssl-mode") ||
                    (keyword == "cipher-list")) {
             result->set(keyword, isc::data::Element::create(value));

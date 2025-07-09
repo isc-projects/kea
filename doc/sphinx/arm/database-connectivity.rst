@@ -79,8 +79,6 @@ Corresponding database configuration parameters for Kea servers are:
 
 -  The ``key-file`` specifies the private key file name.
 
--  The ``key-password`` specifies the private key password.
-
 -  The ``ssl-mode`` specifies the SSL mode: ``disable``, ``prefer``,
    ``require``, ``verify-ca`` or ``verify-full``.
 
@@ -94,10 +92,9 @@ configurations too.
 
 Currently the support for each database is:
 
--  MySQL supports the whole set exccept the 'key-password' parameter,
-   additional configuration must be done in the MySQL local setup,
-   for instance certificate revocation list, choice of a specific TLS
-   version, mutual authentication, etc.
+-  MySQL supports the whole set, additional configuration must be done
+   in the MySQL local setup, for instance certificate revocation list,
+   choice of a specific TLS version, mutual authentication, etc.
    When a TLS connection was required but the actual connection is in
    clear text an error log is emitted.
    The ``ssl-mode`` values correspond to the MySQL values ``DISABLED``,
