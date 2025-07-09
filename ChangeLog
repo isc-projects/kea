@@ -1,4 +1,4 @@
-2368.	[bug]		razvan
+2268.	[bug]		razvan
 	Fix error handling when detecting a global reservation for the
 	client and global reservatons are explicitly disabled in the
 	configuration.
