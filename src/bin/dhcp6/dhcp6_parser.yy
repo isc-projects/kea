@@ -1237,11 +1237,21 @@ ssl_mode: SSL_MODE {
     ctx.leave();
 };
 
-ssl_mode: DISABLE { $$ = ElementPtr(new StringElement("disable", ctx.loc2pos(@1))); }
-        | PREFER { $$ = ElementPtr(new StringElement("prefer", ctx.loc2pos(@1))); }
-        | REQUIRE { $$ = ElementPtr(new StringElement("require", ctx.loc2pos(@1))); }
-        | VERIFY_CA { $$ = ElementPtr(new StringElement("verify-ca", ctx.loc2pos(@1))); }
-        | VERIFY_FULL { $$ = ElementPtr(new StringElement("verify-full", ctx.loc2pos(@1))); }
+ssl_mode: DISABLE {
+            $$ = ElementPtr(new StringElement("disable", ctx.loc2pos(@1)));
+            }
+        | PREFER {
+            $$ = ElementPtr(new StringElement("prefer", ctx.loc2pos(@1)));
+            }
+        | REQUIRE {
+            $$ = ElementPtr(new StringElement("require", ctx.loc2pos(@1)));
+            }
+        | VERIFY_CA {
+            $$ = ElementPtr(new StringElement("verify-ca", ctx.loc2pos(@1)));
+            }
+        | VERIFY_FULL {
+            $$ = ElementPtr(new StringElement("verify-full", ctx.loc2pos(@1)));
+            }
         ;
 
 cipher_list: CIPHER_LIST {
