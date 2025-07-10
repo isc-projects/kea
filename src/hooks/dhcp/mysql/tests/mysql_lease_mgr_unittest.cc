@@ -40,6 +40,15 @@ using namespace std;
 
 namespace {
 
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasMySQLTls() {
+    std::string tls = getMySQLTlsEnv();
+    if (tls.empty()) {
+        tls = getMySQLTlsServer();
+    }
+    return (tls == "YES");
+}
+
 /// @brief Test fixture class for testing MySQL Lease Manager
 ///
 /// Opens the database prior to each test and closes it afterwards.
@@ -205,6 +214,13 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for SSL/TLS support.
+    if (hasMySQLTls()) {
+        EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+            MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+            VALID_PASSWORD, 0, 0, VALID_CERT, VALID_KEY, VALID_CA, VALID_CIPHER)));
+    }
 
     // Check for extended info tables.
     const char* EX_INFO = "extended-info-tables=true";

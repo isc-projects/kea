@@ -42,6 +42,15 @@ using namespace std;
 
 namespace {
 
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasMySQLTls() {
+    std::string tls = getMySQLTlsEnv();
+    if (tls.empty()) {
+        tls = getMySQLTlsServer();
+    }
+    return (tls == "YES");
+}
+
 class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
@@ -245,6 +254,13 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
+
+    // Check for SSL/TLS support.
+    if (hasMySQLTls()) {
+        EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+            MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+            VALID_PASSWORD, 0, 0, VALID_CERT, VALID_KEY, VALID_CA, VALID_CIPHER)));
+    }
 
     // Tidy up after the test
     destroyMySQLSchema();

@@ -42,6 +42,15 @@ using namespace std;
 
 namespace {
 
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasPgSQLTls() {
+    std::string tls = getPgSQLTlsEnv();
+    if (tls.empty()) {
+        tls = getPgSQLTlsServer();
+    }
+    return (tls == "YES");
+}
+
 class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
     /// @brief Clears the database and opens connection to it.
@@ -245,9 +254,11 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
         NoDatabaseName);
 
     // Check for SSL/TLS support.
-    EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
-        0, 0, 0, 0, VALID_CA)));
+    if (hasPgSQLTls()) {
+        EXPECT_NO_THROW(HostMgr::addBackend(connectionString(
+            PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+            VALID_PASSWORD, 0, 0, VALID_CERT, VALID_KEY, VALID_CA, VALID_CIPHER)));
+    }
 
     // Tidy up after the test
     destroyPgSQLSchema();

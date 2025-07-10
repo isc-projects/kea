@@ -40,6 +40,15 @@ using namespace std;
 
 namespace {
 
+/// @brief Check if SSL/TLS support is available and configured.
+bool hasPgSQLTls() {
+    std::string tls = getPgSQLTlsEnv();
+    if (tls.empty()) {
+        tls = getPgSQLTlsServer();
+    }
+    return (tls == "YES");
+}
+
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
 /// Opens the database prior to each test and closes it afterwards.
@@ -210,9 +219,11 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Check for SSL/TLS support.
-    EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
-        PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
-        0, 0, 0, 0, VALID_CA)));
+    if (hasPgSQLTls()) {
+        EXPECT_NO_THROW(LeaseMgrFactory::create(connectionString(
+            PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST_TCP, VALID_SECURE_USER,
+            VALID_PASSWORD, 0, 0, VALID_CERT, VALID_KEY, VALID_CA, VALID_CIPHER)));
+    }
 
     // Check for extended info tables.
     const char* EX_INFO = "extended-info-tables=true";
