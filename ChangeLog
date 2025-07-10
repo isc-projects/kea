@@ -1,3 +1,8 @@
+2270.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 2.6.4
+	stable release.
+	(Gitlab #4009)
+
 2269.	[bug]		tmark
 	Corrected an issue in logging configuration when
 	parsing "syslog:<facility name>".
