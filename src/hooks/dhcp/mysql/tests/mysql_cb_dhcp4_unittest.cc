@@ -351,6 +351,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4Test) {
     getModifiedOptions4Test();
 }
 
+TEST_F(MySqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
+    globalOption4WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4WithClientClassesTest) {
+    getAllOptions4WithClientClassesTest();
+}
+
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4Test) {
     createUpdateDeleteSubnetOption4Test();
 }
@@ -401,10 +409,6 @@ TEST_F(MySqlConfigBackendDHCPv4Test, clientClassDependencies4Test) {
 
 TEST_F(MySqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
-}
-
-TEST_F(MySqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
-    globalOption4WithClientClassesTest();
 }
 
 TEST_F(MySqlConfigBackendDHCPv4Test, sharedNetworkOption4WithClientClassesTest) {

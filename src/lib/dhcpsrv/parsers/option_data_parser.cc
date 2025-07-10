@@ -441,15 +441,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         desc.setContext(user_context);
     }
 
-#if 1
     desc.client_classes_.fromElement(client_classes);
-#else
-    if (client_classes) {
-        for (auto const& class_element : client_classes->listValue()) {
-            desc.addClientClass(class_element->stringValue());
-        }
-    }
-#endif
 
     // All went good, so we can set the option space name.
     return (make_pair(desc, space_param));

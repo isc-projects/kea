@@ -349,6 +349,14 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, getModifiedOptions4Test) {
     getModifiedOptions4Test();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
+    globalOption4WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv4Test, getAllOptions4WithClientClassesTest) {
+    getAllOptions4WithClientClassesTest();
+}
+
 TEST_F(PgSqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4Test) {
     createUpdateDeleteSubnetOption4Test();
 }
@@ -399,10 +407,6 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, clientClassDependencies4Test) {
 
 TEST_F(PgSqlConfigBackendDHCPv4Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
-}
-
-TEST_F(PgSqlConfigBackendDHCPv4Test, globalOption4WithClientClassesTest) {
-    globalOption4WithClientClassesTest();
 }
 
 TEST_F(PgSqlConfigBackendDHCPv4Test, sharedNetworkOption4WithClientClassesTest) {

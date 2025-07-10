@@ -73,7 +73,11 @@ void
 GenericConfigBackendDHCPv4Test::TearDown() {
     cbptr_.reset();
     // If data wipe enabled, delete transient data otherwise destroy the schema.
-    destroySchema();
+    if (getenv("KEA_UNIT_TEST_KEEP_SCHEMA")) {
+        std::cout << "KEA_UNIT_TEST_KEEP_SCHEMA set, avoid schema destruction" << std::endl;
+    } else {
+        destroySchema();
+    }
 }
 
 db::AuditEntryCollection
@@ -3362,9 +3366,13 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteOption4Test() {
 
 void
 GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
-    OptionDescriptorPtr opt_boot_file_name1 = test_options_[0];
-    OptionDescriptorPtr opt_boot_file_name2 = test_options_[6];
-    OptionDescriptorPtr opt_boot_file_name3 = test_options_[7];
+    // Create test options without any client classes.
+    OptionDescriptorPtr opt_boot_file_name1(new OptionDescriptor(*test_options_[0]));
+    opt_boot_file_name1->client_classes_.clear();
+    OptionDescriptorPtr opt_boot_file_name2(new OptionDescriptor(*test_options_[6]));
+    opt_boot_file_name2->client_classes_.clear();
+    OptionDescriptorPtr opt_boot_file_name3(new OptionDescriptor(*test_options_[7]));
+    opt_boot_file_name3->client_classes_.clear();
 
     ASSERT_THROW(cbptr_->createUpdateOption4(ServerSelector::ONE("server1"),
                                              opt_boot_file_name1),
@@ -3635,6 +3643,215 @@ GenericConfigBackendDHCPv4Test::getModifiedOptions4Test() {
         testOptionsEquivalent(*test_options_[0], *option0);
     }
 }
+
+std::list<OptionDescriptorPtr>
+GenericConfigBackendDHCPv4Test::makeClassTaggedOptions() {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        std::string value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { DHO_TCODE,  "T100", "cc-one"   },
+        { DHO_PCODE,  "P100", "cc-one"   },
+        { DHO_PCODE,  "P300", ""         },
+        { DHO_TCODE,  "T200", ""         },
+        { DHO_PCODE,  "P200", "cc-two"   }
+    };
+
+    std::list<OptionDescriptorPtr> tagged_options;
+    for ( auto const& opt_to_make : opts_to_make) {
+        OptionDescriptor desc = createOption<OptionString>(Option::V4, opt_to_make.code_,
+                                                           true, false, false, opt_to_make.value_);
+        desc.space_name_ = DHCP4_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        tagged_options.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+    }
+
+    return (tagged_options);
+}
+
+void
+GenericConfigBackendDHCPv4Test::updateClassTaggedOptions(
+    std::list<OptionDescriptorPtr>& options) {
+    for ( auto& desc : options) {
+        OptionStringPtr opt = boost::dynamic_pointer_cast<OptionString>(desc->option_);
+        ASSERT_TRUE(opt);
+        std::string new_value(opt->getValue() + std::string(".") + opt->getValue());
+        opt->setValue(new_value);
+    }
+}
+
+// Macro the make SCOPED_TRACE around equivalance functon more compact and helpful.
+#define SCOPED_OPT_COMPARE(exp_opt,test_opt)\
+{\
+    std::stringstream oss;\
+    oss << "Options not equal:\n"\
+        << "  exp_opt: " << exp_opt.option_->toText() << "\n"\
+        << " test_opt: " << (test_opt.option_ ? test_opt.option_->toText() : "<null>") << "\n";\
+    SCOPED_TRACE(oss.str());\
+    testOptionsEquivalent(exp_opt,test_opt);\
+}
+
+// Verify that one can add multiple global instances of the same option code
+// and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
+    // Add the options to global scope.
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        // Add option to the config back end.
+        cbptr_->createUpdateOption4(ServerSelector::ALL(), ref_option);
+    }
+
+    // Make sure that we can find each option.
+    OptionDescriptorPtr found_option;
+    for (auto const& ref_option : ref_options) {
+        // Find the option by code and client_classes.
+        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
+        found_option = cbptr_->getOption4(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP4_OPTION_SPACE,
+                                          cclasses);
+        ASSERT_TRUE(found_option);
+        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
+    }
+
+    // Update the option values.
+    updateClassTaggedOptions(ref_options);
+
+    // Update each option in the backend.
+    for (auto const& ref_option : ref_options) {
+        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
+
+        // Update option in the config back end.
+        cbptr_->createUpdateOption4(ServerSelector::ALL(), ref_option);
+
+        // Fetch and verify the updated option.
+        found_option = cbptr_->getOption4(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP4_OPTION_SPACE,
+                                          cclasses);
+        ASSERT_TRUE(found_option);
+        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
+    }
+
+    // Delete each option from the backend.
+    for (auto const& ref_option : ref_options) {
+        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
+
+        // Delete the option by code and client_classes.
+        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                           ref_option->option_->getType(),
+                                           DHCP4_OPTION_SPACE,
+                                           cclasses));
+
+        // Finding the option by code and client_classes should fail.
+        found_option = cbptr_->getOption4(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP4_OPTION_SPACE,
+                                          cclasses);
+        ASSERT_FALSE(found_option);
+    }
+}
+
+
+void
+GenericConfigBackendDHCPv4Test::getAllOptions4WithClientClassesTest() {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint32_t value_;
+        std::string cclass_;
+        ServerSelector server_;
+    };
+
+    auto server1 = ServerSelector::ONE("server1");
+    auto server2 = ServerSelector::ONE("server2");
+    auto all = ServerSelector::ALL();
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 231,  1, "cc-1", server1 },
+        { 231,  2, "cc-2", server1 },
+        { 232,  3, "cc-3", server1 },
+        { 232,  4, "cc-3", server2 },
+        { 233,  5, "cc-4", server1 },
+        { 233,  6, "cc-4", all },
+        { 234,  7, "cc-5", all }
+    };
+
+    // Create two servers.
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer4(test_servers_[1]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer4(test_servers_[2]));
+
+    // Add all of the global options.
+    std::vector<OptionDescriptorPtr> ref_options;
+    for ( auto const& opt_to_make : opts_to_make) {
+        OptionDescriptor desc = createOption<OptionInt<uint32_t>>(Option::V4, opt_to_make.code_,
+                                                           true, false, false, opt_to_make.value_);
+        desc.space_name_ = DHCP4_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ref_options.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+        ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption4(opt_to_make.server_, ref_options.back()));
+    }
+
+    // Try to fetch the collection of global options for the server1.
+    // Build list of options we expect to get back.
+    std::vector<OptionDescriptorPtr> exp_options;
+    exp_options.push_back(ref_options[0]);
+    exp_options.push_back(ref_options[1]);
+    exp_options.push_back(ref_options[2]);
+    exp_options.push_back(ref_options[4]);
+    exp_options.push_back(ref_options[6]);
+
+    OptionContainer returned_options;
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions4(server1));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    auto exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+
+    // Try to fetch the collection of global options for the server1.
+    // Build list of options we expect to get back.
+    exp_options.clear();
+    exp_options.push_back(ref_options[3]);
+    exp_options.push_back(ref_options[5]);
+    exp_options.push_back(ref_options[6]);
+
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions4(server2));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+
+    // Try to fetch the collection of global options for the server1.
+    // Build list of options we expect to get back.
+    exp_options.clear();
+    exp_options.push_back(ref_options[5]);
+    exp_options.push_back(ref_options[6]);
+
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions4(all));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+}
+
 
 void
 GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
@@ -4715,123 +4932,6 @@ GenericConfigBackendDHCPv4Test::multipleAuditEntriesTest() {
                                           it->getRevisionId()).size();
         EXPECT_EQ(partial_size + 1, distance);
         distance--;
-    }
-}
-
-std::list<OptionDescriptorPtr>
-GenericConfigBackendDHCPv4Test::makeClassTaggedOptions() {
-    // Describes an option to create.
-    struct OptData {
-        uint16_t code_;
-        std::string value_;
-        std::string cclass_;
-    };
-
-    // List of options to create.
-    std::list<OptData> opts_to_make = {
-        { DHO_TCODE,  "T100", "cc-one"   },
-        { DHO_PCODE,  "P100", "cc-one"   },
-        { DHO_PCODE,  "P300", ""         },
-        { DHO_TCODE,  "T200", ""         },
-        { DHO_PCODE,  "P200", "cc-two"   }
-    };
-
-    std::list<OptionDescriptorPtr> tagged_options;
-    for ( auto const& opt_to_make : opts_to_make) {
-        OptionDescriptor desc = createOption<OptionString>(Option::V4, opt_to_make.code_,
-                                                           true, false, false, opt_to_make.value_);
-        desc.space_name_ = DHCP4_OPTION_SPACE;
-        if (!opt_to_make.cclass_.empty()) {
-            desc.addClientClass(opt_to_make.cclass_);
-        }
-
-        tagged_options.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
-    }
-
-    return (tagged_options);
-}
-
-void
-GenericConfigBackendDHCPv4Test::updateClassTaggedOptions(
-    std::list<OptionDescriptorPtr>& options) {
-    for ( auto& desc : options) {
-        OptionStringPtr opt = boost::dynamic_pointer_cast<OptionString>(desc->option_);
-        ASSERT_TRUE(opt);
-        std::string new_value(opt->getValue() + std::string(".") + opt->getValue());
-        opt->setValue(new_value);
-    }
-}
-
-// Macro the make SCOPED_TRACE around equivalance functon more compact and helpful.
-#define SCOPED_OPT_COMPARE(exp_opt,test_opt)\
-{\
-    std::stringstream oss;\
-    oss << "Options not equal:\n"\
-        << "  exp_opt: " << exp_opt.option_->toText() << "\n"\
-        << " test_opt: " << (test_opt.option_ ? test_opt.option_->toText() : "<null>") << "\n";\
-    SCOPED_TRACE(oss.str());\
-    testOptionsEquivalent(exp_opt,test_opt);\
-}
-
-// Verify that one can add multiple global instances of the same option code
-// and that they can be distinguished via their client_classes.
-void
-GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
-    // Add the options to global scope.
-    auto ref_options = makeClassTaggedOptions();
-    for (auto const& ref_option : ref_options) {
-        // Add option to the config back end.
-        cbptr_->createUpdateOption4(ServerSelector::ALL(), ref_option);
-    }
-
-    // Make sure that we can find each option.
-    OptionDescriptorPtr found_option;
-    for (auto const& ref_option : ref_options) {
-        // Find the option by code and client_classes.
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
-        found_option = cbptr_->getOption4(ServerSelector::ALL(),
-                                          ref_option->option_->getType(),
-                                          DHCP4_OPTION_SPACE,
-                                          cclasses);
-        ASSERT_TRUE(found_option);
-        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
-    }
-
-    // Update the option values.
-    updateClassTaggedOptions(ref_options);
-
-    // Update each option in the backend.
-    for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
-
-        // Update option in the config back end.
-        cbptr_->createUpdateOption4(ServerSelector::ALL(), ref_option);
-
-        // Fetch and verify the updated option.
-        found_option = cbptr_->getOption4(ServerSelector::ALL(),
-                                          ref_option->option_->getType(),
-                                          DHCP4_OPTION_SPACE,
-                                          cclasses);
-        ASSERT_TRUE(found_option);
-        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
-    }
-
-    // Delete each option from the backend.
-    for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
-
-        // Delete the option by code and client_classes.
-        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
-                                           ref_option->option_->getType(),
-                                           DHCP4_OPTION_SPACE,
-                                           cclasses));
-
-        // Finding the option by code and client_classes should fail.
-        found_option = cbptr_->getOption4(ServerSelector::ALL(),
-                                          ref_option->option_->getType(),
-                                          DHCP4_OPTION_SPACE,
-                                          cclasses);
-        ASSERT_FALSE(found_option);
     }
 }
 

@@ -802,7 +802,8 @@ MySqlConfigBackendImpl::getOptions(const int index,
                 auto existing_it = existing_it_pair.first;
                 bool found = false;
                 for ( ; existing_it != existing_it_pair.second; ++existing_it) {
-                    if (existing_it->space_name_ == desc->space_name_) {
+                    if ((existing_it->space_name_ == desc->space_name_) &&
+                        (existing_it->client_classes_ == desc->client_classes_)) {
                         found = true;
                         // This option was already fetched. Let's check if we should
                         // replace it or not.
@@ -818,8 +819,9 @@ MySqlConfigBackendImpl::getOptions(const int index,
                 // belongs to a different server and the inserted option is not
                 // for all servers.
                 if (!found ||
-                    (!existing_it->hasServerTag(last_option_server_tag) &&
-                     !last_option_server_tag.amAll())) {
+                    ((!existing_it->hasServerTag(last_option_server_tag) &&
+                      !last_option_server_tag.amAll()) ||
+                     (desc->client_classes_ != existing_it->client_classes_))) {
                     static_cast<void>(local_options.push_back(*desc));
                 }
             }
@@ -1130,11 +1132,7 @@ MySqlConfigBackendImpl::createClientClassesForWhereClause(const ClientClassesPtr
 db::MySqlBindingPtr
 MySqlConfigBackendImpl::createInputClientClassesBinding(const ClientClasses& client_classes) {
     // Create JSON list of client classes.
-    data::ElementPtr client_classes_element = data::Element::createList();
-    for (auto const& client_class : client_classes) {
-        client_classes_element->add(data::Element::create(client_class));
-    }
-
+    auto client_classes_element = client_classes.toElement();
     return (db::MySqlBinding::createString(client_classes_element->str()));
 }
 
