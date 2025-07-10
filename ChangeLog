@@ -1,7 +1,14 @@
-2270.	[build]		andrei
+Kea 2.6.4 (stable) released on July 16, 2025
+
+2271.	[build]		andrei
 	The library version numbers have been bumped up for the Kea 2.6.4
 	stable release.
 	(Gitlab #4009)
+
+2270. [build] andrei
+	Fixed a build check that prevented Kea from building PDF
+	documentation with Sphinx 8.1.3+.
+	(Gitlab #3800)
 
 2269.	[bug]		tmark
 	Corrected an issue in logging configuration when
@@ -12,7 +19,7 @@
 	Fix error handling when detecting a global reservation for the
 	client and global reservatons are explicitly disabled in the
 	configuration.
-	(Gitlab #4001)
+	(Gitlab #4001, #3910)
 
 Kea 2.6.3 (stable) released on May 28, 2025
 
