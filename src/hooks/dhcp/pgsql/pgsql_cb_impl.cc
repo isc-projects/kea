@@ -1159,12 +1159,7 @@ void
 PgSqlConfigBackendImpl::addClientClassesBinding(db::PsqlBindArray& bindings,
                                                 const ClientClasses& client_classes) {
     // Create JSON list of client classes.
-    data::ElementPtr client_classes_element = data::Element::createList();
-    for (auto const& client_class : client_classes) {
-        client_classes_element->add(data::Element::create(client_class));
-    }
-
-    bindings.add(client_classes_element);
+    bindings.add(client_classes.toElement());
 }
 
 void

@@ -61,6 +61,11 @@ OptionDescriptor::addClientClass(const std::string& class_name) {
     }
 }
 
+ClientClassesPtr
+OptionDescriptor::copyClientClasses() const {
+    return (ClientClassesPtr(new ClientClasses(client_classes_)));
+}
+
 bool
 OptionDescriptor::allowedForClientClasses(const ClientClasses& cclasses) const {
     if (client_classes_.empty()) {

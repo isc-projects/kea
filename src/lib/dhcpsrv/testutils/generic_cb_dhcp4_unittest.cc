@@ -3714,11 +3714,10 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
     OptionDescriptorPtr found_option;
     for (auto const& ref_option : ref_options) {
         // Find the option by code and client_classes.
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
         found_option = cbptr_->getOption4(ServerSelector::ALL(),
                                           ref_option->option_->getType(),
                                           DHCP4_OPTION_SPACE,
-                                          cclasses);
+                                          ref_option->copyClientClasses());
         ASSERT_TRUE(found_option);
         SCOPED_OPT_COMPARE((*ref_option), (*found_option));
     }
@@ -3728,8 +3727,6 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
 
     // Update each option in the backend.
     for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
-
         // Update option in the config back end.
         cbptr_->createUpdateOption4(ServerSelector::ALL(), ref_option);
 
@@ -3737,14 +3734,14 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
         found_option = cbptr_->getOption4(ServerSelector::ALL(),
                                           ref_option->option_->getType(),
                                           DHCP4_OPTION_SPACE,
-                                          cclasses);
+                                          ref_option->copyClientClasses());
         ASSERT_TRUE(found_option);
         SCOPED_OPT_COMPARE((*ref_option), (*found_option));
     }
 
     // Delete each option from the backend.
     for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
+        ClientClassesPtr cclasses = ref_option->copyClientClasses();
 
         // Delete the option by code and client_classes.
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
@@ -4175,7 +4172,8 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                        shared_network->getName(),
                                        opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_));
+                                       opt_boot_file_name->space_name_,
+                                       opt_boot_file_name->copyClientClasses()));
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);
@@ -4983,13 +4981,11 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOption4WithClientClassesTest() {
     // Now make sure that we can delete the options individually.
     updateClassTaggedOptions(ref_options);
     for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                            network->getName(),
                                            ref_option->option_->getType(),
                                            DHCP4_OPTION_SPACE,
-                                           cclasses)) << "code:" << ref_option->option_->getType() 
-                                                      <<  " classes: " << cclasses->toText();
+                                           ref_option->copyClientClasses()));
     }
 
     // Re-fetch the network.
@@ -5049,12 +5045,11 @@ GenericConfigBackendDHCPv4Test::subnetOption4WithClientClassesTest() {
     // Now make sure that we can delete the options individually.
     updateClassTaggedOptions(ref_options);
     for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                            subnet->getID(),
                                            ref_option->option_->getType(),
                                            DHCP4_OPTION_SPACE,
-                                           cclasses));
+                                           ref_option->copyClientClasses()));
     }
 
     // Re-fetch the subnet.
@@ -5128,13 +5123,12 @@ GenericConfigBackendDHCPv4Test::poolOption4WithClientClassesTest() {
 
     // Now make sure that we can delete the options individually.
     for (auto const& ref_option : ref_options) {
-        ClientClassesPtr cclasses(new ClientClasses(ref_option->client_classes_));
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                            pool->getFirstAddress(),
                                            pool->getLastAddress(),
                                            ref_option->option_->getType(),
                                            DHCP4_OPTION_SPACE,
-                                           cclasses));
+                                           ref_option->copyClientClasses()));
     }
 
     // Re-fetch the subnet.

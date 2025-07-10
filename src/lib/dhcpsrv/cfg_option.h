@@ -219,6 +219,11 @@ public:
     /// @return True if descriptor's client-classes is empty or at least
     /// one of its members is found in the validation list.
     bool allowedForClientClasses(const ClientClasses& cclasses) const;
+
+    /// @brief Get a copy of client classes
+    ///
+    /// @return Pointer to a copy of descriptor's client classes
+    ClientClassesPtr copyClientClasses() const;
 };
 
 /// @brief Multi index container for DHCP option descriptors.
