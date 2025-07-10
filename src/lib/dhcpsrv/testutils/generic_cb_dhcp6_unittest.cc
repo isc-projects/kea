@@ -3381,9 +3381,13 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteOption6Test() {
 
 void
 GenericConfigBackendDHCPv6Test::globalOptions6WithServerTagsTest() {
-    OptionDescriptorPtr opt_timezone1 = test_options_[0];
-    OptionDescriptorPtr opt_timezone2 = test_options_[6];
-    OptionDescriptorPtr opt_timezone3 = test_options_[7];
+    // Create test options without any client classes.
+    OptionDescriptorPtr opt_timezone1(new OptionDescriptor(*test_options_[0]));
+    opt_timezone1->client_classes_.clear();
+    OptionDescriptorPtr opt_timezone2(new OptionDescriptor(*test_options_[6]));
+    opt_timezone2->client_classes_.clear();
+    OptionDescriptorPtr opt_timezone3(new OptionDescriptor(*test_options_[7]));
+    opt_timezone3->client_classes_.clear();
 
     ASSERT_THROW(cbptr_->createUpdateOption6(ServerSelector::ONE("server1"),
                                              opt_timezone1),
