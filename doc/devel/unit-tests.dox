@@ -65,6 +65,11 @@ The following environment variable can affect the unit tests:
   the environment of the unit test process is updated so usually this
   variable is manually set only in order to enforce a particular status.
 
+- KEA_PGSQL_HAVE_SSL - Specifies the SSL/TLS support status of PostgreSQL.
+  When not set the corresponding PostgreSQL global variable is read and
+  the environment of the unit test process is updated so usually this
+  variable is manually set only in order to enforce a particular status.
+
 - KEA_PIDFILE_DIR - Specifies the directory which should be used for PID files
   as used by dhcp::Daemon or its derivatives. If not specified, the
   default is <i>prefix</i>/var/run/kea, where <i>prefix</i> defaults to
@@ -227,6 +232,13 @@ mysql> SHOW GLOBAL VARIABLES LIKE 'have_ssl';
 
 The value of this MySQL global variable is reflected by the
 KEA_MYSQL_HAVE_SSL environment variable.
+
+Recent versions of Community MySQL does not support this global variable.
+SSL/TLS support detection was extended to use status using:
+
+@verbatim
+mysql> SHOW STATUS LIKE 'ssl_cipher';
+@endverbatim
 
 The keatest_secure user requires X509 so a client certificate. Of course
 in production a stricter requirement should be used, in particular when
