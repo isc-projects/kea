@@ -747,6 +747,7 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
     for (auto option_it = option_it_pair.first;
          option_it != option_it_pair.second;
          ++option_it) {
+/// @todo TKM - shouldn't this also compare client_classes_?
         if ((option_it->space_name_ == option->space_name_) &&
             (option_it->hasServerTag(ServerTag(tag)))) {
             index.replace(option_it, *option);
@@ -794,7 +795,8 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
                   << " not present in a selected server");
     }
 
-    shared_network->getCfgOption()->del(option->space_name_, option->option_->getType());
+    shared_network->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                        option->client_classes_);
     shared_network->getCfgOption()->add(*option, option->space_name_);
 }
 
@@ -835,7 +837,8 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
                   << " not present in a selected server");
     }
 
-    subnet->getCfgOption()->del(option->space_name_, option->option_->getType());
+    subnet->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                option->client_classes_);
     subnet->getCfgOption()->add(*option, option->space_name_);
 }
 
@@ -875,7 +878,8 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
         }
 
         // Update the option.
-        pool->getCfgOption()->del(option->space_name_, option->option_->getType());
+        pool->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                  option->client_classes_);
         pool->getCfgOption()->add(*option, option->space_name_);
 
         return;
