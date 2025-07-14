@@ -19,7 +19,7 @@ support for a YANG/NETCONF interface with the :iscman:`kea-netconf` agent.
 Installing NETCONF
 ------------------
 
-To get its NETCONF capabilities, Kea requires the v2 versions of libyang and
+To get its NETCONF capabilities, Kea requires the v3 versions of libyang and
 Sysrepo. The specific versions that have been thoroughly tested with Kea are:
 
 * libyang v3.12.2 (da7272e19d9e27d1bfdd68108fa9dce25fbdf5e8)

@@ -35,7 +35,9 @@ private:
     void cleanUp() {
         Session session(sysrepo::Connection{}.sessionStart());
         session.switchDatastore(sysrepo::Datastore::Candidate);
-        session.deleteItem("/keatest-module:container");
+        if (session.getData("/keatest-module:container/list")) {
+            session.deleteItem("/keatest-module:container/list");
+        }
         session.deleteItem("/keatest-module:kernel-modules");
         session.deleteItem("/keatest-module:list");
         session.deleteItem("/keatest-module:main");
@@ -367,7 +369,9 @@ TEST_F(TranslatorTest, deleteItem) {
     Translator translator(Connection{}.sessionStart(), "keatest-module");
 
     // Missing schema node
-    EXPECT_NO_THROW_LOG(translator.deleteItem("/keatest-module:main/no_such_node"));
+    EXPECT_THROW_MSG(translator.deleteItem("/keatest-module:main/no_such_node"), NetconfError,
+                     "deleting item at '/keatest-module:main/no_such_node': Session::getData: "
+                     "Couldn't get '/keatest-module:main/no_such_node': SR_ERR_NOT_FOUND");
 
     // Existing schema node, but no data
     xpath = "/keatest-module:main/string";
@@ -802,7 +806,8 @@ TEST_F(TranslatorTest, setItem) {
     EXPECT_THROW_MSG(translator->setItem(xpath, element, LeafBaseType::String), NetconfError,
                      "setting item '\"str\"' at '" + xpath +
                      "': Session::setItem: Couldn't set "
-                     "'/keatest-module:main/no_such_node' to 'str': SR_ERR_INVAL_ARG");
+                     "'/keatest-module:main/no_such_node' to 'str': SR_ERR_LY\n Not found node "
+                     "\"no_such_node\" in path. (path \"/keatest-module:main\") (SR_ERR_LY)");
 
     // Bad type.
     xpath = "/keatest-module:main/string";
@@ -858,9 +863,22 @@ TEST_F(TranslatorTest, container) {
         "getting node of type 1 not supported, xpath is '/keatest-module:container'");
     EXPECT_FALSE(element);
     element.reset();
-    EXPECT_NO_THROW_LOG(
-        element = translator.getItemFromAbsoluteXpath("/keatest-module:container[key1='key1'][key2='key2']"));
-    EXPECT_FALSE(element);
+    optional<DataNode> const& container(translator.findXPath("/keatest-module:container"));
+    try {
+        libyang::Set<libyang::DataNode> const& nodes((*container).findXPath("/keatest-module:container/list"));
+        element = isc::data::Element::createList();
+        for (libyang::DataNode const& i : nodes) {
+            ElementPtr result = Element::createMap();
+            translator.getMandatoryLeaf(result, i, "key1");
+            translator.getMandatoryLeaf(result, i, "key2");
+            translator.checkAndGetLeaf(result, i, "leaf");
+            element->add(result);
+        }
+    } catch (libyang::Error const& ex) {
+        ADD_FAILURE() << "failed to retrieve keatest-module:container/list[key1='key1][key2='key2']. error: " << ex.what();
+    }
+    ASSERT_TRUE(element);
+    ASSERT_EQ("[ { \"key1\": \"key1\", \"key2\": \"key2\", \"leaf\": \"Leaf value\" } ]", element->str());
 }
 
 // Test YANG list retrieval.
