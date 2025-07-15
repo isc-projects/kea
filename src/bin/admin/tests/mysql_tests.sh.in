@@ -157,7 +157,7 @@ mysql_db_version_test() {
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "30.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "31.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1157,6 +1157,18 @@ mysql_upgrade_29_to_30_test() {
     assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
+mysql_upgrade_30_to_31_test() {
+    # Check dhcp4.client_classes now needs a value
+    qry="SET @disable_audit = 1;\
+        INSERT INTO dhcp4_options (scope_id, code, space, formatted_value, modification_ts) \
+        VALUES (0, '223', 'dhcp4', 'foo' , current_timestamp );";
+
+    # Should fail with "ERROR 1364 (HY000): Field 'client_classes' doesn't have a default value"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 1 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1178,7 +1190,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "30.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "31.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1773,7 +1785,8 @@ insert into hosts(dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, ipv4_a
     qry="\
 SET @disable_audit = 1;\
 INSERT INTO dhcp4_client_class(name, modification_ts) VALUES ('foo', now());\
-INSERT INTO dhcp4_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
+INSERT INTO dhcp4_options(code, scope_id, dhcp_client_class, modification_ts, client_classes)\
+            VALUES (222, 2, 'foo', now(), '[  ]');\
 INSERT INTO dhcp6_client_class(name, modification_ts) VALUES ('foo', now());\
 INSERT INTO dhcp6_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
 SET @disable_audit = 0"
@@ -1864,6 +1877,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 29.0 to 30.0.
     mysql_upgrade_29_to_30_test
+
+    # Check upgrade from 29.0 to 30.0.
+    mysql_upgrade_30_to_31_test
 
     # Let's wipe the whole database
     mysql_wipe
@@ -3965,6 +3981,56 @@ mysql_migrate_client_class_test() {
     test_finish 0
 }
 
+# Verifies migration of dhcp4_options.client_classes column to not null.
+mysql_migrate_dhcp4_options_client_classes() {
+    test_start "mysql.mysql_migrate_dhcp4_options_client_classes"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    mysql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 30.0
+    mysql_upgrade_schema_to_version 30.0
+
+    # Now insert options.
+    sql="\
+    set @disable_audit = 1;\
+    insert into dhcp4_options \
+        (scope_id, code, space, formatted_value, modification_ts) \
+        values (0, 222, 'dhcp4', 'foo' , current_timestamp); \
+    insert into dhcp4_options \
+        (scope_id, code, space, formatted_value, client_classes, modification_ts) \
+        values (0, 223, 'dhcp4', 'bar' , '[ \"cc-one\" ]', current_timestamp);"
+
+    run_statement "insert option" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_options;"
+    run_statement "#get 4_option_count before update" "$qry" 2
+
+    # Upgrade to schema 31.0
+    mysql_upgrade_schema_to_version 31.0
+
+    # Verify the migrated records.
+    qry="select code from dhcp4_options where client_classes = '[  ]';"
+    run_statement "#get 4_option_222 after update" "$qry" 222 
+
+    qry="select code from dhcp4_options where client_classes = '[ \"cc-one\" ]';"
+    run_statement "#get 4_option_223 after update" "$qry" 223 
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
 # Run tests.
 mysql_db_init_test
 mysql_host_reservation_init_test
@@ -4000,3 +4066,4 @@ mysql_reservation_mode_out_of_pool_parameters_test
 mysql_migrate_opt_record_type
 mysql_remove_control_socket_parameters_test
 mysql_migrate_client_class_test
+mysql_migrate_dhcp4_options_client_classes

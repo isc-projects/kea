@@ -6711,6 +6711,19 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 29.0.
 
+-- This line starts the schema upgrade to version 30.0.
+
+SELECT set_config('kea.disable_audit', 'true', false);
+UPDATE dhcp4_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
+ALTER TABLE dhcp4_options ALTER COLUMN client_classes SET NOT NULL;
+SELECT set_config('kea.disable_audit', 'false', false);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '30', minor = '0';
+
+-- This line concludes the schema upgrade to version 30.0.
+
 -- Commit the script transaction.
 COMMIT;
 

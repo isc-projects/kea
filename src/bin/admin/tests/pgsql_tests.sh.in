@@ -158,7 +158,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "29.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "30.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1129,6 +1129,19 @@ pgsql_upgrade_28_to_29_test() {
     assert_str_eq 'registered' "${OUTPUT}" "${query}: expected output %s, returned %s"
 }
 
+pgsql_upgrade_29_to_30_test() {
+    # Check dhcp4.client_classes now needs a value
+    qry="SELECT set_config('kea.disable_audit', 'true', false);\
+        INSERT INTO dhcp4_options (scope_id, code, space, formatted_value, modification_ts) \
+        VALUES (0, '223', 'dhcp4', 'foo' , current_timestamp );";
+
+    # Should fail with "# ERROR:  null value in column "client_classes" of relation "dhcp4_options"
+    # violates not-null constraint"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 3 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -1147,7 +1160,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "29.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "30.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1226,6 +1239,10 @@ pgsql_upgrade_test() {
 
     # Check 28 to 29 upgrade
     pgsql_upgrade_28_to_29_test
+
+    # Check 29 to 30 upgrade
+    pgsql_upgrade_29_to_30_test
+
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -3106,6 +3123,54 @@ pgsql_migrate_client_class_test() {
     test_finish 0
 }
 
+# Verifies migration of dhcp4_options.client_classes column to not null.
+pgsql_migrate_dhcp4_options_client_classes() {
+    test_start "pgsql.pgsql_migrate_dhcp4_options_client_classes"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 29.0
+    pgsql_upgrade_schema_to_version 29.0
+
+    # Now insert options.
+    sql="\
+    select set_config('kea.disable_audit', 'true', false);\
+    insert into dhcp4_options (scope_id, code, space, formatted_value, modification_ts) \
+        values (0, '222', 'dhcp4', 'foo' , current_timestamp); \
+    insert into dhcp4_options (scope_id, code, space, formatted_value, client_classes, modification_ts) \
+        values (0, '223', 'dhcp4', 'bar' , '[ \"cc-one\" ]', current_timestamp); \
+    select set_config('kea.disable_audit', 'false', false);"
+
+    run_statement "insert option" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from dhcp4_options;"
+    run_statement "#get 4_option_count before update" "$qry" 2
+
+    # Upgrade to schema 30.0
+    pgsql_upgrade_schema_to_version 30.0
+
+    # Verify the migrated records.
+    qry="select code from dhcp4_options where client_classes = '[  ]';"
+    run_statement "#get 4_option_foo after update" "$qry" 222 
+
+    qry="select code from dhcp4_options where client_classes = '[ \"cc-one\" ]';"
+    run_statement "#get 4_option_foo after update" "$qry" 223 
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
 
 # Run tests.
 pgsql_db_init_test
@@ -3136,3 +3201,4 @@ pgsql_reservation_mode_out_of_pool_parameters_test
 pgsql_migrate_opt_record_type
 pgsql_remove_control_socket_parameters_test
 pgsql_migrate_client_class_test
+pgsql_migrate_dhcp4_options_client_classes

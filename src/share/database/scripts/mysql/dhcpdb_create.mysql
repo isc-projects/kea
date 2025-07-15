@@ -6436,6 +6436,19 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 30.0.
 
+-- This line starts the schema upgrade to version 31.0.
+
+SET @disable_audit = 1;
+UPDATE dhcp4_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
+ALTER TABLE dhcp4_options MODIFY COLUMN client_classes LONGTEXT NOT NULL;
+SET @disable_audit = 0;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '31', minor = '0';
+
+-- This line concludes the schema upgrade to version 31.0.
+
 # Notes:
 #
 # Indexes
