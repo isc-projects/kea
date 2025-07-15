@@ -747,8 +747,8 @@ TestConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_se
     for (auto option_it = option_it_pair.first;
          option_it != option_it_pair.second;
          ++option_it) {
-/// @todo TKM - shouldn't this also compare client_classes_?
         if ((option_it->space_name_ == option->space_name_) &&
+            (option_it->client_classes_ == option->client_classes_) &&
             (option_it->hasServerTag(ServerTag(tag)))) {
             index.replace(option_it, *option);
             return;
