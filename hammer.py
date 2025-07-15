@@ -2412,12 +2412,6 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
                 raise_error=False)
         execute(f'sudo rpm -i {rpm_root_path}/RPMS/{arch.strip()}/*rpm', check_times=check_times, dry_run=dry_run)
 
-        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
-        # implicit start from the installation of isc-kea-ctrl-agent above.
-        time.sleep(10)
-        # Reset systemd's rate limit period. Redundant, but just to be safe.
-        execute('sudo systemctl reset-failed kea-ctrl-agent.service', raise_error=False)
-
         _check_installed_rpm_or_debs(
             ['kea-ctrl-agent.service'],
             "Expected a file at path '/etc/kea/kea-api-user'",
@@ -2502,12 +2496,6 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
     if 'install' in features:
         # install packages
         execute('sudo dpkg -i *deb', check_times=check_times, dry_run=dry_run)
-
-        # Wait for systemd's rate limit period to pass to avoid "Start request repeated too quickly" after the failed
-        # implicit start from the installation of isc-kea-ctrl-agent above.
-        time.sleep(10)
-        # Reset systemd's rate limit period. Redundant, but just to be safe.
-        execute('sudo systemctl reset-failed isc-kea-ctrl-agent.service')
 
         _check_installed_rpm_or_debs(
             ['isc-kea-ctrl-agent.service'],
