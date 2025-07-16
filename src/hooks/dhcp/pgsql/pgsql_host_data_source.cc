@@ -477,7 +477,7 @@ class PgSqlHostWithOptionsExchange : public PgSqlHostExchange {
 private:
 
     /// @brief Number of columns holding DHCPv4 or DHCPv6 option information.
-    static const size_t OPTION_COLUMNS = 8;
+    static const size_t OPTION_COLUMNS = 9;
 
     /// @brief Receives DHCPv4 or DHCPv6 options information from the
     /// dhcp4_options or dhcp6_options tables respectively.
@@ -512,6 +512,7 @@ private:
           persistent_index_(start_column_ + 5),
           cancelled_index_(start_column_ + 6),
           user_context_index_(start_column_ + 7),
+          client_classes_index_(start_column_ + 8),
           most_recent_option_id_(0) {
         }
 
@@ -626,6 +627,13 @@ private:
                                               user_context);
             }
 
+            // client_classes: TEXT
+            std::string client_classes;
+            if (!isColumnNull(r, row, client_classes_index_)) {
+                PgSqlExchange::getColumnValue(r, row, client_classes_index_,
+                                              client_classes);
+            }
+
             // Options are held in a binary or textual format in the database.
             // This is similar to having an option specified in a server
             // configuration file. Such option is converted to appropriate C++
@@ -703,6 +711,18 @@ private:
                 }
             }
 
+            // Set option's class tag client classes. Should always be content
+            // per schema rules, even if its's an empty list '[  ]'.
+            if (!client_classes.empty()) {
+                try {
+                    auto cclist_element = Element::fromJSON(client_classes);
+                    desc.client_classes_.fromElement(cclist_element);
+                } catch (const std::exception& ex) {
+                    isc_throw(BadValue, "client classes '" << client_classes
+                              << "' is invalid JSON: " << ex.what());
+                }
+            }
+
             cfg->add(desc, space);
         }
 
@@ -719,6 +739,7 @@ private:
             columns[persistent_index_] = "persistent";
             columns[cancelled_index_] = "cancelled";
             columns[user_context_index_] = "user_context";
+            columns[client_classes_index_] = "client_classes";
         }
 
     private:
@@ -756,6 +777,9 @@ private:
 
         /// @brief User context
         size_t user_context_index_;
+
+        /// @brief Client classes
+        size_t client_classes_index_;
 
         /// @brief Option id for last processed row.
         uint64_t most_recent_option_id_;
@@ -1220,10 +1244,11 @@ private:
     static const size_t PERSISTENT_COL = 5;
     static const size_t CANCELLED_COL = 6;
     static const size_t USER_CONTEXT_COL = 7;
-    static const size_t DHCP_SUBNET_ID_COL = 8;
-    static const size_t HOST_ID_COL = 9;
+    static const size_t CLIENT_CLASSES_COL = 8;
+    static const size_t DHCP_SUBNET_ID_COL = 9;
+    static const size_t HOST_ID_COL = 10;
     /// @brief Number of columns in the option tables holding bindable values.
-    static const size_t OPTION_COLUMNS = 10;
+    static const size_t OPTION_COLUMNS = 11;
 
 public:
 
@@ -1239,10 +1264,11 @@ public:
         columns_[PERSISTENT_COL] = "persistent";
         columns_[CANCELLED_COL] = "cancelled";
         columns_[USER_CONTEXT_COL] = "user_context";
+        columns_[CLIENT_CLASSES_COL] = "client_classes";
         columns_[DHCP_SUBNET_ID_COL] = "dhcp_subnet_id";
         columns_[HOST_ID_COL] = "host_id";
 
-        BOOST_STATIC_ASSERT(10 <= OPTION_COLUMNS);
+        BOOST_STATIC_ASSERT(11 <= OPTION_COLUMNS);
     }
 
     /// @brief Creates binding array to insert option data into database.
@@ -1316,6 +1342,10 @@ public:
             } else {
                 bind_array->addNull();
             }
+
+            // Client classes: TEXT NOT NULL
+            auto client_classes = opt_desc.client_classes_.toElement()->str();
+            bind_array->addTempString(client_classes);
 
             // host_id: INT NULL
             if (!host_id) {
@@ -1702,9 +1732,9 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
-     "  o4.persistent, o4.cancelled, o4.user_context, "
+     "  o4.persistent, o4.cancelled, o4.user_context, o4.client_classes, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
-     "  o6.persistent, o6.cancelled, o6.user_context, "
+     "  o6.persistent, o6.cancelled, o6.user_context, o6.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1728,7 +1758,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
      "WHERE ipv4_address = $1 "
@@ -1748,7 +1778,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
      "WHERE h.dhcp4_subnet_id = $1 AND h.dhcp_identifier_type = $2 "
@@ -1770,7 +1800,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1795,7 +1825,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
      "WHERE h.dhcp4_subnet_id = $1 AND h.ipv4_address = $2 "
@@ -1819,7 +1849,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1848,7 +1878,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1878,7 +1908,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1905,7 +1935,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
      "WHERE h.dhcp4_subnet_id = $1 "
@@ -1932,7 +1962,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1958,9 +1988,9 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
-     "  o4.persistent, o4.cancelled, o4.user_context, "
+     "  o4.persistent, o4.cancelled, o4.user_context, o4.client_classes, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
-     "  o6.persistent, o6.cancelled, o6.user_context, "
+     "  o6.persistent, o6.cancelled, o6.user_context, o6.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -1985,7 +2015,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM hosts AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
      "WHERE lower(h.hostname) = $1 AND h.dhcp4_subnet_id = $2 "
@@ -2009,7 +2039,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM hosts AS h "
@@ -2033,7 +2063,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.dhcp4_subnet_id = $1 AND h.host_id > $2 "
      "       ORDER BY h.host_id "
@@ -2059,7 +2089,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM ( SELECT * FROM hosts AS h "
@@ -2085,7 +2115,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes "
      "FROM ( SELECT * FROM hosts AS h "
      "       WHERE h.host_id > $1 "
      "       ORDER BY h.host_id "
@@ -2111,7 +2141,7 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
-     "  o.persistent, o.cancelled, o.user_context, "
+     "  o.persistent, o.cancelled, o.user_context, o.client_classes, "
      "  r.reservation_id, host(r.address), r.prefix_len, r.type, "
      "  r.dhcp6_iaid, host(r.excluded_prefix), r.excluded_prefix_len "
      "FROM ( SELECT * FROM hosts AS h "
@@ -2201,25 +2231,25 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::INSERT_V4_HOST_OPTION
     // Inserts a single DHCPv4 option into 'dhcp4_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {8,
+    {9,
      { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_BOOL, OID_TEXT, OID_INT8 },
+       OID_VARCHAR, OID_BOOL, OID_BOOL, OID_TEXT, OID_TEXT, OID_INT8 },
      "insert_v4_host_option",
      "INSERT INTO dhcp4_options(code, value, formatted_value, space, "
-     "  persistent, cancelled, user_context, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 3)"
+     "  persistent, cancelled, user_context, client_classes, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 3)"
     },
 
     // PgSqlHostDataSourceImpl::INSERT_V6_HOST_OPTION
     // Inserts a single DHCPv6 option into 'dhcp6_options' table.
     // Using fixed scope_id = 3, which associates an option with host.
-    {8,
+    {9,
      { OID_INT2, OID_BYTEA, OID_TEXT,
-       OID_VARCHAR, OID_BOOL, OID_BOOL, OID_TEXT, OID_INT8 },
+       OID_VARCHAR, OID_BOOL, OID_BOOL, OID_TEXT, OID_TEXT, OID_INT8 },
      "insert_v6_host_option",
      "INSERT INTO dhcp6_options(code, value, formatted_value, space, "
-     "  persistent, cancelled, user_context, host_id, scope_id) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 3)"
+     "  persistent, cancelled, user_context, client_classes, host_id, scope_id) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 3)"
     },
 
     // PgSqlHostDataSourceImpl::DEL_HOST_ADDR4

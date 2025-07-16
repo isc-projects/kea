@@ -6716,6 +6716,8 @@ UPDATE schema_version
 SELECT set_config('kea.disable_audit', 'true', false);
 UPDATE dhcp4_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
 ALTER TABLE dhcp4_options ALTER COLUMN client_classes SET NOT NULL;
+UPDATE dhcp6_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
+ALTER TABLE dhcp6_options ALTER COLUMN client_classes SET NOT NULL;
 SELECT set_config('kea.disable_audit', 'false', false);
 
 -- Update the schema version number.

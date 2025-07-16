@@ -122,6 +122,8 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
             createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
                                        true, false, formatted, "my-boot-file");
         desc.setContext(user_context);
+        desc.addClientClass("class-one");
+        desc.addClientClass("class-two");
         opts->add(desc, DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
                                             false, false, formatted, 64),
@@ -162,6 +164,8 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
             createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
                                        true, false, formatted, "my-boot-file");
         desc.setContext(user_context);
+        desc.addClientClass("class-one");
+        desc.addClientClass("class-two");
         opts->add(desc, DHCP6_OPTION_SPACE);
         opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
                                              false, false, formatted, 3600),

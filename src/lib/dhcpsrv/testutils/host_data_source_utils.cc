@@ -427,6 +427,9 @@ HostDataSourceUtils::compareOptions(const ConstCfgOptionPtr& cfg1,
                 EXPECT_FALSE(ctx2);
             }
 
+            // Compare client classes.
+            EXPECT_EQ(desc1.client_classes_, desc2.client_classes_);
+
             // Retrieve options.
             Option* option1 = desc1.option_.get();
             Option* option2 = desc2.option_.get();

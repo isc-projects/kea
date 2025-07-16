@@ -1788,7 +1788,8 @@ INSERT INTO dhcp4_client_class(name, modification_ts) VALUES ('foo', now());\
 INSERT INTO dhcp4_options(code, scope_id, dhcp_client_class, modification_ts, client_classes)\
             VALUES (222, 2, 'foo', now(), '[  ]');\
 INSERT INTO dhcp6_client_class(name, modification_ts) VALUES ('foo', now());\
-INSERT INTO dhcp6_options(code, scope_id, dhcp_client_class, modification_ts) VALUES (222, 2, 'foo', now());\
+INSERT INTO dhcp6_options(code, scope_id, dhcp_client_class, modification_ts, client_classes)\
+            VALUES (222, 2, 'foo', now(), '[  ]');\
 SET @disable_audit = 0"
     run_command \
         mysql_execute "$qry"

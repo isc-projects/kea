@@ -6441,6 +6441,8 @@ UPDATE schema_version
 SET @disable_audit = 1;
 UPDATE dhcp4_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
 ALTER TABLE dhcp4_options MODIFY COLUMN client_classes LONGTEXT NOT NULL;
+UPDATE dhcp6_options SET client_classes = '[  ]' WHERE client_classes IS NULL;
+ALTER TABLE dhcp6_options MODIFY COLUMN client_classes LONGTEXT NOT NULL;
 SET @disable_audit = 0;
 
 -- Update the schema version number.
