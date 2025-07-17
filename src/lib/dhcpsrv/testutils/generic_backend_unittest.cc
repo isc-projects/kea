@@ -123,7 +123,8 @@ GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
 void
 GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                           const std::string &name,
-                                          ConstElementPtr exp_value) {
+                                          ConstElementPtr exp_value,
+                                          bool is_list) {
     ConstCfgGlobalsPtr globals = srv_cfg->getConfiguredGlobals();
     std::string param_name;
     std::string sub_param_name;
@@ -141,17 +142,24 @@ GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                   << name << " not found";
     }
 
-    ASSERT_EQ(exp_value->getType(), found_global->getType())
-        << "expected global: " << name << " has wrong type";
-
-    ASSERT_EQ(*exp_value, *found_global)
-        << "expected global: " << name << " has wrong value";
+    if (is_list) {
+        ASSERT_EQ(Element::list, found_global->getType())
+            << "expected global: " << name << " has wrong type";
+        ASSERT_EQ(*data::Element::fromJSON(exp_value->stringValue()), *found_global)
+            << "expected global: " << name << " has wrong value";
+    } else {
+        ASSERT_EQ(exp_value->getType(), found_global->getType())
+            << "expected global: " << name << " has wrong type";
+        ASSERT_EQ(*exp_value, *found_global)
+            << "expected global: " << name << " has wrong value";
+    }
 }
 
 void
 GenericBackendTest::checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
-                                          StampedValuePtr& exp_global) {
-    checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue());
+                                          StampedValuePtr& exp_global,
+                                          bool is_list) {
+    checkConfiguredGlobal(srv_cfg, exp_global->getName(), exp_global->getElementValue(), is_list);
 }
 
 void

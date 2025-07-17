@@ -11,6 +11,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/parsers/base_network_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/multi_threading_config_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
@@ -187,8 +188,8 @@ SrvConfig::merge(ConfigBase& other) {
         // Merge globals.
         mergeGlobals(other_srv_config);
 
-        // Merge global maps.
-        mergeGlobalMaps(other_srv_config);
+        // Merge global containers.
+        mergeGlobalContainers(other_srv_config);
 
         // Merge option defs. We need to do this next so we
         // pass these into subsequent merges so option instances
@@ -282,13 +283,27 @@ SrvConfig::mergeGlobals(SrvConfig& other) {
 }
 
 void
-SrvConfig::mergeGlobalMaps(SrvConfig& other) {
+SrvConfig::mergeGlobalContainers(SrvConfig& other) {
     ElementPtr config = Element::createMap();
     for (auto const& other_global : other.getConfiguredGlobals()->valuesMap()) {
         config->set(other_global.first, other_global.second);
     }
     std::string parameter_name;
     try {
+        // Merge list containers.
+        ConstElementPtr host_reservation_identifiers = config->get("host-reservation-identifiers");
+        parameter_name = "host-reservation-identifiers";
+        if (host_reservation_identifiers) {
+            if (CfgMgr::instance().getFamily() == AF_INET) {
+                HostReservationIdsParser4 parser(getCfgHostOperations4());
+                parser.parse(host_reservation_identifiers);
+            } else {
+                HostReservationIdsParser6 parser(getCfgHostOperations6());
+                parser.parse(host_reservation_identifiers);
+            }
+            addConfiguredGlobal("host-reservation-identifiers", host_reservation_identifiers);
+        }
+        // Merge map containers.
         ConstElementPtr compatibility = config->get("compatibility");
         parameter_name = "compatibility";
         if (compatibility) {

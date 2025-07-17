@@ -22,7 +22,7 @@
     "hook": "cb_cmds",
     "name": "remote-global-parameter4-get",
     "resp-comment": [
-        "The returned response contains a map with a global parameter name:value pair. The value may be a JSON string, integer, real, boolean or a map containing only one of these types. The metadata is included and provides database-specific information associated with the returned object. If the \"all\" server tag is specified, the command attempts to fetch the global parameter value associated with all servers. If the explicit server tag is specified, the command fetches the value associated with the given server. If the server-specific value does not exist, the ``remote-global-parameter4-get`` command fetches the value associated with all servers."
+        "The returned response contains a map with a global parameter name:value pair. The value may be a JSON string, integer, real, boolean, list of these scalar types or a map containing only one of these scalar types. The metadata is included and provides database-specific information associated with the returned object. If the \"all\" server tag is specified, the command attempts to fetch the global parameter value associated with all servers. If the explicit server tag is specified, the command fetches the value associated with the given server. If the server-specific value does not exist, the ``remote-global-parameter4-get`` command fetches the value associated with all servers."
     ],
     "resp-syntax": [
         "{",

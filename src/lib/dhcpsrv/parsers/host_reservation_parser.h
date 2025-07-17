@@ -153,7 +153,9 @@ class HostReservationIdsParser : public isc::data::SimpleParser {
 public:
 
     /// @brief Constructor.
-    HostReservationIdsParser();
+    ///
+    /// @param cfg Pointer to the object holding configuration.
+    HostReservationIdsParser(CfgHostOperationsPtr cfg);
 
     /// @brief Destructor.
     virtual ~HostReservationIdsParser() { }
@@ -203,7 +205,9 @@ public:
     ///
     /// Initializes staging configuration pointer to the one used for DHCPv4
     /// configuration.
-    HostReservationIdsParser4();
+    ///
+    /// @param cfg Pointer to the object holding configuration.
+    HostReservationIdsParser4(CfgHostOperationsPtr cfg);
 
 protected:
 
@@ -224,7 +228,9 @@ public:
     ///
     /// Initializes staging configuration pointer to the one used for DHCPv6
     /// configuration.
-    HostReservationIdsParser6();
+    ///
+    /// @param cfg Pointer to the object holding configuration.
+    HostReservationIdsParser6(CfgHostOperationsPtr cfg);
 
 protected:
 

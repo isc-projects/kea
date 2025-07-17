@@ -414,8 +414,8 @@ HostReservationParser6::getSupportedParameters(const bool identifiers_only) cons
     return (getSupportedParams6(identifiers_only));
 }
 
-HostReservationIdsParser::HostReservationIdsParser()
-    : staging_cfg_() {
+HostReservationIdsParser::HostReservationIdsParser(CfgHostOperationsPtr cfg)
+    : staging_cfg_(cfg) {
 }
 
 void
@@ -476,9 +476,8 @@ HostReservationIdsParser::parseInternal(isc::data::ConstElementPtr ids_list) {
 
 }
 
-HostReservationIdsParser4::HostReservationIdsParser4()
-    : HostReservationIdsParser() {
-    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations4();
+HostReservationIdsParser4::HostReservationIdsParser4(CfgHostOperationsPtr cfg)
+    : HostReservationIdsParser(cfg) {
 }
 
 bool
@@ -486,9 +485,8 @@ HostReservationIdsParser4::isSupportedIdentifier(const std::string& id_name) con
     return (getSupportedParams4(true).count(id_name) > 0);
 }
 
-HostReservationIdsParser6::HostReservationIdsParser6()
-    : HostReservationIdsParser() {
-    staging_cfg_ = CfgMgr::instance().getStagingCfg()->getCfgHostOperations6();
+HostReservationIdsParser6::HostReservationIdsParser6(CfgHostOperationsPtr cfg)
+    : HostReservationIdsParser(cfg) {
 }
 
 bool

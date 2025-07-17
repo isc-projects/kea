@@ -60,24 +60,33 @@ protected:
 
     /// @brief It translates the top level map parameters from flat naming
     /// format (e.g. param-name.sub-param-name) to proper ElementMap objects and
-    /// adds all globals fetched from config backend(s) to a SrvConfig instance
+    /// adds all globals fetched from config backend(s) to a SrvConfig instance.
+    /// The top level list parameters are converted from StringElement objects to
+    /// ListElement objects.
     ///
     /// Iterates over the given collection of global parameters and adds them to
     /// the given configuration's list of configured globals.
     ///
-    ///
     /// @param external_cfg SrvConfig instance to update
     /// @param cb_globals collection of global parameters supplied by configuration
     /// backend
+    /// @param global_lists All keywords matching supported global list parameters.
     void translateAndAddGlobalsToConfig(SrvConfigPtr external_cfg,
-                                        data::StampedValueCollection& cb_globals) const {
+                                        data::StampedValueCollection& cb_globals,
+                                        data::SimpleKeywords global_lists) const {
         auto const& index = cb_globals.get<data::StampedValueNameIndexTag>();
         for (auto const& cb_global : index) {
-
             if (cb_global->amNull()) {
                 continue;
             }
-
+            data::ConstElementPtr value = cb_global->getElementValue();
+            // All ListElement parameters must be converted from StringElement
+            // (used by CB to store global list parameters).
+            data::ElementPtr mutable_value = boost::const_pointer_cast<data::Element>(value);
+            if (global_lists.count(cb_global->getName())) {
+                mutable_value = data::Element::fromJSON(value->stringValue());
+            }
+            data::ConstElementPtr global_value = boost::const_pointer_cast<data::Element>(mutable_value);
             std::string param_name;
             std::string sub_param_name;
             if (translateName(cb_global->getName(), param_name, sub_param_name)) {
@@ -85,11 +94,11 @@ protected:
                 if (!sub_param) {
                     sub_param = data::Element::createMap();
                 }
-                sub_param->set(sub_param_name, cb_global->getElementValue());
+                sub_param->set(sub_param_name, global_value);
                 external_cfg->addConfiguredGlobal(param_name, sub_param);
             } else {
                 // Reuse name and value.
-                external_cfg->addConfiguredGlobal(param_name, cb_global->getElementValue());
+                external_cfg->addConfiguredGlobal(param_name, global_value);
             }
         }
     }

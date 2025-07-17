@@ -60,6 +60,7 @@ CfgGlobals::nameToIndex = {
     { "ddns-ttl", DDNS_TTL },
     { "ddns-ttl-min", DDNS_TTL_MIN },
     { "ddns-ttl-max", DDNS_TTL_MAX },
+    { "host-reservation-identifiers", HOST_RESERVATION_IDENTIFIERS },
 
     // DHCPv4 specific parameters.
     { "echo-client-id", ECHO_CLIENT_ID },

@@ -194,6 +194,7 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
     StampedValuePtr mt_enabled(new StampedValue("multi-threading.enable-multi-threading", Element::create(true)));
     StampedValuePtr mt_pool_size(new StampedValue("multi-threading.thread-pool-size", Element::create(256)));
+    StampedValuePtr hr_identifiers(new StampedValue("host-reservation-identifiers", "[ \"hw-address\", \"flex-id\" ]"));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
@@ -202,6 +203,7 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), renew_timer);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_enabled);
     db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), mt_pool_size);
+    db2_->createUpdateGlobalParameter6(ServerSelector::ALL(), hr_identifiers);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -225,6 +227,12 @@ TEST_F(Dhcp6CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, renew_timer));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_enabled));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, mt_pool_size));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(staging_cfg, hr_identifiers, true));
+
+    auto const& ex_hr_i = staging_cfg->getCfgHostOperations6()->getIdentifierTypes();
+    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
+    EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 }
 
 // This test verifies that externally configured option definitions

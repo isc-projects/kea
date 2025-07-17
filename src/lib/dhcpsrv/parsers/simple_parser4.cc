@@ -149,6 +149,20 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "cache-threshold",                  Element::real,    "0.25" },
 };
 
+const SimpleKeywords SimpleParser4::GLOBAL4_LIST_PARAMETERS = {
+    { "host-reservation-identifiers", Element::list },
+    /* not yet supported
+    { "interfaces-config.interfaces", Element::list },
+    */
+};
+
+const SimpleKeywords SimpleParser4::GLOBAL4_LIST_PARAMETER_TYPES = {
+    { "host-reservation-identifiers", Element::string },
+    /* not yet supported
+    { "interfaces-config.interfaces", Element::string },
+    */
+};
+
 /// @brief This table defines all option definition parameters.
 ///
 /// Boolean, integer, real and string types are for scalar parameters,

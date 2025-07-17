@@ -459,7 +459,7 @@ processDhcp4Config(isc::data::ConstElementPtr config_set) {
             mutable_cfg->get("host-reservation-identifiers");
         if (hr_identifiers) {
             parameter_name = "host-reservation-identifiers";
-            HostReservationIdsParser4 parser;
+            HostReservationIdsParser4 parser(srv_config->getCfgHostOperations4());
             parser.parse(hr_identifiers);
         }
 

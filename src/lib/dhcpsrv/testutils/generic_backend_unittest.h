@@ -277,21 +277,25 @@ public:
     /// @brief Tests that a given global is in the configured globals
     ///
     /// @param srv_cfg server config where the global should be checked.
-    /// @param name name of the global parameter
-    /// @param exp_value expected value of the global parameter as an Element
+    /// @param name name of the global parameter.
+    /// @param exp_value expected value of the global parameter as an Element.
+    /// @param is_list Flag which indicates if the parameter is a global list.
     void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
                                const std::string &name,
-                               data::ConstElementPtr exp_value);
+                               data::ConstElementPtr exp_value,
+                               bool is_list = false);
 
     /// @brief Tests that a given global is in the configured globals
     ///
     /// @param srv_cfg server config where the global should be checked.
-    /// @param exp_global StampedValue representing the global value to verify
+    /// @param exp_global StampedValue representing the global value to verify.
+    /// @param is_list Flag which indicates if the parameter is a global list.
     ///
     /// @todo At the point in time StampedVlaue carries type, exp_type should be
-    /// replaced with exp_global->getType()
+    /// replaced with exp_global->getType().
     void checkConfiguredGlobal(const SrvConfigPtr& srv_cfg,
-                               data::StampedValuePtr& exp_global);
+                               data::StampedValuePtr& exp_global,
+                               bool is_list = false);
 
     /// @brief Tests that the new audit entry is added.
     ///

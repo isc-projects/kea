@@ -8404,6 +8404,16 @@ Some scalar parameters contained by top level global maps are supported by the c
    | dhcp-queue-control.capacity                                      | dhcp-queue-control           | capacity                         |
    +------------------------------------------------------------------+------------------------------+----------------------------------+
 
+Some scalar parameters contained by top-level global list are supported by the configuration backend.
+
+.. table:: List of DHCPv6 list parameters supported by the configuration backend
+
+   +------------------------------------------------------------------+
+   | Parameter name                | List container parameter type    |
+   +==================================================================+
+   | host-reservation-identifiers  | string                           |
+   +------------------------------------------------------------------+
+
 .. _dhcp6-cb-json:
 
 Enabling the Configuration Backend

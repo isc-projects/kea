@@ -975,7 +975,7 @@ private:
     /// into this configuration.
     void mergeGlobals(SrvConfig& other);
 
-    /// @brief Merges the global maps specified in the given configuration
+    /// @brief Merges the global containers specified in the given configuration
     /// into this configuration.
     ///
     /// Configurable global values may be specified either via JSON
@@ -997,7 +997,7 @@ private:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    void mergeGlobalMaps(SrvConfig& other);
+    void mergeGlobalContainers(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;

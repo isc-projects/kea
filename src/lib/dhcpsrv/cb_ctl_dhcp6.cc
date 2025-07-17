@@ -77,7 +77,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             // database query and the number of global parameters is small.
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getAllGlobalParameters6(backend_selector, server_selector);
-            translateAndAddGlobalsToConfig(external_cfg, globals);
+            translateAndAddGlobalsToConfig(external_cfg, globals, SimpleParser6::GLOBAL6_LIST_PARAMETERS);
 
             // Add defaults.
             external_cfg->applyDefaultsConfiguredGlobals(SimpleParser6::GLOBAL6_DEFAULTS);
@@ -165,7 +165,7 @@ CBControlDHCPv6::databaseConfigApply(const db::BackendSelector& backend_selector
             data::StampedValueCollection globals;
             globals = getMgr().getPool()->getModifiedGlobalParameters6(backend_selector, server_selector,
                                                                        lb_modification_time);
-            translateAndAddGlobalsToConfig(external_cfg, globals);
+            translateAndAddGlobalsToConfig(external_cfg, globals, SimpleParser6::GLOBAL6_LIST_PARAMETERS);
             globals_fetched = true;
         }
     }

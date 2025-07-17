@@ -561,7 +561,7 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
             mutable_cfg->get("host-reservation-identifiers");
         if (hr_identifiers) {
             parameter_name = "host-reservation-identifiers";
-            HostReservationIdsParser6 parser;
+            HostReservationIdsParser6 parser(srv_config->getCfgHostOperations6());
             parser.parse(hr_identifiers);
         }
 

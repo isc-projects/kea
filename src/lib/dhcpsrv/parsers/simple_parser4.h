@@ -44,6 +44,9 @@ public:
     static const isc::data::SimpleKeywords OPTION4_DEF_PARAMETERS;
     static const isc::data::SimpleDefaults OPTION4_DEF_DEFAULTS;
 
+    static const isc::data::SimpleKeywords GLOBAL4_LIST_PARAMETERS;
+    static const isc::data::SimpleKeywords GLOBAL4_LIST_PARAMETER_TYPES;
+
     static const isc::data::SimpleKeywords OPTION4_PARAMETERS;
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
 

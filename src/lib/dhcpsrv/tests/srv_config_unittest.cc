@@ -1121,6 +1121,10 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     cfg_from.addConfiguredGlobal("multi-threading", mt);
     mt->set("enable-multi-threading", Element::create(false));
     mt->set("thread-pool-size", Element::create(256));
+    ElementPtr hr_i = Element::createList();
+    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
+    hr_i->add(Element::create("hw-address"));
+    hr_i->add(Element::create("flex-id"));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1133,13 +1137,13 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // echo-client-id should be the preserved "to" member value.
     EXPECT_FALSE(cfg_to.getEchoClientId());
 
-    //  dhcp4o6-port should be the "from" configured value.
+    // dhcp4o6-port should be the "from" configured value.
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
 
-    //  server-tag port should be the "from" configured value.
+    // server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
-    //  reservations-lookup-first should be the "from" configured value.
+    // reservations-lookup-first should be the "from" configured value.
     EXPECT_TRUE(cfg_to.getReservationsLookupFirst());
 
     // ip-reservations-unique
@@ -1147,6 +1151,12 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
 
     // multi-threading
     EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
+    // host-reservation-identifiers
+    auto const& ex_hr_i = cfg_to.getCfgHostOperations4()->getIdentifierTypes();
+    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
+    EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
@@ -1157,7 +1167,8 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
         "   \"dhcp4o6-port\": 999, \n"
         "   \"ip-reservations-unique\": false, \n"
         "   \"server-tag\": \"use_this_server\", \n"
-        "   \"reservations-lookup-first\": true,"
+        "   \"reservations-lookup-first\": true, \n"
+        "   \"host-reservation-identifiers\": [ \"hw-address\", \"flex-id\" ], \n"
         "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
         "                          \"packet-queue-size\": 64, \n"
         "                          \"thread-pool-size\": 256 \n"
@@ -1214,6 +1225,10 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     cfg_from.addConfiguredGlobal("multi-threading", mt);
     mt->set("enable-multi-threading", Element::create(false));
     mt->set("thread-pool-size", Element::create(256));
+    ElementPtr hr_i = Element::createList();
+    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
+    hr_i->add(Element::create("hw-address"));
+    hr_i->add(Element::create("flex-id"));
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1223,13 +1238,13 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // decline-probation-period should be the "to" configured value.
     EXPECT_EQ(300, cfg_to.getDeclinePeriod());
 
-    //  dhcp4o6-port should be the "from" configured value.
+    // dhcp4o6-port should be the "from" configured value.
     EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
 
-    //  server-tag port should be the "from" configured value.
+    // server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
 
-    //  reservations-lookup-first should be the "from" configured value.
+    // reservations-lookup-first should be the "from" configured value.
     EXPECT_TRUE(cfg_to.getReservationsLookupFirst());
 
     // ip-reservations-unique
@@ -1237,6 +1252,12 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     // multi-threading
     EXPECT_TRUE(cfg_to.getDHCPMultiThreading());
+
+    // host-reservation-identifiers
+    auto const& ex_hr_i = cfg_to.getCfgHostOperations6()->getIdentifierTypes();
+    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
+    EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 
     // Next we check the explicitly "configured" globals.
     // The list should be all of the "to" + "from", with the
@@ -1248,6 +1269,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
         "   \"ip-reservations-unique\": false, \n"
         "   \"server-tag\": \"use_this_server\", \n"
         "   \"reservations-lookup-first\": true, \n"
+        "   \"host-reservation-identifiers\": [ \"hw-address\", \"flex-id\" ], \n"
         "   \"multi-threading\": { \"enable-multi-threading\": false, \n"
         "                          \"packet-queue-size\": 64, \n"
         "                          \"thread-pool-size\": 256 \n"

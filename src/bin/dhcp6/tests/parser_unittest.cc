@@ -299,34 +299,33 @@ void testFile(const std::string& fname) {
 // twice: first with the existing Element::fromJSONFile() and then
 // the second time with Parser6. Both JSON trees are then compared.
 TEST(ParserTest, file) {
-    vector<string> configs;
-    configs.push_back("advanced.json");
-    configs.push_back("all-keys.json");
-    configs.push_back("all-options.json");
-    configs.push_back("backends.json");
-    configs.push_back("classify.json");
-    configs.push_back("classify2.json");
-    configs.push_back("comments.json");
-    configs.push_back("config-backend.json");
-    configs.push_back("dhcpv4-over-dhcpv6.json");
-    configs.push_back("duid.json");
-    configs.push_back("global-reservations.json");
-    configs.push_back("ha-hot-standby-server1-with-tls.json");
-    configs.push_back("ha-hot-standby-server2.json");
-    configs.push_back("hooks.json");
-    configs.push_back("iPXE.json");
-    configs.push_back("leases-expiration.json");
-    configs.push_back("multiple-options.json");
-    configs.push_back("mysql-reservations.json");
-    configs.push_back("pgsql-reservations.json");
-    configs.push_back("reservations.json");
-    configs.push_back("several-subnets.json");
-    configs.push_back("shared-network.json");
-    configs.push_back("simple.json");
-    configs.push_back("softwire46.json");
-    configs.push_back("stateless.json");
-    configs.push_back("tee-times.json");
-    configs.push_back("with-ddns.json");
+    vector<string> configs = { "advanced.json",
+                               "all-keys.json",
+                               "all-options.json",
+                               "backends.json",
+                               "classify.json",
+                               "classify2.json",
+                               "comments.json",
+                               "config-backend.json",
+                               "dhcpv4-over-dhcpv6.json",
+                               "duid.json",
+                               "global-reservations.json",
+                               "ha-hot-standby-server1-with-tls.json",
+                               "ha-hot-standby-server2.json",
+                               "hooks.json",
+                               "iPXE.json",
+                               "leases-expiration.json",
+                               "multiple-options.json",
+                               "mysql-reservations.json",
+                               "pgsql-reservations.json",
+                               "reservations.json",
+                               "several-subnets.json",
+                               "shared-network.json",
+                               "simple.json",
+                               "softwire46.json",
+                               "stateless.json",
+                               "tee-times.json",
+                               "with-ddns.json" };
 
     for (unsigned i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);

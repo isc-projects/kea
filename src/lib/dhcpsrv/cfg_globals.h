@@ -83,6 +83,7 @@ public:
         DDNS_TTL,
         DDNS_TTL_MIN,
         DDNS_TTL_MAX,
+        HOST_RESERVATION_IDENTIFIERS,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,
