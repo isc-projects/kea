@@ -1130,12 +1130,23 @@ pgsql_upgrade_28_to_29_test() {
 }
 
 pgsql_upgrade_29_to_30_test() {
-    # Check dhcp4.client_classes now needs a value
+    # Check dhcp4_options.client_classes now needs a value
     qry="SELECT set_config('kea.disable_audit', 'true', false);\
         INSERT INTO dhcp4_options (scope_id, code, space, formatted_value, modification_ts) \
         VALUES (0, '223', 'dhcp4', 'foo' , current_timestamp );";
 
     # Should fail with "# ERROR:  null value in column "client_classes" of relation "dhcp4_options"
+    # violates not-null constraint"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 3 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
+
+    # Check dhcp6_options.client_classes now needs a value
+    qry="SELECT set_config('kea.disable_audit', 'true', false);\
+        INSERT INTO dhcp6_options (scope_id, code, space, formatted_value, modification_ts) \
+        VALUES (0, '223', 'dhcp6', 'foo' , current_timestamp );";
+
+    # Should fail with "# ERROR:  null value in column "client_classes" of relation "dhcp6_options"
     # violates not-null constraint"
     run_command \
         pgsql_execute "${qry}"
@@ -3123,9 +3134,9 @@ pgsql_migrate_client_class_test() {
     test_finish 0
 }
 
-# Verifies migration of dhcp4_options.client_classes column to not null.
-pgsql_migrate_dhcp4_options_client_classes() {
-    test_start "pgsql.pgsql_migrate_dhcp4_options_client_classes"
+# Verifies migration of dhcpX_options.client_classes column to not null.
+pgsql_migrate_dhcpX_options_client_classes() {
+    test_start "pgsql.pgsql_migrate_dhcpX_options_client_classes"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -3148,6 +3159,10 @@ pgsql_migrate_dhcp4_options_client_classes() {
         values (0, '222', 'dhcp4', 'foo' , current_timestamp); \
     insert into dhcp4_options (scope_id, code, space, formatted_value, client_classes, modification_ts) \
         values (0, '223', 'dhcp4', 'bar' , '[ \"cc-one\" ]', current_timestamp); \
+    insert into dhcp6_options (scope_id, code, space, formatted_value, modification_ts) \
+        values (0, '222', 'dhcp6', 'foo' , current_timestamp); \
+    insert into dhcp6_options (scope_id, code, space, formatted_value, client_classes, modification_ts) \
+        values (0, '223', 'dhcp6', 'bar' , '[ \"cc-one\" ]', current_timestamp); \
     select set_config('kea.disable_audit', 'false', false);"
 
     run_statement "insert option" "$sql"
@@ -3156,15 +3171,24 @@ pgsql_migrate_dhcp4_options_client_classes() {
     qry="select count(*) from dhcp4_options;"
     run_statement "#get 4_option_count before update" "$qry" 2
 
+    qry="select count(*) from dhcp6_options;"
+    run_statement "#get 6_option_count before update" "$qry" 2
+
     # Upgrade to schema 30.0
     pgsql_upgrade_schema_to_version 30.0
 
     # Verify the migrated records.
     qry="select code from dhcp4_options where client_classes = '[  ]';"
-    run_statement "#get 4_option_foo after update" "$qry" 222 
+    run_statement "#get 4_option_foo after update" "$qry" 222
 
     qry="select code from dhcp4_options where client_classes = '[ \"cc-one\" ]';"
-    run_statement "#get 4_option_foo after update" "$qry" 223 
+    run_statement "#get 4_option_foo after update" "$qry" 223
+
+    qry="select code from dhcp6_options where client_classes = '[  ]';"
+    run_statement "#get 6_option_foo after update" "$qry" 222
+
+    qry="select code from dhcp6_options where client_classes = '[ \"cc-one\" ]';"
+    run_statement "#get 6_option_foo after update" "$qry" 223
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -3201,4 +3225,4 @@ pgsql_reservation_mode_out_of_pool_parameters_test
 pgsql_migrate_opt_record_type
 pgsql_remove_control_socket_parameters_test
 pgsql_migrate_client_class_test
-pgsql_migrate_dhcp4_options_client_classes
+pgsql_migrate_dhcpX_options_client_classes
