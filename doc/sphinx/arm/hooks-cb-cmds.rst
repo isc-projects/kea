@@ -156,6 +156,49 @@ the ``server-tags`` parameter. In future releases, it is expected that this
 map will be extended with additional information, e.g. object modification
 time, log message created during the last modification, etc.
 
+.. _cb-cmds-option-class-tags-as-keys:
+
+Option Class-tags as Keys
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:ref:`option-class-tagging` added a list of client classes, ``client-classes``,
+to option specifications. Thus in any list of option specifications (e.g.
+`option-data`), there may be more than one specification for the same ``code``
+and ``space``' but with different ``client-classes`` lists and different
+data content.
+
+In order to support this construct, Kea uses the option's ``client-classes``
+list in addition to code and space to uniquely identifiy each option. This
+is important to keep in mind when using the Management API to alter your
+configuration. As of Kea 3.1 (applies to DHCPv4 commands only), commands which
+get, set, or delete an individual option now accept an optional ``client-classes``
+parameter in addition to ``code`` and ``space`` parameters.
+
+If the ``client-classes`` parameter is omitted:
+
+1.  Get - Fetches one of n that matches code and space. Which option is returned
+    is indeterminate when more than one match exists.
+
+2.  Set - Updates only the option that matches code and space and has an empty
+    client-classes list. If no match is found then the option is created.
+
+3.  Delete - Deletes all options that match the code and space, if they exist.
+
+If the ``client-classes`` parameter is specified:
+
+1.  Get - Fetches the option that matches code, space and client-classes if
+    one exists.
+
+2.  Set - Updates only the option that matches code, space and client-classes.
+    If no match is found then the option is created.
+
+3.  Delete - Deletes only the option that matches code, space and client-classes,
+    if one exists.
+
+An empty ``client-classes`` list is specified as '[  ]' with or without white spaces
+between the brackets. When managing lists of options that do not employ client class-
+tagging, the ``client-classes`` parameter may simply be omitted.
+
 .. isccmd:: remote-server4-del
 .. _command-remote-server4-del:
 .. isccmd:: remote-server6-del
@@ -1102,6 +1145,9 @@ The ``remote-option4-global-del``, ``remote-option6-global-del`` Commands
 
 These commands are used to delete a global DHCP option from the
 database. The option is identified by an option code and option space.
+As of Kea 3.1, an optional ``client-classes`` parameter may also be
+specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
+
 For example:
 
 .. code-block:: json
@@ -1112,7 +1158,8 @@ For example:
            "options": [
                {
                    "code": 5,
-                   "space": "dhcp4"
+                   "space": "dhcp4",
+                   "client-classes": [ "class-one" ]
                }
            ],
            "remote": {
@@ -1130,6 +1177,7 @@ server. If there is no such option associated with the given server, no option
 is deleted. To delete an option associated with all servers, the
 keyword "all" must be specified.
 
+
 .. isccmd:: remote-option4-global-get
 .. _command-remote-option4-global-get:
 
@@ -1143,6 +1191,8 @@ These commands are used to fetch a global DHCP option from the database.
 The option is identified by the code and option space. The top-level
 option spaces where DHCP standard options belong are called "dhcp4" and
 "dhcp6" for the DHCPv4 and DHCPv6 servers, respectively.
+As of Kea 3.1, an optional ``client-classes`` parameter may also be
+specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
 
 The following command retrieves the IPv6 "DNS Servers" (code 23) option
 associated with all servers:
@@ -1155,7 +1205,8 @@ associated with all servers:
            "options": [
                {
                    "code": 23,
-                   "space": "dhcp6"
+                   "space": "dhcp6",
+                   "client-classes": [ "class-one" ]
                }
            ],
            "remote": {
@@ -1292,8 +1343,10 @@ The ``remote-option4-network-del``, ``remote-option6-network-del`` Commands
 
 These commands are used to delete a shared-network-specific DHCP
 option from the database. The option is identified by an option code
-and option space and these two parameters are passed within the
-``options`` list. Another list, ``shared-networks``, contains a map
+and option space and as of Kea 3.1, an optional ``client-classes``
+parameter may also be specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
+These parameters are passed within the ``options`` list.
+Another list, ``shared-networks``, contains a map
 with the name of the shared network from which the option is to
 be deleted. If the option is not explicitly specified for this
 shared network, no option is deleted. In particular, the given
@@ -1304,8 +1357,8 @@ delete a subnet-level option, the :isccmd:`remote-option4-subnet-del`,
 :isccmd:`remote-option6-subnet-del` commands must be used instead.
 
 The following command attempts to delete an option having the
-option code 5 in the top-level option space from the shared
-network "fancy".
+option code 5 in the top-level option space and an empty client-classes
+list from the shared network "fancy".
 
 .. code-block:: json
 
@@ -1320,7 +1373,8 @@ network "fancy".
            "options": [
                {
                    "code": 5,
-                   "space": "dhcp4"
+                   "space": "dhcp4",
+                   "client-classes" : [ ]
                }
            ],
            "remote": {
@@ -1345,7 +1399,7 @@ These commands create a new shared-network-specific DHCP option or replace
 an existing option in the database. The structure of the option information
 is the same as in the Kea configuration file (see :ref:`dhcp4-std-options`
 and :ref:`dhcp6-std-options`). The option information is carried in the
-``options`` list. Another list, ``shared-networks``, contains a map with the
+``options`` list.  Another list, ``shared-networks``, contains a map with the
 name of the shared network for which the option is to be set. If such an option
 already exists for the shared network, it is replaced with the new instance.
 
@@ -1385,8 +1439,10 @@ The ``remote-option6-pd-pool-del`` Command
 
 This command is used to delete a prefix delegation pool-specific DHCPv6
 option from the database. The option is identified by an option code
-and option space, and these two parameters are passed within the
-``options`` list. Another list, ``pd-pools``, contains a map with the
+and option space, and as of Kea 3.1, an optional ``client-classes`` parameter
+may also be specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
+These parameters are passed within the ``options`` list.
+Another list, ``pd-pools``, contains a map with the
 prefix-delegation-pool prefix and length identifying the pool. If the
 option is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
@@ -1478,8 +1534,10 @@ The ``remote-option4-pool-del``, ``remote-option6-pool-del`` Commands
 
 These commands are used to delete an address-pool-specific DHCP
 option from the database. The option is identified by an option code
-and option space, and these two parameters are passed within the
-``options`` list. Another list, ``pools``, contains a map with the
+and option space, and as of Kea 3.1, an optional ``client-classes`` parameter
+may also be specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
+These parameters are passed within the ``options`` list.
+Another list, ``pools``, contains a map with the
 IP address range or prefix identifying the pool. If the option
 is not explicitly specified for this pool, no option is deleted.
 In particular, the given option may exist for a subnet containing
@@ -1575,8 +1633,10 @@ The ``remote-option4-subnet-del``, ``remote-option6-subnet-del`` Commands
 
 These commands are used to delete a subnet-specific DHCP option
 from the database. The option is identified by an option code
-and option space, and these two parameters are passed within the
-``options`` list. Another list, ``subnets``, contains a map with the
+and option space, and, as of Kea 3.1, an optional ``client-casses``
+parameter (see :ref:`cb-cmds-option-class-tags-as-keys`).
+These parameters are passed within the ``options`` list.
+Another list, ``subnets``, contains a map with the
 identifier of the subnet from which the option is to be deleted.
 If the option is not explicitly specified for this subnet, no
 option is deleted.

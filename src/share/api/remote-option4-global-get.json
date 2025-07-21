@@ -5,7 +5,7 @@
         "This command fetches a global DHCPv4 option for the server from the specified database."
     ],
     "cmd-comment": [
-        "The option is identified by the pair of option code/space values. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed, to fetch the global option instance shared by all servers."
+        "The option is identified by the pair of option code/space values, and as of Kea 3.1, an optional client-classes parameter (see :ref:`cb-cmds-option-class-tags-as-keys`). The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. The server tag \"all\" is allowed, to fetch the global option instance shared by all servers."
     ],
     "cmd-syntax": [
         "{",
@@ -15,6 +15,7 @@
         "            {",
         "                \"code\": <option code>,",
         "                \"space\": <option space>",
+        "                \"client-classes\": [ <zero or more comma-separated strings> ]",
         "            }",
         "        ],",
         "        \"remote\": {",
