@@ -973,7 +973,7 @@ private:
                 user_context.assign(user_context_);
             }
 
-            // Convert clietn classes to string.
+            // Convert client classes to string.
             std::string client_classes;
             if (client_classes_null_ == MLM_FALSE) {
                 client_classes_[client_classes_length_] = '\0';

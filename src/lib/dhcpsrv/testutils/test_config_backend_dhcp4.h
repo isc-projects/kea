@@ -444,8 +444,7 @@ public:
     /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
-    deleteOption4(const db::ServerSelector& server_selector,
-                  const uint16_t code,
+    deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
                   const std::string& space,
                   ClientClassesPtr client_classes = ClientClassesPtr());
 

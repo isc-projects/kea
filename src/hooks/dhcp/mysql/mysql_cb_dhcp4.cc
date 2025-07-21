@@ -3692,7 +3692,7 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp4,
                           WHERE (o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
-                                AND o.client_classes LIKE ?))
+                                 AND o.client_classes LIKE ?))
     },
 
     // Delete options belonging to a subnet.

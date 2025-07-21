@@ -139,8 +139,7 @@ ConfigBackendPoolDHCPv4::getOption4(const BackendSelector& backend_selector,
                                     const ServerSelector& server_selector,
                                     const uint16_t code,
                                     const std::string& space,
-                                    const ClientClassesPtr client_classes
-                                    /* = ClientClassesPtr */) const {
+                                    const ClientClassesPtr client_classes /* = ClientClassesPtr() */) const {
     OptionDescriptorPtr option;
     getPropertyPtrConst<OptionDescriptorPtr, uint16_t, const std::string&>
         (&ConfigBackendDHCPv4::getOption4, backend_selector, server_selector,
@@ -434,7 +433,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes /* = ClientClassesPtr */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
 
     return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
@@ -447,7 +446,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes /* = ClientClassesPtr */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const std::string&, uint16_t,
                                        const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
@@ -460,7 +459,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes /* = ClientClassesPtr */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const SubnetID&, uint16_t, const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
              subnet_id, code, space, client_classes));
@@ -473,7 +472,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes /* = ClientClassesPtr */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const IOAddress&, const IOAddress&,
                                        uint16_t, const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,

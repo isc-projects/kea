@@ -150,7 +150,6 @@ GenericConfigBackendDHCPv4Test::initTestSubnets() {
     subnet->getCfgOption()->add(*test_options_[1], test_options_[1]->space_name_);
     subnet->getCfgOption()->add(*test_options_[2], test_options_[2]->space_name_);
 
-
     test_subnets_.push_back(subnet);
 
     // Adding another subnet with the same subnet id to test
@@ -3663,7 +3662,7 @@ GenericConfigBackendDHCPv4Test::makeClassTaggedOptions() {
     };
 
     std::list<OptionDescriptorPtr> tagged_options;
-    for ( auto const& opt_to_make : opts_to_make) {
+    for (auto const& opt_to_make : opts_to_make) {
         OptionDescriptor desc = createOption<OptionString>(Option::V4, opt_to_make.code_,
                                                            true, false, false, opt_to_make.value_);
         desc.space_name_ = DHCP4_OPTION_SPACE;
@@ -3680,7 +3679,7 @@ GenericConfigBackendDHCPv4Test::makeClassTaggedOptions() {
 void
 GenericConfigBackendDHCPv4Test::updateClassTaggedOptions(
     std::list<OptionDescriptorPtr>& options) {
-    for ( auto& desc : options) {
+    for (auto& desc : options) {
         OptionStringPtr opt = boost::dynamic_pointer_cast<OptionString>(desc->option_);
         ASSERT_TRUE(opt);
         std::string new_value(opt->getValue() + std::string(".") + opt->getValue());
@@ -3688,7 +3687,7 @@ GenericConfigBackendDHCPv4Test::updateClassTaggedOptions(
     }
 }
 
-// Macro the make SCOPED_TRACE around equivalance functon more compact and helpful.
+// Macro the make SCOPED_TRACE around equivalance function more compact and helpful.
 #define SCOPED_OPT_COMPARE(exp_opt,test_opt)\
 {\
     std::stringstream oss;\
@@ -3758,7 +3757,6 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
     }
 }
 
-
 void
 GenericConfigBackendDHCPv4Test::getAllOptions4WithClientClassesTest() {
     // Describes an option to create.
@@ -3789,9 +3787,9 @@ GenericConfigBackendDHCPv4Test::getAllOptions4WithClientClassesTest() {
 
     // Add all of the global options.
     std::vector<OptionDescriptorPtr> ref_options;
-    for ( auto const& opt_to_make : opts_to_make) {
+    for (auto const& opt_to_make : opts_to_make) {
         OptionDescriptor desc = createOption<OptionInt<uint32_t>>(Option::V4, opt_to_make.code_,
-                                                           true, false, false, opt_to_make.value_);
+                                                                  true, false, false, opt_to_make.value_);
         desc.space_name_ = DHCP4_OPTION_SPACE;
         if (!opt_to_make.cclass_.empty()) {
             desc.addClientClass(opt_to_make.cclass_);
@@ -3819,7 +3817,7 @@ GenericConfigBackendDHCPv4Test::getAllOptions4WithClientClassesTest() {
         ++exp_option;
     }
 
-    // Try to fetch the collection of global options for the server1.
+    // Try to fetch the collection of global options for the server2.
     // Build list of options we expect to get back.
     exp_options.clear();
     exp_options.push_back(ref_options[3]);
@@ -3848,7 +3846,6 @@ GenericConfigBackendDHCPv4Test::getAllOptions4WithClientClassesTest() {
         ++exp_option;
     }
 }
-
 
 void
 GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
@@ -4940,7 +4937,7 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOption4WithClientClassesTest() {
     // Make a network with options.
     SharedNetwork4Ptr network(new SharedNetwork4("net1"));
     auto ref_options = makeClassTaggedOptions();
-    for ( auto const& ref_option : ref_options) {
+    for (auto const& ref_option : ref_options) {
         network->getCfgOption()->add(*ref_option, ref_option->space_name_);
     }
 
@@ -4979,7 +4976,6 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOption4WithClientClassesTest() {
     }
 
     // Now make sure that we can delete the options individually.
-    updateClassTaggedOptions(ref_options);
     for (auto const& ref_option : ref_options) {
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                            network->getName(),
@@ -5005,7 +5001,7 @@ GenericConfigBackendDHCPv4Test::subnetOption4WithClientClassesTest() {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24,
                                   30, 40, 60, 1024));
     auto ref_options = makeClassTaggedOptions();
-    for ( auto const& ref_option : ref_options) {
+    for (auto const& ref_option : ref_options) {
         subnet->getCfgOption()->add(*ref_option, ref_option->space_name_);
     }
 
@@ -5043,7 +5039,6 @@ GenericConfigBackendDHCPv4Test::subnetOption4WithClientClassesTest() {
     }
 
     // Now make sure that we can delete the options individually.
-    updateClassTaggedOptions(ref_options);
     for (auto const& ref_option : ref_options) {
         ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
                                            subnet->getID(),
@@ -5074,7 +5069,7 @@ GenericConfigBackendDHCPv4Test::poolOption4WithClientClassesTest() {
 
     // Add the options to the pool.
     auto ref_options = makeClassTaggedOptions();
-    for ( auto const& ref_option : ref_options) {
+    for (auto const& ref_option : ref_options) {
         pool->getCfgOption()->add(*ref_option, ref_option->space_name_);
     }
 
@@ -5116,8 +5111,8 @@ GenericConfigBackendDHCPv4Test::poolOption4WithClientClassesTest() {
     // Make sure that CfgOption->get() with client_classes finds each ref option.
     for (auto const& ref_option : ref_options) {
         auto cfg_option = returned_pool->getCfgOption()->get(DHCP4_OPTION_SPACE,
-                                                               ref_option->option_->getType(),
-                                                               ref_option->client_classes_);
+                                                             ref_option->option_->getType(),
+                                                             ref_option->client_classes_);
         SCOPED_OPT_COMPARE((*ref_option), cfg_option);
     }
 

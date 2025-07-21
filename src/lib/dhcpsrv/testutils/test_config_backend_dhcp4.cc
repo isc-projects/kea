@@ -469,7 +469,6 @@ TestConfigBackendDHCPv4::getGlobalParameter4(const db::ServerSelector& server_se
     return (candidate);
 }
 
-
 StampedValueCollection
 TestConfigBackendDHCPv4::getAllGlobalParameters4(const db::ServerSelector& server_selector) const {
     auto tags = server_selector.getTags();
@@ -1236,7 +1235,6 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
             }
         }
     }
-
 
     if (!found) {
         isc_throw(BadValue, "attempted to delete option in a "

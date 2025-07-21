@@ -645,8 +645,7 @@ public:
     /// @param bindings PsqlBindArray to which the option value should be added.
     /// @param client_classes ClientClasses collection containing the class names.
     void addClientClassesForWhereClause(db::PsqlBindArray& bindings,
-                                        const ClientClassesPtr client_classes
-                                        = ClientClassesPtr());
+                                        const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Iterates over the class names in a JSON list element at a
     /// given column, adding each name to the given ClientClasses instance.

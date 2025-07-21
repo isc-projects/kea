@@ -140,7 +140,7 @@ CfgOption::replace(const OptionDescriptor& desc, const std::string& option_space
     if (od_itr == idx6.end()) {
         isc_throw(isc::BadValue, "cannot replace option: "
                   << option_space << ":" << desc.option_->getType()
-                  << " , client-classes: " << desc.client_classes_.toText()
+                  << ", client-classes: " << desc.client_classes_.toText()
                   << ", it does not exist");
     }
 
@@ -264,7 +264,7 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
     }
 
     // Indicate we replaced the definition.
-    return(true);
+    return (true);
 }
 
 void
@@ -456,7 +456,7 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code,
         idx6.erase(range.first, range.second);
     }
 
-    return(count);
+    return (count);
 }
 
 size_t

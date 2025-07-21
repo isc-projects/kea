@@ -1889,7 +1889,7 @@ SET @disable_audit = 0"
     # Check upgrade from 29.0 to 30.0.
     mysql_upgrade_29_to_30_test
 
-    # Check upgrade from 29.0 to 30.0.
+    # Check upgrade from 30.0 to 31.0.
     mysql_upgrade_30_to_31_test
 
     # Let's wipe the whole database
@@ -3994,7 +3994,7 @@ mysql_migrate_client_class_test() {
 
 # Verifies migration of dhcpX_options.client_classes column to not null.
 mysql_migrate_dhcpX_options_client_classes() {
-    test_start "mysql.mysql_migrate_dhcp4_options_client_classes"
+    test_start "mysql.mysql_migrate_dhcpX_options_client_classes"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -4031,6 +4031,7 @@ mysql_migrate_dhcpX_options_client_classes() {
     # Verify the inserted record counts.
     qry="select count(*) from dhcp4_options;"
     run_statement "#get 4_option_count before update" "$qry" 2
+
     qry="select count(*) from dhcp6_options;"
     run_statement "#get 6_option_count before update" "$qry" 2
 

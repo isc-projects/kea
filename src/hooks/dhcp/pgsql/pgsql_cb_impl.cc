@@ -548,8 +548,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
                                   const ServerSelector& server_selector,
                                   const uint16_t code,
                                   const std::string& space,
-                                  const ClientClassesPtr client_classes 
-                                  /* = ClientClassesPtr() */) {
+                                  const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     if (server_selector.amUnassigned()) {
         isc_throw(NotImplemented, "managing configuration for no particular server"
                                   " (unassigned) is unsupported at the moment");

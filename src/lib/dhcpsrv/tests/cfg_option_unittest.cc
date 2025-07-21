@@ -1509,16 +1509,16 @@ TEST_F(CfgOptionTest, optionsWithClientClasses) {
     OptionDescriptorList list_options = cfg.getList(DHCP6_OPTION_SPACE, 777);
     ASSERT_EQ(options->size(), reference_options.size());
     auto reference_rdesc = reference_options.rbegin();
-    for (auto &returned_desc : list_options ){
+    for (auto &returned_desc : list_options) {
         ASSERT_EQ(*reference_rdesc, returned_desc);
         ++reference_rdesc;
     }
 
     // Verify that CfgOption::get() with client classes returns
     // each one correctly.
-    for (auto &reference_desc : reference_options ){
+    for (auto &reference_desc : reference_options) {
         OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
-                                                reference_desc.client_classes_);
+                                              reference_desc.client_classes_);
         ASSERT_TRUE(found_desc.option_);
         ASSERT_EQ(found_desc, reference_desc);
     }
@@ -1561,7 +1561,7 @@ TEST_F(CfgOptionTest, replaceWithClientClasses) {
     (boost::dynamic_pointer_cast<OptionUint16>(replacement.option_))->setValue(100);
     ASSERT_NO_THROW(cfg.replace(replacement, DHCP6_OPTION_SPACE));
 
-    // Make sure we can the updated option.
+    // Make sure we can get the updated option.
     OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
                                           replacement.client_classes_);
     ASSERT_TRUE(found_desc.option_);
@@ -1572,7 +1572,7 @@ TEST_F(CfgOptionTest, replaceWithClientClasses) {
     (boost::dynamic_pointer_cast<OptionUint16>(replacement2.option_))->setValue(300);
     ASSERT_NO_THROW(cfg.replace(replacement2, DHCP6_OPTION_SPACE));
 
-    // Make sure we can the updated option.
+    // Make sure we can get the updated option.
     found_desc = cfg.get(DHCP6_OPTION_SPACE, 777, replacement2.client_classes_);
     ASSERT_TRUE(found_desc.option_);
     ASSERT_EQ(found_desc, replacement2);
@@ -1631,7 +1631,7 @@ TEST_F(CfgOptionTest, deleteWithClientClasses) {
     ASSERT_FALSE(found_desc.option_);
     reference_options.pop_back();
 
-    // Delete the secon reference option.
+    // Delete the second reference option.
     ASSERT_NO_THROW(cfg.del(DHCP6_OPTION_SPACE, 777, reference_options[1].client_classes_));
 
     // Make sure we can no longer find the deleted option.
