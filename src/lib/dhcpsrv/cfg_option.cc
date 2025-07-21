@@ -440,7 +440,7 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code,
             for (auto const& option_it : *options_in_space) {
 
                 // Check if the option encapsulates our option space and
-                // it does, try to delete our option.
+                // if it does, try to delete our option.
                 if (option_it.option_ &&
                     (option_it.option_->getEncapsulatedSpace() == option_space)) {
                     option_it.option_->delOption(option_code);

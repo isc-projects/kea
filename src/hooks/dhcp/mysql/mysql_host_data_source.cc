@@ -619,7 +619,7 @@ public:
         // Convert user_context to string as well.
         std::string user_context;
         if (user_context_null_ == MLM_FALSE) {
-            user_context_[user_context_length_] = '\0';
+            user_context_[user_context_length_ - 1] = '\0';
             user_context.assign(user_context_);
         }
 
@@ -949,7 +949,7 @@ private:
             if (space_null_ == MLM_FALSE) {
                 // Typically, the string values returned by the database are not
                 // NULL terminated.
-                space_[space_length_] = '\0';
+                space_[space_length_ - 1] = '\0';
                 space.assign(space_);
             }
 
@@ -962,21 +962,21 @@ private:
             // Convert formatted_value to string.
             std::string formatted_value;
             if (formatted_value_null_ == MLM_FALSE) {
-                formatted_value_[formatted_value_length_] = '\0';
+                formatted_value_[formatted_value_length_ - 1] = '\0';
                 formatted_value.assign(formatted_value_);
             }
 
             // Convert user_context to string.
             std::string user_context;
             if (user_context_null_ == MLM_FALSE) {
-                user_context_[user_context_length_] = '\0';
+                user_context_[user_context_length_ - 1] = '\0';
                 user_context.assign(user_context_);
             }
 
             // Convert client classes to string.
             std::string client_classes;
             if (client_classes_null_ == MLM_FALSE) {
-                client_classes_[client_classes_length_] = '\0';
+                client_classes_[client_classes_length_ - 1] = '\0';
                 client_classes.assign(client_classes_);
             }
 

@@ -1559,7 +1559,7 @@ TEST_F(CfgOptionTest, replaceWithClientClasses) {
     // Replace the first reference option.
     auto& replacement = reference_options[0];
     (boost::dynamic_pointer_cast<OptionUint16>(replacement.option_))->setValue(100);
-    ASSERT_NO_THROW(cfg.replace(replacement, DHCP6_OPTION_SPACE));
+    ASSERT_NO_THROW(cfg.replace(OptionDescriptor(replacement), DHCP6_OPTION_SPACE));
 
     // Make sure we can get the updated option.
     OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
