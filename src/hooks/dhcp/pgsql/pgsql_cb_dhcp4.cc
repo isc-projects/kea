@@ -4051,7 +4051,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 15 server_tag
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
-            OID_VARCHAR     // 18 client_classes (of option to update)
+            OID_TEXT        // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4",
         PGSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
@@ -4079,7 +4079,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 15 subnet_id (of option to update)
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
-            OID_VARCHAR     // 18 client_classes (of option to update)
+            OID_TEXT        // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_SUBNET_ID",
         PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 1 AND o.dhcp4_subnet_id = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
@@ -4107,7 +4107,7 @@ TaggedStatementArray tagged_statements = { {
             OID_INT8,       // 15 pool_id (of option to update)
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
-            OID_VARCHAR     // 18 client_classes (of option to update)
+            OID_TEXT        // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_POOL_ID",
         PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 5 AND o.pool_id = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
@@ -4135,7 +4135,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 15 shared_network_name (of option to update)
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
-            OID_VARCHAR     // 18 client_classes (of option to update)
+            OID_TEXT,       // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_SHARED_NETWORK",
         PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
@@ -4163,7 +4163,7 @@ TaggedStatementArray tagged_statements = { {
             OID_VARCHAR,    // 15 dhcp_client_class (of option to update)
             OID_INT2,       // 16 code (of option to update)
             OID_VARCHAR,    // 17 space (of option to update)
-            OID_VARCHAR     // 18 client_classes (of option to update)
+            OID_TEXT        // 18 client_classes (of option to update)
         },
         "UPDATE_OPTION4_CLIENT_CLASS",
         PGSQL_UPDATE_OPTION4_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $15 AND o.code = $16 AND o.space = $17 AND o.client_classes = $18)
