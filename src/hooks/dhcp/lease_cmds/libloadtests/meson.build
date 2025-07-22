@@ -18,7 +18,6 @@ dhcp_lease_cmds_libload_tests = executable(
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
     link_with: [libs_testutils] + LIBS_BUILT_SO_FAR,
 )
 test(
