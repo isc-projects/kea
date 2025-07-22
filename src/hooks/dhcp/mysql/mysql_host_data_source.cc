@@ -24,6 +24,7 @@
 #include <util/buffer.h>
 #include <util/multi_threading_mgr.h>
 #include <util/optional.h>
+#include <config_backend/constants.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -1234,7 +1235,7 @@ private:
         unsigned long user_context_length_;
 
         /// @brief Buffer holding textual client classes of an option.
-        char client_classes_[CLIENT_CLASSES_MAX_LEN];
+        char client_classes_[cb::CLIENT_CLASS_LIST_BUF_LENGTH];
 
         /// @brief User context length.
         unsigned long client_classes_length_;
