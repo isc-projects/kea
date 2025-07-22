@@ -1439,9 +1439,7 @@ The ``remote-option6-pd-pool-del`` Command
 
 This command is used to delete a prefix delegation pool-specific DHCPv6
 option from the database. The option is identified by an option code
-and option space, and as of Kea 3.1, an optional ``client-classes`` parameter
-may also be specified (see :ref:`cb-cmds-option-class-tags-as-keys`).
-These parameters are passed within the ``options`` list.
+and option space. These two parameters are passed within the ``options`` list.
 Another list, ``pd-pools``, contains a map with the
 prefix-delegation-pool prefix and length identifying the pool. If the
 option is not explicitly specified for this pool, no option is deleted.
