@@ -1,5 +1,5 @@
 [bug]		tmark
 	kea-dhcp4 now correctly supports option class-tags
 	(i.e."client-classes") in host and config back ends
-	for both MySql and PosgreSQL.
+	for both MySQL and PosgreSQL.
 	(Gitlab #3770)
