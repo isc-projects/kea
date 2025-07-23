@@ -121,7 +121,7 @@ ClientClasses::fromElement(isc::data::ConstElementPtr cc_list) {
 
 bool
 ClientClasses::equals(const ClientClasses& other) const {
- return ((size() == other.size()) && std::equal(cbegin(), cend(), other.cbegin()));
+    return ((size() == other.size()) && std::equal(cbegin(), cend(), other.cbegin()));
 }
 
 ClientClasses&
@@ -134,5 +134,14 @@ ClientClasses::operator=(const ClientClasses& other) {
     return (*this);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+size_t
+ClientClasses::Hash::operator()(const ClientClasses &client_classes) {
+    return (hash_value(client_classes));
+}
+
+size_t hash_value(const ClientClasses& client_classes) {
+    boost::hash<std::string> hasher;
+    return (hasher(client_classes.toText("")));
+}
+
+}} // end of namespace isc

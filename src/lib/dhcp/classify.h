@@ -18,6 +18,7 @@
 #include <boost/multi_index/sequenced_index.hpp>
 
 #include <string>
+#include <functional>
 
 /// @file   classify.h
 ///
@@ -250,10 +251,31 @@ public:
     /// are invalid
     void fromElement(isc::data::ConstElementPtr list);
 
+    /// @brief Hash enabling use in the unordered containers.
+    struct Hash {
+        /// @brief A hashing operator.
+        ///
+        /// @param client_classes ClientClasses instance to be hashed.
+        /// \return a hashing result.
+        size_t operator()(const ClientClasses& client_classes);
+    };
+
 private:
     /// @brief container part
     ClientClassContainer container_;
 };
+
+/// @brief Hash a ClientClasses instance.
+///
+/// This method allows boost multi-index hashed indexes on ClientClasses.
+/// It follows the requirement with equality: if two class lists are equal
+/// their hashes are equal, if two class lists are not equal their hashes
+/// are almost surely not equal.
+///
+/// @param address A @c ClientClasses to hash.
+/// @return The hash of the ClientClasses.
+
+size_t hash_value(const ClientClasses& client_classes);
 
 /// @brief Smart pointer to ClientClasses object.
 typedef boost::shared_ptr<ClientClasses> ClientClassesPtr;

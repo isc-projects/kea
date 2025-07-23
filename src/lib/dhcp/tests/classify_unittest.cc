@@ -11,6 +11,7 @@
 #include <testutils/gtest_utils.h>
 
 #include <gtest/gtest.h>
+#include <unordered_set>
 
 using namespace isc;
 using namespace isc::dhcp;
@@ -290,4 +291,41 @@ TEST(ClassifyTest, ClientClassesIntersects) {
 
     EXPECT_TRUE(classes1.intersects(classes2));
     EXPECT_TRUE(classes2.intersects(classes1));
+}
+
+TEST(ClassifyTest, ClientClassesHash) {
+    // Add hashes for different contents to a set.
+    ClientClasses::Hash hash;
+    std::unordered_set<size_t> results;
+
+    ClientClasses cclasses;
+    results.insert(hash(cclasses));
+
+    cclasses.insert("one");
+    results.insert(hash(cclasses));
+
+    cclasses.insert("two");
+    results.insert(hash(cclasses));
+
+    cclasses.insert("three");
+    results.insert(hash(cclasses));
+
+    // Should have all four entries.
+    EXPECT_EQ(4, results.size());
+
+    // Check that empty containers make equal hashes.
+    ClientClasses empty1;
+    ClientClasses empty2;
+    EXPECT_EQ(hash(empty1), hash(empty2));
+
+    // Check that equal containers make equal hashes.
+    ClientClasses cclasses2(cclasses);
+    EXPECT_EQ(hash(cclasses2), hash(cclasses));
+
+    // Check that different ordering make not equal hashes.
+    ClientClasses cclasses3;
+    cclasses3.insert("three");
+    cclasses3.insert("two");
+    cclasses3.insert("one");
+    EXPECT_NE(hash(cclasses3), hash(cclasses));
 }
