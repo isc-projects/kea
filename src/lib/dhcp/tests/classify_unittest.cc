@@ -322,10 +322,16 @@ TEST(ClassifyTest, ClientClassesHash) {
     ClientClasses cclasses2(cclasses);
     EXPECT_EQ(hash(cclasses2), hash(cclasses));
 
-    // Check that different ordering make not equal hashes.
+    // Check that different ordering makes not equal hashes.
     ClientClasses cclasses3;
     cclasses3.insert("three");
     cclasses3.insert("two");
     cclasses3.insert("one");
     EXPECT_NE(hash(cclasses3), hash(cclasses));
+
+    // Check that single class name same as individual class names
+    // makes not equal hashes.
+    ClientClasses cclasses4;
+    cclasses4.insert("onetwothree");
+    EXPECT_NE(hash(cclasses4), hash(cclasses));
 }

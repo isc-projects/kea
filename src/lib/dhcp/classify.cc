@@ -141,7 +141,7 @@ ClientClasses::Hash::operator()(const ClientClasses &client_classes) {
 
 size_t hash_value(const ClientClasses& client_classes) {
     boost::hash<std::string> hasher;
-    return (hasher(client_classes.toText("")));
+    return (hasher(client_classes.toText("+")));
 }
 
 }} // end of namespace isc
