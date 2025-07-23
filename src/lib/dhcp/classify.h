@@ -256,7 +256,7 @@ public:
         /// @brief A hashing operator.
         ///
         /// @param client_classes ClientClasses instance to be hashed.
-        /// \return a hashing result.
+        /// @return a hashing result.
         size_t operator()(const ClientClasses& client_classes);
     };
 

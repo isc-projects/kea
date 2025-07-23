@@ -342,7 +342,6 @@ typedef boost::multi_index_container<
                                            ClientClasses,
                                            &OptionDescriptor::client_classes_>
             >
-
         >
     >
 > OptionContainer;
