@@ -35,6 +35,7 @@ private:
     void cleanUp() {
         Session session(sysrepo::Connection{}.sessionStart());
         session.switchDatastore(sysrepo::Datastore::Candidate);
+        // remove the 'if' statement when a fix is provided in sysrepo branch.
         if (session.getData("/keatest-module:container/list")) {
             session.deleteItem("/keatest-module:container/list");
         }
@@ -844,7 +845,7 @@ TEST_F(TranslatorTest, container) {
 
     // Container with no data apparently throws.
     EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath("/keatest-module:container"), NotImplemented,
-                     "getting node of type 1 not supported, xpath is '/keatest-module:container'");
+                     "getting node of type container not supported, xpath is '/keatest-module:container'");
     EXPECT_FALSE(element);
     element.reset();
 
@@ -860,12 +861,19 @@ TEST_F(TranslatorTest, container) {
     element.reset();
     EXPECT_THROW_MSG(
         element = translator.getItemFromAbsoluteXpath("/keatest-module:container"), NotImplemented,
-        "getting node of type 1 not supported, xpath is '/keatest-module:container'");
+        "getting node of type container not supported, xpath is '/keatest-module:container'");
     EXPECT_FALSE(element);
     element.reset();
     optional<DataNode> const& container(translator.findXPath("/keatest-module:container"));
+    EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath(
+                         "/keatest-module:container/list[key1='key1'][key2='key2']"),
+                     NotImplemented,
+                     "getting node of type list not supported, xpath is "
+                     "'/keatest-module:container/list[key1='key1'][key2='key2']'");
+    EXPECT_FALSE(element);
+    element.reset();
     try {
-        libyang::Set<libyang::DataNode> const& nodes((*container).findXPath("/keatest-module:container/list"));
+        libyang::Set<libyang::DataNode> const& nodes(container->findXPath("/keatest-module:container/list"));
         element = isc::data::Element::createList();
         for (libyang::DataNode const& i : nodes) {
             ElementPtr result = Element::createMap();
@@ -878,7 +886,7 @@ TEST_F(TranslatorTest, container) {
         ADD_FAILURE() << "failed to retrieve keatest-module:container/list[key1='key1][key2='key2']. error: " << ex.what();
     }
     ASSERT_TRUE(element);
-    ASSERT_EQ("[ { \"key1\": \"key1\", \"key2\": \"key2\", \"leaf\": \"Leaf value\" } ]", element->str());
+    EXPECT_EQ("[ { \"key1\": \"key1\", \"key2\": \"key2\", \"leaf\": \"Leaf value\" } ]", element->str());
 }
 
 // Test YANG list retrieval.
@@ -902,12 +910,12 @@ TEST_F(TranslatorTest, list) {
     element.reset();
     EXPECT_THROW_MSG(
         element = translator.getItemFromAbsoluteXpath("/keatest-module:container/list"), NotImplemented,
-        "getting node of type 16 not supported, xpath is '/keatest-module:container/list'");
+        "getting node of type list not supported, xpath is '/keatest-module:container/list'");
     EXPECT_FALSE(element);
     element.reset();
     EXPECT_THROW_MSG(element = translator.getItemFromAbsoluteXpath(
                          "/keatest-module:container/list[key1='key1'][key2='key2']"), NotImplemented,
-                     "getting node of type 16 not supported, xpath is "
+                     "getting node of type list not supported, xpath is "
                      "'/keatest-module:container/list[key1='key1'][key2='key2']'");
     EXPECT_FALSE(element);
 }

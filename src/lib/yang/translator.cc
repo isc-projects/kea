@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -175,7 +175,7 @@ Translator::getItem(DataNode const& data_node,
             return result;
         } else {
             isc_throw(NotImplemented, "getting node of type "
-                                          << int(node_type) << " not supported, xpath is '" << xpath
+                                          << node_type << " not supported, xpath is '" << xpath
                                           << "'");
         }
 

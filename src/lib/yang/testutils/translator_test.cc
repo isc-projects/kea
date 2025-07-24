@@ -252,7 +252,7 @@ operator<<(ostream& os, LeafBaseType type) {
         os << "unknown";
         break;
     default:
-        isc_throw(BadValue, "unsupported type " << int(type));
+        isc_throw(BadValue, "unsupported type " << type);
     }
     return (os);
 }
