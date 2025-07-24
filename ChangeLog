@@ -1,3 +1,9 @@
+2376.	[func]		razvan
+	Added support for global list parameters (containing only scalar
+	elements) in CB. The "host-reservation-identifiers" is now
+	supported in CB.
+	(Gitlab #3944)
+
 Kea 3.0.0 (stable) released on June 25, 2025
 
 2375.	[build]		wlodek
