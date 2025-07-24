@@ -1122,9 +1122,9 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     mt->set("enable-multi-threading", Element::create(false));
     mt->set("thread-pool-size", Element::create(256));
     ElementPtr hr_i = Element::createList();
-    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
     hr_i->add(Element::create("hw-address"));
     hr_i->add(Element::create("flex-id"));
+    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));
@@ -1226,9 +1226,9 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     mt->set("enable-multi-threading", Element::create(false));
     mt->set("thread-pool-size", Element::create(256));
     ElementPtr hr_i = Element::createList();
-    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
     hr_i->add(Element::create("hw-address"));
     hr_i->add(Element::create("flex-id"));
+    cfg_from.addConfiguredGlobal("host-reservation-identifiers", hr_i);
 
     // Now let's merge.
     ASSERT_NO_THROW(cfg_to.merge(cfg_from));

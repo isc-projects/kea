@@ -155,6 +155,9 @@ public:
     /// @brief Constructor.
     ///
     /// @param cfg Pointer to the object holding configuration.
+    /// The configuration provided will be updated by
+    /// @ref HostReservationIdsParser::parse with the list of host
+    /// identifiers.
     HostReservationIdsParser(CfgHostOperationsPtr cfg);
 
     /// @brief Destructor.
@@ -207,6 +210,9 @@ public:
     /// configuration.
     ///
     /// @param cfg Pointer to the object holding configuration.
+    /// The configuration provided will be updated by
+    /// @ref HostReservationIdsParser::parse with the list of host
+    /// identifiers.
     HostReservationIdsParser4(CfgHostOperationsPtr cfg);
 
 protected:
@@ -230,6 +236,9 @@ public:
     /// configuration.
     ///
     /// @param cfg Pointer to the object holding configuration.
+    /// The configuration provided will be updated by
+    /// @ref HostReservationIdsParser::parse with the list of host
+    /// identifiers.
     HostReservationIdsParser6(CfgHostOperationsPtr cfg);
 
 protected:
