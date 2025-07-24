@@ -1,5 +1,0 @@
-[sec]*		tmark
-	Additional runtime security checks were added
-	to kea-dhcp4,kea-dhcp6,kea-dhcp-ddns, and
-	kea-ctrl-agent
-	(Gitlab #3848)

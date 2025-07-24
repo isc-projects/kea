@@ -320,6 +320,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                        | trust_anchor
                        | cert_file
                        | key_file
+                       | ssl_mode
                        | cipher_list
                        | unknown_map_entry
 
@@ -368,6 +369,13 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      cert_file ::= "cert-file" ":" STRING
 
      key_file ::= "key-file" ":" STRING
+
+     ssl_mode ::= "ssl-mode" ":" ssl_mode
+             | "disable"
+             | "prefer"
+             | "require"
+             | "verify-ca"
+             | "verify-full"
 
      cipher_list ::= "cipher-list" ":" STRING
 

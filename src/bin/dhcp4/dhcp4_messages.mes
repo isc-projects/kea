@@ -1042,6 +1042,12 @@ supplied its hostname. The first argument includes the client and the
 transaction identification information. The second argument holds the
 generated hostname.
 
+% DHCP4_ROOT_USER_SECURITY_WARNING kea-dhcp4 running as root user!
+This warning is emitted when kea-dhcp4 is running as a root user.
+While the server will function fully, this mode of operation may
+expose your environment to security vulnerabilities and should
+only be used after careful consideration.
+
 % DHCP4_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
 This warning is emitted when internal security checks normally
 performed by kea-dhcp4 have been disabled via command line option '-X'.
@@ -1190,9 +1196,3 @@ expected: the erroneous response is dropped, the request query is displayed.
 An DHCPOFFER for the 0.0.0.0 address was generated for a client requesting
 the v6-only-preferred (108) option but the option is not in the response as
 expected: the erroneous response is dropped, the discover query is displayed.
-
-% DHCP4_ROOT_USER_SECURITY_WARNING kea-dhcp4 running as root user!
-This warning is emitted when kea-dhcp4 is running as a root user.
-While the server will function fully, this mode of operation may
-expose your environment to security vulnerabilities and should
-only be used after careful consideration.

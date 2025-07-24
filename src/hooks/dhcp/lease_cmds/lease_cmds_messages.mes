@@ -105,6 +105,13 @@ This error message indicates an error loading the Lease Commands
 hooks library. The details of the error are provided as argument of
 the log message.
 
+% LEASE_CMDS_PATH_SECURITY_WARNING lease file path specified is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and the path portion of the `filename` parameter of the lease4-write
+or lease6-write command does not comply with the supported path. The
+server will still use the specified path but is warning that doing so
+may pose a security risk.
+
 % LEASE_CMDS_RESEND_DDNS4 lease4-resend-ddns command successful: %1
 A request to update DNS for the requested IPv4 lease has been
 successfully queued for transmission to kea-dhcp-ddns.
@@ -166,10 +173,3 @@ are logged.
 % LEASE_CMDS_WIPE6_FAILED lease6-wipe command failed (parameters: %1, reason: %2)
 The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
-
-% LEASE_CMDS_PATH_SECURITY_WARNING lease file path specified is NOT SECURE: %1
-This warning message is issued when security enforcement is disabled
-and the path portion of the `filename` parameter of the lease4-write
-or lease6-write command does not comply with the supported path. The
-server will still use the specified path but is warning that doing so
-may pose a security risk.

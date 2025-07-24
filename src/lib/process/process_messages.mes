@@ -78,6 +78,13 @@ to create and initialize its application instance.
 This error message is issued if the controller could not initialize the
 application and will exit.
 
+% DCTL_LOG_PATH_SECURITY_WARNING Log output path specified is NOT SECURE: %1
+This warning message is issued when security enforcement is
+disabled and the output path specified for a given logger does
+not comply with the supported path. The server will still
+use the specified path but is warning that doing so may pose a
+security risk.
+
 % DCTL_NOT_RUNNING %1 application instance is not running
 A warning message is issued when an attempt is made to shut down the
 application when it is not running.
@@ -106,6 +113,12 @@ The first argument is the process name.
 The controller has encountered a fatal error while running the
 application and is terminating. The reason for the failure is
 included in the message.
+
+% DCTL_ROOT_USER_SECURITY_WARNING %1 running as root user!
+This warning is emitted when the server is running as a root user.
+While the server will function fully, this mode of operation may
+expose your environment to security vulnerabilities and should
+only be used after careful consideration.
 
 % DCTL_RUN_PROCESS %1 starting application event loop
 Logged at debug log level 0.
@@ -145,16 +158,3 @@ This is a debug message indicating that the application received an
 unsupported signal.  This is a programming error indicating that the
 application has registered to receive the signal but no associated
 processing logic has been added.
-
-% DCTL_LOG_PATH_SECURITY_WARNING Log output path specified is NOT SECURE: %1
-This warning message is issued when security enforcement is
-disabled and the output path specified for a given logger does
-not comply with the supported path. The server will still
-use the specified path but is warning that doing so may pose a
-security risk.
-
-% DCTL_ROOT_USER_SECURITY_WARNING %1 running as root user!
-This warning is emitted when the server is running as a root user.
-While the server will function fully, this mode of operation may
-expose your environment to security vulnerabilities and should
-only be used after careful consideration.

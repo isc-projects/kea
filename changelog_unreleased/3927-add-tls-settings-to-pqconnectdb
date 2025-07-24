@@ -1,5 +1,0 @@
-[func]		razvan
-	Added SSL/TLS support for PostgreSQL database connection in
-	the Kea configuration. Available parameters are:
-	"trust-anchor", "cert-file", "key-file" and "ssl-mode".
-	(Gitlab #3927)

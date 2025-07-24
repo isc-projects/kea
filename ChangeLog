@@ -1,3 +1,27 @@
+Kea 3.1.0 (development) released on July 30, 2025
+
+2381.	[build]*		fdupont
+	Moved Botan crypto backend support to version 3.
+	(Gitlab #3553)
+
+2380.	[bug]		tmark
+	kea-dhcp4 now correctly supports option class-tags
+	(i.e."client-classes") in host and config back ends
+	for both MySQL and PosgreSQL.
+	(Gitlab #3770)
+
+2379.	[func]		razvan
+	Added SSL/TLS support for PostgreSQL database connection in
+	the Kea configuration. Available parameters are:
+	"trust-anchor", "cert-file", "key-file" and "ssl-mode".
+	(Gitlab #3927)
+
+2378.	[sec]*		tmark
+	Additional runtime security checks were added
+	to kea-dhcp4,kea-dhcp6,kea-dhcp-ddns, and
+	kea-ctrl-agent
+	(Gitlab #3848)
+
 2377.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.1.0
 	development release.

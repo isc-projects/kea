@@ -446,6 +446,12 @@ message but the attempt to send it suffered an unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
+% DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING use of clear text TSIG 'secret' is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and TSIG key configuration uses clear text 'secret' rather
+than 'secret-file'. The server will still use the key as configured
+but is warning that doing so may pose a security risk.
+
 % DHCP_DDNS_UPDATE_REQUEST_SENT Request ID %1: %2 to server: %3
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
@@ -455,9 +461,3 @@ server.
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
-
-% DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING use of clear text TSIG 'secret' is NOT SECURE: %1 
-This warning message is issued when security enforcement is disabled
-and TSIG key configuration uses clear text 'secret' rather
-than 'secret-file'. The server will still use the key as configured
-but is warning that doing so may pose a security risk.

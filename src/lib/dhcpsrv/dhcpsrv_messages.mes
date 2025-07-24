@@ -789,6 +789,12 @@ testing but should not be enabled in normal circumstances. Non-persistence
 mode is enabled when 'persist4=no persist6=no' parameters are specified
 in the database access string.
 
+% DHCPSRV_MEMFILE_PATH_SECURITY_WARNING Lease file path specified is NOT SECURE: %1
+This warning message is issued when security enforcement is
+disabled and the lease file path specified for does not comply
+with the supported path. The server will still use the specified
+path but is warning that doing so may pose a security risk.
+
 % DHCPSRV_MEMFILE_READ_HWADDR_FAIL failed to read hardware address from lease file: %1
 A warning message issued when read attempt of the hardware address stored in
 a disk file failed. The parameter should provide the exact nature of the failure.
@@ -1002,12 +1008,6 @@ included in the message.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software. This is a configuration error.
-
-% DHCPSRV_MEMFILE_PATH_SECURITY_WARNING Lease file path specified is NOT SECURE: %1
-This warning message is issued when security enforcement is
-disabled and the lease file path specified for does not comply
-with the supported path. The server will still use the specified
-path but is warning that doing so may pose a security risk.
 
 % LEGAL_LOG_PATH_SECURITY_WARNING Forensic log path specified is NOT SECURE: %1
 This warning message is issued when security enforcement is

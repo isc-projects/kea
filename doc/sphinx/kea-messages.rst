@@ -2691,6 +2691,18 @@ Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has begun to shutdown.
 
+COMMAND_HTTP_SOCKET_SECURITY_WARNING
+====================================
+
+.. code-block:: text
+
+    command socket configuration is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and command socket configuration does not use HTTPS/TLS or  baseic HTTP
+authentication. The server will still use the socket as configured but
+is warning that doing so may pose a security risk.
+
 COMMAND_PROCESS_ERROR1
 ======================
 
@@ -2879,6 +2891,30 @@ COMMAND_SOCKET_WRITE_FAIL
 
 This error message indicates that an error was encountered while
 attempting to send a response to the command socket.
+
+COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING
+=========================================
+
+.. code-block:: text
+
+    unix socket path is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not comply with the supported path. The server will still use the
+specified path but is warning that doing so may pose a security risk.
+
+COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING
+================================================
+
+.. code-block:: text
+
+    unix socket permissions are NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not have the required socket permissions. The server will still use the
+specified path but is warning that doing so may pose a security risk.
 
 COMMAND_WATCH_SOCKET_CLEAR_ERROR
 ================================
@@ -3508,6 +3544,19 @@ DCTL_INIT_PROCESS_FAIL
 This error message is issued if the controller could not initialize the
 application and will exit.
 
+DCTL_LOG_PATH_SECURITY_WARNING
+==============================
+
+.. code-block:: text
+
+    Log output path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is
+disabled and the output path specified for a given logger does
+not comply with the supported path. The server will still
+use the specified path but is warning that doing so may pose a
+security risk.
+
 DCTL_NOT_RUNNING
 ================
 
@@ -3566,6 +3615,18 @@ DCTL_PROCESS_FAILED
 The controller has encountered a fatal error while running the
 application and is terminating. The reason for the failure is
 included in the message.
+
+DCTL_ROOT_USER_SECURITY_WARNING
+===============================
+
+.. code-block:: text
+
+    %1 running as root user!
+
+This warning is emitted when the server is running as a root user.
+While the server will function fully, this mode of operation may
+expose your environment to security vulnerabilities and should
+only be used after careful consideration.
 
 DCTL_RUN_PROCESS
 ================
@@ -5828,6 +5889,18 @@ when required by the server's configuration or when the client hasn't
 supplied its hostname. The first argument includes the client and the
 transaction identification information. The second argument holds the
 generated hostname.
+
+DHCP4_ROOT_USER_SECURITY_WARNING
+================================
+
+.. code-block:: text
+
+    kea-dhcp4 running as root user!
+
+This warning is emitted when kea-dhcp4 is running as a root user.
+While the server will function fully, this mode of operation may
+expose your environment to security vulnerabilities and should
+only be used after careful consideration.
 
 DHCP4_SECURITY_CHECKS_DISABLED
 ==============================
@@ -8187,6 +8260,18 @@ identification information. The second and third argument contains the
 packet name and type respectively. The fourth argument contains detailed
 packet information.
 
+DHCP6_ROOT_USER_SECURITY_WARNING
+================================
+
+.. code-block:: text
+
+    kea-dhcp6 running as root user!
+
+This warning is emitted when kea-dhcp6 is running as a root user.
+While the server will function fully, this mode of operation may
+expose your environment to security vulnerabilities and should
+only be used after careful consideration
+
 DHCP6_SECURITY_CHECKS_DISABLED
 ==============================
 
@@ -9964,6 +10049,18 @@ testing but should not be enabled in normal circumstances. Non-persistence
 mode is enabled when 'persist4=no persist6=no' parameters are specified
 in the database access string.
 
+DHCPSRV_MEMFILE_PATH_SECURITY_WARNING
+=====================================
+
+.. code-block:: text
+
+    Lease file path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is
+disabled and the lease file path specified for does not comply
+with the supported path. The server will still use the specified
+path but is warning that doing so may pose a security risk.
+
 DHCPSRV_MEMFILE_READ_HWADDR_FAIL
 ================================
 
@@ -11453,6 +11550,18 @@ This is error message issued when the application is able to construct an update
 message but the attempt to send it suffered an unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
+
+DHCP_DDNS_TSIG_SECRET_SECURITY_WARNING
+======================================
+
+.. code-block:: text
+
+    use of clear text TSIG 'secret' is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and TSIG key configuration uses clear text 'secret' rather
+than 'secret-file'. The server will still use the key as configured
+but is warning that doing so may pose a security risk.
 
 DHCP_DDNS_UDP_SENDER_WATCH_SOCKET_CLOSE_ERROR
 =============================================
@@ -14489,6 +14598,19 @@ This is most likely due to the installation of a new version of Kea
 without rebuilding the hook library.  A rebuild and re-install of the
 library should fix the problem in most cases.
 
+HOOKS_LIBPATH_SECURITY_WARNING
+==============================
+
+.. code-block:: text
+
+    Library path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is
+disabled and the library path specified for a given hook library
+does not comply with the supported path. The server will still load
+the hook library but is warning that doing so may pose a security
+risk.
+
 HOOKS_LIBRARY_CLOSED
 ====================
 
@@ -15975,6 +16097,18 @@ HOST_CACHE_INIT_OK
 This info message indicates that the Host Cache hooks library has been
 loaded successfully. Enjoy!
 
+HOST_CACHE_PATH_SECURITY_WARNING
+================================
+
+.. code-block:: text
+
+    Cache file path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is
+disabled and the host cache file path specified does not comply
+with the supported path. The server will still use the specified
+path but is warning that doing so may pose a security risk.
+
 HOST_CMDS_DEINIT_OK
 ===================
 
@@ -16344,6 +16478,18 @@ Logged at debug log level 40.
 This debug message is issued when a multi-threaded HTTP client instance has
 been created.  The argument specifies the maximum number of threads.
 
+HTTP_CLIENT_PASSWORD_SECURITY_WARNING
+=====================================
+
+.. code-block:: text
+
+    use of clear text 'password' is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and command socket configuration uses clear text 'password' rather
+than 'password-file'. The server will still use the socket as configured
+but is warning that doing so may pose a security risk.
+
 HTTP_CLIENT_QUEUE_SIZE_GROWING
 ==============================
 
@@ -16464,6 +16610,18 @@ Logged at debug log level 50.
 This debug message is issued when the HTTP request timeout has occurred and
 the server is going to send a response with Http Request timeout status
 code.
+
+HTTP_CLIENT_USER_SECURITY_WARNING
+=================================
+
+.. code-block:: text
+
+    use of clear text 'user' is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and command socket configuration uses clear text 'user' rather
+than 'user-file'. The server will still use the socket as configured
+but is warning that doing so may pose a security risk.
 
 HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED
 ===========================================
@@ -17039,6 +17197,19 @@ This error message indicates an error loading the Lease Commands
 hooks library. The details of the error are provided as argument of
 the log message.
 
+LEASE_CMDS_PATH_SECURITY_WARNING
+================================
+
+.. code-block:: text
+
+    lease file path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is disabled
+and the path portion of the `filename` parameter of the lease4-write
+or lease6-write command does not comply with the supported path. The
+server will still use the specified path but is warning that doing so
+may pose a security risk.
+
 LEASE_CMDS_RESEND_DDNS4
 =======================
 
@@ -17441,6 +17612,19 @@ LEGAL_LOG_MYSQL_TLS_CIPHER
 Logged at debug log level 50.
 A debug message issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
+
+LEGAL_LOG_PATH_SECURITY_WARNING
+===============================
+
+.. code-block:: text
+
+    Forensic log path specified is NOT SECURE: %1
+
+This warning message is issued when security enforcement is
+disabled and the path specified for forensic logging output
+does not comply with the supported path. The server will
+still use the specified path but is warning that doing so may
+pose a security risk.
 
 LEGAL_LOG_PGSQL_COMMIT
 ======================

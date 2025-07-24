@@ -48,6 +48,12 @@ Logged at debug log level 10.
 This debug messages is issued when the Command HTTP listener, listening
 at the given address and port, has begun to shutdown.
 
+% COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket configuration is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and command socket configuration does not use HTTPS/TLS or  baseic HTTP
+authentication. The server will still use the socket as configured but
+is warning that doing so may pose a security risk.
+
 % COMMAND_PROCESS_ERROR1 Error while processing command: %1
 This warning message indicates that the server encountered an error while
 processing received command. Additional information will be provided, if
@@ -135,6 +141,18 @@ over command socket identifier by the specified file descriptor.
 This error message indicates that an error was encountered while
 attempting to send a response to the command socket.
 
+% COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING unix socket path is NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not comply with the supported path. The server will still use the
+specified path but is warning that doing so may pose a security risk.
+
+% COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING unix socket permissions are NOT SECURE: %1
+This warning message is issued when security enforcement is disabled
+and the path specified for a control channel unix socket-name does
+not have the required socket permissions. The server will still use the
+specified path but is warning that doing so may pose a security risk.
+
 % COMMAND_WATCH_SOCKET_CLEAR_ERROR watch socket failed to clear: %1
 This error message is issued when the command manager was unable to reset
 the ready status after completing a send. This is a programmatic error
@@ -180,21 +198,3 @@ control commands.
 % HTTP_COMMAND_MGR_SERVICE_STOPPING Server is stopping %1 service %2
 This informational message indicates that the server has stopped
 HTTP/HTTPS service. When known the address and port are displayed.
-
-% COMMAND_UNIX_SOCKET_PATH_SECURITY_WARNING unix socket path is NOT SECURE: %1
-This warning message is issued when security enforcement is disabled
-and the path specified for a control channel unix socket-name does
-not comply with the supported path. The server will still use the
-specified path but is warning that doing so may pose a security risk.
-
-% COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING unix socket permissions are NOT SECURE: %1
-This warning message is issued when security enforcement is disabled
-and the path specified for a control channel unix socket-name does
-not have the required socket permissions. The server will still use the
-specified path but is warning that doing so may pose a security risk.
-
-% COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket configuration is NOT SECURE: %1
-This warning message is issued when security enforcement is disabled
-and command socket configuration does not use HTTPS/TLS or  baseic HTTP
-authentication. The server will still use the socket as configured but
-is warning that doing so may pose a security risk.
