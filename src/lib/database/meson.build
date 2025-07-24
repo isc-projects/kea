@@ -15,7 +15,7 @@ kea_database_lib = shared_library(
     install_rpath: INSTALL_RPATH,
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
-    version: '76.0.0',
+    version: '87.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_database_lib] + LIBS_BUILT_SO_FAR
 subdir('testutils')
