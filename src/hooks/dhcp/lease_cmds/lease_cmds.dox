@@ -64,7 +64,7 @@ For details see documentation and code of the following handlers:
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetHandler (lease4-get, lease6-get)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetAllHandler(lease4-get-all, lease6-get-all)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetPageHandler(lease4-get-page, lease6-get-page)
-- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHwAddressHandler(lease4-get-by-hw-address)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHwAddressHandler(lease4-get-by-hw-address, lease6-get-by-hw-address)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByClientIdHandler(lease4-get-by-client-id)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByDuidHandler(lease6-get-by-duid)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHostnameHandler(lease4-get-by-hostname, lease6-get-by-hostname)

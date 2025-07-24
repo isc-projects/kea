@@ -229,6 +229,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress6_[0]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->type_ = leasetype6_[0];
         lease->prefixlen_ = 128;
         lease->iaid_ = 142;
@@ -243,6 +244,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[1]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->type_ = leasetype6_[1];
         lease->prefixlen_ = 128;
         lease->iaid_ = 42;
@@ -258,6 +260,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->pool_id_ = 7;
 
     } else if (address == straddress6_[2]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
         lease->type_ = leasetype6_[2];
         lease->prefixlen_ = 48;
         lease->iaid_ = 89;
@@ -272,6 +275,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[3]) {
+        // Hardware address same as lease 1.
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->type_ = leasetype6_[3];
         lease->prefixlen_ = 128;
         lease->iaid_ = 0xfffffffe;
@@ -295,6 +300,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[4]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x4c), HTYPE_ETHER));
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[4];
         lease->prefixlen_ = 128;
@@ -310,6 +316,8 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "otherhost.example.com.";
 
     } else if (address == straddress6_[5]) {
+        // Same as lease 1
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[5];
         lease->prefixlen_ = 56;
@@ -327,6 +335,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->setContext(Element::fromJSON("{ \"foo\": true }"));
 
     } else if (address == straddress6_[6]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x6e), HTYPE_ETHER));
         // Same DUID as straddress6_1
         lease->type_ = leasetype6_[6];
         lease->prefixlen_ = 128;
@@ -343,6 +352,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "hostname.example.com.";
 
     } else if (address == straddress6_[7]) {
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(), HTYPE_ETHER)); // Empty
         // Same IAID as straddress6_1
         lease->type_ = leasetype6_[7];
         lease->prefixlen_ = 128;
@@ -606,8 +616,9 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
     detailCompareLease(leases[7], *returned.begin());
 
     // Try to get something with invalid hardware address
-    vector<uint8_t> invalid(6, 0);
-    returned = lmptr_->getLease4(invalid);
+    HWAddr hwaddr(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
+    hwaddr.hwaddr_ = vector<uint8_t>(6, 0);
+    returned = lmptr_->getLease4(hwaddr);
     EXPECT_EQ(0, returned.size());
 }
 
@@ -1009,6 +1020,77 @@ GenericLeaseMgrTest::testLease6HWTypeAndSource() {
 }
 
 void
+GenericLeaseMgrTest::testGetLease6HWAddr1() {
+    // Let's initialize two different leases 6 and just add the first ...
+    Lease6Ptr leaseA = initializeLease6(straddress6_[5]);
+    HWAddr hwaddrA(*leaseA->hwaddr_);
+    HWAddr hwaddrB(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
+
+    EXPECT_TRUE(lmptr_->addLease(leaseA));
+
+    // we should not have a lease, with this HWAddr
+    Lease6Collection returned = lmptr_->getLease6(hwaddrB);
+    ASSERT_EQ(0, returned.size());
+
+    // But with this one
+    returned = lmptr_->getLease6(hwaddrA);
+    ASSERT_EQ(1, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLease6HWAddr2() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the hardware address of lease 1
+    HWAddr tmp(*leases[1]->hwaddr_);
+    Lease6Collection returned = lmptr_->getLease6(tmp);
+
+    // Should be three leases, matching leases[1], [3] and [5].
+    ASSERT_EQ(3, returned.size());
+
+    // Check the lease[5] (and only this one) has an user context.
+    size_t contexts = 0;
+    for (auto const& i : returned) {
+        if (i->getContext()) {
+            ++contexts;
+            EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
+        }
+    }
+    EXPECT_EQ(1, contexts);
+
+    // Easiest way to check is to look at the addresses.
+    vector<string> addresses;
+    for (auto const& i : returned) {
+        addresses.push_back(i->addr_.toText());
+    }
+    sort(addresses.begin(), addresses.end());
+    EXPECT_EQ(straddress6_[1], addresses[0]);
+    EXPECT_EQ(straddress6_[3], addresses[1]);
+    EXPECT_EQ(straddress6_[5], addresses[2]);
+
+    // Repeat test with just one expected match
+    returned = lmptr_->getLease6(*leases[2]->hwaddr_);
+    ASSERT_EQ(1, returned.size());
+    detailCompareLease(leases[2], *returned.begin());
+
+    // Check that an empty vector is valid
+    EXPECT_TRUE(leases[7]->hwaddr_->hwaddr_.empty());
+    returned = lmptr_->getLease6(*leases[7]->hwaddr_);
+    ASSERT_EQ(1, returned.size());
+    detailCompareLease(leases[7], *returned.begin());
+
+    // Try to get something with invalid hardware address
+    HWAddr hwaddr(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
+    hwaddr.hwaddr_ = vector<uint8_t>(6, 0);
+    returned = lmptr_->getLease6(hwaddr);
+    EXPECT_EQ(0, returned.size());
+}
+
+void
 GenericLeaseMgrTest::testLease4InvalidHostname() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
@@ -1065,6 +1147,29 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
         /// @todo: Simply use HWAddr directly once 2589 is implemented
         Lease4Collection returned =
             lmptr_->getLease4(*leases[1]->hwaddr_);
+
+        ASSERT_EQ(1, returned.size());
+        detailCompareLease(leases[1], *returned.begin());
+        ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
+    }
+
+    // Database should not let us add one that is too big
+    // (The 42 is a random value put in each byte of the address.)
+    leases[1]->hwaddr_->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::db::DbOperationError);
+}
+
+void
+GenericLeaseMgrTest::testGetLease6HWAddrSize() {
+    // Create leases, although we need only one.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Now add leases with increasing hardware address size.
+    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
+        leases[1]->hwaddr_->hwaddr_.resize(i, i);
+        EXPECT_TRUE(lmptr_->addLease(leases[1]));
+        Lease6Collection returned =
+            lmptr_->getLease6(*leases[1]->hwaddr_);
 
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());

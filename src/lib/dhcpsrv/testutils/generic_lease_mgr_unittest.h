@@ -314,6 +314,21 @@ public:
     /// @brief Checks that Lease6 stores hardware type and hardware source.
     void testLease6HWTypeAndSource();
 
+    /// @brief Test lease retrieval using HW address.
+    void testGetLease6HWAddr1();
+
+    /// @brief Check GetLease4 methods - access by Hardware Address
+    ///
+    /// Adds leases to the database and checks that they can be accessed using
+    /// HWAddr information.
+    void testGetLease6HWAddr2();
+
+    /// @brief Get lease4 by hardware address (2)
+    ///
+    /// Check that the system can cope with getting a hardware address of
+    /// any size.
+    void testGetLease6HWAddrSize();
+
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     void testAddGetDelete6();
 

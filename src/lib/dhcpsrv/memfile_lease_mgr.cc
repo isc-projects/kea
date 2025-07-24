@@ -1209,7 +1209,7 @@ Memfile_LeaseMgr::getLease4Internal(const HWAddr& hwaddr,
 Lease4Collection
 Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_HWADDR).arg(hwaddr.toText());
+              DHCPSRV_MEMFILE_GET_HWADDR4).arg(hwaddr.toText());
 
     Lease4Collection collection;
     if (MultiThreadingMgr::instance().getMode()) {
@@ -1454,6 +1454,38 @@ Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
     } else {
         return (Lease6Ptr(new Lease6(**l)));
     }
+}
+
+void
+Memfile_LeaseMgr::getLease6Internal(const HWAddr& hwaddr,
+                                    Lease6Collection& collection) const {
+    // Using composite index by 'hw address' and 'subnet id'. It is
+    // ok to use it for searching by the 'hw address' only.
+    const Lease6StorageHWAddressSubnetIdIndex& idx =
+        storage6_.get<HWAddressSubnetIdIndexTag>();
+    std::pair<Lease6StorageHWAddressSubnetIdIndex::const_iterator,
+              Lease6StorageHWAddressSubnetIdIndex::const_iterator> l
+        = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLease6(const HWAddr& hwaddr) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_HWADDR6).arg(hwaddr.toText());
+
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLease6Internal(hwaddr, collection);
+    } else {
+        getLease6Internal(hwaddr, collection);
+    }
+
+    return (collection);
 }
 
 Lease6Ptr

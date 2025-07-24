@@ -88,6 +88,11 @@ ConcreteLeaseMgr::getLease6(Lease::Type /* not used yet */,
 }
 
 Lease6Collection
+ConcreteLeaseMgr::getLease6(const HWAddr&) const {
+    return (Lease6Collection());
+}
+
+Lease6Collection
 ConcreteLeaseMgr::getLeases6(Lease::Type /* not used yet */,
                              const DUID&, uint32_t) const {
     return (leases6_);

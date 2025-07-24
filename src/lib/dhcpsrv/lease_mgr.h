@@ -409,6 +409,18 @@ public:
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const = 0;
 
+    /// @brief Returns existing IPv6 leases for specified hardware address.
+    ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
+    ///
+    /// @param hwaddr hardware address of the client
+    ///
+    /// @return lease collection
+    virtual Lease6Collection getLease6(const isc::dhcp::HWAddr& hwaddr) const = 0;
+
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
     /// Although in the usual case there will be only one lease, for mobile

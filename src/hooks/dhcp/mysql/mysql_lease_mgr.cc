@@ -301,6 +301,15 @@ tagged_statements = { {
                         "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE address = ? AND lease_type = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_HWADDR,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context, pool_id "
+                            "FROM lease6 "
+                            "WHERE hwaddr = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2564,7 +2573,7 @@ MySqlLeaseMgr::getLease4(const IOAddress& addr) const {
 
 Lease4Collection
 MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
-    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_HWADDR)
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_HWADDR4)
         .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
@@ -2870,6 +2879,47 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
     MySqlLeaseContextPtr ctx = get_context.ctx_;
 
     getLease(ctx, GET_LEASE6_ADDR, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLease6(const HWAddr& hwaddr) const {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_HWADDR6)
+        .arg(hwaddr.toText());
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+
+    // If the data happens to be empty, we have to create a 1 byte dummy
+    // buffer and pass it to the binding.
+    uint8_t single_byte_data = 0;
+
+    // As "buffer" is "char*" - even though the data is being read - we need
+    // to cast away the "const"ness as well as reinterpreting the data as
+    // a "char*". (We could avoid the "const_cast" by copying the data to a
+    // local variable, but as the data is only being read, this introduces
+    // an unnecessary copy).
+    uint8_t* data = !hwaddr.hwaddr_.empty() ? const_cast<uint8_t*>(&hwaddr.hwaddr_[0])
+        : &single_byte_data;
+
+    inbind[0].buffer = reinterpret_cast<char*>(data);
+    inbind[0].buffer_length = hwaddr_length;
+    inbind[0].length = &hwaddr_length;
+
+    // Get the data
+    Lease6Collection result;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_HWADDR, inbind, result);
 
     return (result);
 }

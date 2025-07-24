@@ -324,6 +324,17 @@ PgSqlTaggedStatement tagged_statements[] = {
       "FROM lease6 "
       "WHERE address = cast($1 as inet) AND lease_type = $2" },
 
+    // GET_LEASE6_HWADDR
+    { 1, { OID_BYTEA },
+      "get_lease6_hwaddr",
+      "SELECT host(address), duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context, pool_id "
+      "FROM lease6 "
+      "WHERE hwaddr = $1" },
+
     // GET_LEASE6_DUID_IAID
     { 3, { OID_BYTEA, OID_INT8, OID_INT2 },
       "get_lease6_duid_iaid",
@@ -1936,7 +1947,7 @@ PgSqlLeaseMgr::getLease4(const IOAddress& addr) const {
 
 Lease4Collection
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
-    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HWADDR)
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HWADDR4)
         .arg(hwaddr.toText());
 
     // Set up the WHERE clause value
@@ -2172,6 +2183,33 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
 
     getLease(ctx, GET_LEASE6_ADDR, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLease6(const HWAddr& hwaddr) const {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HWADDR6)
+        .arg(hwaddr.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // HWADDR
+    if (!hwaddr.hwaddr_.empty()) {
+        bind_array.add(hwaddr.hwaddr_);
+    } else {
+        bind_array.add("");
+    }
+
+    // Get the data
+    Lease6Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_HWADDR, bind_array, result);
 
     return (result);
 }

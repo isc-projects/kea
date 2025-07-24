@@ -1549,6 +1549,35 @@ TEST_F(MemfileLeaseMgrTest, testLease6MacMultiThread) {
     testLease6MAC();
 }
 
+/// @brief Checks lease6 retrieval through HWAddr
+TEST_F(MemfileLeaseMgrTest, getLease6HWAddr1) {
+    startBackend(V6);
+    testGetLease6HWAddr1();
+}
+
+/// @brief Checks lease6 retrieval through HWAddr
+TEST_F(MemfileLeaseMgrTest, getLease6HWAddr1MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease6HWAddr1();
+}
+
+/// @brief Check GetLease6 methods - access by Hardware Address
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DUID and IAID.
+TEST_F(MemfileLeaseMgrTest, getLease6HWAddr2) {
+    startBackend(V6);
+    testGetLease6HWAddr2();
+}
+
+/// @brief Check GetLease6 methods - access by Hardware Address
+TEST_F(MemfileLeaseMgrTest, getLease6HWAddr2MultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLease6HWAddr2();
+}
+
 /// @brief Check that memfile reports version correctly.
 TEST_F(MemfileLeaseMgrTest, versionCheck) {
     // Check that V4 backend reports versions correctly.

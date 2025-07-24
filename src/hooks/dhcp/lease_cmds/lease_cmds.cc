@@ -194,7 +194,7 @@ public:
     int
     leaseGetPageHandler(hooks::CalloutHandle& handle);
 
-    /// @brief lease4-get-by-hw-address command handler
+    /// @brief lease4-get-by-hw-address, lease6-get-by-hw-address command handler
     ///
     /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByHwAddressHandler
     ///
@@ -1576,8 +1576,10 @@ LeaseCmdsImpl::leaseGetPageHandler(CalloutHandle& handle) {
 
 int
 LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
+    bool v4 = true;
     try {
         extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-by-hw-address");
 
         // arguments must always be present
         if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
@@ -1597,16 +1599,28 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
 
         HWAddr hwaddr = HWAddr::fromText(hw_address->stringValue());
 
-        Lease4Collection leases =
-            LeaseMgrFactory::instance().getLease4(hwaddr);
         ElementPtr leases_json = Element::createList();
-        for (auto const& lease : leases) {
-            ElementPtr lease_json = lease->toElement();
-            leases_json->add(lease_json);
+
+        if (v4) {
+            Lease4Collection leases =
+                LeaseMgrFactory::instance().getLease4(hwaddr);
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        } else {
+            Lease6Collection leases =
+                LeaseMgrFactory::instance().getLease6(hwaddr);
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
         }
 
         std::ostringstream s;
-        s << leases_json->size() << " IPv4 lease(s) found.";
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found.";
         ElementPtr args = Element::createMap();
         args->set("leases", leases_json);
         ConstElementPtr response =

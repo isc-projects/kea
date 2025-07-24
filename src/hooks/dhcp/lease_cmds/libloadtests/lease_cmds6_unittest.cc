@@ -64,7 +64,7 @@ public:
     /// @param pool_id expected pool-id (if value is 0 the parameter pool-id should not be present)
     void checkLease6(isc::data::ConstElementPtr l, std::string ip,
                      uint8_t prefixlen, uint32_t subnet_id, std::string duid,
-                     bool hwaddr_required, uint32_t pool_id = 0) {
+                     std::string hwaddr = std::string(), uint32_t pool_id = 0) {
         ASSERT_TRUE(l);
 
         // If the element is a list we need to retrieve the lease that
@@ -96,8 +96,9 @@ public:
         EXPECT_EQ(duid, l->get("duid")->stringValue());
 
         // hwaddr may or may not appear
-        if (hwaddr_required) {
-            EXPECT_TRUE(l->get("hwaddr"));
+        if (!hwaddr.empty()) {
+            ASSERT_TRUE(l->get("hw-address"));
+            EXPECT_EQ(hwaddr, l->get("hw-address")->stringValue());
         }
 
         if (pool_id) {
@@ -279,6 +280,18 @@ public:
 
     /// @brief Verifies that the limit of 0 is rejected.
     void testLease6GetPagedLimitIsZero();
+
+    /// @brief Check that lease6-get-by-hw-address can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLease6GetByHwAddressParams();
+
+    /// @brief Check that lease6-get-by-hw-address works as expected (find no
+    /// lease).
+    void testLease6GetByHwAddressFind0();
+
+    /// @brief Check that lease6-get-by-hw-address works as expected (find two
+    /// leases).
+    void testLease6GetByHwAddressFind2();
 
     /// @brief Check that lease6-get-by-duid can handle a situation when the
     /// query is broken (required parameter is missing).
@@ -1519,7 +1532,7 @@ void Lease6CmdsTest::testLease6GetByAddr() {
     ASSERT_TRUE(lease);
 
     // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
 }
 void Lease6CmdsTest::testLease6GetByAddrPrefix() {
     // Initialize lease manager (true = v6, false = don't add leases)
@@ -1554,7 +1567,7 @@ void Lease6CmdsTest::testLease6GetByAddrPrefix() {
     ASSERT_TRUE(lease);
 
     // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1234:ab::", 56, 66, "77:77:77:77:77:77:77:77", false);
+    checkLease6(lease, "2001:db8:1234:ab::", 56, 66, "77:77:77:77:77:77:77:77");
 }
 
 void Lease6CmdsTest::testLease6GetByDuid() {
@@ -1584,7 +1597,7 @@ void Lease6CmdsTest::testLease6GetByDuid() {
     ASSERT_TRUE(lease);
 
     // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
 }
 
 void Lease6CmdsTest::testLease6GetAll() {
@@ -1611,10 +1624,10 @@ void Lease6CmdsTest::testLease6GetAll() {
     ASSERT_EQ(Element::list, leases->getType());
 
     // Let's check if the response contains desired leases.
-    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
-    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", "", 5);
+    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
+    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56");
 }
 
 void Lease6CmdsTest::testLease6GetAllNoLeases() {
@@ -1671,8 +1684,8 @@ void Lease6CmdsTest::testLease6GetAllBySubnetId() {
     ASSERT_EQ(Element::list, leases->getType());
 
     // Let's check if the response contains desired leases.
-    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", "", 5);
 }
 
 void Lease6CmdsTest::testLease6GetAllBySubnetIdNoLeases() {
@@ -1732,10 +1745,10 @@ void Lease6CmdsTest::testLease6GetAllByMultipleSubnetIds() {
     ASSERT_EQ(Element::list, leases->getType());
 
     // Let's check if the response contains desired leases.
-    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false, 5);
-    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
-    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", "", 5);
+    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
+    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56");
 }
 
 void Lease6CmdsTest::testLease6GetBySubnetIdInvalidArguments() {
@@ -1855,7 +1868,7 @@ void Lease6CmdsTest::testLease6GetPaged() {
                     pool_id = 5;
                 }
                 checkLease6(leases, last_address, 0, from_mgr->subnet_id_,
-                            from_mgr->duid_->toText(), false, pool_id);
+                            from_mgr->duid_->toText(), "", pool_id);
             }
 
         } else {
@@ -1979,6 +1992,91 @@ void Lease6CmdsTest::testLease6GetPagedLimitIsZero() {
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
+void Lease6CmdsTest::testLease6GetByHwAddressParams() {
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'hw-address' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // hw-address must be a string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": 1234\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hw-address' parameter must be a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Simply bad value.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"00::01:00:bc:0d:67\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "two consecutive separators (':') specified in a decoded string";
+    exp_rsp += " '00::01:00:bc:0d:67'";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetByHwAddressFind0() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"01:02:03:04:05:06\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv6 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+void Lease6CmdsTest::testLease6GetByHwAddressFind2() {
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"08:08:08:08:08:08\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(2, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
+    lease = leases->get(1);
+    ASSERT_TRUE(lease);
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
+}
+
 void Lease6CmdsTest::testLease6GetByDuidParams() {
     // No parameters whatsoever.
     string cmd =
@@ -2058,10 +2156,10 @@ void Lease6CmdsTest::testLease6GetByDuidFind2() {
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
     lease = leases->get(1);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
 }
 
 void Lease6CmdsTest::testLease6GetByHostnameParams() {
@@ -2142,10 +2240,10 @@ void Lease6CmdsTest::testLease6GetByHostnameFind2() {
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
     lease = leases->get(2);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
 }
 
 void Lease6CmdsTest::testLease6UpdateMissingParams() {
@@ -4788,6 +4886,34 @@ TEST_F(Lease6CmdsTest, lease6GetPagedLimitIsZeroMultiThreading) {
     MultiThreadingTest mt(true);
     testLease6GetPagedLimitIsZero();
 }
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressParams) {
+    testLease6GetByHwAddressParams();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByHwAddressParams();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressFind0) {
+    testLease6GetByHwAddressFind0();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressFind0MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByHwAddressFind0();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressFind2) {
+    testLease6GetByHwAddressFind2();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByHwAddressFind2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByHwAddressFind2();
+}
+
 
 TEST_F(Lease6CmdsTest, lease6GetByDuidParams) {
     testLease6GetByDuidParams();

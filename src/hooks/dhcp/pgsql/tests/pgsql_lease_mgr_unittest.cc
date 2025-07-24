@@ -873,6 +873,42 @@ TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSourceMultiThreading) {
     testLease6HWTypeAndSource();
 }
 
+/// @brief Check GetLease6 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddr1) {
+    testGetLease6HWAddr1();
+}
+
+/// @brief Check GetLease6 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddr1MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLease6HWAddr1();
+}
+
+/// @brief Check GetLease6 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddr2) {
+    testGetLease6HWAddr2();
+}
+
+/// @brief Check GetLease6 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddr2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLease6HWAddr2();
+}
+
+/// @brief Get lease6 by hardware address (2)
+///
+/// Check that the system can cope with getting a hardware address of
+/// any size.
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddrSize) {
+    testGetLease6HWAddrSize();
+}
+
+/// @brief Get lease6 by hardware address (2)
+TEST_F(PgSqlLeaseMgrTest, getLease6HWAddrSizeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLease6HWAddrSize();
+}
+
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
 ///
 /// This test adds a number of leases to the lease database and marks

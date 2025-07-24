@@ -33,7 +33,8 @@ extern const isc::log::MessageID MYSQL_LB_GET_EXPIRED4 = "MYSQL_LB_GET_EXPIRED4"
 extern const isc::log::MessageID MYSQL_LB_GET_EXPIRED6 = "MYSQL_LB_GET_EXPIRED6";
 extern const isc::log::MessageID MYSQL_LB_GET_HOSTNAME4 = "MYSQL_LB_GET_HOSTNAME4";
 extern const isc::log::MessageID MYSQL_LB_GET_HOSTNAME6 = "MYSQL_LB_GET_HOSTNAME6";
-extern const isc::log::MessageID MYSQL_LB_GET_HWADDR = "MYSQL_LB_GET_HWADDR";
+extern const isc::log::MessageID MYSQL_LB_GET_HWADDR4 = "MYSQL_LB_GET_HWADDR4";
+extern const isc::log::MessageID MYSQL_LB_GET_HWADDR6 = "MYSQL_LB_GET_HWADDR6";
 extern const isc::log::MessageID MYSQL_LB_GET_IAID_DUID = "MYSQL_LB_GET_IAID_DUID";
 extern const isc::log::MessageID MYSQL_LB_GET_IAID_SUBID_DUID = "MYSQL_LB_GET_IAID_SUBID_DUID";
 extern const isc::log::MessageID MYSQL_LB_GET_PAGE4 = "MYSQL_LB_GET_PAGE4";
@@ -93,7 +94,8 @@ const char* values[] = {
     "MYSQL_LB_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
     "MYSQL_LB_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
     "MYSQL_LB_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
-    "MYSQL_LB_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
+    "MYSQL_LB_GET_HWADDR4", "obtaining IPv4 leases for hardware address %1",
+    "MYSQL_LB_GET_HWADDR6", "obtaining IPv6 leases for hardware address %1",
     "MYSQL_LB_GET_IAID_DUID", "obtaining IPv6 leases for IAID %1, DUID %2, lease type %3",
     "MYSQL_LB_GET_IAID_SUBID_DUID", "obtaining IPv6 leases for IAID %1, subnet ID %2, DUID %3, lease type %4",
     "MYSQL_LB_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",

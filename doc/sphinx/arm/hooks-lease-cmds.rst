@@ -71,6 +71,9 @@ This library provides the following commands:
 -  :isccmd:`lease4-get-by-hw-address` - returns all IPv4 leases with the specified
    hardware address.
 
+-  :isccmd:`lease6-get-by-hw-address` - returns all IPv6 leases with the specified
+   hardware address.
+
 -  :isccmd:`lease4-get-by-client-id` - returns all IPv4 leases with the specified
    ``client-id``.
 
@@ -750,6 +753,9 @@ leases were found.
 
 .. isccmd:: lease4-get-by-hw-address
 .. _command-lease4-get-by-hw-address:
+
+.. isccmd:: lease6-get-by-hw-address
+.. _command-lease6-get-by-hw-address:
 
 .. isccmd:: lease4-get-by-client-id
 .. _command-lease4-get-by-client-id:

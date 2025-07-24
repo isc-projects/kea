@@ -338,6 +338,24 @@ public:
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const override;
 
+    /// @brief Returns existing IPv6 leases for specified hardware address.
+    ///
+    /// Although in the usual case there will be only one lease, for mobile
+    /// clients or clients with multiple static/fixed/reserved leases there
+    /// can be more than one. Thus return type is a container, not a single
+    /// pointer.
+    ///
+    /// @param hwaddr hardware address of the client
+    ///
+    /// @return lease collection
+    ///
+    /// @throw isc::dhcp::DataTruncation Data was truncated on retrieval to
+    ///        fit into the space allocated for the result.  This indicates a
+    ///        programming error.
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    ///        failed.
+    virtual Lease6Collection getLease6(const isc::dhcp::HWAddr& hwaddr) const override;
+
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
     /// Although in the usual case there will be only one lease, for mobile
@@ -756,6 +774,7 @@ public:
         GET_LEASE4_REMOTEID_QET,     // Get page of leases by remote ID and query end time.
         GET_LEASE6,                  // Get all IPv6 leases
         GET_LEASE6_ADDR,             // Get lease6 by address and type
+        GET_LEASE6_HWADDR,           // Get lease6 by HW address
         GET_LEASE6_DUID_IAID,        // Get lease6 by DUID and IAID
         GET_LEASE6_DUID_IAID_SUBID,  // Get lease6 by DUID, IAID and subnet ID
         GET_LEASE6_PAGE,             // Get page of leases beginning with an address

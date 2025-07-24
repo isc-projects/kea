@@ -143,10 +143,16 @@ A debug message issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database for a client with the specified
 hostname.
 
-% MYSQL_LB_GET_HWADDR obtaining IPv4 leases for hardware address %1
+% MYSQL_LB_GET_HWADDR4 obtaining IPv4 leases for hardware address %1
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
+hardware address.
+
+% MYSQL_LB_GET_HWADDR6 obtaining IPv6 leases for hardware address %1
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database for a client with the specified
 hardware address.
 
 % MYSQL_LB_GET_IAID_DUID obtaining IPv6 leases for IAID %1, DUID %2, lease type %3

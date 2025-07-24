@@ -360,7 +360,8 @@ public:
     isc::dhcp::Lease6Ptr createLease6(const std::string& ip_address,
                                       const isc::dhcp::SubnetID& subnet_id,
                                       const uint8_t duid_pattern,
-                                      bool declined = false, uint32_t pool_id = 0) {
+                                      bool declined = false, uint32_t pool_id = 0,
+                                      const uint8_t hw_address_pattern = 0) {
         isc::dhcp::Lease6Ptr lease(new isc::dhcp::Lease6());
 
         lease->addr_ = isc::asiolink::IOAddress(ip_address);
@@ -382,6 +383,7 @@ public:
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
         lease->pool_id_ = pool_id;
+        lease->hwaddr_.reset(new isc::dhcp::HWAddr(std::vector<uint8_t>(6, hw_address_pattern), isc::dhcp::HTYPE_ETHER));
 
         return (lease);
     }
@@ -429,10 +431,10 @@ public:
 
         if (insert_lease) {
             if (v6) {
-                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, declined));
-                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined, 5));
-                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, declined));
-                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, declined));
+                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42, declined, 0, 0x08));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56, declined, 5, 0x09));
+                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42, declined, 0, 0x08));
+                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56, declined, 0, 0x09));
                 if (declined) {
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 66, "declined-addresses"),

@@ -46,7 +46,7 @@ TEST_F(LeaseCmdsTest, commands) {
         "lease4-get",               "lease6-get",
         "lease4-get-all",           "lease6-get-all",
         "lease4-get-page",          "lease6-get-page",
-        "lease4-get-by-hw-address",
+        "lease4-get-by-hw-address", "lease6-get-by-hw-address",
         "lease4-get-by-client-id",  "lease6-get-by-duid",
         "lease4-get-by-hostname",   "lease6-get-by-hostname",
         "lease4-del",               "lease6-del",

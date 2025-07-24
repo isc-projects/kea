@@ -553,8 +553,8 @@ Lease6::toText() const {
            << "Pref life:     " << lifetimeToText(preferred_lft_) << "\n"
            << "Valid life:    " << lifetimeToText(valid_lft_) << "\n"
            << "Cltt:          " << cltt_ << "\n"
-           << "DUID:          " << (duid_?duid_->toText():"(none)") << "\n"
-           << "Hardware addr: " << (hwaddr_?hwaddr_->toText(false):"(none)") << "\n"
+           << "DUID:          " << (duid_ ? duid_->toText() : "(none)") << "\n"
+           << "Hardware addr: " << (hwaddr_ ? hwaddr_->toText(false) : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
            << "Pool ID:       " << pool_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";

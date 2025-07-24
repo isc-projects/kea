@@ -262,12 +262,12 @@ public:
     int
     leaseGetPageHandler(hooks::CalloutHandle& handle);
 
-    /// @brief lease4-get-by-hw-address command handler
+    /// @brief lease4-get-by-hw-address, lease6-get-by-hw-address command handler
     ///
-    /// This command attempts to retrieve all IPv4 leases with a particular
+    /// This command attempts to retrieve all IPv4 or IPv6 leases with a particular
     /// hardware address.
     ///
-    /// Example command:
+    /// Example command for IPv4:
     /// {
     ///     "command": "lease4-get-by-hw-address",
     ///     "arguments": {

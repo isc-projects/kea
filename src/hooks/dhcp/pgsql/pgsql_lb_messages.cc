@@ -32,7 +32,8 @@ extern const isc::log::MessageID PGSQL_LB_GET_EXPIRED4 = "PGSQL_LB_GET_EXPIRED4"
 extern const isc::log::MessageID PGSQL_LB_GET_EXPIRED6 = "PGSQL_LB_GET_EXPIRED6";
 extern const isc::log::MessageID PGSQL_LB_GET_HOSTNAME4 = "PGSQL_LB_GET_HOSTNAME4";
 extern const isc::log::MessageID PGSQL_LB_GET_HOSTNAME6 = "PGSQL_LB_GET_HOSTNAME6";
-extern const isc::log::MessageID PGSQL_LB_GET_HWADDR = "PGSQL_LB_GET_HWADDR";
+extern const isc::log::MessageID PGSQL_LB_GET_HWADDR4 = "PGSQL_LB_GET_HWADDR4";
+extern const isc::log::MessageID PGSQL_LB_GET_HWADDR6 = "PGSQL_LB_GET_HWADDR6";
 extern const isc::log::MessageID PGSQL_LB_GET_IAID_DUID = "PGSQL_LB_GET_IAID_DUID";
 extern const isc::log::MessageID PGSQL_LB_GET_IAID_SUBID_DUID = "PGSQL_LB_GET_IAID_SUBID_DUID";
 extern const isc::log::MessageID PGSQL_LB_GET_PAGE4 = "PGSQL_LB_GET_PAGE4";
@@ -89,7 +90,8 @@ const char* values[] = {
     "PGSQL_LB_GET_EXPIRED6", "obtaining maximum %1 of expired IPv6 leases",
     "PGSQL_LB_GET_HOSTNAME4", "obtaining IPv4 leases for hostname %1",
     "PGSQL_LB_GET_HOSTNAME6", "obtaining IPv6 leases for hostname %1",
-    "PGSQL_LB_GET_HWADDR", "obtaining IPv4 leases for hardware address %1",
+    "PGSQL_LB_GET_HWADDR4", "obtaining IPv4 leases for hardware address %1",
+    "PGSQL_LB_GET_HWADDR6", "obtaining IPv6 leases for hardware address %1",
     "PGSQL_LB_GET_IAID_DUID", "obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3",
     "PGSQL_LB_GET_IAID_SUBID_DUID", "obtaining IPv4 leases for IAID %1, subnet ID %2, DUID %3, and lease type %4",
     "PGSQL_LB_GET_PAGE4", "obtaining at most %1 IPv4 leases starting from address %2",
