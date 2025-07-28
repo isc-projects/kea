@@ -335,6 +335,14 @@ TEST_F(MySqlConfigBackendDHCPv6Test, getModifiedOptionDefs6Test) {
     getModifiedOptionDefs6Test();
 }
 
+TEST_F(MySqlConfigBackendDHCPv6Test, globalOption6WithClientClassesTest) {
+    globalOption6WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, getAllOptions6WithClientClassesTest) {
+    getAllOptions6WithClientClassesTest();
+}
+
 TEST_F(MySqlConfigBackendDHCPv6Test, createUpdateDeleteOption6Test) {
     createUpdateDeleteOption6Test();
 }
@@ -405,6 +413,22 @@ TEST_F(MySqlConfigBackendDHCPv6Test, clientClassDependencies6Test) {
 
 TEST_F(MySqlConfigBackendDHCPv6Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, sharedNetworkOption6WithClientClassesTest) {
+    sharedNetworkOption6WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, subnetOption6WithClientClassesTest) {
+    subnetOption6WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, poolOption6WithClientClassesTest) {
+    poolOption6WithClientClassesTest();
+}
+
+TEST_F(MySqlConfigBackendDHCPv6Test, pdPoolOption6WithClientClassesTest) {
+    pdPoolOption6WithClientClassesTest();
 }
 
 /// @brief Test fixture for verifying database connection loss-recovery

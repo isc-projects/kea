@@ -2175,7 +2175,8 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
+            createInputClientClassesBinding(option->client_classes_)
         };
 
         MySqlTransaction transaction(conn_);
@@ -2189,8 +2190,8 @@ public:
 
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
                                     in_bindings) == 0) {
-            // Remove the 3 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 3);
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2231,7 +2232,8 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
+            createInputClientClassesBinding(option->client_classes_)
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;
@@ -2252,8 +2254,8 @@ public:
 
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
                                     in_bindings) == 0) {
-            // Remove the 3 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 3);
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2386,6 +2388,7 @@ public:
         in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(option->option_->getType()));
         in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
+        in_bindings.push_back(createInputClientClassesBinding(option->client_classes_));
 
         MySqlTransaction transaction(conn_);
 
@@ -2406,8 +2409,8 @@ public:
                       MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID :
                       MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID);
         if (conn_.updateDeleteQuery(index, in_bindings) == 0) {
-            // Remove the 3 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 3);
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2449,7 +2452,8 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint16_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
+            createInputClientClassesBinding(option->client_classes_)
         };
 
         boost::scoped_ptr<MySqlTransaction> transaction;
@@ -2471,8 +2475,8 @@ public:
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     UPDATE_OPTION6_SHARED_NETWORK,
                                     in_bindings) == 0) {
-            // Remove the 3 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 3);
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
 
@@ -2512,7 +2516,8 @@ public:
             MySqlBinding::createNull(),
             MySqlBinding::createString(client_class->getName()),
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
-            MySqlBinding::condCreateString(option->space_name_)
+            MySqlBinding::condCreateString(option->space_name_),
+            createInputClientClassesBinding(option->client_classes_)
         };
 
         // Create scoped audit revision. As long as this instance exists
@@ -2526,8 +2531,8 @@ public:
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv6Impl::
                                     UPDATE_OPTION6_CLIENT_CLASS,
                                     in_bindings) == 0) {
-            // Remove the 3 bindings used only in case of update.
-            in_bindings.resize(in_bindings.size() - 3);
+            // Remove the 4 bindings used only in case of update.
+            in_bindings.resize(in_bindings.size() - 4);
             insertOption6(server_selector, in_bindings);
         }
     }
@@ -2612,13 +2617,16 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption6(const ServerSelector& server_selector,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(code),
-            MySqlBinding::createString(space)
+            MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes)
         };
 
         // Run DELETE.
@@ -2636,15 +2644,18 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption6(const ServerSelector& server_selector,
                            const SubnetID& subnet_id,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint16_t>(code),
-            MySqlBinding::createString(space)
+            MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes)
         };
 
         // Run DELETE.
@@ -2662,15 +2673,18 @@ public:
     /// @param pool_end_address Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption6(const db::ServerSelector& server_selector,
                            const IOAddress& pool_start_address,
                            const IOAddress& pool_end_address,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(code),
             MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes),
             MySqlBinding::createString(pool_start_address.toText()),
             MySqlBinding::createString(pool_end_address.toText())
         };
@@ -2690,15 +2704,18 @@ public:
     /// @param pd_pool_prefix_length Length of the pd pool prefix.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption6(const db::ServerSelector& server_selector,
                            const asiolink::IOAddress& pd_pool_prefix,
                            const uint8_t pd_pool_prefix_length,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(code),
             MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes),
             MySqlBinding::createString(pd_pool_prefix.toText()),
             MySqlBinding::createInteger<uint8_t>(pd_pool_prefix_length)
         };
@@ -2718,15 +2735,18 @@ public:
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
     /// @return Number of deleted options.
     uint64_t deleteOption6(const db::ServerSelector& server_selector,
                            const std::string& shared_network_name,
                            const uint16_t code,
-                           const std::string& space) {
+                           const std::string& space,
+                           const ClientClassesPtr client_classes) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint16_t>(code),
-            MySqlBinding::createString(space)
+            MySqlBinding::createString(space),
+            createClientClassesForWhereClause(client_classes)
         };
 
         // Run DELETE.
@@ -3548,9 +3568,10 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_OPTION_DEF(dhcp6, AND d.modification_ts >= ?)
     },
 
-    // Retrieves global option by code and space.
+    // Retrieves global option by code, space and client-classes.
     { MySqlConfigBackendDHCPv6Impl::GET_OPTION6_CODE_SPACE,
-      MYSQL_GET_OPTION6(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION6(AND o.scope_id = 0 AND o.code = ? AND o.space = ?
+                        AND o.client_classes LIKE ?)
     },
 
     // Retrieves all global options.
@@ -3905,32 +3926,38 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing global option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6,
-      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ?
+                                    AND o.client_classes = ?)
     },
 
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SUBNET_ID,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?
+                                  AND o.client_classes = ?)
     },
 
     // Update existing pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_POOL_ID,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?
+                                  AND o.client_classes = ?)
     },
 
     // Update existing pd pool level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_PD_POOL_ID,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = ? AND o.code = ? AND o.space = ?
+                                  AND o.client_classes = ?)
     },
 
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SHARED_NETWORK,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ?
+                                  AND o.space = ? AND o.client_classes = ?)
     },
 
     // Update existing client class level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_CLIENT_CLASS,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ?
+                                  AND o.space = ? AND o.client_classes = ?)
     },
 
     // Update existing client class with specifying its position.
@@ -4060,7 +4087,8 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete single global option.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6,
-      MYSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_WITH_TAG(dhcp6, AND o.scope_id = 0 AND o.code = ? AND o.space = ?
+                                   AND o.client_classes LIKE ?)
     },
 
     // Delete all global options which are unassigned to any servers.
@@ -4071,23 +4099,27 @@ TaggedStatementArray tagged_statements = { {
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SUBNET_ID,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?)
+                          WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?
+                                AND o.client_classes LIKE ?)
     },
 
     // Delete single option from a pool.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_POOL_RANGE,
-      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp6, o.scope_id = 5 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp6, o.scope_id = 5 AND o.code = ? AND o.space = ?
+                                     AND o.client_classes LIKE ?)
     },
 
     // Delete single option from a pd pool.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_PD_POOL,
-      MYSQL_DELETE_OPTION_PD_POOL(o.scope_id = 6 AND o.code = ? AND o.space = ?)
+      MYSQL_DELETE_OPTION_PD_POOL(o.scope_id = 6 AND o.code = ? AND o.space = ?
+                                  AND o.client_classes LIKE ?)
     },
 
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
+                                AND o.client_classes LIKE ?)
     },
 
     // Delete options belonging to a subnet.
@@ -4296,11 +4328,12 @@ MySqlConfigBackendDHCPv6::getModifiedOptionDefs6(const ServerSelector& server_se
 OptionDescriptorPtr
 MySqlConfigBackendDHCPv6::getOption6(const ServerSelector& server_selector,
                                      const uint16_t code,
-                                     const std::string& space) const {
+                                     const std::string& space,
+                                     const ClientClassesPtr client_classes) const {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_GET_OPTION6)
         .arg(code).arg(space);
     return (impl_->getOption(MySqlConfigBackendDHCPv6Impl::GET_OPTION6_CODE_SPACE,
-                             Option::V6, server_selector, code, space));
+                             Option::V6, server_selector, code, space, client_classes));
 }
 
 OptionContainer
@@ -4658,10 +4691,11 @@ MySqlConfigBackendDHCPv6::deleteAllOptionDefs6(const ServerSelector& server_sele
 uint64_t
 MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& server_selector,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        const ClientClassesPtr client_classes) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION6)
         .arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(server_selector, code, space);
+    uint64_t result = impl_->deleteOption6(server_selector, code, space, client_classes);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION6_RESULT)
         .arg(result);
     return (result);
@@ -4671,14 +4705,15 @@ uint64_t
 MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6)
         .arg(shared_network_name).arg(code).arg(space);
     uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), shared_network_name,
-                                           code, space);
+                                           code, space, client_classes);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_SHARED_NETWORK_OPTION6_RESULT)
         .arg(result);
     return (result);
@@ -4688,13 +4723,15 @@ uint64_t
 MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector */,
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6)
         .arg(subnet_id).arg(code).arg(space);
-    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), subnet_id, code, space);
+    uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), subnet_id, code, space,
+                                           client_classes);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_SUBNET_ID_OPTION6_RESULT)
         .arg(result);
     return (result);
@@ -4705,14 +4742,15 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector
                                         const asiolink::IOAddress& pool_start_address,
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        const ClientClassesPtr client_classes) {
     /// @todo In the future we might use the server selector to make sure that the
     /// option is only deleted if the pool belongs to a given server. For now, we
     /// just delete it when there is a match with the parent object.
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6)
         .arg(pool_start_address.toText()).arg(pool_end_address.toText()).arg(code).arg(space);
     uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pool_start_address,
-                                           pool_end_address, code, space);
+                                           pool_end_address, code, space, client_classes);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_OPTION6_RESULT)
         .arg(result);
     return (result);
@@ -4723,11 +4761,12 @@ MySqlConfigBackendDHCPv6::deleteOption6(const ServerSelector& /* server_selector
                                         const asiolink::IOAddress& pd_pool_prefix,
                                         const uint8_t pd_pool_prefix_length,
                                         const uint16_t code,
-                                        const std::string& space) {
+                                        const std::string& space,
+                                        const ClientClassesPtr client_classes) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6)
         .arg(pd_pool_prefix.toText()).arg(pd_pool_prefix_length).arg(code).arg(space);
     uint64_t result = impl_->deleteOption6(ServerSelector::ANY(), pd_pool_prefix,
-                                           pd_pool_prefix_length, code, space);
+                                           pd_pool_prefix_length, code, space, client_classes);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_BY_POOL_PREFIX_OPTION6_RESULT)
         .arg(result);
     return (result);

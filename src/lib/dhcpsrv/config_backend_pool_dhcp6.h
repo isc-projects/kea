@@ -165,13 +165,16 @@ public:
     /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
     getOption6(const db::BackendSelector& backend_selector,
                const db::ServerSelector& server_selector,
                const uint16_t code,
-               const std::string& space) const;
+               const std::string& space,
+               const ClientClassesPtr client_classes = ClientClassesPtr()) const;
 
     /// @brief Retrieves all global options.
     ///
@@ -513,12 +516,15 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption6(const db::BackendSelector& backend_selector,
                   const db::ServerSelector& server_selector,
                   const uint16_t code,
-                  const std::string& space);
+                  const std::string& space,
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes shared network level option.
     ///
@@ -528,12 +534,16 @@ public:
     /// belongs to.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
+    /// @return Number of deleted options.
     virtual uint64_t
     deleteOption6(const db::BackendSelector& backend_selector,
                   const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
-                  const std::string& space);
+                  const std::string& space,
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes subnet level option.
     ///
@@ -543,12 +553,15 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption6(const db::BackendSelector& backend_selector,
                   const db::ServerSelector& server_selector,
                   const SubnetID& subnet_id,
-                  const uint16_t code, const std::string& space);
+                  const uint16_t code, const std::string& space,
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes pool level option.
     ///
@@ -567,7 +580,8 @@ public:
                   const asiolink::IOAddress& pool_start_address,
                   const asiolink::IOAddress& pool_end_address,
                   const uint16_t code,
-                  const std::string& space);
+                  const std::string& space,
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes prefix delegation pool level option.
     ///
@@ -579,6 +593,8 @@ public:
     /// pool to which the deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption6(const db::BackendSelector& backend_selector,
@@ -586,7 +602,8 @@ public:
                   const asiolink::IOAddress& pd_pool_prefix,
                   const uint8_t pd_pool_prefix_length,
                   const uint16_t code,
-                  const std::string& space);
+                  const std::string& space,
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes global parameter.
     ///

@@ -580,11 +580,8 @@ MySqlConfigBackendImpl::getOption(const int index,
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
     }
     in_bindings.push_back(MySqlBinding::createString(space));
+    in_bindings.push_back(createClientClassesForWhereClause(client_classes));
 
-    /// @todo TKM Remove the if when v6 is ready.
-    if (universe == Option::V4) {
-        in_bindings.push_back(createClientClassesForWhereClause(client_classes));
-    }
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));

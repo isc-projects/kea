@@ -349,6 +349,15 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedOptions6Test) {
     getModifiedOptions6Test();
 }
 
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, globalOption6WithClientClassesTest) {
+    globalOption6WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, getAllOptions6WithClientClassesTest) {
+    getAllOptions6WithClientClassesTest();
+}
+
 TEST_F(PgSqlConfigBackendDHCPv6Test, createUpdateDeleteSubnetOption6Test) {
     createUpdateDeleteSubnetOption6Test();
 }
@@ -403,6 +412,22 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, clientClassDependencies6Test) {
 
 TEST_F(PgSqlConfigBackendDHCPv6Test, multipleAuditEntriesTest) {
     multipleAuditEntriesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, sharedNetworkOption6WithClientClassesTest) {
+    sharedNetworkOption6WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, subnetOption6WithClientClassesTest) {
+    subnetOption6WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, poolOption6WithClientClassesTest) {
+    poolOption6WithClientClassesTest();
+}
+
+TEST_F(PgSqlConfigBackendDHCPv6Test, pdPoolOption6WithClientClassesTest) {
+    pdPoolOption6WithClientClassesTest();
 }
 
 /// @brief Test fixture for verifying database connection loss-recovery

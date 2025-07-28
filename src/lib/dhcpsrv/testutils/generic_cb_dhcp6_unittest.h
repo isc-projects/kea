@@ -315,6 +315,22 @@ public:
     /// @brief This test verifies that modified global options can be retrieved.
     void getModifiedOptions6Test();
 
+    /// @brief Creates a list of string options with and without client_class tags.
+    /// It creates 2 D6O_NEW_TZDB_TIMEZONE options and 2 D6O_NEW_POSIX_TIMEZONE options.
+    std::list<OptionDescriptorPtr> makeClassTaggedOptions();
+
+    /// @brief Updates the value of each string option in the list.
+    void updateClassTaggedOptions(std::list<OptionDescriptorPtr>& options);
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to global scope and be distinguished from one another
+    /// by their client-classes content.
+    void globalOption6WithClientClassesTest();
+
+    /// @brief This test verifies that global options with varying client-classes
+    /// and varying server tags are handled properly.
+    void getAllOptions6WithClientClassesTest();
+
     /// @brief This test verifies that subnet level option can be added, updated and
     /// deleted.
     void createUpdateDeleteSubnetOption6Test();
@@ -372,6 +388,26 @@ public:
     /// (either it is a common even and this should catch it, or it is a rare
     /// event and it does not matter).
     void multipleAuditEntriesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a shared-network and be distinguished from one another
+    /// by their client-classes content.
+    void sharedNetworkOption6WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a subnet and be distinguished from one another
+    /// by their client-classes content.
+    void subnetOption6WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a pool and be distinguished from one another
+    /// by their client-classes content.
+    void poolOption6WithClientClassesTest();
+
+    /// @brief This test verifies that multiple instances of an option can
+    /// be added to a pd pool and be distinguished from one another
+    /// by their client-classes content.
+    void pdPoolOption6WithClientClassesTest();
 
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet6Ptr> test_subnets_;

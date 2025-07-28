@@ -370,7 +370,8 @@ TestConfigBackendDHCPv6::getModifiedOptionDefs6(const db::ServerSelector& server
 OptionDescriptorPtr
 TestConfigBackendDHCPv6::getOption6(const db::ServerSelector& server_selector,
                                     const uint16_t code,
-                                    const std::string& space) const {
+                                    const std::string& space,
+                                    const ClientClassesPtr client_classes) const {
     auto const& tags = server_selector.getTags();
     auto candidate = OptionDescriptorPtr();
     auto const& index = options_.get<1>();
@@ -378,11 +379,16 @@ TestConfigBackendDHCPv6::getOption6(const db::ServerSelector& server_selector,
 
     BOOST_FOREACH(auto const& option_it, option_it_pair) {
         if (option_it.space_name_ == space) {
+            if (client_classes && (option_it.client_classes_ != *client_classes)) {
+                continue;
+            }
+
             for (auto const& tag : tags) {
                 if (option_it.hasServerTag(ServerTag(tag))) {
                     return (OptionDescriptorPtr(new OptionDescriptor(option_it)));
                 }
             }
+
             if (option_it.hasAllServerTag()) {
                 candidate = OptionDescriptorPtr(new OptionDescriptor(option_it));
             }
@@ -741,6 +747,7 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
          option_it != option_it_pair.second;
          ++option_it) {
         if ((option_it->space_name_ == option->space_name_) &&
+            (option_it->client_classes_ == option->client_classes_) &&
             (option_it->hasServerTag(ServerTag(tag)))) {
             index.replace(option_it, *option);
             return;
@@ -787,7 +794,8 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                   << " not present in a selected server");
     }
 
-    shared_network->getCfgOption()->del(option->space_name_, option->option_->getType());
+    shared_network->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                        option->client_classes_);
     shared_network->getCfgOption()->add(*option, option->space_name_);
 }
 
@@ -828,7 +836,8 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
                   << " not present in a selected server");
     }
 
-    subnet->getCfgOption()->del(option->space_name_, option->option_->getType());
+    subnet->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                option->client_classes_);
     subnet->getCfgOption()->add(*option, option->space_name_);
 }
 
@@ -868,7 +877,8 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
         }
 
         // Update the option.
-        pool->getCfgOption()->del(option->space_name_, option->option_->getType());
+        pool->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                  option->client_classes_);
         pool->getCfgOption()->add(*option, option->space_name_);
 
         return;
@@ -922,7 +932,8 @@ TestConfigBackendDHCPv6::createUpdateOption6(const db::ServerSelector& server_se
         }
 
         // Update the option.
-        pdpool->getCfgOption()->del(option->space_name_, option->option_->getType());
+        pdpool->getCfgOption()->del(option->space_name_, option->option_->getType(),
+                                    option->client_classes_);
         pdpool->getCfgOption()->add(*option, option->space_name_);
 
         return;
@@ -1228,13 +1239,15 @@ TestConfigBackendDHCPv6::deleteAllOptionDefs6(const db::ServerSelector& server_s
 uint64_t
 TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto const& tag = getServerTag(server_selector);
     uint64_t erased = 0;
     for (auto option_it = options_.begin(); option_it != options_.end(); ) {
         if ((option_it->option_->getType() == code) &&
             (option_it->space_name_ == space) &&
-            (option_it->hasServerTag(ServerTag(tag)))) {
+            (option_it->hasServerTag(ServerTag(tag))) &&
+            (!client_classes || (option_it->client_classes_ == *client_classes))) {
             option_it = options_.erase(option_it);
             ++erased;
         } else {
@@ -1248,7 +1261,8 @@ uint64_t
 TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       ClientClassesPtr client_classes) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network_name);
 
@@ -1276,10 +1290,15 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
             }
         }
     }
+
     if (!found) {
         isc_throw(BadValue, "attempted to delete option in a "
                   "shared network " << shared_network_name
                   << " not present in a selected server");
+    }
+
+    if (client_classes) {
+        return (shared_network->getCfgOption()->del(space, code, *client_classes));
     }
 
     return (shared_network->getCfgOption()->del(space, code));
@@ -1289,7 +1308,8 @@ uint64_t
 TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
 
@@ -1317,10 +1337,15 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
             }
         }
     }
+
     if (!found) {
         isc_throw(BadValue, "attempted to delete option in a "
                   "subnet ID " << subnet_id
                   << " not present in a selected server");
+    }
+
+    if (client_classes) {
+        return (subnet->getCfgOption()->del(space, code, *client_classes));
     }
 
     return (subnet->getCfgOption()->del(space, code));
@@ -1331,7 +1356,8 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
                                        const asiolink::IOAddress& pool_start_address,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes) {
     auto not_in_selected_servers = false;
     for (auto const& subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.
@@ -1363,6 +1389,10 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
             }
         }
 
+        if (client_classes) {
+            return (pool->getCfgOption()->del(space, code, *client_classes));
+        }
+
         return (pool->getCfgOption()->del(space, code));
     }
 
@@ -1381,7 +1411,8 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
                                        const asiolink::IOAddress& pd_pool_prefix,
                                        const uint8_t pd_pool_prefix_length,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes) {
     auto not_in_selected_servers = false;
     for (auto const& subnet : subnets_) {
         // Get the pd pool: if it is not here we can directly go to the next subnet.
@@ -1410,6 +1441,10 @@ TestConfigBackendDHCPv6::deleteOption6(const db::ServerSelector& server_selector
                 not_in_selected_servers = true;
                 continue;
             }
+        }
+
+        if (client_classes) {
+            return (pdpool->getCfgOption()->del(space, code, *client_classes));
         }
 
         return (pdpool->getCfgOption()->del(space, code));

@@ -561,10 +561,7 @@ PgSqlConfigBackendImpl::getOption(const int index,
     in_bindings.add(tag);
     in_bindings.add(code);
     in_bindings.add(space);
-    /// @todo TKM remove if when v6 is ready.
-    if (universe == Option::V4) {
-        addClientClassesForWhereClause(in_bindings, client_classes);
-    }
+    addClientClassesForWhereClause(in_bindings, client_classes);
 
     getOptions(index, in_bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :

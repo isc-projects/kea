@@ -37,7 +37,7 @@
         "        \"options\": [",
         "            {",
         "                \"code\": <option code>,",
-        "                \"space\": <option space>",
+        "                \"space\": <option space>,",
         "                \"client-classes\": [ <one or more comma-separated strings> ]",
         "            }",
         "        ]",

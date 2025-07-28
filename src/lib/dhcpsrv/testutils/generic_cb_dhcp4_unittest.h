@@ -316,7 +316,7 @@ public:
     void getModifiedOptions4Test();
 
     /// @brief Creates a list of string options with and without client_class tags.
-    /// It creates 3 DHO_TCODE options and 2 DHO_PCODE options.
+    /// It creates 2 DHO_TCODE options and 3 DHO_PCODE options.
     std::list<OptionDescriptorPtr> makeClassTaggedOptions();
 
     /// @brief Updates the value of each string option in the list.

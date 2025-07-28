@@ -1185,7 +1185,7 @@ uint64_t
 TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space,
-                                       ClientClassesPtr client_classes) {
+                                       const ClientClassesPtr client_classes) {
     auto tag = getServerTag(server_selector);
     uint64_t erased = 0;
     for (auto option_it = options_.begin(); option_it != options_.end(); ) {
@@ -1207,7 +1207,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                                        const std::string& shared_network_name,
                                        const uint16_t code,
                                        const std::string& space,
-                                       ClientClassesPtr client_classes) {
+                                       const ClientClassesPtr client_classes) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
     auto network_it = index.find(shared_network_name);
 
@@ -1254,7 +1254,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
                                        const std::string& space,
-                                       ClientClassesPtr client_classes) {
+                                       const ClientClassesPtr client_classes) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
     auto subnet_it = index.find(subnet_id);
 
@@ -1301,7 +1301,7 @@ TestConfigBackendDHCPv4::deleteOption4(const db::ServerSelector& server_selector
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
                                        const std::string& space,
-                                       ClientClassesPtr client_classes) {
+                                       const ClientClassesPtr client_classes) {
     auto not_in_selected_servers = false;
     for (auto const& subnet : subnets_) {
         // Get the pool: if it is not here we can directly go to the next subnet.

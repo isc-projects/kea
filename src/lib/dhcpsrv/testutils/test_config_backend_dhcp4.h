@@ -446,7 +446,7 @@ public:
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes shared network level option.
     ///
@@ -462,7 +462,7 @@ public:
                   const std::string& shared_network_name,
                   const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes subnet level option.
     ///
@@ -477,7 +477,7 @@ public:
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const SubnetID& subnet_id,
                   const uint16_t code, const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes pool level option.
     ///
@@ -497,7 +497,7 @@ public:
                   const asiolink::IOAddress& pool_end_address,
                   const uint16_t code,
                   const std::string& space,
-                  ClientClassesPtr client_classes = ClientClassesPtr());
+                  const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes global parameter.
     ///

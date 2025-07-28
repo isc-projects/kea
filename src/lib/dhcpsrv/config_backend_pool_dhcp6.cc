@@ -138,11 +138,13 @@ OptionDescriptorPtr
 ConfigBackendPoolDHCPv6::getOption6(const BackendSelector& backend_selector,
                                     const ServerSelector& server_selector,
                                     const uint16_t code,
-                                    const std::string& space) const {
+                                    const std::string& space,
+                                    const ClientClassesPtr client_classes
+                                    /* = ClientClassesPtr() */) const {
     OptionDescriptorPtr option;
     getPropertyPtrConst<OptionDescriptorPtr, uint16_t, const std::string&>
         (&ConfigBackendDHCPv6::getOption6, backend_selector, server_selector,
-         option, code, space);
+         option, code, space, client_classes);
     return (option);
 }
 
@@ -443,10 +445,13 @@ uint64_t
 ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const uint16_t code,
-                                       const std::string& space) {
-    return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&>
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes
+                                             /* = ClientClassesPtr() */) {
+    return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&,
+                                       const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
-             code, space));
+             code, space, client_classes));
 }
 
 uint64_t
@@ -454,11 +459,14 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes
+                                             /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const std::string&, uint16_t,
-                                       const std::string&>
+                                       const std::string&,
+                                       const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
-             shared_network_name, code, space));
+             shared_network_name, code, space, client_classes));
 }
 
 uint64_t
@@ -466,10 +474,14 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
-                                       const std::string& space) {
-    return (createUpdateDeleteProperty<uint64_t, const SubnetID&, uint16_t, const std::string&>
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes
+                                             /* = ClientClassesPtr() */) {
+    return (createUpdateDeleteProperty<uint64_t, const SubnetID&, uint16_t,
+                                       const std::string&,
+                                       const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
-             subnet_id, code, space));
+             subnet_id, code, space, client_classes));
 }
 
 uint64_t
@@ -478,11 +490,14 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const asiolink::IOAddress& pool_start_address,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes
+                                             /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const IOAddress&, const IOAddress&,
-                                       uint16_t, const std::string&>
+                                       uint16_t, const std::string&,
+                                       const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
-             pool_start_address, pool_end_address, code, space));
+             pool_start_address, pool_end_address, code, space, client_classes));
 }
 
 uint64_t
@@ -491,11 +506,14 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const asiolink::IOAddress& pd_pool_prefix,
                                        const uint8_t pd_pool_prefix_length,
                                        const uint16_t code,
-                                       const std::string& space) {
+                                       const std::string& space,
+                                       const ClientClassesPtr client_classes
+                                             /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const IOAddress&, uint8_t,
-                                       uint16_t, const std::string&>
+                                       uint16_t, const std::string&,
+                                       const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
-             pd_pool_prefix, pd_pool_prefix_length, code, space));
+             pd_pool_prefix, pd_pool_prefix_length, code, space, client_classes));
 }
 
 uint64_t

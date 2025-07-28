@@ -74,8 +74,12 @@ GenericConfigBackendDHCPv6Test::SetUp() {
 void
 GenericConfigBackendDHCPv6Test::TearDown() {
     cbptr_.reset();
-    // If data wipe enabled, delete transient data otherwise destroy the schema.
-    destroySchema();
+    if (getenv("KEA_UNIT_TEST_KEEP_SCHEMA")) {
+        std::cout << "KEA_UNIT_TEST_KEEP_SCHEMA set, avoid schema destruction" << std::endl;
+    } else {
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
+        destroySchema();
+    }
 }
 
 db::AuditEntryCollection
@@ -3659,6 +3663,212 @@ GenericConfigBackendDHCPv6Test::getModifiedOptions6Test() {
     }
 }
 
+std::list<OptionDescriptorPtr>
+GenericConfigBackendDHCPv6Test::makeClassTaggedOptions() {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        std::string value_;
+        std::string cclass_;
+    };
+
+    // List of options to create.
+    // Using timezone options as they are handy string options.
+    std::list<OptData> opts_to_make =  {
+        { D6O_NEW_TZDB_TIMEZONE,   "T100", "cc-one"   },
+        { D6O_NEW_POSIX_TIMEZONE,  "P100", "cc-one"   },
+        { D6O_NEW_POSIX_TIMEZONE,  "P300", ""         },
+        { D6O_NEW_TZDB_TIMEZONE,   "T200", ""         },
+        { D6O_NEW_POSIX_TIMEZONE,  "P200", "cc-two"   }
+    };
+
+    std::list<OptionDescriptorPtr> tagged_options;
+    for (auto const& opt_to_make : opts_to_make) {
+        OptionDescriptor desc = createOption<OptionString>(Option::V6, opt_to_make.code_,
+                                                           true, false, false, opt_to_make.value_);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        tagged_options.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+    }
+
+    return (tagged_options);
+}
+
+void
+GenericConfigBackendDHCPv6Test::updateClassTaggedOptions(
+    std::list<OptionDescriptorPtr>& options) {
+    for (auto& desc : options) {
+        OptionStringPtr opt = boost::dynamic_pointer_cast<OptionString>(desc->option_);
+        ASSERT_TRUE(opt);
+        std::string new_value(opt->getValue() + std::string(".") + opt->getValue());
+        opt->setValue(new_value);
+    }
+}
+
+// Macro the make SCOPED_TRACE around equivalance function more compact and helpful.
+#define SCOPED_OPT_COMPARE(exp_opt,test_opt)\
+{\
+    std::stringstream oss;\
+    oss << "Options not equal:\n"\
+        << "  exp_opt: " << exp_opt.option_->toText() << "\n"\
+        << " test_opt: " << (test_opt.option_ ? test_opt.option_->toText() : "<null>") << "\n";\
+    SCOPED_TRACE(oss.str());\
+    testOptionsEquivalent(exp_opt,test_opt);\
+}
+
+// Verify that one can add multiple global instances of the same option code
+// and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv6Test::globalOption6WithClientClassesTest() {
+    // Add the options to global scope.
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        // Add option to the config back end.
+        cbptr_->createUpdateOption6(ServerSelector::ALL(), ref_option);
+    }
+
+    // Make sure that we can find each option.
+    OptionDescriptorPtr found_option;
+    for (auto const& ref_option : ref_options) {
+        // Find the option by code and client_classes.
+        found_option = cbptr_->getOption6(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP6_OPTION_SPACE,
+                                          ref_option->copyClientClasses());
+        ASSERT_TRUE(found_option) << "ref_option" << ref_option->option_->toText()
+                                  << ", cc: " << ref_option->client_classes_.toText();
+        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
+    }
+
+    // Update the option values.
+    updateClassTaggedOptions(ref_options);
+
+    // Update each option in the backend.
+    for (auto const& ref_option : ref_options) {
+        // Update option in the config back end.
+        cbptr_->createUpdateOption6(ServerSelector::ALL(), ref_option);
+
+        // Fetch and verify the updated option.
+        found_option = cbptr_->getOption6(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP6_OPTION_SPACE,
+                                          ref_option->copyClientClasses());
+        ASSERT_TRUE(found_option);
+        SCOPED_OPT_COMPARE((*ref_option), (*found_option));
+    }
+
+    // Delete each option from the backend.
+    for (auto const& ref_option : ref_options) {
+        ClientClassesPtr cclasses = ref_option->copyClientClasses();
+
+        // Delete the option by code and client_classes.
+        ASSERT_EQ(1, cbptr_->deleteOption6(ServerSelector::ALL(),
+                                           ref_option->option_->getType(),
+                                           DHCP6_OPTION_SPACE,
+                                           cclasses));
+
+        // Finding the option by code and client_classes should fail.
+        found_option = cbptr_->getOption6(ServerSelector::ALL(),
+                                          ref_option->option_->getType(),
+                                          DHCP6_OPTION_SPACE,
+                                          cclasses);
+        ASSERT_FALSE(found_option);
+    }
+}
+
+void
+GenericConfigBackendDHCPv6Test::getAllOptions6WithClientClassesTest() {
+    // Describes an option to create.
+    struct OptData {
+        uint16_t code_;
+        uint32_t value_;
+        std::string cclass_;
+        ServerSelector server_;
+    };
+
+    auto server1 = ServerSelector::ONE("server1");
+    auto server2 = ServerSelector::ONE("server2");
+    auto all = ServerSelector::ALL();
+    // List of options to create.
+    std::list<OptData> opts_to_make = {
+        { 231,  1, "cc-1", server1 },
+        { 231,  2, "cc-2", server1 },
+        { 232,  3, "cc-3", server1 },
+        { 232,  4, "cc-3", server2 },
+        { 233,  5, "cc-4", server1 },
+        { 233,  6, "cc-4", all },
+        { 234,  7, "cc-5", all }
+    };
+
+    // Create two servers.
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[1]));
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateServer6(test_servers_[2]));
+
+    // Add all of the global options.
+    std::vector<OptionDescriptorPtr> ref_options;
+    for (auto const& opt_to_make : opts_to_make) {
+        OptionDescriptor desc = createOption<OptionInt<uint32_t>>(Option::V6, opt_to_make.code_,
+                                                                  true, false, false, opt_to_make.value_);
+        desc.space_name_ = DHCP6_OPTION_SPACE;
+        if (!opt_to_make.cclass_.empty()) {
+            desc.addClientClass(opt_to_make.cclass_);
+        }
+
+        ref_options.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+        ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(opt_to_make.server_, ref_options.back()));
+    }
+
+    // Try to fetch the collection of global options for the server1.
+    // Build list of options we expect to get back.
+    std::vector<OptionDescriptorPtr> exp_options;
+    exp_options.push_back(ref_options[0]);
+    exp_options.push_back(ref_options[1]);
+    exp_options.push_back(ref_options[2]);
+    exp_options.push_back(ref_options[4]);
+    exp_options.push_back(ref_options[6]);
+
+    OptionContainer returned_options;
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions6(server1));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    auto exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+
+    // Try to fetch the collection of global options for the server2.
+    // Build list of options we expect to get back.
+    exp_options.clear();
+    exp_options.push_back(ref_options[3]);
+    exp_options.push_back(ref_options[5]);
+    exp_options.push_back(ref_options[6]);
+
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions6(server2));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+
+    // Try to fetch the collection of global options for the server1.
+    // Build list of options we expect to get back.
+    exp_options.clear();
+    exp_options.push_back(ref_options[5]);
+    exp_options.push_back(ref_options[6]);
+
+    ASSERT_NO_THROW_LOG(returned_options = cbptr_->getAllOptions6(all));
+    ASSERT_EQ(returned_options.size(), exp_options.size());
+    exp_option = exp_options.begin();
+    for (auto returned_option : returned_options) {
+        testOptionsEquivalent(*(*exp_option), returned_option);
+        ++exp_option;
+    }
+}
+
 void
 GenericConfigBackendDHCPv6Test::createUpdateDeleteSubnetOption6Test() {
     // Insert new subnet.
@@ -3744,7 +3954,8 @@ GenericConfigBackendDHCPv6Test::createUpdateDeleteSubnetOption6Test() {
     // It should succeed for any server.
     EXPECT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(), subnet->getID(),
                                        opt_posix_timezone->option_->getType(),
-                                       opt_posix_timezone->space_name_));
+                                       opt_posix_timezone->space_name_,
+                                       opt_posix_timezone->copyClientClasses()));
 
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
                                          subnet->getID());
@@ -4873,4 +5084,302 @@ GenericConfigBackendDHCPv6Test::multipleAuditEntriesTest() {
         EXPECT_EQ(partial_size + 1, distance);
         distance--;
     }
+}
+
+// Verify that one can add multiple instances of the same option code
+// to a shared-network and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv6Test::sharedNetworkOption6WithClientClassesTest() {
+    // Make a network with options.
+    SharedNetwork6Ptr network(new SharedNetwork6("net1"));
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        network->getCfgOption()->add(*ref_option, ref_option->space_name_);
+    }
+
+    // Add the network to config back end.
+    cbptr_->createUpdateSharedNetwork6(ServerSelector::ALL(), network);
+
+    // Fetch the network.
+    SharedNetwork6Ptr returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(),
+                                                                   network->getName());
+    ASSERT_TRUE(returned_network);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_network->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                                ref_option->option_->getType(),
+                                                                ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can set the options individually.
+    updateClassTaggedOptions(ref_options);
+    for (auto const& ref_option : ref_options) {
+        cbptr_->createUpdateOption6(ServerSelector::ALL(), network->getName(), ref_option);
+    }
+
+    // Re-fetch the network.
+    returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(), network->getName());
+    ASSERT_TRUE(returned_network);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_network->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                                ref_option->option_->getType(),
+                                                                ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can delete the options individually.
+    for (auto const& ref_option : ref_options) {
+        ASSERT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
+                                           network->getName(),
+                                           ref_option->option_->getType(),
+                                           DHCP6_OPTION_SPACE,
+                                           ref_option->copyClientClasses()));
+    }
+
+    // Re-fetch the network.
+    returned_network = cbptr_->getSharedNetwork6(ServerSelector::ALL(), network->getName());
+    ASSERT_TRUE(returned_network);
+
+    // Make sure that CfgOption is empty
+    auto cfg_option = returned_network->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    EXPECT_TRUE(cfg_option->empty());
+}
+
+// Verify that one can add multiple instances of the same option code
+// to a subnet and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv6Test::subnetOption6WithClientClassesTest() {
+    // Make a subnet with options.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
+                                  30, 40, 50, 60, 1024));
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        subnet->getCfgOption()->add(*ref_option, ref_option->space_name_);
+    }
+
+    // Add the subnet to config back end.
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch the subnet.
+    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_subnet->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                               ref_option->option_->getType(),
+                                                               ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can set the options individually.
+    updateClassTaggedOptions(ref_options);
+    for (auto const& ref_option : ref_options) {
+        cbptr_->createUpdateOption6(ServerSelector::ALL(), subnet->getID(), ref_option);
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_subnet->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                               ref_option->option_->getType(),
+                                                               ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can delete the options individually.
+    for (auto const& ref_option : ref_options) {
+        ASSERT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
+                                           subnet->getID(),
+                                           ref_option->option_->getType(),
+                                           DHCP6_OPTION_SPACE,
+                                           ref_option->copyClientClasses()));
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // Make sure that CfgOption is empty
+    auto cfg_option = returned_subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    EXPECT_TRUE(cfg_option->empty());
+}
+
+// Verify that one can add multiple instances of the same option code
+// to a pool and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv6Test::poolOption6WithClientClassesTest() {
+    // Make subnet with a pool with options.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
+                                  30, 40, 50, 60, 1024));
+
+    Pool6Ptr pool(new Pool6(Lease::TYPE_NA,
+                            IOAddress("2001:db8::10"), IOAddress("2001:db8::20")));
+    subnet->addPool(pool);
+
+    // Add the options to the pool.
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        pool->getCfgOption()->add(*ref_option, ref_option->space_name_);
+    }
+
+    // Add the subnet to config back end.
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    PoolPtr returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                             ref_option->option_->getType(),
+                                                             ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can set the options individually.
+    updateClassTaggedOptions(ref_options);
+    for (auto const& ref_option : ref_options) {
+        cbptr_->createUpdateOption6(ServerSelector::ALL(),
+                                    pool->getFirstAddress(),
+                                    pool->getLastAddress(),
+                                    ref_option);
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                             ref_option->option_->getType(),
+                                                             ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can delete the options individually.
+    for (auto const& ref_option : ref_options) {
+        ASSERT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
+                                           pool->getFirstAddress(),
+                                           pool->getLastAddress(),
+                                           ref_option->option_->getType(),
+                                           DHCP6_OPTION_SPACE,
+                                           ref_option->copyClientClasses()));
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption is empty
+    auto cfg_option = returned_pool->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    EXPECT_TRUE(cfg_option->empty());
+}
+
+// Verify that one can add multiple instances of the same option code
+// to a pd pool and that they can be distinguished via their client_classes.
+void
+GenericConfigBackendDHCPv6Test::pdPoolOption6WithClientClassesTest() {
+    // Make subnet with a pool with options.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64,
+                                  30, 40, 50, 60, 1024));
+
+    const PoolPtr pool(new Pool6(Lease::TYPE_PD,
+                                 IOAddress("2001:db8:a::"), 48, 64));
+    auto pool_len = prefixLengthFromRange(pool->getFirstAddress(),
+                                          pool->getLastAddress());
+    subnet->addPool(pool);
+
+    // Add the options to the pool.
+    auto ref_options = makeClassTaggedOptions();
+    for (auto const& ref_option : ref_options) {
+        pool->getCfgOption()->add(*ref_option, ref_option->space_name_);
+    }
+
+    // Add the subnet to config back end.
+    cbptr_->createUpdateSubnet6(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet6Ptr returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    PoolPtr returned_pool = returned_subnet->getPool(Lease::TYPE_PD,
+                                                     IOAddress("2001:db8:a::"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                             ref_option->option_->getType(),
+                                                             ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can set the options individually.
+    updateClassTaggedOptions(ref_options);
+
+    for (auto const& ref_option : ref_options) {
+        cbptr_->createUpdateOption6(ServerSelector::ALL(),
+                                    pool->getFirstAddress(),
+                                    static_cast<uint8_t>(pool_len),
+                                    ref_option);
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    returned_pool = returned_subnet->getPool(Lease::TYPE_PD,
+                                             IOAddress("2001:db8:a::"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption->get() with client_classes finds each ref option.
+    for (auto const& ref_option : ref_options) {
+        auto cfg_option = returned_pool->getCfgOption()->get(DHCP6_OPTION_SPACE,
+                                                             ref_option->option_->getType(),
+                                                             ref_option->client_classes_);
+        SCOPED_OPT_COMPARE((*ref_option), cfg_option);
+    }
+
+    // Now make sure that we can delete the options individually.
+    for (auto const& ref_option : ref_options) {
+        ASSERT_EQ(1, cbptr_->deleteOption6(ServerSelector::ANY(),
+                                           pool->getFirstAddress(),
+                                           static_cast<uint8_t>(pool_len),
+                                           ref_option->option_->getType(),
+                                           DHCP6_OPTION_SPACE,
+                                           ref_option->copyClientClasses()));
+    }
+
+    // Re-fetch the subnet.
+    returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    returned_pool = returned_subnet->getPool(Lease::TYPE_PD,
+                                             IOAddress("2001:db8:a::"));
+    ASSERT_TRUE(returned_pool);
+
+    // Make sure that CfgOption is empty
+    auto cfg_option = returned_pool->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
+    EXPECT_TRUE(cfg_option->empty());
 }
