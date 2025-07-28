@@ -6,6 +6,7 @@ The following versions are supported:
 
 | Version | Supported          | End-Of-Life                      |
 | ------- | ------------------ | -------------------------------- |
+| 3.1.x   | :white_check_mark: | summer 2026, on release of 3.2.0 |
 | 3.0.x   | :white_check_mark: | LTS, summer 2028                 |
 | 2.7.x   | :x:                | June 2025, on release of 3.0.0   |
 | 2.6.x   | :white_check_mark: | summer 2026, on release of 3.2.0 |
