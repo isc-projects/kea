@@ -35,10 +35,7 @@ private:
     void cleanUp() {
         Session session(sysrepo::Connection{}.sessionStart());
         session.switchDatastore(sysrepo::Datastore::Candidate);
-        // remove the 'if' statement when a fix is provided in sysrepo branch.
-        if (session.getData("/keatest-module:container/list")) {
-            session.deleteItem("/keatest-module:container/list");
-        }
+        session.deleteItem("/keatest-module:container");
         session.deleteItem("/keatest-module:kernel-modules");
         session.deleteItem("/keatest-module:list");
         session.deleteItem("/keatest-module:main");

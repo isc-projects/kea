@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,9 @@
 
 #include <map>
 
+// #include <sysrepo-cpp/Changes.hpp>  // Will be required on newer sysrepo-cpp
 #include <sysrepo-cpp/Session.hpp>
+// #include <sysrepo-cpp/Subscription.hpp>  // Will be required on newer sysrepo-cpp
 
 namespace isc {
 namespace netconf {
