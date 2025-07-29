@@ -1,0 +1,5 @@
+[bug]		tmark
+	kea-dhcp6 now correctly supports option class-tags
+	(i.e."client-classes") in host and config backends
+	for both MySQL and PosgreSQL.
+	(Gitlab #4014)
