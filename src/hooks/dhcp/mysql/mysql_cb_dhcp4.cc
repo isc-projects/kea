@@ -3517,7 +3517,8 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing global option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
-      MYSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ? AND o.client_classes = ?)
+      MYSQL_UPDATE_OPTION4_WITH_TAG(AND o.scope_id = 0 AND o.code = ? AND o.space = ?
+                                    AND o.client_classes = ?)
     },
 
     // Update existing subnet level option.

@@ -139,8 +139,7 @@ ConfigBackendPoolDHCPv6::getOption6(const BackendSelector& backend_selector,
                                     const ServerSelector& server_selector,
                                     const uint16_t code,
                                     const std::string& space,
-                                    const ClientClassesPtr client_classes
-                                    /* = ClientClassesPtr() */) const {
+                                    const ClientClassesPtr client_classes /* = ClientClassesPtr() */) const {
     OptionDescriptorPtr option;
     getPropertyPtrConst<OptionDescriptorPtr, uint16_t, const std::string&>
         (&ConfigBackendDHCPv6::getOption6, backend_selector, server_selector,
@@ -446,8 +445,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes
-                                             /* = ClientClassesPtr() */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&,
                                        const ClientClassesPtr>
             (&ConfigBackendDHCPv6::deleteOption6, backend_selector, server_selector,
@@ -460,8 +458,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes
-                                             /* = ClientClassesPtr() */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const std::string&, uint16_t,
                                        const std::string&,
                                        const ClientClassesPtr>
@@ -475,8 +472,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes
-                                             /* = ClientClassesPtr() */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const SubnetID&, uint16_t,
                                        const std::string&,
                                        const ClientClassesPtr>
@@ -491,8 +487,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes
-                                             /* = ClientClassesPtr() */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const IOAddress&, const IOAddress&,
                                        uint16_t, const std::string&,
                                        const ClientClassesPtr>
@@ -507,8 +502,7 @@ ConfigBackendPoolDHCPv6::deleteOption6(const BackendSelector& backend_selector,
                                        const uint8_t pd_pool_prefix_length,
                                        const uint16_t code,
                                        const std::string& space,
-                                       const ClientClassesPtr client_classes
-                                             /* = ClientClassesPtr() */) {
+                                       const ClientClassesPtr client_classes /* = ClientClassesPtr() */) {
     return (createUpdateDeleteProperty<uint64_t, const IOAddress&, uint8_t,
                                        uint16_t, const std::string&,
                                        const ClientClassesPtr>

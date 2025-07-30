@@ -3717,7 +3717,8 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
                                           ref_option->option_->getType(),
                                           DHCP4_OPTION_SPACE,
                                           ref_option->copyClientClasses());
-        ASSERT_TRUE(found_option);
+        ASSERT_TRUE(found_option) << "ref_option" << ref_option->option_->toText()
+                                  << ", cc: " << ref_option->client_classes_.toText();
         SCOPED_OPT_COMPARE((*ref_option), (*found_option));
     }
 

@@ -523,10 +523,8 @@ public:
     /// @return Number of deleted options.
     /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
-    deleteOption6(const db::ServerSelector& server_selector,
-                  const SubnetID& subnet_id,
-                  const uint16_t code,
-                  const std::string& space,
+    deleteOption6(const db::ServerSelector& server_selector, const SubnetID& subnet_id,
+                  const uint16_t code, const std::string& space,
                   const ClientClassesPtr client_classes = ClientClassesPtr());
 
     /// @brief Deletes pool level option.

@@ -74,10 +74,10 @@ GenericConfigBackendDHCPv6Test::SetUp() {
 void
 GenericConfigBackendDHCPv6Test::TearDown() {
     cbptr_.reset();
+    // If data wipe enabled, delete transient data otherwise destroy the schema.
     if (getenv("KEA_UNIT_TEST_KEEP_SCHEMA")) {
         std::cout << "KEA_UNIT_TEST_KEEP_SCHEMA set, avoid schema destruction" << std::endl;
     } else {
-        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroySchema();
     }
 }
@@ -5238,7 +5238,8 @@ GenericConfigBackendDHCPv6Test::poolOption6WithClientClassesTest() {
                                                     subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
-    PoolPtr returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    PoolPtr returned_pool = returned_subnet->getPool(Lease::TYPE_NA,
+                                                     IOAddress("2001:db8::10"));
     ASSERT_TRUE(returned_pool);
 
     // Make sure that CfgOption->get() with client_classes finds each ref option.
@@ -5251,6 +5252,7 @@ GenericConfigBackendDHCPv6Test::poolOption6WithClientClassesTest() {
 
     // Now make sure that we can set the options individually.
     updateClassTaggedOptions(ref_options);
+
     for (auto const& ref_option : ref_options) {
         cbptr_->createUpdateOption6(ServerSelector::ALL(),
                                     pool->getFirstAddress(),
@@ -5262,7 +5264,8 @@ GenericConfigBackendDHCPv6Test::poolOption6WithClientClassesTest() {
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
-    returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    returned_pool = returned_subnet->getPool(Lease::TYPE_NA,
+                                             IOAddress("2001:db8::10"));
     ASSERT_TRUE(returned_pool);
 
     // Make sure that CfgOption->get() with client_classes finds each ref option.
@@ -5287,7 +5290,8 @@ GenericConfigBackendDHCPv6Test::poolOption6WithClientClassesTest() {
     returned_subnet = cbptr_->getSubnet6(ServerSelector::ALL(), subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
-    returned_pool = returned_subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8::10"));
+    returned_pool = returned_subnet->getPool(Lease::TYPE_NA,
+                                             IOAddress("2001:db8::10"));
     ASSERT_TRUE(returned_pool);
 
     // Make sure that CfgOption is empty

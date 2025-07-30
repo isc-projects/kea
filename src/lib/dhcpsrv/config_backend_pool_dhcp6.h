@@ -573,6 +573,8 @@ public:
     /// deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @param client_classes Optional client classes list of the option to be deleted.
+    /// Defaults to an empty pointer.
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption6(const db::BackendSelector& backend_selector,

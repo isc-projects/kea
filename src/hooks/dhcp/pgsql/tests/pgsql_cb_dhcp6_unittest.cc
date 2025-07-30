@@ -349,7 +349,6 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, getModifiedOptions6Test) {
     getModifiedOptions6Test();
 }
 
-
 TEST_F(PgSqlConfigBackendDHCPv6Test, globalOption6WithClientClassesTest) {
     globalOption6WithClientClassesTest();
 }

@@ -587,7 +587,6 @@ MySqlConfigBackendImpl::getOption(const int index,
             OptionDescriptor::create(*options.begin()));
 }
 
-
 OptionContainer
 MySqlConfigBackendImpl::getAllOptions(const int index,
                                       const Option::Universe& universe,

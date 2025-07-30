@@ -521,6 +521,7 @@ public:
     /// @param space Option space of the option to be deleted.
     /// @param client_classes Optional client classes list of the option to be deleted.
     /// Defaults to an empty pointer.
+    /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::BackendSelector& backend_selector,
                   const db::ServerSelector& server_selector,

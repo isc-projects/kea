@@ -487,6 +487,7 @@ public:
     /// @param space Option space of the deleted option.
     /// @param client_classes Optional client classes list of the option to be deleted.
     /// Defaults to an empty pointer.
+    /// @return Number of deleted options.
     /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,

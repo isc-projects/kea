@@ -4492,8 +4492,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT        // 19 client_classes (of option to update)
         },
         "UPDATE_OPTION6_SUBNET_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = $16 AND o.code = $17
-                                    AND o.space = $18 AND o.client_classes = $19)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 1 AND o.dhcp6_subnet_id = $16 AND o.code = $17 AND o.space = $18
+                                    AND o.client_classes = $19)
     },
 
     // Update existing pool level option.
@@ -4522,8 +4522,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT        // 19 client_classes (of option to update)
         },
         "UPDATE_OPTION6_POOL_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = $16 AND o.code = $17
-                                    AND o.space = $18 AND o.client_classes = $19)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 5 AND o.pool_id = $16 AND o.code = $17 AND o.space = $18
+                                    AND o.client_classes = $19)
     },
 
     // Update existing pd pool level option.
@@ -4552,8 +4552,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT        // 19 client_classes (of option to update)
         },
         "UPDATE_OPTION6_PD_POOL_ID",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = $16 AND o.code = $17
-                                    AND o.space = $18 AND o.client_classes = $19)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 6 AND o.pd_pool_id = $16 AND o.code = $17 AND o.space = $18
+                                    AND o.client_classes = $19)
     },
 
     // Update existing shared network level option.
@@ -4582,8 +4582,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT        // 19 client_classes (of option to update)
         },
         "UPDATE_OPTION6_SHARED_NETWORK",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $16 AND o.code = $17
-                                    AND o.space = $18 AND o.client_classes = $19)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = $16 AND o.code = $17 AND o.space = $18
+                                    AND o.client_classes = $19)
     },
 
     // Update existing client class level option.
@@ -4612,8 +4612,8 @@ TaggedStatementArray tagged_statements = { {
             OID_TEXT        // 19 client_classes (of option to update)
         },
         "UPDATE_OPTION6_CLIENT_CLASS",
-        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $16 AND o.code = $17
-                                    AND o.space = $18 AND o.client_classes = $19)
+        PGSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = $16 AND o.code = $17 AND o.space = $18
+                                    AND o.client_classes = $19)
     },
 
     // Update existing client class with specifying its position.
@@ -5015,7 +5015,7 @@ TaggedStatementArray tagged_statements = { {
         "DELETE_OPTION6_SHARED_NETWORK",
         PGSQL_DELETE_OPTION_NO_TAG(dhcp6,
             WHERE o.scope_id = 4 AND o.shared_network_name = $1 AND o.code = $2 AND o.space = $3
-                 AND o.client_classes LIKE $4)
+                  AND o.client_classes LIKE $4)
     },
 
     // Delete options belonging to a subnet.

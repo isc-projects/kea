@@ -3950,14 +3950,14 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_SHARED_NETWORK,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ?
-                                  AND o.space = ? AND o.client_classes = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
+                                  AND o.client_classes = ?)
     },
 
     // Update existing client class level option.
     { MySqlConfigBackendDHCPv6Impl::UPDATE_OPTION6_CLIENT_CLASS,
-      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ?
-                                  AND o.space = ? AND o.client_classes = ?)
+      MYSQL_UPDATE_OPTION6_NO_TAG(o.scope_id = 2 AND o.dhcp_client_class = ? AND o.code = ? AND o.space = ?
+                                  AND o.client_classes = ?)
     },
 
     // Update existing client class with specifying its position.
@@ -4099,8 +4099,8 @@ TaggedStatementArray tagged_statements = { {
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SUBNET_ID,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?
-                                AND o.client_classes LIKE ?)
+                          WHERE (o.scope_id = 1 AND o.dhcp6_subnet_id = ? AND o.code = ? AND o.space = ?
+                                 AND o.client_classes LIKE ?))
     },
 
     // Delete single option from a pool.
@@ -4118,8 +4118,8 @@ TaggedStatementArray tagged_statements = { {
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv6Impl::DELETE_OPTION6_SHARED_NETWORK,
       MYSQL_DELETE_OPTION_NO_TAG(dhcp6,
-                          WHERE o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
-                                AND o.client_classes LIKE ?)
+                          WHERE (o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?
+                                 AND o.client_classes LIKE ?))
     },
 
     // Delete options belonging to a subnet.
