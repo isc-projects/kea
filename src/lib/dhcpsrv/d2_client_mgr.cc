@@ -187,11 +187,10 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
                          const DdnsParams& ddns_params,
                          const bool trailing_dot) const {
     std::ostringstream gen_name;
-
     gen_name << partial_name;
     std::string suffix = ddns_params.getQualifyingSuffix();
-    bool suffix_present = true;
-    if (!suffix.empty()) {
+    if (!suffix.empty() && partial_name.back() != '.') {
+        bool suffix_present = true;
         std::string str = gen_name.str();
         auto suffix_rit = suffix.rbegin();
         if (*suffix_rit == '.') {
@@ -199,10 +198,6 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
         }
 
         auto gen_rit = str.rbegin();
-        if (*gen_rit == '.') {
-            ++gen_rit;
-        }
-
         while (suffix_rit != suffix.rend()) {
             if ((gen_rit == str.rend()) || (*suffix_rit != *gen_rit)) {
                 // They don't match.

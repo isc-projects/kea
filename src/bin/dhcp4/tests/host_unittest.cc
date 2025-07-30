@@ -41,12 +41,13 @@ const char* CONFIGS[] = {
     "{ \"interfaces-config\": {\n"
         "      \"interfaces\": [ \"*\" ]\n"
         "},\n"
+        "\"ddns-qualifying-suffix\": \"example.org.\",\n"
         "\"host-reservation-identifiers\": [ \"circuit-id\", \"hw-address\",\n"
         "                                    \"duid\", \"client-id\" ],\n"
         "\"reservations\": [ \n"
         "{\n"
         "   \"hw-address\": \"aa:bb:cc:dd:ee:ff\",\n"
-        "   \"hostname\": \"hw-host-dynamic\"\n"
+        "   \"hostname\": \"hw-host-dynamic.already.com.\"\n"
         "},\n"
         "{\n"
         "   \"hw-address\": \"01:02:03:04:05:06\",\n"
@@ -55,12 +56,12 @@ const char* CONFIGS[] = {
         "},\n"
         "{\n"
         "   \"hw-address\": \"02:02:03:04:05:06\",\n"
-        "   \"hostname\": \"hw-host-fixed-in-range\",\n"
+        "   \"hostname\": \"hw-host-fixed-in-range.example.org.\",\n"
         "   \"ip-address\": \"10.0.0.77\"\n"
         "},\n"
         "{\n"
         "   \"duid\": \"01:02:03:04:05\",\n"
-        "   \"hostname\": \"duid-host\"\n"
+        "   \"hostname\": \"duid-host.\"\n"
         "},\n"
         "{\n"
         "   \"circuit-id\": \"'charter950'\",\n"
@@ -590,7 +591,7 @@ TEST_F(HostTest, globalHardwareDynamicAddress) {
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("aa:bb:cc:dd:ee:ff");
-    runDoraTest(CONFIGS[0], client, "hw-host-dynamic", "10.0.0.10");
+    runDoraTest(CONFIGS[0], client, "hw-host-dynamic.already.com", "10.0.0.10");
 }
 
 // Verifies that a client matched to a global in-subnet address reservation
@@ -600,7 +601,7 @@ TEST_F(HostTest, globalHardwareFixedAddressInRange) {
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("02:02:03:04:05:06");
-    runDoraTest(CONFIGS[0], client, "hw-host-fixed-in-range", "10.0.0.77");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-in-range.example.org", "10.0.0.77");
 }
 
 // Verifies that a client matched to a global out-of-range address reservation
@@ -610,7 +611,7 @@ TEST_F(HostTest, globalHardwareFixedAddressOutOfRange) {
     Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
 
     client.setHWAddress("01:02:03:04:05:06");
-    runDoraTest(CONFIGS[0], client, "hw-host-fixed-out-of-range", "10.0.0.10");
+    runDoraTest(CONFIGS[0], client, "hw-host-fixed-out-of-range.example.org", "10.0.0.10");
 }
 
 // Verifies that a client can be matched to a global reservation by DUID
@@ -641,7 +642,7 @@ TEST_F(HostTest, globalCircuitId) {
     // Set the circuit id
     client.setCircuitId("charter950");
 
-    runDoraTest(CONFIGS[0], client, "circuit-id-host", "10.0.0.10");
+    runDoraTest(CONFIGS[0], client, "circuit-id-host.example.org", "10.0.0.10");
 }
 
 // Verifies that a client can be matched to a global reservation by client-id
@@ -655,7 +656,7 @@ TEST_F(HostTest, globalClientID) {
     // - 11:22:33:44:55:66 - is an actual DUID for which there is a
     client.includeClientId("01:11:22:33:44:55:66");
 
-    runDoraTest(CONFIGS[0], client, "client-id-host", "10.0.0.10");
+    runDoraTest(CONFIGS[0], client, "client-id-host.example.org", "10.0.0.10");
 }
 
 // Verifies that even when a matching global reservation exists,
