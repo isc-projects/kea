@@ -210,7 +210,7 @@ Now it's time to publish the code.
 
 ## Support
 
-1. [ ] Update tickets if any support customers are waiting for the release.
+1. [ ] Update tickets if any support customers are waiting for the release. [:link:](https://wiki.isc.org/bin/view/Main/KeaReleaseSupportUpdateTix)
 
 ## QA
 
