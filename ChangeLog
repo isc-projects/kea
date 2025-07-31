@@ -1,4 +1,4 @@
-2382.	[build]		razvan
+2382.	[func]		razvan
 	Implemented the 'lease6-get-by-hw-address' command used to query
 	IPv6 leases by HW Address.
 	(Gitlab #3826)

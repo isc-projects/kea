@@ -1597,7 +1597,7 @@ LeaseCmdsImpl::leaseGetByHwAddressHandler(CalloutHandle& handle) {
             isc_throw(BadValue, "'hw-address' parameter must be a string");
         }
 
-        if (!v4 && hw_address->stringValue().empty()) {
+        if (hw_address->stringValue().empty()) {
             isc_throw(BadValue, "'hw-address' parameter must not be empty");
         }
 
