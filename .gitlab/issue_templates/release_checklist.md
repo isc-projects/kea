@@ -5,8 +5,6 @@ about: Create a new issue using this checklist for each release.
 
 # Kea Release Checklist
 
-This is thoroughly documented in [the Kea Release Process guide](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess).
-
 #### Legend
 
 - `A.B.C`: the version being released
