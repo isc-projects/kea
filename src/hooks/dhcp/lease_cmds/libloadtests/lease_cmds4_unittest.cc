@@ -1794,6 +1794,16 @@ void Lease4CmdsTest::testLease4GetByHwAddressFind0() {
         "}";
     string exp_rsp = "0 IPv4 lease(s) found.";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Empty HWAddr.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"\"\n"
+        "    }\n"
+        "}";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 void Lease4CmdsTest::testLease4GetByHwAddressFind2() {

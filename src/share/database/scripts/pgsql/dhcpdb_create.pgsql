@@ -6728,6 +6728,17 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 30.0.
 
+-- This line starts the schema upgrade to version 31.0.
+
+-- Create index for searching leases by hwaddr.
+CREATE INDEX lease6_by_hwaddr ON lease6 (hwaddr);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '31', minor = '0';
+
+-- This line concludes the schema upgrade to version 31.0.
+
 -- Commit the script transaction.
 COMMIT;
 

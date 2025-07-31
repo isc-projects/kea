@@ -2014,6 +2014,17 @@ void Lease6CmdsTest::testLease6GetByHwAddressParams() {
     exp_rsp = "'hw-address' parameter must be a string";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
+    // Empty HWAddr.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-hw-address\",\n"
+        "    \"arguments\": {"
+        "        \"hw-address\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'hw-address' parameter must not be empty";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
     // Simply bad value.
     cmd =
         "{\n"
@@ -2071,10 +2082,10 @@ void Lease6CmdsTest::testLease6GetByHwAddressFind2() {
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
+    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
     lease = leases->get(1);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", "08:08:08:08:08:08");
 }
 
 void Lease6CmdsTest::testLease6GetByDuidParams() {

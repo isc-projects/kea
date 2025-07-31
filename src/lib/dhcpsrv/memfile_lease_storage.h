@@ -37,6 +37,9 @@ struct ExpirationIndexTag { };
 /// @brief Tag for indexes by HW address, subnet-id tuple.
 struct HWAddressSubnetIdIndexTag { };
 
+/// @brief Tag for indexes by HW address.
+struct HWAddressIndexTag { };
+
 /// @brief Tag for indexes by client-id, subnet-id tuple.
 struct ClientIdSubnetIdIndexTag { };
 
@@ -176,25 +179,15 @@ typedef boost::multi_index_container<
             >
         >,
 
-        // Specification of the eight index starts here.
-        boost::multi_index::ordered_non_unique<
-            boost::multi_index::tag<HWAddressSubnetIdIndexTag>,
-            // This is a composite index that combines two attributes of the
-            // Lease6 object: hardware address and subnet id.
-            boost::multi_index::composite_key<
-                Lease6,
-                // The hardware address is held in the hwaddr_ member of the
-                // Lease4 object, which is a HWAddr object. Boost does not
-                // provide a key extractor for getting a member of a member,
-                // so we need a simple method for that.
-                boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
-                                                  &Lease::getHWAddrVector>,
-                // The subnet id is held in the subnet_id_ member of Lease6
-                // class. Note that the subnet_id_ is defined in the base
-                // class (Lease) so we have to point to this class rather
-                // than derived class: Lease6.
-                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
-            >
+        // Specification of the eighth index starts here.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<HWAddressIndexTag>,
+            // The hardware address is held in the hwaddr_ member of the
+            // Lease6 object, which is a HWAddr object. Boost does not
+            // provide a key extractor for getting a member of a member,
+            // so we need a simple method for that.
+            boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
+                                              &Lease::getHWAddrVector>
         >
     >
 > Lease6Storage; // Specify the type name of this container.
@@ -364,9 +357,9 @@ typedef Lease6Storage::index<DuidIaidTypeIndexTag>::type Lease6StorageDuidIaidTy
 /// @brief DHCPv6 lease storage index by expiration time.
 typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIndex;
 
-/// @brief DHCPv6 lease storage index by HW address and subnet-id.
-typedef Lease6Storage::index<HWAddressSubnetIdIndexTag>::type
-Lease6StorageHWAddressSubnetIdIndex;
+/// @brief DHCPv6 lease storage index by HW address.
+typedef Lease6Storage::index<HWAddressIndexTag>::type
+Lease6StorageHWAddressIndex;
 
 /// @brief DHCPv6 lease storage index by subnet-id.
 typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;

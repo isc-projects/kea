@@ -1459,13 +1459,11 @@ Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
 void
 Memfile_LeaseMgr::getLease6Internal(const HWAddr& hwaddr,
                                     Lease6Collection& collection) const {
-    // Using composite index by 'hw address' and 'subnet id'. It is
-    // ok to use it for searching by the 'hw address' only.
-    const Lease6StorageHWAddressSubnetIdIndex& idx =
-        storage6_.get<HWAddressSubnetIdIndexTag>();
-    std::pair<Lease6StorageHWAddressSubnetIdIndex::const_iterator,
-              Lease6StorageHWAddressSubnetIdIndex::const_iterator> l
-        = idx.equal_range(boost::make_tuple(hwaddr.hwaddr_));
+    const Lease6StorageHWAddressIndex& idx =
+        storage6_.get<HWAddressIndexTag>();
+    std::pair<Lease6StorageHWAddressIndex::const_iterator,
+              Lease6StorageHWAddressIndex::const_iterator> l
+        = idx.equal_range(hwaddr.hwaddr_);
 
     BOOST_FOREACH(auto const& lease, l) {
         collection.push_back(Lease6Ptr(new Lease6(*lease)));

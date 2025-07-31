@@ -1,3 +1,8 @@
+2382.	[build]		razvan
+	Implemented the 'lease6-get-by-hw-address' command used to query
+	IPv6 leases by HW Address.
+	(Gitlab #3826)
+
 Kea 3.1.0 (development) released on July 30, 2025
 
 2381.	[build]		razvan
