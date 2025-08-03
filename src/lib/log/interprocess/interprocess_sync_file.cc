@@ -54,10 +54,14 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
 
         // Open the lockfile in the constructor so it doesn't do the access
         // checks every time a message is logged.
-        const mode_t mode = umask(S_IXUSR | S_IXGRP | S_IXOTH); // 0111
         fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR,
                    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP); // 0660
-        umask(mode);
+        if (fd_ != -1) {
+            if (fchmod(fd_, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) != 0) {
+                close(fd_);
+                fd_ = -1;
+            }
+        }
 
         if (fd_ == -1) {
             std::stringstream tmp;
