@@ -797,7 +797,7 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4) {
             "myhost.example.com.", Option4ClientFqdn::FULL
         },
         {
-            "RCM_NEVER #4, partial client name with traling .",
+            "RCM_NEVER #4, partial client name with trailing .",
             D2ClientConfig::RCM_NEVER,
             "myhost.", Option4ClientFqdn::PARTIAL,
             "myhost.suffix.com.", Option4ClientFqdn::FULL
