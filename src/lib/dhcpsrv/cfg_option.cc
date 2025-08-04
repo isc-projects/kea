@@ -302,6 +302,15 @@ CfgOption::encapsulateInternal(const std::string& option_space) {
     for (auto const& opt : *options) {
         encapsulateInternal(opt.option_);
     }
+
+    for (auto const& vendor : getVendorIds()) {
+        OptionContainerPtr vendor_options = getAll(vendor);
+        // For each option in the option space we will append sub-options
+        // from the option spaces they encapsulate.
+        for (auto const& opt : *vendor_options) {
+            encapsulateInternal(opt.option_);
+        }
+    }
 }
 
 void

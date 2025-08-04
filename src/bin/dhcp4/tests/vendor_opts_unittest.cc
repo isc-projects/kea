@@ -1606,6 +1606,141 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     EXPECT_FALSE(cdesc.option_->getOption(2));
 }
 
+// Checks that it's possible to have a vivso (125) option in the response
+// only. Once specific client (Genexis) sends only vendor-class info and
+// expects the server to include vivso in the response. This test adds
+// an empty container option (code 193) with 2 suboptions
+// (code 16 - ipv4-address and code 20 - uint16).
+TEST_F(VendorOptsTest, vivsoInResponseOnlyComplex) {
+    Dhcp4Client client(srv_);
+
+    // The config defines custom vendor 125 suboption 193 that conveys 2 suboptions:
+    // suboption 16 (ipv4-address) and suboption 20 (uint16).
+    // The client doesn't send vendor 125 option, so normal vendor option
+    // processing is impossible. However, since there's a class defined that
+    // matches client's packets and that class inserts vivso in the response,
+    // Kea should be able to figure out the vendor-id and then also insert
+    // suboption 193 with 2 suboptions: 16 and 20.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"pma-addr\","
+        "            \"code\": 16,"
+        "            \"type\": \"ipv4-address\","
+        "            \"array\": false,"
+        "            \"space\": \"vendor-25167-193\""
+        "        },"
+        "        {"
+        "            \"name\": \"pma-port\","
+        "            \"code\": 20,"
+        "            \"type\": \"uint16\","
+        "            \"array\": false,"
+        "            \"space\": \"vendor-25167-193\""
+        "        },"
+        "        {"
+        "            \"name\": \"pma\","
+        "            \"code\": 193,"
+        "            \"space\": \"vendor-25167\","
+        "            \"type\": \"empty\","
+        "            \"array\": false,"
+        "            \"encapsulate\": \"vendor-25167-193\","
+        "            \"record-types\": \"\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "    {"
+        "        \"name\": \"cpe_genexis\","
+        "        \"test\": \"substring(option[60].hex,0,7) == 'HMC1000'\","
+        "        \"option-data\": ["
+        "        {"
+        "            \"name\": \"vivso-suboptions\","
+        "            \"data\": \"25167\""
+        "        },"
+        "        {"
+        "            \"name\": \"pma-addr\","
+        "            \"space\": \"vendor-25167-193\","
+        "            \"code\": 16,"
+        "            \"data\": \"192.0.3.1\","
+        "            \"always-send\": true"
+        "        },"
+        "        {"
+        "            \"name\": \"pma-port\","
+        "            \"space\": \"vendor-25167-193\","
+        "            \"code\": 20,"
+        "            \"data\": \"300\","
+        "            \"always-send\": true"
+        "        },"
+        "        {"
+        "            \"name\": \"pma\","
+        "            \"space\": \"vendor-25167\","
+        "            \"code\": 193,"
+        "            \"always-send\": true"
+        "        } ]"
+        "    } ],"
+        "\"subnet4\": [ { "
+        "    \"id\": 10,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // Add a vendor-class identifier (this matches what Genexis hardware sends)
+    OptionPtr vopt(new OptionString(Option::V4, DHO_VENDOR_CLASS_IDENTIFIER,
+                                    "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
+    client.addExtraOption(vopt);
+    client.requestOptions(DHO_VIVSO_SUBOPTIONS);
+
+    // Let's check whether the server is not able to process this packet
+    // and include vivso with appropriate sub-options
+    EXPECT_NO_THROW(client.doDiscover());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check there's a response.
+    OptionPtr rsp = client.getContext().response_->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(rsp);
+
+    // Check that it includes vivso with vendor-id = 25167
+    OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
+    ASSERT_TRUE(rsp_vivso);
+    EXPECT_EQ(rsp_vivso->getVendorId(), 25167);
+
+    // Now check that it contains suboption 193 with appropriate content.
+    OptionPtr subopt193 = rsp_vivso->getOption(193);
+    ASSERT_TRUE(subopt193);
+
+    OptionPtr expected(new Option(Option::V4, 193));
+    Option4AddrLstPtr opt16(new Option4AddrLst(16, IOAddress("192.0.3.1")));
+    boost::shared_ptr<OptionIntArray<uint16_t>> opt20(new OptionIntArray<uint16_t>(Option::V4, 20));
+    opt20->addValue(300);
+    expected->addOption(opt16);
+    expected->addOption(opt20);
+
+    vector<uint8_t> subopt193bin = subopt193->toBinary(false);
+    vector<uint8_t> expectedbin = expected->toBinary(false);
+    ASSERT_EQ(expectedbin, subopt193bin);
+
+    // Check the config was not altered by unwanted side effect
+    // on the vendor option.
+
+    // Get class config:
+    ClientClassDefPtr cdef = CfgMgr::instance().getCurrentCfg()->
+        getClientClassDictionary()->findClass("cpe_genexis");
+    ASSERT_TRUE(cdef);
+    OptionDescriptor cdesc = cdef->getCfgOption()->
+        get(DHCP4_OPTION_SPACE, DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(cdesc.option_);
+    // If the config was altered these two EXPECT will fail.
+    EXPECT_TRUE(cdesc.option_->getOptions().empty());
+    EXPECT_FALSE(cdesc.option_->getOption(2));
+}
+
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
     // If there is no definition for option 43 a last resort
