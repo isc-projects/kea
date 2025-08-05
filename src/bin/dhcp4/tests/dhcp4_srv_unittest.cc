@@ -6267,6 +6267,38 @@ TEST_F(Dhcpv4SrvTest, v6OnlyPreferredRequestError) {
     EXPECT_FALSE(srv_->processRequest(req));
 }
 
+// Verify that a discover requesting v6-only-preferred
+// is handled gracefully when there is no matching subnet.
+TEST_F(Dhcpv4SrvTest, v6OnlyPreferredNoSelectedSubnet) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    // Sort source address to non-matching subnet.
+    dis->setRemoteAddr(IOAddress("192.0.99.1"));
+    dis->setIface("eth1");
+    dis->setIndex(ETH1_INDEX);
+
+    // Add a PRL with v6-only-preferred.
+    OptionUint8ArrayPtr prl(new OptionUint8Array(Option::V4,
+                                                 DHO_DHCP_PARAMETER_REQUEST_LIST));
+    ASSERT_TRUE(prl);
+    prl->addValue(DHO_V6_ONLY_PREFERRED);
+    dis->addOption(prl);
+
+    // Should not have gotten a response.
+    Pkt4Ptr resp = srv_->processDiscover(dis);
+    ASSERT_FALSE(resp);
+
+    // Should have logged a NAK_0001.
+    EXPECT_EQ(1, countFile("DHCP4_PACKET_NAK_0001 [hwtype=1 ], cid=[64:65:66:67],"
+                           " tid=0x4d2: failed to select a subnet for incoming packet,"
+                           " src 192.0.99.1, type DHCPDISCOVER"));
+
+}
+
 /// @brief Test fixture for recoverStashedAgentOption.
 class StashAgentOptionTest : public Dhcpv4SrvTest {
 public:

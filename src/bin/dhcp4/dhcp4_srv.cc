@@ -774,7 +774,6 @@ Dhcpv4Srv::shutdown() {
 
 isc::dhcp::ConstSubnet4Ptr
 Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop, bool allow_answer_park) {
-
     // DHCPv4-over-DHCPv6 is a special (and complex) case
     if (query->isDhcp4o6()) {
         return (selectSubnet4o6(query, drop, allow_answer_park));
@@ -2966,21 +2965,23 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // allocation.
     bool fake_allocation = (query->getType() == DHCPDISCOVER);
 
-    // Check if IPv6-Only Preferred was requested.
-    OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
-        OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
-    if (option_prl) {
-        auto const& requested_opts = option_prl->getValues();
-        if ((std::find(requested_opts.cbegin(), requested_opts.cend(),
-                       DHO_V6_ONLY_PREFERRED) != requested_opts.cend()) &&
-            assignZero(subnet, query->getClasses())) {
-            ex.setIPv6OnlyPreferred(true);
-            ctx->subnet_ = subnet;
-            resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
-            if (!fake_allocation) {
-                resp->setCiaddr(query->getCiaddr());
+    if (subnet) {
+        // Check if IPv6-Only Preferred was requested.
+        OptionUint8ArrayPtr option_prl = boost::dynamic_pointer_cast<
+            OptionUint8Array>(query->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+        if (option_prl) {
+            auto const& requested_opts = option_prl->getValues();
+            if ((std::find(requested_opts.cbegin(), requested_opts.cend(),
+                           DHO_V6_ONLY_PREFERRED) != requested_opts.cend()) &&
+                assignZero(subnet, query->getClasses())) {
+                ex.setIPv6OnlyPreferred(true);
+                ctx->subnet_ = subnet;
+                resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+                if (!fake_allocation) {
+                    resp->setCiaddr(query->getCiaddr());
+                }
+                return;
             }
-            return;
         }
     }
 
