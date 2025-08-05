@@ -1,3 +1,8 @@
+2383.	[func]		razvan
+	The kea-dhcp4 server now supports configuring vivso options with
+	suboptions.
+	(Gitlab #3861)
+
 2382.	[func]		razvan
 	Implemented the 'lease6-get-by-hw-address' command used to query
 	IPv6 leases by HW Address.
