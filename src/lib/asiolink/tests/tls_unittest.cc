@@ -962,6 +962,7 @@ TEST_F(TLSTest, serverNotConfigured) {
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_CERT)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.addError("ssl/tls alert handshake failure (SSL routines)");
+    exps.addError("ssl/tls alert handshake failure");
     exps.checkAsync("client", client_cb);
     if (Expecteds::displayErrMsg()) {
         if (timeout) {
@@ -1241,6 +1242,7 @@ TEST_F(TLSTest, unknownClient) {
     exps.addError("wrong version number (SSL routines)");
     exps.addError("wrong version number (SSL routines, ssl3_get_record)");
     exps.addError("packet length too long (SSL routines)");
+    exps.addError("packet length too long");
     // Recent LibreSSL error.
     exps.addError("unknown protocol (SSL routines, ACCEPT_SR_CLNT_HELLO)");
     exps.addError("tlsv1 alert protocol version (SSL routines, ACCEPT_SR_CLNT_HELLO)");
@@ -1651,6 +1653,7 @@ TEST_F(TLSTest, serverNotConfiguredCloseonError) {
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_SRVR_HELLO)");
     exps.addError("sslv3 alert handshake failure (SSL routines, ssl3_read_bytes)");
     exps.addError("ssl/tls alert handshake failure (SSL routines)");
+    exps.addError("ssl/tls alert handshake failure");
     // Recent LibreSSL error.
     exps.addError("sslv3 alert handshake failure (SSL routines, CONNECT_CR_CERT)");
     exps.checkAsync("client", client_cb);
