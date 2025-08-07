@@ -132,7 +132,7 @@ The following is the directory layout of the complete Kea installation.
 
 -  ``share/man/`` — manual pages (online documentation).
 
--  ``var/lib/kea/`` — server identification and lease database files.
+-  ``var/lib/kea/`` — server identifier (DHCPv6) and lease database files.
 
 -  ``var/log/kea/`` - log files.
 

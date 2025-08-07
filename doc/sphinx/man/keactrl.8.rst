@@ -33,7 +33,7 @@ Configuration File
 Depending on the user's requirements, not all of the available servers need be run.
 The ``keactrl`` configuration file specifies which servers are enabled and which
 are disabled. By default the configuration file is
-``[kea-install-dir]/etc/kea/keactrl.conf``.
+``"[kea-install-dir]/etc/kea/keactrl.conf"``.
 
 See the Kea Administrator Reference Manual for documentation of the
 parameters in the ``keactrl`` configuration file.
@@ -60,7 +60,7 @@ Options
 ``-c|--ctrl-config keactrl-config-file``
    Specifies the ``keactrl`` configuration file. Without this switch,
    ``keactrl`` uses the file
-   ``[kea-install-dir]/etc/kea/keactrl.conf``.
+   ``"[kea-install-dir]/etc/kea/keactrl.conf"``.
 
 ``-s|--server server[,server,...]``
    Specifies a subset of the enabled servers to which the command should

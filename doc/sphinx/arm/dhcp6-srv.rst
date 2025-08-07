@@ -6417,7 +6417,10 @@ which will result in the following server identifier:
    |type |htype|   identifier    |
 
 The server stores the generated server identifier in the following
-location: ``[kea-install-dir]/var/lib/kea/kea-dhcp6-serverid``.
+location: ``"[kea-install-dir]/var/lib/kea/kea-dhcp6-serverid"``.
+
+As of Kea 2.7.9, this path may be overridden at startup by setting the
+environment variable ``KEA_DHCP_DATA_DIR`` to the desired path.
 
 In some uncommon deployments where no stable storage is available, the
 server should be configured not to try to store the server identifier.
@@ -6452,8 +6455,8 @@ DHCPv6 Data Directory
 
 The Kea DHCPv6 server puts the server identifier file and the default
 memory lease file into its data directory. By default this directory is
-``prefix/var/lib/kea`` but this location can be changed using the
-``data-directory`` global parameter, as in:
+``"[kea-install-dir]/var/lib/kea"`` but this location can be changed
+using the ``data-directory`` global parameter, as in:
 
 ::
 

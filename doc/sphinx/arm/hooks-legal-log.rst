@@ -85,7 +85,7 @@ configuration of the desired DHCP server modules. :ischooklib:`libdhcp_legal_log
 can save logs to a text file or to a database (created using
 :iscman:`kea-admin`; see :ref:`mysql-database-create` and :ref:`pgsql-database-create`).
 The library is installed alongside the Kea libraries in
-``[kea-install-dir]/var/log/kea``, where ``kea-install-dir`` is determined
+``"[kea-install-dir]/var/log/kea"``, where ``kea-install-dir`` is determined
 by the ``--prefix`` meson setup option which defaults to
 ``/usr/local``. Assuming the default value, :iscman:`kea-dhcp4` can be configured to load
 :ischooklib:`libdhcp_legal_log.so` like this:
@@ -127,7 +127,7 @@ For :iscman:`kea-dhcp6`, the configuration is:
 The hook library parameters for the text file configuration are:
 
 -  ``path`` - the directory in which the forensic file(s) will be written.
-   The default value is ``[kea-install-dir]/var/log/kea``. The directory
+   The default value is ``"[kea-install-dir]/var/log/kea"``. The directory
    must exist.
 
 .. note::

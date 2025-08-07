@@ -305,6 +305,8 @@ Potential Kea security issues can be minimized by running only those processes r
     omit the path portion from ``filename``. Same restriction also applies to
     writing cache file using ``cache-write`` command. For ease of use in
     specifying a custom file name simply omit the path portion from ``filename``.
+    The ``KEA_DHCP_DATA_DIR`` environment variable is also used to change the default
+    location for the generated DHCPv6 server identifier file (kea-dhcp6-serverid).
 
 Limiting Application Permissions
 --------------------------------
@@ -425,13 +427,15 @@ the following table:
 +-------------------------------------+---------------------------------------+-------------------------------+
 | Lease Files                         | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIR``         |
 +-------------------------------------+---------------------------------------+-------------------------------+
+| DHCPv6 Server Identifier File       | ``var/lib/kea``                       | ``KEA_DHCP_DATA_DIR``         |
++-------------------------------------+---------------------------------------+-------------------------------+
 | Log Files                           | ``var/log/kea``                       | ``KEA_LOG_FILE_DIR``          |
 +-------------------------------------+---------------------------------------+-------------------------------+
 | Forensic Log Files                  | ``var/log/kea``                       | ``KEA_LEGAL_LOG_DIR``         |
 +-------------------------------------+---------------------------------------+-------------------------------+
 | Unix Sockets                        | ``var/run/kea``                       | ``KEA_CONTROL_SOCKET_DIR``    |
 +-------------------------------------+---------------------------------------+-------------------------------+
-| Scripts used by hook libraries      | ``share/kea/scripts/``                | ``KEA_HOOK_SCRIPTS_PATH``     |
+| Scripts Used By Hook Libraries      | ``share/kea/scripts/``                | ``KEA_HOOK_SCRIPTS_PATH``     |
 +-------------------------------------+---------------------------------------+-------------------------------+
 
 .. note:

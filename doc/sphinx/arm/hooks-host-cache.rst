@@ -137,10 +137,10 @@ example usage looks as follows:
 
    {
        "command": "cache-write",
-       "arguments": "/usr/local/var/lib/kea/kea-host-cache.json"
+       "arguments": "/var/lib/kea/kea-host-cache.json"
    }
 
-This causes the contents to be stored in the ``/usr/local/var/lib/kea/kea-host-cache.json``
+This causes the contents to be stored in the ``/var/lib/kea/kea-host-cache.json``
 file. That file can then be loaded with the :isccmd:`cache-load` command or
 processed by any other tool that is able to understand JSON format.
 

@@ -35,7 +35,7 @@ Command Line Options
 The optional ``-c keactrl-config-file`` switch allows specification of
 an alternate :iscman:`keactrl` configuration file. (``--ctrl-config`` is a
 synonym for ``-c``.) In the absence of ``-c``, :iscman:`keactrl` uses the
-default configuration file ``[kea-install-dir]/etc/kea/keactrl.conf``.
+default configuration file ``"[kea-install-dir]/etc/kea/keactrl.conf"``.
 
 The optional ``-s server[,server,...]`` switch selects the servers to
 which the command is issued. (``--server`` is a synonym for ``-s``.) If
@@ -52,7 +52,7 @@ Depending on the administrator's requirements, it may not be
 necessary to run all of the available servers.
 The :iscman:`keactrl` configuration file sets which servers are enabled and
 which are disabled. The default configuration file is
-``[kea-install-dir]/etc/kea/keactrl.conf``, but this can be overridden
+``"[kea-install-dir]/etc/kea/keactrl.conf"``, but this can be overridden
 on a per-command basis using the ``-c`` switch.
 
 The contents of ``keactrl.conf`` are:
@@ -113,7 +113,7 @@ corresponding server when starting or reconfiguring Kea. Some daemons
 (dhcp_ddns and netconf) are disabled by default.
 
 By default, Kea servers managed by :iscman:`keactrl` are located in
-``[kea-install-dir]/sbin``. This should work for most installations. If
+``"[kea-install-dir]/sbin"``. This should work for most installations. If
 the default location needs to be altered, the paths
 specified with the ``dhcp4_srv``, ``dhcp6_srv``, ``dhcp_ddns_srv``,
 ``ctrl_agent_srv``, and ``netconf_srv`` parameters should be modified.
