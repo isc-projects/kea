@@ -334,7 +334,7 @@ class Dhcp4Client;
 /// Currently it configures the test data path directory in
 /// the @c CfgMgr. When the object is destroyed, the original
 /// path is reverted.
-class BaseServerTest : public /* ::testing::Test */ LogContentTest {
+class BaseServerTest : public LogContentTest {
 public:
 
     /// @brief Constructor.
