@@ -569,6 +569,7 @@ global_param: data_directory
             | t2_percent
             | cache_threshold
             | cache_max_age
+            | adaptive_lease_time_threshold
             | loggers
             | hostname_char_set
             | hostname_char_replacement

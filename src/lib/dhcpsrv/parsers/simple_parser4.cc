@@ -148,7 +148,6 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "stash-agent-options",              Element::boolean, "false" },
     { "cache-threshold",                  Element::real,    "0.25" },
-    { "adaptive-lease-time-threshold",    Element::real,    "1." },
 };
 
 const SimpleKeywords SimpleParser4::GLOBAL4_LIST_PARAMETERS = {

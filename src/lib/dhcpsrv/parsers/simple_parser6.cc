@@ -143,7 +143,6 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "pd-allocator",                     Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "cache-threshold",                  Element::real,    "0.25" },
-    { "adaptive-lease-time-threshold",    Element::real,    "1." },
 };
 
 const SimpleKeywords SimpleParser6::GLOBAL6_LIST_PARAMETERS = {
