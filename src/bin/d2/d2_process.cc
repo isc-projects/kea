@@ -56,6 +56,9 @@ namespace d2 {
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT = 80;
 
+// IOService run time duration is 100 ms.
+const unsigned int D2Process::IO_SERVICE_RUN_TIME_USECS = (100 * 1000);
+
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
       reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
@@ -162,9 +165,7 @@ D2Process::runIO() {
         // main service. If the service is stopped it will return immediately
         //  with a cnt of zero and timed_out set to false.
         bool timed_out;
-        /// @todo TKM wait time should probably be configurable.
-        /// Currently microseconds, should be milliseconds?
-        cnt = getIOService()->runOneFor(100 * 1000, timed_out);
+        cnt = getIOService()->runOneFor(IO_SERVICE_RUN_TIME_USECS, timed_out);
         if (timed_out) {
             // Return 1 so caller knows the service has not stopped.
             return (1);

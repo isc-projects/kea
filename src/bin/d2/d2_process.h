@@ -47,6 +47,10 @@ public:
     /// by restarting the queue manager.
     static const unsigned int QUEUE_RESTART_PERCENT;
 
+    /// @brief Amount of time to allow the main IOSerivce to wait
+    /// for ready handlers before timimg out in microseconds.
+    static const unsigned int IO_SERVICE_RUN_TIME_USECS;
+
     /// @brief Constructor
     ///
     /// Construction creates the configuration manager, the queue

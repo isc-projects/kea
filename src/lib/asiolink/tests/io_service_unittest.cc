@@ -46,19 +46,19 @@ TEST(IOService, post) {
     EXPECT_EQ(3, called[2]);
 }
 
-// Check the runOneFor() operates correctly.
+// Verify that runOneFor() operates correctly.
 TEST(IOService, runOneFor) {
     IOServicePtr io_service(new IOService());
 
     // Setup up a timer to expire in 200 ms.
     IntervalTimer timer(io_service);
-    size_t wait_ms = 200; 
+    size_t wait_ms = 200;
     bool timer_fired = false;
-    timer.setup([&timer_fired] { timer_fired = true; }, 
+    timer.setup([&timer_fired] { timer_fired = true; },
                 wait_ms, IntervalTimer::ONE_SHOT);
 
     size_t time_outs = 0;
-    while (timer_fired == false && time_outs < 5) { 
+    while (timer_fired == false && time_outs < 5) {
         // Call runOneFor() with 1/4 of the timer duration.
         bool timed_out = false;
         auto cnt = io_service->runOneFor(50 * 1000, timed_out);
@@ -75,6 +75,40 @@ TEST(IOService, runOneFor) {
 
     // Timer should have fired.
     EXPECT_EQ(timer_fired, 1);
+}
+
+// Verify that runOneFor() handles service stop correctly.
+TEST(IOService, runOneForStopped) {
+    IOServicePtr io_service(new IOService());
+
+    // Setup up a timer to expire in 200 ms.
+    IntervalTimer timer(io_service);
+    size_t wait_ms = 200;
+    bool timer_fired = false;
+    timer.setup([&timer_fired] { timer_fired = true; },
+                wait_ms, IntervalTimer::ONE_SHOT);
+
+    // Call runOneFor() with runtime of 500ms in a thread.
+    size_t cnt = 0;
+    bool timed_out = false;
+    std::thread th([this, io_service, &timed_out, &cnt]() {
+        cnt = io_service->runOneFor(500 * 1000, timed_out);
+    });
+
+    // Sleep for 5 ms.
+    usleep(5 * 1000);
+
+    // Stop the service.
+    io_service->stop();
+
+    // Wait for the thread to complete.
+    th.join();
+
+    // Handle count should be 0, we should not have timed out, and
+    // the timer should not have fired.
+    EXPECT_EQ(0, cnt);
+    EXPECT_FALSE(timed_out);
+    EXPECT_FALSE(timer_fired);
 }
 
 }
