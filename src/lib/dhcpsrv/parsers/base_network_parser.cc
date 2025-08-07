@@ -17,7 +17,6 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-
 void
 BaseNetworkParser::parseCommon(const ConstElementPtr& network_data,
                                NetworkPtr& network) {
@@ -172,6 +171,24 @@ BaseNetworkParser::parsePdAllocatorParams(const data::ConstElementPtr& network_d
 }
 
 void
+BaseNetworkParser::parseAdaptiveLeaseTimeParam(const ConstElementPtr& network_data,
+                                               NetworkPtr& network) {
+    if (network_data->contains("adaptive-lease-time-threshold")) {
+        double adaptive_lease_time_threshold =
+            getDouble(network_data, "adaptive-lease-time-threshold");
+        if ((adaptive_lease_time_threshold <= 0.0) ||
+            (adaptive_lease_time_threshold > 1.0)) {
+            isc_throw(DhcpConfigError,
+                      "adaptive-lease-time-threshold: "
+                      << adaptive_lease_time_threshold
+                      << " is invalid, it must be greater than 0.0 "
+                      << "and less than or equal to 1.0");
+        }
+        network->setAdaptiveLeaseTimeThreshold(adaptive_lease_time_threshold);
+    }
+}
+
+void
 BaseNetworkParser::parseOfferLft(const data::ConstElementPtr& network_data,
                                         Network4Ptr& network) {
     if (network_data->contains("offer-lifetime")) {
@@ -250,7 +267,6 @@ BaseNetworkParser::getClientClassesElem(ConstElementPtr params,
         }
     }
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

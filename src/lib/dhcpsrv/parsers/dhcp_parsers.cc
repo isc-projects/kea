@@ -972,6 +972,9 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // Parse lease cache parameters
     parseCacheParams(params, network);
 
+    // Parse adaptive lease time parameter.
+    parseAdaptiveLeaseTimeParam(params, network);
+
     // Set the offer_lft value for the subnet.
     if (params->contains("offer-lifetime")) {
         uint32_t offer_lft = getInteger(params, "offer-lifetime");
@@ -1441,6 +1444,9 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Parse lease cache parameters
     parseCacheParams(params, network);
+
+    // Parse adaptive lease time parameter.
+    parseAdaptiveLeaseTimeParam(params, network);
 }
 
 void

@@ -117,6 +117,21 @@ protected:
     void parsePdAllocatorParams(const data::ConstElementPtr& network_data,
                                 Network6Ptr& network);
 
+    /// @brief Parses parameter related to adaptive lease time.
+    ///
+    /// The parsed parameter is:
+    /// - adaptive-lease-time-threshold.
+    ///
+    /// @param network_data Data element holding network configuration
+    /// to be parsed.
+    /// @param [out] network Pointer to a network in which parsed data is
+    /// to be stored.
+    ///
+    /// @throw DhcpConfigError if configuration of this parameter is
+    /// invalid.
+    void parseAdaptiveLeaseTimeParam(const data::ConstElementPtr& network_data,
+                                     NetworkPtr& network);
+
     /// @brief Parses offer-lifetime parameter (v4 only)
     ///
     /// @param network_data Data element holding shared network

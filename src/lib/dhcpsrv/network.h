@@ -221,7 +221,8 @@ public:
           cache_threshold_(), cache_max_age_(), ddns_update_on_renew_(),
           ddns_conflict_resolution_mode_(), ddns_ttl_percent_(),
           ddns_ttl_(), ddns_ttl_min_(), ddns_ttl_max_(),
-          allocator_type_(), default_allocator_type_() {
+          allocator_type_(), default_allocator_type_(),
+          adaptive_lease_time_threshold_() {
     }
 
     /// @brief Virtual destructor.
@@ -894,6 +895,25 @@ public:
         default_allocator_type_ = allocator_type;
     }
 
+    /// @brief Returns percentage of the adaptive lease time threshold,
+    ///
+    /// @param inheritance inheritance mode to be used.
+    util::Optional<double>
+    getAdaptiveLeaseTimeThreshold(const Inheritance& inheritance = Inheritance::ALL) const {
+        return (getProperty<Network>(&Network::getAdaptiveLeaseTimeThreshold,
+                                     adaptive_lease_time_threshold_,
+                                     inheritance,
+                                     CfgGlobals::ADAPTIVE_LEASE_TIME_THRESHOLD));
+    }
+
+    /// @brief Sets new percentage of the adaptive lease time threshold.
+    ///
+    /// @param adaptive_lease_time_threshold New percentage to use.
+    void setAdaptiveLeaseTimeThreshold(const util::Optional<double>&
+                                       adaptive_lease_time_threshold) {
+        adaptive_lease_time_threshold_ = adaptive_lease_time_threshold;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -1307,6 +1327,11 @@ protected:
     /// This value is not configurable by the user. It is used by the configuration
     /// backend internally.
     util::Optional<std::string> default_allocator_type_;
+
+    /// @brief Percentage of the adaptive lease time threshold.
+    /// (a lease assignment over the threshold will get minimal or remaining
+    /// life times).
+    util::Optional<double> adaptive_lease_time_threshold_;
 
     /// @brief Pointer to another network that this network belongs to.
     ///
