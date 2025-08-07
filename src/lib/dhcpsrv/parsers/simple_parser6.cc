@@ -103,6 +103,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-ttl",                         Element::integer },
     { "ddns-ttl-min",                     Element::integer },
     { "ddns-ttl-max",                     Element::integer },
+    { "adaptive-lease-time-threshold",    Element::real },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -142,6 +143,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "pd-allocator",                     Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "cache-threshold",                  Element::real,    "0.25" },
+    { "adaptive-lease-time-threshold",    Element::real,    "1." },
 };
 
 const SimpleKeywords SimpleParser6::GLOBAL6_LIST_PARAMETERS = {
@@ -274,6 +276,7 @@ const SimpleKeywords SimpleParser6::SUBNET6_PARAMETERS = {
     { "ddns-ttl",                       Element::integer },
     { "ddns-ttl-min",                   Element::integer },
     { "ddns-ttl-max",                   Element::integer },
+    { "adaptive-lease-time-threshold",  Element::real },
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -329,7 +332,8 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "cache-threshold",
     "cache-max-age",
     "allocator",
-    "pd-allocator"
+    "pd-allocator",
+    "adaptive-lease-time-threshold",
 };
 
 /// @brief This table defines all pool parameters.
@@ -439,6 +443,7 @@ const SimpleKeywords SimpleParser6::SHARED_NETWORK6_PARAMETERS = {
     { "ddns-ttl",                       Element::integer },
     { "ddns-ttl-min",                   Element::integer },
     { "ddns-ttl-max",                   Element::integer },
+    { "adaptive-lease-time-threshold",  Element::real },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv6.

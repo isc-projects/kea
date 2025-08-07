@@ -939,6 +939,9 @@
                 // lease is returned as it was "cached".
                 "cache-max-age": 1000,
 
+                // Adaptive lease time threshold = 1. (disabled).
+                "adaptive-lease-time-threshold": 1.,
+
                 // Specify whether the server should look up global reservations.
                 "reservations-global": false,
 
@@ -1270,6 +1273,9 @@
                         // Subnet-level cache maximum.
                         "cache-max-age": 1000,
 
+                        // Adaptive lease time threshold = 1. (disabled).
+                        "adaptive-lease-time-threshold": 1.,
+
                         // List of static IPv6 reservations assigned to clients belonging
                         // to this subnet. For a detailed example, see reservations.json.
                         "reservations": [
@@ -1407,6 +1413,9 @@
 
         // Global cache maximum.
         "cache-max-age": 1000,
+
+        // Adaptive lease time threshold = 1. (disabled).
+        "adaptive-lease-time-threshold": 1.,
 
         // String of zero or more characters with which to replace each
         // invalid character in the Client FQDN. The default

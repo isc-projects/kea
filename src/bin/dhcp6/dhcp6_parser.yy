@@ -115,6 +115,7 @@ using namespace std;
   T2_PERCENT "t2-percent"
   CACHE_THRESHOLD "cache-threshold"
   CACHE_MAX_AGE "cache-max-age"
+  ADAPTIVE_LEASE_TIME_THRESHOLD "adaptive-lease-time-threshold"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
   STATISTIC_DEFAULT_SAMPLE_COUNT "statistic-default-sample-count"
@@ -684,6 +685,12 @@ cache_max_age: CACHE_MAX_AGE COLON INTEGER {
     ctx.unique("cache-max-age", ctx.loc2pos(@1));
     ElementPtr cm(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("cache-max-age", cm);
+};
+
+adaptive_lease_time_threshold: ADAPTIVE_LEASE_TIME_THRESHOLD COLON FLOAT {
+    ctx.unique("adaptive-lease-time-threshold", ctx.loc2pos(@1));
+    ElementPtr altt(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("adaptive-lease-time-threshold", altt);
 };
 
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
@@ -1692,6 +1699,7 @@ subnet6_param: preferred_lifetime
              | t2_percent
              | cache_threshold
              | cache_max_age
+             | adaptive_lease_time_threshold
              | hostname_char_set
              | hostname_char_replacement
              | ddns_send_updates
@@ -1884,6 +1892,7 @@ shared_network_param: name
                     | t2_percent
                     | cache_threshold
                     | cache_max_age
+                    | adaptive_lease_time_threshold
                     | hostname_char_set
                     | hostname_char_replacement
                     | ddns_send_updates

@@ -103,6 +103,7 @@ const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
     { "ddns-ttl",                         Element::integer },
     { "ddns-ttl-min",                     Element::integer },
     { "ddns-ttl-max",                     Element::integer },
+    { "adaptive-lease-time-threshold",    Element::real },
 };
 
 /// @brief This table defines default global values for DHCPv4
@@ -147,6 +148,7 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "stash-agent-options",              Element::boolean, "false" },
     { "cache-threshold",                  Element::real,    "0.25" },
+    { "adaptive-lease-time-threshold",    Element::real,    "1." },
 };
 
 const SimpleKeywords SimpleParser4::GLOBAL4_LIST_PARAMETERS = {
@@ -281,6 +283,7 @@ const SimpleKeywords SimpleParser4::SUBNET4_PARAMETERS = {
     { "ddns-ttl",                       Element::integer },
     { "ddns-ttl-min",                   Element::integer },
     { "ddns-ttl-max",                   Element::integer },
+    { "adaptive-lease-time-threshold",  Element::real },
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -338,6 +341,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "cache-max-age",
     "allocator",
     "offer-lifetime",
+    "adaptive-lease-time-threshold",
 };
 
 /// @brief This table defines all pool parameters.
@@ -425,6 +429,7 @@ const SimpleKeywords SimpleParser4::SHARED_NETWORK4_PARAMETERS = {
     { "ddns-ttl",                       Element::integer },
     { "ddns-ttl-min",                   Element::integer },
     { "ddns-ttl-max",                   Element::integer },
+    { "adaptive-lease-time-threshold",  Element::real },
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.

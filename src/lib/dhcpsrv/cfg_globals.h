@@ -84,6 +84,7 @@ public:
         DDNS_TTL_MIN,
         DDNS_TTL_MAX,
         HOST_RESERVATION_IDENTIFIERS,
+        ADAPTIVE_LEASE_TIME_THRESHOLD,
 
         // DHCPv4 specific parameters.
         ECHO_CLIENT_ID,

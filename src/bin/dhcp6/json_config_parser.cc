@@ -780,6 +780,7 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "t2-percent") ||
                  (config_pair.first == "cache-threshold") ||
                  (config_pair.first == "cache-max-age") ||
+                 (config_pair.first == "adaptive-lease-time-threshold") ||
                  (config_pair.first == "hostname-char-set") ||
                  (config_pair.first == "hostname-char-replacement") ||
                  (config_pair.first == "ddns-send-updates") ||

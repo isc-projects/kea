@@ -1169,7 +1169,7 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_STRING("ddns-ttl-percent", driver.loc_);
     }
 }
- 
+
 \"ddns-ttl\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
@@ -1610,6 +1610,17 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         return isc::dhcp::Dhcp6Parser::make_CACHE_MAX_AGE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("cache-max-age", driver.loc_);
+    }
+}
+
+\"adaptive-lease-time-threshold\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+    case isc::dhcp::Parser6Context::SUBNET6:
+    case isc::dhcp::Parser6Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp6Parser::make_ADAPTIVE_LEASE_TIME_THRESHOLD(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("adaptive-lease-time-threshold", driver.loc_);
     }
 }
 
