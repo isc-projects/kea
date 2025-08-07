@@ -276,6 +276,11 @@ Network::toElement() const {
         map->set("allocator", Element::create(allocator_type_));
     }
 
+    if (!adaptive_lease_time_threshold_.unspecified()) {
+        map->set("adaptive-lease-time-threshold",
+                 Element::create(adaptive_lease_time_threshold_));
+    }
+
     return (map);
 }
 

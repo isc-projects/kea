@@ -186,6 +186,7 @@ TEST_F(NetworkTest, inheritanceSupport4) {
     globals_->set("ddns-ttl", Element::create(400));
     globals_->set("ddns-ttl-min", Element::create(200));
     globals_->set("ddns-ttl-max", Element::create(600));
+    globals_->set("adaptive-lease-time-threshold", Element::create(.90));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -393,6 +394,12 @@ TEST_F(NetworkTest, inheritanceSupport4) {
                                              &Network::setDdnsTtlMax,
                                              500, 600);
     }
+    {
+        SCOPED_TRACE("adaptive-lease-time-threshold");
+        testNetworkInheritance<TestNetwork4>(&Network::getAdaptiveLeaseTimeThreshold,
+                                             &Network::setAdaptiveLeaseTimeThreshold,
+                                             .80, .90);
+    }
 }
 
 // This test verifies that the inheritance is supported for DHCPv6
@@ -420,6 +427,7 @@ TEST_F(NetworkTest, inheritanceSupport6) {
     globals_->set("ddns-ttl-max", Element::create(600));
     globals_->set("cache-threshold", Element::create(.35));
     globals_->set("cache-max-age", Element::create(20));
+    globals_->set("adaptive-lease-time-threshold", Element::create(.90));
 
     // For each parameter for which inheritance is supported run
     // the test that checks if the values are inherited properly.
@@ -557,6 +565,12 @@ TEST_F(NetworkTest, inheritanceSupport6) {
         testNetworkInheritance<TestNetwork4>(&Network::getCacheMaxAge,
                                              &Network::setCacheMaxAge,
                                              10, 20);
+    }
+    {
+        SCOPED_TRACE("adaptive-lease-time-threshold");
+        testNetworkInheritance<TestNetwork4>(&Network::getAdaptiveLeaseTimeThreshold,
+                                             &Network::setAdaptiveLeaseTimeThreshold,
+                                             .80, .90);
     }
 
     // Interface-id requires special type of test.

@@ -299,6 +299,7 @@ public:
                 "    \"store-extended-info\": true,"
                 "    \"cache-threshold\": 0.123,"
                 "    \"cache-max-age\": 123,"
+                "    \"adaptive-lease-time-threshold\": .90,"
                 "    \"offer-lifetime\": 777,"
                 "    \"ddns-update-on-renew\": true,"
                 "    \"option-data\": ["
@@ -336,7 +337,8 @@ public:
                 "            \"hostname-char-set\": \"\","
                 "            \"cache-threshold\": .20,"
                 "            \"cache-max-age\": 50,"
-                "            \"allocator\": \"random\""
+                "            \"allocator\": \"random\","
+                "            \"adaptive-lease-time-threshold\": .80"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -362,7 +364,8 @@ public:
                 "            \"t1-percent\": .40,"
                 "            \"t2-percent\": .80,"
                 "            \"cache-threshold\": 0.0,"
-                "            \"cache-max-age\": 0"
+                "            \"cache-max-age\": 0,"
+                "            \"adaptive-lease-time-threshold\": .70"
                 "        }"
                 "    ]"
                 "}";
@@ -432,6 +435,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ(777, network->getOfferLft().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
     EXPECT_EQ("iterative", network->getAllocatorType().get());
+    EXPECT_EQ(.90, network->getAdaptiveLeaseTimeThreshold().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
@@ -730,6 +734,7 @@ public:
                 "    \"ddns-update-on-renew\": true,"
                 "    \"allocator\": \"random\","
                 "    \"pd-allocator\": \"iterative\","
+                "    \"adaptive-lease-time-threshold\": .90,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -845,6 +850,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
     EXPECT_EQ("random", network->getAllocatorType().get());
     EXPECT_EQ("iterative", network->getPdAllocatorType().get());
+    EXPECT_EQ(.90, network->getAdaptiveLeaseTimeThreshold().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

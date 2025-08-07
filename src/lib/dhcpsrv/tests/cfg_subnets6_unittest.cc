@@ -684,6 +684,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
     subnet1->setCacheThreshold(0.20);
+    subnet1->setAdaptiveLeaseTimeThreshold(.90);
 
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("2001:db8:ff::2"));
@@ -740,6 +741,7 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"valid-lifetime\": 4,\n"
         "    \"min-valid-lifetime\": 4,\n"
         "    \"max-valid-lifetime\": 4,\n"
+        "    \"adaptive-lease-time-threshold\": .90,\n"
         "    \"client-classes\": [ \"foo\", \"bar\" ],\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -1610,6 +1612,10 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
         {"too big", 1.05,
          "subnet configuration failed: cache-threshold:"
          " 1.05 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
+        },
+        {"excluded", 1.0,
+         "subnet configuration failed: cache-threshold:"
+         " 1 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
         }
     };
 
@@ -1663,6 +1669,91 @@ TEST(CfgSubnets6Test, cacheParamValidation) {
 
             // We parsed correctly, make sure the values are right.
             EXPECT_TRUE(util::areDoublesEquivalent(test.threshold, subnet->getCacheThreshold()));
+        }
+    }
+}
+
+// This test verifies the Subnet6 parser's validation logic for
+// adaptive lease time parameter.
+TEST(CfgSubnets6Test, AdaptiveLeaseTimeParamValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        double threshold;          // value of adaptive-lease-time-threshold
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"valid", .25, ""},
+        {"valid", 1.0, ""},
+        {"negative", -.25,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " -0.25 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        },
+        {"excluded", 0.,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " 0 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        },
+        {"too big", 1.05,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " 1.05 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet6.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"2001:db8:1::/64\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false \n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto const& test : tests) {
+        {
+            SCOPED_TRACE("test: " + test.label);
+
+            // Set this scenario's configuration parameters
+            elems->set("adaptive-lease-time-threshold",
+                       data::Element::create(test.threshold));
+
+            Subnet6Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet6ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!test.error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ(test.error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_TRUE(util::areDoublesEquivalent(test.threshold,
+                                                   subnet->getAdaptiveLeaseTimeThreshold()));
         }
     }
 }

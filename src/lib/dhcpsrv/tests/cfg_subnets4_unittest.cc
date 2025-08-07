@@ -1087,6 +1087,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
     subnet1->setCacheThreshold(0.20);
+    subnet1->setAdaptiveLeaseTimeThreshold(.90);
 
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("10.0.0.1"));
@@ -1146,6 +1147,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
+        "    \"adaptive-lease-time-threshold\": .90,\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ],\n"
         "    \"user-context\": { \"comment\": \"foo\" }\n"
@@ -1821,6 +1823,10 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         {"too big", 1.05,
          "subnet configuration failed: cache-threshold:"
          " 1.05 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
+        },
+        {"excluded", 1.0,
+         "subnet configuration failed: cache-threshold:"
+         " 1 is invalid, it must be greater than or equal to 0.0 and less than 1.0"
         }
     };
 
@@ -1848,7 +1854,6 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
         "            \"4o6-interface-id\": \"\", \n"
         "            \"4o6-subnet\": \"\" \n"
         "        }";
-
 
     data::ElementPtr elems;
     ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
@@ -1883,6 +1888,99 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
 
             // We parsed correctly, make sure the values are right.
             EXPECT_TRUE(util::areDoublesEquivalent(test.threshold, subnet->getCacheThreshold()));
+        }
+    }
+}
+
+// This test verifies the Subnet4 parser's validation logic for
+// adaptive lease time parameter.
+TEST(CfgSubnets4Test, AdaptiveLeaseTimeParamValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        double threshold;          // value of adaptive-lease-time-threshold
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"valid", .25, ""},
+        {"valid", 1.0, ""},
+        {"negative", -.25,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " -0.25 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        },
+        {"excluded", 0.,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " 0 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        },
+        {"too big", 1.05,
+         "subnet configuration failed: adaptive-lease-time-threshold:"
+         " 1.05 is invalid, it must be greater than 0.0 and less than or equal to 1.0"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet4.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"match-client-id\": false, \n"
+        "            \"authoritative\": false, \n"
+        "            \"next-server\": \"\", \n"
+        "            \"server-hostname\": \"\", \n"
+        "            \"boot-file-name\": \"\", \n"
+        "            \"client-classes\": [], \n"
+        "            \"evaluate-additional-classes\": [], \n"
+        "            \"reservations-global\": false, \n"
+        "            \"reservations-in-subnet\": true, \n"
+        "            \"reservations-out-of-pool\": false, \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\" \n"
+        "        }";
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto const& test : tests) {
+        {
+            SCOPED_TRACE("test: " + test.label);
+
+            // Set this scenario's configuration parameters
+            elems->set("adaptive-lease-time-threshold",
+                       data::Element::create(test.threshold));
+
+            Subnet4Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet4ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!test.error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ(test.error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_TRUE(util::areDoublesEquivalent(test.threshold,
+                                                   subnet->getAdaptiveLeaseTimeThreshold()));
         }
     }
 }

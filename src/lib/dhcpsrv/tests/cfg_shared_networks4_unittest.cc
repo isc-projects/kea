@@ -210,6 +210,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setHostnameCharReplacement("x");
     network1->setCacheThreshold(.20);
     network1->setOfferLft(77);
+    network1->setAdaptiveLeaseTimeThreshold(.90);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -255,6 +256,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"cache-max-age\": 50\n"
         "  },\n"
         "  {\n"
+        "    \"adaptive-lease-time-threshold\": .90,\n"
         "    \"calculate-tee-times\": true,\n"
         "    \"ddns-generated-prefix\": \"prefix\",\n"
         "    \"ddns-override-no-update\": true,\n"
