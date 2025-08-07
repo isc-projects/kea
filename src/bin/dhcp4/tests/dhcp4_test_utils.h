@@ -30,6 +30,7 @@
 #include <config/command_mgr.h>
 #include <config/unix_command_mgr.h>
 #include <util/multi_threading_mgr.h>
+#include <testutils/log_utils.h>
 #include <list>
 
 #include <boost/shared_ptr.hpp>
@@ -333,7 +334,7 @@ class Dhcp4Client;
 /// Currently it configures the test data path directory in
 /// the @c CfgMgr. When the object is destroyed, the original
 /// path is reverted.
-class BaseServerTest : public ::testing::Test {
+class BaseServerTest : public LogContentTest {
 public:
 
     /// @brief Constructor.
