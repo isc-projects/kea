@@ -35,11 +35,14 @@ IOServiceMgr::unregisterIOService(IOServicePtr io_service) {
     }
 }
 
-void
+size_t
 IOServiceMgr::pollIOServices() {
+    size_t cnt = 0;
     for (auto& io_service : io_services_) {
-        io_service->poll();
+        cnt += io_service->poll();
     }
+
+    return (cnt);
 }
 
 } // namespace asiolink

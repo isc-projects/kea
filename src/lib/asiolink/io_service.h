@@ -61,6 +61,22 @@ public:
     /// @return The number of handlers that were executed.
     size_t runOne();
 
+    /// @brief Run the underlying event loop for a single event or until
+    /// a wait time expires.
+    ///
+    /// This method returns control to the caller as soon as the
+    /// first handler has completed or the wait time elapses. If the
+    /// number of handlers executed is zero and timed_out is set to
+    /// false this indicates that the IOService was stopped.
+    ///
+    /// @param wait_time_usecs wait time in microseconds
+    /// @param[out] time_out set to true if th wait time expired
+    /// without any handlers executing.
+    /// timed_out parameter will be set true if the wait time elapsed
+    ///
+    /// @return The number of handlers that were executed.
+    size_t runOneFor(size_t wait_time_usecs, bool& timed_out);
+
     /// @brief Run the underlying event loop for a ready events.
     ///
     /// This method executes handlers for all ready events and returns.

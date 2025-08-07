@@ -14,6 +14,10 @@
 #include <boost/shared_ptr.hpp>
 #include <sys/socket.h>
 
+#include <chrono>
+
+using namespace std::chrono;
+
 namespace isc {
 namespace asiolink {
 
@@ -54,6 +58,26 @@ public:
     /// @return The number of handlers that were executed.
     size_t runOne() {
         return (static_cast<size_t>(io_service_.run_one()));
+    };
+
+    /// @brief Run the underlying event loop for a single event or until
+    /// a wait time expires.
+    ///
+    /// This method returns control to the caller as soon as the
+    /// first handler has completed or the wait time elapses. If the
+    /// number of handlers executed is zero and timed_out is set to
+    /// false this indicates that the IOService was stopped.
+    ///
+    /// @param wait_time_usecs wait time in microseconds
+    /// @param[out] time_out set to true if th wait time expired
+    /// without any handlers executing.
+    /// timed_out parameter will be set true if the wait time elapsed
+    ///
+    /// @return The number of handlers that were executed.
+    size_t runOneFor(size_t wait_time_usecs, bool& timed_out) {
+        size_t cnt = io_service_.run_one_for(microseconds(wait_time_usecs));
+        timed_out = (!cnt && !io_service_.stopped());
+        return (cnt);
     };
 
     /// @brief Run the underlying event loop for a ready events.
@@ -138,6 +162,11 @@ size_t
 IOService::runOne() {
     return (io_impl_->runOne());
 }
+
+size_t
+IOService::runOneFor(size_t wait_time_usecs, bool& timed_out) {
+    return (io_impl_->runOneFor(wait_time_usecs, timed_out));
+};
 
 size_t
 IOService::poll() {
