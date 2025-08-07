@@ -163,7 +163,7 @@ D2Process::runIO() {
         // Polling ran no handlers so either none are ready or the service has been
         // stopped.  Either way, call runOneFor() to wait for a IO event on the
         // main service. If the service is stopped it will return immediately
-        //  with a cnt of zero and timed_out set to false.
+        // with a cnt of zero and timed_out set to false.
         bool timed_out;
         cnt = getIOService()->runOneFor(IO_SERVICE_RUN_TIME_USECS, timed_out);
         if (timed_out) {

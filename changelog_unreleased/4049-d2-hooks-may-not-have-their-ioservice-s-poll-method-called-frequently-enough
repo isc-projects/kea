@@ -1,5 +1,5 @@
 [bug]		tmark
 	Fixed an issue in kea-dhcp-ddns which was
-	causing GSSI key exchanges to timeout when
-	NCR traffic is intermittent. 
+	causing GSS-TSIG key exchanges to timeout when
+	NCR traffic is intermittent.
 	(Gitlab #4049)
