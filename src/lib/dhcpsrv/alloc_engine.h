@@ -1555,6 +1555,20 @@ public:
     /// @return unsigned integer value of the offer lifetime to use.
     static uint32_t getOfferLft(const ClientContext4& ctx,
                                 bool only_on_discover = true);
+    /// @brief Set remaining valid life time.
+    ///
+    /// @param lease A pointer to the lease.
+    /// @param [out] valid The remaining valid life time or 0.
+    static void getRemaining(const Lease4Ptr& lease, uint32_t& valid);
+
+    /// @brief Set remaining valid and preferred life times.
+    ///
+    /// @param lease A pointer to the lease.
+    /// @param [out] valid The remaining valid life time or 0.
+    /// @param [out] preferred The remaining preferred life time or 0.
+    static void getRemaining(const Lease6Ptr& lease, uint32_t& valid,
+                             uint32_t& preferred);
+
 private:
 
     /// @brief Offers the lease.

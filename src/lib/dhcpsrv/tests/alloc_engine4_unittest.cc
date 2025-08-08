@@ -4850,6 +4850,52 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     }
 }
 
+// Verifies that AllocEngine::getRemaining retuns the remaining lifetime value.
+TEST_F(AllocEngine4Test, getRemaining) {
+    // No Lease.
+    uint32_t valid(1);
+    Lease4Ptr lease;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Unexpected state.
+    valid = 1;
+    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    uint8_t clientid[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
+    time_t now = time(0);
+    lease.reset(new Lease4(IOAddress("192.0.2.100"), hwaddr, clientid,
+                           sizeof(clientid), 100, now, 1));
+    lease->state_ = Lease::STATE_DECLINED;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Infinite lifetime.
+    lease->state_ = Lease::STATE_DEFAULT;
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    lease->valid_lft_ = lease->current_valid_lft_ = infinity_lft;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(infinity_lft, valid);
+
+    // Time going backward.
+    lease->cltt_ = lease->current_cltt_ = now + 100;
+    lease->valid_lft_ = lease->current_valid_lft_ = 50;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Already expired.
+    valid = 1;
+    lease->cltt_ = lease->current_cltt_ = now - 100;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Valid case.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 10;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_NEAR(40, valid, 1);
+}
+
 // Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
 // lifetime value based on the context content.
 TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {

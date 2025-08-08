@@ -6027,6 +6027,62 @@ TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
     }
 }
 
+// Verifies that AllocEngine::getRemaining retuns the remaining lifetime values.
+TEST_F(AllocEngine6Test, getRemaining) {
+    // No Lease.
+    uint32_t valid(1);
+    uint32_t preferred(1);
+    Lease6Ptr lease;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Unexpected state.
+    valid = 1;
+    preferred = 1;
+    DuidPtr duid(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t  iaid = 3568;
+    time_t now = time(0);
+    lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"), duid,
+                           iaid, 30, 50, 1));
+    lease->state_ = Lease::STATE_DECLINED;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Time going backward.
+    valid = 1;
+    preferred = 1;
+    lease->state_ = Lease::STATE_DEFAULT;
+    lease->cltt_ = lease->current_cltt_ = now + 100;
+    lease->valid_lft_ = lease->current_valid_lft_ = 50;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Already expired.
+    valid = 1;
+    preferred = 1;
+    lease->cltt_ = lease->current_cltt_ = now - 100;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Valid case.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 10;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_NEAR(40, valid, 1);
+    EXPECT_NEAR(20, preferred, 1);
+
+    // No longer preferred.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 40;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_NEAR(10, valid, 1);
+    EXPECT_EQ(0, preferred);
+}
+
 // Verifies that AllocEngine::getLifetimes6() returns the appropriate
 // preferred lifetime value based on the context content.
 TEST_F(AllocEngine6Test, getPreferredLifetime) {

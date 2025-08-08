@@ -2098,6 +2098,31 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
     }
 }
 
+void
+AllocEngine::getRemaining(const Lease6Ptr& lease, uint32_t& valid,
+                          uint32_t& preferred) {
+    valid = 0;
+    preferred = 0;
+    if (!lease || (lease->state_ != Lease::STATE_DEFAULT)) {
+        return;
+    }
+    time_t now = time(0);
+    // Refuse time not going forward.
+    if (lease->cltt_ > now) {
+        return;
+    }
+    uint32_t age = now - lease->cltt_;
+    // Already expired.
+    if (age >= lease->valid_lft_) {
+        return;
+    }
+    valid = lease->valid_lft_ - age;
+    if (age >= lease->preferred_lft_) {
+        return;
+    }
+    preferred = lease->preferred_lft_ - age;
+}
+
 Lease6Collection
 AllocEngine::renewLeases6(ClientContext6& ctx) {
     try {
@@ -4455,6 +4480,30 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
         // have already verified the lease does not exist in the database.
         return (lease);
     }
+}
+
+void
+AllocEngine::getRemaining(const Lease4Ptr& lease, uint32_t& valid) {
+    valid = 0;
+    if (!lease || (lease->state_ != Lease::STATE_DEFAULT)) {
+        return;
+    }
+    // Always remain infinite lifetime leases.
+    if (lease->valid_lft_ == Lease::INFINITY_LFT) {
+        valid = Lease::INFINITY_LFT;
+        return;
+    }
+    time_t now = time(0);
+    // Refuse time not going forward.
+    if (lease->cltt_ > now) {
+        return;
+    }
+    uint32_t age = now - lease->cltt_;
+    // Already expired.
+    if (age >= lease->valid_lft_) {
+        return;
+    }
+    valid = lease->valid_lft_ - age;
 }
 
 Lease4Ptr
