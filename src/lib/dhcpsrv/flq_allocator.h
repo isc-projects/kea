@@ -51,6 +51,40 @@ public:
         return ("flq");
     }
 
+    /// @brief Returns the occupancy rate (v4 addresses).
+    ///
+    /// The method counts the total number and the number of not free
+    /// addresses in the suitable pools of the subnet, and returns the
+    /// occupancy rate. If the total number of addresses is over UMAX64
+    /// or the address is not from one of these pools, or by default
+    /// the 0. rate is returned.
+    ///
+    /// @param addr the address.
+    /// @param client_classes list of classes client belongs to.
+    /// @param count_me the address is still marked as free.
+    virtual double
+    getOccupancyRate(const asiolink::IOAddress& addr,
+                     const ClientClasses& client_classes,
+                     const bool count_me) const;
+
+    /// @brief Returns the occupancy rate (v6 prefixes).
+    ///
+    /// The method counts the total number and the number of not free
+    /// prefixes in the suitable pools of the subnet, and returns the
+    /// occupancy rate. If the total number of prefixes is over UMAX64
+    /// or the prefix is not from one of these pools, or by default
+    /// the 0. rate is returned.
+    ///
+    /// @param pref the prefix.
+    /// @param plen the prefix length.
+    /// @param client_classes list of classes client belongs to.
+    /// @param count_me the prefix is still marked as free.
+    virtual double
+    getOccupancyRate(const asiolink::IOAddress& pref,
+                     const uint8_t plen,
+                     const ClientClasses& client_classes,
+                     const bool count_me) const;
+
 private:
 
     /// @brief Performs allocator initialization after server's reconfiguration.

@@ -13,6 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <util/stopwatch.h>
+#include <limits>
 #include <unordered_set>
 
 using namespace isc::asiolink;
@@ -132,6 +133,107 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
     }
     // No prefix available.
     return (IOAddress::IPV6_ZERO_ADDRESS());
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
+                                          const ClientClasses& client_classes,
+                                          const bool count_me) const {
+    // Sanity.
+    if (!addr.isV4()) {
+        return (0.);
+    }
+    auto subnet = subnet_.lock();
+    uint128_t total(0);
+    uint128_t busy(0);
+    bool found(false);
+
+    for (auto const& pool : subnet->getPools(Lease::TYPE_V4)) {
+        if (!pool->clientSupported(client_classes)) {
+            continue;
+        }
+        uint128_t capacity = pool->getCapacity();
+        total += capacity;
+        if (total >= std::numeric_limits<uint64_t>::max()) {
+            return (0.);
+        }
+        auto pool_state = boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>(pool->getAllocationState());
+        if (!pool_state) {
+            continue;
+        }
+        uint128_t free_cnt = pool_state->getFreeLeaseCount();
+        if (!found && pool->inRange(addr)) {
+            found = true;
+            if (count_me && (free_cnt > 0)) {
+                --free_cnt;
+            }
+        }
+        if (free_cnt > capacity) {
+            free_cnt = capacity;
+        }
+        busy += capacity - free_cnt;
+    }
+    if (!found) {
+        return (0.);
+    }
+    // Should not happen...
+    if (total == 0) {
+        return (0.);
+    }
+    return (static_cast<double>(busy) / static_cast<double>(total));
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& pref,
+                                          const uint8_t plen,
+                                          const ClientClasses& client_classes,
+                                          const bool count_me) const {
+    // Sanity.
+    if (!pref.isV6()) {
+        return (0.);
+    }
+    auto subnet = subnet_.lock();
+    uint128_t total(0);
+    uint128_t busy(0);
+    bool found(false);
+
+    for (auto const& pool : subnet->getPools(Lease::TYPE_PD)) {
+        if (!pool->clientSupported(client_classes)) {
+            continue;
+        }
+        auto const& pool6 = boost::dynamic_pointer_cast<Pool6>(pool);
+        if (!pool6 || (pool6->getLength() > plen)) {
+            continue;
+        }
+        uint128_t capacity = pool->getCapacity();
+        total += capacity;
+        if (total >= std::numeric_limits<uint64_t>::max()) {
+            return (0.);
+        }
+        auto pool_state = boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>(pool->getAllocationState());
+        if (!pool_state) {
+            continue;
+        }
+        uint128_t free_cnt = pool_state->getFreeLeaseCount();
+        if (!found && pool->inRange(pref)) {
+            found = true;
+            if (count_me && (free_cnt > 0)) {
+                --free_cnt;
+            }
+        }
+        if (free_cnt > capacity) {
+            free_cnt = capacity;
+        }
+        busy += capacity - free_cnt;
+    }
+    if (!found) {
+        return (0.);
+    }
+    // Should not happen...
+    if (total == 0) {
+        return (0.);
+    }
+    return (static_cast<double>(busy) / static_cast<double>(total));
 }
 
 void
