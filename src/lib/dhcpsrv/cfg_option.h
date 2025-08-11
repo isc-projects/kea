@@ -904,7 +904,7 @@ public:
     /// @return A pointer to the unparsed configuration.
     isc::data::ElementPtr
     toElementWithMetadata(const bool include_metadata,
-			  CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr()) const;
+                          CfgOptionDefPtr cfg_option_def = CfgOptionDefPtr()) const;
 
 private:
 

@@ -4850,52 +4850,6 @@ TEST_F(AllocEngine4Test, getValidLft4) {
     }
 }
 
-// Verifies that AllocEngine::getRemaining retuns the remaining lifetime value.
-TEST_F(AllocEngine4Test, getRemaining) {
-    // No Lease.
-    uint32_t valid(1);
-    Lease4Ptr lease;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
-
-    // Unexpected state.
-    valid = 1;
-    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
-    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
-    uint8_t clientid[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
-    time_t now = time(0);
-    lease.reset(new Lease4(IOAddress("192.0.2.100"), hwaddr, clientid,
-                           sizeof(clientid), 100, now, 1));
-    lease->state_ = Lease::STATE_DECLINED;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
-
-    // Infinite lifetime.
-    lease->state_ = Lease::STATE_DEFAULT;
-    uint32_t infinity_lft = Lease::INFINITY_LFT;
-    lease->valid_lft_ = lease->current_valid_lft_ = infinity_lft;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(infinity_lft, valid);
-
-    // Time going backward.
-    lease->cltt_ = lease->current_cltt_ = now + 100;
-    lease->valid_lft_ = lease->current_valid_lft_ = 50;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
-
-    // Already expired.
-    valid = 1;
-    lease->cltt_ = lease->current_cltt_ = now - 100;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
-
-    // Valid case.
-    now = time(0);
-    lease->cltt_ = lease->current_cltt_ = now - 10;
-    AllocEngine::getRemaining(lease, valid);
-    EXPECT_NEAR(40, valid, 1);
-}
-
 // Verifies that AllocEngine::getValidLft(ctx4) returns the appropriate
 // lifetime value based on the context content.
 TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
@@ -5046,6 +5000,209 @@ TEST_F(AllocEngine4Test, getTemplateClassValidLft4) {
             EXPECT_EQ(lease->valid_lft_, scenario.exp_valid_);
         }
     }
+}
+
+// Verifies that AllocEngine::getMinValidLft(ctx4, valid) sets the appropriate
+// lifetime value based on the context content.
+TEST_F(AllocEngine4Test, getMinValidLft4) {
+    AllocEngine engine(0);
+
+    // Let's make three classes, two with valid-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ExpressionPtr match_expr;
+    ExpressionParser parser;
+
+    ElementPtr test_cfg = Element::create("'valid_one_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    ClientClassDefPtr class_def(new TemplateClientClassDef("valid_one", match_expr));
+    Triplet<uint32_t> valid_one(50, 100, 150);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_two_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_two", match_expr));
+    Triplet<uint32_t>valid_two(200, 250, 300);
+    class_def->setValid(valid_two);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_unspec_value'");
+    parser.parse(match_expr, test_cfg, AF_INET, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_unspec", match_expr));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setValid(Triplet<uint32_t>(500, 1000, 1500));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t remaining_lft_;            // remaining lifime or 0
+        uint32_t exp_valid_;                // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "BOOTP",
+            { "BOOTP" },
+            0,
+            0,
+            Lease::INFINITY_LFT
+        },
+        {
+            "no classes, no option, remain 0",
+            {},
+            0,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, no option, remain too small",
+            {},
+            0,
+            100,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, no option, remain",
+            {},
+            0,
+            800,
+            800
+        },
+        {
+            "no classes, option, remain 0",
+            {},
+            1000,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "class unspecified, no option, remain 0",
+            { "valid_unspec" },
+            0,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "from last class, no option, remain 0",
+            { "valid_unspec", "valid_one" },
+            0,
+            0,
+            valid_one.getMin()
+        },
+        {
+            "from first class, no option, remain 0",
+            { "valid_two", "valid_one" },
+            0,
+            0,
+            valid_two.getMin()
+        },
+        {
+            "class plus remain too small",
+            { "valid_one" },
+            0,
+            10,
+            valid_one.getMin(),
+        },
+        {
+            "class plus remain",
+            { "valid_one" },
+            0,
+            100,
+            100
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext4 ctx(subnet_, ClientIdPtr(), hwaddr_,
+                                            IOAddress("0.0.0.0"), false, false,
+                                            "", false);
+            ctx.query_.reset(new Pkt4(DHCPDISCOVER, 1234));
+
+            // Add client classes (if any)
+            for (auto const& class_name : scenario.classes_) {
+                if (class_name == "BOOTP") {
+                    ctx.query_->addClass(class_name);
+                } else {
+                    string subclass(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
+                    subclass += class_name;
+                    subclass += "_value";
+                    ctx.query_->addSubClass(class_name, subclass);
+                }
+            }
+
+            // Add client option (if one)
+            if (scenario.requested_lft_) {
+                OptionUint32Ptr opt(new OptionUint32(Option::V4, DHO_DHCP_LEASE_TIME,
+                                                     scenario.requested_lft_));
+                ctx.query_->addOption(opt);
+            }
+
+            uint32_t valid = scenario.remaining_lft_;
+            engine.getMinValidLft(ctx, valid);
+            EXPECT_EQ(valid, scenario.exp_valid_);
+        }
+    }
+}
+
+// Verifies that AllocEngine::getRemaining retuns the remaining lifetime value.
+TEST_F(AllocEngine4Test, getRemaining) {
+    // No Lease.
+    uint32_t valid(1);
+    Lease4Ptr lease;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Unexpected state.
+    valid = 1;
+    uint8_t hwaddr_data[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe };
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data), HTYPE_ETHER));
+    uint8_t clientid[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
+    time_t now = time(0);
+    lease.reset(new Lease4(IOAddress("192.0.2.100"), hwaddr, clientid,
+                           sizeof(clientid), 100, now, 1));
+    lease->state_ = Lease::STATE_DECLINED;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Infinite lifetime.
+    lease->state_ = Lease::STATE_DEFAULT;
+    uint32_t infinity_lft = Lease::INFINITY_LFT;
+    lease->valid_lft_ = lease->current_valid_lft_ = infinity_lft;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(infinity_lft, valid);
+
+    // Time going backward.
+    lease->cltt_ = lease->current_cltt_ = now + 100;
+    lease->valid_lft_ = lease->current_valid_lft_ = 50;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Already expired.
+    valid = 1;
+    lease->cltt_ = lease->current_cltt_ = now - 100;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_EQ(0, valid);
+
+    // Valid case.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 10;
+    AllocEngine::getRemaining(lease, valid);
+    EXPECT_NEAR(40, valid, 1);
 }
 
 // This test checks that deleteRelease handles BOOTP leases.

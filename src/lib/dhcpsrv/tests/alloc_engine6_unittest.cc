@@ -6027,62 +6027,6 @@ TEST_F(AllocEngine6Test, getTemplateClassValidLifetime) {
     }
 }
 
-// Verifies that AllocEngine::getRemaining retuns the remaining lifetime values.
-TEST_F(AllocEngine6Test, getRemaining) {
-    // No Lease.
-    uint32_t valid(1);
-    uint32_t preferred(1);
-    Lease6Ptr lease;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
-
-    // Unexpected state.
-    valid = 1;
-    preferred = 1;
-    DuidPtr duid(new DUID(vector<uint8_t>(12, 0xff)));
-    const uint32_t  iaid = 3568;
-    time_t now = time(0);
-    lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"), duid,
-                           iaid, 30, 50, 1));
-    lease->state_ = Lease::STATE_DECLINED;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
-
-    // Time going backward.
-    valid = 1;
-    preferred = 1;
-    lease->state_ = Lease::STATE_DEFAULT;
-    lease->cltt_ = lease->current_cltt_ = now + 100;
-    lease->valid_lft_ = lease->current_valid_lft_ = 50;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
-
-    // Already expired.
-    valid = 1;
-    preferred = 1;
-    lease->cltt_ = lease->current_cltt_ = now - 100;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
-
-    // Valid case.
-    now = time(0);
-    lease->cltt_ = lease->current_cltt_ = now - 10;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_NEAR(40, valid, 1);
-    EXPECT_NEAR(20, preferred, 1);
-
-    // No longer preferred.
-    now = time(0);
-    lease->cltt_ = lease->current_cltt_ = now - 40;
-    AllocEngine::getRemaining(lease, valid, preferred);
-    EXPECT_NEAR(10, valid, 1);
-    EXPECT_EQ(0, preferred);
-}
-
 // Verifies that AllocEngine::getLifetimes6() returns the appropriate
 // preferred lifetime value based on the context content.
 TEST_F(AllocEngine6Test, getPreferredLifetime) {
@@ -6378,6 +6322,358 @@ TEST_F(AllocEngine6Test, getTemplateClassPreferredLifetime) {
             EXPECT_EQ(lease->preferred_lft_, scenario.exp_preferred_);
         }
     }
+}
+
+// Verifies that AllocEngine::getMinLifetimes6() returns the appropriate
+// valid lifetime value based on the context content.
+TEST_F(AllocEngine6Test, getMinValidLifetime) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Let's make three classes, two with valid-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ExpressionPtr match_expr;
+    ExpressionParser parser;
+
+    ElementPtr test_cfg = Element::create("'valid_one_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    ClientClassDefPtr class_def(new TemplateClientClassDef("valid_one", match_expr));
+    Triplet<uint32_t> valid_one(50, 100, 150);
+    class_def->setValid(valid_one);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_two_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_two", match_expr));
+    Triplet<uint32_t>valid_two(200, 250, 300);
+    class_def->setValid(valid_two);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'valid_unspec_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("valid_unspec", match_expr));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful.
+    subnet_->setValid(Triplet<uint32_t>(500, 1000, 1500));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t remaining_lft_;            // remaining valid lifetime
+        uint32_t exp_valid_;                // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "no classes, no hint, remain 0",
+            {},
+            0,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, no hint, remain too small",
+            {},
+            0,
+            100,
+            subnet_->getValid().getMin()
+        },
+        {
+            "no classes, no hint, remain",
+            {},
+            0,
+            800,
+            800
+        },
+        {
+            "no classes, hint, remain 0",
+            {},
+            800,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "class unspecified, no hint, remain 0",
+            { "valid_unspec" },
+            0,
+            0,
+            subnet_->getValid().getMin()
+        },
+        {
+            "from last class, no hint, remain 0",
+            { "valid_unspec", "valid_one" },
+            0,
+            0,
+            valid_one.getMin()
+        },
+        {
+            "from first class, no hint, remain 0",
+            { "valid_two", "valid_one" },
+            0,
+            0,
+            valid_two.getMin()
+        },
+        {
+            "class plus remain too small",
+            { "valid_one" },
+            0,
+            10,
+            valid_one.getMin()
+        },
+        {
+            "class plus remain",
+            { "valid_one" },
+            0,
+            100,
+            100
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
+                                            Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
+            // Add client classes (if any)
+            for (auto const& class_name : scenario.classes_) {
+                ctx.query_->addClass(class_name);
+            }
+
+            // Add hint
+            ctx.currentIA().iaid_ = iaid_;
+
+            // prefix, prefixlen, preferred, valid
+            ctx.currentIA().addHint(IOAddress("::"), 128, 0, scenario.requested_lft_);
+            uint32_t valid = scenario.remaining_lft_;
+            uint32_t preferred = 0;
+
+            engine->getMinLifetimes6(ctx, preferred, valid);
+            EXPECT_EQ(valid, scenario.exp_valid_);
+        }
+    }
+}
+
+// Verifies that AllocEngine::getMinLifetimes6() returns the appropriate
+// preferred lifetime value based on the context content.
+TEST_F(AllocEngine6Test, getMinPreferredLifetime) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(100)));
+    ASSERT_TRUE(engine);
+
+    // Let's make three classes, two with preferred-lifetime and one without,
+    // and add them to the dictionary.
+    ClientClassDictionaryPtr dictionary = CfgMgr::instance().getStagingCfg()->getClientClassDictionary();
+    ExpressionPtr match_expr;
+    ExpressionParser parser;
+
+    ElementPtr test_cfg = Element::create("'preferred_one_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    ClientClassDefPtr class_def(new TemplateClientClassDef("preferred_one", match_expr));
+    Triplet<uint32_t> preferred_one(50, 100, 150);
+    class_def->setPreferred(preferred_one);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'preferred_two_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("preferred_two", match_expr));
+    Triplet<uint32_t>preferred_two(200, 250, 300);
+    class_def->setPreferred(preferred_two);
+    dictionary->addClass(class_def);
+
+    test_cfg = Element::create("'preferred_unspec_value'");
+    parser.parse(match_expr, test_cfg, AF_INET6, EvalContext::acceptAll, EvalContext::PARSER_STRING);
+
+    class_def.reset(new TemplateClientClassDef("preferred_unspec", match_expr));
+    dictionary->addClass(class_def);
+
+    // Commit our class changes.
+    CfgMgr::instance().commit();
+
+    // Update the subnet's triplet to something more useful. Note that
+    // valid is 400 for the subnet.
+    subnet_->setPreferred(Triplet<uint32_t>(300, 350, 450));
+
+    // Describes a test scenario.
+    struct Scenario {
+        std::string desc_;                  // descriptive text for logging
+        std::vector<std::string> classes_;  // class list of assigned classes
+        uint32_t requested_lft_;            // use as option 51 is > 0
+        uint32_t remaining_lft_;            // remaining preferred lifetime
+        uint32_t exp_preferred_;            // expected lifetime
+    };
+
+    // Scenarios to test.
+    std::vector<Scenario> scenarios = {
+        {
+            "no classes, no hint, remain 0",
+            {},
+            0,
+            0,
+            subnet_->getPreferred().getMin()
+        },
+        {
+            "no classes, no hint, remain too small",
+            {},
+            0,
+            100,
+            subnet_->getPreferred().getMin()
+        },
+        {
+            "no classes, no hint, remain",
+            {},
+            0,
+            350,
+            350
+        },
+        {
+            "no classes, no hint, remain too big",
+            {},
+            0,
+            500,
+            subnet_->getValid().getMin() * 5 / 8
+        },
+        {
+            "no classes, hint, remain 0",
+            {},
+            800,
+            0,
+            subnet_->getPreferred().getMin()
+        },
+        {
+            "class unspecified, no hint, remain 0",
+            { "preferred_unspec" },
+            0,
+            0,
+            subnet_->getPreferred().getMin()
+        },
+        {
+            "from last class, no hint, remain 0",
+            { "preferred_unspec", "preferred_one" },
+            0,
+            0,
+            preferred_one.getMin()
+        },
+        {
+            "from first class, no hint, remain 0",
+            { "preferred_two", "preferred_one" },
+            0,
+            0,
+            preferred_two.getMin()
+        },
+        {
+            "class plus remain too small",
+            { "preferred_one" },
+            0,
+            10,
+            preferred_one.getMin()
+        },
+        {
+            "class plus remain",
+            { "preferred_one" },
+            0,
+            100,
+            100
+        }
+    };
+
+    // Iterate over the scenarios and verify the correct outcome.
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE(scenario.desc_); {
+            // Create a context;
+            AllocEngine::ClientContext6 ctx(subnet_, duid_, false, false, "", true,
+                                            Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234)));
+            // Add client classes (if any)
+            for (auto const& class_name : scenario.classes_) {
+                string subclass(TemplateClientClassDef::SPAWN_CLASS_PREFIX);
+                subclass += class_name;
+                subclass += "_value";
+                ctx.query_->addSubClass(class_name, subclass);
+            }
+
+            // Add hint
+            ctx.currentIA().iaid_ = iaid_;
+
+            // prefix, prefixlen, preferred, valid
+            ctx.currentIA().addHint(IOAddress("::"), 128, scenario.requested_lft_, 0);
+
+            uint32_t valid = 0;
+            uint32_t preferred = scenario.remaining_lft_;
+
+            engine->getMinLifetimes6(ctx, preferred, valid);
+            EXPECT_EQ(preferred, scenario.exp_preferred_);
+        }
+    }
+}
+
+// Verifies that AllocEngine::getRemaining retuns the remaining lifetime values.
+TEST_F(AllocEngine6Test, getRemaining) {
+    // No Lease.
+    uint32_t valid(1);
+    uint32_t preferred(1);
+    Lease6Ptr lease;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Unexpected state.
+    valid = 1;
+    preferred = 1;
+    DuidPtr duid(new DUID(vector<uint8_t>(12, 0xff)));
+    const uint32_t  iaid = 3568;
+    time_t now = time(0);
+    lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"), duid,
+                           iaid, 30, 50, 1));
+    lease->state_ = Lease::STATE_DECLINED;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Time going backward.
+    valid = 1;
+    preferred = 1;
+    lease->state_ = Lease::STATE_DEFAULT;
+    lease->cltt_ = lease->current_cltt_ = now + 100;
+    lease->valid_lft_ = lease->current_valid_lft_ = 50;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Already expired.
+    valid = 1;
+    preferred = 1;
+    lease->cltt_ = lease->current_cltt_ = now - 100;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0, preferred);
+
+    // Valid case.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 10;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_NEAR(40, valid, 1);
+    EXPECT_NEAR(20, preferred, 1);
+
+    // No longer preferred.
+    now = time(0);
+    lease->cltt_ = lease->current_cltt_ = now - 40;
+    AllocEngine::getRemaining(lease, valid, preferred);
+    EXPECT_NEAR(10, valid, 1);
+    EXPECT_EQ(0, preferred);
 }
 
 }  // namespace test

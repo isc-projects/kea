@@ -840,7 +840,7 @@ private:
     /// @return Collection of const @c Host objects.
     ConstHostCollection
     getAllInternal4(const SubnetID& subnet_id,
-		    const asiolink::IOAddress& address) const;
+                    const asiolink::IOAddress& address) const;
 
     /// @brief Returns @c Host objects for the specified (Subnet-id,IPv6 address) tuple.
     ///

@@ -820,6 +820,22 @@ public:
     /// @param [out] valid set to the valid lifetime that should be used.
     static void getLifetimes6(ClientContext6& ctx, uint32_t& preferred,
                               uint32_t& valid);
+
+    /// @brief Determines the preferred and valid v6 lease lifetimes when
+    /// the pool occupancy is over the adaptive lease time threshold.
+    ///
+    /// As for the common case find the candidate triplet and return
+    /// minimal values. Requested lifetimes are ignored but remaining
+    /// lifetimes are returned when greater than minimal.
+    ///
+    /// @param ctx client context that passes all necessary information. See
+    ///        @ref ClientContext6 for details.
+    /// @param [in/out] preferred set to the preferred lifetime that should
+    //                  be used. Caller must set it to 0 or remaining value.
+    /// @param [in/out] valid set to the valid lifetime that should be used.
+    ///                 Caller must set it to 0 or remaining value.
+    static void getMinLifetimes6(ClientContext6& ctx, uint32_t& preferred,
+                                 uint32_t& valid);
 private:
 
     /// @brief Creates a lease and inserts it in LeaseMgr if necessary
@@ -1536,6 +1552,22 @@ public:
     /// @param ctx Client context holding various information about the client.
     /// @return unsigned integer value of the valid lifetime to use.
     static uint32_t getValidLft(const ClientContext4& ctx);
+
+    /// @brief Returns the valid lifetime based on the v4 context when
+    /// the pool occupancy is over the adaptive lease time threshold.
+    ///
+    /// If the client query is a BOOTP query, the value returned will
+    /// be Lease::INFINITY_LFT.
+    ///
+    /// Otherwise, as for the common case find the canndidate triplet
+    /// and return the minimal value. Requested lifetime is ignored but
+    /// remaining lifetime is returned when greater than minimal.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @param [in/out] valid set to the valid lifetime that should be used.
+    ///                 Caller must set it to 0 or remaining value.
+    /// @return unsigned integer value of the valid lifetime to use.
+    static void getMinValidLft(const ClientContext4& ctx, uint32_t& valid);
 
     /// @brief Returns the offer lifetime based on the v4 context
     ///

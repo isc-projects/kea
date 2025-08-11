@@ -1891,6 +1891,20 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     return (expired);
 }
 
+namespace {
+void sanitizeLifetimes6(AllocEngine::ClientContext6& ctx,
+                        uint32_t& preferred, uint32_t& valid) {
+    // If preferred isn't set or insane, calculate it as valid_lft * 0.625.
+    if (!preferred || preferred > valid) {
+        preferred = ((valid * 5)/8);
+        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
+                  ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME)
+                .arg(ctx.query_->getLabel())
+                .arg(preferred);
+    }
+}
+} // end of anonymous namespace.
+
 void
 AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& valid) {
     // If the triplets are specified in one of our classes use it.
@@ -1950,14 +1964,70 @@ AllocEngine::getLifetimes6(ClientContext6& ctx, uint32_t& preferred, uint32_t& v
         }
     }
 
-    // If preferred isn't set or insane, calculate it as valid_lft * 0.625.
-    if (!preferred || preferred > valid) {
-        preferred = ((valid * 5)/8);
-        LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
-                  ALLOC_ENGINE_V6_CALCULATED_PREFERRED_LIFETIME)
-                .arg(ctx.query_->getLabel())
-                .arg(preferred);
+    sanitizeLifetimes6(ctx, preferred, valid);
+}
+
+void
+AllocEngine::getMinLifetimes6(ClientContext6& ctx, uint32_t& preferred,
+                              uint32_t& valid) {
+    // If the triplets are specified in one of our classes use it.
+    // We use the first one we find for each lifetime.
+    Triplet<uint32_t> candidate_preferred;
+    Triplet<uint32_t> candidate_valid;
+    const ClientClasses classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        // Let's get class definitions
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+
+        // Iterate over the assigned class definitions.
+        int have_both = 0;
+        for (auto const& name : classes) {
+            ClientClassDefPtr cl = dict->findClass(name);
+            if (candidate_preferred.unspecified() &&
+                (cl && (!cl->getPreferred().unspecified()))) {
+                candidate_preferred = cl->getPreferred();
+                ++have_both;
+            }
+
+            if (candidate_valid.unspecified() &&
+                (cl && (!cl->getValid().unspecified()))) {
+                candidate_valid = cl->getValid();
+                ++have_both;
+            }
+            if (have_both == 2) {
+                break;
+            }
+        }
     }
+
+    // If no classes specified preferred lifetime, get it from the subnet.
+    if (!candidate_preferred) {
+        candidate_preferred = ctx.subnet_->getPreferred();
+    }
+
+    // If no classes specified valid lifetime, get it from the subnet.
+    if (!candidate_valid) {
+        candidate_valid = ctx.subnet_->getValid();
+    }
+
+    // Save remaining values.
+    uint32_t remain_preferred(preferred);
+    uint32_t remain_valid(valid);
+
+    // Set the outbound parameters to the minimal values.
+    preferred = candidate_preferred.getMin();
+    valid = candidate_valid.getMin();
+
+    // Return at least the remaining values.
+    if (remain_preferred > preferred) {
+        preferred = remain_preferred;
+    }
+    if (remain_valid > valid) {
+        valid = remain_valid;
+    }
+
+    sanitizeLifetimes6(ctx, preferred, valid);
 }
 
 Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
@@ -4336,6 +4406,50 @@ AllocEngine::getValidLft(const ClientContext4& ctx) {
 
     // Use the candidate's default value.
     return (candidate_lft.get());
+}
+
+void
+AllocEngine::getMinValidLft(const ClientContext4& ctx, uint32_t& valid) {
+    // If it's BOOTP, use infinite valid lifetime.
+    if (ctx.query_->inClass("BOOTP")) {
+        valid = Lease::INFINITY_LFT;
+        return;
+    }
+
+    // If the triplet is specified in one of our classes use it.
+    // We use the first one we find.
+    Triplet<uint32_t> candidate_lft;
+    const ClientClasses classes = ctx.query_->getClasses();
+    if (!classes.empty()) {
+        // Let's get class definitions
+        const ClientClassDictionaryPtr& dict =
+            CfgMgr::instance().getCurrentCfg()->getClientClassDictionary();
+
+        // Iterate over the assigned class definitions.
+        for (auto const& name : classes) {
+            ClientClassDefPtr cl = dict->findClass(name);
+            if (cl && (!cl->getValid().unspecified())) {
+                candidate_lft = cl->getValid();
+                break;
+            }
+        }
+    }
+
+    // If no classes specified it, get it from the subnet.
+    if (!candidate_lft) {
+        candidate_lft = ctx.subnet_->getValid();
+    }
+
+    // Save remaining value.
+    uint32_t remain(valid);
+
+    // Set to the minimal value.
+    valid = candidate_lft.getMin();
+
+    // Return at least the remaining value.
+    if (remain > valid) {
+        valid = remain;
+    }
 }
 
 Lease4Ptr

@@ -155,7 +155,7 @@
     example: 0
 
   - <b>fqdn_rev</b> - FQDN reverse DNS RR update flag \n
-    type: bool (0 or 1)	\n
+    type: bool (0 or 1) \n
     example: 1
 
   - <b>hostname</b> - hostname \n
