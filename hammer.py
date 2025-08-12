@@ -1247,7 +1247,7 @@ def _install_libyang_from_sources(ignore_errors=False):
 
 def _install_sysrepo_from_sources(ignore_errors=False):
     """Install sysrepo from sources."""
-    version = '3.13.5'
+    version = '3.7.11'
 
     libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
     for libdir in libdirs:
