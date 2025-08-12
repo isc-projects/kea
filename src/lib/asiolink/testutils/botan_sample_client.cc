@@ -21,6 +21,7 @@
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>
 #include <botan/auto_rng.h>
+#include <botan/tls_session_manager_noop.h>
 
 inline std::string CA_(const std::string& filename) {
   return (std::string(TEST_CA_DIR) + "/" + filename);
@@ -35,19 +36,20 @@ using Client_Certificate_Store = Botan::Flatfile_Certificate_Store;
 class Client_Credentials_Manager : public Botan::Credentials_Manager
 {
 public:
-  explicit Client_Credentials_Manager(Botan::RandomNumberGenerator& rng)
+  explicit Client_Credentials_Manager()
     : stores_(), certs_(),
       store_(new Client_Certificate_Store(CA_("kea-ca.crt"))),
       cert_(Botan::X509_Certificate(CA_("kea-client.crt"))),
-      key_(Botan::PKCS8::load_key(CA_("kea-client.key"), rng))
+      key_()
   {
+    Botan::DataSource_Stream source(CA_("kea-client.key"));
+    auto priv_key = Botan::PKCS8::load_key(source);
+    key_ = std::move(priv_key);
     stores_.push_back(store_.get());
     certs_.push_back(cert_);
   }
 
-  virtual ~Client_Credentials_Manager()
-  {
-  }
+  virtual ~Client_Credentials_Manager() = default;
 
   std::vector<Botan::Certificate_Store*>
   trusted_certificate_authorities(const std::string&,
@@ -58,25 +60,26 @@ public:
 
   std::vector<Botan::X509_Certificate>
   cert_chain(const std::vector<std::string>&,
+             const std::vector<Botan::AlgorithmIdentifier>&,
              const std::string&,
              const std::string&) override
   {
     return certs_;
   }
 
-  Botan::Private_Key*
+  std::shared_ptr<Botan::Private_Key>
   private_key_for(const Botan::X509_Certificate&,
                   const std::string&,
                   const std::string&) override
   {
-    return key_.get();
+    return (key_);
   }
 
   std::vector<Botan::Certificate_Store*> stores_;
   std::vector<Botan::X509_Certificate> certs_;
   std::shared_ptr<Botan::Certificate_Store> store_;
   Botan::X509_Certificate cert_;
-  std::unique_ptr<Botan::Private_Key> key_;
+  std::shared_ptr<Botan::Private_Key> key_;
 };
 
 using Client_Session_Manager = Botan::TLS::Session_Manager_Noop;
@@ -101,8 +104,8 @@ public:
 class client
 {
 public:
-  client(boost::asio::io_context& io_context,
-      Botan::TLS::Context& context,
+      client(boost::asio::io_context& io_context,
+      std::shared_ptr<Botan::TLS::Context> context,
       const tcp::endpoint& endpoint)
     : socket_(io_context, context)
   {
@@ -128,7 +131,7 @@ private:
 
   void handshake()
   {
-    socket_.async_handshake(Botan::TLS::Connection_Side::CLIENT,
+    socket_.async_handshake(Botan::TLS::Connection_Side::Client,
         [this](const boost::system::error_code& error)
         {
           if (!error)
@@ -210,11 +213,16 @@ int main(int argc, char* argv[])
     using namespace std; // For atoi.
     tcp::endpoint endpoint(
       boost::asio::ip::make_address(argv[1]), atoi(argv[2]));
-    Botan::AutoSeeded_RNG rng;
-    Client_Credentials_Manager creds_mgr(rng);
-    Client_Session_Manager sess_mgr;
-    Client_Policy policy;
-    Botan::TLS::Context ctx(creds_mgr, rng, sess_mgr, policy);
+    std::shared_ptr<Botan::AutoSeeded_RNG>
+      rng(new Botan::AutoSeeded_RNG());
+    std::shared_ptr<Client_Credentials_Manager>
+      creds_mgr(new Client_Credentials_Manager());
+    std::shared_ptr<Client_Session_Manager>
+      sess_mgr(new Client_Session_Manager());
+    std::shared_ptr<Client_Policy>
+      policy(new Client_Policy());
+    std::shared_ptr<Botan::TLS::Context>
+      ctx(new Botan::TLS::Context(creds_mgr, rng, sess_mgr, policy));
 
     client c(io_context, ctx, endpoint);
 

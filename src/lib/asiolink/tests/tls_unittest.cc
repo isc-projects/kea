@@ -509,6 +509,7 @@ TEST_F(TLSTest, loadNoCAFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
+    exps.addThrow("I/O error: DataSource: Failure opening file '/no-such-file'");
     // OpenSSL errors.
     exps.addThrow("No such file or directory");
     exps.addThrow("No such file or directory (system library)");
@@ -586,6 +587,7 @@ TEST_F(TLSTest, loadNoCertFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
+    exps.addThrow("I/O error: DataSource: Failure opening file '/no-such-file'");
     // OpenSSL errors.
     exps.addThrow("No such file or directory");
     exps.addThrow("No such file or directory (system library)");
@@ -632,6 +634,7 @@ TEST_F(TLSTest, loadNoKeyFile) {
     Expecteds exps;
     // Botan error.
     exps.addThrow("I/O error: DataSource: Failure opening file /no-such-file");
+    exps.addThrow("I/O error: DataSource: Failure opening file '/no-such-file'");
     // OpenSSL errors.
     exps.addThrow("No such file or directory");
     exps.addThrow("No such file or directory (system library)");
@@ -654,6 +657,9 @@ TEST_F(TLSTest, loadCertKeyFile) {
     // Botan error.
     string botan_error = "PKCS #8 private key decoding failed with PKCS #8: ";
     botan_error += "Unknown PEM label CERTIFICATE";
+    exps.addThrow(botan_error);
+    botan_error = "PKCS #8 private key decoding failed with PKCS #8: ";
+    botan_error += "Unknown PEM label 'CERTIFICATE'";
     exps.addThrow(botan_error);
     // OpenSSL errors.
     exps.addThrow("no start line");
@@ -732,6 +738,8 @@ TEST_F(TLSTest, configureError) {
     string common_error = "load of cert file '/no-such-file' failed: ";
     // Botan error.
     string botan_error = "I/O error: DataSource: Failure opening file /no-such-file";
+    exps.addThrow(common_error + botan_error);
+    botan_error = "I/O error: DataSource: Failure opening file '/no-such-file'";
     exps.addThrow(common_error + botan_error);
     // OpenSSL errors.
     string openssl_error = "No such file or directory";
@@ -946,6 +954,7 @@ TEST_F(TLSTest, serverNotConfigured) {
     exps.clear();
     // On Botan and some OpenSSL the client hangs.
     exps.addTimeout();
+    exps.addError("handshake_failure");
     // OpenSSL errors.
     exps.addError("sslv3 alert handshake failure");
     exps.addError("sslv3 alert handshake failure (SSL routines)");
@@ -1027,6 +1036,7 @@ TEST_F(TLSTest, clientNotConfigured) {
     Expecteds exps;
     // On Botan and some OpenSSL the server hangs.
     exps.addTimeout();
+    exps.addError("bad_certificate");
     // OpenSSL errors.
     exps.addError("tlsv1 alert unknown ca");
     exps.addError("tlsv1 alert unknown ca (SSL routines)");
@@ -1128,6 +1138,7 @@ TEST_F(TLSTest, clientHTTPnoS) {
     exps.addTimeout();
     // Botan error.
     exps.addError("protocol_version");
+    exps.addError("unexpected_message");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors (OpenSSL recognizes HTTP).
@@ -1220,6 +1231,7 @@ TEST_F(TLSTest, unknownClient) {
     // Botan errors.
     exps.addError("record_overflow");
     exps.addError("protocol_version");
+    exps.addError("unexpected_message");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // Old OpenSSL error.
@@ -1630,6 +1642,7 @@ TEST_F(TLSTest, serverNotConfiguredCloseonError) {
     exps.clear();
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    exps.addError("handshake_failure");
     // Alias on old OpenSSL.
     exps.addError("short read");
     // OpenSSL errors.
@@ -1710,6 +1723,7 @@ TEST_F(TLSTest, clientNotConfiguredCloseonError) {
     Expecteds exps;
     // Botan and some OpenSSL.
     exps.addError("stream truncated");
+    exps.addError("bad_certificate");
     // Alias on old OpenSSL.
     exps.addError("short read");
     // OpenSSL errors.
@@ -1810,6 +1824,7 @@ TEST_F(TLSTest, clientHTTPnoSCloseonError) {
     exps.addTimeout();
     // Botan behavior was reported and fixed.
     exps.addError("protocol_version");
+    exps.addError("unexpected_message");
     // Old LibreSSL error.
     exps.addError("tlsv1 alert protocol version");
     // OpenSSL errors when OpenSSL recognizes HTTP.

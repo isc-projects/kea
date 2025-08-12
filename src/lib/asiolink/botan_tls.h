@@ -28,9 +28,9 @@ namespace asiolink {
 /// @brief Translate TLS role into implementation.
 inline Botan::TLS::Connection_Side roleToImpl(TlsRole role) {
     if (role == TlsRole::SERVER) {
-        return (Botan::TLS::Connection_Side::SERVER);
+        return (Botan::TLS::Connection_Side::Server);
     } else {
-        return (Botan::TLS::Connection_Side::CLIENT);
+        return (Botan::TLS::Connection_Side::Client);
     }
 }
 
@@ -53,7 +53,7 @@ public:
     explicit TlsContext(TlsRole role);
 
     /// @brief Return the underlying context.
-    Botan::TLS::Context& getContext();
+    std::shared_ptr<Botan::TLS::Context> getContext();
 
     /// @brief Get the peer certificate requirement mode.
     ///

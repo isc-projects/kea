@@ -20,6 +20,7 @@
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>
 #include <botan/auto_rng.h>
+#include <botan/tls_session_manager_noop.h>
 
 inline std::string CA_(const std::string& filename) {
   return (std::string(TEST_CA_DIR) + "/" + filename);
@@ -32,19 +33,20 @@ using Server_Certificate_Store = Botan::Flatfile_Certificate_Store;
 class Server_Credentials_Manager : public Botan::Credentials_Manager
 {
 public:
-  explicit Server_Credentials_Manager(Botan::RandomNumberGenerator& rng)
+  explicit Server_Credentials_Manager()
     : stores_(), certs_(),
       store_(new Server_Certificate_Store(CA_("kea-ca.crt"))),
       cert_(Botan::X509_Certificate(CA_("kea-server.crt"))),
-      key_(Botan::PKCS8::load_key(CA_("kea-server.key"), rng))
+      key_()
   {
+    Botan::DataSource_Stream source(CA_("kea-server.key"));
+    auto priv_key = Botan::PKCS8::load_key(source);
+    key_ = std::move(priv_key);
     stores_.push_back(store_.get());
     certs_.push_back(cert_);
   }
 
-  virtual ~Server_Credentials_Manager()
-  {
-  }
+  virtual ~Server_Credentials_Manager() = default;
 
   std::vector<Botan::Certificate_Store*>
   trusted_certificate_authorities(const std::string&,
@@ -55,25 +57,26 @@ public:
 
   std::vector<Botan::X509_Certificate>
   cert_chain(const std::vector<std::string>&,
+             const std::vector<Botan::AlgorithmIdentifier>&,
              const std::string&,
              const std::string&) override
   {
     return certs_;
   }
 
-  Botan::Private_Key*
+  std::shared_ptr<Botan::Private_Key>
   private_key_for(const Botan::X509_Certificate&,
                   const std::string&,
                   const std::string&) override
   {
-    return key_.get();
+    return (key_);
   }
 
   std::vector<Botan::Certificate_Store*> stores_;
   std::vector<Botan::X509_Certificate> certs_;
   std::shared_ptr<Botan::Certificate_Store> store_;
   Botan::X509_Certificate cert_;
-  std::unique_ptr<Botan::Private_Key> key_;
+  std::shared_ptr<Botan::Private_Key> key_;
 };
 
 using Server_Session_Manager = Botan::TLS::Session_Manager_Noop;
@@ -98,7 +101,7 @@ public:
 class session : public std::enable_shared_from_this<session>
 {
 public:
-  session(tcp::socket socket, Botan::TLS::Context& ctx)
+  session(tcp::socket socket, std::shared_ptr<Botan::TLS::Context> ctx)
     : socket_(std::move(socket), ctx)
   {
   }
@@ -112,7 +115,7 @@ private:
   void do_handshake()
   {
     auto self(shared_from_this());
-    socket_.async_handshake(Botan::TLS::Connection_Side::SERVER,
+    socket_.async_handshake(Botan::TLS::Connection_Side::Server,
         [this, self](const boost::system::error_code& error)
         {
           if (!error)
@@ -162,12 +165,13 @@ class server
 public:
   server(boost::asio::io_context& io_context,
          unsigned short port,
-         Botan::Credentials_Manager& creds_mgr,
-         Botan::RandomNumberGenerator& rng,
-         Botan::TLS::Session_Manager& sess_mgr,
-         Botan::TLS::Policy& policy)
+         std::shared_ptr<Botan::Credentials_Manager> creds_mgr,
+         std::shared_ptr<Botan::RandomNumberGenerator> rng,
+         std::shared_ptr<Botan::TLS::Session_Manager> sess_mgr,
+         std::shared_ptr<Botan::TLS::Policy> policy
+         )
     : acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
-      context_(creds_mgr, rng, sess_mgr, policy)
+      context_(new Botan::TLS::Context(creds_mgr, rng, sess_mgr, policy))
   {
     do_accept();
   }
@@ -188,7 +192,7 @@ private:
   }
 
   tcp::acceptor acceptor_;
-  Botan::TLS::Context context_;
+  std::shared_ptr<Botan::TLS::Context> context_;
 };
 
 int main(int argc, char* argv[])
@@ -202,11 +206,14 @@ int main(int argc, char* argv[])
     }
 
     boost::asio::io_context io_context;
-
-    Botan::AutoSeeded_RNG rng;
-    Server_Credentials_Manager creds_mgr(rng);
-    Server_Session_Manager sess_mgr;
-    Server_Policy policy;
+    std::shared_ptr<Botan::AutoSeeded_RNG>
+      rng(new Botan::AutoSeeded_RNG());
+    std::shared_ptr<Server_Credentials_Manager>
+      creds_mgr(new Server_Credentials_Manager());
+    std::shared_ptr<Server_Session_Manager>
+      sess_mgr(new Server_Session_Manager());
+    std::shared_ptr<Server_Policy>
+      policy(new Server_Policy());
     server s(io_context, std::atoi(argv[1]), creds_mgr, rng, sess_mgr, policy);
 
     io_context.run();
