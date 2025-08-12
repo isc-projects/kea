@@ -1212,7 +1212,7 @@ def _install_gtest_sources():
 
 def _install_libyang_from_sources(ignore_errors=False):
     """Install libyang from sources."""
-    version = '3.12.2'
+    version = '3.13.5'
 
     libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
     for libdir in libdirs:
@@ -1247,7 +1247,7 @@ def _install_libyang_from_sources(ignore_errors=False):
 
 def _install_sysrepo_from_sources(ignore_errors=False):
     """Install sysrepo from sources."""
-    version = '3.6.11'
+    version = '3.13.5'
 
     libdirs = [f'{usr}/{lib}' for usr in ['/usr', '/usr/local'] for lib in ['lib', 'lib64']]
     for libdir in libdirs:

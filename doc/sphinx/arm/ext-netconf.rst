@@ -22,10 +22,10 @@ Installing NETCONF
 To get its NETCONF capabilities, Kea requires the v3 versions of libyang and
 Sysrepo. The specific versions that have been thoroughly tested with Kea are:
 
-* libyang v3.13.3 (7783869951e1494d6f4366892baebb32132c360d)
-* sysrepo v3.7.10 (3bdc1ab2988adbe935fd0f26f31f820d087c0804)
-* libyang-cpp v3 (f3cd4e05462a16e81d6bfd0c4a5b385cf88a8549)
-* sysrepo-cpp v3 (fe4edfa3998fdf312099ee1fb08a06983b6907f6)
+* libyang v3.13.5 (commit efe43e3790822a3dc64d7d28db935d03fff8b81f)
+* sysrepo v3.7.11 (commit 1b720b196f630f348d9e0c131d326b3fb8c6aca7)
+* libyang-cpp v3 (commit f3cd4e05462a16e81d6bfd0c4a5b385cf88a8549)
+* sysrepo-cpp v3 (commit fe4edfa3998fdf312099ee1fb08a06983b6907f6)
 
 .. note::
 
@@ -46,7 +46,7 @@ Installing ``libyang`` From Sources
 
     $ git clone https://github.com/CESNET/libyang.git
     $ cd libyang
-    $ git checkout v2.1.4
+    $ git checkout v3.13.5
     $ mkdir build
     $ cd build
     $ cmake ..
@@ -62,7 +62,7 @@ Installing ``sysrepo`` From Sources
 
     $ git clone https://github.com/sysrepo/sysrepo.git
     $ cd sysrepo
-    $ git checkout v2.2.12
+    $ git checkout v3.7.11
     $ mkdir build
     $ cd build
     $ cmake -DREPO_PATH=/etc/sysrepo ..
