@@ -87,8 +87,8 @@ prefix="@prefix@"
 # If script is in sources, use modules from sources.
 # If script is in installation, use modules from installation.
 modules='@abs_top_srcdir@/src/share/yang/modules'
-if test "${script_path}" = '@datarootdir@/kea/yang/modules/utils'; then
-  modules='@datarootdir@/kea/yang/modules'
+if test "${script_path}" = "@datarootdir@/kea/yang/modules/utils"; then
+  modules="@datarootdir@/kea/yang/modules"
 fi
 if test -z "${modules+x}"; then
   printf 'ERROR: cannot find location of modules. Use this script from sources or from installation.\n' >&2
