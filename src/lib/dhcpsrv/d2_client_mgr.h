@@ -491,7 +491,6 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
     } else {
         // Sanitize the name the client sent us, if we're configured to do so.
         std::string client_name = fqdn.getDomainName();
-
         isc::util::str::StringSanitizerPtr sanitizer = ddns_params.getHostnameSanitizer();
         if (sanitizer) {
             // We need the raw text form, so we can replace escaped chars
@@ -521,6 +520,12 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
 
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == T::PARTIAL) {
+            if (client_name.back() == '.') {
+                // By definition a partial cannot end in a dot, sanitizing above
+                // may have added one.  Strip it, so we'll add the suffix (if one).
+                client_name.pop_back();
+            }
+
             fqdn_resp.setDomainName(qualifyName(client_name, ddns_params, true), T::FULL);
         } else  {
             fqdn_resp.setDomainName(client_name, T::FULL);

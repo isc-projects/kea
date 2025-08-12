@@ -639,13 +639,8 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_dot);
     EXPECT_EQ("somehost.hasdot.com.", qualified_name);
 
-    // Verify that the qualifying suffix gets appended without an
-    // extraneous dot when partial_name ends with a "."
-    qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_dot);
-    EXPECT_EQ("somehost.hasdot.com.", qualified_name);
-
-    // Verify that a name with a trailing dot does not get an extraneous
-    // dot when the suffix is blank
+    // Verify that the qualifying suffix does not get appended nor an
+    // extraneous dot added to a name with a trailing dot.
     subnet_->setDdnsQualifyingSuffix("");
     qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_dot);
     EXPECT_EQ("somehost.", qualified_name);
@@ -664,7 +659,6 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     // suffix is blank and trailing dot is false
     qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
-
 }
 
 /// @brief Tests the qualifyName method's ability to avoid duplicating
@@ -803,6 +797,12 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4) {
             "myhost.example.com.", Option4ClientFqdn::FULL
         },
         {
+            "RCM_NEVER #4, partial client name with trailing .",
+            D2ClientConfig::RCM_NEVER,
+            "myhost.", Option4ClientFqdn::PARTIAL,
+            "myhost.suffix.com.", Option4ClientFqdn::FULL
+        },
+        {
             "RCM_ALWAYS #1, empty client name",
             D2ClientConfig::RCM_ALWAYS,
             "", Option4ClientFqdn::PARTIAL,
@@ -916,6 +916,12 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6) {
             D2ClientConfig::RCM_NEVER,
             "myhost.example.com.", Option6ClientFqdn::FULL,
             "myhost.example.com.", Option6ClientFqdn::FULL
+        },
+        {
+            "RCM_NEVER #4, partial client name with trailing .",
+            D2ClientConfig::RCM_NEVER,
+            "myhost.", Option6ClientFqdn::PARTIAL,
+            "myhost.suffix.com.", Option6ClientFqdn::FULL
         },
         {
             "RCM_ALWAYS #1, empty client name",

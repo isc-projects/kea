@@ -68,6 +68,7 @@ const char* CONFIGS[] = {
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
+        "\"ddns-qualifying-suffix\":\"example.org.\", "
         "\"subnet6\": [ "
         " { "
         "    \"id\": 1, "
@@ -82,7 +83,8 @@ const char* CONFIGS[] = {
         "    },"
         "    {"
         "        \"duid\": \"01:02:03:05\","
-        "        \"ip-addresses\": [ \"2001:db8:1:1::babf\" ]"
+        "        \"ip-addresses\": [ \"2001:db8:1:1::babf\" ],"
+        "        \"hostname\": \"hare.mad-hatter.com.\""
         "    } ]"
         " } ]"
    "}",
@@ -1551,7 +1553,7 @@ TEST_F(HostTest, basicSarrs) {
     // and lease has reserved hostname
     Lease6Ptr lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
-    EXPECT_EQ("alice", lease_server->hostname_);
+    EXPECT_EQ("alice.example.org", lease_server->hostname_);
 
     // Now redo the client, adding one to the DUID
     client.clearConfig();
@@ -1569,7 +1571,7 @@ TEST_F(HostTest, basicSarrs) {
     // and that the server lease has NO hostname
     lease_server = checkLease(lease_client);
     ASSERT_TRUE(lease_server);
-    EXPECT_EQ("", lease_server->hostname_);
+    EXPECT_EQ("hare.mad-hatter.com", lease_server->hostname_);
 
     // Now redo the client with yet another DUID and verify that
     // we get a dynamic address.

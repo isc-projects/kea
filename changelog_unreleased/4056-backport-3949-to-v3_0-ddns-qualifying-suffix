@@ -1,0 +1,4 @@
+[bug]		tmark, razvan
+	Avoid adding the qualifying-suffix to fully qualified
+	host names specified in host reservations.
+	(Gitlab #4056, #3949)
