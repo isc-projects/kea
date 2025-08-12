@@ -4475,7 +4475,6 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
             }
         }
         if (use_min) {
-            // Log
             getMinValidLft(ctx, valid_lft);
         } else {
             valid_lft = getValidLft(ctx);
@@ -5178,6 +5177,8 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         changed = true;
         lease->client_id_ = ClientIdPtr();
     }
+    uint32_t remain_lft(0);
+    getRemaining(lease, remain_lft);
     lease->cltt_ = time(0);
 
     // Get the context appropriate valid lifetime.
@@ -5193,7 +5194,7 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
             }
         }
         if (use_min) {
-            // Log
+            lease->valid_lft_ = remain_lft;
             getMinValidLft(ctx, lease->valid_lft_);
         } else {
             lease->valid_lft_ = getValidLft(ctx);

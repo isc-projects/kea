@@ -126,6 +126,7 @@ kea_dhcp4_tests = executable(
     'dhcp4to6_ipc_unittest.cc',
     'direct_client_unittest.cc',
     'dora_unittest.cc',
+    'flq_unittest.cc',
     'fqdn_unittest.cc',
     'get_config_unittest.cc',
     'hooks_unittest.cc',
