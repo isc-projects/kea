@@ -39,12 +39,15 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseV4) {
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("192.0.2.1")));
     state->addFreeLease(IOAddress("192.0.2.1"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("192.0.2.1")));
     // The same lease is always offered.
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("192.0.2.1")));
 
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("192.0.2.3"));
@@ -55,9 +58,12 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseV4) {
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
     // Now, the second lease should be offered.
     EXPECT_EQ("192.0.2.3", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("192.0.2.1")));
+    EXPECT_TRUE(state->isFreeLease(IOAddress("192.0.2.3")));
 
     // Try to delete a non-existing lease. It should not affect the
     // existing leases.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("192.0.2.2")));
     state->deleteFreeLease(IOAddress("192.0.2.2"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(2, state->getFreeLeaseCount());
@@ -126,12 +132,15 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("2001:db8:1::1")));
     state->addFreeLease(IOAddress("2001:db8:1::1"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("2001:db8:1::1")));
     // The same lease is always offered.
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("2001:db8:1::1")));
 
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("2001:db8:1::3"));
@@ -142,9 +151,12 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
     // Now, the second lease should be offered.
     EXPECT_EQ("2001:db8:1::3", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(state->isFreeLease(IOAddress("2001:db8:1::3")));
 
     // Try to delete a non-existing lease. It should not affect the
     // existing leases.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("2001:db8:1::2")));
     state->deleteFreeLease(IOAddress("2001:db8:1::2"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(2, state->getFreeLeaseCount());
@@ -211,11 +223,15 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeasePD) {
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("3000::5600")));
     state->addFreeLease(IOAddress("3000::5600"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("3000::5600")));
     // The same lease is always offered.
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
+    EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("3000::5600")));
 
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("3000::7800"));
@@ -226,9 +242,12 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeasePD) {
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
     // Now, the second lease should be offered.
     EXPECT_EQ("3000::7800", state->offerFreeLease().toText());
+    EXPECT_TRUE(state->isFreeLease(IOAddress("3000::5600")));
+    EXPECT_TRUE(state->isFreeLease(IOAddress("3000::7800")));
 
     // Try to delete a non-existing lease. It should not affect the
     // existing leases.
+    EXPECT_FALSE(state->isFreeLease(IOAddress("3000::6400")));
     state->deleteFreeLease(IOAddress("3000::6400"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ(2, state->getFreeLeaseCount());
@@ -273,6 +292,5 @@ TEST(PoolFreeLeaseAllocationState, addFreeLeasPDSeveralTimes) {
     state->deleteFreeLease(IOAddress("3000::5600"));
     EXPECT_TRUE(state->exhausted());
 }
-
 
 } // end of anonymous namespace

@@ -150,11 +150,9 @@ public:
     ///
     /// @param addr the address.
     /// @param client_classes list of classes client belongs to.
-    /// @param count_me the address is still marked as free.
     virtual double
     getOccupancyRate(const asiolink::IOAddress& addr,
-                     const ClientClasses& client_classes,
-                     const bool count_me) const {
+                     const ClientClasses& client_classes) const {
         return (0.);
     }
 
@@ -169,12 +167,10 @@ public:
     /// @param pref the prefix.
     /// @param plen the prefix length.
     /// @param client_classes list of classes client belongs to.
-    /// @param count_me the prefix is still marked as free.
     virtual double
     getOccupancyRate(const asiolink::IOAddress& pref,
                      const uint8_t plen,
-                     const ClientClasses& client_classes,
-                     const bool count_me) const {
+                     const ClientClasses& client_classes) const {
         return (0.);
     }
 

@@ -53,6 +53,17 @@ PoolFreeLeaseQueueAllocationState::deleteFreeLease(const asiolink::IOAddress& ad
     }
 }
 
+bool
+PoolFreeLeaseQueueAllocationState::isFreeLease(const asiolink::IOAddress& address) const {
+    if (free_lease4_queue_) {
+        auto const& idx = free_lease4_queue_->get<1>();
+        return (idx.count(address.toUint32()) > 0);
+    } else {
+        auto const& idx = free_lease6_queue_->get<1>();
+        return (idx.count(address) > 0);
+    }
+}
+
 IOAddress
 PoolFreeLeaseQueueAllocationState::offerFreeLease() {
     if (free_lease4_queue_) {
@@ -84,4 +95,3 @@ PoolFreeLeaseQueueAllocationState::getFreeLeaseCount() const {
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
-

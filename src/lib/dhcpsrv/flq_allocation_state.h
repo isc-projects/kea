@@ -55,6 +55,11 @@ public:
     /// @param address lease address.
     void deleteFreeLease(const asiolink::IOAddress& address);
 
+    /// @brief Check if a lease is in the queue.
+    ///
+    /// @param address lease address.
+    bool isFreeLease(const asiolink::IOAddress& address) const;
+
     /// @brief Returns next available lease.
     ///
     /// @return next free lease address or IPv4/IPv6 zero address when

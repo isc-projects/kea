@@ -137,8 +137,7 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
 
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
-                                          const ClientClasses& client_classes,
-                                          const bool count_me) const {
+                                          const ClientClasses& client_classes) const {
     // Sanity.
     if (!addr.isV4()) {
         return (0.);
@@ -164,7 +163,7 @@ FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
         uint128_t free_cnt = pool_state->getFreeLeaseCount();
         if (!found && pool->inRange(addr)) {
             found = true;
-            if (count_me && (free_cnt > 0)) {
+            if ((free_cnt > 0) && pool_state->isFreeLease(addr)) {
                 --free_cnt;
             }
         }
@@ -186,8 +185,7 @@ FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& pref,
                                           const uint8_t plen,
-                                          const ClientClasses& client_classes,
-                                          const bool count_me) const {
+                                          const ClientClasses& client_classes) const {
     // Sanity.
     if (!pref.isV6()) {
         return (0.);
@@ -217,7 +215,7 @@ FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& pref,
         uint128_t free_cnt = pool_state->getFreeLeaseCount();
         if (!found && pool->inRange(pref)) {
             found = true;
-            if (count_me && (free_cnt > 0)) {
+            if ((free_cnt > 0) && pool_state->isFreeLease(pref)) {
                 --free_cnt;
             }
         }

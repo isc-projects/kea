@@ -65,11 +65,9 @@ TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
     ASSERT_TRUE(pool_state);
     EXPECT_FALSE(pool_state->exhausted());
 
-    double r = alloc.getOccupancyRate(IOAddress("192.0.2.101"), cc_, false);
-    EXPECT_EQ(.5, r);
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.101"), cc_, true);
+    double r = alloc.getOccupancyRate(IOAddress("192.0.2.101"), cc_);
     EXPECT_EQ(.6, r);
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.1"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.1"), cc_);
     EXPECT_EQ(0., r);
 
     std::set<IOAddress> addresses;
@@ -131,7 +129,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
     IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
 
-    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(1., r);
 
     auto i = 0;
@@ -142,7 +140,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
         ++i;
     }
 
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(.5, r);
 
     for (auto j = 0; j < 5; ++j) {
@@ -156,7 +154,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
     candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
 
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -186,7 +184,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
     IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
 
-    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(1., r);
 
     auto i = 0;
@@ -198,7 +196,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
         }
         ++i;
     }
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(.5, r);
 
     for (auto j = 0; j < 5; ++j) {
@@ -212,7 +210,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
     candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
 
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -237,8 +235,9 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
 
     auto& lease_mgr = LeaseMgrFactory::instance();
 
-    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
-    EXPECT_EQ(0., r);
+    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
+    // 1/100
+    EXPECT_EQ(.01, r);
 
     std::set<IOAddress> addresses_set;
     std::vector<IOAddress> addresses_vector;
@@ -259,7 +258,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
     // Make sure that unique addresses have been returned.
     EXPECT_EQ(total, addresses_set.size());
 
-    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(1., r);
 
     // Verify that the addresses are returned in the random order.
@@ -301,7 +300,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, noPools) {
     EXPECT_TRUE(candidate.isV4Zero());
 
     // rate is 0. because of the address can't be found, not from 0./0....
-    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
     EXPECT_EQ(0., r);
 }
 
@@ -338,8 +337,9 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
 
    // Simulate client's request belonging to the class bar.
    cc_.insert("bar");
-   double r = alloc.getOccupancyRate(IOAddress("192.0.2.120"), cc_, false);
-   EXPECT_EQ(0., r);
+   double r = alloc.getOccupancyRate(IOAddress("192.0.2.120"), cc_);
+   // 1/20
+   EXPECT_EQ(.05, r);
    for (auto i = 0; i < 20; ++i) {
        // Allocate random addresses and make sure they belong to the
        // pools associated with the class bar.
@@ -351,7 +351,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
    }
    EXPECT_EQ(20, addresses_set.size());
 
-   r = alloc.getOccupancyRate(IOAddress("192.0.2.120"), cc_, false);
+   r = alloc.getOccupancyRate(IOAddress("192.0.2.120"), cc_);
    EXPECT_EQ(1., r);
 
    addresses_set.clear();
@@ -359,8 +359,9 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
    // Simulate the case that the client also belongs to the class foo.
    // All pools should now be available.
    cc_.insert("foo");
-   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
-   EXPECT_EQ(.5, r);
+   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
+   // 21/40
+   EXPECT_EQ(.525, r);
    for (auto i = 0; i < 20; ++i) {
        IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
        addresses_set.insert(candidate);
@@ -368,7 +369,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
        EXPECT_TRUE(subnet_->inRange(candidate));
    }
    EXPECT_EQ(20, addresses_set.size());
-   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
    EXPECT_EQ(1., r);
 
    // When the client does not belong to any client class the allocator
@@ -376,7 +377,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
    cc_.clear();
    IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
    EXPECT_TRUE(candidate.isV4Zero());
-   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_, false);
+   r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
    EXPECT_EQ(0., r);
 }
 
@@ -428,7 +429,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {
     EXPECT_NO_THROW(alloc.initAfterConfigure());
 
     // Address getOccupancyRate is for IPv4 only.
-    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1::10"), cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1::10"), cc_);
     EXPECT_EQ(0., r);
 
     auto pool_state = boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>(pool_->getAllocationState());
@@ -735,8 +736,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeases) {
     ASSERT_TRUE(pool_state);
     EXPECT_FALSE(pool_state->exhausted());
 
-    double r = alloc.getOccupancyRate(IOAddress("2001:db8:2::"),
-                                      128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("2001:db8:2::"), 128, cc_);
     EXPECT_EQ(5. / 256., r);
 
     std::set<IOAddress> addresses;
@@ -775,8 +775,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPool) {
     // The pool comprises 65536 prefixes. All should be returned.
     EXPECT_EQ(65536, prefixes.size());
 
-    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"),
-                                      128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 128, cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -814,7 +813,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
 
     IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());
-    double r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(1., r);
 
     auto i = 0;
@@ -824,10 +823,8 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
         }
         ++i;
     }
-    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(.5, r);
-    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, true);
-    EXPECT_EQ(129. / 256., r);
 
     for (auto j = 0; j < 128; ++j) {
         candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
@@ -840,7 +837,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
     candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());
 
-    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -878,7 +875,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
 
     IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());
-    double r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(1., r);
 
     auto i = 0;
@@ -890,7 +887,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
         }
         ++i;
     }
-    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(.5, r);
 
     for (auto j = 0; j < 128; ++j) {
@@ -905,7 +902,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
     candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());
 
-        r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_, false);
+        r = alloc.getOccupancyRate(IOAddress("3000::"), 128, cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -942,7 +939,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
     // Make sure that unique prefixes have been returned.
     EXPECT_EQ(total, prefixes.size());
 
-    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_);
     EXPECT_EQ(1., r);
 }
 
@@ -979,12 +976,11 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLower) {
     // Make sure that unique prefixes have been returned.
     EXPECT_EQ(total, prefixes.size());
 
-    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"),
-                                      120, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 120, cc_);
     EXPECT_EQ(1., r);
-    r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 128, cc_);
     EXPECT_EQ(65536. / 68096., r);
-    r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 64, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 64, cc_);
     EXPECT_EQ(0., r);
 }
 
@@ -1020,7 +1016,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqual) {
     }
     // Make sure that unique prefixes have been returned.
     EXPECT_EQ(total, prefixes.size());
-    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_);
     EXPECT_EQ(2560. / 68096., r);
 }
 
@@ -1056,7 +1052,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
     }
     // Make sure that unique prefixes have been returned.
     EXPECT_EQ(total, prefixes.size());
-    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_);
     EXPECT_EQ(2560. / 68096., r);
 }
 
@@ -1095,13 +1091,13 @@ TEST_F(FreeLeaseQueueAllocatorTest6, pdPoolsClientClasses) {
     candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 64);
     EXPECT_TRUE(candidate.isV6Zero());
 
-    double r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_, false);
+    double r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_);
     EXPECT_EQ(1., r);
     cc_.insert("foo");
-    r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_);
     EXPECT_EQ(256. / 65792., r);
     cc_.clear();
-    r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_, false);
+    r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_);
     EXPECT_EQ(0., r);
 }
 
