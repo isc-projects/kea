@@ -1114,36 +1114,22 @@ protected:
 
     /// @brief Selects a subnet for a given client's packet.
     ///
-    /// If selectSubnet is called to simply do sanity checks (check if a
-    /// subnet would be selected), then there is no need to call hooks,
-    /// as this will happen later (when selectSubnet is called again).
-    /// In such case the sanity_only should be set to true.
-    ///
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
-    /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::ConstSubnet4Ptr selectSubnet(const Pkt4Ptr& query,
                                             bool& drop,
-                                            bool sanity_only = false,
                                             bool allow_answer_park = true);
 
     /// @brief Selects a subnet for a given client's DHCP4o6 packet.
     ///
-    /// If selectSubnet is called to simply do sanity checks (check if a
-    /// subnet would be selected), then there is no need to call hooks,
-    /// as this will happen later (when selectSubnet is called again).
-    /// In such case the sanity_only should be set to true.
-    ///
     /// @param query client's message
     /// @param drop if it is true the packet will be dropped
-    /// @param sanity_only if it is true the callout won't be called
     /// @param allow_answer_park Indicates if parking a packet is allowed
     /// @return selected subnet (or null if no suitable subnet was found)
     isc::dhcp::ConstSubnet4Ptr selectSubnet4o6(const Pkt4Ptr& query,
                                                bool& drop,
-                                               bool sanity_only = false,
                                                bool allow_answer_park = true);
 
     /// @brief dummy wrapper around IfaceMgr::receive4

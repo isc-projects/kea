@@ -4786,14 +4786,14 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
     pkt->setLocalAddr(IOAddress("255.255.255.255"));
     EXPECT_TRUE(srv_->accept(pkt));
 
-    // For eth0, there is no subnet configured. Such message is expected
-    // to be silently dropped.
+    // If the message is broadcast it should be accepted, even though
+    // it has been received via eth0 for which no subnet is configured.
     pkt->setIface("eth0");
     pkt->setIndex(ETH0_INDEX);
-    EXPECT_FALSE(srv_->accept(pkt));
+    EXPECT_TRUE(srv_->accept(pkt));
 
-    // But, if the message is unicast it should be accepted, even though
-    // it has been received via eth0.
+    // If the message is unicast it should be accepted, even though
+    // it has been received via eth0 for which no subnet is configured.
     pkt->setLocalAddr(IOAddress("10.0.0.1"));
     EXPECT_TRUE(srv_->accept(pkt));
 

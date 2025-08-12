@@ -1631,6 +1631,7 @@ DORATest::ciaddr() {
     ASSERT_NO_THROW(client.doRequest());
     // The client is sending invalid ciaddr so the server should send a NAK.
     resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
     ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
     // For DHCPNAK the ciaddr is always 0 (should not be copied) from the
     // client's message.
