@@ -4463,9 +4463,26 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     }
 
     // Get the context appropriate lifetime.
-    uint32_t valid_lft = (ctx.offer_lft_ ? ctx.offer_lft_ : getValidLft(ctx));
+    uint32_t valid_lft = ctx.offer_lft_;
+    if (!valid_lft) {
+        bool use_min(false);
+        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+        if (!threshold.unspecified() && (threshold < 1.0)) {
+            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_V4)->
+                getOccupancyRate(addr, ctx.query_->getClasses());
+            if (occupancy >= threshold) {
+                use_min = true;
+            }
+        }
+        if (use_min) {
+            // Log
+            getMinValidLft(ctx, valid_lft);
+        } else {
+            valid_lft = getValidLft(ctx);
+        }
+    }
 
-    time_t now = time(NULL);
+    time_t now = time(0);
 
     ClientIdPtr client_id;
     if (ctx.subnet_->getMatchClientId()) {
@@ -5161,10 +5178,27 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
         changed = true;
         lease->client_id_ = ClientIdPtr();
     }
-    lease->cltt_ = time(NULL);
+    lease->cltt_ = time(0);
 
     // Get the context appropriate valid lifetime.
-    lease->valid_lft_ = (ctx.offer_lft_ ? ctx.offer_lft_ : getValidLft(ctx));
+    lease->valid_lft_ = ctx.offer_lft_;
+    if (!lease->valid_lft_) {
+        bool use_min(false);
+        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+        if (!threshold.unspecified() && (threshold < 1.0)) {
+            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_V4)->
+                getOccupancyRate(lease->addr_, ctx.query_->getClasses());
+            if (occupancy >= threshold) {
+                use_min = true;
+            }
+        }
+        if (use_min) {
+            // Log
+            getMinValidLft(ctx, lease->valid_lft_);
+        } else {
+            lease->valid_lft_ = getValidLft(ctx);
+        }
+    }
 
     // Valid lifetime has changed.
     if (lease->valid_lft_ != lease->current_valid_lft_) {
