@@ -1,0 +1,6 @@
+[bug]		tmark
+	Corrected an issue in kea-dhcp4 which caused
+	broadcasted client queries to fail to match subnets
+	restricted to classes assigned during early global
+	host lookups.
+	(Gitlab #4047)

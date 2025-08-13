@@ -2371,7 +2371,7 @@ TEST_F(ClassifyTest, classTaggingList) {
     IfaceMgrTestConfig test_config(true);
 
     // Define a client-str option for classification, and server-str
-    // option to send in response.  Then define 3 possible values in 
+    // option to send in response.  Then define 3 possible values in
     // a subnet for sever-str based on class membership.
     string config = R"^(
     {
@@ -2431,8 +2431,8 @@ TEST_F(ClassifyTest, classTaggingList) {
     };
 
     std::list<Scenario> scenarios {
-        { __LINE__, "one",     "class-one",     "string.one" }, 
-        { __LINE__, "two",     "class-two",     "string.two" }, 
+        { __LINE__, "one",     "class-one",     "string.one" },
+        { __LINE__, "two",     "class-two",     "string.two" },
         { __LINE__, "neither", "class-neither", "string.other" }
     };
 
@@ -2474,6 +2474,65 @@ TEST_F(ClassifyTest, classTaggingList) {
         ASSERT_TRUE(server_opt);
         EXPECT_EQ(server_opt->toString(), scenario.exp_server_str_);
     }
+}
+
+// This test verifies that a broadcast message can rely on
+// early global reservations lookup for selecting a guarded subnet.
+// This test uses a single guarded subnet to ensure that subnet
+// selection doesn't have default.
+TEST_F(ClassifyTest, earlySubnetNoFallback) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    std::string config =
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"early-global-reservations-lookup\": true,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"only-one\""
+        "}],"
+        "\"subnet4\": ["
+        "{"
+        "    \"subnet\": \"10.0.0.0/24\","
+        "    \"id\": 1,"
+        "    \"interface\": \"eth0\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"client-class\": \"only-one\""
+        "}"
+        "],"
+        "\"reservations\": [ {"
+        "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "    \"client-classes\": [ \"only-one\" ] } ]"
+    "}";
+
+    // Configure DHCP server.
+    configure(config, *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Check response.
+    Pkt4Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    EXPECT_EQ("10.0.0.10", resp->getYiaddr().toText());
+
+    // Try with a different HW address.
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+
+    // Set the HW address to another value.  This will not select a subnet.
+    client2.setHWAddress("aa:bb:cc:01:ee:ff");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Check response.
+    resp = client2.getContext().response_;
+    ASSERT_FALSE(resp);
 }
 
 } // end of anonymous namespace
