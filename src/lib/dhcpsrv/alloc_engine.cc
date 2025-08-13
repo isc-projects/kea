@@ -1750,8 +1750,19 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         isc_throw(BadValue, "Attempt to recycle registered address");
     }
 
+    bool use_min = false;
     if (expired->type_ != Lease::TYPE_PD) {
         prefix_len = 128; // non-PD lease types must be always /128
+    } else {
+	auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+        if (!threshold.unspecified() && (threshold < 1.0)) {
+            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_PD)->
+                getOccupancyRate(expired->addr_, prefix_len,
+                                 ctx.query_->getClasses());
+            if (occupancy >= threshold) {
+                use_min = true;
+            }
+        }
     }
 
     if (!ctx.fake_allocation_) {
@@ -1764,12 +1775,19 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // address, lease type and prefixlen (0) stay the same
     expired->iaid_ = ctx.currentIA().iaid_;
     expired->duid_ = ctx.duid_;
+    expired->hwaddr_ = ctx.hwaddr_;
 
     // Calculate life times.
-    getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
+    expired->preferred_lft_ = 0;
+    expired->valid_lft_ = 0;
+    if (use_min) {
+	getMinLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
+    } else {
+	getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
+    }
     expired->reuseable_valid_lft_ = 0;
 
-    expired->cltt_ = time(NULL);
+    expired->cltt_ = time(0);
     expired->subnet_id_ = ctx.subnet_->getID();
     expired->hostname_ = ctx.hostname_;
     expired->fqdn_fwd_ = ctx.fwd_dns_update_;
@@ -2035,13 +2053,27 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     uint8_t prefix_len,
                                     CalloutHandle::CalloutNextStep& callout_status) {
 
-    if (ctx.currentIA().type_ != Lease::TYPE_PD) {
-        prefix_len = 128; // non-PD lease types must be always /128
-    }
-
     uint32_t preferred = 0;
     uint32_t valid = 0;
-    getLifetimes6(ctx, preferred, valid);
+    bool use_min = false;
+    if (ctx.currentIA().type_ != Lease::TYPE_PD) {
+        prefix_len = 128; // non-PD lease types must be always /128
+    } else {
+        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+        if (!threshold.unspecified() && (threshold < 1.0)) {
+            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_PD)->
+                getOccupancyRate(addr, prefix_len,
+                                 ctx.query_->getClasses());
+            if (occupancy >= threshold) {
+                use_min = true;
+            }
+        }
+    }
+    if (use_min) {
+        getMinLifetimes6(ctx, preferred, valid);
+    } else {
+        getLifetimes6(ctx, preferred, valid);
+    }
 
     Lease6Ptr lease(new Lease6(ctx.currentIA().type_, addr, ctx.duid_,
                                ctx.currentIA().iaid_, preferred,
