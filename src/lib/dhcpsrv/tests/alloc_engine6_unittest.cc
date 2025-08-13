@@ -6626,7 +6626,7 @@ TEST_F(AllocEngine6Test, getRemaining) {
     uint32_t valid(1);
     uint32_t preferred(1);
     Lease6Ptr lease;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_EQ(0, valid);
     EXPECT_EQ(0, preferred);
 
@@ -6639,7 +6639,7 @@ TEST_F(AllocEngine6Test, getRemaining) {
     lease.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"), duid,
                            iaid, 30, 50, 1));
     lease->state_ = Lease::STATE_DECLINED;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_EQ(0, valid);
     EXPECT_EQ(0, preferred);
 
@@ -6649,7 +6649,7 @@ TEST_F(AllocEngine6Test, getRemaining) {
     lease->state_ = Lease::STATE_DEFAULT;
     lease->cltt_ = lease->current_cltt_ = now + 100;
     lease->valid_lft_ = lease->current_valid_lft_ = 50;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_EQ(0, valid);
     EXPECT_EQ(0, preferred);
 
@@ -6657,21 +6657,21 @@ TEST_F(AllocEngine6Test, getRemaining) {
     valid = 1;
     preferred = 1;
     lease->cltt_ = lease->current_cltt_ = now - 100;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_EQ(0, valid);
     EXPECT_EQ(0, preferred);
 
     // Valid case.
     now = time(0);
     lease->cltt_ = lease->current_cltt_ = now - 10;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_NEAR(40, valid, 1);
     EXPECT_NEAR(20, preferred, 1);
 
     // No longer preferred.
     now = time(0);
     lease->cltt_ = lease->current_cltt_ = now - 40;
-    AllocEngine::getRemaining(lease, valid, preferred);
+    AllocEngine::getRemaining(lease, preferred, valid);
     EXPECT_NEAR(10, valid, 1);
     EXPECT_EQ(0, preferred);
 }
