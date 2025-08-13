@@ -27,8 +27,8 @@ std::string FLQ_CONFIG =
     "\"preferred-lifetime\": 200,"
     "\"max-preferred-lifetime\": 300,"
     "\"min-valid-lifetime\": 400,"
-    "\"valid-lifetime\": 500,"
-    "\"max-valid-lifetime\": 600,"
+    "\"valid-lifetime\": 600,"
+    "\"max-valid-lifetime\": 700,"
     "\"rebind-timer\": 250,"
     "\"renew-timer\": 250,"
     "\"adaptive-lease-time-threshold\": .5,"
@@ -99,8 +99,8 @@ TEST_F(FLQTest, empty) {
     // Preferred lifetime should be the config preferred-lifetime (200).
     EXPECT_EQ(200, lease->preferred_lft_);
 
-    // Valid lifetime should be the config valid-lifetime (500).
-    EXPECT_EQ(500, lease->valid_lft_);
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, lease->valid_lft_);
 }
 
 // Test allocation with almost full pool.
@@ -247,190 +247,273 @@ TEST_F(FLQTest, reclaimed) {
     // Valid lifetime should be the config min-valid-lifetime (400).
     EXPECT_EQ(400, lease->valid_lft_);
 }
-#if 0
+
 // Test renewal with almost empty pool.
 TEST_F(FLQTest, renew) {
-    Dhcp6Client client(srv_, Dhcp6Client::SELECTING);
+    Dhcp6Client client(srv_);
 
     // Configure DHCP server.
     configure(FLQ_CONFIG, *client.getServer());
 
-    // Obtain a lease from the server using the 4-way exchange.
-    boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
-    ASSERT_NO_THROW(client.doDORA(hint));
+    // Perform 4-way exchange with the server requesting the last prefix.
+    client.requestPrefix(1, 51, IOAddress("2001:db8:1:e000::"));
+    ASSERT_NO_THROW(client.doSARR());
 
-    // Make sure that the server responded.
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr lease = checkLease(client.getLease(0));
+    ASSERT_TRUE(lease);
 
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the requested prefix.
+    EXPECT_EQ("2001:db8:1:e000::", lease->addr_.toText());
+    EXPECT_EQ(51, lease->prefixlen_);
 
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Preferred lifetime should be the config preferred-lifetime (200).
+    EXPECT_EQ(200, lease->preferred_lft_);
 
-    // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, lease->valid_lft_);
 
     // Age the lease.
+    lease->cltt_ -= 1000;
+    lease->current_cltt_ -= 1000;
     auto& lease_mgr = LeaseMgrFactory::instance();
-    Lease6Ptr lease = lease_mgr.getLease6(*hint);
-    ASSERT_TRUE(lease);
-    lease->cltt_ -= 150;
-    lease->current_cltt_ -= 150;
     EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
 
-    // Let's transition the client to Renewing state.
-    client.setState(Dhcp6Client::RENEWING);
+    // Send the renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
 
-    // Set the unicast destination address to indicate that it is a renewal.
-    client.setDestAddress(IOAddress("10.0.0.1"));
-    ASSERT_NO_THROW(client.doRequest());
+    // Server should have renewed the prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr renewed = checkLease(client.getLease(0));
+    ASSERT_TRUE(renewed);
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the same prefix.
+    EXPECT_EQ(lease->addr_, renewed->addr_);
+    EXPECT_EQ(lease->prefixlen_, renewed->prefixlen_);
 
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Check the lease was updated.
+    EXPECT_NEAR(lease->cltt_ + 1000, renewed->cltt_, 2);
 
-    // Valid lifetime should be the valid-lifetime parameter value (200).
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    // Preferred lifetime should be the config preferred-lifetime (200).
+    EXPECT_EQ(200, renewed->preferred_lft_);
+
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, renewed->valid_lft_);
 }
 
 // Test renewal with full pool.
 TEST_F(FLQTest, renewFull) {
-    Dhcp6Client client(srv_, Dhcp6Client::SELECTING);
+    Dhcp6Client client(srv_);
 
     // Configure DHCP server.
     configure(FLQ_CONFIG, *client.getServer());
 
-    // Obtain a lease from the server using the 4-way exchange.
-    boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
-    ASSERT_NO_THROW(client.doDORA(hint));
+    // Perform 4-way exchange with the server requesting the last prefix.
+    client.requestPrefix(1, 51, IOAddress("2001:db8:1:e000::"));
+    ASSERT_NO_THROW(client.doSARR());
 
-    // Make sure that the server responded.
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr lease = checkLease(client.getLease(0));
+    ASSERT_TRUE(lease);
 
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the requested prefix.
+    EXPECT_EQ("2001:db8:1:e000::", lease->addr_.toText());
+    EXPECT_EQ(51, lease->prefixlen_);
 
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Preferred lifetime should be the config preferred-lifetime (200).
+    EXPECT_EQ(200, lease->preferred_lft_);
 
-    // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, lease->valid_lft_);
+
+    // Create leases for the first prefixes.
+    auto& lease_mgr = LeaseMgrFactory::instance();
+    auto lease0 = createLease6(IOAddress("2001:db8:1::"), 1);
+    EXPECT_TRUE(lease_mgr.addLease(lease0));
+    auto lease1 = createLease6(IOAddress("2001:db8:1:2000::"), 2);
+    EXPECT_TRUE(lease_mgr.addLease(lease1));
+    auto lease2 = createLease6(IOAddress("2001:db8:1:4000::"), 3);
+    EXPECT_TRUE(lease_mgr.addLease(lease2));
+    auto lease3 = createLease6(IOAddress("2001:db8:1:6000::"), 4);
+    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    auto lease4 = createLease6(IOAddress("2001:db8:1:8000::"), 5);
+    EXPECT_TRUE(lease_mgr.addLease(lease4));
+    auto lease5 = createLease6(IOAddress("2001:db8:1:a000::"), 6);
+    EXPECT_TRUE(lease_mgr.addLease(lease5));
+    auto lease6 = createLease6(IOAddress("2001:db8:1:c000::"), 7);
+    EXPECT_TRUE(lease_mgr.addLease(lease6));
+    auto lease7 = createLease6(IOAddress("2001:db8:1:e000::"), 8);
 
     // Age the lease.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    Lease6Ptr lease = lease_mgr.getLease6(*hint);
-    ASSERT_TRUE(lease);
-    lease->cltt_ -= 150;
-    lease->current_cltt_ -= 150;
+    lease->cltt_ -= 1000;
+    lease->current_cltt_ -= 1000;
     EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
 
-    // Create leases for the first addresses.
-    auto lease1 = createLease6(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease6(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease6(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    // Send the renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
 
-    // Let's transition the client to Renewing state.
-    client.setState(Dhcp6Client::RENEWING);
+    // Server should have renewed the prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr renewed = checkLease(client.getLease(0));
+    ASSERT_TRUE(renewed);
 
-    // Set the unicast destination address to indicate that it is a renewal.
-    client.setDestAddress(IOAddress("10.0.0.1"));
-    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the client has got the same prefix.
+    EXPECT_EQ(lease->addr_, renewed->addr_);
+    EXPECT_EQ(lease->prefixlen_, renewed->prefixlen_);
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check the lease was updated.
+    EXPECT_NEAR(lease->cltt_ + 1000, renewed->cltt_, 2);
 
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Preferred lifetime should be the config min-preferred-lifetime (100).
+    EXPECT_EQ(100, renewed->preferred_lft_);
 
-    // Valid lifetime should be the min-valid-lifetime parameter value (100).
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(100, opt->getValue());
+    // Valid lifetime should be the config min-valid-lifetime (400).
+    EXPECT_EQ(400, renewed->valid_lft_);
 }
 
-// Test renewal with full pool but remaining lifetime greater than minimal.
+// Test renewal with full pool but remaining lifetimes greater than minimal.
 TEST_F(FLQTest, renewRemaining) {
-    Dhcp6Client client(srv_, Dhcp6Client::SELECTING);
+    Dhcp6Client client(srv_);
 
     // Configure DHCP server.
     configure(FLQ_CONFIG, *client.getServer());
 
-    // Obtain a lease from the server using the 4-way exchange.
-    boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
-    ASSERT_NO_THROW(client.doDORA(hint));
+    // Perform 4-way exchange with the server requesting the last prefix.
+    client.requestPrefix(1, 51, IOAddress("2001:db8:1:e000::"));
+    ASSERT_NO_THROW(client.doSARR());
 
-    // Make sure that the server responded.
-    Pkt6Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr lease = checkLease(client.getLease(0));
+    ASSERT_TRUE(lease);
 
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the requested prefix.
+    EXPECT_EQ("2001:db8:1:e000::", lease->addr_.toText());
+    EXPECT_EQ(51, lease->prefixlen_);
 
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Preferred lifetime should be the config preferred-lifetime (200).
+    EXPECT_EQ(200, lease->preferred_lft_);
 
-    // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, lease->valid_lft_);
+
+    // Create leases for the first prefixes.
+    auto& lease_mgr = LeaseMgrFactory::instance();
+    auto lease0 = createLease6(IOAddress("2001:db8:1::"), 1);
+    EXPECT_TRUE(lease_mgr.addLease(lease0));
+    auto lease1 = createLease6(IOAddress("2001:db8:1:2000::"), 2);
+    EXPECT_TRUE(lease_mgr.addLease(lease1));
+    auto lease2 = createLease6(IOAddress("2001:db8:1:4000::"), 3);
+    EXPECT_TRUE(lease_mgr.addLease(lease2));
+    auto lease3 = createLease6(IOAddress("2001:db8:1:6000::"), 4);
+    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    auto lease4 = createLease6(IOAddress("2001:db8:1:8000::"), 5);
+    EXPECT_TRUE(lease_mgr.addLease(lease4));
+    auto lease5 = createLease6(IOAddress("2001:db8:1:a000::"), 6);
+    EXPECT_TRUE(lease_mgr.addLease(lease5));
+    auto lease6 = createLease6(IOAddress("2001:db8:1:c000::"), 7);
+    EXPECT_TRUE(lease_mgr.addLease(lease6));
+    auto lease7 = createLease6(IOAddress("2001:db8:1:e000::"), 8);
 
     // Age the lease but only by 50 seconds.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    Lease6Ptr lease = lease_mgr.getLease6(*hint);
-    ASSERT_TRUE(lease);
     lease->cltt_ -= 50;
     lease->current_cltt_ -= 50;
     EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
 
-    // Create leases for the first addresses.
-    auto lease1 = createLease6(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease6(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease6(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    // Send the renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
 
-    // Let's transition the client to Renewing state.
-    client.setState(Dhcp6Client::RENEWING);
+    // Server should have renewed the prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr renewed = checkLease(client.getLease(0));
+    ASSERT_TRUE(renewed);
 
-    // Set the unicast destination address to indicate that it is a renewal.
-    client.setDestAddress(IOAddress("10.0.0.1"));
-    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the client has got the same prefix.
+    EXPECT_EQ(lease->addr_, renewed->addr_);
+    EXPECT_EQ(lease->prefixlen_, renewed->prefixlen_);
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Check the lease was updated.
+    EXPECT_NEAR(lease->cltt_ + 50, renewed->cltt_, 2);
 
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
+    // Preferred lifetime should be the remaining lifetime so ~150.
+    EXPECT_NEAR(150, renewed->preferred_lft_, 2);
 
-    // Valid lifetime should be the remaining lifetime so ~150 seconds.
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_NEAR(150, opt->getValue(), 2);
+    // Valid lifetime should be the remaining lifetime so ~550
+    EXPECT_NEAR(550, renewed->valid_lft_, 2);
 }
-#endif
+
+// Test renewal with full pool but remaining valid lifetime only greater
+// than minimal.
+TEST_F(FLQTest, renewRemainingValid) {
+    Dhcp6Client client(srv_);
+
+    // Configure DHCP server.
+    configure(FLQ_CONFIG, *client.getServer());
+
+    // Perform 4-way exchange with the server requesting the last prefix.
+    client.requestPrefix(1, 51, IOAddress("2001:db8:1:e000::"));
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Server should have assigned a prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr lease = checkLease(client.getLease(0));
+    ASSERT_TRUE(lease);
+
+    // Make sure that the client has got the requested prefix.
+    EXPECT_EQ("2001:db8:1:e000::", lease->addr_.toText());
+    EXPECT_EQ(51, lease->prefixlen_);
+
+    // Preferred lifetime should be the config preferred-lifetime (200).
+    EXPECT_EQ(200, lease->preferred_lft_);
+
+    // Valid lifetime should be the config valid-lifetime (600).
+    EXPECT_EQ(600, lease->valid_lft_);
+
+    // Create leases for the first prefixes.
+    auto& lease_mgr = LeaseMgrFactory::instance();
+    auto lease0 = createLease6(IOAddress("2001:db8:1::"), 1);
+    EXPECT_TRUE(lease_mgr.addLease(lease0));
+    auto lease1 = createLease6(IOAddress("2001:db8:1:2000::"), 2);
+    EXPECT_TRUE(lease_mgr.addLease(lease1));
+    auto lease2 = createLease6(IOAddress("2001:db8:1:4000::"), 3);
+    EXPECT_TRUE(lease_mgr.addLease(lease2));
+    auto lease3 = createLease6(IOAddress("2001:db8:1:6000::"), 4);
+    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    auto lease4 = createLease6(IOAddress("2001:db8:1:8000::"), 5);
+    EXPECT_TRUE(lease_mgr.addLease(lease4));
+    auto lease5 = createLease6(IOAddress("2001:db8:1:a000::"), 6);
+    EXPECT_TRUE(lease_mgr.addLease(lease5));
+    auto lease6 = createLease6(IOAddress("2001:db8:1:c000::"), 7);
+    EXPECT_TRUE(lease_mgr.addLease(lease6));
+    auto lease7 = createLease6(IOAddress("2001:db8:1:e000::"), 8);
+
+    // Age the lease but only by 150 seconds.
+    lease->cltt_ -= 150;
+    lease->current_cltt_ -= 150;
+    EXPECT_NO_THROW(lease_mgr.updateLease6(lease));
+
+    // Send the renew message to the server.
+    ASSERT_NO_THROW(client.doRenew());
+
+    // Server should have renewed the prefix.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6Ptr renewed = checkLease(client.getLease(0));
+    ASSERT_TRUE(renewed);
+
+    // Make sure that the client has got the same prefix.
+    EXPECT_EQ(lease->addr_, renewed->addr_);
+    EXPECT_EQ(lease->prefixlen_, renewed->prefixlen_);
+
+    // Check the lease was updated.
+    EXPECT_NEAR(lease->cltt_ + 150, renewed->cltt_, 2);
+
+    // Preferred lifetime should be the config min-preferred-lifetime (100).
+    EXPECT_EQ(100, renewed->preferred_lft_);
+
+    // Valid lifetime should be the remaining lifetime so ~450
+    EXPECT_NEAR(450, renewed->valid_lft_, 2);
+}
 
 }

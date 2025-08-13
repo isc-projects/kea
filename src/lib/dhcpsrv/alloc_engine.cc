@@ -1737,6 +1737,22 @@ AllocEngine::removeNonreservedLeases6(ClientContext6& ctx,
         existing_leases.end(), Lease6Ptr()), existing_leases.end());
 }
 
+namespace {
+bool
+useMinLifetimes6(AllocEngine::ClientContext6& ctx, const IOAddress& addr,
+                 uint8_t prefix_len) {
+    auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+    if (!threshold.unspecified() && (threshold < 1.0)) {
+        auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_PD)->
+            getOccupancyRate(addr, prefix_len, ctx.query_->getClasses());
+        if (occupancy >= threshold) {
+            return (true);
+        }
+    }
+    return (false);
+}
+} // end of anonymous namespace.
+
 Lease6Ptr
 AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
                                uint8_t prefix_len,
@@ -1750,19 +1766,8 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
         isc_throw(BadValue, "Attempt to recycle registered address");
     }
 
-    bool use_min = false;
     if (expired->type_ != Lease::TYPE_PD) {
         prefix_len = 128; // non-PD lease types must be always /128
-    } else {
-	auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
-        if (!threshold.unspecified() && (threshold < 1.0)) {
-            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_PD)->
-                getOccupancyRate(expired->addr_, prefix_len,
-                                 ctx.query_->getClasses());
-            if (occupancy >= threshold) {
-                use_min = true;
-            }
-        }
     }
 
     if (!ctx.fake_allocation_) {
@@ -1780,10 +1785,11 @@ AllocEngine::reuseExpiredLease(Lease6Ptr& expired, ClientContext6& ctx,
     // Calculate life times.
     expired->preferred_lft_ = 0;
     expired->valid_lft_ = 0;
-    if (use_min) {
-	getMinLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
+    if ((expired->type_ == Lease::TYPE_PD) &&
+        useMinLifetimes6(ctx, expired->addr_, prefix_len)) {
+        getMinLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
     } else {
-	getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
+        getLifetimes6(ctx, expired->preferred_lft_, expired->valid_lft_);
     }
     expired->reuseable_valid_lft_ = 0;
 
@@ -2053,23 +2059,14 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
                                     uint8_t prefix_len,
                                     CalloutHandle::CalloutNextStep& callout_status) {
 
-    uint32_t preferred = 0;
-    uint32_t valid = 0;
-    bool use_min = false;
     if (ctx.currentIA().type_ != Lease::TYPE_PD) {
         prefix_len = 128; // non-PD lease types must be always /128
-    } else {
-        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
-        if (!threshold.unspecified() && (threshold < 1.0)) {
-            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_PD)->
-                getOccupancyRate(addr, prefix_len,
-                                 ctx.query_->getClasses());
-            if (occupancy >= threshold) {
-                use_min = true;
-            }
-        }
     }
-    if (use_min) {
+
+    uint32_t preferred = 0;
+    uint32_t valid = 0;
+    if ((ctx.currentIA().type_ == Lease::TYPE_PD) &&
+        useMinLifetimes6(ctx, addr, prefix_len)) {
         getMinLifetimes6(ctx, preferred, valid);
     } else {
         getLifetimes6(ctx, preferred, valid);
@@ -2201,8 +2198,8 @@ Lease6Ptr AllocEngine::createLease6(ClientContext6& ctx,
 }
 
 void
-AllocEngine::getRemaining(const Lease6Ptr& lease, uint32_t& valid,
-                          uint32_t& preferred) {
+AllocEngine::getRemaining(const Lease6Ptr& lease, uint32_t& preferred,
+                          uint32_t& valid) {
     valid = 0;
     preferred = 0;
     if (!lease || (lease->state_ != Lease::STATE_DEFAULT)) {
@@ -2409,7 +2406,17 @@ AllocEngine::extendLease6(ClientContext6& ctx, Lease6Ptr lease) {
 
     // Calculate life times.
     uint32_t current_preferred_lft = lease->preferred_lft_;
-    getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+    if ((lease->type_ == Lease::TYPE_PD) &&
+        useMinLifetimes6(ctx, lease->addr_, lease->prefixlen_)) {
+        uint32_t remain_preferred_lft(0);
+        uint32_t remain_valid_lft(0);
+        getRemaining(lease, remain_preferred_lft, remain_valid_lft);
+        lease->preferred_lft_ = remain_preferred_lft;
+        lease->valid_lft_ = remain_valid_lft;
+        getMinLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+    } else {
+        getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+    }
 
     // If either has changed set the changed flag.
     if ((lease->preferred_lft_ != current_preferred_lft) ||
@@ -2595,7 +2602,13 @@ AllocEngine::updateLeaseData(ClientContext6& ctx, const Lease6Collection& leases
         uint32_t current_preferred_lft = lease->preferred_lft_;
         if (lease->valid_lft_ == 0) {
             // The lease was expired by a release: reset zero lifetimes.
-            getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+            lease->preferred_lft_ = 0;
+            if ((lease->type_ == Lease::TYPE_PD) &&
+                useMinLifetimes6(ctx, lease->addr_, lease->prefixlen_)) {
+                getMinLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+            } else {
+                getLifetimes6(ctx, lease->preferred_lft_, lease->valid_lft_);
+            }
         }
         if (!ctx.fake_allocation_) {
             bool update_stats = false;
@@ -4484,6 +4497,21 @@ AllocEngine::getMinValidLft(const ClientContext4& ctx, uint32_t& valid) {
     }
 }
 
+namespace {
+bool
+useMinValidLft(const AllocEngine::ClientContext4& ctx, const IOAddress&addr) {
+    auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
+    if (!threshold.unspecified() && (threshold < 1.0)) {
+        auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_V4)->
+            getOccupancyRate(addr, ctx.query_->getClasses());
+        if (occupancy >= threshold) {
+            return (true);
+        }
+    }
+    return (false);
+}
+} // end of anonymous namespace.
+
 Lease4Ptr
 AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
                           CalloutHandle::CalloutNextStep& callout_status) {
@@ -4497,16 +4525,7 @@ AllocEngine::createLease4(const ClientContext4& ctx, const IOAddress& addr,
     // Get the context appropriate lifetime.
     uint32_t valid_lft = ctx.offer_lft_;
     if (!valid_lft) {
-        bool use_min(false);
-        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
-        if (!threshold.unspecified() && (threshold < 1.0)) {
-            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_V4)->
-                getOccupancyRate(addr, ctx.query_->getClasses());
-            if (occupancy >= threshold) {
-                use_min = true;
-            }
-        }
-        if (use_min) {
+        if (useMinValidLft(ctx, addr)) {
             getMinValidLft(ctx, valid_lft);
         } else {
             valid_lft = getValidLft(ctx);
@@ -5216,16 +5235,7 @@ AllocEngine::updateLease4Information(const Lease4Ptr& lease,
     // Get the context appropriate valid lifetime.
     lease->valid_lft_ = ctx.offer_lft_;
     if (!lease->valid_lft_) {
-        bool use_min(false);
-        auto const& threshold = ctx.subnet_->getAdaptiveLeaseTimeThreshold();
-        if (!threshold.unspecified() && (threshold < 1.0)) {
-            auto const& occupancy = ctx.subnet_->getAllocator(Lease::TYPE_V4)->
-                getOccupancyRate(lease->addr_, ctx.query_->getClasses());
-            if (occupancy >= threshold) {
-                use_min = true;
-            }
-        }
-        if (use_min) {
+        if (useMinValidLft(ctx, lease->addr_)) {
             lease->valid_lft_ = remain_lft;
             getMinValidLft(ctx, lease->valid_lft_);
         } else {

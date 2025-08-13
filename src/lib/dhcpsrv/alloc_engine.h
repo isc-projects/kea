@@ -1596,10 +1596,10 @@ public:
     /// @brief Set remaining valid and preferred life times.
     ///
     /// @param lease A pointer to the lease.
-    /// @param [out] valid The remaining valid life time or 0.
     /// @param [out] preferred The remaining preferred life time or 0.
-    static void getRemaining(const Lease6Ptr& lease, uint32_t& valid,
-                             uint32_t& preferred);
+    /// @param [out] valid The remaining valid life time or 0.
+    static void getRemaining(const Lease6Ptr& lease, uint32_t& preferred,
+                             uint32_t& valid);
 
 private:
 
