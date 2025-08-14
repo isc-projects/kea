@@ -1,0 +1,4 @@
+[bug]		fdupont
+	Fixed a bug making reused expired v6 leases to not get
+	the client hardware address.
+	(Gitlab #4058)
