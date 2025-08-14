@@ -8731,7 +8731,7 @@ avoiding unnecessary impact on the server's startup time.
    leases to the clients. Only a server reclaiming a particular lease will
    be able to offer it.
 
-In Kea 3.1 a new parameter ``adaptive-lease-time-threshold`` was added.
+In Kea 3.1.1 a new parameter ``adaptive-lease-time-threshold`` was added.
 It can be specified at global, shared network and subnet levels and
 takes a floating point value between ``0.`` (excluded) and ``1.``.
 It is disabled by default or when set to ``1.``. It is active only with
