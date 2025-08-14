@@ -64,6 +64,64 @@ public:
         return (lease);
     }
 
+    /// @brief Check the response.
+    ///
+    /// @param resp the response.
+    /// @param expected the expected lifetime.
+    /// @param near use near comparision (when true) or equality (when false).
+    void checkResponse(Pkt4Ptr resp, uint32_t expected, bool near = false) {
+        ASSERT_TRUE(resp);
+
+        // Make sure that the server has responded with DHCPACK.
+        ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+
+        // Make sure that the client has got the requested address.
+        EXPECT_EQ("10.0.0.14", resp->getYiaddr().toText());
+
+        // Verify the valid liftime.
+        OptionUint32Ptr opt = boost::dynamic_pointer_cast<
+            OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
+        ASSERT_TRUE(opt);
+        if (near) {
+            EXPECT_NEAR(expected, opt->getValue(), 2);
+        } else {
+            EXPECT_EQ(expected, opt->getValue());
+        }
+    }
+
+    /// @brief Allocate all pool leases leaving the last one free.
+    void fill() {
+        auto& lease_mgr = LeaseMgrFactory::instance();
+        auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
+        EXPECT_TRUE(lease_mgr.addLease(lease1));
+        auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
+        EXPECT_TRUE(lease_mgr.addLease(lease2));
+        auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
+        EXPECT_TRUE(lease_mgr.addLease(lease3));
+    }
+
+    /// @brief Age and commit a lease.
+    ///
+    /// @param lease the lease.
+    /// @param delay the amount of time backward.
+    /// @param update when false add the lease, when true update the lease.
+    /// @param reclaim when true change the state.
+    void ageLease(Lease4Ptr lease, uint32_t delay, bool update,
+                  bool reclaim = false) {
+        ASSERT_TRUE(lease);
+        lease->cltt_ -= delay;
+        lease->current_cltt_ -= delay;
+        if (reclaim) {
+            lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+        }
+        auto& lease_mgr = LeaseMgrFactory::instance();
+        if (update) {
+            EXPECT_NO_THROW(lease_mgr.updateLease4(lease));
+        } else {
+            EXPECT_TRUE(lease_mgr.addLease(lease));
+        }
+    }
+
     /// @brief Interface Manager's fake configuration control.
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
@@ -79,21 +137,9 @@ TEST_F(FLQTest, empty) {
     boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
     ASSERT_NO_THROW(client.doDORA(hint));
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 200);
 }
 
 // Test allocation with almost full pool.
@@ -104,32 +150,14 @@ TEST_F(FLQTest, last) {
     configure(FLQ_CONFIG, *client.getServer());
 
     // Create leases for the first addresses.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    fill();
 
     // Perform 4-way exchange with the server.
     ASSERT_NO_THROW(client.doDORA());
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the last address.
-    EXPECT_EQ("10.0.0.14", resp->getYiaddr().toText());
-
     // Valid lifetime should be the min-valid-lifetime parameter value (100).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(100, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 100);
 }
 
 // Test allocation with an expired lease.
@@ -140,38 +168,19 @@ TEST_F(FLQTest, expired) {
     configure(FLQ_CONFIG, *client.getServer());
 
     // Create leases for the first addresses.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
-    auto lease4 = createLease4(IOAddress("10.0.0.14"), 4);
-    // Expired lease.
-    lease4->cltt_ -= 1000;
-    lease4->current_cltt_ -= 1000;
-    ASSERT_TRUE(lease4->expired());
-    EXPECT_TRUE(lease_mgr.addLease(lease4));
+    fill();
+
+    // Create and expire last lease.
+    auto lease = createLease4(IOAddress("10.0.0.14"), 4);
+    ageLease(lease, 1000, false);
+    ASSERT_TRUE(lease->expired());
 
     // Perform 4-way exchange with the server.
     ASSERT_NO_THROW(client.doDORA());
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the last address.
-    EXPECT_EQ("10.0.0.14", resp->getYiaddr().toText());
-
     // Valid lifetime should be the min-valid-lifetime parameter value (100).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(100, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 100);
 }
 
 // Test allocation with a reclaimed lease.
@@ -182,38 +191,18 @@ TEST_F(FLQTest, reclaimed) {
     configure(FLQ_CONFIG, *client.getServer());
 
     // Create leases for the first addresses.
-    auto& lease_mgr = LeaseMgrFactory::instance();
-    auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
-    auto lease4 = createLease4(IOAddress("10.0.0.14"), 4);
-    // Reclaimed lease.
-    lease4->cltt_ -= 1000;
-    lease4->current_cltt_ -= 1000;
-    lease4->state_ = Lease::STATE_EXPIRED_RECLAIMED;
-    EXPECT_TRUE(lease_mgr.addLease(lease4));
+    fill();
+
+    // Create and reclaim last lease.
+    auto lease = createLease4(IOAddress("10.0.0.14"), 4);
+    ageLease(lease, 1000, false, true);
 
     // Perform 4-way exchange with the server.
     ASSERT_NO_THROW(client.doDORA());
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the last address.
-    EXPECT_EQ("10.0.0.14", resp->getYiaddr().toText());
-
     // Valid lifetime should be the min-valid-lifetime parameter value (100).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(100, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 100);
 }
 
 // Test renewal with almost empty pool.
@@ -227,29 +216,15 @@ TEST_F(FLQTest, renew) {
     boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
     ASSERT_NO_THROW(client.doDORA(hint));
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 200);
 
     // Age the lease.
     auto& lease_mgr = LeaseMgrFactory::instance();
     Lease4Ptr lease = lease_mgr.getLease4(*hint);
-    ASSERT_TRUE(lease);
-    lease->cltt_ -= 150;
-    lease->current_cltt_ -= 150;
-    EXPECT_NO_THROW(lease_mgr.updateLease4(lease));
+    ageLease(lease, 150, true);
+    ASSERT_FALSE(lease->expired());
 
     // Let's transition the client to Renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -258,18 +233,9 @@ TEST_F(FLQTest, renew) {
     client.setDestAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(client.doRequest());
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the valid-lifetime parameter value (200).
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    resp = client.getContext().response_;
+    checkResponse(resp, 200);
 }
 
 // Test renewal with full pool.
@@ -283,37 +249,18 @@ TEST_F(FLQTest, renewFull) {
     boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
     ASSERT_NO_THROW(client.doDORA(hint));
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 200);
+
+    // Create leases for the first addresses.
+    fill();
 
     // Age the lease.
     auto& lease_mgr = LeaseMgrFactory::instance();
     Lease4Ptr lease = lease_mgr.getLease4(*hint);
-    ASSERT_TRUE(lease);
-    lease->cltt_ -= 150;
-    lease->current_cltt_ -= 150;
-    EXPECT_NO_THROW(lease_mgr.updateLease4(lease));
-
-    // Create leases for the first addresses.
-    auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    ageLease(lease, 150, true);
+    ASSERT_FALSE(lease->expired());
 
     // Let's transition the client to Renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -322,18 +269,9 @@ TEST_F(FLQTest, renewFull) {
     client.setDestAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(client.doRequest());
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the min-valid-lifetime parameter value (100).
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(100, opt->getValue());
+    resp = client.getContext().response_;
+    checkResponse(resp, 100);
 }
 
 // Test renewal with full pool but remaining lifetime greater than minimal.
@@ -347,37 +285,18 @@ TEST_F(FLQTest, renewRemaining) {
     boost::shared_ptr<IOAddress> hint(new IOAddress("10.0.0.14"));
     ASSERT_NO_THROW(client.doDORA(hint));
 
-    // Make sure that the server responded.
-    Pkt4Ptr resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-
-    // Make sure that the server has responded with DHCPACK.
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client has got the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the valid-lifetime parameter value (200).
-    OptionUint32Ptr opt = boost::dynamic_pointer_cast<
-        OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(200, opt->getValue());
+    Pkt4Ptr resp = client.getContext().response_;
+    checkResponse(resp, 200);
+
+    // Create leases for the first addresses.
+    fill();
 
     // Age the lease but only by 50 seconds.
     auto& lease_mgr = LeaseMgrFactory::instance();
     Lease4Ptr lease = lease_mgr.getLease4(*hint);
-    ASSERT_TRUE(lease);
-    lease->cltt_ -= 50;
-    lease->current_cltt_ -= 50;
-    EXPECT_NO_THROW(lease_mgr.updateLease4(lease));
-
-    // Create leases for the first addresses.
-    auto lease1 = createLease4(IOAddress("10.0.0.11"), 1);
-    EXPECT_TRUE(lease_mgr.addLease(lease1));
-    auto lease2 = createLease4(IOAddress("10.0.0.12"), 2);
-    EXPECT_TRUE(lease_mgr.addLease(lease2));
-    auto lease3 = createLease4(IOAddress("10.0.0.13"), 3);
-    EXPECT_TRUE(lease_mgr.addLease(lease3));
+    ageLease(lease, 50, true);
+    ASSERT_FALSE(lease->expired());
 
     // Let's transition the client to Renewing state.
     client.setState(Dhcp4Client::RENEWING);
@@ -386,18 +305,9 @@ TEST_F(FLQTest, renewRemaining) {
     client.setDestAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(client.doRequest());
 
-    // Make sure that renewal was ACKed.
-    resp = client.getContext().response_;
-    ASSERT_TRUE(resp);
-    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
-
-    // Make sure that the client renewed the requested address.
-    EXPECT_EQ(*hint, resp->getYiaddr());
-
     // Valid lifetime should be the remaining lifetime so ~150 seconds.
-    opt = boost::dynamic_pointer_cast<OptionUint32>(resp->getOption(DHO_DHCP_LEASE_TIME));
-    ASSERT_TRUE(opt);
-    EXPECT_NEAR(150, opt->getValue(), 2);
+    resp = client.getContext().response_;
+    checkResponse(resp, 150, true);
 }
 
 }
