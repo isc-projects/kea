@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 #include <functional>
+#include <thread>
 #include <vector>
 
 using namespace isc::asiolink;
@@ -91,7 +92,7 @@ TEST(IOService, runOneForStopped) {
     // Call runOneFor() with runtime of 500ms in a thread.
     size_t cnt = 0;
     bool timed_out = false;
-    std::thread th([this, io_service, &timed_out, &cnt]() {
+    std::thread th([io_service, &timed_out, &cnt]() {
         cnt = io_service->runOneFor(500 * 1000, timed_out);
     });
 
