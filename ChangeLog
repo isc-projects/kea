@@ -1,3 +1,22 @@
+Kea 3.0.1 (stable) released on August 27, 2025
+
+2378.	[build]*		fdupont, razvan
+	Moved Botan crypto backend support to version 3.
+	(Gitlab #4057, #3553)
+
+2377.	[bug]		tmark, razvan
+	Avoid adding the qualifying-suffix to fully qualified
+	host names specified in host reservations.
+	(Gitlab #4056, #3949)
+
+2376.	[sec]		tmark
+	Corrected an issue in kea-dhcp4 that caused
+	the server to exit after receiving a broadcast
+	query that requests option 108 and fails to
+	match a subnet.
+	CVE:2025-40779
+	(Gitlab #4055, #4048)
+
 Kea 3.0.0 (stable) released on June 25, 2025
 
 2375.	[build]		wlodek
