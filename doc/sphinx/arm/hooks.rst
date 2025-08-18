@@ -647,9 +647,9 @@ loaded by the correct process per the table below.
    |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`MySQL Configuration Backend <hooks-mysql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
-   |                                                           | source       | Host and Configuration Backend for MySQL. It uses a          |
+   |                                                           | source       | Host, and Configuration Backend for MySQL. It uses a         |
    |                                                           |              | MySQL database as a repository for the Kea leases, host      |
-   |                                                           |              | reservations and configuration information. Kea servers use  |
+   |                                                           |              | reservations, and configuration information. Kea servers use |
    |                                                           |              | this library to fetch their configurations if Configuration  |
    |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
@@ -661,10 +661,10 @@ loaded by the correct process per the table below.
    |                                                           | source       | perform ping checks of candidate lease addresses before      |
    |                                                           |              | offering them to clients.                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`PostgreSQL Database Backend <hooks-pgsql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
-   |                                                           | source       | Host and Configuration Backend for PostgreSQL. It uses a     |
+   | :ref:`PostgreSQL Configuration Backend <hooks-pgsql>`     | Kea open     | This hook library is an implementation of the Kea Lease,     |
+   |                                                           | source       | Host, and Configuration Backend for PostgreSQL. It uses a    |
    |                                                           |              | PostgreSQL database as a repository for the Kea leases, host |
-   |                                                           |              | reservations and configuration information. Kea servers use  |
+   |                                                           |              | reservations, and configuration information. Kea servers use |
    |                                                           |              | this library to fetch their configurations if Configuration  |
    |                                                           |              | Backend is used.                                             |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
