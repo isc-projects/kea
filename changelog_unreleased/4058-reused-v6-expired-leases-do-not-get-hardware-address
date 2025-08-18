@@ -1,4 +1,4 @@
 [bug]		fdupont
-	Fixed a bug making reused expired v6 leases to not get
-	the client hardware address.
+	When reusing an expired lease, kea-dhcp6 now correctly saves
+	the client hardware address in the lease.
 	(Gitlab #4058)
