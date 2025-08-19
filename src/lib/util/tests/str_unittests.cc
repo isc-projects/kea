@@ -16,6 +16,7 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <list>
 
 #include <gtest/gtest.h>
 
@@ -524,6 +525,54 @@ TEST_F(StringUtilTest, vectorIsPrintable) {
     // Add a control character (not printable).
     content.push_back('\a');
     EXPECT_FALSE(isPrintable(content));
+}
+
+// Verifies the printOrDUmp operates correctly.
+TEST_F(StringUtilTest, printOrDump) {
+    struct Scenario {
+        size_t line_;
+        std::vector<uint8_t> input_;
+        size_t max_length_;
+        std::string exp_output_;
+    };
+
+    std::list<Scenario> scenarios {
+        {
+            __LINE__,
+            { '1', '2', '3', 0, 0 },
+            5,
+            "123",
+        },
+        {
+            __LINE__,
+            { '4', '5', '6' },
+            3,
+            "456"
+        },
+        {
+            __LINE__,
+            { 0 , 0, 0, 0},
+            4,
+            ""
+        },
+        {
+            __LINE__,
+            { 0 , 1, 2, 3, 0},
+            5,
+            "00:01:02:03:00"
+        },
+        {
+            __LINE__,
+            { 0 , 1, 2, 3, 0},
+            3,
+            "00:01:02.."
+        }
+    };
+
+    for ( auto const& scenario : scenarios ) {
+        EXPECT_EQ(printOrDump(scenario.input_, scenario.max_length_),
+                              scenario.exp_output_);
+    }
 }
 
 }  // namespace

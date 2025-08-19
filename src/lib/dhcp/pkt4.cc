@@ -10,6 +10,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_int.h>
 #include <dhcp/pkt4.h>
+#include <util/str.h>
 #include <exceptions/exceptions.h>
 
 #include <algorithm>
@@ -19,6 +20,7 @@
 using namespace std;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::util::str;
 
 namespace {
 
@@ -417,7 +419,7 @@ Pkt4::makeLabel(const HWAddrPtr& hwaddr, const ClientIdPtr& client_id) {
 }
 
 std::string
-Pkt4::toText() const {
+Pkt4::toText(bool verbose /* = false */) const {
     stringstream tmp;
 
     // First print the basics
@@ -436,6 +438,36 @@ Pkt4::toText() const {
     }
 
     tmp << ", trans_id=0x" << hex << transid_ << dec;
+
+    if (verbose) {
+        tmp << ", secs=" << secs_;
+        tmp << ", flags=0x" << hex << flags_;
+        if (!ciaddr_.isV4Zero()) {
+            tmp << ", ciaddr=" << ciaddr_.toText();
+        }
+
+        if (!yiaddr_.isV4Zero()) {
+            tmp << ", yiaddr=" << yiaddr_.toText();
+        }
+
+        if (!siaddr_.isV4Zero()) {
+            tmp << ", siaddr=" << siaddr_.toText();
+        }
+
+        if (!giaddr_.isV4Zero()) {
+            tmp << ", giaddr=" << giaddr_.toText();
+        }
+
+        auto sname_dump = printOrDump(getSname(), 32);
+        if (!sname_dump.empty()) {
+            tmp << ", sname=[" << sname_dump << "]";
+        }
+
+        auto file_dump = printOrDump(getFile(), 32);
+        if (!file_dump.empty()) {
+            tmp << ", file=[" << file_dump << "]";
+        }
+    }
 
     if (!options_.empty()) {
         tmp << "," << endl << "options:";

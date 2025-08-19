@@ -293,6 +293,21 @@ dumpAsHex(const uint8_t* data, size_t length);
 /// @return string representation of val
 std::string dumpDouble(double val, size_t precision = 5);
 
+/// @brief Outputs the contents of a vector as either a string printable
+/// characters or a hex dump.
+///
+/// Output of as string if all characters upto the first 0x0 are printable
+/// characters, otherwise as a string of hex digits limited to max_dump
+/// number of input bytes.  If the vector is empty or all zeros it returns
+/// an empty string. If the vector size exceeds max_dump when dumping as hex
+/// the output will be suffixed with "..".
+///
+/// @param data vector to be output
+/// @param max_dump maximum number of bytes to include when dumping as hex
+/// @return output string
+std::string
+printOrDump(const std::vector<uint8_t>& data, size_t max_dump);
+
 }  // namespace str
 }  // namespace util
 }  // namespace isc

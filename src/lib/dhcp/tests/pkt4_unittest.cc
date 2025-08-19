@@ -19,6 +19,7 @@
 #include <exceptions/exceptions.h>
 #include <testutils/gtest_utils.h>
 #include <util/buffer.h>
+#include <util/str.h>
 #include <util/encode/encode.h>
 
 #include <boost/shared_array.hpp>
@@ -1334,6 +1335,83 @@ TEST_F(Pkt4Test, toText) {
               "message contains no options",
               pkt.toText());
 
+}
+
+// This test checks that the packet data are correctly converted to the
+// textual format.
+TEST_F(Pkt4Test, toTextVerbose) {
+    Pkt4 pkt(DHCPDISCOVER, 2543);
+    pkt.setLocalAddr(IOAddress("192.0.2.34"));
+    pkt.setRemoteAddr(IOAddress("192.10.33.4"));
+
+    pkt.addOption(OptionPtr(new Option4AddrLst(123, IOAddress("192.0.2.3"))));
+    pkt.addOption(OptionPtr(new OptionUint32(Option::V4, 156, 123456)));
+    pkt.addOption(OptionPtr(new OptionString(Option::V4, 87, "lorem ipsum")));
+    OptionBuffer data = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66 };
+    OptionPtr opt(new Option(Option::V4, 231, data));
+    pkt.addOption(opt);
+    OptionBuffer data_sub = { 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+    OptionPtr sub_opt(new Option(Option::V4, 1, data_sub));
+    opt->addOption(sub_opt);
+    data_sub.clear();
+    sub_opt.reset(new Option(Option::V4, 2, data_sub));
+    opt->addOption(sub_opt);
+
+    // Set verbose true but with verbose members not set.
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=DHCPDISCOVER (1), trans_id=0x9ef, secs=0, flags=0x0,\n"
+              "options:\n"
+              "  type=053, len=001: 1 (uint8)\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)\n"
+              "  type=231, len=020: 61:62:63:64:65:66 'abcdef',\n"
+              "options:\n"
+              "    type=001, len=010: 30:31:32:33:34:35:36:37:38:39 '0123456789'\n"
+              "    type=002, len=000: ''",
+              pkt.toText(true));
+
+    // Now populate verbose members.
+    pkt.setSecs(2);
+    pkt.setFlags(0x80);
+    pkt.setCiaddr(IOAddress("1.1.1.1"));
+    pkt.setYiaddr(IOAddress("2.2.2.2"));
+    pkt.setSiaddr(IOAddress("3.3.3.3"));
+    pkt.setGiaddr(IOAddress("4.4.4.4"));
+
+    std::vector<uint8_t> sname = { 'x', 'y', 'z' };
+    std::vector<uint8_t> file = { 'A', 'B', 'C' };
+    pkt.setSname(sname.data(), 3);
+    pkt.setFile(file.data(), 3);
+
+    // Verbose defaulting to false.
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=DHCPDISCOVER (1), trans_id=0x9ef,\n"
+              "options:\n"
+              "  type=053, len=001: 1 (uint8)\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)\n"
+              "  type=231, len=020: 61:62:63:64:65:66 'abcdef',\n"
+              "options:\n"
+              "    type=001, len=010: 30:31:32:33:34:35:36:37:38:39 '0123456789'\n"
+              "    type=002, len=000: ''",
+              pkt.toText());
+
+    // Set verbose true.
+    EXPECT_EQ("local_address=192.0.2.34:67, remote_address=192.10.33.4:68,\n"
+              "msg_type=DHCPDISCOVER (1), trans_id=0x9ef, secs=2, flags=0x80, ciaddr=1.1.1.1,"
+              " yiaddr=2.2.2.2, siaddr=3.3.3.3, giaddr=4.4.4.4, sname=[xyz], file=[ABC],\n"
+              "options:\n"
+              "  type=053, len=001: 1 (uint8)\n"
+              "  type=087, len=011: \"lorem ipsum\" (string)\n"
+              "  type=123, len=004: 192.0.2.3\n"
+              "  type=156, len=004: 123456 (uint32)\n"
+              "  type=231, len=020: 61:62:63:64:65:66 'abcdef',\n"
+              "options:\n"
+              "    type=001, len=010: 30:31:32:33:34:35:36:37:38:39 '0123456789'\n"
+              "    type=002, len=000: ''",
+              pkt.toText(true));
 }
 
 // Sanity check. Verifies that the getName() and getType()

@@ -199,8 +199,11 @@ public:
     ///
     /// This function is useful mainly for debugging.
     ///
+    /// @param verbose output most if not all members. Not currently
+    /// used for v6.
+    ///
     /// @return string with text representation
-    virtual std::string toText() const;
+    virtual std::string toText(bool verbose = false) const;
 
     /// @brief Returns length of the packet.
     ///

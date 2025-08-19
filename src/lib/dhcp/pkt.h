@@ -283,9 +283,10 @@ public:
     /// @note This is a pure virtual method and must be implemented in
     /// the derived classes. The @c Pkt4 and @c Pkt6 class have respective
     /// implementations of this method.
+    /// @param verbose output most if not all members.
     ///
     /// @return string with text representation
-    virtual std::string toText() const = 0;
+    virtual std::string toText(bool verbose = false) const = 0;
 
     /// @brief Returns packet size in binary format.
     ///

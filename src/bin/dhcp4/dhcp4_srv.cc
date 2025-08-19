@@ -1462,7 +1462,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         .arg(query->getIface());
     LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
         .arg(query->getLabel())
-        .arg(query->toText());
+        .arg(query->toText(true));
 
     // Let's execute all callouts registered for pkt4_receive
     if (HooksManager::calloutsPresent(Hooks.hook_index_pkt4_receive_)) {
@@ -2017,7 +2017,7 @@ Dhcpv4Srv::processPacketBufferSend(CalloutHandlePtr& callout_handle,
             .arg(rsp->getLabel())
             .arg(rsp->getName())
             .arg(static_cast<int>(rsp->getType()))
-            .arg(rsp->toText());
+            .arg(rsp->toText(true));
         sendPacket(rsp);
 
         // Update statistics accordingly for sent packet.

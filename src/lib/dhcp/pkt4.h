@@ -125,9 +125,10 @@ public:
     /// @brief Returns text representation of the packet.
     ///
     /// This function is useful mainly for debugging.
-    ///
+    /// @param verbose output includes secs, flags and if they are populated: 
+    /// ciaddr, yiaddr, siaddr, giaddr, sname, and file
     /// @return string with text representation
-    std::string toText() const;
+    std::string toText(bool verbose = false) const;
 
     /// @brief Returns the size of the required buffer to build the packet.
     ///

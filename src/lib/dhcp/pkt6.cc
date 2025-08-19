@@ -725,7 +725,7 @@ Pkt6::getLabel() const {
     return (makeLabel(getClientId(), getTransid(), HWAddrPtr()));}
 
 std::string
-Pkt6::toText() const {
+Pkt6::toText(bool /* verbose = false */) const {
     stringstream tmp;
 
     // First print the basics
