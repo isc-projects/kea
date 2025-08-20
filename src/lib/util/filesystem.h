@@ -246,7 +246,7 @@ public:
     /// @return validated path as a string (supported path + input file name)
     ///
     /// @throw BadValue if the input path does not include a file name.
-    /// @trhow SecurityError if the parent path does not path the supported path and
+    /// @throw SecurityError if the parent path does not path the supported path and
     /// security is being enforced, SecurityWarn if it is not being enforced.
     std::string validatePath(const std::string input_path_str,
                              bool enforce_path = shouldEnforceSecurity()) const;
