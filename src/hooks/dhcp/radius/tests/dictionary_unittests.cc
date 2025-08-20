@@ -131,8 +131,20 @@ TEST_F(DictionaryTest, parseLine) {
                      "expected 4 tokens, got 3 at line 1");
     EXPECT_THROW_MSG(parseLine("VALUE My-Attribute My-Value 1"), BadValue,
                      "unknown attribute 'My-Attribute' at line 1");
-    EXPECT_THROW_MSG(parseLine("VENDOR my-vendor 4417"), BadValue,
-                     "unknown dictionary entry 'VENDOR' at line 1");
+
+    EXPECT_THROW_MSG(parseLine("$INCLUDE"), BadValue,
+                     "expected 2 tokens, got 1 at line 1");
+    EXPECT_THROW_MSG(parseLine("$INCLUDE foo bar"), BadValue,
+                     "expected 2 tokens, got 3 at line 1");
+    EXPECT_THROW_MSG(parseLine("VENDOR my-vendor"), BadValue,
+                     "expected 3 tokens, got 2 at line 1");
+    EXPECT_THROW_MSG(parseLine("VENDOR my-vendor 44 17"), BadValue,
+                     "expected 3 tokens, got 4 at line 1");
+
+    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR my-vendor"), BadValue,
+                     "unknown dictionary entry 'BEGIN-VENDOR' at line 1");
+    EXPECT_THROW_MSG(parseLine("END-VENDOR my-vendor"), BadValue,
+                     "unknown dictionary entry 'END-VENDOR' at line 1");
 }
 
 // Verifies sequences attribute of (re)definitions.
@@ -216,12 +228,49 @@ TEST_F(DictionaryTest, integerConstant) {
     EXPECT_THROW_MSG(parseLines(new_value), BadValue, expected);
 }
 
+// Verifies vendor id definitions.
+TEST_F(DictionaryTest, vendorId) {
+    // Value must be an integer.
+    list<string> not_integer_val = {
+        "VENDOR My-Value Non-Integer"
+    };
+    EXPECT_THROW_MSG(parseLines(not_integer_val), BadValue,
+                     "can't parse integer value Non-Integer at line 1");
+
+    // Positive case.
+    list<string> positive = {
+        "VENDOR ISC 2495"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(positive));
+
+    // Redefine the same vendor id.
+    list<string> same = {
+        "VENDOR ISC 2495",
+        "VENDOR ISC 2495"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(same));
+
+    // Redefine with a different value is not allowed.
+    list<string> new_value = {
+        "VENDOR ISC 2495",
+        "VENDOR ISC 24950",
+    };
+    string expected = "Illegal vendor id redefinition of ";
+    expected += "'ISC' value 2495 by 24950 at line 2";
+    EXPECT_THROW_MSG(parseLines(new_value), BadValue, expected);
+}
+
 // Verifies errors from bad dictionary files.
 TEST_F(DictionaryTest, badFile) {
     string expected = "can't open dictionary '/does-not-exist': ";
     expected += "No such file or directory";
     EXPECT_THROW_MSG(AttrDefs::instance().readDictionary("/does-not-exist"),
                      BadValue, expected);
+    list<string> bad_include = {
+        "$INCLUDE /does-not-exist"
+    };
+    expected += " at line 1";
+    EXPECT_THROW_MSG(parseLines(bad_include), BadValue, expected);
 }
 
 // Definitions of Standard attributes used by the hook.
@@ -239,13 +288,11 @@ TEST_F(DictionaryTest, include) {
     include.push_back("# Including the dictonary");
     include.push_back(string("$INCLUDE ") + string(TEST_DICTIONARY));
     include.push_back("# Dictionary included");
-    //    include.push_back("VALUE Vendor-Specific ISC 2495");
-    include.push_back("VALUE ARAP-Security ISC 2495");
+    include.push_back("VENDOR ISC 2495");
     EXPECT_NO_THROW_LOG(parseLines(include));
     EXPECT_NO_THROW_LOG(AttrDefs::instance().
         checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
-    //    auto isc = AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, "ISC");
-    auto isc = AttrDefs::instance().getByName(PW_ARAP_SECURITY, "ISC");
+    auto isc = AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, "ISC");
     ASSERT_TRUE(isc);
     EXPECT_EQ(2495, isc->value_);
 

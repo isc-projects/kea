@@ -79,6 +79,8 @@ typedef boost::shared_ptr<AttrDef> AttrDefPtr;
 typedef std::list<AttrDef> AttrDefList;
 
 /// @brief RADIUS integer constant definitions.
+///
+/// Include vendor ids with Vendor-Specific attribute.
 class IntCstDef {
 public:
 

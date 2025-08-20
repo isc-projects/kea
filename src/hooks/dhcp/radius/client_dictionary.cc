@@ -172,6 +172,12 @@ AttrDefs::add(IntCstDefPtr def) {
             // Duplicate: ignore.
             return;
         }
+        if (def->type_ == PW_VENDOR_SPECIFIC) {
+            // Vendor id special case.
+            isc_throw(BadValue, "Illegal vendor id redefinition of '"
+                      << def->name_ << "' value " << (*it)->value_
+                      << " by " << def->value_);
+        }
         isc_throw(BadValue, "Illegal integer constant redefinition of '"
                   << def->name_ << "' for attribute '" << getName(def->type_)
                   << "' value " << (*it)->value_ << " by " << def->value_);
@@ -256,6 +262,28 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
             isc_throw(Unexpected, "can't parse integer value " << value_str);
         }
         IntCstDefPtr def(new IntCstDef(attr->type_, name, value));
+        add(def);
+        return;
+    }
+    // Vendor id definition.
+    if (tokens[0] == "VENDOR") {
+        if (tokens.size() != 3) {
+            isc_throw(Unexpected, "expected 3 tokens, got " << tokens.size());
+        }
+        const string& name = tokens[1];
+        const string& value_str = tokens[2];
+        uint32_t value = 0;
+        try {
+            int64_t val = boost::lexical_cast<int64_t>(value_str);
+            if ((val < numeric_limits<int32_t>::min()) ||
+                (val > numeric_limits<uint32_t>::max())) {
+                isc_throw(Unexpected, "not 32 bit " << value_str);
+            }
+            value = static_cast<uint32_t>(val);
+        } catch (...) {
+            isc_throw(Unexpected, "can't parse integer value " << value_str);
+        }
+        IntCstDefPtr def(new IntCstDef(PW_VENDOR_SPECIFIC, name, value));
         add(def);
         return;
     }

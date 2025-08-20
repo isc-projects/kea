@@ -550,7 +550,7 @@ RADIUS dictionary. There are differences:
 
       - Yes
 
-      - No
+      - since Kea 3.1.1
 
     * - Support for Vendor Attributes
 

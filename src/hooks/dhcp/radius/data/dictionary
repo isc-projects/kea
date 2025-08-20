@@ -252,3 +252,8 @@ VALUE           Acct-Terminate-Cause    Service-Unavailable     15
 VALUE           Acct-Terminate-Cause    Callback                16
 VALUE           Acct-Terminate-Cause    User-Error              17
 VALUE           Acct-Terminate-Cause    Host-Request            18
+
+#	Examples
+
+#$INCLUDE	foobar
+#VENDOR		DSL-Forum		3561
