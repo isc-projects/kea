@@ -8988,9 +8988,9 @@ avoiding unnecessary impact on the server's startup time.
 
 In Kea 3.1.1 a new parameter ``adaptive-lease-time-threshold`` was added.
 It can be specified at global, shared network and subnet levels and
-takes a floating point value between ``0.`` (excluded) and ``1.``.
-It is disabled by default or when set to ``1.``. It is active only with
-he FLQ allocator and when the occupancy rate of pools of subnet is
+takes a floating point value between ``0.0`` (excluded) and ``1.0``.
+It is disabled by default or when set to ``1.0``. It is only supported
+by the FLQ allocator. When the occupancy rate of pools in a subnet is
 above the specified value the server decreases the lease valid lifetime
 to the applicable ``min-valid-lifetime`` for new clients. Clients
 renewing an already existing lease get at least the remaining lifetime

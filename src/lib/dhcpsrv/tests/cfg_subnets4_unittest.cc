@@ -1894,7 +1894,7 @@ TEST(CfgSubnets4Test, cacheParamValidation) {
 
 // This test verifies the Subnet4 parser's validation logic for
 // adaptive lease time parameter.
-TEST(CfgSubnets4Test, AdaptiveLeaseTimeParamValidation) {
+TEST(CfgSubnets4Test, adaptiveLeaseTimeParamValidation) {
 
     // Describes a single test scenario.
     struct Scenario {
