@@ -180,6 +180,19 @@ TEST_F(DictionaryTest, parseLines) {
     expected = "Illegal attribute redefinition of 'Service-Type' ";
     expected += "type 6 value type integer by 6 string at line 2";
     EXPECT_THROW_MSG(parseLines(new_value_type), BadValue, expected);
+
+    // Only the attribute 26 (Vendor-Specific) can have the vsa data type.
+    list<string> bad_vsa = {
+        "ATTRIBUTE Attr126 126 vsa"
+    };
+    expected = "only Vendor-Specific (26) attribute can have ";
+    expected += "the vsa data type at line 1";
+    EXPECT_THROW_MSG(parseLines(bad_vsa), BadValue, expected);
+
+    list<string> vsa = {
+        "ATTRIBUTE Attr26 26 vsa"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(vsa));
 }
 
 // Verifies integer constant definitions.

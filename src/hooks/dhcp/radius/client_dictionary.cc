@@ -34,6 +34,8 @@ attrValueTypeToText(const AttrValueType value) {
         return ("ipv6addr");
     case PW_TYPE_IPV6PREFIX:
         return ("ipv6prefix");
+    case PW_TYPE_VSA:
+        return ("vsa");
     default:
         // Impossible case.
         return ("unknown?");
@@ -52,6 +54,8 @@ textToAttrValueType(const string& name) {
         return (PW_TYPE_IPV6ADDR);
     } else if (name == "ipv6prefix") {
         return (PW_TYPE_IPV6PREFIX);
+    } else if (name == "vsa") {
+        return (PW_TYPE_VSA);
     } else {
         isc_throw(OutOfRange, "unknown AttrValueType name " << name);
     }
@@ -230,6 +234,10 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
             isc_throw(Unexpected, "can't parse attribute type " << type_str);
         }
         AttrValueType value_type = textToAttrValueType(tokens[3]);
+        if ((value_type == PW_TYPE_VSA) && (type != PW_VENDOR_SPECIFIC)) {
+            isc_throw(BadValue, "only Vendor-Specific (26) attribute can "
+                      << "have the vsa data type");
+        }
         AttrDefPtr def(new AttrDef(type, name, value_type));
         add(def);
         return;

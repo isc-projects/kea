@@ -28,6 +28,9 @@ namespace radius {
 /// @brief Maximum string size.
 static constexpr size_t MAX_STRING_LEN = 253;
 
+/// @brief Maximum vsa data size.
+static constexpr size_t MAX_VSA_DATA_LEN = MAX_STRING_LEN - 4;
+
 /// @brief Type error.
 using isc::data::TypeError;
 
@@ -159,6 +162,28 @@ public:
                                        const uint8_t len,
                                        const asiolink::IOAddress& value);
 
+    /// @brief From Vendor ID and string data with type.
+    ///
+    /// @note Requires the type to be of the Vendor Specific attribute (26).
+    ///
+    /// @param type type of attribute.
+    /// @param vendor vendor id.
+    /// @param value vsa data.
+    static AttributePtr fromVSA(const uint8_t type,
+                                const uint32_t vendor,
+                                const std::string& value);
+
+    /// @brief From Vendor ID and binary data with type.
+    ///
+    /// @note Requires the type to be of the Vendor Specific attribute (26).
+    ///
+    /// @param type type of attribute.
+    /// @param vendor vendor id.
+    /// @param value vsa data.
+    static AttributePtr fromVSA(const uint8_t type,
+                                const uint32_t vendor,
+                                const std::vector<uint8_t>& value);
+
     /// Generic get methods.
 
     /// @brief Value length.
@@ -184,13 +209,13 @@ public:
     /// @brief To string.
     ///
     /// @return the string value.
-    /// @throw TypeError if the attribute is not a string one.
+    /// @throw TypeError if the attribute is not a string or vsa one.
     virtual std::string toString() const;
 
     /// @brief To binary.
     ///
     /// @return the string value as a binary.
-    /// @throw TypeError if the attribute is not a string one.
+    /// @throw TypeError if the attribute is not a string or vsa one.
     virtual std::vector<uint8_t> toBinary() const;
 
     /// @brief To integer.
@@ -223,6 +248,20 @@ public:
     /// @throw TypeError if the attribute is not an ipv6prefix one.
     virtual uint8_t toIpv6PrefixLen() const;
 
+    /// @brief To vendor id.
+    ///
+    /// @return the vendor id.
+    /// @throw TypeError if the attribute is not a vsa one.
+    virtual uint32_t toVendorId() const;
+
+    /// Generic set methods.
+
+    /// @brief Set vendor id.
+    ///
+    /// @param vendor vendor id.
+    /// @throw TypeError if the attribute is not a vsa one.
+    virtual void setVendorId(const uint32_t vendor);
+
     /// @brief Type.
     const uint8_t type_;
 };
@@ -233,6 +272,7 @@ public:
 /// @brief RADIUS attribute holding strings.
 class AttrString : public Attribute {
 protected:
+
     /// @brief Constructor.
     ///
     /// @param type attribute type.
@@ -647,6 +687,119 @@ private:
     /// @brief Value.
     asiolink::IOAddress value_;
 };
+
+/// @brief RADIUS attribute holding vsa.
+class AttrVSA : public Attribute {
+protected:
+
+    /// @brief Constructor.
+    ///
+    /// @param type attribute type.
+    /// @param vendor vendor id.
+    /// @param value string vsa data.
+    AttrVSA(const uint8_t type, const int32_t vendor, const std::string& value)
+        : Attribute(type), vendor_(vendor), value_(value) {
+        if (value.empty()) {
+            isc_throw(BadValue, "value is empty");
+        }
+        if (value.size() > MAX_VSA_DATA_LEN) {
+            isc_throw(BadValue, "value is too large " << value.size()
+                      << " > " << MAX_VSA_DATA_LEN);
+        }
+    }
+
+    /// @brief Constructor.
+    ///
+    /// @param type attribute type.
+    /// @param vendor vendor id.
+    /// @param value binary vsa data.
+    AttrVSA(const uint8_t type, const int32_t vendor,
+            const std::vector<uint8_t>& value);
+
+    /// @brief From text.
+    ///
+    /// @param type attribute type.
+    /// @param repr value representation.
+    /// @return pointer to the attribute or null.
+    static AttributePtr fromText(const uint8_t type, const std::string& repr);
+
+    /// @brief From bytes.
+    ///
+    /// @param type attribute type.
+    /// @param bytes binary value.
+    /// @return pointer to the attribute or null.
+    static AttributePtr fromBytes(const uint8_t type,
+                                  const std::vector<uint8_t>& bytes);
+
+    /// Make Attribute a friend class.
+    friend class Attribute;
+
+public:
+
+    /// @brief Get value type.
+    ///
+    /// @return the value type.
+    virtual AttrValueType getValueType() const override {
+        return (PW_TYPE_VSA);
+    }
+
+    /// @brief Value length.
+    ///
+    /// @return Value length.
+    virtual size_t getValueLen() const override {
+        return (4 + value_.size());
+    }
+
+    /// @brief Returns text representation of the attribute.
+    ///
+    /// @param indent number of spaces before printing text.
+    /// @return string with text representation.
+    virtual std::string toText(size_t indent = 0) const override;
+
+    /// @brief To bytes.
+    ///
+    /// @return binary representation.
+    virtual std::vector<uint8_t> toBytes() const override;
+
+    /// @brief To string.
+    ///
+    /// @return the string value.
+    virtual std::string toString() const override {
+        return (value_);
+    }
+
+    /// @brief To binary.
+    ///
+    /// @return the string value as a binary.
+    virtual std::vector<uint8_t> toBinary() const override;
+
+    /// @brief To vendor id.
+    ///
+    /// @return the vendor id.
+    virtual uint32_t toVendorId() const override {
+        return (vendor_);
+    }
+
+    /// @brief Set vendor id.
+    ///
+    /// @param vendor vendor id.
+    virtual void setVendorId(const uint32_t vendor) override {
+        vendor_ = vendor;
+    }
+
+    /// @brief Unparse attribute.
+    ///
+    /// @return a pointer to unparsed attribute.
+    virtual data::ElementPtr toElement() const override;
+
+private:
+    /// @brief Vendor id.
+    uint32_t vendor_;
+
+    /// @brief Value.
+    std::string value_;
+};
+
 
 /// @brief Collection of attributes.
 class Attributes : public data::CfgToElement {

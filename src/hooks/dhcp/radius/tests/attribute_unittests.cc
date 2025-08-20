@@ -175,6 +175,8 @@ TEST_F(AttributeTest, attrString) {
                      "the attribute value type must be ipv6prefix, not string");
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
                      "the attribute value type must be ipv6prefix, not string");
+    EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not string");
 }
 
 // Verifies raw string attribute.
@@ -268,9 +270,9 @@ TEST_F(AttributeTest, attrInt) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string, not integer");
+                     "the attribute value type must be string or vsa, not integer");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string, not integer");
+                     "the attribute value type must be string or vsa, not integer");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
                      "the attribute value type must be ipaddr, not integer");
     EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
@@ -278,7 +280,10 @@ TEST_F(AttributeTest, attrInt) {
     EXPECT_THROW_MSG(attr->toIpv6Prefix(), TypeError,
                      "the attribute value type must be ipv6prefix, not integer");
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
-                     "the attribute value type must be ipv6prefix, not integer");
+                     "the attribute value type must be ipv6prefix, not integer"
+);
+    EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not integer");
 }
 
 // Verifies IP address attribute.
@@ -338,9 +343,9 @@ TEST_F(AttributeTest, attrIpAddr) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string, not ipaddr");
+                     "the attribute value type must be string or vsa, not ipaddr");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string, not ipaddr");
+                     "the attribute value type must be string or vsa, not ipaddr");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipaddr");
     EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
@@ -349,6 +354,8 @@ TEST_F(AttributeTest, attrIpAddr) {
                      "the attribute value type must be ipv6prefix, not ipaddr");
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
                      "the attribute value type must be ipv6prefix, not ipaddr");
+    EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not ipaddr");
 }
 
 // Verifies IPv6 address attribute.
@@ -415,9 +422,9 @@ TEST_F(AttributeTest, attrIpv6Addr) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string, not ipv6addr");
+                     "the attribute value type must be string or vsa, not ipv6addr");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string, not ipv6addr");
+                     "the attribute value type must be string or vsa, not ipv6addr");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipv6addr");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
@@ -426,6 +433,8 @@ TEST_F(AttributeTest, attrIpv6Addr) {
                      "the attribute value type must be ipv6prefix, not ipv6addr");
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
                      "the attribute value type must be ipv6prefix, not ipv6addr");
+    EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not ipv6addr");
 }
 
 // Verifies IPv6 prefix attribute.
@@ -524,15 +533,17 @@ TEST_F(AttributeTest, attrIpv6Prefix) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string, not ipv6prefix");
+                     "the attribute value type must be string or vsa, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string, not ipv6prefix");
+                     "the attribute value type must be string or vsa, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
                      "the attribute value type must be ipaddr, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
                      "the attribute value type must be ipv6addr, not ipv6prefix");
+    EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not ipv6prefix");
 }
 
 // Verifies basic methods for attribute collection.

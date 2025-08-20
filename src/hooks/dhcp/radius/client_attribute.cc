@@ -80,6 +80,8 @@ Attribute::fromText(const AttrDefPtr& def, const string& value) {
         return (AttrIpv6Addr::fromText(def->type_, value));
     case PW_TYPE_IPV6PREFIX:
         return (AttrIpv6Prefix::fromText(def->type_, value));
+    case PW_TYPE_VSA:
+        return (AttrVSA::fromText(def->type_, value));
     default:
         // Impossible case.
         isc_throw(OutOfRange, "unknown value type "
@@ -131,6 +133,8 @@ Attribute::fromBytes(const AttrDefPtr& def, const vector<uint8_t>& value) {
         return (AttrIpv6Addr::fromBytes(def->type_, value));
     case PW_TYPE_IPV6PREFIX:
         return (AttrIpv6Prefix::fromBytes(def->type_, value));
+    case PW_TYPE_VSA:
+        return (AttrVSA::fromBytes(def->type_, value));
     default:
         // Impossible case.
         isc_throw(OutOfRange, "unknown value type "
@@ -177,13 +181,13 @@ Attribute::fromIpv6Prefix(const uint8_t type, const uint8_t len,
 
 string
 Attribute::toString() const {
-    isc_throw(TypeError, "the attribute value type must be string, not "
+    isc_throw(TypeError, "the attribute value type must be string or vsa, not "
               << attrValueTypeToText(getValueType()));
 }
 
 vector<uint8_t>
 Attribute::toBinary() const {
-    isc_throw(TypeError, "the attribute value type must be string, not "
+    isc_throw(TypeError, "the attribute value type must be string or vsa, not "
               << attrValueTypeToText(getValueType()));
 }
 
@@ -214,6 +218,18 @@ Attribute::toIpv6Prefix() const {
 uint8_t
 Attribute::toIpv6PrefixLen() const {
     isc_throw(TypeError, "the attribute value type must be ipv6prefix, not "
+              << attrValueTypeToText(getValueType()));
+}
+
+uint32_t
+Attribute::toVendorId() const {
+    isc_throw(TypeError, "the attribute value type must be vsa, not "
+              << attrValueTypeToText(getValueType()));
+}
+
+void
+Attribute::setVendorId(const uint32_t vendor) {
+    isc_throw(TypeError, "the attribute value type must be vsa, not "
               << attrValueTypeToText(getValueType()));
 }
 
@@ -609,6 +625,100 @@ AttrIpv6Prefix::toElement() const {
     ostringstream val;
     val << value_.toText() << "/" << static_cast<unsigned>(len_);
     output->set("data", Element::create(val.str()));
+    return (output);
+}
+
+AttrVSA::AttrVSA(const uint8_t type, const int32_t vendor,
+                 const vector<uint8_t>& value)
+    : Attribute(type), vendor_(vendor), value_() {
+    if (value.empty()) {
+        isc_throw(BadValue, "value is empty");
+    }
+    if (value.size() > MAX_VSA_DATA_LEN) {
+        isc_throw(BadValue, "value is too large " << value.size()
+                  << " > " << MAX_VSA_DATA_LEN);
+    }
+    value_.resize(value.size());
+    memmove(&value_[0], &value[0], value_.size());
+}
+
+AttributePtr
+AttrVSA::fromText(const uint8_t type, const string& repr) {
+    isc_throw(NotImplemented, "Can't decode VSA from text");
+}
+
+AttributePtr
+AttrVSA::fromBytes(const uint8_t type, const vector<uint8_t>& bytes) {
+    if (bytes.empty()) {
+        isc_throw(BadValue, "empty attribute value");
+    }
+    if (bytes.size() < 5) {
+        isc_throw(BadValue, "value is too small " << bytes.size() << " < 5");
+    } else if (bytes.size() > MAX_STRING_LEN) {
+        isc_throw(BadValue, "value is too large " << bytes.size()
+                  << " > " << MAX_STRING_LEN);
+    }
+    uint32_t vendor = bytes[0] << 24;
+    vendor |= bytes[1] << 16;
+    vendor |= bytes[2] << 8;
+    vendor |= bytes[3];
+    vector<uint8_t> value;
+    value.resize(bytes.size() - 4);
+    if (value.size() > 0) {
+        memmove(&value[0], &bytes[4], value.size());
+    }
+    return (AttributePtr(new AttrVSA(type, vendor, value)));
+}
+
+string
+AttrVSA::toText(size_t indent) const {
+    isc_throw(NotImplemented, "Can't encode VSA into text");
+}
+
+std::vector<uint8_t>
+AttrVSA::toBytes() const {
+    vector<uint8_t> output;
+    output.resize(2 + getValueLen());
+    output[0] = getType();
+    output[1] = 2 + getValueLen();
+    output[2] = (vendor_ & 0xff000000U) >> 24;
+    output[3] = (vendor_ & 0xff0000U) >> 16;
+    output[4] = (vendor_ & 0xff00U) >> 8;
+    output[5] = vendor_ & 0xffU;
+    if (output.size() > 6) {
+        memmove(&output[6], &value_[0], output.size() - 6);
+    }
+    return (output);
+}
+
+std::vector<uint8_t>
+AttrVSA::toBinary() const {
+    vector<uint8_t> binary;
+    binary.resize(getValueLen() - 4);
+    if (binary.size() > 0) {
+        memmove(&binary[0], &value_[0], binary.size());
+    }
+    return (binary);
+}
+
+ElementPtr
+AttrVSA::toElement() const {
+    ElementPtr output = Element::createMap();
+    AttrDefPtr def = AttrDefs::instance().getByType(getType());
+    if (def) {
+        output->set("name", Element::create(def->name_));
+    }
+    output->set("type", Element::create(static_cast<int>(getType())));
+    ostringstream vendor;
+    vendor << vendor_;
+    output->set("vendor", Element::create(vendor.str()));
+    vector<uint8_t> binary;
+    binary.resize(value_.size());
+    if (binary.size() > 0) {
+        memmove(&binary[0], value_.c_str(), binary.size());
+    }
+    string raw = encode::encodeHex(binary);
+    output->set("vsa-raw", Element::create(raw));
     return (output);
 }
 

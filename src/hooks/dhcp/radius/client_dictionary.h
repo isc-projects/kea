@@ -31,7 +31,8 @@ enum AttrValueType {
     PW_TYPE_INTEGER,
     PW_TYPE_IPADDR,
     PW_TYPE_IPV6ADDR,
-    PW_TYPE_IPV6PREFIX
+    PW_TYPE_IPV6PREFIX,
+    PW_TYPE_VSA
 };
 
 /// @brief AttrValueType value -> name function.
