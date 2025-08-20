@@ -79,7 +79,7 @@ Allocator::initAfterConfigure() {
 }
 
 double
-Allocator::getOccupancyRate(const asiolink::IOAddress&ddr,
+Allocator::getOccupancyRate(const asiolink::IOAddress&,
                             const ClientClasses&) const {
     return (0.);
 }
