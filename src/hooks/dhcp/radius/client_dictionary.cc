@@ -180,7 +180,7 @@ AttrDefs::add(IntCstDefPtr def) {
 }
 
 void
-AttrDefs::parseLine(const string& line) {
+AttrDefs::parseLine(const string& line, unsigned int depth) {
     // Ignore empty lines.
     if (line.empty()) {
         return;
@@ -194,6 +194,14 @@ AttrDefs::parseLine(const string& line) {
     auto tokens = str::tokens(line);
     // Ignore blank lines.
     if (tokens.empty()) {
+        return;
+    }
+    // $INCLUDE include.
+    if (tokens[0] == "$INCLUDE") {
+        if (tokens.size() != 2) {
+            isc_throw(Unexpected, "expected 2 tokens, got " << tokens.size());
+        }
+        readDictionary(tokens[1], depth + 1);
         return;
     }
     // Attribute definition.
@@ -255,7 +263,10 @@ AttrDefs::parseLine(const string& line) {
 }
 
 void
-AttrDefs::readDictionary(const string& path) {
+AttrDefs::readDictionary(const string& path, unsigned depth) {
+    if (depth >= 5) {
+        isc_throw(BadValue, "Too many nested $INCLUDE");
+    }
     ifstream ifs(path);
     if (!ifs.is_open()) {
         isc_throw(BadValue, "can't open dictionary '" << path << "': "
@@ -265,23 +276,24 @@ AttrDefs::readDictionary(const string& path) {
         isc_throw(BadValue, "bad dictionary '" << path << "'");
     }
     try {
-        readDictionary(ifs);
+        readDictionary(ifs, depth);
         ifs.close();
     } catch (const exception& ex) {
         ifs.close();
-        isc_throw(BadValue, ex.what() << " in dictionary '" << path << "'");
+        isc_throw(BadValue, ex.what() << " in dictionary '" << path << "'"
+                  << (depth > 0 ? "," : ""));
     }
 }
 
 void
-AttrDefs::readDictionary(istream& is) {
+AttrDefs::readDictionary(istream& is, unsigned int depth) {
     size_t lines = 0;
     string line;
     try {
         while (is.good()) {
             ++lines;
             getline(is, line);
-            parseLine(line);
+            parseLine(line, depth);
         }
         if (!is.eof()) {
             isc_throw(BadValue, "I/O error: " << strerror(errno));

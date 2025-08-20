@@ -223,18 +223,22 @@ public:
     /// @brief Read a dictionary from a file.
     ///
     /// Fills attribute and integer constant definition tables from
-    /// a dictionary file.
+    /// a dictionary file. Recursion depth is initialized to 0,
+    /// incremented by includes and limited to 5.
     ///
     /// @param path dictionary file path.
-    void readDictionary(const std::string& path);
+    /// @param depth recursion depth.
+    void readDictionary(const std::string& path, unsigned int depth = 0);
 
     /// @brief Read a dictionary from an input stream.
     ///
     /// Fills attribute and integer constant definition tables from
-    /// a dictionary input stream.
+    /// a dictionary input stream. Recursion depth is initialized to 0,
+    /// incremented by includes and limited to 5.
     ///
     /// @param is input stream.
-    void readDictionary(std::istream& is);
+    /// @param depth recursion depth.
+    void readDictionary(std::istream& is, unsigned int depth = 0);
 
     /// @brief Check if a list of standard attribute definitions
     /// are available and correct.
@@ -255,7 +259,8 @@ protected:
     /// @brief Parse a dictionary line.
     ///
     /// @param line line to parse.
-    void parseLine(const std::string& line);
+    /// @param depth recursion depth.
+    void parseLine(const std::string& line, unsigned int depth);
 
     /// @brief Attribute definition container.
     AttrDefContainer container_;

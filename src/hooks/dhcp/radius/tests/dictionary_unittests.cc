@@ -47,28 +47,48 @@ public:
     /// @brief Destructor.
     virtual ~DictionaryTest() {
         AttrDefs::instance().clear();
+        static_cast<void>(remove(TEST_DICT));
     }
 
     /// @brief Parse a line.
     ///
     /// @param line line to parse.
-    void parseLine(const string& line) {
+    /// @param depth recursion depth.
+    void parseLine(const string& line, unsigned int depth = 0) {
         istringstream is(line + "\n");
-        AttrDefs::instance().readDictionary(is);
+        AttrDefs::instance().readDictionary(is, depth);
     }
 
     /// @brief Parse a list of lines.
     ///
     /// @param lines list of lines.
-    void parseLines(const list<string>& lines) {
+    /// @param depth recursion depth.
+    void parseLines(const list<string>& lines, unsigned int depth = 0) {
         string content;
         for (auto const& line : lines) {
             content += line + "\n";
         }
         istringstream is(content);
-        AttrDefs::instance().readDictionary(is);
+        AttrDefs::instance().readDictionary(is, depth);
     }
+
+    /// @brief writes specified content to a file.
+    ///
+    /// @param file_name name of file to be written.
+    /// @param content content to be written to file.
+    void writeFile(const std::string& file_name, const std::string& content) {
+        static_cast<void>(remove(file_name.c_str()));
+        ofstream out(file_name.c_str(), ios::trunc);
+        EXPECT_TRUE(out.is_open());
+        out << content;
+        out.close();
+    }
+
+    /// Name of a dictionary file used during tests.
+    static const char* TEST_DICT;
 };
+
+const char* DictionaryTest::TEST_DICT  = "test-dict";
 
 // Verifies standards definitions can be read from the dictionary.
 TEST_F(DictionaryTest, standard) {
@@ -211,6 +231,41 @@ TEST_F(DictionaryTest, hookAttributes) {
     ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY));
     EXPECT_NO_THROW_LOG(AttrDefs::instance().
         checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
+}
+
+// Verifies the $INCLUDE entry.
+TEST_F(DictionaryTest, include) {
+    list<string> include;
+    include.push_back("# Including the dictonary");
+    include.push_back(string("$INCLUDE ") + string(TEST_DICTIONARY));
+    include.push_back("# Dictionary included");
+    //    include.push_back("VALUE Vendor-Specific ISC 2495");
+    include.push_back("VALUE ARAP-Security ISC 2495");
+    EXPECT_NO_THROW_LOG(parseLines(include));
+    EXPECT_NO_THROW_LOG(AttrDefs::instance().
+        checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
+    //    auto isc = AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, "ISC");
+    auto isc = AttrDefs::instance().getByName(PW_ARAP_SECURITY, "ISC");
+    ASSERT_TRUE(isc);
+    EXPECT_EQ(2495, isc->value_);
+
+    // max depth is 5.
+    EXPECT_THROW_MSG(parseLines(include, 4), BadValue,
+                     "Too many nested $INCLUDE at line 2");
+}
+
+// Verifies the $INCLUDE entry can't eat the stack.
+TEST_F(DictionaryTest, includeLimit) {
+    string include = "$INCLUDE " + string(TEST_DICT) + "\n";
+    writeFile(TEST_DICT, include);
+    string expected = "Too many nested $INCLUDE ";
+    expected += "at line 1 in dictionary 'test-dict', ";
+    expected += "at line 1 in dictionary 'test-dict', ";
+    expected += "at line 1 in dictionary 'test-dict', ";
+    expected += "at line 1 in dictionary 'test-dict', ";
+    expected += "at line 1";
+    EXPECT_THROW_MSG(parseLine(string("$INCLUDE ") + string(TEST_DICT)),
+                     BadValue, expected);
 }
 
 namespace {
