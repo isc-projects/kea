@@ -816,8 +816,8 @@ public:
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
-    /// @param [out] preferred set to the preferred lifetime that should be used.
-    /// @param [out] valid set to the valid lifetime that should be used.
+    /// @param[out] preferred set to the preferred lifetime that should be used.
+    /// @param[out] valid set to the valid lifetime that should be used.
     static void getLifetimes6(ClientContext6& ctx, uint32_t& preferred,
                               uint32_t& valid);
 
@@ -830,10 +830,10 @@ public:
     ///
     /// @param ctx client context that passes all necessary information. See
     ///        @ref ClientContext6 for details.
-    /// @param [in/out] preferred set to the preferred lifetime that should
-    //                  be used. Caller must set it to 0 or remaining value.
-    /// @param [in/out] valid set to the valid lifetime that should be used.
-    ///                 Caller must set it to 0 or remaining value.
+    /// @param[in,out] preferred set to the preferred lifetime that should
+    ///                be used. Caller must set it to 0 or remaining value.
+    /// @param[in,out] valid set to the valid lifetime that should be used.
+    ///                Caller must set it to 0 or remaining value.
     static void getMinLifetimes6(ClientContext6& ctx, uint32_t& preferred,
                                  uint32_t& valid);
 private:
@@ -850,7 +850,7 @@ private:
     ///        available
     /// @param prefix_len length of the prefix (for PD only)
     ///        should be 128 for other lease types
-    /// @param [out] callout_status callout returned by the lease6_select
+    /// @param[out] callout_status callout returned by the lease6_select
     ///
     /// The following fields of the ctx structure are used:
     /// @ref ClientContext6::subnet_ Subnet the lease is allocated from
@@ -1564,9 +1564,8 @@ public:
     /// remaining lifetime is returned when greater than minimal.
     ///
     /// @param ctx Client context holding various information about the client.
-    /// @param [in/out] valid set to the valid lifetime that should be used.
-    ///                 Caller must set it to 0 or remaining value.
-    /// @return unsigned integer value of the valid lifetime to use.
+    /// @param[in,out] valid set to the valid lifetime that should be used.
+    ///                Caller must set it to 0 or remaining value.
     static void getMinValidLft(const ClientContext4& ctx, uint32_t& valid);
 
     /// @brief Returns the offer lifetime based on the v4 context

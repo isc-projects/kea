@@ -272,7 +272,7 @@ private:
 /// their hashes are equal, if two class lists are not equal their hashes
 /// are almost surely not equal.
 ///
-/// @param address A @c ClientClasses to hash.
+/// @param client_classes A @c ClientClasses to hash.
 /// @return The hash of the ClientClasses.
 
 size_t hash_value(const ClientClasses& client_classes);

@@ -70,7 +70,7 @@ public:
     /// false this indicates that the IOService was stopped.
     ///
     /// @param wait_time_usecs wait time in microseconds.
-    /// @param[out] time_out set to true if the wait time expired
+    /// @param[out] timed_out set to true if the wait time expired
     /// without any handlers executing.
     /// timed_out parameter will be set true if the wait time elapsed.
     ///
