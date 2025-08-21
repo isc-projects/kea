@@ -646,12 +646,8 @@ loaded by the correct process per the table below.
    |                                                           |              | which packets receive a response. The limit can be applied   |
    |                                                           |              | per-client class or per-subnet.                              |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`MySQL Configuration Backend <hooks-mysql>`          | Kea open     | This hook library is an implementation of the Kea Lease,     |
-   |                                                           | source       | Host, and Configuration Backend for MySQL. It uses a         |
-   |                                                           |              | MySQL database as a repository for the Kea leases, host      |
-   |                                                           |              | reservations, and configuration information. Kea servers use |
-   |                                                           |              | this library to fetch their configurations if Configuration  |
-   |                                                           |              | Backend is used.                                             |
+   | :ref:`MySQL Support Library <hooks-mysql>`                | Kea open     | This hook library provides support for using MySQL           |
+   |                                                           | source       | database(s) for Kea Lease, Host, and Configuration Backends. |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`PerfMon <hooks-perfmon>`                            | Kea open     | With this hook library, :iscman:`kea-dhcp4` and              |
    |                                                           | source       | :iscman:`kea-dhcp6` servers can track and report performance |
@@ -661,12 +657,8 @@ loaded by the correct process per the table below.
    |                                                           | source       | perform ping checks of candidate lease addresses before      |
    |                                                           |              | offering them to clients.                                    |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
-   | :ref:`PostgreSQL Configuration Backend <hooks-pgsql>`     | Kea open     | This hook library is an implementation of the Kea Lease,     |
-   |                                                           | source       | Host, and Configuration Backend for PostgreSQL. It uses a    |
-   |                                                           |              | PostgreSQL database as a repository for the Kea leases, host |
-   |                                                           |              | reservations, and configuration information. Kea servers use |
-   |                                                           |              | this library to fetch their configurations if Configuration  |
-   |                                                           |              | Backend is used.                                             |
+   | :ref:`PostgreSQL Support Library <hooks-pgsql>`           | Kea open     | This hook library provides support for using PostgreSQL      |
+   |                                                           | source       | database(s) for Kea Lease, Host, and Configuration Backends. |
    +-----------------------------------------------------------+--------------+--------------------------------------------------------------+
    | :ref:`RADIUS <hooks-radius>`                              | Kea open     | The RADIUS hook library allows Kea to interact with          |
    |                                                           | source       | RADIUS servers using access and accounting mechanisms. The   |
