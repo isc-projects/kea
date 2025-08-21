@@ -9,23 +9,34 @@ about: Create a new issue using this checklist for each release.
 
 - `A.B.C`: the version being released
 
+- `Stable Release`: the first release on a stable branch. `B` is an even number. `C` is 0.
+
+- `Maintenance Release`: any release on a stable branch except the first. `B` is an even number. `C` is not 0.
+
+- `Dev Release`: any release from the `master` branch. `B` is an odd number.
+
+- `Security Release`: any release that contains changes that were assigned a CVE number.
+
 #### General Guidelines
 
-- <mark>Stable and Maintenance Releases Only</mark>: Use dedicated Jenkins folder `kea-A-B` instead of `kea-dev`.
+- <mark>Stable or Maintenance Releases Only</mark>: Use dedicated Jenkins folder `kea-A-B` instead of `kea-dev`.
 
-- <mark>Stable and Maintenance Releases Only</mark>: Run QA scripts from branch `vA_B` of `qa-dhcp` instead of `master`.
+- <mark>Stable or Maintenance Releases Only</mark>: Run QA scripts from branch `vA_B` of `qa-dhcp` instead of `master`.
+
+- <mark>Security Release Only</mark>: If releasing from the `master` branch, use `kea-cve` instead of `kea-dev`.
 
 ## Pre-Release Preparation
 
 Some of these checks and updates can be made before the actual freeze.
 
+1. <mark>Security Release Only</mark>: The release will be done from the isc-private/kea. Rebase the private branch you are releasing on the public branch. If there are changes after the rebase, push them. If there are conflicts, you may ask developers for help on resolving them.
 1. [ ] Check Jenkins results:
-   1. [ ] Check Jenkins jobs for failures: [distcheck](https://jenkins.aws.isc.org/job/kea-dev/job/distcheck/), etc...
+   1. [ ] Check Jenkins jobs for failures: [ut-dist](https://jenkins.aws.isc.org/job/kea-dev/job/ut-dist/), etc...
    1. [ ] Check [Jenkins Tests Report](https://jenkins.aws.isc.org/job/kea-dev/job/jenkins-tests-report/).
    1. [ ] Check [tarball check report](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/Kea_20Build_20Checks/)
-1. [ ] <mark>Maintenance Releases Only</mark>: Check if any changes in [kea-packaging repository](https://gitlab.isc.org/isc-projects/kea-packaging/) should be backported to the corresponding stable branch.
+1. [ ] <mark>Maintenance Release Only</mark>: Check if any changes in [kea-packaging repository](https://gitlab.isc.org/isc-projects/kea-packaging/) should be backported to the corresponding stable branch.
    1. [ ] Backport changes and link merge request with this issue.
-1. [ ] <mark>Maintenance Releases Only</mark>: Check if any changes in [Kea Docker repository](https://gitlab.isc.org/isc-projects/kea-docker) should be backported to the corresponding stable branch.
+1. [ ] <mark>Maintenance Release Only</mark>: Check if any changes in [Kea Docker repository](https://gitlab.isc.org/isc-projects/kea-docker) should be backported to the corresponding stable branch.
    1. [ ] Backport changes and link merge request with this issue.
 1. [ ] Check [Performance Test Results](https://jenkins.aws.isc.org/job/kea-dev/job/performance/lastSuccessfulBuild/artifact/qa-dhcp/kea/performance-jenkins/report.html) in Jenkins for drops in performance.
 1. [ ] Create a Gitlab issue for bumping up library versions and `KEA_HOOKS_VERSION` and notify developers.
@@ -45,6 +56,7 @@ Some of these checks and updates can be made before the actual freeze.
    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
    1. Click `Build with Parameters`.
    1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field. Leave the rest as they are `PrivPubRepos: "private"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
+   1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
@@ -55,15 +67,19 @@ The following steps may involve changing files in the repository.
 1. [ ] Run QA script [update-code-for-release.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
    Example command: `GITLAB_TOKEN='...' ./update-code-for-release.py 2.3.4 --repo-dir ~/isc/repos/kea/`. \
    Help: `GITLAB_TOKEN='...' ./update-code-for-release.py --help`. \
-   <mark>Stable and Maintenance Releases Only</mark>: Run from branch `v*_*` of `qa-dhcp`. \
+   <mark>Stable or Maintenance Releases Only</mark>: Run from branch `v*_*` of `qa-dhcp`. \
+   <mark>Security Release Only</mark>: Pass the `--cve` parameter. \
    The script makes the following changes and actions:
-   1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/prepare_kea_release.sh) that:
-      1. Adds release entries in ChangeLogs.
-      1. Updates Kea version in configure.ac.
-      1. Updates copyright years in files that were changed in the current year.
-      1. Sort message files.
-      1. Regenerates message files headers.
-   1. Regenerates parsers using Bison from Docker
+      1. Runs [prepare_kea_release.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/prepare_kea_release.sh) that:
+         1. Adds release entries in ChangeLogs.
+         1. Updates Kea version in `meson.build`.
+         1. Updates copyright years in files that were changed in the current year.
+         1. Sort messages in message files in alphabetical order.
+         1. Regenerates message files headers.
+         1. Merges changelog_unreleased to ChangeLog.
+      1. Regenerates BNF grammar.
+      1. Regenerates message documentation.
+      1. Regenerates parsers using Bison from Docker
 1. [ ] Run the script again with the `--upload-only` flag, which:
    1. Create an issue in GitLab for release changes in the kea repo.
    1. Creates branches and merge requests for kea and kea-premium.
@@ -80,7 +96,7 @@ The following steps may involve changing files in the repository.
    1. [ ] Chapter 3. Installation
       1. [ ] Check installation hierarchy (this is also automatically checked at the end of [ut-extended job](https://jenkins.aws.isc.org/job/kea-dev/job/ut-extended/)).
       1. [ ] Check and update Build Requirements.
-      1. [ ] Check configure options against what `./configure -h` says.
+      1. [ ] Check configure options against what `meson configure` says.
 1. [ ] Check ChangeLog entries in Kea main and premium: spelling, trailing whitespaces, etc.
 1. [ ] Check AUTHORS, INSTALL, README files in Kea main and premium.
    - AUTHORS: update credits
@@ -96,7 +112,7 @@ This is the last moment to freeze the code! :snowflake:
    1. Download tarballs from the picked Jenkins build
    1. Check hook libraries.
       1. Are there any new hook libraries installed in this release?
-         1. Are they in the proper tarball? Premium or subscription?
+         1. Are they in the proper tarball? Core or subscriber?
          1. Do they have their own package?
    1. Check sizes - is the new package reasonable?
    1. Check the installation tree, and compare it with the previous release
@@ -114,6 +130,7 @@ This is the last moment to freeze the code! :snowflake:
    1. Click `Build with Parameters`.
    1. In the field `Tarball`, select the picked tarball build.
    1. In the field `Pkg`, select the corresponding pkg job.
+   1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. In field `Release_Candidate` pick:
       1. `rc1` if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick the previous rc number - it will result in an error)
@@ -125,53 +142,63 @@ This is the last moment to freeze the code! :snowflake:
          - a link to chapter 4 Sanity Checks of the release process: [KeaReleaseProcess - SanityChecks](https://wiki.isc.org/bin/view/QA/KeaReleaseProcess#4.%20Sanity%20Checks)
          - a link to the GitLab issue
          - tarballs locations with SHA256 checksums
-         - rpm/deb packages locations and versions
+         - apk, deb, rpm packages locations and versions
 
 ## Releasing Tarballs and Packages
 
 Now it's time to publish the code.
 
- 1. [ ] Update Release Notes with ChangeLog entries.
- 1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
+1. [ ] Update Release Notes with ChangeLog entries.
+1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
     1. Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
        1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
        1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
- 1. [ ] Upload final tarballs to repo.isc.org.
+1. [ ] Upload final tarballs to repo.isc.org.
     1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
     1. Click `Build with Parameters`.
     1. In the field `Tarball`, select the picked tarball build.
     1. In the field `Pkg`, select the corresponding pkg job.
+    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
     1. In the field `Release_Candidate`, pick `final`. This job will also:
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
        - Create Git tags `Kea-A.B.C` in Kea main and premium repositories.
        - Create Gitlab releases `Kea-A.B.C` in Kea main and premium repositories.
- 1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
- 1. [ ] Sign tarballs with the personal key by running [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh) which signs, verifies signatures and uploads them.
-    - If the release engineer does NOT have a signing key, please contact the team member.
- 1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
- 1. [ ] Wait for clearance from Security Officer to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
- 1. [ ] Login to repo.isc.org and upload the final tarball to public ftp using the make-available script.
-    * Example command: `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/2.3.4`.
-    * [ ] For premium tarballs, use the `--private` option.
+1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
+1. [ ] Sign the tarballs. Run QA script [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh).
+    * Example command: `./sign_kea_and_upload_asc.sh 2.3.4 wlodek 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
+    * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
+    * Fallback if it does not work:
+        1. Download the tarballs from `repo.isc.org:/data/shared/sweng/kea/releases/x.y.z/*-x.y.z.tar.gz`.
+        1. Sign them.
+        1. Upload the public signature at `/data/shared/sweng/kea/releases/x.y.z/*-x.y.z.tar.gz.asc`.
+1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
+    * Example command: `ssh repo.isc.org 'sha256sum /data/shared/sweng/kea/releases/*2.3.4/*.tar.xz'`
+1. [ ] <mark>Security Release Only</mark>: Wait for clearance from Security Officer to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
+1. [ ] Login to repo.isc.org and upload the final tarball to public ftp using the make-available script.
+    * [ ] For the subscriber tarball, run again with the `--private` flag instead of `--public`.
+    * Example commands:
+      * `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/2.3.4`
+      * `make-available --private --symlink=cur/2.3 /data/shared/sweng/kea/releases/subscriber-2.3.4`
     * For more information, use the `--debug` option.
     * To overwrite existing content, use `--force` option.
     * If you made a mistake, contact ASAP someone from the ops team to remove incorrectly uploaded tarballs.
-    * [ ] Save links to all premium tarballs and put them into the signing ticket as a comment.
- 1. [ ] Upload final RPM & DEB packages, tarballs and sign files to cloudsmith.io:
+    * [ ] Save the link to the subscriber tarball and put it into the signing ticket as a comment.
+1. [ ] Upload final APK, DEB & RPM packages, tarballs and sign files to cloudsmith.io:
     1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
     1. Click `Build with Parameters`.
     1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
        - This step also verifies sign files.
-    1. When it finishes run check: [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
- 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
+    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
+1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
+1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
     * Make sure the right package job is selected under `Packages`.
     * Tick `Upload`.
     * Leave `TestProdRepos` to `testing`.
     * Leave `versionTag` ticked.
-    * <mark>Stable and Maintenance Releases Only</mark>: Tick `latestTag`.
-    * <mark>Stable and Maintenance Releases Only</mark>: Change `KeaDockerBranch` to the appropriate branch.
+    * Leave `versionDateTag` ticked.
+    * <mark>Latest Stable Release Only</mark>: Tick `latestTag`.
     * Press `Build`.
- 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
+1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
 1. [ ] Update docs on https://app.readthedocs.org/projects/kea/.
     1. Click the triple dot button on the `latest` build -> click `Rebuild version`. This is really a workaround for RTD to pull the repo and discover the new tag.
     1. Go to `Versions` -> `Add version` -> find the tag name in the dropdown menu -> check `Active` -> click `Update version`. Wait for the build to complete.
@@ -179,7 +206,7 @@ Now it's time to publish the code.
         1. Go to `Settings` -> `Default version:` -> choose the new version as default.
         1. Check that https://kea.readthedocs.io/ redirects to the new version.
     1. [ ] <mark>Latest Stable Release Only</mark>: Rebuild the `stable` version. Go to [the stable build](https://app.readthedocs.org/projects/kea/builds/?version__slug=stable), click `Rebuild version`.
- 1. [ ] Create an issue and a merge request to bump up Kea version in `meson.build` to the next development version which could be, based on just released version `A.B.C`:
+1. [ ] <mark>Stable or Dev Releases Only</mark>: Create an issue and a merge request to bump up Kea version in `meson.build` to the next development version which could be, based on just released version `A.B.C`:
     * `A.B.z-git` where `z == C + 1` most of the time, or
     * `A.y.0-git` where `y == B + 2` if a new development series starts, or
     * `x.1.0-git` where `x == A + 1` when the released minor version `b` is 9 and `A.B.C` was the last version in the development series and a new development version is coming up next.
@@ -193,7 +220,7 @@ Now it's time to publish the code.
 1. [ ] Check that the tarballs are available on Cloudsmith, since we are downloading from there, not downloads or ftp.
 1. [ ] Publish links to downloads on the ISC website. Update release dates. Check the modal messages and update if necessary.
 1. [ ] <mark>Security Release Only</mark>: Update the security releases version table in the downloads data file on the website. This information is used by Stork to flag new security versions.
-1. [ ] <mark>Stable Releases Only</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated.
+1. [ ] <mark>Stable Release Only</mark>: If it is a new `major.minor` version, SWENG will have created a new repo in Cloudsmith, which will need the customer tokens migrated from an existing repo. Verify that the KB on installing from Cloudsmith has also been updated.
    * If the tokens were not migrated, contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
 1. [ ] Send notifications to existing subscribers of the new version.
