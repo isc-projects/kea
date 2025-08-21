@@ -743,7 +743,7 @@ TEST_F(RequestTest, accept) {
     ASSERT_EQ(1, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
-    EXPECT_EQ("User-Name=user", attr->toText());
+    EXPECT_EQ("User-Name='user'", attr->toText());
 }
 
 /// Verify what happens with Accounting-Response response.
@@ -938,7 +938,7 @@ TEST_F(RequestTest, badAccept) {
     ASSERT_EQ(1, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
-    EXPECT_EQ("User-Name=user", attr->toText());
+    EXPECT_EQ("User-Name='user'", attr->toText());
 }
 
 /// Verify what happens with bad Accounting-Response response.
@@ -1326,7 +1326,7 @@ TEST_F(RequestTest, reject) {
     ASSERT_EQ(1, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
-    EXPECT_EQ("User-Name=user", attr->toText());
+    EXPECT_EQ("User-Name='user'", attr->toText());
 }
 
 /// Verify what happens with a backup authentication server.
@@ -1427,7 +1427,7 @@ TEST_F(RequestTest, accept2) {
     ASSERT_EQ(1, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
-    EXPECT_EQ("User-Name=user", attr->toText());
+    EXPECT_EQ("User-Name='user'", attr->toText());
 }
 
 /// Verify what happens with a backup accounting server.

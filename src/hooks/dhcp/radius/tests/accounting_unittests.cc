@@ -743,10 +743,10 @@ void AccountingTest::testBuildAcctLease4() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IP_ADDRESS);
     ASSERT_TRUE(framed_ip_address);
@@ -782,7 +782,7 @@ void AccountingTest::testBuildAcctLease4canon() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20-e5-2a-b8-15-14",
+    EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
@@ -805,7 +805,7 @@ void AccountingTest::testBuildAcctLease4noDuid() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -827,7 +827,7 @@ void AccountingTest::testBuildAcctLease4noPop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -849,7 +849,7 @@ void AccountingTest::testBuildAcctLease4notPrintable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -873,7 +873,7 @@ void AccountingTest::testBuildAcctLease4Duid() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=05:06:07:08:09", user_name->toText());
+    EXPECT_EQ("User-Name='05:06:07:08:09'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -898,7 +898,7 @@ void AccountingTest::testBuildAcctLease4DuidPrintable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -920,7 +920,7 @@ void AccountingTest::testBuildAcctLease4Pop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -942,7 +942,7 @@ void AccountingTest::testBuildAcctLease4Pop0Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -962,7 +962,7 @@ void AccountingTest::testBuildAcctLease4noClientId() {
     ASSERT_LE(4, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=20:e5:2a:b8:15:14", user_name->toText());
+    EXPECT_EQ("User-Name='20:e5:2a:b8:15:14'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     EXPECT_FALSE(calling_station_id);
     EXPECT_EQ(0, attrs->count(PW_CLASS));
@@ -1166,7 +1166,7 @@ void AccountingTest::testBuildAcctLease4ClassClientID() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv4/HwAddr can get the Class from host cache.
@@ -1200,7 +1200,7 @@ void AccountingTest::testBuildAcctLease4ClassHwAddr() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv4/DUID can get the Class from host cache.
@@ -1235,7 +1235,7 @@ void AccountingTest::testBuildAcctLease4ClassDuid() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv4/Flex can get the Class from host cache.
@@ -1268,7 +1268,7 @@ void AccountingTest::testBuildAcctLease4ClassFlex() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv6 lease works.
@@ -1292,10 +1292,10 @@ void AccountingTest::testBuildAcctLease6() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IPV6_ADDRESS);
     ASSERT_TRUE(framed_ip_address);
@@ -1335,10 +1335,10 @@ void AccountingTest::testBuildAcctLease6prefix() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr delegated_prefix = attrs->get(PW_DELEGATED_IPV6_PREFIX);
     ASSERT_TRUE(delegated_prefix);
@@ -1376,7 +1376,7 @@ void AccountingTest::testBuildAcctLease6canon() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20-e5-2a-b8-15-14",
+    EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
@@ -1400,7 +1400,7 @@ void AccountingTest::testBuildAcctLease6noPop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
 }
 
 /// Verify that buildAcct on IPv6 lease works with not printable duid.
@@ -1422,7 +1422,7 @@ void AccountingTest::testBuildAcctLease6notPrintable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1445,7 +1445,7 @@ void AccountingTest::testBuildAcctLease6Pop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1468,7 +1468,7 @@ void AccountingTest::testBuildAcctLease6Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1491,7 +1491,7 @@ void AccountingTest::testBuildAcctLease6Pop0Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1701,7 +1701,7 @@ void AccountingTest::testBuildAcctLease6ClassDUID() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv6/HwAddr can get the Class from host cache.
@@ -1736,7 +1736,7 @@ void AccountingTest::testBuildAcctLease6ClassHwAddr() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct on IPv6/Flex can get the Class from host cache.
@@ -1770,7 +1770,7 @@ void AccountingTest::testBuildAcctLease6ClassFlex() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct4 works.
@@ -1794,10 +1794,10 @@ void AccountingTest::testBuildAcct4() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IP_ADDRESS);
     ASSERT_TRUE(framed_ip_address);
@@ -1872,7 +1872,7 @@ void AccountingTest::testBuildAcct4canon() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20-e5-2a-b8-15-14",
+    EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IP_ADDRESS);
     EXPECT_EQ("Framed-IP-Address=192.0.2.1", framed_ip_address->toText());
@@ -1897,7 +1897,7 @@ void AccountingTest::testBuildAcct4noPop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1919,7 +1919,7 @@ void AccountingTest::testBuildAcct4notPrintable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1941,7 +1941,7 @@ void AccountingTest::testBuildAcct4Pop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1963,7 +1963,7 @@ void AccountingTest::testBuildAcct4Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -1985,7 +1985,7 @@ void AccountingTest::testBuildAcct4Pop0Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2029,7 +2029,7 @@ void AccountingTest::testBuildAcct4noClientId() {
     ASSERT_LE(4, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=20:e5:2a:b8:15:14", user_name->toText());
+    EXPECT_EQ("User-Name='20:e5:2a:b8:15:14'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2050,7 +2050,7 @@ void AccountingTest::testBuildAcct4noClientIdcanon() {
     ASSERT_LE(4, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=20-e5-2a-b8-15-14", user_name->toText());
+    EXPECT_EQ("User-Name='20-e5-2a-b8-15-14'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2132,7 +2132,7 @@ void AccountingTest::testBuildAcct4ClassClientID() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct4 on HwAddr can get the Class from host cache.
@@ -2167,7 +2167,7 @@ void AccountingTest::testBuildAcct4ClassHwAddr() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct4 on Flex can get the Class from host cache.
@@ -2202,7 +2202,7 @@ void AccountingTest::testBuildAcct4ClassFlex() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct6 works.
@@ -2226,10 +2226,10 @@ void AccountingTest::testBuildAcct6() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IPV6_ADDRESS);
     ASSERT_TRUE(framed_ip_address);
@@ -2270,10 +2270,10 @@ void AccountingTest::testBuildAcct6prefix() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
     ConstAttributePtr delegated_prefix = attrs->get(PW_DELEGATED_IPV6_PREFIX);
     ASSERT_TRUE(delegated_prefix);
@@ -2464,7 +2464,7 @@ void AccountingTest::testBuildAcct6canon() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20-e5-2a-b8-15-14",
+    EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IPV6_ADDRESS);
     EXPECT_EQ("Framed-IPv6-Address=2001:db8::1235",
@@ -2491,7 +2491,7 @@ void AccountingTest::testBuildAcct6noPop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2514,7 +2514,7 @@ void AccountingTest::testBuildAcct6notPrintable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2537,7 +2537,7 @@ void AccountingTest::testBuildAcct6Pop0() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=01:02:03:04", user_name->toText());
+    EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2560,7 +2560,7 @@ void AccountingTest::testBuildAcct6Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2583,7 +2583,7 @@ void AccountingTest::testBuildAcct6Pop0Printable() {
     ASSERT_LE(5, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    EXPECT_EQ("User-Name=Foobar", user_name->toText());
+    EXPECT_EQ("User-Name='Foobar'", user_name->toText());
     EXPECT_EQ(0, attrs->count(PW_CLASS));
 }
 
@@ -2690,7 +2690,7 @@ void AccountingTest::testBuildAcct6ClassDUID() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct6 on HwAddr can get the Class from host cache.
@@ -2724,7 +2724,7 @@ void AccountingTest::testBuildAcct6ClassHwAddr() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that buildAcct6 on Flex can get the Class from host cache.
@@ -2758,7 +2758,7 @@ void AccountingTest::testBuildAcct6ClassFlex() {
     ASSERT_LE(6, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
-    EXPECT_EQ("Class=foobar", cclass->toText());
+    EXPECT_EQ("Class='foobar'", cclass->toText());
 }
 
 /// Verify that lease4_select hook returns for fake allocations.

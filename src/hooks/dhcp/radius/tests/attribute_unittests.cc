@@ -28,22 +28,6 @@ using namespace isc::test;
 
 namespace {
 
-// Verify error cases for generic factory fromText.
-TEST_F(AttributeTest, fromText) {
-    EXPECT_THROW_MSG(Attribute::fromText(""), BadValue,
-                     "empty text attribute");
-    EXPECT_THROW_MSG(Attribute::fromText(" "), BadValue,
-                     "blank text attribute ' '");
-    EXPECT_THROW_MSG(Attribute::fromText("foo-bar"), BadValue,
-                     "can't find '=' in text attribute 'foo-bar'");
-    EXPECT_THROW_MSG(Attribute::fromText("=bar"), BadValue,
-                     "empty attribute name in '=bar'");
-    EXPECT_THROW_MSG(Attribute::fromText("foo="), BadValue,
-                     "empty attribute value in 'foo='");
-    EXPECT_THROW_MSG(Attribute::fromText("Foo-Bar=1"), NotFound,
-                     "can't find attribute definition for 'Foo-Bar'");
-}
-
 // Verify error cases for factory fromText with definition.
 TEST_F(AttributeTest, defFromText) {
     AttrDefPtr def;
@@ -107,17 +91,12 @@ TEST_F(AttributeTest, attrString) {
     string to_string;
     EXPECT_NO_THROW_LOG(to_string = attr->toString());
     EXPECT_EQ("foobar", to_string);
-    EXPECT_EQ("User-Name=foobar", attr->toText());
+    EXPECT_EQ("User-Name='foobar'", attr->toText());
     vector<uint8_t> binary = { 1, 8, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
     EXPECT_EQ(binary, attr->toBytes());
     string expected = "{ \"type\": 1, \"name\": \"User-Name\", ";
     expected += " \"data\": \"foobar\" }";
     runToElementTest<Attribute>(expected, *attr);
-
-    AttributePtr from_text = Attribute::fromText("User-Name=foobar");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
 
     AttributePtr from_bytes = Attribute::fromBytes(binary);
     ASSERT_TRUE(from_bytes);
@@ -177,6 +156,8 @@ TEST_F(AttributeTest, attrString) {
                      "the attribute value type must be ipv6prefix, not string");
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
                      "the attribute value type must be vsa, not string");
+    EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
+                     "the attribute value type must be vsa, not string");
 }
 
 // Verifies raw string attribute.
@@ -190,17 +171,12 @@ TEST_F(AttributeTest, rawAttrString) {
     string to_string;
     EXPECT_NO_THROW_LOG(to_string = attr->toString());
     EXPECT_EQ("\x01\x02\x03", to_string);
-    EXPECT_EQ("User-Name=\x01\x02\x03", attr->toText());
+    EXPECT_EQ("User-Name=0x010203", attr->toText());
     vector<uint8_t> binary = { 1, 5, 1, 2, 3 };
     EXPECT_EQ(binary, attr->toBytes());
     string expected = "{ \"type\": 1, \"name\": \"User-Name\", ";
     expected += " \"raw\": \"010203\" }";
     runToElementTest<Attribute>(expected, *attr);
-
-    AttributePtr from_text = Attribute::fromText("User-Name=\x01\x02\x03");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
 
     AttributePtr from_bytes = Attribute::fromBytes(binary);
     ASSERT_TRUE(from_bytes);
@@ -232,19 +208,6 @@ TEST_F(AttributeTest, attrInt) {
     expected += " \"data\": \"15\" }";
     runToElementTest<Attribute>(expected, *attr);
 
-    AttributePtr from_text = Attribute::fromText("NAS-Port-Type=Ethernet");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
-
-    AttributePtr attr2;
-    ASSERT_NO_THROW(attr2 = Attribute::fromInt(61, 1155));
-    ASSERT_TRUE(attr2);
-    AttributePtr from_text2 = Attribute::fromText("NAS-Port-Type=1155");
-    ASSERT_TRUE(from_text2);
-    EXPECT_TRUE(compare(from_text2, attr2))
-        << from_text2->toText() << " != " << attr2->toText();
-
     AttributePtr from_bytes = Attribute::fromBytes(binary);
     ASSERT_TRUE(from_bytes);
     EXPECT_TRUE(compare(from_bytes, attr))
@@ -270,9 +233,9 @@ TEST_F(AttributeTest, attrInt) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string or vsa, not integer");
+                     "the attribute value type must be string, not integer");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string or vsa, not integer");
+                     "the attribute value type must be string, not integer");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
                      "the attribute value type must be ipaddr, not integer");
     EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
@@ -283,6 +246,8 @@ TEST_F(AttributeTest, attrInt) {
                      "the attribute value type must be ipv6prefix, not integer"
 );
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not integer");
+    EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
                      "the attribute value type must be vsa, not integer");
 }
 
@@ -309,11 +274,6 @@ TEST_F(AttributeTest, attrIpAddr) {
     string expected = "{ \"type\": 8, \"name\": \"Framed-IP-Address\", ";
     expected += " \"data\": \"192.0.2.1\" }";
     runToElementTest<Attribute>(expected, *attr);
-
-    AttributePtr from_text = Attribute::fromText("Framed-IP-Address=192.0.2.1");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(Attribute::fromIpAddr(8, IOAddress("2001:db8::1235")),
                      BadValue, "not v4 address 2001:db8::1235");
@@ -343,9 +303,9 @@ TEST_F(AttributeTest, attrIpAddr) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string or vsa, not ipaddr");
+                     "the attribute value type must be string, not ipaddr");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string or vsa, not ipaddr");
+                     "the attribute value type must be string, not ipaddr");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipaddr");
     EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
@@ -355,6 +315,8 @@ TEST_F(AttributeTest, attrIpAddr) {
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
                      "the attribute value type must be ipv6prefix, not ipaddr");
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not ipaddr");
+    EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
                      "the attribute value type must be vsa, not ipaddr");
 }
 
@@ -384,19 +346,13 @@ TEST_F(AttributeTest, attrIpv6Addr) {
     expected += " \"data\": \"2001:db8::1235\" }";
     runToElementTest<Attribute>(expected, *attr);
 
-    AttributePtr from_text =
-        Attribute::fromText("Framed-IPv6-Address=2001:db8::1235");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
-
     EXPECT_THROW_MSG(Attribute::fromIpv6Addr(168, IOAddress("192.0.2.1")),
                      BadValue, "not v6 address 192.0.2.1");
 
     AttributePtr def_text = Attribute::fromText(def, "2001:db8::1235");
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
+    ASSERT_TRUE(def_text);
+    EXPECT_TRUE(compare(def_text, attr))
+        << def_text->toText() << " != " << attr->toText();
 
     AttributePtr from_bytes = Attribute::fromBytes(binary);
     ASSERT_TRUE(from_bytes);
@@ -422,9 +378,9 @@ TEST_F(AttributeTest, attrIpv6Addr) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string or vsa, not ipv6addr");
+                     "the attribute value type must be string, not ipv6addr");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string or vsa, not ipv6addr");
+                     "the attribute value type must be string, not ipv6addr");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipv6addr");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
@@ -434,6 +390,8 @@ TEST_F(AttributeTest, attrIpv6Addr) {
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
                      "the attribute value type must be ipv6prefix, not ipv6addr");
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
+                     "the attribute value type must be vsa, not ipv6addr");
+    EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
                      "the attribute value type must be vsa, not ipv6addr");
 }
 
@@ -466,28 +424,11 @@ TEST_F(AttributeTest, attrIpv6Prefix) {
     expected += " \"data\": \"2001:db8::1235/128\" }";
     runToElementTest<Attribute>(expected, *attr);
 
-    AttributePtr from_text;
-    EXPECT_NO_THROW_LOG(from_text = Attribute::fromText("Delegated-IPv6-Prefix=2001:db8::1235/128"));
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
-
-    EXPECT_THROW_MSG(Attribute::fromText("Delegated-IPv6-Prefix=192.0.2.1/32"),
-                     BadValue, "not v6 address 192.0.2.1");
-
     AttributePtr def_text;
     EXPECT_NO_THROW_LOG(def_text = Attribute::fromText(def, "2001:db8::1235/128"));
-    ASSERT_TRUE(from_text);
-    EXPECT_TRUE(compare(from_text, attr))
-        << from_text->toText() << " != " << attr->toText();
-
-    string long_prefix = "Delegated-IPv6-Prefix=2001:db8::1235/300";
-    EXPECT_THROW_MSG(Attribute::fromText(long_prefix), BadValue,
-                     "not 8 bit prefix length 2001:db8::1235/300");
-
-    long_prefix = "Delegated-IPv6-Prefix=2001:db8::1235/129";
-    EXPECT_THROW_MSG(Attribute::fromText(long_prefix), BadValue,
-                     "too long prefix 129");
+    ASSERT_TRUE(def_text);
+    EXPECT_TRUE(compare(def_text, attr))
+        << def_text->toText() << " != " << attr->toText();
 
     AttributePtr from_bytes;
     EXPECT_NO_THROW_LOG(from_bytes = Attribute::fromBytes(binary));
@@ -533,9 +474,9 @@ TEST_F(AttributeTest, attrIpv6Prefix) {
         << def_bytes->toText() << " != " << attr->toText();
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,
-                     "the attribute value type must be string or vsa, not ipv6prefix");
+                     "the attribute value type must be string, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toBinary(), TypeError,
-                     "the attribute value type must be string or vsa, not ipv6prefix");
+                     "the attribute value type must be string, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toInt(), TypeError,
                      "the attribute value type must be integer, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
@@ -544,6 +485,109 @@ TEST_F(AttributeTest, attrIpv6Prefix) {
                      "the attribute value type must be ipv6addr, not ipv6prefix");
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
                      "the attribute value type must be vsa, not ipv6prefix");
+    EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
+                     "the attribute value type must be vsa, not ipv6prefix");
+}
+
+// Verifies vsa attribute.
+TEST_F(AttributeTest, attrVsa) {
+    // Using Vector-Specific (26) *only* vsa attribute.
+    AttrDefPtr def = AttrDefs::instance().getByType(PW_VENDOR_SPECIFIC);
+    ASSERT_TRUE(def);
+    EXPECT_EQ(26, def->type_);
+    EXPECT_EQ(PW_TYPE_VSA, def->value_type_);
+
+    AttributePtr attr;
+    ASSERT_NO_THROW(attr = Attribute::fromVsa(PW_VENDOR_SPECIFIC,
+                                              1234, "foobar"));
+    ASSERT_TRUE(attr);
+
+    EXPECT_EQ(26, attr->getType());
+    EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
+    uint32_t vendor = 0;
+    ASSERT_NO_THROW(vendor = attr->toVendorId());
+    EXPECT_EQ(1234, vendor);
+    EXPECT_EQ("Vendor-Specific=[1234]0x666F6F626172", attr->toText());
+    vector<uint8_t> binary = { 26, 12, 0, 0, 0x04, 0xd2,
+                               0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
+    EXPECT_EQ(binary, attr->toBytes());
+    string expected = "{ \"type\": 26, \"name\": \"Vendor-Specific\", ";
+    expected += " \"vendor\": \"1234\", \"vsa-raw\": \"666F6F626172\" }";
+    runToElementTest<Attribute>(expected, *attr);
+
+    AttributePtr from_bytes = Attribute::fromBytes(binary);
+    ASSERT_TRUE(from_bytes);
+    EXPECT_TRUE(compare(from_bytes, attr))
+        << from_bytes->toText() << " != " << attr->toText();
+
+    vector<uint8_t> value = { 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
+    AttributePtr def_value = Attribute::fromVsa(PW_VENDOR_SPECIFIC,
+                                                1234, value);
+    ASSERT_TRUE(def_value);
+    EXPECT_TRUE(compare(def_value, attr))
+        << def_value->toText() << " != " << attr->toText();
+
+    vector<uint8_t> bytes = { 0, 0, 0x04, 0xd2,
+                              0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
+    AttributePtr def_bytes = Attribute::fromBytes(def, bytes);
+    ASSERT_TRUE(def_bytes);
+    EXPECT_TRUE(compare(def_bytes, attr))
+        << def_bytes->toText() << " != " << attr->toText();
+
+    EXPECT_THROW_MSG(Attribute::fromVsa(PW_VENDOR_SPECIFIC, 1234, ""),
+                     BadValue, "value is empty");
+
+    vector<uint8_t> empty;
+    EXPECT_THROW_MSG(Attribute::fromVsa(PW_VENDOR_SPECIFIC, 1234, empty),
+                     BadValue, "value is empty");
+
+    vector<uint8_t> small = { 26, 6, 0, 0, 0x4, 0xd2 };
+    EXPECT_THROW_MSG(Attribute::fromBytes(small), BadValue,
+                     "value is too small 4 < 5");
+
+    vector<uint8_t> small2 = { 0, 0, 0x4, 0xd2 };
+    EXPECT_THROW_MSG(Attribute::fromBytes(def, small2), BadValue,
+                     "value is too small 4 < 5");
+
+    string big_text(MAX_VSA_DATA_LEN, 'x');
+    EXPECT_NO_THROW_LOG(Attribute::fromVsa(PW_VENDOR_SPECIFIC,
+                                           1234, big_text));
+
+    vector<uint8_t> big_binary(MAX_VSA_DATA_LEN, 0x78);
+    EXPECT_NO_THROW_LOG(Attribute::fromVsa(PW_VENDOR_SPECIFIC,
+                                           1234, big_binary));
+
+    vector<uint8_t> big_value(MAX_STRING_LEN, 0x87);
+    EXPECT_NO_THROW_LOG(Attribute::fromBytes(def, big_value));
+
+    string too_big_text(MAX_VSA_DATA_LEN + 1, 'x');
+    EXPECT_THROW_MSG(Attribute::fromVsa(PW_VENDOR_SPECIFIC, 1234,
+                                        too_big_text), BadValue,
+                     "value is too large 250 > 249");
+
+    vector<uint8_t> too_big_binary(MAX_VSA_DATA_LEN + 1, 0x87);
+    EXPECT_THROW_MSG(Attribute::fromVsa(PW_VENDOR_SPECIFIC, 1234,
+                                        too_big_binary), BadValue,
+                     "value is too large 250 > 249");
+
+    vector<uint8_t> too_bigvalue(MAX_STRING_LEN + 1, 0x87);
+    EXPECT_THROW_MSG(Attribute::fromBytes(def, too_bigvalue), BadValue,
+                     "value is too large 254 > 253");
+
+    EXPECT_THROW_MSG(attr->toString(), TypeError,
+                     "the attribute value type must be string, not vsa");
+    EXPECT_THROW_MSG(attr->toBinary(), TypeError,
+                     "the attribute value type must be string, not vsa");
+    EXPECT_THROW_MSG(attr->toInt(), TypeError,
+                     "the attribute value type must be integer, not vsa");
+    EXPECT_THROW_MSG(attr->toIpAddr(), TypeError,
+                     "the attribute value type must be ipaddr, not vsa");
+    EXPECT_THROW_MSG(attr->toIpv6Addr(), TypeError,
+                     "the attribute value type must be ipv6addr, not vsa");
+    EXPECT_THROW_MSG(attr->toIpv6Prefix(), TypeError,
+                     "the attribute value type must be ipv6prefix, not vsa");
+    EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
+                     "the attribute value type must be ipv6prefix, not vsa");
 }
 
 // Verifies basic methods for attribute collection.
@@ -604,8 +648,8 @@ TEST_F(AttributeTest, attributesAddDel) {
     attr.reset();
 
     // toText.
-    string expected = "User-Name=foobar,\nUser-Name=foo,\n";
-    expected += "Service-Type=20,\nUser-Name=bar";
+    string expected = "User-Name='foobar',\nUser-Name='foo',\n";
+    expected += "Service-Type=20,\nUser-Name='bar'";
     string got;
     ASSERT_NO_THROW(got = attrs.toText());
     EXPECT_EQ(expected, got) << expected << "\n" << got << "\n";

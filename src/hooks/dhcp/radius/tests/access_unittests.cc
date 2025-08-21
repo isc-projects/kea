@@ -1755,12 +1755,12 @@ TEST_F(AccessTest, buildHWAddr4) {
     EXPECT_LE(2, handler->env_.send_attrs_->size());
     ConstAttributePtr user_name = handler->env_.send_attrs_->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    string expected = "User-Name=" + text;
+    string expected = "User-Name='" + text + "'";
     EXPECT_EQ(expected, user_name->toText());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20:e5:2a:b8:15:14",
+    EXPECT_EQ("Calling-Station-Id='20:e5:2a:b8:15:14'",
               calling_station_id->toText());
 }
 
@@ -1783,12 +1783,12 @@ TEST_F(AccessTest, buildHWAddr6) {
     EXPECT_LE(2, handler->env_.send_attrs_->size());
     ConstAttributePtr user_name = handler->env_.send_attrs_->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
-    string expected = "User-Name=" + text;
+    string expected = "User-Name='" + text + "'";
     EXPECT_EQ(expected, user_name->toText());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=08:00:27:58:f1:e8",
+    EXPECT_EQ("Calling-Station-Id='08:00:27:58:f1:e8'",
               calling_station_id->toText());
 }
 
@@ -1809,7 +1809,7 @@ TEST_F(AccessTest, buildCanonHWAddr4) {
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=20-e5-2a-b8-15-14",
+    EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
 }
 
@@ -1830,7 +1830,7 @@ TEST_F(AccessTest, buildCanonHWAddr6) {
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
-    EXPECT_EQ("Calling-Station-Id=08-00-27-58-f1-e8",
+    EXPECT_EQ("Calling-Station-Id='08-00-27-58-f1-e8'",
               calling_station_id->toText());
 }
 

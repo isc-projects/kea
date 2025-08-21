@@ -35,6 +35,9 @@ AttributeTest::compare(ConstAttributePtr first, ConstAttributePtr second) {
     } else if (first->getValueType() == PW_TYPE_IPV6PREFIX) {
         return ((first->toIpv6Prefix() == second->toIpv6Prefix()) &&
                 (first->toIpv6PrefixLen() == second->toIpv6PrefixLen()));
+    } else if (first->getValueType() == PW_TYPE_VSA) {
+        return ((first->toVendorId() == second->toVendorId()) &&
+                (first->toVsaData() == second->toVsaData()));
     }
     // Should not happen...
     return (false);

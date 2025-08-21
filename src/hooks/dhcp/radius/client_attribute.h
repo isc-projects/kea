@@ -69,13 +69,6 @@ public:
 
     /// Generic factories.
 
-    /// @brief From text.
-    ///
-    /// @param repr name=value representation.
-    /// @return pointer to the attribute.
-    /// @throw NotFound if the definition can't be found.
-    static AttributePtr fromText(const std::string& repr);
-
     /// @brief From bytes (wire format).
     ///
     /// @param bytes binary attribute.
@@ -164,12 +157,12 @@ public:
 
     /// @brief From Vendor ID and string data with type.
     ///
-    /// @note Requires the type to be of the Vendor Specific attribute (26).
+    /// @note Requires the type to be of a standard vsa attribute.
     ///
     /// @param type type of attribute.
     /// @param vendor vendor id.
     /// @param value vsa data.
-    static AttributePtr fromVSA(const uint8_t type,
+    static AttributePtr fromVsa(const uint8_t type,
                                 const uint32_t vendor,
                                 const std::string& value);
 
@@ -180,7 +173,7 @@ public:
     /// @param type type of attribute.
     /// @param vendor vendor id.
     /// @param value vsa data.
-    static AttributePtr fromVSA(const uint8_t type,
+    static AttributePtr fromVsa(const uint8_t type,
                                 const uint32_t vendor,
                                 const std::vector<uint8_t>& value);
 
@@ -209,13 +202,13 @@ public:
     /// @brief To string.
     ///
     /// @return the string value.
-    /// @throw TypeError if the attribute is not a string or vsa one.
+    /// @throw TypeError if the attribute is not a string one.
     virtual std::string toString() const;
 
     /// @brief To binary.
     ///
     /// @return the string value as a binary.
-    /// @throw TypeError if the attribute is not a string or vsa one.
+    /// @throw TypeError if the attribute is not a string one.
     virtual std::vector<uint8_t> toBinary() const;
 
     /// @brief To integer.
@@ -254,13 +247,11 @@ public:
     /// @throw TypeError if the attribute is not a vsa one.
     virtual uint32_t toVendorId() const;
 
-    /// Generic set methods.
-
-    /// @brief Set vendor id.
+    /// @brief To vsa data.
     ///
-    /// @param vendor vendor id.
+    /// @return the vsa data.
     /// @throw TypeError if the attribute is not a vsa one.
-    virtual void setVendorId(const uint32_t vendor);
+    virtual std::string toVsaData() const;
 
     /// @brief Type.
     const uint8_t type_;
@@ -689,7 +680,7 @@ private:
 };
 
 /// @brief RADIUS attribute holding vsa.
-class AttrVSA : public Attribute {
+class AttrVsa : public Attribute {
 protected:
 
     /// @brief Constructor.
@@ -697,7 +688,8 @@ protected:
     /// @param type attribute type.
     /// @param vendor vendor id.
     /// @param value string vsa data.
-    AttrVSA(const uint8_t type, const int32_t vendor, const std::string& value)
+    AttrVsa(const uint8_t type, const uint32_t vendor,
+            const std::string& value)
         : Attribute(type), vendor_(vendor), value_(value) {
         if (value.empty()) {
             isc_throw(BadValue, "value is empty");
@@ -713,7 +705,7 @@ protected:
     /// @param type attribute type.
     /// @param vendor vendor id.
     /// @param value binary vsa data.
-    AttrVSA(const uint8_t type, const int32_t vendor,
+    AttrVsa(const uint8_t type, const uint32_t vendor,
             const std::vector<uint8_t>& value);
 
     /// @brief From text.
@@ -721,6 +713,7 @@ protected:
     /// @param type attribute type.
     /// @param repr value representation.
     /// @return pointer to the attribute or null.
+    /// @throw NotImplemented
     static AttributePtr fromText(const uint8_t type, const std::string& repr);
 
     /// @brief From bytes.
@@ -761,18 +754,6 @@ public:
     /// @return binary representation.
     virtual std::vector<uint8_t> toBytes() const override;
 
-    /// @brief To string.
-    ///
-    /// @return the string value.
-    virtual std::string toString() const override {
-        return (value_);
-    }
-
-    /// @brief To binary.
-    ///
-    /// @return the string value as a binary.
-    virtual std::vector<uint8_t> toBinary() const override;
-
     /// @brief To vendor id.
     ///
     /// @return the vendor id.
@@ -780,11 +761,11 @@ public:
         return (vendor_);
     }
 
-    /// @brief Set vendor id.
+    /// @brief To vsa data.
     ///
-    /// @param vendor vendor id.
-    virtual void setVendorId(const uint32_t vendor) override {
-        vendor_ = vendor;
+    /// @return the vsa data.
+    virtual std::string toVsaData() const override {
+        return (value_);
     }
 
     /// @brief Unparse attribute.

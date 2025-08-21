@@ -74,6 +74,7 @@ const AttrDefList RadiusConfigParser::USED_STANDARD_ATTR_DEFS = {
     { PW_FRAMED_IP_ADDRESS,     "Framed-IP-Address",     PW_TYPE_IPADDR },
     { PW_REPLY_MESSAGE,         "Reply-Message",         PW_TYPE_STRING },
     { PW_CLASS,                 "Class",                 PW_TYPE_STRING },
+    { PW_VENDOR_SPECIFIC,       "Vendor-Specific",       PW_TYPE_VSA },
     { PW_CALLING_STATION_ID,    "Calling-Station-Id",    PW_TYPE_STRING },
     { PW_ACCT_STATUS_TYPE,      "Acct-Status-Type",      PW_TYPE_INTEGER },
     { PW_ACCT_DELAY_TIME,       "Acct-Delay-Time",       PW_TYPE_INTEGER },

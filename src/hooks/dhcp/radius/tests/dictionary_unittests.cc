@@ -140,6 +140,8 @@ TEST_F(DictionaryTest, parseLine) {
                      "expected 3 tokens, got 2 at line 1");
     EXPECT_THROW_MSG(parseLine("VENDOR my-vendor 44 17"), BadValue,
                      "expected 3 tokens, got 4 at line 1");
+    EXPECT_THROW_MSG(parseLine("VENDOR my-vendor 0"), BadValue,
+                     "0 is reserved at line 1");
 
     EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR my-vendor"), BadValue,
                      "unknown dictionary entry 'BEGIN-VENDOR' at line 1");

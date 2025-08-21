@@ -792,7 +792,7 @@ TEST_F(ConfigTest, attribute) {
     ASSERT_EQ(1, attrs.size());
     const ConstAttributePtr& first = *attrs.cbegin();
     ASSERT_TRUE(first);
-    EXPECT_EQ("User-Name=foobar", first->toText());
+    EXPECT_EQ("User-Name='foobar'", first->toText());
 
     // Another way to check.
     string expected = "[ { "
@@ -800,6 +800,15 @@ TEST_F(ConfigTest, attribute) {
         " \"type\": 1, "
         " \"data\": \"foobar\" } ]";
     runToElementTest<CfgAttributes>(expected, srv->attributes_);
+
+    // Vendor-Specific (26) does not support textual data.
+    srv->attributes_.clear();
+    attr = Element::createMap();
+    attr->set("data", Element::create("foobar"));
+    attr->set("type", Element::create(26));
+    expected = "can't create Vendor-Specific attribute from [foobar]: ";
+    expected += "Can't decode vsa from text");
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError, expected);
 
     // One of expr, data, raw
     srv->attributes_.clear();
@@ -845,9 +854,7 @@ TEST_F(ConfigTest, attribute) {
     EXPECT_EQ("", srv->attributes_.getTest(1));
     const ConstAttributePtr& firstr = srv->attributes_.get(1);
     ASSERT_TRUE(firstr);
-    expected = "User-Name=f\x01\x02";
-    expected += "bar";
-    EXPECT_EQ(expected, firstr->toText());
+    EXPECT_EQ("User-Name=0x660102626172", firstr->toText());
     expected = "[ { "
         " \"name\": \"User-Name\", "
         " \"type\": 1, "

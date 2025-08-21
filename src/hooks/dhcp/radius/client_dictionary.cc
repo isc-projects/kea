@@ -291,6 +291,9 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
         } catch (...) {
             isc_throw(Unexpected, "can't parse integer value " << value_str);
         }
+        if (value == 0) {
+            isc_throw(Unexpected, "0 is reserved");
+        }
         IntCstDefPtr def(new IntCstDef(PW_VENDOR_SPECIFIC, name, value));
         add(def);
         return;

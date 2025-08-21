@@ -25,36 +25,6 @@ namespace isc {
 namespace radius {
 
 AttributePtr
-Attribute::fromText(const string& repr) {
-    if (repr.empty()) {
-        isc_throw(BadValue, "empty text attribute");
-    }
-    string trimed = str::trim(repr);
-    if (trimed.empty()) {
-        isc_throw(BadValue, "blank text attribute '" << repr << "'");
-    }
-    size_t equal = trimed.find('=');
-    if (equal == string::npos) {
-        isc_throw(BadValue, "can't find '=' in text attribute '"
-                  << repr << "'");
-    }
-    string name = str::trim(trimed.substr(0, equal));
-    if (name.empty()) {
-        isc_throw(BadValue, "empty attribute name in '" << repr << "'");
-    }
-    string value = str::trim(trimed.substr(equal + 1));
-    if (value.empty()) {
-        isc_throw(BadValue, "empty attribute value in '" << repr << "'");
-    }
-    AttrDefPtr def = AttrDefs::instance().getByName(name);
-    if (!def) {
-        isc_throw(NotFound, "can't find attribute definition for '"
-                  << name << "'");
-    }
-    return (Attribute::fromText(def, value));
-}
-
-AttributePtr
 Attribute::fromText(const AttrDefPtr& def, const string& value) {
     if (!def) {
         isc_throw(BadValue, "null attribute definition");
@@ -81,7 +51,7 @@ Attribute::fromText(const AttrDefPtr& def, const string& value) {
     case PW_TYPE_IPV6PREFIX:
         return (AttrIpv6Prefix::fromText(def->type_, value));
     case PW_TYPE_VSA:
-        return (AttrVSA::fromText(def->type_, value));
+        return (AttrVsa::fromText(def->type_, value));
     default:
         // Impossible case.
         isc_throw(OutOfRange, "unknown value type "
@@ -134,7 +104,7 @@ Attribute::fromBytes(const AttrDefPtr& def, const vector<uint8_t>& value) {
     case PW_TYPE_IPV6PREFIX:
         return (AttrIpv6Prefix::fromBytes(def->type_, value));
     case PW_TYPE_VSA:
-        return (AttrVSA::fromBytes(def->type_, value));
+        return (AttrVsa::fromBytes(def->type_, value));
     default:
         // Impossible case.
         isc_throw(OutOfRange, "unknown value type "
@@ -179,15 +149,27 @@ Attribute::fromIpv6Prefix(const uint8_t type, const uint8_t len,
     return (AttributePtr(new AttrIpv6Prefix(type, len, value)));
 }
 
+AttributePtr
+Attribute::fromVsa(const uint8_t type, const uint32_t vendor,
+                   const std::string& value) {
+    return (AttributePtr(new AttrVsa(type, vendor, value)));
+}
+
+AttributePtr
+Attribute::fromVsa(const uint8_t type, const uint32_t vendor,
+                   const std::vector<uint8_t>& value) {
+    return (AttributePtr(new AttrVsa(type, vendor, value)));
+}
+
 string
 Attribute::toString() const {
-    isc_throw(TypeError, "the attribute value type must be string or vsa, not "
+    isc_throw(TypeError, "the attribute value type must be string, not "
               << attrValueTypeToText(getValueType()));
 }
 
 vector<uint8_t>
 Attribute::toBinary() const {
-    isc_throw(TypeError, "the attribute value type must be string or vsa, not "
+    isc_throw(TypeError, "the attribute value type must be string, not "
               << attrValueTypeToText(getValueType()));
 }
 
@@ -227,8 +209,8 @@ Attribute::toVendorId() const {
               << attrValueTypeToText(getValueType()));
 }
 
-void
-Attribute::setVendorId(const uint32_t vendor) {
+string
+Attribute::toVsaData() const {
     isc_throw(TypeError, "the attribute value type must be vsa, not "
               << attrValueTypeToText(getValueType()));
 }
@@ -276,7 +258,17 @@ AttrString::toText(size_t indent) const {
     for (size_t i = 0; i < indent; i++) {
         output << " ";
     }
-    output << AttrDefs::instance().getName(getType()) << '=' << value_;
+    output << AttrDefs::instance().getName(getType()) << '=';
+    if (str::isPrintable(value_)) {
+        output << "'" << value_ << "'";
+    } else {
+        vector<uint8_t> binary;
+        binary.resize(value_.size());
+        if (binary.size() > 0) {
+            memmove(&binary[0], value_.c_str(), binary.size());
+        }
+        output << "0x" << encode::encodeHex(binary);
+    }
     return (output.str());
 }
 
@@ -628,7 +620,7 @@ AttrIpv6Prefix::toElement() const {
     return (output);
 }
 
-AttrVSA::AttrVSA(const uint8_t type, const int32_t vendor,
+AttrVsa::AttrVsa(const uint8_t type, const uint32_t vendor,
                  const vector<uint8_t>& value)
     : Attribute(type), vendor_(vendor), value_() {
     if (value.empty()) {
@@ -643,12 +635,12 @@ AttrVSA::AttrVSA(const uint8_t type, const int32_t vendor,
 }
 
 AttributePtr
-AttrVSA::fromText(const uint8_t type, const string& repr) {
-    isc_throw(NotImplemented, "Can't decode VSA from text");
+AttrVsa::fromText(const uint8_t type, const string& repr) {
+    isc_throw(NotImplemented, "Can't decode vsa from text");
 }
 
 AttributePtr
-AttrVSA::fromBytes(const uint8_t type, const vector<uint8_t>& bytes) {
+AttrVsa::fromBytes(const uint8_t type, const vector<uint8_t>& bytes) {
     if (bytes.empty()) {
         isc_throw(BadValue, "empty attribute value");
     }
@@ -667,16 +659,28 @@ AttrVSA::fromBytes(const uint8_t type, const vector<uint8_t>& bytes) {
     if (value.size() > 0) {
         memmove(&value[0], &bytes[4], value.size());
     }
-    return (AttributePtr(new AttrVSA(type, vendor, value)));
+    return (AttributePtr(new AttrVsa(type, vendor, value)));
 }
 
 string
-AttrVSA::toText(size_t indent) const {
-    isc_throw(NotImplemented, "Can't encode VSA into text");
+AttrVsa::toText(size_t indent) const {
+    ostringstream output;
+    for (size_t i = 0; i < indent; i++) {
+        output << " ";
+    }
+    output << AttrDefs::instance().getName(getType()) << "=["
+           << vendor_ << "]";
+    vector<uint8_t> binary;
+    binary.resize(value_.size());
+    if (binary.size() > 0) {
+        memmove(&binary[0], value_.c_str(), binary.size());
+    }
+    output << "0x" << encode::encodeHex(binary);
+    return (output.str());
 }
 
 std::vector<uint8_t>
-AttrVSA::toBytes() const {
+AttrVsa::toBytes() const {
     vector<uint8_t> output;
     output.resize(2 + getValueLen());
     output[0] = getType();
@@ -691,18 +695,8 @@ AttrVSA::toBytes() const {
     return (output);
 }
 
-std::vector<uint8_t>
-AttrVSA::toBinary() const {
-    vector<uint8_t> binary;
-    binary.resize(getValueLen() - 4);
-    if (binary.size() > 0) {
-        memmove(&binary[0], &value_[0], binary.size());
-    }
-    return (binary);
-}
-
 ElementPtr
-AttrVSA::toElement() const {
+AttrVsa::toElement() const {
     ElementPtr output = Element::createMap();
     AttrDefPtr def = AttrDefs::instance().getByType(getType());
     if (def) {
