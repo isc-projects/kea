@@ -58,9 +58,10 @@ public:
     /// @param type attribute type.
     /// @param name attribute name.
     /// @param value_type attribute value type.
+    /// @param vendor vendor id (default 0).
     AttrDef(const uint8_t type, const std::string& name,
-                 const AttrValueType value_type)
-        : type_(type), name_(name), value_type_(value_type) {
+            const AttrValueType value_type, const uint32_t vendor = 0)
+    : type_(type), name_(name), value_type_(value_type), vendor_(vendor) {
     }
 
     /// @brief type.
@@ -71,6 +72,9 @@ public:
 
     /// @brief value_type.
     const AttrValueType value_type_;
+
+    /// @brief vendor id (default 0).
+    const uint32_t vendor_;
 };
 
 /// @brief Shared pointers to Attribute definition.
@@ -78,6 +82,30 @@ typedef boost::shared_ptr<AttrDef> AttrDefPtr;
 
 /// @brief List of Attribute definitions.
 typedef std::list<AttrDef> AttrDefList;
+
+/// @brief RADIUS attribute aliases.
+class AttrDefAlias {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param alias attribute alias name.
+    /// @param name attribute name.
+    /// @param vendor vendor id (default 0).
+    AttrDefAlias(const std::string& alias, const std::string& name,
+                 const uint32_t vendor = 0)
+    : alias_(alias), name_(name), vendor_(vendor) {
+    }
+
+    /// @brief alias.
+    const std::string alias_;
+
+    /// @brief name.
+    const std::string name_;
+
+    /// @brief vendor id (default 0).
+    const uint32_t vendor_;
+};
 
 /// @brief RADIUS integer constant definitions.
 ///
@@ -118,23 +146,53 @@ public:
         AttrDefPtr,
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
-            // Hash index for by type.
+            // Hash index for by vendor and type.
             boost::multi_index::hashed_unique<
-                boost::multi_index::member<
-                    AttrDef, const uint8_t, &AttrDef::type_
+                boost::multi_index::composite_key<
+                    AttrDef,
+                    boost::multi_index::member<
+                        AttrDef, const uint32_t, &AttrDef::vendor_
+                    >,
+                    boost::multi_index::member<
+                        AttrDef, const uint8_t, &AttrDef::type_
+                    >
                 >
             >,
-            // Hash index for by name.
+            // Hash index for by vendor and name.
             boost::multi_index::hashed_unique<
-                boost::multi_index::member<
-                    AttrDef, const std::string, &AttrDef::name_
+                boost::multi_index::composite_key<
+                    AttrDef,
+                    boost::multi_index::member<
+                        AttrDef, const uint32_t, &AttrDef::vendor_
+                    >,
+                    boost::multi_index::member<
+                        AttrDef, const std::string, &AttrDef::name_
+                    >
                 >
             >
         >
     > AttrDefContainer;
 
     /// @brief Type of the alias table (alias -> standard name map).
-    typedef std::unordered_map<std::string, std::string> AttrDefAliases;
+    typedef boost::multi_index_container<
+        // This container stores aliases.
+        AttrDefAlias,
+        // Start specification of indexes here.
+        boost::multi_index::indexed_by<
+            // Hash index for by vendor and alias.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::composite_key<
+                    AttrDefAlias,
+                    boost::multi_index::member<
+                        AttrDefAlias, const uint32_t, &AttrDefAlias::vendor_
+                    >,
+                    boost::multi_index::member<
+                        AttrDefAlias, const std::string, &AttrDefAlias::alias_
+                    >
+                >
+            >
+        >
+    > AttrDefAliases;
 
     /// @brief Type of the integer constant definition container.
     typedef boost::multi_index_container<
@@ -176,17 +234,20 @@ public:
     /// @return the single instance.
     static AttrDefs& instance();
 
-    /// @brief Get attribute definition by type.
+    /// @brief Get attribute definition by type and vendor.
     ///
     /// @param type type to look for.
+    /// @param vendor vendor id to look for (default 0).
     /// @return pointer to the attribute definition or null.
-    AttrDefPtr getByType(const uint8_t type) const;
+    AttrDefPtr getByType(const uint8_t type, const uint32_t vendor = 0) const;
 
-    /// @brief Get attribute definition by name.
+    /// @brief Get attribute definition by name and vendor.
     ///
     /// @param name name to look for.
+    /// @param vendor vendor id to look for (default 0).
     /// @return pointer to the attribute definition or null.
-    AttrDefPtr getByName(const std::string& name) const;
+    AttrDefPtr getByName(const std::string& name,
+                         const uint32_t vendor = 0) const;
 
     /// @brief Add (or replace) an attribute definition.
     ///
@@ -203,7 +264,8 @@ public:
     /// @brief Get attribute name.
     ///
     /// @param type type to look for.
-    std::string getName(const uint8_t type) const;
+    /// @param vendor vendor id to look for (default 0).
+    std::string getName(const uint8_t type, const uint32_t vendor = 0) const;
 
     /// @brief Get integer constant definition by attribute type and name.
     ///

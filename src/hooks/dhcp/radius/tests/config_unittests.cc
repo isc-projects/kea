@@ -807,7 +807,7 @@ TEST_F(ConfigTest, attribute) {
     attr->set("data", Element::create("foobar"));
     attr->set("type", Element::create(26));
     expected = "can't create Vendor-Specific attribute from [foobar]: ";
-    expected += "Can't decode vsa from text");
+    expected += "Can't decode vsa from text";
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError, expected);
 
     // One of expr, data, raw

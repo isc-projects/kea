@@ -68,9 +68,9 @@ AttrDefs::instance() {
 }
 
 AttrDefPtr
-AttrDefs::getByType(const uint8_t type) const {
+AttrDefs::getByType(const uint8_t type, const uint32_t vendor) const {
     auto const& idx = container_.get<0>();
-    auto it = idx.find(type);
+    auto it = idx.find(boost::make_tuple(vendor, type));
     if (it != idx.end()) {
         return (*it);
     }
@@ -78,15 +78,15 @@ AttrDefs::getByType(const uint8_t type) const {
 }
 
 AttrDefPtr
-AttrDefs::getByName(const string& name) const {
+AttrDefs::getByName(const string& name, const uint32_t vendor) const {
     auto const& idx = container_.get<1>();
-    auto it = idx.find(name);
+    auto it = idx.find(boost::make_tuple(vendor, name));
     if (it != idx.end()) {
         return (*it);
     }
-    auto alias = aliases_.find(name);
+    auto alias = aliases_.find(boost::make_tuple(vendor, name));
     if (alias != aliases_.end()) {
-        auto ita = idx.find(alias->second);
+        auto ita = idx.find(boost::make_tuple(vendor, alias->name_));
         if (ita != idx.end()) {
             return (*ita);
         }
@@ -100,42 +100,51 @@ AttrDefs::add(AttrDefPtr def) {
         return;
     }
     auto& idx1 = container_.get<1>();
-    auto it1 = idx1.find(def->name_);
+    auto it1 = idx1.find(boost::make_tuple(def->vendor_, def->name_));
     if (it1 != idx1.end()) {
         if ((def->type_ == (*it1)->type_) &&
             (def->value_type_ == (*it1)->value_type_)) {
             // Duplicate: ignore.
             return;
         }
-        isc_throw(BadValue, "Illegal attribute redefinition of '" << def->name_
-                  << "' type " << static_cast<unsigned>((*it1)->type_)
-                  << " value type " << attrValueTypeToText((*it1)->value_type_)
-                  << " by " << static_cast<unsigned>(def->type_)
-                  << " " << attrValueTypeToText(def->value_type_));
+        ostringstream msg;
+        msg << "Illegal attribute redefinition of '" << def->name_ << "'";
+        if (def->vendor_ != 0) {
+            msg << " vendor " << def->vendor_;
+        }
+        msg << " type " << static_cast<unsigned>((*it1)->type_)
+            << " value type " << attrValueTypeToText((*it1)->value_type_)
+            << " by " << static_cast<unsigned>(def->type_)
+            << " " << attrValueTypeToText(def->value_type_);
+        isc_throw(BadValue, msg.str());
     }
     auto& idx0 = container_.get<0>();
-    auto it0 = idx0.find(def->type_);
+    auto it0 = idx0.find(boost::make_tuple(def->vendor_, def->type_));
     if (it0 != idx0.end()) {
         if (def->value_type_ == (*it0)->value_type_) {
             // Alias.
-            auto p = pair<string, string>(def->name_, (*it0)->name_);
-            static_cast<void>(aliases_.insert(p));
+            AttrDefAlias alias(def->name_, (*it0)->name_, def->vendor_);
+            static_cast<void>(aliases_.insert(alias));
             return;
         }
-        isc_throw(BadValue, "Illegal attribute redefinition of '"
-                  << (*it0)->name_ << "' type "
-                  << static_cast<unsigned>((*it0)->type_) << " value type "
-                  << attrValueTypeToText((*it0)->value_type_)
-                  << " by '" << def->name_ << "' "
-                  << static_cast<unsigned>(def->type_) << " "
-                  << attrValueTypeToText(def->value_type_));
+        ostringstream msg;
+        msg << "Illegal attribute redefinition of '" << (*it0)->name_ << "'";
+        if (def->vendor_ != 0) {
+            msg << " vendor " << def->vendor_;
+        }
+        msg << " type " << static_cast<unsigned>((*it0)->type_)
+            << " value type " << attrValueTypeToText((*it0)->value_type_)
+            << " by '" << def->name_ << "' "
+            << static_cast<unsigned>(def->type_) << " "
+            << attrValueTypeToText(def->value_type_);
+        isc_throw(BadValue, msg.str());
     }
     static_cast<void>(container_.insert(def));
 }
 
 string
-AttrDefs::getName(const uint8_t type) const {
-    AttrDefPtr def = getByType(type);
+AttrDefs::getName(const uint8_t type, const uint32_t vendor) const {
+    AttrDefPtr def = getByType(type, vendor);
     if (def) {
         return (def->name_);
     }
