@@ -53,23 +53,33 @@ public:
     /// @brief Parse a line.
     ///
     /// @param line line to parse.
+    /// @param before vendor id on input (default to 0).
+    /// @param after expected vendor id on output (default to 0).
     /// @param depth recursion depth.
-    void parseLine(const string& line, unsigned int depth = 0) {
+    void parseLine(const string& line, uint32_t before = 0,
+                   uint32_t after = 0, unsigned int depth = 0) {
         istringstream is(line + "\n");
-        AttrDefs::instance().readDictionary(is, depth);
+        uint32_t vendor = before;
+        AttrDefs::instance().readDictionary(is, vendor, depth);
+        EXPECT_EQ(after, vendor);
     }
 
     /// @brief Parse a list of lines.
     ///
     /// @param lines list of lines.
+    /// @param before vendor id on input (default to 0).
+    /// @param after expected vendor id on output (default to 0).
     /// @param depth recursion depth.
-    void parseLines(const list<string>& lines, unsigned int depth = 0) {
+    void parseLines(const list<string>& lines, uint32_t before = 0,
+                   uint32_t after = 0, unsigned int depth = 0) {
         string content;
         for (auto const& line : lines) {
             content += line + "\n";
         }
         istringstream is(content);
-        AttrDefs::instance().readDictionary(is, depth);
+        uint32_t vendor = before;
+        AttrDefs::instance().readDictionary(is, vendor, depth);
+        EXPECT_EQ(after, vendor);
     }
 
     /// @brief writes specified content to a file.
@@ -92,7 +102,10 @@ const char* DictionaryTest::TEST_DICT  = "test-dict";
 
 // Verifies standards definitions can be read from the dictionary.
 TEST_F(DictionaryTest, standard) {
-    ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY));
+    uint32_t vendor = 0;
+    ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY,
+                                                            vendor));
+    EXPECT_EQ(0, vendor);
 }
 
 // Verifies parseLine internal routine.
@@ -142,11 +155,19 @@ TEST_F(DictionaryTest, parseLine) {
                      "expected 3 tokens, got 4 at line 1");
     EXPECT_THROW_MSG(parseLine("VENDOR my-vendor 0"), BadValue,
                      "0 is reserved at line 1");
+    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR"), BadValue,
+                     "expected 2 tokens, got 1 at line 1");
+    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR  my-vendor 1"), BadValue,
+                     "expected 2 tokens, got 3 at line 1");
+    EXPECT_THROW_MSG(parseLine("END-VENDOR", 1), BadValue,
+                     "expected 2 tokens, got 1 at line 1");
+    EXPECT_THROW_MSG(parseLine("END-VENDOR  my-vendor 1", 1), BadValue,
+                     "expected 2 tokens, got 3 at line 1");
 
-    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR my-vendor"), BadValue,
-                     "unknown dictionary entry 'BEGIN-VENDOR' at line 1");
-    EXPECT_THROW_MSG(parseLine("END-VENDOR my-vendor"), BadValue,
-                     "unknown dictionary entry 'END-VENDOR' at line 1");
+    EXPECT_THROW_MSG(parseLine("BEGIN-TLV my-vendor"), BadValue,
+                     "unknown dictionary entry 'BEGIN-TLV' at line 1");
+    EXPECT_THROW_MSG(parseLine("END-TLV my-vendor"), BadValue,
+                     "unknown dictionary entry 'END-TLV' at line 1");
 }
 
 // Verifies sequences attribute of (re)definitions.
@@ -275,12 +296,90 @@ TEST_F(DictionaryTest, vendorId) {
     EXPECT_THROW_MSG(parseLines(new_value), BadValue, expected);
 }
 
+// Verifies begin and end vendor entries.
+TEST_F(DictionaryTest, beginEndVendor) {
+    // Begin already open.
+    list<string> begin_unknown = {
+        "BEGIN-VENDOR foo"
+    };
+    string expected =  "unsupported embedded begin vendor, ";
+    expected += "1 is still open at line 1";
+    EXPECT_THROW_MSG(parseLines(begin_unknown, 1), BadValue, expected);
+    // Value must be a known name or integer.
+    EXPECT_THROW_MSG(parseLines(begin_unknown), BadValue,
+                     "can't parse integer value foo at line 1");
+    // End not yet open.
+    list<string> end_unknown = {
+        "END-VENDOR foo"
+    };
+    EXPECT_THROW_MSG(parseLines(end_unknown), BadValue,
+                     "no matching begin vendor at line 1");
+    EXPECT_THROW_MSG(parseLines(end_unknown, 1), BadValue,
+                     "can't parse integer value foo at line 1");
+    // 0 is reserved.
+    list<string> begin0 = {
+        "BEGIN-VENDOR 0"
+    };
+    EXPECT_THROW_MSG(parseLines(begin0), BadValue,
+                     "0 is reserved at line 1");
+
+    // Positive using a name.
+    list<string> positive = {
+        "VENDOR DSL-Forum 3561",
+        "BEGIN-VENDOR DSL-Forum",
+        "ATTRIBUTE Agent-Circuit-Id 1 string"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(positive, 0, 3561));
+    auto aci = AttrDefs::instance().getByName("Agent-Circuit-Id", 3561);
+    ASSERT_TRUE(aci);
+    EXPECT_EQ(1, aci->type_);
+    EXPECT_EQ(PW_TYPE_STRING, aci->value_type_);
+    EXPECT_EQ("Agent-Circuit-Id", aci->name_);
+    EXPECT_EQ(3561, aci->vendor_);
+
+    // Positive using an integer.
+    list<string> positive_n = {
+        "BEGIN-VENDOR 3561",
+        "ATTRIBUTE Actual-Data-Rate-Upstream 129 integer"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(positive_n, 0, 3561));
+    auto adru =  AttrDefs::instance().getByType(129, 3561);
+    ASSERT_TRUE(adru);
+    EXPECT_EQ(129, adru->type_);
+    EXPECT_EQ(PW_TYPE_INTEGER, adru->value_type_);
+    EXPECT_EQ("Actual-Data-Rate-Upstream", adru->name_);
+    EXPECT_EQ(3561, adru->vendor_);
+
+    // End using a name.
+    list<string> end_name = {
+        "END-VENDOR DSL-Forum"
+    };
+    EXPECT_NO_THROW_LOG(parseLines(end_name, 3561, 0));
+
+    // End using an integer.
+    list<string> end_int = {
+        "END-VENDOR 3561"
+        };
+    EXPECT_NO_THROW_LOG(parseLines(end_int, 3561, 0));
+
+    // Not matching.
+    list<string> no_match = {
+        "BEGIN-VENDOR 1234",
+        "END-VENDOR 2345"
+    };
+    expected = "begin vendor 1234 and end vendor 2345 do not match at line 2";
+    EXPECT_THROW_MSG(parseLines(no_match), BadValue, expected);
+}
+
 // Verifies errors from bad dictionary files.
 TEST_F(DictionaryTest, badFile) {
     string expected = "can't open dictionary '/does-not-exist': ";
     expected += "No such file or directory";
-    EXPECT_THROW_MSG(AttrDefs::instance().readDictionary("/does-not-exist"),
+    uint32_t vendor = 0;
+    EXPECT_THROW_MSG(AttrDefs::instance().readDictionary("/does-not-exist",
+                                                         vendor),
                      BadValue, expected);
+    EXPECT_EQ(0, vendor);
     list<string> bad_include = {
         "$INCLUDE /does-not-exist"
     };
@@ -292,7 +391,10 @@ TEST_F(DictionaryTest, badFile) {
 
 // Verifies that the dictionary correctly defines used standard attributes.
 TEST_F(DictionaryTest, hookAttributes) {
-    ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY));
+    uint32_t vendor = 0;
+    ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY,
+                                                            vendor));
+    EXPECT_EQ(0, vendor);
     EXPECT_NO_THROW_LOG(AttrDefs::instance().
         checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
 }
@@ -312,7 +414,7 @@ TEST_F(DictionaryTest, include) {
     EXPECT_EQ(2495, isc->value_);
 
     // max depth is 5.
-    EXPECT_THROW_MSG(parseLines(include, 4), BadValue,
+    EXPECT_THROW_MSG(parseLines(include, 0, 0, 4), BadValue,
                      "Too many nested $INCLUDE at line 2");
 }
 
@@ -353,11 +455,13 @@ TEST_F(DictionaryTest, DISABLED_readDictionaries) {
     const string path_regex("/usr/share/freeradius/*");
     Glob g(path_regex);
     AttrDefs& defs(AttrDefs::instance());
+    uint32_t vendor = 0;
     for (size_t i = 0; i < g.glob_buffer_.gl_pathc; ++i) {
         const string file_name(g.glob_buffer_.gl_pathv[i]);
         SCOPED_TRACE(file_name);
-        EXPECT_NO_THROW_LOG(defs.readDictionary(file_name));
+        EXPECT_NO_THROW_LOG(defs.readDictionary(file_name, vendor));
     }
+    EXPECT_EQ(0, vendor);
 }
 
 // Verifies attribute definitions.

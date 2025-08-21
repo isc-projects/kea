@@ -199,7 +199,7 @@ AttrDefs::add(IntCstDefPtr def) {
 }
 
 void
-AttrDefs::parseLine(const string& line, unsigned int depth) {
+AttrDefs::parseLine(const string& line, uint32_t& vendor, unsigned int depth) {
     // Ignore empty lines.
     if (line.empty()) {
         return;
@@ -220,7 +220,7 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
         if (tokens.size() != 2) {
             isc_throw(Unexpected, "expected 2 tokens, got " << tokens.size());
         }
-        readDictionary(tokens[1], depth + 1);
+        readDictionary(tokens[1], vendor, depth + 1);
         return;
     }
     // Attribute definition.
@@ -243,11 +243,12 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
             isc_throw(Unexpected, "can't parse attribute type " << type_str);
         }
         AttrValueType value_type = textToAttrValueType(tokens[3]);
-        if ((value_type == PW_TYPE_VSA) && (type != PW_VENDOR_SPECIFIC)) {
+        if ((value_type == PW_TYPE_VSA) &&
+            ((vendor != 0) || (type != PW_VENDOR_SPECIFIC))) {
             isc_throw(BadValue, "only Vendor-Specific (26) attribute can "
                       << "have the vsa data type");
         }
-        AttrDefPtr def(new AttrDef(type, name, value_type));
+        AttrDefPtr def(new AttrDef(type, name, value_type, vendor));
         add(def);
         return;
     }
@@ -307,11 +308,79 @@ AttrDefs::parseLine(const string& line, unsigned int depth) {
         add(def);
         return;
     }
+    // Begin vendor attribute definitions.
+    if (tokens[0] == "BEGIN-VENDOR") {
+        if (vendor != 0) {
+            isc_throw(Unexpected, "unsupported embedded begin vendor, "
+                      << vendor << " is still open");
+        }
+        if (tokens.size() != 2) {
+            isc_throw(Unexpected, "expected 2 tokens, got " << tokens.size());
+        }
+        const string& vendor_str = tokens[1];
+        IntCstDefPtr vendor_cst = getByName(PW_VENDOR_SPECIFIC, vendor_str);
+        if (vendor_cst) {
+            vendor = vendor_cst->value_;
+            return;
+        }
+        try {
+            int64_t val = boost::lexical_cast<int64_t>(vendor_str);
+            if ((val < numeric_limits<int32_t>::min()) ||
+                (val > numeric_limits<uint32_t>::max())) {
+                isc_throw(Unexpected, "not 32 bit " << vendor_str);
+            }
+            vendor = static_cast<uint32_t>(val);
+        } catch (...) {
+            isc_throw(Unexpected, "can't parse integer value " << vendor_str);
+        }
+        if (vendor == 0) {
+            isc_throw(Unexpected, "0 is reserved");
+        }
+        return;
+    }
+    // End vendor attribute definitions.
+    if (tokens[0] == "END-VENDOR") {
+        if (vendor == 0) {
+            isc_throw(Unexpected, "no matching begin vendor");
+        }
+        if (tokens.size() != 2) {
+            isc_throw(Unexpected, "expected 2 tokens, got " << tokens.size());
+        }
+        const string& vendor_str = tokens[1];
+        IntCstDefPtr vendor_cst = getByName(PW_VENDOR_SPECIFIC, vendor_str);
+        if (vendor_cst) {
+            if (vendor_cst->value_ == vendor) {
+                vendor = 0;
+                return;
+            } else {
+                isc_throw(Unexpected, "begin vendor " << vendor
+                          << " and end vendor " << vendor_cst->value_
+                          << " do not match");
+            }
+        }
+        uint32_t value;
+        try {
+            int64_t val = boost::lexical_cast<int64_t>(vendor_str);
+            if ((val < numeric_limits<int32_t>::min()) ||
+                (val > numeric_limits<uint32_t>::max())) {
+                isc_throw(Unexpected, "not 32 bit " << vendor_str);
+            }
+            value = static_cast<uint32_t>(val);
+        } catch (...) {
+            isc_throw(Unexpected, "can't parse integer value " << vendor_str);
+        }
+        if (vendor == value) {
+            vendor = 0;
+            return;
+        }
+        isc_throw(Unexpected, "begin vendor " << vendor
+                  << " and end vendor " << value << " do not match");
+    }
     isc_throw(Unexpected, "unknown dictionary entry '" << tokens[0] << "'");
 }
 
 void
-AttrDefs::readDictionary(const string& path, unsigned depth) {
+AttrDefs::readDictionary(const string& path, uint32_t& vendor, unsigned depth) {
     if (depth >= 5) {
         isc_throw(BadValue, "Too many nested $INCLUDE");
     }
@@ -324,7 +393,7 @@ AttrDefs::readDictionary(const string& path, unsigned depth) {
         isc_throw(BadValue, "bad dictionary '" << path << "'");
     }
     try {
-        readDictionary(ifs, depth);
+        readDictionary(ifs, vendor, depth);
         ifs.close();
     } catch (const exception& ex) {
         ifs.close();
@@ -334,14 +403,14 @@ AttrDefs::readDictionary(const string& path, unsigned depth) {
 }
 
 void
-AttrDefs::readDictionary(istream& is, unsigned int depth) {
+AttrDefs::readDictionary(istream& is, uint32_t& vendor, unsigned int depth) {
     size_t lines = 0;
     string line;
     try {
         while (is.good()) {
             ++lines;
             getline(is, line);
-            parseLine(line, depth);
+            parseLine(line, vendor, depth);
         }
         if (!is.eof()) {
             isc_throw(BadValue, "I/O error: " << strerror(errno));

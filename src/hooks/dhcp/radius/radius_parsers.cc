@@ -87,9 +87,10 @@ const AttrDefList RadiusConfigParser::USED_STANDARD_ATTR_DEFS = {
 
 /// @brief Defaults for Radius attribute configuration.
 const SimpleDefaults RadiusAttributeParser::ATTRIBUTE_DEFAULTS = {
-    { "data", Element::string, "" },
-    { "expr", Element::string, "" },
-    { "raw",  Element::string, "" }
+    { "data",   Element::string, "" },
+    { "expr",   Element::string, "" },
+    { "raw",    Element::string, "" },
+    { "vendor", Element::string, "" }
 };
 
 void
@@ -106,11 +107,16 @@ RadiusConfigParser::parse(ElementPtr& config) {
 
         // Read the dictionary
         if (!AttrDefs::instance().getByType(1)) {
+            uint32_t vendor = 0;
             try {
-                AttrDefs::instance().readDictionary(riref.dictionary_);
+              AttrDefs::instance().readDictionary(riref.dictionary_, vendor);
             } catch (const exception& ex) {
                 isc_throw(BadValue, "can't read radius dictionary: "
                           << ex.what());
+            }
+            if (vendor != 0) {
+                isc_throw(BadValue, "vendor definitions were not properly "
+                          << "closed: vendor " << vendor << " is still open");
             }
         }
 
@@ -511,16 +517,43 @@ RadiusAttributeParser::parse(const RadiusServicePtr& service,
     // Set defaults.
     setDefaults(attr, ATTRIBUTE_DEFAULTS);
 
+    // vendor.
+    uint32_t vendor = 0;
+    const string& vendor_txt = getString(attr, "vendor");
+    if (!vendor_txt.empty()) {
+        IntCstDefPtr vendor_cst =
+            AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, vendor_txt);
+        if (vendor_cst) {
+            vendor = vendor_cst->value_;
+        } else {
+            try {
+                int64_t val = boost::lexical_cast<int64_t>(vendor_txt);
+                if ((val < numeric_limits<int32_t>::min()) ||
+                    (val > numeric_limits<uint32_t>::max())) {
+                    isc_throw(Unexpected, "not 32 bit " << vendor_txt);
+                }
+                vendor = static_cast<uint32_t>(val);
+            } catch (...) {
+                isc_throw(ConfigError, "can't parse vendor " << vendor_txt);
+            }
+        }
+    }
+
     // name.
     const ConstElementPtr& name = attr->get("name");
     if (name) {
         if (name->stringValue().empty()) {
             isc_throw(ConfigError, "attribute name is empty");
         }
-        def = AttrDefs::instance().getByName(name->stringValue());
+        def = AttrDefs::instance().getByName(name->stringValue(), vendor);
         if (!def) {
-            isc_throw(ConfigError, "attribute '"
-                      << name->stringValue() << "' is unknown");
+            ostringstream msg;
+            msg << "attribute '" << name->stringValue() << "'";
+            if (vendor != 0) {
+                msg << " in vendor '" << vendor_txt << "'";
+            }
+            msg << " is unknown";
+            isc_throw(ConfigError, msg.str());
         }
     }
 
@@ -533,16 +566,26 @@ RadiusAttributeParser::parse(const RadiusServicePtr& service,
         }
         uint8_t attrib = static_cast<uint8_t>(type->intValue());
         if (def && (def->type_ != attrib)) {
-            isc_throw(ConfigError, name->stringValue() << " attribute has "
-                      << "type " << static_cast<unsigned>(def->type_)
-                      << ", not " << static_cast<unsigned>(attrib));
+            ostringstream msg;
+            msg << "'" << name->stringValue() << "' attribute";
+            if (vendor != 0) {
+                msg << " in vendor '" << vendor_txt << "'";
+            }
+            msg << " has type " << static_cast<unsigned>(def->type_)
+                << ", not " << static_cast<unsigned>(attrib);
+            isc_throw(ConfigError, msg.str());
         }
         if (!def) {
-            def = AttrDefs::instance().getByType(attrib);
+            def = AttrDefs::instance().getByType(attrib, vendor);
         }
         if (!def) {
-            isc_throw(ConfigError, "attribute type "
-                      << static_cast<unsigned>(attrib) << " is unknown");
+            ostringstream msg;
+            msg << "attribute type " << static_cast<unsigned>(attrib);
+            if (vendor != 0) {
+                msg << " in vendor '" << vendor_txt << "'";
+            }
+            msg << " is unknown";
+            isc_throw(ConfigError, msg.str());
         }
     }
 

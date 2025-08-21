@@ -756,7 +756,7 @@ TEST_F(ConfigTest, attribute) {
     attr->set("name", Element::create("User-Name"));
     attr->set("type", Element::create(123));
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
-                     "User-Name attribute has type 1, not 123");
+                     "'User-Name' attribute has type 1, not 123");
 
     // Type must be between 0 and 255.
     attr = Element::createMap();

@@ -19,7 +19,9 @@ class AttributeTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     AttributeTest() {
-        AttrDefs::instance().readDictionary(TEST_DICTIONARY);
+        uint32_t vendor = 0;
+        AttrDefs::instance().readDictionary(TEST_DICTIONARY, vendor);
+        EXPECT_EQ(0, vendor);
     }
 
     /// @brief Destructor.
