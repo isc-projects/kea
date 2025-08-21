@@ -370,10 +370,16 @@ TEST_F(AttributeTest, attrDefs) {
     EXPECT_EQ(1, def->type_);
     EXPECT_EQ("User-Name", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(0, def->vendor_);
     def.reset();
 
     // Type 0 is reserved.
     ASSERT_NO_THROW(def = AttrDefs::instance().getByType(0));
+    EXPECT_FALSE(def);
+    def.reset();
+
+    // Only vendor 0 i.e. no vendor was populated.
+    ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1, 1234));
     EXPECT_FALSE(def);
     def.reset();
 
@@ -383,9 +389,14 @@ TEST_F(AttributeTest, attrDefs) {
     EXPECT_EQ(1, def->type_);
     EXPECT_EQ("User-Name", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(0, def->vendor_);
     def.reset();
 
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("Does-not-exist"));
+    EXPECT_FALSE(def);
+    def.reset();
+
+    ASSERT_NO_THROW(def = AttrDefs::instance().getByName("User-Name", 1234));
     EXPECT_FALSE(def);
     def.reset();
 
@@ -396,6 +407,10 @@ TEST_F(AttributeTest, attrDefs) {
     name.clear();
     ASSERT_NO_THROW(name = AttrDefs::instance().getName(252));
     EXPECT_EQ("Attribute-252", name);
+    name.clear();
+    ASSERT_NO_THROW(name = AttrDefs::instance().getName(1, 1234));
+    EXPECT_EQ("Attribute-1", name);
+    name.clear();
 
     // add (new).
     AttrDefPtr def1(new AttrDef(252, "Foo-Bar", PW_TYPE_IPADDR));
@@ -405,12 +420,14 @@ TEST_F(AttributeTest, attrDefs) {
     EXPECT_EQ(252, def->type_);
     EXPECT_EQ("Foo-Bar", def->name_);
     EXPECT_EQ(PW_TYPE_IPADDR, def->value_type_);
+    EXPECT_EQ(0, def->vendor_);
     def.reset();
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("Foo-Bar"));
     ASSERT_TRUE(def);
     EXPECT_EQ(252, def->type_);
     EXPECT_EQ("Foo-Bar", def->name_);
     EXPECT_EQ(PW_TYPE_IPADDR, def->value_type_);
+    EXPECT_EQ(0, def->vendor_);
     def.reset();
 
     // add (alias).
@@ -421,12 +438,37 @@ TEST_F(AttributeTest, attrDefs) {
     ASSERT_TRUE(got);
     EXPECT_EQ(18, got->type_);
     EXPECT_EQ(PW_TYPE_STRING, got->value_type_);
+    EXPECT_EQ(0, got->vendor_);
+    def.reset();
+
+    // add (vendor).
+    AttrDefPtr defv(new AttrDef(1, "Agent-Circuit-Id", PW_TYPE_STRING, 3561));
+    ASSERT_NO_THROW(AttrDefs::instance().add(defv));
+    ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1, 3561));
+    ASSERT_TRUE(def);
+    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ("Agent-Circuit-Id", def->name_);
+    EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(3561, def->vendor_);
+    def.reset();
+    ASSERT_NO_THROW(def =
+        AttrDefs::instance().getByName("Agent-Circuit-Id", 3561));
+    ASSERT_TRUE(def);
+    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ("Agent-Circuit-Id", def->name_);
+    EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(3561, def->vendor_);
+    def.reset();
+    ASSERT_NO_THROW(name = AttrDefs::instance().getName(1, 3561));
+    EXPECT_EQ("Agent-Circuit-Id", name);
+    name.clear();
 
     // add (change type).
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("User-Password"));
     ASSERT_TRUE(def);
     EXPECT_EQ(2, def->type_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(0, def->vendor_);
     AttrDefPtr def3(new AttrDef(17, "User-Password", PW_TYPE_STRING));
     string expected = "Illegal attribute redefinition of ";
     expected += "'User-Password' type 2 value type string by 17 string";
@@ -444,9 +486,33 @@ TEST_F(AttributeTest, attrDefs) {
     expected += "type 2 value type string by 'Password' 2 integer";
     EXPECT_THROW_MSG(AttrDefs::instance().add(def5), BadValue, expected);
 
+    // Same with vendor.
+    ASSERT_NO_THROW(def =
+        AttrDefs::instance().getByName("Agent-Circuit-Id", 3561));
+    ASSERT_TRUE(def);
+    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
+    EXPECT_EQ(3561, def->vendor_);
+    AttrDefPtr def3v(new AttrDef(2, "Agent-Circuit-Id", PW_TYPE_STRING, 3561));
+    expected = "Illegal attribute redefinition of 'Agent-Circuit-Id' ";
+    expected += "vendor 3561 type 1 value type string by 2 string";
+    EXPECT_THROW_MSG(AttrDefs::instance().add(def3v), BadValue, expected);
+    AttrDefPtr def4v(new AttrDef(1, "Agent-Circuit-Id", PW_TYPE_INTEGER, 3561));
+    expected = "Illegal attribute redefinition of 'Agent-Circuit-Id' ";
+    expected += "vendor 3561 type 1 value type string by 1 integer";
+    EXPECT_THROW_MSG(AttrDefs::instance().add(def4v), BadValue, expected);
+    AttrDefPtr def5v(new AttrDef(1, "Agent-Remote-Id", PW_TYPE_INTEGER, 3561));
+    expected = "Illegal attribute redefinition of 'Agent-Circuit-Id' ";
+    expected += "vendor 3561 type 1 value type string by ";
+    expected += "'Agent-Remote-Id' 1 integer";
+    EXPECT_THROW_MSG(AttrDefs::instance().add(def5v), BadValue, expected);
+
     // clear.
     ASSERT_NO_THROW(AttrDefs::instance().clear());
     ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1));
+    EXPECT_FALSE(def);
+    def.reset();
+    ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1, 3561));
     EXPECT_FALSE(def);
     def.reset();
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("Foo-Bar"));

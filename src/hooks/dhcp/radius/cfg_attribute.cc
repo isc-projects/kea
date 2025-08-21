@@ -28,13 +28,12 @@ CfgAttributes::add(const AttrDefPtr& def,
     if (!def) {
         isc_throw(BadValue, "no attribute definition");
     }
-    container_.insert(pair<const uint8_t, AttributeValue>
-                (def->type_, AttributeValue(def, attr, expr, test)));
+    container_.insert(AttributeValue(def, attr, expr, test));
 }
 
 bool
-CfgAttributes::del(const uint8_t type) {
-    auto it = container_.find(type);
+CfgAttributes::del(const uint8_t type, const uint32_t vendor) {
+    auto it = container_.find(boost::make_tuple(vendor, type));
     if (it != container_.end()) {
         container_.erase(it);
         return (true);
@@ -43,46 +42,46 @@ CfgAttributes::del(const uint8_t type) {
 }
 
 AttrDefPtr
-CfgAttributes::getDef(const uint8_t type) const {
-    auto it = container_.find(type);
+CfgAttributes::getDef(const uint8_t type, const uint32_t vendor) const {
+    auto it = container_.find(boost::make_tuple(vendor, type));
     if (it == container_.end()) {
         return (AttrDefPtr());
     }
-    return (it->second.def_);
+    return (it->def_);
 }
 
 ConstAttributePtr
-CfgAttributes::get(const uint8_t type) const {
-    auto it = container_.find(type);
+CfgAttributes::get(const uint8_t type, const uint32_t vendor) const {
+    auto it = container_.find(boost::make_tuple(vendor, type));
     if (it == container_.end()) {
         return (AttributePtr());
     }
-    return (it->second.attr_);
+    return (it->attr_);
 }
 
 ExpressionPtr
-CfgAttributes::getExpr(const uint8_t type) const {
-    auto it = container_.find(type);
+CfgAttributes::getExpr(const uint8_t type, const uint32_t vendor) const {
+    auto it = container_.find(boost::make_tuple(vendor, type));
     if (it == container_.end()) {
         return (ExpressionPtr());
     }
-    return (it->second.expr_);
+    return (it->expr_);
 }
 
 string
-CfgAttributes::getTest(const uint8_t type) const {
-    auto it = container_.find(type);
+CfgAttributes::getTest(const uint8_t type, const uint32_t vendor) const {
+    auto it = container_.find(boost::make_tuple(vendor, type));
     if (it == container_.end()) {
         return ("");
     }
-    return (it->second.test_);
+    return (it->test_);
 }
 
 Attributes
 CfgAttributes::getAll() const {
     Attributes attrs;
     for (auto const& it : container_) {
-        attrs.add(it.second.attr_);
+        attrs.add(it.attr_);
     }
     return (attrs);
 }
@@ -91,16 +90,16 @@ Attributes
 CfgAttributes::getEvalAll(Pkt& pkt) {
     Attributes attrs;
     for (auto const& it : container_) {
-        const ExpressionPtr& match_expr = it.second.expr_;
+        const ExpressionPtr& match_expr = it.expr_;
         if (!match_expr) {
-            attrs.add(it.second.attr_);
+            attrs.add(it.attr_);
             continue;
         }
         string value = evaluateString(*match_expr, pkt);
         if (value.empty()) {
             continue;
         }
-        AttrDefPtr def = it.second.def_;
+        AttrDefPtr def = it.def_;
         if (!def) {
             continue;
         }
@@ -117,18 +116,18 @@ ElementPtr
 CfgAttributes::toElement() const {
     ElementPtr result = Element::createList();
     for (auto const& it : container_) {
-        AttrDefPtr def = it.second.def_;
+        AttrDefPtr def = it.def_;
         if (!def) {
             continue;
         }
         ElementPtr map;
-        if (!it.second.test_.empty()) {
+        if (!it.test_.empty()) {
             map = Element::createMap();
-            map->set("type", Element::create(static_cast<int>(it.first)));
-            map->set("expr", Element::create(it.second.test_));
+            map->set("type", Element::create(static_cast<int>(def->type_)));
+            map->set("expr", Element::create(it.test_));
             map->set("name", Element::create(def->name_));
-        } else if (it.second.attr_) {
-            map = it.second.attr_->toElement();
+        } else if (it.attr_) {
+            map = it.attr_->toElement();
         }
         result->add(map);
     }

@@ -78,7 +78,9 @@ public:
 
     /// From definition generic factories.
 
-    /// @brief From text with definition.
+    /// @brief From text with definition (handle vendor).
+    ///
+    /// Handle Vendor-Specific encapsulation.
     ///
     /// @param def pointer to attribute definition.
     /// @param value textual value.
@@ -87,7 +89,9 @@ public:
     static AttributePtr fromText(const AttrDefPtr& def,
                                  const std::string& value);
 
-    /// @brief From bytes with definition.
+    /// @brief From bytes with definition (handle vendor).
+    ///
+    /// Handle Vendor-Specific encapsulation.
     ///
     /// @param def pointer to attribute definition.
     /// @param value binary value.
@@ -251,10 +255,30 @@ public:
     ///
     /// @return the vsa data.
     /// @throw TypeError if the attribute is not a vsa one.
-    virtual std::string toVsaData() const;
+    virtual std::vector<uint8_t> toVsaData() const;
 
     /// @brief Type.
     const uint8_t type_;
+
+private:
+
+    /// @brief From text with definition.
+    ///
+    /// @param def pointer to attribute definition.
+    /// @param value textual value.
+    /// @return pointer to the attribute.
+    /// @throw BadValue on errors.
+    static AttributePtr fromText0(const AttrDefPtr& def,
+                                  const std::string& value);
+
+    /// @brief From bytes with definition.
+    ///
+    /// @param def pointer to attribute definition.
+    /// @param value binary value.
+    /// @return pointer to the attribute.
+    /// @throw BadValue on errors.
+    static AttributePtr fromBytes0(const AttrDefPtr& def,
+                                   const std::vector<uint8_t>& value);
 };
 
 /// @brief RADIUS attribute derived classes: do not use them directly
@@ -764,9 +788,7 @@ public:
     /// @brief To vsa data.
     ///
     /// @return the vsa data.
-    virtual std::string toVsaData() const override {
-        return (value_);
-    }
+    virtual std::vector<uint8_t> toVsaData() const override;
 
     /// @brief Unparse attribute.
     ///

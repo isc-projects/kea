@@ -32,6 +32,17 @@ Attribute::fromText(const AttrDefPtr& def, const string& value) {
     if (value.empty()) {
         isc_throw(BadValue, "empty attribute value");
     }
+    AttributePtr attr = fromText0(def, value);
+    if (def->vendor_ == 0) {
+        return (attr);
+    }
+    // Encapsulate into a Vendor-Specific attribute.
+    const vector<uint8_t> vsa_data = attr->toBytes();
+    return (fromVsa(PW_VENDOR_SPECIFIC, def->vendor_, vsa_data));
+}
+
+AttributePtr
+Attribute::fromText0(const AttrDefPtr& def, const string& value) {
     switch (static_cast<uint8_t>(def->value_type_)) {
     case PW_TYPE_STRING:
         return (AttrString::fromText(def->type_, value));
@@ -92,6 +103,17 @@ Attribute::fromBytes(const AttrDefPtr& def, const vector<uint8_t>& value) {
     if (value.empty()) {
         isc_throw(BadValue, "empty attribute value");
     }
+    AttributePtr attr = fromBytes0(def, value);
+    if (def->vendor_ == 0) {
+        return (attr);
+    }
+    // Encapsulate into a Vendor-Specific attribute.
+    const vector<uint8_t> vsa_data = attr->toBytes();
+    return (fromVsa(PW_VENDOR_SPECIFIC, def->vendor_, vsa_data));
+}
+
+AttributePtr
+Attribute::fromBytes0(const AttrDefPtr& def, const vector<uint8_t>& value) {
     switch (static_cast<uint8_t>(def->value_type_)) {
     case PW_TYPE_STRING:
         return (AttrString::fromBytes(def->type_, value));
@@ -209,7 +231,7 @@ Attribute::toVendorId() const {
               << attrValueTypeToText(getValueType()));
 }
 
-string
+std::vector<uint8_t>
 Attribute::toVsaData() const {
     isc_throw(TypeError, "the attribute value type must be vsa, not "
               << attrValueTypeToText(getValueType()));
@@ -693,6 +715,16 @@ AttrVsa::toBytes() const {
         memmove(&output[6], &value_[0], output.size() - 6);
     }
     return (output);
+}
+
+std::vector<uint8_t>
+AttrVsa::toVsaData() const {
+    vector<uint8_t> binary;
+    binary.resize(value_.size());
+    if (binary.size() > 0) {
+        memmove(&binary[0], &value_[0], binary.size());
+    }
+    return (binary);
 }
 
 ElementPtr

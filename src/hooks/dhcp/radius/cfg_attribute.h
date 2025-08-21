@@ -14,6 +14,10 @@
 #include <dhcp/pkt.h>
 #include <eval/token.h>
 #include <util/buffer.h>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <map>
@@ -81,8 +85,9 @@ public:
     /// Deletes only the first occurrence.
     ///
     /// @param type type of the attribute to delete.
+    /// @param vendor vendor id (default 0).
     /// @return true if found.
-    bool del(const uint8_t type);
+    bool del(const uint8_t type, const uint32_t vendor = 0);
 
     /// @brief Clear the container.
     void clear() {
@@ -92,34 +97,41 @@ public:
     /// @brief Counts instance of the attribute in the configuration.
     ///
     /// @param type type of the attribute to count.
-    /// @return count of attributes with the given type in the configuration.
-    size_t count(const uint8_t type) const {
-        return (container_.count(type));
+    /// @param vendor vendor id (default 0).
+    /// @return count of attributes with the given type and vendor
+    /// in the configuration.
+    size_t count(const uint8_t type, const uint32_t vendor = 0) const {
+        return (container_.count(boost::make_tuple(vendor, type)));
     }
 
     /// @brief Returns the definition of an attribute.
     ///
     /// @param type type of the attribute.
+    /// @param vendor vendor id (default 0).
     /// @return the definition of the attribute.
-    AttrDefPtr getDef(const uint8_t type) const;
+    AttrDefPtr getDef(const uint8_t type, const uint32_t vendor = 0) const;
 
     /// @brief Get instance of the attribute in the configuration.
     ///
     /// @param type type of the attribute to retrieve.
+    /// @param vendor vendor id (default 0).
     /// @return the first instance if exists.
-    ConstAttributePtr get(const uint8_t type) const;
+    ConstAttributePtr get(const uint8_t type, const uint32_t vendor = 0) const;
 
     /// @brief Returns the expression of an attribute.
     ///
     /// @param type type of the attribute.
+    /// @param vendor vendor id (default 0).
     /// @return the expression of the attribute.
-    dhcp::ExpressionPtr getExpr(const uint8_t type) const;
+    dhcp::ExpressionPtr getExpr(const uint8_t type,
+                                const uint32_t vendor = 0) const;
 
     /// @brief Returns the text expression of an attribute.
     ///
     /// @param type type of the attribute.
+    /// @param vendor vendor id (default 0).
     /// @return the text expression of the attribute.
-    std::string getTest(const uint8_t type) const;
+    std::string getTest(const uint8_t type, const uint32_t vendor = 0) const;
 
     /// @brief Get all attributes in the configuration.
     ///
@@ -182,10 +194,44 @@ protected:
 
         /// @brief Original expression.
         std::string test_;
+
+        /// @brief Return the type.
+        uint8_t getType() const {
+            if (!def_) {
+                isc_throw(BadValue, "no attribute definition");
+            }
+            return (def_->type_);
+        }
+
+        /// @brief Return the vendor.
+        uint32_t getVendor() const {
+            if (!def_) {
+                isc_throw(BadValue, "no attribute definition");
+            }
+            return (def_->vendor_);
+        }
     };
 
     /// @brief The container.
-    std::multimap<uint8_t, AttributeValue> container_;
+    boost::multi_index_container<
+        // This container stores AttributeValue objects.
+        AttributeValue,
+        // Start specification of indexes here.
+        boost::multi_index::indexed_by<
+            // Hash index for by vendor and type.
+            boost::multi_index::hashed_non_unique<
+                boost::multi_index::composite_key<
+                    AttributeValue,
+                    boost::multi_index::const_mem_fun<
+                        AttributeValue, uint32_t, &AttributeValue::getVendor
+                    >,
+                    boost::multi_index::const_mem_fun<
+                        AttributeValue, uint8_t, &AttributeValue::getType
+                    >
+                >
+            >
+        >
+    > container_;
 };
 
 } // end of namespace isc::radius

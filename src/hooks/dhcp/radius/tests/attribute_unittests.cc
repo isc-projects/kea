@@ -590,6 +590,38 @@ TEST_F(AttributeTest, attrVsa) {
                      "the attribute value type must be ipv6prefix, not vsa");
 }
 
+// Verifies vendor fromText.
+TEST_F(AttributeTest, vendorFromText) {
+    // Using DSL-Forum (3561) Agent-Circuit-Id (1),
+    AttrDefPtr def(new AttrDef(1, "Agent-Circuit-Id", PW_TYPE_STRING, 3561));
+    AttributePtr attr;
+    ASSERT_NO_THROW(attr = Attribute::fromText(def, "foobar"));
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_VENDOR_SPECIFIC, attr->getType());
+    EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
+    EXPECT_EQ(3561, attr->toVendorId());
+    EXPECT_EQ(12, attr->getValueLen());
+    vector<uint8_t> vsa_data = { 1, 8, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
+    EXPECT_EQ(vsa_data, attr->toVsaData());
+}
+
+// Verifies vendor fromBytes.
+TEST_F(AttributeTest, vendorFromBytes) {
+    // Using DSL-Forum (3561) Access-Loop-Encapsulation (144),
+    AttrDefPtr def(new AttrDef(144, "Access-Loop-Encapsulation",
+                               PW_TYPE_STRING, 3561));
+    AttributePtr attr;
+    vector<uint8_t> value = { 2, 0, 0 };
+    ASSERT_NO_THROW(attr = Attribute::fromBytes(def, value));
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_VENDOR_SPECIFIC, attr->getType());
+    EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
+    EXPECT_EQ(3561, attr->toVendorId());
+    EXPECT_EQ(9, attr->getValueLen());
+    vector<uint8_t> vsa_data = { 144, 5, 2, 0, 0 };
+    EXPECT_EQ(vsa_data, attr->toVsaData());
+}
+
 // Verifies basic methods for attribute collection.
 TEST_F(AttributeTest, attributesBasic) {
     Attributes attrs;
