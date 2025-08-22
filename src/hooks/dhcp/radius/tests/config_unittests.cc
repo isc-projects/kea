@@ -14,6 +14,7 @@
 
 #include <radius_parsers.h>
 #include <cc/default_credentials.h>
+#include <dhcp/pkt4.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
@@ -954,6 +955,28 @@ TEST_F(ConfigTest, attribute) {
         " \"raw\": \"660102626172\" } ]";
     runToElementTest<CfgAttributes>(expected, srv->attributes_);
 
+    // Try the raw version of DSL-Forum (3561) Agent-Circuit-Id (1).
+    srv->attributes_.clear();
+    attr = Element::createMap();
+    attr->set("vendor", Element::create("DSL-Forum"));
+    attr->set("raw", Element::create("660102626172"));
+    attr->set("type", Element::create(1));
+    EXPECT_NO_THROW(parser.parse(srv, attr));
+    EXPECT_FALSE(srv->attributes_.empty());
+    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
+    EXPECT_FALSE(srv->attributes_.getExpr(1, 3561));
+    EXPECT_EQ("", srv->attributes_.getTest(1, 3561));
+    got = srv->attributes_.get(1, 3561);
+    ASSERT_TRUE(got);
+    EXPECT_EQ("Vendor-Specific=[3561]0x0108660102626172", got->toText());
+    expected = "[ { "
+        " \"name\": \"Vendor-Specific\", "
+        " \"type\": 26, "
+        " \"vendor\": \"3561\", "
+        " \"vsa-raw\": \"0108660102626172\" } ]";
+    runToElementTest<CfgAttributes>(expected, srv->attributes_);
+
     // Check with expr.
     srv->attributes_.clear();
     attr = Element::createMap();
@@ -979,7 +1002,7 @@ TEST_F(ConfigTest, attribute) {
     EXPECT_NO_THROW(parser.parse(srv, attr));
     EXPECT_EQ(1, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getAll().empty());
-    const ExpressionPtr& expr = srv->attributes_.getExpr(1);
+    ExpressionPtr expr = srv->attributes_.getExpr(1);
     ASSERT_TRUE(expr);
     ASSERT_EQ(1, expr->size());
     TokenPtr token = (*expr)[0];
@@ -994,6 +1017,43 @@ TEST_F(ConfigTest, attribute) {
         " \"type\": 1, "
         " \"expr\": \"'foobar'\" } ]";
     runToElementTest<CfgAttributes>(expected, srv->attributes_);
+
+    // Try with vendor.
+    srv->attributes_.clear();
+    attr = Element::createMap();
+    attr->set("vendor", Element::create("3561"));
+    attr->set("type", Element::create(1));
+    attr->set("expr", Element::create("'foobar'"));
+    EXPECT_NO_THROW(parser.parse(srv, attr));
+    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
+    EXPECT_FALSE(srv->attributes_.get(1, 3561));
+    EXPECT_TRUE(srv->attributes_.getAll().empty());
+    expr = srv->attributes_.getExpr(1, 3561);
+    ASSERT_TRUE(expr);
+    ASSERT_EQ(1, expr->size());
+    token = (*expr)[0];
+    tokstr = boost::dynamic_pointer_cast<TokenString>(token);
+    EXPECT_TRUE(tokstr);
+    EXPECT_EQ("'foobar'", srv->attributes_.getTest(1, 3561));
+    expected = "[ { "
+      " \"name\": \"Agent-Circuit-Id\", "
+      " \"type\": 1, "
+      " \"vendor\": \"3561\", "
+      " \"expr\": \"'foobar'\" } ]";
+    runToElementTest<CfgAttributes>(expected, srv->attributes_);
+
+    // Evaluate.
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
+    Attributes evaluated;
+    EXPECT_NO_THROW_LOG(evaluated = srv->attributes_.getEvalAll(*query));
+    EXPECT_EQ(1, evaluated.size());
+    expected = "[ { "
+        " \"name\": \"Vendor-Specific\", "
+        " \"type\": 26, "
+        " \"vendor\": \"3561\", "
+        " \"vsa-raw\": \"0108666F6F626172\" } ]";
+    runToElementTest<Attributes>(expected, evaluated);
 }
 
 // Verify checkAttributes sanity check.

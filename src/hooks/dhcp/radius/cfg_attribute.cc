@@ -121,13 +121,18 @@ CfgAttributes::toElement() const {
             continue;
         }
         ElementPtr map;
-        if (!it.test_.empty()) {
+        if (it.attr_) {
+            map = it.attr_->toElement();
+        } else if (!it.test_.empty()) {
             map = Element::createMap();
             map->set("type", Element::create(static_cast<int>(def->type_)));
             map->set("expr", Element::create(it.test_));
             map->set("name", Element::create(def->name_));
-        } else if (it.attr_) {
-            map = it.attr_->toElement();
+            if (def->vendor_ != 0) {
+                ostringstream vendor;
+                vendor << def->vendor_;
+                map->set("vendor", Element::create(vendor.str()));
+            }
         }
         result->add(map);
     }
