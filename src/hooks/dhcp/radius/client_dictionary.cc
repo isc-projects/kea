@@ -154,9 +154,10 @@ AttrDefs::getName(const uint8_t type, const uint32_t vendor) const {
 }
 
 IntCstDefPtr
-AttrDefs::getByName(const uint8_t type, const string& name) const {
+AttrDefs::getByName(const uint8_t type, const string& name,
+                    const uint32_t vendor) const {
     auto const& idx = ic_container_.get<0>();
-    auto it = idx.find(boost::make_tuple(type, name));
+    auto it = idx.find(boost::make_tuple(vendor, type, name));
     if (it != idx.end()) {
         return (*it);
     }
@@ -164,9 +165,10 @@ AttrDefs::getByName(const uint8_t type, const string& name) const {
 }
 
 IntCstDefPtr
-AttrDefs::getByValue(const uint8_t type, const uint32_t value) const {
+AttrDefs::getByValue(const uint8_t type, const uint32_t value,
+                     const uint32_t vendor) const {
     auto const& idx = ic_container_.get<1>();
-    auto it = idx.find(boost::make_tuple(type, value));
+    auto it = idx.find(boost::make_tuple(vendor, type, value));
     if (it != idx.end()) {
         return (*it);
     }
@@ -179,7 +181,7 @@ AttrDefs::add(IntCstDefPtr def) {
         return;
     }
     auto& idx = ic_container_.get<0>();
-    auto it = idx.find(boost::make_tuple(def->type_, def->name_));
+    auto it = idx.find(boost::make_tuple(def->vendor_, def->type_, def->name_));
     if (it != idx.end()) {
         if (def->value_ == (*it)->value_) {
             // Duplicate: ignore.
@@ -191,9 +193,15 @@ AttrDefs::add(IntCstDefPtr def) {
                       << def->name_ << "' value " << (*it)->value_
                       << " by " << def->value_);
         }
-        isc_throw(BadValue, "Illegal integer constant redefinition of '"
-                  << def->name_ << "' for attribute '" << getName(def->type_)
-                  << "' value " << (*it)->value_ << " by " << def->value_);
+        ostringstream msg;
+        msg << "Illegal integer constant redefinition of '"
+            << def->name_ << "' for attribute '"
+            << getName(def->type_, def->vendor_) << "'";
+        if (def->vendor_ != 0) {
+            msg << " in vendor " << def->vendor_;
+        }
+        msg << " value " << (*it)->value_ << " by " << def->value_;
+        isc_throw(BadValue, msg.str());
     }
     static_cast<void>(ic_container_.insert(def));
 }
@@ -254,21 +262,27 @@ AttrDefs::parseLine(const string& line, uint32_t& vendor, unsigned int depth) {
     }
     // Integer constant definition.
     if (tokens[0] == "VALUE") {
-        if (vendor != 0) {
-            // Ignore vendor constant definitions.
-            return;
-        }
         if (tokens.size() != 4) {
             isc_throw(Unexpected, "expected 4 tokens, got " << tokens.size());
         }
         const string& attr_str = tokens[1];
-        AttrDefPtr attr = getByName(attr_str/*, vendor*/);
+        AttrDefPtr attr = getByName(attr_str, vendor);
         if (!attr) {
-            isc_throw(Unexpected, "unknown attribute '" << attr_str << "'");
+            ostringstream msg;
+            msg << "unknown attribute '" << attr_str << "'";
+            if (vendor != 0) {
+                msg << " in vendor " << vendor;
+            }
+            isc_throw(Unexpected, msg.str());
         }
         if (attr->value_type_ != PW_TYPE_INTEGER) {
-            isc_throw(Unexpected, "attribute '" << attr_str
-                      << "' is not an integer attribute");
+            ostringstream msg;
+            msg << "attribute '" << attr_str << "'";
+            if (vendor != 0) {
+                msg << " in vendor " << vendor;
+            }
+            msg << " is not an integer attribute";
+            isc_throw(Unexpected, msg.str());
         }
         const string& name = tokens[2];
         const string& value_str = tokens[3];
@@ -283,7 +297,7 @@ AttrDefs::parseLine(const string& line, uint32_t& vendor, unsigned int depth) {
         } catch (...) {
             isc_throw(Unexpected, "can't parse integer value " << value_str);
         }
-        IntCstDefPtr def(new IntCstDef(attr->type_, name, value));
+        IntCstDefPtr def(new IntCstDef(attr->type_, name, value, vendor));
         add(def);
         return;
     }

@@ -118,9 +118,10 @@ public:
     /// @param type attribute type.
     /// @param name integer constant name.
     /// @param value integer constant value.
+    /// @param vendor vendor id (default 0).
     IntCstDef(const uint8_t type, const std::string& name,
-              const uint32_t value)
-        : type_(type), name_(name), value_(value) {
+              const uint32_t value, const uint32_t vendor = 0)
+        : type_(type), name_(name), value_(value), vendor_(vendor) {
     }
 
     /// @brief attribute type.
@@ -131,6 +132,9 @@ public:
 
     /// @brief value.
     const uint32_t value_;
+
+    /// @brief vendor id (default 0).
+    const uint32_t vendor_;
 };
 
 /// @brief Shared pointers to Integer constant definition.
@@ -200,10 +204,13 @@ public:
         IntCstDefPtr,
         // Start specification of indexes here.
         boost::multi_index::indexed_by<
-            // Hash index for by type and name.
+            // Hash index for by vendor, type and name.
             boost::multi_index::hashed_unique<
                 boost::multi_index::composite_key<
                     IntCstDef,
+                    boost::multi_index::member<
+                        IntCstDef, const uint32_t, &IntCstDef::vendor_
+                    >,
                     boost::multi_index::member<
                         IntCstDef, const uint8_t, &IntCstDef::type_
                     >,
@@ -212,10 +219,13 @@ public:
                     >
                 >
             >,
-            // Hash index for by type and value.
+            // Hash index for by vendor, type and value.
             boost::multi_index::hashed_unique<
                 boost::multi_index::composite_key<
                     IntCstDef,
+                    boost::multi_index::member<
+                        IntCstDef, const uint32_t, &IntCstDef::vendor_
+                    >,
                     boost::multi_index::member<
                         IntCstDef, const uint8_t, &IntCstDef::type_
                     >,
@@ -271,15 +281,19 @@ public:
     ///
     /// @param type attribute type.
     /// @param name name to look for.
+    /// @param vendor vendor id to look for (default 0).
     /// @return pointer to the integer constant definition or null.
-    IntCstDefPtr getByName(const uint8_t type, const std::string& name) const;
+    IntCstDefPtr getByName(const uint8_t type, const std::string& name,
+                           const uint32_t vendor = 0) const;
 
     /// @brief Get integer constant definition by attribute type and value.
     ///
     /// @param type attribute type.
     /// @param value value to look for.
+    /// @param vendor vendor id to look for (default 0).
     /// @return pointer to the integer constant definition or null.
-    IntCstDefPtr getByValue(const uint8_t type, const uint32_t value) const;
+    IntCstDefPtr getByValue(const uint8_t type, const uint32_t value,
+                            const uint32_t vendor = 0) const;
 
     /// @brief Add (or replace) an integer constant definition.
     ///

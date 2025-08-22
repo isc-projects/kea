@@ -144,6 +144,9 @@ TEST_F(DictionaryTest, parseLine) {
                      "expected 4 tokens, got 3 at line 1");
     EXPECT_THROW_MSG(parseLine("VALUE My-Attribute My-Value 1"), BadValue,
                      "unknown attribute 'My-Attribute' at line 1");
+    EXPECT_THROW_MSG(parseLine("VALUE My-Attribute My-Value 1", 99),
+                     BadValue,
+                     "unknown attribute 'My-Attribute' in vendor 99 at line 1");
 
     EXPECT_THROW_MSG(parseLine("$INCLUDE"), BadValue,
                      "expected 2 tokens, got 1 at line 1");
@@ -229,6 +232,18 @@ TEST_F(DictionaryTest, integerConstant) {
     expected += " at line 2";
     EXPECT_THROW_MSG(parseLines(not_integer_attr), BadValue, expected);
 
+    // Same with a vendor attribute.
+    list<string> not_integer_attrv = {
+        "VENDOR DSL-Forum 3561",
+        "BEGIN-VENDOR DSL-Forum",
+        "ATTRIBUTE Agent-Circuit-Id 1 string",
+        "VALUE  Agent-Circuit-Id My-Value 1",
+        "END-VENDOR DSL-Forum"
+    };
+    expected = "attribute 'Agent-Circuit-Id' in vendor 3561";
+    expected += " is not an integer attribute at line 4";
+    EXPECT_THROW_MSG(parseLines(not_integer_attrv), BadValue, expected);
+
     // Value must be an integer.
     list<string> not_integer_val = {
         "ATTRIBUTE Acct-Status-Type 40 integer",
@@ -262,6 +277,10 @@ TEST_F(DictionaryTest, integerConstant) {
     expected += "'Start' for attribute 'Acct-Status-Type' value 1 by 2";
     expected += " at line 3";
     EXPECT_THROW_MSG(parseLines(new_value), BadValue, expected);
+    expected = "Illegal integer constant redefinition of ";
+    expected += "'Start' for attribute 'Acct-Status-Type' in vendor 1234 ";
+    expected += "value 1 by 2 at line 3";
+    EXPECT_THROW_MSG(parseLines(new_value, 1234, 1234), BadValue, expected);
 }
 
 // Verifies vendor id definitions.
