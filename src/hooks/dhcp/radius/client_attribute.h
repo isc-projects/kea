@@ -162,6 +162,7 @@ public:
     /// @brief From Vendor ID and string data with type.
     ///
     /// @note Requires the type to be of a standard vsa attribute.
+    /// @note Used only in unit tests.
     ///
     /// @param type type of attribute.
     /// @param vendor vendor id.
@@ -189,6 +190,8 @@ public:
     virtual size_t getValueLen() const = 0;
 
     /// @brief Returns text representation of the attribute.
+    ///
+    /// @note Used for logs.
     ///
     /// @param indent number of spaces before printing text.
     /// @return string with text representation.
@@ -260,9 +263,14 @@ public:
     /// @brief Type.
     const uint8_t type_;
 
+    /// @note No need for a vendor member as vendor attributes
+    /// are only temporary.
+
 private:
 
     /// @brief From text with definition.
+    ///
+    /// Dispatch over the value type.
     ///
     /// @param def pointer to attribute definition.
     /// @param value textual value.
@@ -272,6 +280,8 @@ private:
                                   const std::string& value);
 
     /// @brief From bytes with definition.
+    ///
+    /// Dispatch over the value type.
     ///
     /// @param def pointer to attribute definition.
     /// @param value binary value.
@@ -805,6 +815,8 @@ private:
 
 
 /// @brief Collection of attributes.
+///
+/// Designed to not handle vendor attributes so can be keyed by type only.
 class Attributes : public data::CfgToElement {
 public:
 
@@ -890,6 +902,8 @@ public:
     ConstAttributePtr get(const uint8_t type) const;
 
     /// @brief Returns text representation of the collection.
+    ///
+    /// @note Used for logs.
     ///
     /// @param indent number of spaces before printing text.
     /// @return string with text representation.

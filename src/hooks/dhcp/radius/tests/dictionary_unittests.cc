@@ -47,7 +47,7 @@ public:
     /// @brief Destructor.
     virtual ~DictionaryTest() {
         AttrDefs::instance().clear();
-        static_cast<void>(remove(TEST_DICT));
+        static_cast<void>(remove(TEST_FILE));
     }
 
     /// @brief Parse a line.
@@ -95,10 +95,10 @@ public:
     }
 
     /// Name of a dictionary file used during tests.
-    static const char* TEST_DICT;
+    static const char* TEST_FILE;
 };
 
-const char* DictionaryTest::TEST_DICT  = "test-dict";
+const char* DictionaryTest::TEST_FILE  = "test-dictionary";
 
 // Verifies standards definitions can be read from the dictionary.
 TEST_F(DictionaryTest, standard) {
@@ -420,15 +420,15 @@ TEST_F(DictionaryTest, include) {
 
 // Verifies the $INCLUDE entry can't eat the stack.
 TEST_F(DictionaryTest, includeLimit) {
-    string include = "$INCLUDE " + string(TEST_DICT) + "\n";
-    writeFile(TEST_DICT, include);
+    string include = "$INCLUDE " + string(TEST_FILE) + "\n";
+    writeFile(TEST_FILE, include);
     string expected = "Too many nested $INCLUDE ";
-    expected += "at line 1 in dictionary 'test-dict', ";
-    expected += "at line 1 in dictionary 'test-dict', ";
-    expected += "at line 1 in dictionary 'test-dict', ";
-    expected += "at line 1 in dictionary 'test-dict', ";
+    expected += "at line 1 in dictionary 'test-dictionary', ";
+    expected += "at line 1 in dictionary 'test-dictionary', ";
+    expected += "at line 1 in dictionary 'test-dictionary', ";
+    expected += "at line 1 in dictionary 'test-dictionary', ";
     expected += "at line 1";
-    EXPECT_THROW_MSG(parseLine(string("$INCLUDE ") + string(TEST_DICT)),
+    EXPECT_THROW_MSG(parseLine(string("$INCLUDE ") + string(TEST_FILE)),
                      BadValue, expected);
 }
 

@@ -53,11 +53,29 @@ public:
     virtual ~ConfigTest() {
         impl_.reset();
         HostDataSourceFactory::deregisterFactory("cache");
+        static_cast<void>(remove(TEST_FILE));
+    }
+
+    /// @brief writes specified content to a file.
+    ///
+    /// @param file_name name of file to be written.
+    /// @param content content to be written to file.
+    void writeFile(const std::string& file_name, const std::string& content) {
+        static_cast<void>(remove(file_name.c_str()));
+        ofstream out(file_name.c_str(), ios::trunc);
+        EXPECT_TRUE(out.is_open());
+        out << content;
+        out.close();
     }
 
     /// @brief Radius implementation.
     RadiusImpl& impl_;
+
+    /// Name of a dictionary file used during tests.
+    static const char* TEST_FILE;
 };
+
+const char* ConfigTest::TEST_FILE  = "test-dictonary";
 
 // Verify that a configuration must be a map.
 TEST_F(ConfigTest, notMap) {
@@ -175,6 +193,15 @@ TEST_F(ConfigTest, badDictionary) {
     string expected = "can't read radius dictionary: ";
     expected += "can't open dictionary '/do-not-exist': ";
     expected += "No such file or directory";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+
+    impl_.reset();
+    string dict = "BEGIN-VENDOR 1234\n";
+    writeFile(TEST_FILE, dict);
+    config = Element::createMap();
+    config->set("dictionary", Element::create(string(TEST_FILE)));
+    expected = "vendor definitions were not properly closed: ";
+    expected += "vendor 1234 is still open";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
     impl_.reset();
@@ -730,6 +757,12 @@ TEST_F(ConfigTest, attribute) {
     ElementPtr config = Element::createMap();
     EXPECT_NO_THROW(impl_.init(config));
 
+    // Add vendor too.
+    IntCstDefPtr cstv(new IntCstDef(PW_VENDOR_SPECIFIC, "DSL-Forum", 3561));
+    ASSERT_NO_THROW(AttrDefs::instance().add(cstv));
+    AttrDefPtr defv(new AttrDef(1, "Agent-Circuit-Id", PW_TYPE_STRING, 3561));
+    ASSERT_NO_THROW(AttrDefs::instance().add(defv));
+
     RadiusServicePtr srv(new RadiusService("test"));
     ASSERT_TRUE(srv);
     RadiusAttributeParser parser;
@@ -739,6 +772,17 @@ TEST_F(ConfigTest, attribute) {
     EXPECT_THROW_MSG(parser.parse(srv, attr), TypeError,
                      "get(string) called on a non-map Element");
     EXPECT_TRUE(srv->attributes_.empty());
+
+    // Vendor must be a string.
+    attr = Element::createMap();
+    attr->set("vendor", Element::create(1234));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), TypeError,
+                     "vendor parameter must be a string");
+
+    // Named vendor must be known.
+    attr->set("vendor", Element::create("foobar"));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
+                     "can't parse vendor 'foobar'");
 
     // Name or type is required.
     attr = Element::createMap();
@@ -752,11 +796,32 @@ TEST_F(ConfigTest, attribute) {
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
                      "attribute 'No-Such-Attribute' is unknown");
 
+    attr->set("name", Element::create("User-Name"));
+    attr->set("vendor", Element::create("DSL-Forum"));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
+                     "attribute 'User-Name' in vendor 'DSL-Forum' is unknown");
+    attr->set("vendor", Element::create("1234"));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
+                     "attribute 'User-Name' in vendor '1234' is unknown");
+    attr->set("vendor", Element::create(""));
+
     // Type and name must match.
     attr->set("name", Element::create("User-Name"));
     attr->set("type", Element::create(123));
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
                      "'User-Name' attribute has type 1, not 123");
+
+    attr->set("name", Element::create("Agent-Circuit-Id"));
+    attr->set("vendor", Element::create("DSL-Forum"));
+    string expected = "'Agent-Circuit-Id' attribute in vendor 'DSL-Forum' ";
+    expected += "has type 1, not 123";
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError, expected);
+    attr->set("vendor", Element::create("3561"));
+    expected = "'Agent-Circuit-Id' attribute in vendor '3561' ";
+    expected += "has type 1, not 123";
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError, expected);
+    attr->set("name", Element::create("User-Name"));
+    attr->set("vendor", Element::create(""));
 
     // Type must be between 0 and 255.
     attr = Element::createMap();
@@ -777,6 +842,12 @@ TEST_F(ConfigTest, attribute) {
     attr->set("type", Element::create(234));
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
                      "attribute type 234 is unknown");
+    attr->set("vendor", Element::create("DSL-Forum"));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
+                     "attribute type 234 in vendor 'DSL-Forum' is unknown");
+    attr->set("vendor", Element::create("1234"));
+    EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError,
+                     "attribute type 234 in vendor '1234' is unknown");
 
     // Set a type.
     attr = Element::createMap();
@@ -786,19 +857,41 @@ TEST_F(ConfigTest, attribute) {
 
     // Get the option to look at into.
     EXPECT_FALSE(srv->attributes_.empty());
+    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_TRUE(srv->attributes_.getDef(1));
     EXPECT_FALSE(srv->attributes_.getExpr(1));
     EXPECT_EQ("", srv->attributes_.getTest(1));
-    const Attributes& attrs = srv->attributes_.getAll();
-    ASSERT_EQ(1, attrs.size());
-    const ConstAttributePtr& first = *attrs.cbegin();
-    ASSERT_TRUE(first);
-    EXPECT_EQ("User-Name='foobar'", first->toText());
+    ConstAttributePtr got = srv->attributes_.get(1);
+    ASSERT_TRUE(got);
+    EXPECT_EQ("User-Name='foobar'", got->toText());
 
     // Another way to check.
-    string expected = "[ { "
+    expected = "[ { "
         " \"name\": \"User-Name\", "
         " \"type\": 1, "
         " \"data\": \"foobar\" } ]";
+    runToElementTest<CfgAttributes>(expected, srv->attributes_);
+
+    // Check with a vendor.
+    srv->attributes_.clear();
+    attr = Element::createMap();
+    attr->set("vendor", Element::create("DSL-Forum"));
+    attr->set("data", Element::create("foobar"));
+    attr->set("type", Element::create(1));
+    EXPECT_NO_THROW(parser.parse(srv, attr));
+    EXPECT_FALSE(srv->attributes_.empty());
+    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
+    EXPECT_FALSE(srv->attributes_.getExpr(1, 3561));
+    EXPECT_EQ("", srv->attributes_.getTest(1, 3561));
+    got = srv->attributes_.get(1, 3561);
+    ASSERT_TRUE(got);
+    EXPECT_EQ("Vendor-Specific=[3561]0x0108666F6F626172", got->toText());
+    expected = "[ { "
+        " \"name\": \"Vendor-Specific\", "
+        " \"type\": 26, "
+        " \"vendor\": \"3561\", "
+        " \"vsa-raw\": \"0108666F6F626172\" } ]";
     runToElementTest<CfgAttributes>(expected, srv->attributes_);
 
     // Vendor-Specific (26) does not support textual data.

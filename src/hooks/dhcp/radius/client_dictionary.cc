@@ -254,11 +254,15 @@ AttrDefs::parseLine(const string& line, uint32_t& vendor, unsigned int depth) {
     }
     // Integer constant definition.
     if (tokens[0] == "VALUE") {
+        if (vendor != 0) {
+            // Ignore vendor constant definitions.
+            return;
+        }
         if (tokens.size() != 4) {
             isc_throw(Unexpected, "expected 4 tokens, got " << tokens.size());
         }
         const string& attr_str = tokens[1];
-        AttrDefPtr attr = getByName(attr_str);
+        AttrDefPtr attr = getByName(attr_str/*, vendor*/);
         if (!attr) {
             isc_throw(Unexpected, "unknown attribute '" << attr_str << "'");
         }

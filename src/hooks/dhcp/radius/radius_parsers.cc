@@ -519,7 +519,15 @@ RadiusAttributeParser::parse(const RadiusServicePtr& service,
 
     // vendor.
     uint32_t vendor = 0;
-    const string& vendor_txt = getString(attr, "vendor");
+    const ConstElementPtr& vendor_elem = attr->get("vendor");
+    if (!vendor_elem) {
+        // Should not happen as it is added by setDefaults.
+        isc_throw(Unexpected, "no vendor parameter");
+    } else if (vendor_elem->getType() != Element::string) {
+        // Expected to be a common error.
+        isc_throw(TypeError, "vendor parameter must be a string");
+    }
+    const string& vendor_txt = vendor_elem->stringValue();
     if (!vendor_txt.empty()) {
         IntCstDefPtr vendor_cst =
             AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, vendor_txt);
@@ -534,7 +542,8 @@ RadiusAttributeParser::parse(const RadiusServicePtr& service,
                 }
                 vendor = static_cast<uint32_t>(val);
             } catch (...) {
-                isc_throw(ConfigError, "can't parse vendor " << vendor_txt);
+                isc_throw(ConfigError, "can't parse vendor '"
+                          << vendor_txt << "'");
             }
         }
     }
