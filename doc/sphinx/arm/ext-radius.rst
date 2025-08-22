@@ -226,8 +226,19 @@ At the service level, three sections can be configured:
    -  ``expr`` - is the last of the three ways to specify the attribute content.
       It specifies an evaluation expression on the DHCP query packet.
 
+   -  ``vendor`` -  since Kea 3.1.2 is the vendor id of the attribute.
+      It allways contents a string with the vendor name or an integer litteral.
 
     Attributes are supported only for the access service.
+
+.. note::
+
+   Vendor-Specific attribute can be specified in two ways: using a ``raw``
+   value which must include the vendor and the vsa data, note that the ``data``
+   value is no longer supported sine Kea 3.1.2, and the ``expr`` value
+   is evaluated to the content of the attribute. The second way was added
+   by 3.1.2 and allows to specify a vendor attribute which is automatically
+   embedded into a Vendor-Specific attribute.
 
 - The ``peer-updates`` boolean flag (default ``true``) controls whether lease
   updates coming from an active High-Availability (HA) partner should result in
@@ -569,6 +580,12 @@ RADIUS dictionary. There are differences:
       - Do not require an attribute definition.
 
       - Must have an associated attribute definition in the dictionary.
+
+    * - Attribute and Integer Value name spaces
+
+      - flat name spaces allowing duplicates.
+
+      - since Kea 3.1.2 different name spaces per vendor.
 
     * - Reply-Message Presence in the Kea Logs
 

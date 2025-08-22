@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added support of RADIUS vendor attributes and integer
+	translations to the RADIUS hook library for compatibility
+	with previous versions using the FreeRADIUS client library.
+	(Gitlab #2860)

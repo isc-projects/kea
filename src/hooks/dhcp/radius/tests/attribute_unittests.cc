@@ -184,7 +184,7 @@ TEST_F(AttributeTest, rawAttrString) {
         << from_bytes->toText() << " != " << attr->toText();
 }
 
-// Verifies integer string attribute.
+// Verifies integer attribute.
 TEST_F(AttributeTest, attrInt) {
     // Using NAS-Port-Type (61) integer attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_NAS_PORT_TYPE);
@@ -249,6 +249,20 @@ TEST_F(AttributeTest, attrInt) {
                      "the attribute value type must be vsa, not integer");
     EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
                      "the attribute value type must be vsa, not integer");
+}
+
+// Verifies vendor integer attribute.
+TEST_F(AttributeTest, vendorAttrInt) {
+    // Attibute.
+    AttrDefPtr def(new AttrDef(1, "My-Int", PW_TYPE_INTEGER, 2495));
+    ASSERT_NO_THROW(AttrDefs::instance().add(def));
+    // Integer constant.
+    IntCstDefPtr cst(new IntCstDef(1, "My-Cst", 144, 2495));
+    ASSERT_NO_THROW(AttrDefs::instance().add(cst));
+    AttributePtr attr;
+    ASSERT_NO_THROW(attr = Attribute::fromText(def, "My-Cst"));
+    ASSERT_TRUE(attr);
+    EXPECT_EQ("Vendor-Specific=[2495]0x010600000090", attr->toText());
 }
 
 // Verifies IP address attribute.

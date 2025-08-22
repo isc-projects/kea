@@ -49,7 +49,8 @@ Attribute::fromText0(const AttrDefPtr& def, const string& value) {
     case PW_TYPE_INTEGER:
         if (!isdigit(value[0])) {
             IntCstDefPtr ic_def =
-                AttrDefs::instance().getByName(def->type_, value);
+                AttrDefs::instance().getByName(def->type_, value,
+                                               def->vendor_);
             if (ic_def) {
                 return (fromInt(def->type_, ic_def->value_));
             }
