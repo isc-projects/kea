@@ -253,7 +253,7 @@ TEST_F(AttributeTest, attrInt) {
 
 // Verifies vendor integer attribute.
 TEST_F(AttributeTest, vendorAttrInt) {
-    // Attibute.
+    // Attribute.
     AttrDefPtr def(new AttrDef(1, "My-Int", PW_TYPE_INTEGER, 2495));
     ASSERT_NO_THROW(AttrDefs::instance().add(def));
     // Integer constant.
