@@ -130,6 +130,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                  | t2_percent
                  | cache_threshold
                  | cache_max_age
+                 | adaptive_lease_time_threshold
                  | loggers
                  | hostname_char_set
                  | hostname_char_replacement
@@ -179,6 +180,8 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
      cache_threshold ::= "cache-threshold" ":" FLOAT
 
      cache_max_age ::= "cache-max-age" ":" INTEGER
+
+     adaptive_lease_time_threshold ::= "adaptive-lease-time-threshold" ":" FLOAT
 
      decline_probation_period ::= "decline-probation-period" ":" INTEGER
 
@@ -544,6 +547,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                   | t2_percent
                   | cache_threshold
                   | cache_max_age
+                  | adaptive_lease_time_threshold
                   | ddns_send_updates
                   | ddns_override_no_update
                   | ddns_override_client_update
@@ -634,6 +638,7 @@ This grammar is generated from ``dhcp4_parser.yy``. See :ref:`dhcp4` for more de
                          | t2_percent
                          | cache_threshold
                          | cache_max_age
+                         | adaptive_lease_time_threshold
                          | ddns_send_updates
                          | ddns_override_no_update
                          | ddns_override_client_update

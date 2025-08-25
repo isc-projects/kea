@@ -1,7 +1,0 @@
-[func]		fdupont
-	Added the new "adaptive-lease-time-threshold" parameter
-	for the FLQ (Free Lease Queue) allocator which reduces
-	the lifetime of leases when pools of a subnet have an
-	occupancy rate above a configured threshold (new feature
-	from ISC DHCP).
-	(Gitlab #226)

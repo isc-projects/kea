@@ -1,4 +1,0 @@
-[bug]		fdupont
-	When reusing an expired lease, kea-dhcp6 now correctly saves
-	the client hardware address in the lease.
-	(Gitlab #4058)

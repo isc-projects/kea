@@ -9731,8 +9731,8 @@ A debug message issued when the server is attempting to obtain a set of
 IPv6 leases from the memory file database for a client with the specified
 hostname.
 
-DHCPSRV_MEMFILE_GET_HWADDR
-==========================
+DHCPSRV_MEMFILE_GET_HWADDR4
+===========================
 
 .. code-block:: text
 
@@ -9741,6 +9741,18 @@ DHCPSRV_MEMFILE_GET_HWADDR
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
+hardware address.
+
+DHCPSRV_MEMFILE_GET_HWADDR6
+===========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set of
+IPv6 leases from the memory file database for a client with the specified
 hardware address.
 
 DHCPSRV_MEMFILE_GET_IAID_DUID
@@ -20721,8 +20733,8 @@ A debug message issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database for a client with the specified
 hostname.
 
-MYSQL_LB_GET_HWADDR
-===================
+MYSQL_LB_GET_HWADDR4
+====================
 
 .. code-block:: text
 
@@ -20731,6 +20743,18 @@ MYSQL_LB_GET_HWADDR
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
+hardware address.
+
+MYSQL_LB_GET_HWADDR6
+====================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database for a client with the specified
 hardware address.
 
 MYSQL_LB_GET_IAID_DUID
@@ -23846,8 +23870,8 @@ A debug message issued when the server is attempting to obtain a set
 of IPv6 leases from the PostgreSQL database for a client with the specified
 hostname.
 
-PGSQL_LB_GET_HWADDR
-===================
+PGSQL_LB_GET_HWADDR4
+====================
 
 .. code-block:: text
 
@@ -23856,6 +23880,18 @@ PGSQL_LB_GET_HWADDR
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
+hardware address.
+
+PGSQL_LB_GET_HWADDR6
+====================
+
+.. code-block:: text
+
+    obtaining IPv6 leases for hardware address %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database for a client with the specified
 hardware address.
 
 PGSQL_LB_GET_IAID_DUID
