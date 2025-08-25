@@ -31,10 +31,10 @@ Kea 3.1.1 (development) released on September 27, 2025
 	(Gitlab #3931)
 
 2386.	[sec]		tmark
-	Corrected an issue in kea-dhcp4 that caused
-	the server to exit after receiving a broadcast
-	query that requests option 108 and fails to
-	match a subnet.
+	Corrected an issue in kea-dhcp4 that caused the server
+	to abort if a client sent a unicast request with a particular
+	options, and Kea failed to find an appropriate subnet
+	for that client.
 	CVE:2025-40779
 	(Gitlab #4048)
 
