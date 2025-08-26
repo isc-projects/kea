@@ -111,6 +111,15 @@ The classification process is conducted in several steps:
     classes of the host reservation. If a reservation is not found, the
     packet is assigned to the ``UNKNOWN`` class.
 
+.. note::
+
+    If there is a matching reservation from the selected subnet and that
+    subnet belongs to a shared-network, then the assignment of any classes
+    specified in the reservation is deferred until after lease allocation.
+    This is done to account for the possibility that the subnet selection may
+    change during lease allocation and that would negate and possibly replace
+    the original reservation match.
+
 9.  Classes with matching expressions - directly, or indirectly using the
     ``KNOWN``/``UNKNOWN`` built-in classes and not marked for later evaluation
     ("on request") - are processed in the order they are defined
@@ -136,6 +145,12 @@ The classification process is conducted in several steps:
 
     The ``lease4_select``, ``lease4_renew``, ``lease6_select``, ``lease6_renew``,
     and ``lease6_rebind`` callouts are called here.
+
+.. note::
+
+    If there is a matching host reservation from the selected subnet and that
+    subnet belongs to a shared-network, then any classes specified in the
+    reservation are assigned.
 
 12. The ``evaluate-additional-classes`` lists (if any) are evaluated first
     for the pool, then the subnet, and the finally shared-network to which the
