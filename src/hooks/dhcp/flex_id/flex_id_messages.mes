@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 % FLEX_ID_NO_IDENTIFIER_EXPRESSION identifier-expression is either not specified or empty
+Logged at debug log level 40.
 This debug message is printed when the flex-id library is being loaded,
 but the expression used to generate the identifier was either omitted or
 is empty. The library will load, but will neither generate nor replace
