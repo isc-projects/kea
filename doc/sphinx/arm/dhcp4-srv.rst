@@ -2687,6 +2687,12 @@ The definition used to decode a VSI option is:
    limited option set (codes 43 and from 224 to 254), and only for
    DHCPv4.
 
+.. note::
+
+   It is also possible to redefine some standard options in Kea, via
+   the :ref:`hooks-flex-option` hook. Examples of this mechanism are available
+   in this `Knowledgebase article <https://kb.isc.org/docs/redefining-standard-options>`_.
+
 .. _dhcp4-vendor-opts:
 
 DHCPv4 Vendor-Specific Options
