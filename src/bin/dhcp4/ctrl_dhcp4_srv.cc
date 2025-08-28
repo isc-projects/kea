@@ -14,6 +14,7 @@
 #include <config/http_command_mgr.h>
 #include <config/unix_command_mgr.h>
 #include <cryptolink/crypto_hash.h>
+#include <database/dbaccess_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
@@ -26,6 +27,7 @@
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <process/cfgrpt/config_report.h>
@@ -374,6 +376,21 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         return (result);
     }
 
+    ConstElementPtr lease_database = dhcp4->get("lease-database");
+    if (lease_database) {
+        db::DbAccessParser parser;
+        std::string access_string;
+        parser.parse(access_string, lease_database);
+        auto params = parser.getDbAccessParameters();
+        if (params["type"] == "memfile") {
+            string file_name = params["name"];
+            if (Memfile_LeaseMgr::isLFCProcessRunning(file_name, Memfile_LeaseMgr::V4)) {
+                return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                        "Can not update configuration while lease file cleanup process is running."));
+            }
+        }
+    }
+
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
 
@@ -396,7 +413,7 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     ConstElementPtr result = processConfig(dhcp4);
 
     // If the configuration parsed successfully, apply the new logger
-    // configuration and the commit the new configuration.  We apply
+    // configuration and then commit the new configuration.  We apply
     // the logging first in case there's a configuration failure.
     int rcode = 0;
     isc::config::parseAnswer(rcode, result);

@@ -51,5 +51,7 @@ test(
     'dhcp-forensic-log-tests',
     dhcp_forensic_log_tests,
     protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
     timeout: 60,
 )

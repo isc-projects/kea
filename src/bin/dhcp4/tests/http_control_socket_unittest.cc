@@ -13,6 +13,7 @@
 #include <config/command_mgr.h>
 #include <config/http_command_mgr.h>
 #include <config/timeouts.h>
+#include <database/database_connection.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
@@ -20,6 +21,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <hooks/hooks_manager.h>
@@ -52,6 +54,7 @@ using namespace isc::asiolink;
 using namespace isc::asiolink::test;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
@@ -85,7 +88,7 @@ public:
 };
 
 /// @brief Base fixture class intended for testing HTTP/HTTPS control channel.
-class BaseCtrlChannelDhcpv4Test : public ::testing::Test {
+class BaseCtrlChannelDhcpv4Test : public BaseServerTest {
 public:
 
     /// @brief List of interfaces (defaults to "*").
@@ -529,6 +532,9 @@ public:
     // file is not a valid JSON.
     void testConfigReloadBrokenFile();
 
+    // Tests if config-reload attempts to reload a file while LFC is running.
+    void testConfigReloadLFCRunning();
+
     // Tests if config-reload attempts to reload a file and reports that the
     // file is loaded correctly.
     void testConfigReloadValid();
@@ -575,6 +581,18 @@ public:
     // This test verifies that the server signals timeout if the transmission
     // takes too long, having received no data from the client.
     void testConnectionTimeoutNoData();
+
+    /// @brief Return path to the lease file used by unit tests.
+    ///
+    /// @param filename Name of the lease file appended to the path to the
+    /// directory where test data is held.
+    ///
+    /// @return Full path to the lease file.
+    static std::string getLeaseFilePath(const std::string& filename) {
+        std::ostringstream s;
+        s << CfgMgr::instance().getDataDir() << "/" << filename;
+        return (s.str());
+    }
 };
 
 /// @brief Fixture class intended for testing HTTP control channel.
@@ -1179,6 +1197,152 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configSet) {
     CfgMgr::instance().clear();
 }
 
+// Check that the "config-set" fails when LFC is running.
+TEST_F(HttpCtrlChannelDhcpv4Test, configSetLFCRunning) {
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string config_set_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket =
+        "    ,\"control-socket\": { \n"
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124 \n"
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << config_set_txt << ","
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+    EXPECT_EQ("[ { \"arguments\": { \"hash\": \"CEA228E014102D623F40E6E9C68EC166A6021A81E220A15276F8C87F68866FDF\" }, \"result\": 0, \"text\": \"Configuration successful.\" } ]",
+              response);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("kea-leases4.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+
+    // Send the config-set command
+    sendHttpCommand(os.str(), response);
+
+    // Should fail with an error
+    EXPECT_EQ("[ { \"result\": 1, "
+              "\"text\": \"Can not update configuration while lease file cleanup process is running.\" } ]",
+              response);
+
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
 // Check that the "config-set" command will replace current configuration.
 TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     createHttpChannelServer();
@@ -1359,6 +1523,161 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configSet) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
     EXPECT_EQ(2, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Check that the "config-set" fails when LFC is running.
+TEST_F(HttpsCtrlChannelDhcpv4Test, configSetLFCRunning) {
+    createHttpChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string ca_dir(string(TEST_CA_DIR));
+    string config_set_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp4_cfg_txt =
+        "    \"Dhcp4\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet4\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"192.2.0.0/24\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.0.1-192.2.0.50\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"192.2.1.0/24\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.1.1-192.2.1.50\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"192.2.2.0/24\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"192.2.2.1-192.2.2.50\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp4\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "    ,\"control-socket\": { \n"
+        "       \"socket-type\": \"http\", \n"
+        "       \"socket-address\": \"127.0.0.1\", \n"
+        "       \"socket-port\": 18124, \n";
+    string control_socket_footer =
+        "    } \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << config_set_txt << ","
+       << args_txt
+       << dhcp4_cfg_txt
+       << subnet1
+       << subnet_footer
+       << option_def
+       << option_data
+       << control_socket_header
+       << "        \"trust-anchor\": \"" << ca_dir << "/kea-ca.crt\", \n"
+       << "        \"cert-file\": \"" << ca_dir << "/kea-server.crt\", \n"
+       << "        \"key-file\": \"" << ca_dir << "/kea-server.key\" \n"
+       << control_socket_footer
+       << logger_txt
+       << "}\n"                      // close dhcp4
+       << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendHttpCommand(os.str(), response);
+    // Verify the configuration was successful. The config contains random
+    // file paths (CA directory), so the hash will be different each time.
+    // As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""),
+              std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("kea-leases4.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+
+    // Send the config-set command
+    sendHttpCommand(os.str(), response);
+
+    // Should fail with an error
+    EXPECT_EQ("[ { \"result\": 1, "
+              "\"text\": \"Can not update configuration while lease file cleanup process is running.\" } ]",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef(DHCP4_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the HTTP control channel socket exists.
+    EXPECT_TRUE(HttpCommandMgr::instance().getHttpListener());
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -2506,6 +2825,68 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadBrokenFile) {
 
 TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadBrokenFile) {
     testConfigReloadBrokenFile();
+}
+
+// Tests if config-reload attempts to reload a file while LFC is running.
+void
+BaseCtrlChannelDhcpv4Test::testConfigReloadLFCRunning() {
+    createHttpChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"id\": 1, \"subnet\": \"192.0.2.0/24\" },"
+        "        { \"id\": 2, \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "4";
+    pmap["name"] = getLeaseFilePath("kea-leases4.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+
+
+    // This command should reload test8.json config.
+    sendHttpCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload will fail.
+    EXPECT_EQ("[ { \"result\": 1, \"text\": \"Config reload failed: configuration error using file 'test8.json': "
+              "Can not update configuration while lease file cleanup process is running.\" } ]",
+              response);
+
+    ::remove("test8.json");
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, configReloadLFCRunning) {
+    testConfigReloadLFCRunning();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadLFCRunning) {
+    testConfigReloadLFCRunning();
 }
 
 // Tests if config-reload attempts to reload a file and reports that the

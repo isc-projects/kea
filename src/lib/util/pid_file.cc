@@ -31,7 +31,7 @@ PIDFile::check() const {
     // If we weren't able to open the file treat
     // it as if the process wasn't running
     if (!fs.is_open()) {
-        return (false);
+        return (0);
     }
 
     // Try to get the pid, get the status and get rid of the file

@@ -10,6 +10,7 @@
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
 #include <config/timeouts.h>
+#include <database/database_connection.h>
 #include <config/unix_command_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
@@ -17,10 +18,12 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger_support.h>
+#include <process/log_parser.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
@@ -49,6 +52,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
@@ -458,6 +462,18 @@ public:
             arguments->add(Element::create(s.str()));
         }
         return (createAnswer(CONTROL_RESULT_SUCCESS, arguments));
+    }
+
+    /// @brief Return path to the lease file used by unit tests.
+    ///
+    /// @param filename Name of the lease file appended to the path to the
+    /// directory where test data is held.
+    ///
+    /// @return Full path to the lease file.
+    static std::string getLeaseFilePath(const std::string& filename) {
+        std::ostringstream s;
+        s << CfgMgr::instance().getDataDir() << "/" << filename;
+        return (s.str());
     }
 };
 
@@ -880,6 +896,159 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     // Check that the config was not lost
     subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
     EXPECT_EQ(2, subnets->size());
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Check that the "config-set" fails when LFC is running.
+TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
+    setLogTestPath("/dev");
+    createUnixChannelServer();
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp6_cfg_txt =
+        "    \"Dhcp6\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"preferred-lifetime\": 3000, \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet6\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp6_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << logger_txt
+        << "}\n"                      // close dhcp6
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP6_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("kea-leases6.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+
+    // Send the config-set command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with an error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"Can not update configuration while lease file cleanup process is running.\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef(DHCP6_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the control channel socket exists.
+    ASSERT_TRUE(fileExists(socket_path_));
 
     // Clean up after the test.
     CfgMgr::instance().clear();
@@ -1642,6 +1811,58 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
               response);
 
     ::remove("test7.json");
+}
+
+// Tests if config-reload attempts to reload a file while LFC is running
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
+    createUnixChannelServer();
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp6\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet6\": ["
+        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1 },"
+        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "     ],"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = getLeaseFilePath("kea-leases6.csv");
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+
+    // Now tell Kea to reload its config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload will fail.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: configuration error using file 'test8.json': "
+              "Can not update configuration while lease file cleanup process is running.\" }",
+              response);
+
+    ::remove("test8.json");
 }
 
 // Tests if config-reload attempts to reload a file and reports that the
