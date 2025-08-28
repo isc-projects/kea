@@ -1951,9 +1951,23 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'ubuntu':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++', 'gnupg', 'libboost-system-dev', 'liblog4cplus-dev',  'libpcap-dev',
-                         'libssl-dev', 'make'])
+        packages.extend(
+            [
+                'gcc',
+                'g++',
+                'gnupg',
+                'libboost-system-dev',
+                'liblog4cplus-dev',
+                'libpcap-dev',
+                'libssl-dev',
+                'python3-dev',
+                'python3-venv',
+            ]
+        )
         deferred_functions.append(install_meson)
+
+        if 'coverage' in features:
+            packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
             packages.extend(['python3-sphinx', 'python3-sphinx-rtd-theme',
@@ -1995,8 +2009,23 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'debian':
         _apt_update(system, revision, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
-        packages.extend(['gcc', 'g++',  'gnupg', 'libboost-system-dev', 'liblog4cplus-dev', 'libssl-dev', 'make'])
+        packages.extend(
+            [
+                'gcc',
+                'g++',
+                'gnupg',
+                'libboost-system-dev',
+                'liblog4cplus-dev',
+                'libpcap-dev',
+                'libssl-dev',
+                'python3-dev',
+                'python3-venv',
+            ]
+        )
         deferred_functions.append(install_meson)
+
+        if 'coverage' in features:
+            packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
             packages.extend(['doxygen', 'graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
@@ -2794,7 +2823,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 
 DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
-ALL_FEATURES = ['all', 'ccache', 'distcheck', 'docs', 'forge', 'gssapi',
+ALL_FEATURES = ['all', 'ccache', 'coverage', 'distcheck', 'docs', 'forge', 'gssapi',
                 'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
                 'pgsql', 'shell', 'tls', 'unittest']
 
