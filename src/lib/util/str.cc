@@ -349,6 +349,9 @@ dumpDouble(double val, size_t precision) {
 
 std::string
 printOrDump(const std::vector<uint8_t>& data, size_t max_dump) {
+    if (data.empty()) {
+        return ("");
+    }
 
     auto it = data.begin();
     bool print_it = true;

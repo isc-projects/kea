@@ -539,6 +539,12 @@ TEST_F(StringUtilTest, printOrDump) {
     std::list<Scenario> scenarios {
         {
             __LINE__,
+            { },
+            1,
+            ""
+        },
+        {
+            __LINE__,
             { '1', '2', '3', 0, 0 },
             5,
             "123",
