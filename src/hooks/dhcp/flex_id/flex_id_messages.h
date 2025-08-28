@@ -5,12 +5,10 @@
 
 #include <log/message_types.h>
 
-extern const isc::log::MessageID FLEX_ID_EXPRESSION_EMPTY;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_EVALUATED_NP;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_HEX;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_INVALID_JSON_TYPE;
-extern const isc::log::MessageID FLEX_ID_EXPRESSION_NOT_DEFINED;
 extern const isc::log::MessageID FLEX_ID_EXPRESSION_PARSE_FAILED;
 extern const isc::log::MessageID FLEX_ID_IGNORE_IAID_APPLIED_ON_NA;
 extern const isc::log::MessageID FLEX_ID_IGNORE_IAID_APPLIED_ON_PD;
@@ -19,6 +17,7 @@ extern const isc::log::MessageID FLEX_ID_IGNORE_IAID_JSON_TYPE;
 extern const isc::log::MessageID FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_NA;
 extern const isc::log::MessageID FLEX_ID_IGNORE_IAID_NOT_APPLIED_ON_PD;
 extern const isc::log::MessageID FLEX_ID_LOAD_ERROR;
+extern const isc::log::MessageID FLEX_ID_NO_IDENTIFIER_EXPRESSION;
 extern const isc::log::MessageID FLEX_ID_REPLACE_CLIENT_ID_JSON_TYPE;
 extern const isc::log::MessageID FLEX_ID_RESTORE_CLIENT_ID;
 extern const isc::log::MessageID FLEX_ID_RESTORE_DUID;

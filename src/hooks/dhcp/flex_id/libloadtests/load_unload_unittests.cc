@@ -67,17 +67,25 @@ TEST_F(FlexIdLibLoadTest, invalidDaemonLoad) {
     invalidDaemonTest("bogus", AF_INET, valid_params_);
 }
 
+// Simple test that checks the library still loads when identifier expression is
+// either omitted or empty.
+TEST_F(FlexIdLibLoadTest, emptyOrOmittedExpressionValid) {
+    // Prepare parameters for the callout parameters library.
+    ElementPtr params = Element::createMap();
+    params->set("replace-client-id", Element::create(true));
+    params->set("ignore-iaid", Element::create(true));
+    validDaemonTest("kea-dhcp4", AF_INET, params);
+
+    // Empty expression.
+    params->set("identifier-expression", Element::create(string("")));
+    validDaemonTest("kea-dhcp4", AF_INET, params);
+}
+
 // Simple test that checks the library fails to load on bad expressions.
 TEST_F(FlexIdLibLoadTest, badExpression) {
     // Prepare parameters for the callout parameters library.
     ElementPtr params = Element::createMap();
     params->set("replace-client-id", Element::create(true));
-    invalidDaemonTest("kea-dhcp4", AF_INET, params);
-
-    // Empty expression.
-    params->set("identifier-expression", Element::create(string("")));
-    // Warning (vs error)
-    validDaemonTest("kea-dhcp4", AF_INET, params);
 
     // Bad expression.
     params->set("identifier-expression", Element::create("foobar"));

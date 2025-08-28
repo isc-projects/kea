@@ -40,8 +40,8 @@ be host reservations that are tied to specific values of the flexible
 identifier.
 
 The library can be loaded similarly to other hook libraries. It
-takes a mandatory parameter ``identifier-expression`` and some optional boolean
-parameters like ``replace-client-id`` and ``ignore-iaid``:
+supports the following parameters: ``identifier-expression``, ``replace-client-id``,
+and ``ignore-iaid``:
 
 ::
 
@@ -283,3 +283,12 @@ part of the expression.
 
    This functionality breaks RFC compliance and should be enabled only if
    required. When enabled, a warning message is issued at configure time.
+
+.. note::
+
+    The ``ignore-iaid`` parameter operates independently of the flexible identifier
+    feature and may be used wihtout specifying a value for ``identifier-expression``.
+    When ``identifier-expression`` is omitted or specified as an empty string, `""`,
+    the flexible identifier feature is disabled. Kea versions prior to 3.1.2 require
+    a value for ``indentifier-expression`` but accept the empty string value. As of
+    Kea 3.1.2, the parameter is optional.

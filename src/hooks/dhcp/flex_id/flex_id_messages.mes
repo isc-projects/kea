@@ -4,11 +4,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-% FLEX_ID_EXPRESSION_EMPTY Specified identifier-expression is empty
-This warning message is printed when the flex-id library is being loaded,
-but the expression used to generate the identifier is empty. The library
-will load, but will not generate any identifiers. Please make sure that
-the identifier-expression parameter is specified.
+% FLEX_ID_NO_IDENTIFIER_EXPRESSION identifier-expression is either not specified or empty
+This debug message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier was either omitted or
+is empty. The library will load, but will neither generate nor replace
+client identifiers. Typically this occurs when users are only interested
+in using ignore-iaid, which operates independently of the expression.
 
 % FLEX_ID_EXPRESSION_EVALUATED Expression evaluated for packet to "%1" (size: %2)
 Logged at debug log level 40.
@@ -32,12 +33,6 @@ hexadecimal format for logging.
 This error message is printed when the flex-id library is being loaded,
 but the expression used to generate the identifier is malformed. It has
 a different JSON type (e.g. is a map) rather than expected string.
-
-% FLEX_ID_EXPRESSION_NOT_DEFINED Expression (identifier-expression) is not defined.
-This warning message is printed when the flex-id library is loaded, but the
-expression used to generate the identifier is not specified. The library
-will load, but will not generate any identifiers. Please make sure that
-the identifier-expression parameter is specified for your library.
 
 % FLEX_ID_EXPRESSION_PARSE_FAILED The identifier-expression is [%1], but fails to parse with error: %2
 This error message is printed when the flex-id library is being loaded,

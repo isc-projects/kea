@@ -24,6 +24,7 @@ using namespace flex_id;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::process;
+using namespace isc::log;
 
 namespace { // anonymous namespace.
 
@@ -72,31 +73,29 @@ int load(LibraryHandle& handle) {
                       << ", expected " << expected_proc_name);
         }
 
-        // identifier-expression is mandatory
+        // identifier-expression is optional.
         data::ConstElementPtr param = handle.getParameter("identifier-expression");
-        if (!param) {
-            LOG_ERROR(flex_id_logger, FLEX_ID_EXPRESSION_NOT_DEFINED);
-            return (1);
+        std::string expr;
+        if (param) {
+            // It must be a string...
+            if (param->getType() != Element::string) {
+                LOG_ERROR(flex_id_logger, FLEX_ID_EXPRESSION_INVALID_JSON_TYPE)
+                          .arg(Element::typeToName(param->getType()));
+                return (1);
+            }
+
+            std::string expr = param->stringValue();
+            if (!expr.empty() && !checkExpression(v6, expr)) {
+                // The error was logged.
+                return (1);
+            }
         }
 
-        // It must be a string...
-        if (param->getType() != Element::string) {
-            LOG_ERROR(flex_id_logger, FLEX_ID_EXPRESSION_INVALID_JSON_TYPE)
-                .arg(Element::typeToName(param->getType()));
-            return (1);
-        }
-
-        // ... and shouldn't be empty.
-        std::string expr = param->stringValue();
         if (expr.empty()) {
-            // Ok, we can continue without the expression, but it's just useless
-            // to have this lib loaded. Nevertheless, there may be cases when
-            // user temporarily changes the expression to empty string to
-            // troubleshoot something.
-            LOG_WARN(flex_id_logger, FLEX_ID_EXPRESSION_EMPTY);
-        } else if (!checkExpression(v6, expr)) {
-            // The error was logged.
-            return (1);
+            // Ok, we can continue without the expression. This is likely the
+            // case when users are only interested in ignore-iaid. 
+            LOG_DEBUG(flex_id_logger, DBGLVL_TRACE_BASIC,
+                      FLEX_ID_NO_IDENTIFIER_EXPRESSION);
         }
 
         // replace-client-id indicates if flexible identifier should be used to
@@ -127,6 +126,9 @@ int load(LibraryHandle& handle) {
                 }
 
                 ignore_iaid = param_ignore->boolValue();
+                if (ignore_iaid) {
+                    LOG_WARN(flex_id_logger, FLEX_ID_IGNORE_IAID_ENABLED);
+                }
             }
         }
 
@@ -135,10 +137,6 @@ int load(LibraryHandle& handle) {
 
         // Store specified expression.
         storeConfiguration(v6, expr, replace_client_id, ignore_iaid);
-
-        if (ignore_iaid) {
-            LOG_WARN(flex_id_logger, FLEX_ID_IGNORE_IAID_ENABLED);
-        }
     } catch (const std::exception& ex) {
         // Log the error and return failure.
         LOG_ERROR(flex_id_logger, FLEX_ID_LOAD_ERROR)
