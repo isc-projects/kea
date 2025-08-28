@@ -2064,7 +2064,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             pyv = _get_package_version('python')
             pyv = pyv.split('_')[0].replace('.', '')
             log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
-            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme'])
+            packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme', 'texlive-full'])
 
         if 'mysql' in features:
             if revision.startswith(('11', '12')):
