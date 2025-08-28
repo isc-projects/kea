@@ -2091,7 +2091,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                     packages.append(found[-1])
 
         if 'gssapi' in features:
-            packages.extend(['krb5-devel'])
+            packages.extend(['krb5'])
             # FreeBSD comes with a Heimdal krb5-config by default. Make sure
             # it's deleted so that Kea uses the MIT packages added just above.
             execute('sudo rm -f /usr/bin/krb5-config')
