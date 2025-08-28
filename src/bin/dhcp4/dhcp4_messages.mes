@@ -907,7 +907,7 @@ Logged at debug log level 55.
 A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
 information. Packet fields ciaddr, yiaddr, siaddr, giaddr, sname, and file
-will be included not empty.
+will be included when not empty.
 
 % DHCP4_QUERY_LABEL received query: %1
 This information message indicates that a query was received. It displays
@@ -1015,7 +1015,7 @@ to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the
 packet name and type respectively. The fourth argument contains detailed
 packet information. Packet fields ciaddr, yiaddr, siaddr, giaddr, sname,
-and file will be included not empty.
+and file will be included when not empty.
 
 % DHCP4_RESPONSE_FQDN_DATA %1: including FQDN option in the server's response: %2
 Logged at debug log level 55.

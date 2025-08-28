@@ -351,13 +351,11 @@ std::string
 printOrDump(const std::vector<uint8_t>& data, size_t max_dump) {
     auto it = data.begin();
     bool print_it = true;
-    while (it != data.end() && *it != 0) {
+    for ( ; it != data.end() && *it != 0; ++it) {
         if (!isprint(*it)) {
             print_it = false;
             break;
         }
-
-        ++it;
     }
 
     if (print_it && it != data.begin()) {
@@ -367,7 +365,7 @@ printOrDump(const std::vector<uint8_t>& data, size_t max_dump) {
     bool zeros = std::all_of(data.begin(), data.end(), [](int i) { return i==0; });
     if (!zeros) {
         if (data.size() > max_dump) {
-           return (std::string(dumpAsHex(&data[0], max_dump) + std::string("..")));
+           return (dumpAsHex(&data[0], max_dump) + std::string(".."));
         }
 
         return (dumpAsHex(&data[0], data.size()));

@@ -527,7 +527,7 @@ TEST_F(StringUtilTest, vectorIsPrintable) {
     EXPECT_FALSE(isPrintable(content));
 }
 
-// Verifies the printOrDUmp operates correctly.
+// Verifies the printOrDump operates correctly.
 TEST_F(StringUtilTest, printOrDump) {
     struct Scenario {
         size_t line_;
