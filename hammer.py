@@ -1760,8 +1760,14 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     if 'netconf' in features and 'netconf' not in ignore_errors_for:
         require_minimum_package_version('cmake', '3.19')
 
+    packages = []
+
     # Common packages
-    packages = ['bison', 'flex']
+    if 'ccache' in features:
+        packages.append('ccache')
+
+    if 'docs' in features:
+        packages.extend(['bison', 'flex'])
 
     # prepare fedora
     if system == 'fedora':
@@ -1782,9 +1788,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
@@ -1842,9 +1845,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
@@ -1897,9 +1897,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
 
@@ -1932,9 +1929,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'gssapi' in features:
             packages.extend(['krb5-devel'])
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2-devel'])
@@ -1997,9 +1991,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'libpcre2-dev'])
 
@@ -2058,9 +2049,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'gssapi' in features:
             packages.extend(['libkrb5-dev'])
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
     # prepare freebsd
@@ -2108,9 +2096,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             # it's deleted so that Kea uses the MIT packages added just above.
             execute('sudo rm -f /usr/bin/krb5-config')
 
-        if 'ccache' in features:
-            packages.extend(['ccache'])
-
         if 'netconf' in features:
             packages.extend(['cmake', 'git', 'pcre2'])
 
@@ -2154,9 +2139,6 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['alpine-sdk', 'python3-dev'])
-
-        if 'ccache' in features:
-            packages.extend(['ccache'])
 
         if 'unittest' in features:
             packages.append('wget')
