@@ -1761,11 +1761,11 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         require_minimum_package_version('cmake', '3.19')
 
     # Common packages
-    packages = ['autoconf', 'automake', 'bison', 'flex', 'libtool']
+    packages = ['bison', 'flex']
 
     # prepare fedora
     if system == 'fedora':
-        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel', 'make'])
+        packages.extend(['boost-devel', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'libpcap-devel'])
         deferred_functions.append(install_meson)
 
         if 'native-pkg' in features:
@@ -1805,7 +1805,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'centos':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'make', 'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'git', 'log4cplus-devel', 'openssl-devel'])
         deferred_functions.append(install_meson)
 
         if revision in ['7', '8']:
@@ -1856,7 +1856,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare rhel
     elif system == 'rhel':
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel'])
 
         # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
         # hammer.py.
@@ -1913,7 +1913,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'rocky':
         install_pkgs('epel-release', env=env, check_times=check_times)
 
-        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'make', 'openssl-devel', 'ninja-build'])
+        packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel', 'ninja-build'])
         deferred_functions.append(install_meson)
 
         if 'docs' in features:
@@ -2103,8 +2103,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'alpine':
         if 0 != execute("grep -E '^ulimit -s unlimited$' ~/.profile", quiet=True, raise_error=False):
             execute("echo 'ulimit -s unlimited' >> ~/.profile")
-        packages.extend(['bison', 'boost-libs', 'boost-dev', 'build-base', 'flex', 'gcompat', 'gcc', 'g++', 'gzip',
-                         'log4cplus', 'log4cplus-dev', 'make', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
+        packages.extend(['boost-libs', 'boost-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
+                         'log4cplus', 'log4cplus-dev', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
                          'tar'])
         deferred_functions.append(install_meson)
 
