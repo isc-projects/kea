@@ -1232,7 +1232,7 @@ def _install_libyang_from_sources(ignore_errors=False):
         execute('mkdir ~/.hammer-tmp/libyang/build')
         execute('cmake -DBUILD_TESTING=OFF ..',
                 cwd='~/.hammer-tmp/libyang/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/libyang/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1270,7 +1270,7 @@ def _install_sysrepo_from_sources(ignore_errors=False):
         execute(f'git checkout v{version}', cwd='~/.hammer-tmp/sysrepo')
         execute('mkdir ~/.hammer-tmp/sysrepo/build')
         execute('cmake -DBUILD_TESTING=OFF -DREPO_PATH=/etc/sysrepo ..', cwd='~/.hammer-tmp/sysrepo/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/sysrepo/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1304,7 +1304,7 @@ def _install_libyang_cpp_from_sources(ignore_errors=False):
         execute(f'git checkout v{version}', cwd='~/.hammer-tmp/libyang-cpp')
         execute('mkdir ~/.hammer-tmp/libyang-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/libyang-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/libyang-cpp/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/libyang-cpp/build')
         execute('sudo make install', cwd='~/.hammer-tmp/libyang-cpp/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -1338,7 +1338,7 @@ def _install_sysrepo_cpp_from_sources(ignore_errors=False):
         execute(f'git checkout v{version}', cwd='~/.hammer-tmp/sysrepo-cpp')
         execute('mkdir ~/.hammer-tmp/sysrepo-cpp/build')
         execute('cmake -DBUILD_TESTING=OFF .. ', cwd='~/.hammer-tmp/sysrepo-cpp/build')
-        execute('make -j $(nproc || gnproc || echo 1)', cwd='~/.hammer-tmp/sysrepo-cpp/build')
+        execute('make -j $(nproc || gnproc)', cwd='~/.hammer-tmp/sysrepo-cpp/build')
         execute('sudo make install', cwd='~/.hammer-tmp/sysrepo-cpp/build')
         system, _ = get_system_revision()
         if system != 'alpine':
@@ -2053,7 +2053,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'git', 'log4cplus', 'openssl'])
+        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'openssl'])
         deferred_functions.append(install_meson)
 
         if revision.startswith('14'):
