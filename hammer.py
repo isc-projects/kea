@@ -102,6 +102,7 @@ SYSTEMS = {
         '10': False,
         '11': True,
         '12': True,
+        '13': True,
     },
     'freebsd': {
         '11.2': False,
@@ -1536,7 +1537,7 @@ def _enable_postgresql(system):
     else:
         # Disable all PostgreSQL services first to avoid conflicts.
         # raise_error=False for when there are no matches
-        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+        _, output = execute("sudo systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
                             capture=True, raise_error=False)
         for service in output.split():
             execute(f'sudo systemctl disable {service}')
@@ -1554,7 +1555,7 @@ def _restart_postgresql(system):
     else:
         # Stop all PostgreSQL services first to avoid conflicts.
         # raise_error=False for when there are no matches
-        _, output = execute("systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
+        _, output = execute("sudo systemctl list-unit-files | grep postgres | grep -Fv '@.service' | cut -d ' ' -f 1",
                             capture=True, raise_error=False)
         for service in output.split():
             execute(f'sudo systemctl stop {service}')
