@@ -915,6 +915,10 @@ list:
    not specified or specified as an empty string, no authentication header is
    added to HTTP transactions. It must not contain the colon (:) character.
 
+-  ``basic-auth-user-file`` - is an alternatibe to ``basic-auth-user``:
+   instead of presenting the user ID in the configuration file it is specified
+   in the file indicated by this parameter.
+
 -  ``basic-auth-password`` - specifies the password for basic HTTP
    authentication. This parameter is ignored when the user ID is not specified
    or is empty. The password is optional; if not specified, an empty password is

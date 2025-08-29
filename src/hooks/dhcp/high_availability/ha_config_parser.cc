@@ -321,8 +321,31 @@ HAConfigParser::parseOne(const HAConfigMapperPtr& config_storage,
         }
 
         // Basic HTTP authentication user.
+        std::string user;
+        bool do_auth = false;
         if (p->contains("basic-auth-user")) {
-            std::string user = getString(p, "basic-auth-user");
+            if (p->contains("basic-auth-user-file")) {
+                isc_throw(dhcp::DhcpConfigError, "only one of "
+                          << "basic-auth-user and "
+                          << "basic-auth-user-file parameter can be "
+                          << "configured in peer '"
+                          << cfg->getName() << "'");
+            }
+            user = getString(p, "basic-auth-user");
+            do_auth = true;
+        }
+        if (p->contains("basic-auth-user-file")) {
+            std::string user_file =
+                getString(p, "basic-auth-user-file");
+            try {
+                user = util::file::getContent(user_file);
+                do_auth = true;
+            } catch (const std::exception& ex) {
+                isc_throw(dhcp::DhcpConfigError, "bad user file in peer '"
+                          << cfg->getName() << "': " << ex.what());
+            }
+        }
+        if (do_auth) {
             BasicHttpAuthPtr& auth = cfg->getBasicAuth();
             try {
                 if (!user.empty()) {
