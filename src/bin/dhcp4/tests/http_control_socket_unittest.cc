@@ -532,7 +532,7 @@ public:
     // file is not a valid JSON.
     void testConfigReloadBrokenFile();
 
-    // Tests if config-reload attempts to reload a file while LFC is running.
+    // Tests if config-reload fails to reload a file while LFC is running.
     void testConfigReloadLFCRunning();
 
     // Tests if config-reload attempts to reload a file and reports that the
@@ -2827,7 +2827,7 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadBrokenFile) {
     testConfigReloadBrokenFile();
 }
 
-// Tests if config-reload attempts to reload a file while LFC is running.
+// Check that the "config-reload" fails when LFC is running.
 void
 BaseCtrlChannelDhcpv4Test::testConfigReloadLFCRunning() {
     createHttpChannelServer();

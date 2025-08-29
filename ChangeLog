@@ -1,3 +1,8 @@
+2392.	[func]		razvan
+	Reject 'config-set' and 'config-reload' commands when lease
+	file cleanup process is running.
+	(Gitlab #3986)
+
 Kea 3.1.1 (development) released on September 27, 2025
 
 2391.	[bug]		fdupont

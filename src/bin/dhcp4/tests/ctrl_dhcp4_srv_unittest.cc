@@ -1809,7 +1809,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadBrokenFile) {
     ::remove("test7.json");
 }
 
-// Tests if config-reload attempts to reload a file while LFC is running
+// Check that the "config-reload" fails when LFC is running.
 TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning) {
     createUnixChannelServer();
     std::string response;
