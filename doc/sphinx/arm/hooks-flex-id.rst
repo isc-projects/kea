@@ -287,8 +287,8 @@ part of the expression.
 .. note::
 
     The ``ignore-iaid`` parameter operates independently of the flexible identifier
-    feature and may be used wihtout specifying a value for ``identifier-expression``.
+    feature and may be used without specifying a value for ``identifier-expression``.
     When ``identifier-expression`` is omitted or specified as an empty string, `""`,
     the flexible identifier feature is disabled. Kea versions prior to 3.1.2 require
-    a value for ``indentifier-expression`` but accept the empty string value. As of
+    a value for ``identifier-expression`` but accept the empty string value. As of
     Kea 3.1.2, the parameter is optional.

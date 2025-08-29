@@ -1,4 +1,4 @@
 [func]		tmark
 	The flex-id hook library parameter, ``identifier-expression``,
-	is now optional. Prior to this, it was manadatory.
+	is now optional. Prior to this, it was mandatory.
 	(Gitlab #4011)
