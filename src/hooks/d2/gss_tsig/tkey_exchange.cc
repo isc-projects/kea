@@ -26,7 +26,7 @@ namespace {
 // OutputBuffer objects are pre-allocated before data is written to them.
 // This is a default number of bytes for the buffers we create within
 // TKeyExchange class.
-const size_t DEFAULT_BUFFER_SIZE = 4096;
+const size_t DEFAULT_BUFFER_SIZE = 8192;
 
 }
 
