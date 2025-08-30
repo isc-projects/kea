@@ -582,7 +582,7 @@ Kea sources.
                // The hook libraries list may contain more than one library.
                {
                    // The only necessary parameter is the library filename.
-                   "library": "/opt/local/custom_hooks_example.so",
+                   "library": "custom_hooks_example.so",
 
                    // Some libraries may support parameters. Make sure you
                    // type this section carefully, as kea-netconf does not

@@ -918,7 +918,7 @@ DHCPv4 module, it must be listed in the "hooks-libraries" element of the
        :
     "hooks-libraries": [
         {
-            "library": "/usr/local/lib/example.so"
+            "library": "example.so"
         }
     ]
         :
@@ -1325,10 +1325,10 @@ as separate elements of the hooks-libraries configuration element, e.g.,
        :
     "hooks-libraries": [
         {
-            "library": "/usr/lib/library1.so"
+            "library": "library1.so"
         },
         {
-            "library": "/opt/library2.so"
+            "library": "library2.so"
         }
        :
     ]
@@ -1402,15 +1402,15 @@ logic. Consider the following example:
 @code
 "hooks-libraries": [
     {
-        "library": "/opt/first.so"
+        "library": "first.so"
     },
     {
-        "library": "/opt/second.so",
+        "library": "second.so",
         "parameters": {
         }
     },
     {
-        "library": "/opt/third.so",
+        "library": "third.so",
         "parameters": {
             "mail": "spam@example.com",
             "floor": 13,

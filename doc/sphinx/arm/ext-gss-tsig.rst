@@ -516,7 +516,7 @@ An excerpt from a D2 server configuration is provided below; more examples are a
         // The GSS-TSIG hook is loaded and its configuration is specified here.
         "hooks-libraries": [
         {
-            "library": "/opt/lib/libddns_gss_tsig.so",
+            "library": "libddns_gss_tsig.so",
             "parameters": {
                 // This section governs the GSS-TSIG integration. Each server
                 // mentioned in forward-ddns and/or reverse-ddns needs to have

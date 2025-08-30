@@ -48,7 +48,7 @@ and ``ignore-iaid``:
    "Dhcp6": {
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_flex_id.so",
+               "library": "libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "expression",
                    "replace-client-id": false,
@@ -96,7 +96,7 @@ can be achieved by using the following configuration:
        # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_flex_id.so",
+               "library": "libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "substring(relay6[0].option[18].hex,0,8)"
                }
@@ -145,7 +145,7 @@ for non-printable characters and do not require the use of the
        # add "flex-id" to reservation identifiers
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_flex_id.so",
+               "library": "libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "vendor[4491].option[1026].hex"
                }
@@ -198,7 +198,7 @@ The following is a stub configuration that enables this behavior:
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_flex_id.so",
+               "library": "libdhcp_flex_id.so",
                "parameters": {
                    "identifier-expression": "expression",
                    "replace-client-id": true

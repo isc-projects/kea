@@ -66,10 +66,10 @@ takes many parameters. For example, this configuration can be used:
           {
             // Note that the RADIUS access service requires host-cache for
             // proper operation, so this library is loaded as well.
-            "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so"
+            "library": "libdhcp_host_cache.so"
           },
           {
-            "library": "/usr/local/lib/kea/hooks/libdhcp_radius.so",
+            "library": "libdhcp_radius.so",
             "parameters": {
 
               // Specify where the dictionary is located.

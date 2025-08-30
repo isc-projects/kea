@@ -32,7 +32,7 @@ it takes no parameters.
 
     "Dhcp4": {
         "hooks-libraries": [
-            {   "library": "/usr/local/lib/libdhcp_bootp.so" },
+            {   "library": "libdhcp_bootp.so" },
             ...
         ]
     }

@@ -244,10 +244,10 @@ Server 1:
    {
      "Dhcp4": {
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server1",
@@ -291,10 +291,10 @@ Server 2:
    {
      "Dhcp4": {
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server2",
@@ -671,10 +671,10 @@ only difference that ``this-server-name`` should be set to "server2" and
 
    "Dhcp4": {
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server1",
@@ -1011,10 +1011,10 @@ library configuration has been removed from this example.
        }],
 
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                }]
@@ -1073,10 +1073,10 @@ The following is an example configuration of the primary server in a
 
    "Dhcp4": {
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server1",
@@ -1158,10 +1158,10 @@ The following is an example configuration file for the primary server in a
    {
      "Dhcp4": {
        "hooks-libraries": [{
-           "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+           "library": "libdhcp_lease_cmds.so",
            "parameters": { }
        }, {
-           "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+           "library": "libdhcp_ha.so",
            "parameters": {
                "high-availability": [{
                    "this-server-name": "server1",
@@ -1277,11 +1277,11 @@ default to ``true``:
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "library": "libdhcp_lease_cmds.so",
                "parameters": { }
            },
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "library": "libdhcp_ha.so",
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
@@ -1370,11 +1370,11 @@ single page of leases from 60 seconds to 90 seconds:
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "library": "libdhcp_lease_cmds.so",
                "parameters": { }
            },
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "library": "libdhcp_ha.so",
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
@@ -1449,11 +1449,11 @@ the HA state machine to pause in the ``waiting`` state after server startup.
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "library": "libdhcp_lease_cmds.so",
                "parameters": { }
            },
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "library": "libdhcp_ha.so",
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
@@ -1504,11 +1504,11 @@ Consider the following configuration:
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "library": "libdhcp_lease_cmds.so",
                "parameters": { }
            },
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "library": "libdhcp_ha.so",
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
@@ -1665,11 +1665,11 @@ as illustrated below:
    "Dhcp4": {
        "hooks-libraries": [
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+               "library": "libdhcp_lease_cmds.so",
                "parameters": { }
            },
            {
-               "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+               "library": "libdhcp_ha.so",
                "parameters": {
                    "high-availability": [ {
                        "this-server-name": "server1",
@@ -2446,11 +2446,11 @@ grouped into relationships as in the snippet below:
             },
             "hooks-libraries": [
                 {
-                    "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+                    "library": "libdhcp_lease_cmds.so",
                     "parameters": {}
                 },
                 {
-                    "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+                    "library": "libdhcp_ha.so",
                     "parameters": {
                         "high-availability": [
                             {
@@ -2550,11 +2550,11 @@ branch ``server3``:
             },
             "hooks-libraries": [
                 {
-                    "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so",
+                    "library": "libdhcp_lease_cmds.so",
                     "parameters": {}
                 },
                 {
-                    "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+                    "library": "libdhcp_ha.so",
                     "parameters": {
                         "high-availability": [
                             {

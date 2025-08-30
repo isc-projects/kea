@@ -193,10 +193,10 @@ configuration would be:
         "Dhcp6": {
             "hooks-libraries": [
                 {
-                    "library": "/opt/first_custom_hooks_example.so"
+                    "library": "first_custom_hooks_example.so"
                 },
                 {
-                    "library": "/opt/local/second_custom_hooks_example.so",
+                    "library": "second_custom_hooks_example.so",
                     "parameters": {
                         "mail": "spam@example.com",
                         "floor": 13,
@@ -227,7 +227,7 @@ directory determined during compilation and shown in the config report as
 "Hooks directory".  This value may be overridden at startup by setting the
 environment variable ``KEA_HOOKS_PATH`` to the desired path.  If a path other
 than this value is used in a ``library`` element Kea will emit an error and refuse
-to load the library. For ease of use ``library`` elements may simply omit path
+to load the library. For ease of use ``library`` elements should simply omit path
 components, specifying the file name only as shown below:
 
 .. code-block:: json
@@ -240,23 +240,6 @@ components, specifying the file name only as shown below:
                 },
                 {
                     "library": "second_custom_hooks_example.so"
-                }
-            ]
-        }
-    }
-
-This snippet (on Debian 12) is equivalent to:
-
-.. code-block:: json
-
-    {
-        "Dhcp6": {
-            "hooks-libraries": [
-                {
-                    "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/first_custom_hooks_example.so"
-                },
-                {
-                    "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/second_custom_hooks_example.so"
                 }
             ]
         }
@@ -393,7 +376,7 @@ The Limits hook uses user-context in classes and subnets to set parameters. For 
         ],
         "hooks-libraries": [
           {
-            "library": "/usr/local/lib/libdhcp_limits.so"
+            "library": "libdhcp_limits.so"
           }
         ],
         "subnet6": [
@@ -459,10 +442,10 @@ It lowers the number of concurrently parked packets to 128.
         "parked-packet-limit": 128
         "hooks-libraries": [
           {
-            "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so"
+            "library": "libdhcp_lease_cmds.so"
           },
           {
-            "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+            "library": "libdhcp_ha.so",
             "parameters": {
               "high-availability": [
                 {

@@ -142,7 +142,7 @@ addresses:
    {
     "hooks-libraries": [
         {
-            "library": "lib/kea/hooks/libdhcp_lease_query.so",
+            "library": "libdhcp_lease_query.so",
             "parameters": {
                 "requesters": [ "192.0.1.1", "10.0.0.2" ]
             }
@@ -327,7 +327,7 @@ addresses:
    {
     "hooks-libraries": [
         {
-            "library": "lib/kea/hooks/libdhcp_lease_query.so",
+            "library": "libdhcp_lease_query.so",
             "parameters": {
                 "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ],
                 "prefix-lengths": [ 72 ]
@@ -542,7 +542,7 @@ For instance, for DHCPv4:
    {
      "hooks-libraries": [
          {
-             "library": "lib/kea/hooks/libdhcp_lease_query.so",
+             "library": "libdhcp_lease_query.so",
              "parameters": {
                  "requesters": [ "192.0.2.1", "192.0.2.2" ],
                  "advanced" : {
@@ -571,7 +571,7 @@ or for DHCPv6:
    {
      "hooks-libraries": [
          {
-             "library": "lib/kea/hooks/libdhcp_lease_query.so",
+             "library": "libdhcp_lease_query.so",
              "parameters": {
                  "requesters": [ "2001:db8:1::1", "2001:db8:2::1" ],
                  "advanced" : {

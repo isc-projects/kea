@@ -52,7 +52,7 @@
     "hooks-libraries": [
         {
             // Location of the hook library to be loaded.
-            "library": "/opt/local/ddns-server-commands.so",
+            "library": "ddns-server-commands.so",
 
             // Hook library-specific configuration parameters.
             "parameters": { }

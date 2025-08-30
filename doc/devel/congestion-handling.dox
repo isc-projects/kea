@@ -292,7 +292,7 @@ to look something like this:
     "hooks-libraries": [
     {
         # Loading your hook library!
-        "library": "/somepath/lib/libyour_packet_queue.so"
+        "library": "libyour_packet_queue.so"
     }
 
     # any other hook libs
@@ -430,7 +430,7 @@ Server configuration for kea-dhcp6:
     "hooks-libraries": [
     {
         # Loading your hook library!
-        "library": "/somepath/lib/libyour_packet_queue.so"
+        "library": "libyour_packet_queue.so"
     }
 
     # any other hook libs

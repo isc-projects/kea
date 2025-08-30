@@ -41,7 +41,7 @@ any other hook library; for example, this configuration could be used:
 
      "hooks-libraries": [
      {
-         "library": "/usr/local/lib/kea/hooks/libdhcp_host_cache.so",
+         "library": "libdhcp_host_cache.so",
          "parameters": {
 
              # Tells Kea to never cache more than 1000 hosts.

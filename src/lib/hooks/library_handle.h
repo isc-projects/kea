@@ -140,11 +140,11 @@ public:
     ///
     /// "hooks-libraries": [
     ///     {
-    ///        "library": "/opt/charging.so",
+    ///        "library": "charging.so",
     ///        "parameters": {}
     ///    },
     ///    {
-    ///        "library": "/opt/local/notification.so",
+    ///        "library": "notification.so",
     ///        "parameters": {
     ///            "mail": "alarm@example.com",
     ///            "floor": 42,

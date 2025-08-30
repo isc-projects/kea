@@ -52,7 +52,7 @@ expression.
     "Dhcp4": {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_flex_option.so",
+                "library": "libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
                         {
@@ -81,7 +81,7 @@ mask in the response:
         "Dhcp4": {
             "hooks-libraries": [
                 {
-                    "library": "/usr/local/lib/libdhcp_flex_option.so",
+                    "library": "libdhcp_flex_option.so",
                     "parameters": {
                         "options": [
                             {
@@ -176,7 +176,7 @@ encapsulates the ``vendor-encapsulated-options`` space.
     "Dhcp4": {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_flex_option.so",
+                "library": "libdhcp_flex_option.so",
                 "parameters": {
                     "options": [
                         {

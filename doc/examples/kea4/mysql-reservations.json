@@ -75,7 +75,7 @@
   "hooks-libraries": [
     {
         // the MySQL host backend hook library required for host storage.
-        "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+        "library": "libdhcp_mysql.so"
     }
   ],
 

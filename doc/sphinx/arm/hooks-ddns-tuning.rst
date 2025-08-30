@@ -23,7 +23,7 @@ server's configuration:
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
+                "library": "libdhcp_ddns_tuning.so",
                 "parameters": {
                     ...
                 }
@@ -47,7 +47,7 @@ expression is shown below:
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
+                "library": "libdhcp_ddns_tuning.so",
                 "parameters": {
                     "hostname-expr": "'host-'+hexstring(pkt4.mac,'-')",
                     ...
@@ -67,7 +67,7 @@ the ``hostname-expr`` one would use to reverse this rule:
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_ddns_tuning.so",
+                "library": "libdhcp_ddns_tuning.so",
                 "parameters": {
                     "hostname-expr" : "ifelse(option[12].exists, option[host-name].text, option[81].text)"
                 }

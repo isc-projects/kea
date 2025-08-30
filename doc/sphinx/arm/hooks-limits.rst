@@ -34,7 +34,7 @@ The library can be loaded by both :iscman:`kea-dhcp4` and :iscman:`kea-dhcp6` se
       "Dhcp6": {
         "hooks-libraries": [
           {
-            "library": "/usr/local/lib/libdhcp_limits.so"
+            "library": "libdhcp_limits.so"
           }
         ]
       }

@@ -35,10 +35,10 @@
 
   "hooks-libraries": [
      {
-        "library": "/opt/lib/security.so"
+        "library": "security.so"
      },
      {
-         "library": "/opt/lib/charging.so",
+         "library": "charging.so",
          "parameters": {
              "path": "/var/log/kea",
              "base-name": "kea-forensic6"

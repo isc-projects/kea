@@ -49,7 +49,7 @@ parameters:
    "Dhcp6": {
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_stat_cmds.so"
+               "library": "libdhcp_stat_cmds.so"
            },
            ...
        ]

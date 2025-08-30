@@ -24,7 +24,7 @@ the server's configuration:
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_perfmon.so",
+                "library": "libdhcp_perfmon.so",
                 "parameters": {
                     ...
                 }
@@ -408,7 +408,7 @@ A sample configuration is shown below:
     {
         "hooks-libraries": [
         {
-            "library": "lib/kea/hooks/libdhcp_perfmon.so",
+            "library": "libdhcp_perfmon.so",
             "parameters": {
                 "enable-monitoring": true,
                 "interval-width-secs": 5,

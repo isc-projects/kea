@@ -122,7 +122,7 @@ servers.
    "Dhcp6": {
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_lease_cmds.so"
+               "library": "libdhcp_lease_cmds.so"
            },
            ...
        ]
@@ -1139,7 +1139,7 @@ lease:
 
     {
         "hooks-libraries": [{
-            "library": "/path/libdhcp_lease_cmds.so",
+            "library": "libdhcp_lease_cmds.so",
             "parameters": {
                 "binding-variables": [{
                     "name": "opt-222",

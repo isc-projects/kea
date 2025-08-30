@@ -63,19 +63,19 @@
         // The libdhcp_mysql.so is required to use MySQL Configuration
         // Backend.
         {
-            "library": "/usr/local/lib/kea/hooks/libdhcp_mysql.so"
+            "library": "libdhcp_mysql.so"
         }
         // If using PostgreSQL Configuration Backend, the "libdhcp_pgsql.so" is
         // required.
         // {
-        //    "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql.so"
+        //    "library": "libdhcp_pgsql.so"
         // }
         // The libdhcp_cb_cmds.so is optional. It allows for managing the
         // configuration in the database. If this library is not loaded,
         // the configuration can be managed directly using available
         // tools that work directly with the MySQL database.
         // ,{
-        //     "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+        //     "library": "libdhcp_cb_cmds.so"
         // }
     ],
 

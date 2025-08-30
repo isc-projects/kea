@@ -96,7 +96,7 @@ by the ``--prefix`` meson setup option which defaults to
         "Dhcp4": {
             "hooks-libraries": [
                 {
-                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "library": "libdhcp_legal_log.so",
                     "parameters": {
                         "path": "/var/log/kea",
                         "base-name": "kea-forensic4"
@@ -114,7 +114,7 @@ For :iscman:`kea-dhcp6`, the configuration is:
         "Dhcp6": {
             "hooks-libraries": [
                 {
-                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "library": "libdhcp_legal_log.so",
                     "parameters": {
                         "path": "/var/log/kea",
                         "base-name": "kea-forensic6"
@@ -200,7 +200,7 @@ Examples:
         "Dhcp6": {
             "hooks-libraries": [
                 {
-                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "library": "libdhcp_legal_log.so",
                     "parameters": {
                         "path": "/var/log/kea",
                         "base-name": "kea-forensic6",
@@ -233,7 +233,7 @@ Examples:
         "Dhcp6": {
             "hooks-libraries": [
                 {
-                    "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+                    "library": "libdhcp_legal_log.so",
                     "parameters": {
                         "path": "/var/log/kea",
                         "base-name": "kea-forensic6",
@@ -252,7 +252,7 @@ Additional parameters for the database connection can be specified, e.g:
       "Dhcp6": {
         "hooks-libraries": [
           {
-            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "library": "libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
               "password": "1234",
@@ -490,7 +490,7 @@ Examples:
       "Dhcp4": {
         "hooks-libraries": [
           {
-            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "library": "libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
               "password": "1234",
@@ -815,7 +815,7 @@ Examples:
       "Dhcp6": {
         "hooks-libraries": [
           {
-            "library": "/usr/local/lib/kea/hooks/libdhcp_legal_log.so",
+            "library": "libdhcp_legal_log.so",
             "parameters": {
               "name": "database-name",
               "password": "1234",

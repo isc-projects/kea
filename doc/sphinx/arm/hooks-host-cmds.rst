@@ -83,7 +83,7 @@ servers.
    "Dhcp6": {
        "hooks-libraries": [
            {
-               "library": "/path/libdhcp_host_cmds.so"
+               "library": "libdhcp_host_cmds.so"
            },
            ...
        ]

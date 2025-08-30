@@ -26,7 +26,7 @@ by adding it to the ``hooks-libraries`` element of the server's configuration:
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_ping_check.so",
+                "library": "libdhcp_ping_check.so",
                 "parameters": {
                     ...
                 }
@@ -132,7 +132,7 @@ The following configuration excerpt illustrates a global-level configuration:
 
     {
         "hooks-libraries": [{
-            "library": "lib/kea/hooks/libdhcp_ping_check.so",
+            "library": "libdhcp_ping_check.so",
             "parameters": {
                 "enable-ping-check" : true,
                 "min-ping-requests" : 1,

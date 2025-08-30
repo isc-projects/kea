@@ -50,7 +50,7 @@
 // Specify the lease backend hook library location.
 //  {
 //      // the MySQL lease backend hook library required for lease storage.
-//      "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+//      "library": "libdhcp_mysql.so"
 //  },
 
 // 3. PostgreSQL backend. Leases will be stored in PostgreSQL database. Make
@@ -78,7 +78,7 @@
 // Specify the lease backend hook library location.
 //  {
 //      // the PostgreSQL lease backend hook library required for lease storage.
-//      "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+//      "library": "libdhcp_pgsql.so"
 //  },
 
 // Addresses will be assigned with preferred and valid lifetimes

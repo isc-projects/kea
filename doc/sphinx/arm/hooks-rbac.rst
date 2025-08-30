@@ -268,7 +268,7 @@ in the Kea source and is copied below.
         // Add hooks here.
         "hooks-libraries": [
         {
-            "library": "/opt/lib/libdhcp_rbac.so",
+            "library": "libdhcp_rbac.so",
             "parameters": {
                 // This section configures the RBAC hook library.
                 // Mandatory parameters.

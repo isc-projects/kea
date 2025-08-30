@@ -22,7 +22,7 @@ packet-processing hook points.
     {
         "hooks-libraries": [
             {
-                "library": "/usr/local/lib/libdhcp_run_script.so",
+                "library": "libdhcp_run_script.so",
                 "parameters": {
                     "name": "/full_path_to/script_name.sh",
                     "sync": false

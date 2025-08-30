@@ -642,7 +642,7 @@ Specify the lease backend hook library location:
    "Dhcp6": { "hooks-libraries": [
        {
            // the MySQL lease backend hook library required for lease storage.
-           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+           "library": "libdhcp_mysql.so"
        }, ... ], ... }
 
 Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
@@ -654,7 +654,7 @@ Specify the lease backend hook library location.
    "Dhcp6": { "hooks-libraries": [
        {
            // the PostgreSQL lease backend hook library required for lease storage.
-           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+           "library": "libdhcp_pgsql.so"
        }, ... ], ... }
 
 
@@ -899,7 +899,7 @@ Specify the lease backend hook library location:
    "Dhcp6": { "hooks-libraries": [
        {
            // the MySQL host backend hook library required for host storage.
-           "library": "/opt/lib/kea/hooks/libdhcp_mysql.so"
+           "library": "libdhcp_mysql.so"
        }, ... ], ... }
 
 Since Kea.2.7.4, the libdhcp_pgsql.so hook library must be loaded in order to
@@ -911,7 +911,7 @@ Specify the lease backend hook library location.
    "Dhcp6": { "hooks-libraries": [
        {
            // the PostgreSQL host backend hook library required for host storage.
-           "library": "/opt/lib/kea/hooks/libdhcp_pgsql.so"
+           "library": "libdhcp_pgsql.so"
        }, ... ], ... }
 
 
@@ -8467,10 +8467,10 @@ database:
            },
            "hooks-libraries": [
                {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_mysql.so"
+                   "library": "libdhcp_mysql.so"
                },
                {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+                   "library": "libdhcp_cb_cmds.so"
                }
            ]
        }
@@ -8498,10 +8498,10 @@ The following snippet illustrates the use of a PostgreSQL database:
            },
            "hooks-libraries": [
                {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_pgsql.so"
+                   "library": "libdhcp_pgsql.so"
                },
                {
-                   "library": "/usr/local/lib/kea/hooks/libdhcp_cb_cmds.so"
+                   "library": "libdhcp_cb_cmds.so"
                }
            ]
        }
