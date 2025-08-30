@@ -157,7 +157,7 @@ enum DHCPv6OptionType {
 // D6O_S46_BIND_IPV6_PREFIX               = 137, /* RFC8539 */
 // D6O_IA_LL                              = 138, /* RFC8947 */
 // D6O_LLADDR                             = 139, /* RFC8947 */
-// D6O_SLAP_QUAD                          = 140, /* RFC8958 */
+// D6O_SLAP_QUAD                          = 140, /* RFC8948 */
 // D6O_V6_DOTS_RI                         = 141, /* RFC8973 */
 // D6O_V6_DOTS_ADDRESS                    = 142, /* RFC8973 */
    D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
