@@ -160,8 +160,8 @@ the system:
 -  The development tools meson, ninja, and pkg-config.
 
 -  Boost C++ libraries (https://www.boost.org/). The oldest Boost version
-   used for testing is 1.67 (although Kea may also work with older
-   versions e.g. 1.66). The Boost system library must also be installed.
+   used for testing is 1.71 (although Kea may also work with older
+   versions e.g. 1.69). The Boost system library must also be installed.
    Installing a header-only version of Boost is not recommended.
 
 -  OpenSSL (at least version 1.0.2) or Botan (at least version 2).
