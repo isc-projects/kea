@@ -745,7 +745,6 @@ report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
 report_conf_data.set('PREMIUM', premium ? 'yes' : 'no')
 report_conf_data.set('MESON_VERSION', meson.version())
-report_conf_data.set('MESON_INFO', DATADIR / 'kea/meson-info')
 build_options = meson.build_options()
 report_conf_data.set('BUILD_OPTIONS', build_options.replace('\'', '"'))
 report_conf_data.set('CXX', ' '.join(cpp.cmd_array()))
@@ -1138,18 +1137,3 @@ endif
 
 # Print the setup report.
 message(run_command(['cat', CONFIG_REPORT], check: true).stdout())
-
-# Copy the meson.info directory during installation.
-install_meson_info = configure_file(
-    input: 'install-meson-info.sh.in',
-    output: 'install-meson-info.sh',
-    configuration: configuration_data(
-        {
-            'INSTALL': INSTALL.full_path(),
-            'PREFIX': PREFIX,
-            'TOP_BUILD_DIR': TOP_BUILD_DIR,
-            'DATADIR': DATADIR,
-        },
-    ),
-)
-meson.add_install_script(install_meson_info)

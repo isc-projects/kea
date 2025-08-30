@@ -22,7 +22,6 @@ Package:
   Premium hooks:      @PREMIUM@
 
 Meson Version:        @MESON_VERSION@
-Meson info:           @MESON_INFO@
 Build Options:        @BUILD_OPTIONS@
 
 HERE_DOCUMENT
