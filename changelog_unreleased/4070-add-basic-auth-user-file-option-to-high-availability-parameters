@@ -1,6 +1,6 @@
-[func]		fdupont
+[sec]		fdupont
 	Added the "basic-auth-user-file" parameter to the HA
-	hook library to provide the user ID which is part of
-	the secret used by the basic HTTP auth from a file
-	instead in clear in the configuration.
+	hook library. This allows the basic HTTP auth user
+	ID to be read from a file rather than specified as
+	clear text in the configuration.
 	(Gitlab #4070)

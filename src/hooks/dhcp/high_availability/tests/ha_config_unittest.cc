@@ -1368,6 +1368,132 @@ TEST_F(HAConfigTest, invalidUser) {
         "user 'foo:bar' must not contain a ':' in peer 'server2'");
 }
 
+// Test that only one of basic-auth-password and basic-auth-password-file
+// is allowed
+TEST_F(HAConfigTest, twoBasicAuthPassword) {
+    std::string expected = "only one of basic-auth-password and ";
+    expected += "basic-auth-password-file parameter can be ";
+    expected += "configured in peer 'server2'";
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"basic-auth-user\": \"foobar\","
+        "                \"basic-auth-password\": \"foobar\","
+        "                \"basic-auth-password-file\": \"foobar\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        expected);
+}
+
+// Test that invalid basic-auth-password-file is refused.
+TEST_F(HAConfigTest, invalidBasicAuthPasswordFile) {
+    std::string expected = "bad password file in peer 'server2': ";
+    expected += "Expected a file at path '/does/not/exist'";
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"basic-auth-user\": \"foobar\","
+        "                \"basic-auth-password-file\": \"/does/not/exist\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        expected);
+}
+
+// Test that only one of basic-auth-user and basic-auth-user-file
+// is allowed
+TEST_F(HAConfigTest, twoBasicAuthUser) {
+    std::string expected = "only one of basic-auth-user and ";
+    expected += "basic-auth-user-file parameter can be ";
+    expected += "configured in peer 'server2'";
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"basic-auth-user\": \"foobar\","
+        "                \"basic-auth-user-file\": \"foobar\","
+        "                \"basic-auth-password\": \"foobar\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        expected);
+}
+
+// Test that invalid basic-auth-user-file is refused.
+TEST_F(HAConfigTest, invalidBasicAuthUserFile) {
+    std::string expected = "bad user file in peer 'server2': ";
+    expected += "Expected a file at path '/does/not/exist'";
+    testInvalidConfig(
+        "["
+        "    {"
+        "        \"this-server-name\": \"server1\","
+        "        \"mode\": \"load-balancing\","
+        "        \"peers\": ["
+        "            {"
+        "                \"name\": \"server1\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"role\": \"primary\","
+        "                \"auto-failover\": false"
+        "            },"
+        "            {"
+        "                \"name\": \"server2\","
+        "                \"url\": \"http://127.0.0.1:8080/\","
+        "                \"basic-auth-user-file\": \"/does/not/exist\","
+        "                \"basic-auth-password\": \"foobar\","
+        "                \"role\": \"secondary\","
+        "                \"auto-failover\": true"
+        "            }"
+        "        ]"
+        "    }"
+        "]",
+        expected);
+}
+
 // Test that setting delayed-updates-limit is not allowed in hot-standby mode.
 TEST_F(HAConfigTest, hotStandbyDelayedUpdatesLimit) {
     testInvalidConfig(
@@ -2109,6 +2235,5 @@ TEST_F(HAConfigTest, getSubnetServerNameInvalid) {
     subnet6->setContext(context);
     EXPECT_THROW(HAConfig::getSubnetServerName(subnet6), BadValue);
 }
-
 
 }  // namespace

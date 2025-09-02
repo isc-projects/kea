@@ -915,7 +915,7 @@ list:
    not specified or specified as an empty string, no authentication header is
    added to HTTP transactions. It must not contain the colon (:) character.
 
--  ``basic-auth-user-file`` - is an alternatibe to ``basic-auth-user``:
+-  ``basic-auth-user-file`` - is an alternative to ``basic-auth-user``:
    instead of presenting the user ID in the configuration file it is specified
    in the file indicated by this parameter.
 
