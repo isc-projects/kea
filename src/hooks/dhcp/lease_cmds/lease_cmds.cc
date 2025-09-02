@@ -523,6 +523,8 @@ public:
 void
 LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
     if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    "assigned-addresses"),
@@ -567,6 +569,10 @@ LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
             StatsMgr::generateName("subnet", lease->subnet_id_, "registered-nas"),
             static_cast<int64_t>(1));
     } else if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
+                                      "assigned-nas" : "assigned-pds",
+                                      static_cast<int64_t>(1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -697,6 +703,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
         // old lease is expired-reclaimed
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
+            StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
+
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_,
                                        "assigned-addresses"),
@@ -844,6 +852,10 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
         // old lease is expired-reclaimed
         if (!lease->stateExpiredReclaimed()) {
             // new lease is non expired-reclaimed
+            StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
+                                          "assigned-nas" : "assigned-pds",
+                                          static_cast<int64_t>(1));
+
             StatsMgr::instance().addValue(
                 StatsMgr::generateName("subnet", lease->subnet_id_,
                                        lease->type_ == Lease::TYPE_NA ?
@@ -889,6 +901,8 @@ LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
 void
 LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
     if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(-1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    "assigned-addresses"),
@@ -934,6 +948,10 @@ LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
                                    "registered-nas"),
             static_cast<int64_t>(-1));
     } else if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
+                                      "assigned-nas" : "assigned-pds",
+                                      static_cast<int64_t>(-1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_,
                                    lease->type_ == Lease::TYPE_NA ?
@@ -2317,13 +2335,22 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
             num = LeaseMgrFactory::instance().wipeLeases4(id);
             ids << " " << id;
 
-            auto observation = StatsMgr::instance().getObservation(
+            auto assigned_observation = StatsMgr::instance().getObservation(
+                StatsMgr::generateName("subnet", id, "assigned-addresses"));
+
+            int64_t previous_assigned = 0;
+
+            if (assigned_observation) {
+                previous_assigned = assigned_observation->getInteger().first;
+            }
+
+            auto declined_observation = StatsMgr::instance().getObservation(
                 StatsMgr::generateName("subnet", id, "declined-addresses"));
 
             int64_t previous_declined = 0;
 
-            if (observation) {
-                previous_declined = observation->getInteger().first;
+            if (declined_observation) {
+                previous_declined = declined_observation->getInteger().first;
             }
 
             StatsMgr::instance().setValue(
@@ -2352,6 +2379,8 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                     }
                 }
             }
+
+            StatsMgr::instance().addValue("assigned-addresses", -previous_assigned);
 
             StatsMgr::instance().addValue("declined-addresses", -previous_declined);
         } else {
@@ -2388,6 +2417,8 @@ LeaseCmdsImpl::lease4WipeHandler(CalloutHandle& handle) {
                     }
                 }
             }
+
+            StatsMgr::instance().setValue("assigned-addresses", static_cast<int64_t>(0));
 
             StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
         }
@@ -2436,13 +2467,31 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             num = LeaseMgrFactory::instance().wipeLeases6(id);
             ids << " " << id;
 
-            auto observation = StatsMgr::instance().getObservation(
+            auto assigned_na_observation = StatsMgr::instance().getObservation(
+                StatsMgr::generateName("subnet", id, "assigned-nas"));
+
+            int64_t previous_assigned_na = 0;
+
+            if (assigned_na_observation) {
+                previous_assigned_na = assigned_na_observation->getInteger().first;
+            }
+
+            auto assigned_pd_observation = StatsMgr::instance().getObservation(
+                StatsMgr::generateName("subnet", id, "assigned-pds"));
+
+            int64_t previous_assigned_pd = 0;
+
+            if (assigned_pd_observation) {
+                previous_assigned_na = assigned_pd_observation->getInteger().first;
+            }
+
+            auto declined_observation = StatsMgr::instance().getObservation(
                 StatsMgr::generateName("subnet", id, "declined-addresses"));
 
             int64_t previous_declined = 0;
 
-            if (observation) {
-                previous_declined = observation->getInteger().first;
+            if (declined_observation) {
+                previous_declined = declined_observation->getInteger().first;
             }
 
             StatsMgr::instance().setValue(
@@ -2488,6 +2537,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     }
                 }
             }
+
+            StatsMgr::instance().addValue("assigned-nas", -previous_assigned_na);
+
+            StatsMgr::instance().addValue("assigned-pds", -previous_assigned_pd);
 
             StatsMgr::instance().addValue("declined-addresses", -previous_declined);
         } else {
@@ -2541,6 +2594,10 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
                     }
                 }
             }
+
+            StatsMgr::instance().setValue("assigned-nas", static_cast<int64_t>(0));
+
+            StatsMgr::instance().setValue("assigned-pds", static_cast<int64_t>(0));
 
             StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(0));
         }

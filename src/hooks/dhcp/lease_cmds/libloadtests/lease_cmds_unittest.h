@@ -456,6 +456,7 @@ public:
                 isc::stats::StatsMgr::instance().setValue(
                         isc::stats::StatsMgr::generateName("subnet", 99, "assigned-nas" ),
                     int64_t(2));
+                isc::stats::StatsMgr::instance().setValue("assigned-nas", int64_t(4));
             } else {
                 lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42, declined));
                 lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56, declined, 5));
@@ -482,6 +483,7 @@ public:
                 isc::stats::StatsMgr::instance().setValue(
                         isc::stats::StatsMgr::generateName("subnet", 88, "assigned-addresses"),
                     int64_t(2));
+                isc::stats::StatsMgr::instance().setValue("assigned-addresses", int64_t(4));
             }
         }
     }

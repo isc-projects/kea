@@ -625,6 +625,7 @@ public:
     /// - assigned-addresses
     /// - declined-addresses
     /// global:
+    /// - assigned-addresses
     /// - declined-addresses
     ///
     /// It invokes the virtual method, startLeaseStatsQuery4(), which

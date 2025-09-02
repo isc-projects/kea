@@ -84,6 +84,9 @@ LeaseMgr::recountLeaseStats4() {
     // Cumulative counters ("reclaimed-declined-addresses", "reclaimed-leases",
     // "cumulative-assigned-addresses") never get zeroed.
     int64_t zero = 0;
+
+    stats_mgr.setValue("assigned-addresses", zero);
+
     stats_mgr.setValue("declined-addresses", zero);
 
     // Create if it does not exit reclaimed declined leases global stats.
@@ -164,6 +167,9 @@ LeaseMgr::recountLeaseStats4() {
     LeaseStatsRow row;
     while (query->getNextRow(row)) {
         if (row.lease_state_ == Lease::STATE_DEFAULT) {
+            // Add to the global value.
+            stats_mgr.addValue("assigned-addresses", row.state_count_);
+
             // Add to subnet level value.
             stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                       "assigned-addresses"),
@@ -173,6 +179,9 @@ LeaseMgr::recountLeaseStats4() {
             stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                       "declined-addresses"),
                                row.state_count_);
+
+            // Add to the global value.
+            stats_mgr.addValue("assigned-addresses", row.state_count_);
 
             // Add to the global value.
             stats_mgr.addValue("declined-addresses", row.state_count_);
@@ -295,6 +304,11 @@ LeaseMgr::recountLeaseStats6() {
     // "cumulative-assigned-nas", "cumulative-assigned-pds",
     // "cumulative-registered-nas")) never get zeroed.
     int64_t zero = 0;
+
+    stats_mgr.setValue("assigned-nas", zero);
+
+    stats_mgr.setValue("assigned-pds", zero);
+
     stats_mgr.setValue("declined-addresses", zero);
 
     if (!stats_mgr.getObservation("reclaimed-declined-addresses")) {
@@ -420,6 +434,9 @@ LeaseMgr::recountLeaseStats6() {
         switch(row.lease_type_) {
             case Lease::TYPE_NA:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Add to the global value.
+                    stats_mgr.addValue("assigned-nas", row.state_count_);
+
                     // Add to subnet level value.
                     stats_mgr.addValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                               "assigned-nas"),
@@ -429,6 +446,9 @@ LeaseMgr::recountLeaseStats6() {
                     stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                               "declined-addresses"),
                                        row.state_count_);
+
+                    // Add to the global value.
+                    stats_mgr.addValue("assigned-nas", row.state_count_);
 
                     // Add to the global value.
                     stats_mgr.addValue("declined-addresses", row.state_count_);
@@ -448,6 +468,9 @@ LeaseMgr::recountLeaseStats6() {
 
             case Lease::TYPE_PD:
                 if (row.lease_state_ == Lease::STATE_DEFAULT) {
+                    // Add to the global value.
+                    stats_mgr.addValue("assigned-pds", row.state_count_);
+
                     // Set subnet level value.
                     stats_mgr.setValue(StatsMgr::generateName("subnet", row.subnet_id_,
                                                               "assigned-pds"),

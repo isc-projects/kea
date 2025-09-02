@@ -3550,6 +3550,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         }
 
         // Need to decrease statistic for assigned addresses.
+        StatsMgr::instance().addValue("assigned-nas", static_cast<int64_t>(-1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-nas"),
             static_cast<int64_t>(-1));
@@ -3759,6 +3761,8 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         }
 
         // Need to decrease statistic for assigned prefixes.
+        StatsMgr::instance().addValue("assigned-pds", static_cast<int64_t>(-1));
+
         StatsMgr::instance().addValue(
             StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-pds"),
             static_cast<int64_t>(-1));

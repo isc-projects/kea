@@ -230,6 +230,12 @@ Here is an example response returning all collected statistics:
    {
        "command": "statistic-get-all",
        "arguments": {
+           "assigned-addresses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836096"
+               ]
+           ],
            "cumulative-assigned-addresses": [
                [
                    0,
@@ -487,6 +493,18 @@ or
    {
        "command": "statistic-get-all",
        "arguments": {
+           "assigned-nas": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196757"
+               ]
+           ],
+           "assigned-pds": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196757"
+               ]
+           ],
            "cumulative-assigned-nas": [
                [
                    0,

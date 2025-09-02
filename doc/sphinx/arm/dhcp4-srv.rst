@@ -7418,12 +7418,21 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | separately, and is reset during a  |
    |                                                    |                | reconfiguration event.             |
    +----------------------------------------------------+----------------+------------------------------------+
+   | assigned-addresses                                 | integer        | Number of assigned addresses. It   |
+   |                                                    |                | increases every time a new lease is|
+   |                                                    |                | allocated (as a result of receiving|
+   |                                                    |                | a DHCPREQUEST message) and         |
+   |                                                    |                | decreases every time a lease is    |
+   |                                                    |                | released (a DHCPRELEASE message is |
+   |                                                    |                | received) or expires and is reset  |
+   |                                                    |                | during a reconfiguration event.    |
+   +----------------------------------------------------+----------------+------------------------------------+
    | cumulative-assigned-addresses                      | integer        | Cumulative number of addresses     |
    |                                                    |                | that have been assigned since      |
    |                                                    |                | server startup. It is incremented  |
    |                                                    |                | each time an address is assigned   |
-   |                                                    |                | and is not reset when the server   |
-   |                                                    |                | is reconfigured.                   |
+   |                                                    |                | and is not reset during a          |
+   |                                                    |                | reconfiguration event.             |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].cumulative-assigned-addresses           | integer        | Cumulative number of assigned      |
    |                                                    |                | addresses in a given subnet. It    |

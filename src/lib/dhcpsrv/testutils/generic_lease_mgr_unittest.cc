@@ -3225,6 +3225,9 @@ GenericLeaseMgrTest::testRecountLeaseStats4() {
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
 
+    // Check that assigned global stats always exist.
+    EXPECT_TRUE(StatsMgr::instance().getObservation("assigned-addresses"));
+
     // Check that cumulative global stats always exist.
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-addresses"));
 
@@ -3359,6 +3362,10 @@ GenericLeaseMgrTest::testRecountLeaseStats6() {
 
     // Make sure stats are as expected.
     ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Check that global stats always exist.
+    EXPECT_TRUE(StatsMgr::instance().getObservation("assigned-nas"));
+    EXPECT_TRUE(StatsMgr::instance().getObservation("assigned-pds"));
 
     // Check that cumulative global stats always exist.
     EXPECT_TRUE(StatsMgr::instance().getObservation("cumulative-assigned-nas"));

@@ -1666,7 +1666,7 @@ TEST_F(AddrRegTest, calloutDrop) {
     EXPECT_EQ(1, countFile("DHCP6_HOOK_ADDR6_REGISTER_DROP"));
 }
 
-// Check the statictics for the basic scenario.
+// Check the statistics for the basic scenario.
 TEST_F(AddrRegTest, stats) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1693,7 +1693,7 @@ TEST_F(AddrRegTest, stats) {
     EXPECT_EQ(21, stat->getInteger().first);
 }
 
-// Check the statictics for the renew scenario.
+// Check the statistics for the renew scenario.
 TEST_F(AddrRegTest, statsRenew) {
     IfaceMgrTestConfig test_config(true);
 
@@ -1720,7 +1720,7 @@ TEST_F(AddrRegTest, statsRenew) {
     EXPECT_EQ(20, stat->getInteger().first);
 }
 
-// Check the statictics for the another subnet scenario.
+// Check the statistics for the another subnet scenario.
 TEST_F(AddrRegTest, statsAnotherSubnet) {
     IfaceMgrTestConfig test_config(true);
 

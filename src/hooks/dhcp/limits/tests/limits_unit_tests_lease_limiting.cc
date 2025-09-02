@@ -348,8 +348,7 @@ LeaseLimitFixture<DHCPv6>::addLease(LeaseTPtr<DHCPv6> lease) {
     LeaseMgrFactory::instance().addLease(lease);
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
                                                          lease->getType() == Lease::TYPE_PD ?
-                                                             "assigned-pds" :
-                                                             "assigned-nas"),
+                                                         "assigned-pds" : "assigned-nas"),
                                   static_cast<int64_t>(1));
 }
 

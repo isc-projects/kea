@@ -2048,6 +2048,10 @@ TEST(CfgSubnets4Test, updateStatistics) {
     cfg->add(subnet);
 
     observation = StatsMgr::instance().getObservation(
+        "assigned-addresses");
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
         "cumulative-assigned-addresses");
     ASSERT_FALSE(observation);
 
@@ -2124,6 +2128,11 @@ TEST(CfgSubnets4Test, updateStatistics) {
     ASSERT_FALSE(observation);
 
     cfg->updateStatistics();
+
+    observation = StatsMgr::instance().getObservation(
+        "assigned-addresses");
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
 
     observation = StatsMgr::instance().getObservation(
         "cumulative-assigned-addresses");

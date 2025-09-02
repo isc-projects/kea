@@ -7154,7 +7154,7 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | to grow in most cases after a      |
    |                                                   |                | ADDR-REG-INFORM is processed.      |
    |                                                   |                | There are certain cases where      |
-   |                                                   |                | there is n response.               |
+   |                                                   |                | there is no response.              |
    +---------------------------------------------------+----------------+------------------------------------+
    | subnet[id].total-nas                              | big integer    | Total number of NA addresses       |
    |                                                   |                | available for DHCPv6 management    |
@@ -7187,6 +7187,15 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | exposed for each subnet pool       |
    |                                                   |                | separately, and is reset during a  |
    |                                                   |                | reconfiguration event.             |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | assigned-nas                                      | integer        | Number of NA addresses that are    |
+   |                                                   |                | assigned. It increases every time a|
+   |                                                   |                | new lease is allocated (as a result|
+   |                                                   |                | of receiving a REQUEST message) and|
+   |                                                   |                | decreases every time a lease is    |
+   |                                                   |                | released (a RELEASE message is     |
+   |                                                   |                | received) or expires and is reset  |
+   |                                                   |                | during a reconfiguration event.    |
    +---------------------------------------------------+----------------+------------------------------------+
    | cumulative-assigned-nas                           | integer        | Cumulative number of NA addresses  |
    |                                                   |                | that have been assigned since      |
@@ -7226,7 +7235,7 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | increases every time a new lease   |
    |                                                   |                | is allocated (as a result of       |
    |                                                   |                | receiving a REQUEST message) and   |
-   |                                                   |                | is decreased every time a lease is |
+   |                                                   |                | decreases every time a lease is    |
    |                                                   |                | released (a RELEASE message is     |
    |                                                   |                | received) or expires. The *id* is  |
    |                                                   |                | the subnet ID of a given subnet.   |
@@ -7239,7 +7248,7 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | increases every time a new lease   |
    |                                                   |                | is allocated (as a result of       |
    |                                                   |                | receiving a REQUEST message) and   |
-   |                                                   |                | is decreased every time a lease is |
+   |                                                   |                | decreases every time a lease is    |
    |                                                   |                | released (a RELEASE message is     |
    |                                                   |                | received) or expires. The *id* is  |
    |                                                   |                | the subnet ID of a given subnet.   |
@@ -7281,6 +7290,15 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | separately, and is reset during a  |
    |                                                   |                | reconfiguration event.             |
    +---------------------------------------------------+----------------+------------------------------------+
+   | assigned-pds                                      | integer        | Number of PD prefixes that are     |
+   |                                                   |                | assigned. It increases every time a|
+   |                                                   |                | new lease is allocated (as a result|
+   |                                                   |                | of receiving a REQUEST message) and|
+   |                                                   |                | decreases every time a lease is    |
+   |                                                   |                | released (a RELEASE message is     |
+   |                                                   |                | received) or expires and is reset  |
+   |                                                   |                | during a reconfiguration event.    |
+   +---------------------------------------------------+----------------+------------------------------------+
    | cumulative-assigned-pds                           | integer        | Cumulative number of PD prefixes   |
    |                                                   |                | that have been assigned since      |
    |                                                   |                | server startup. It is incremented  |
@@ -7319,7 +7337,7 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | increases every time a new lease   |
    |                                                   |                | is allocated (as a result of       |
    |                                                   |                | receiving a REQUEST message) and   |
-   |                                                   |                | is decreased every time a lease is |
+   |                                                   |                | decreases every time a lease is    |
    |                                                   |                | released (a RELEASE message is     |
    |                                                   |                | received) or expires. The *id* is  |
    |                                                   |                | the subnet ID of a given subnet.   |
@@ -7332,7 +7350,7 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | It increases every time a new      |
    |                                                   |                | lease is allocated (as a result of |
    |                                                   |                | receiving a REQUEST message) and   |
-   |                                                   |                | is decreased every time a lease is |
+   |                                                   |                | decreases every time a lease is    |
    |                                                   |                | released (a RELEASE message is     |
    |                                                   |                | received) or expires. The *id* is  |
    |                                                   |                | the subnet ID of a given subnet.   |

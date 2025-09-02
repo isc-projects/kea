@@ -1824,7 +1824,15 @@ TEST(CfgSubnets6Test, updateStatistics) {
     cfg->add(subnet);
 
     observation = StatsMgr::instance().getObservation(
+        "assigned-nas");
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
         "cumulative-assigned-nas");
+    ASSERT_FALSE(observation);
+
+    observation = StatsMgr::instance().getObservation(
+        "assigned-pds");
     ASSERT_FALSE(observation);
 
     observation = StatsMgr::instance().getObservation(
@@ -1955,7 +1963,17 @@ TEST(CfgSubnets6Test, updateStatistics) {
     cfg->updateStatistics();
 
     observation = StatsMgr::instance().getObservation(
+        "assigned-nas");
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
         "cumulative-assigned-nas");
+    ASSERT_TRUE(observation);
+    ASSERT_EQ(0, observation->getInteger().first);
+
+    observation = StatsMgr::instance().getObservation(
+        "assigned-pds");
     ASSERT_TRUE(observation);
     ASSERT_EQ(0, observation->getInteger().first);
 

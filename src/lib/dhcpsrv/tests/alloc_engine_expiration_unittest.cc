@@ -277,6 +277,15 @@ public:
             leases_[lease_index]->valid_lft_;
         leases_[lease_index]->state_ = Lease::STATE_EXPIRED_RECLAIMED;
         ASSERT_NO_THROW(updateLease(lease_index));
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        auto observation = stats_mgr.getObservation("assigned-addresses");
+        if (observation) {
+            stats_mgr.addValue("assigned-addresses", int64_t(-1));
+        }
+        observation = stats_mgr.getObservation("assigned-nas");
+        if (observation) {
+            stats_mgr.addValue("assigned-nas", int64_t(-1));
+        }
     }
 
     /// @brief Declines specified lease
@@ -303,6 +312,7 @@ public:
         // Update the stats.
         StatsMgr& stats_mgr = StatsMgr::instance();
         auto subnet_id = leases_[lease_index]->subnet_id_;
+        stats_mgr.addValue("assigned-nas", int64_t(-1));
         stats_mgr.addValue(stats_mgr.generateName("subnet", subnet_id,
                                                   "assigned-nas"),
                            int64_t(-1));
@@ -1064,6 +1074,8 @@ public:
         // be used to easily detect whether a given stat was decreased or
         // increased. They are sufficiently high compared to number of leases
         // to avoid any chances of going into negative.
+        stats_mgr.setValue(stat_name, static_cast<int64_t>(3000));
+
         stats_mgr.setValue("declined-addresses", static_cast<int64_t>(1000));
 
         // Let's set global the counter for reclaimed declined addresses.
@@ -1090,7 +1102,11 @@ public:
         // in removal of all leases with even indexes.
         ASSERT_NO_THROW(reclaimExpiredLeases(0, 0, true));
 
-        // Declined-addresses should be decreased from its initial value (1000)
+        // The assigned-addresses should be decreased from its initial value (3000)
+        // for both recovered addresses from subnet1 and subnet2.
+        testStatistics(stat_name, 3000 - subnet1_cnt - subnet2_cnt);
+
+        // The declined-addresses should be decreased from its initial value (1000)
         // for both recovered addresses from subnet1 and subnet2.
         testStatistics("declined-addresses", 1000 - subnet1_cnt - subnet2_cnt);
 
@@ -1375,6 +1391,7 @@ ExpirationAllocEngine6Test::createLeases() {
         StatsMgr& stats_mgr = StatsMgr::instance();
         std::string stat_name =
             lease->type_ == Lease::TYPE_NA ? "assigned-nas" : "assigned-pds";
+        stats_mgr.addValue(stat_name, int64_t(1));
         stats_mgr.addValue(stats_mgr.generateName("subnet", lease->subnet_id_, stat_name),
                            int64_t(1));
     }
@@ -1419,12 +1436,14 @@ ExpirationAllocEngine6Test::setLeaseType(const uint16_t lease_index,
         StatsMgr& stats_mgr = StatsMgr::instance();
         std::string stats_name = (lease_type == Lease::TYPE_NA ?
                                   "assigned-nas" : "assigned-pds");
+        stats_mgr.addValue(stats_name, int64_t(1));
         stats_mgr.addValue(stats_mgr.generateName("subnet",
                                                   leases_[lease_index]->subnet_id_,
                                                   stats_name),
                            int64_t(1));
         stats_name = (leases_[lease_index]->type_ == Lease::TYPE_NA ?
                       "assigned-nas" : "assigned-pds");
+        stats_mgr.addValue(stats_name, int64_t(-1));
         stats_mgr.addValue(stats_mgr.generateName("subnet",
                                                   leases_[lease_index]->subnet_id_,
                                                   stats_name),
@@ -1467,10 +1486,10 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesStats() {
         EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
         EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("assigned-nas",
-                                   (TEST_LEASES_NUM - i) / 2, 1));
-        EXPECT_TRUE(testStatistics("assigned-pds",
-                                   (TEST_LEASES_NUM - i) / 2, 2));
+        EXPECT_TRUE(testStatistics("assigned-nas", (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-pds", (TEST_LEASES_NUM - i) / 2));
+        EXPECT_TRUE(testStatistics("assigned-nas", (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-pds", (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 
@@ -1529,14 +1548,19 @@ ExpirationAllocEngine6Test::testReclaimReusedLeases(const uint16_t msg_type,
     // initially reclaimed.
     if (use_reclaimed || (msg_type == DHCPV6_SOLICIT)) {
         EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
+        if (use_reclaimed && (msg_type == DHCPV6_SOLICIT)) {
+            EXPECT_TRUE(testStatistics("assigned-nas", 0));
+        } else {
+            EXPECT_TRUE(testStatistics("assigned-nas", TEST_LEASES_NUM));
+        }
     } else {
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-nas", TEST_LEASES_NUM));
         EXPECT_TRUE(testStatistics("assigned-nas", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.
         EXPECT_TRUE(testLeases(&leaseNotReclaimed, &allLeaseIndexes));
     }
-
 }
 
 void
@@ -1603,6 +1627,7 @@ ExpirationAllocEngine6Test::testReclaimExpiredLeasesRegisteredStats() {
         ASSERT_NO_THROW(reclaimExpiredLeases(reclamation_group_size,
                                              0, false));
 
+        EXPECT_TRUE(testStatistics("assigned-nas", 0));
         // Number of reclaimed leases should increase as we loop.
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
         // Make sure that the number of reclaimed leases is also distributed
@@ -1997,6 +2022,7 @@ ExpirationAllocEngine4Test::createLeases() {
         // Note in the statistics that this lease has been added.
         StatsMgr& stats_mgr = StatsMgr::instance();
         std::string stat_name = "assigned-addresses";
+        stats_mgr.addValue(stat_name, int64_t(1));
         stats_mgr.addValue(stats_mgr.generateName("subnet", lease->subnet_id_, stat_name),
                            int64_t(1));
     }
@@ -2175,15 +2201,14 @@ ExpirationAllocEngine4Test::testReclaimExpiredLeasesStats() {
 
         // Number of reclaimed leases should increase as we loop.
         EXPECT_TRUE(testStatistics("reclaimed-leases", i));
+        EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM - i));
         // Make sure that the number of reclaimed leases is also distributed
         // across two subnets.
         EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 1));
         EXPECT_TRUE(testStatistics("reclaimed-leases", i / 2, 2));
         // Number of assigned leases should decrease as we reclaim them.
-        EXPECT_TRUE(testStatistics("assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2, 1));
-        EXPECT_TRUE(testStatistics("assigned-addresses",
-                                   (TEST_LEASES_NUM - i) / 2, 2));
+        EXPECT_TRUE(testStatistics("assigned-addresses", (TEST_LEASES_NUM - i) / 2, 1));
+        EXPECT_TRUE(testStatistics("assigned-addresses", (TEST_LEASES_NUM - i) / 2, 2));
     }
 }
 
@@ -2248,10 +2273,15 @@ ExpirationAllocEngine4Test::testReclaimReusedLeases(const uint8_t msg_type,
     // 'expired-reclaimed' state.
     if (use_reclaimed || (msg_type == DHCPDISCOVER)) {
         EXPECT_TRUE(testStatistics("reclaimed-leases", 0));
-
+        if (use_reclaimed && msg_type == DHCPDISCOVER) {
+            EXPECT_TRUE(testStatistics("assigned-addresses", 0));
+        } else {
+            EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM));
+        }
     } else if (msg_type == DHCPREQUEST) {
         // Re-allocation of expired leases should result in reclamations.
         EXPECT_TRUE(testStatistics("reclaimed-leases", TEST_LEASES_NUM));
+        EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM));
         EXPECT_TRUE(testStatistics("assigned-addresses", TEST_LEASES_NUM, subnet->getID()));
         // Leases should have been updated in the lease database and their
         // state should not be 'expired-reclaimed' anymore.

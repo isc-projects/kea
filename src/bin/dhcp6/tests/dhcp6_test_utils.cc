@@ -631,9 +631,13 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     ASSERT_TRUE(l);
 
     // And prepopulate the stats counter
+    StatsMgr::instance().setValue(type == Lease::TYPE_NA ?
+                                  "assigned-nas" : "assigned-pds",
+                                  static_cast<int64_t>(1));
+
     std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
-                                              type == Lease::TYPE_NA ? "assigned-nas" :
-                                              "assigned-pds");
+                                              type == Lease::TYPE_NA ?
+                                              "assigned-nas" : "assigned-pds");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
     ObservationPtr stat = StatsMgr::instance().getObservation(name);
@@ -678,11 +682,6 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
         l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
                                                   subnet_->getID());
         ASSERT_FALSE(l);
-
-        // We should have decremented the address counter
-        stat = StatsMgr::instance().getObservation(name);
-        ASSERT_TRUE(stat);
-        EXPECT_EQ(0, stat->getInteger().first);
     } else {
         l = LeaseMgrFactory::instance().getLease6(type, release_addr);
         ASSERT_TRUE(l);
@@ -700,12 +699,17 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
         EXPECT_EQ(l->valid_lft_, 0);
         EXPECT_EQ(l->preferred_lft_, 0);
         EXPECT_EQ(Lease::STATE_RELEASED, l->state_);
-
-        // We should have decremented the address counter
-        stat = StatsMgr::instance().getObservation(name);
-        ASSERT_TRUE(stat);
-        EXPECT_EQ(0, stat->getInteger().first);
     }
+
+    // We should have decremented the address counter
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(0, stat->getInteger().first);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(0, stat->getInteger().first);
 }
 
 void
@@ -788,15 +792,20 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
 
     // And prepopulate the stats counter
     std::string name = StatsMgr::generateName("subnet", (*subnets->begin())->getID(),
-                                              type == Lease::TYPE_NA ? "assigned-nas" :
-                                              "assigned-pds");
+                                              type == Lease::TYPE_NA ?
+                                              "assigned-nas" : "assigned-pds");
 
     // Perform 4-way exchange.
     ASSERT_NO_THROW(client.doSARR());
 
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ObservationPtr stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                                              "assigned-nas" : "assigned-pds");
     ASSERT_TRUE(stat);
-    uint64_t before = stat->getInteger().first;
+    uint64_t global_before = stat->getInteger().first;
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    uint64_t subnet_before = stat->getInteger().first;
 
     // Make sure that the client has acquired NA lease.
     std::vector<Lease6> leases = client.getLeasesByType(type);
@@ -849,20 +858,26 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     EXPECT_EQ(l->preferred_lft_, 0);
     EXPECT_EQ(Lease::STATE_RELEASED, l->state_);
 
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    uint64_t global_after = stat->getInteger().first;
+    ASSERT_EQ(global_after, global_before - 1);
+
     stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
-    uint64_t after = stat->getInteger().first;
-    ASSERT_EQ(after, before - 1);
+    uint64_t subnet_after = stat->getInteger().first;
+    ASSERT_EQ(subnet_after, subnet_before - 1);
     sleep(1);
     client.getServer()->getIOService()->poll();
 
     l = LeaseMgrFactory::instance().getLease6(type, leases[0].addr_);
-        ASSERT_TRUE(l);
+    ASSERT_TRUE(l);
 
-        EXPECT_EQ(l->valid_lft_, 0);
-        EXPECT_EQ(l->preferred_lft_, 0);
+    EXPECT_EQ(l->valid_lft_, 0);
+    EXPECT_EQ(l->preferred_lft_, 0);
 
-        EXPECT_EQ(Lease6::STATE_EXPIRED_RECLAIMED, l->state_);
+    EXPECT_EQ(Lease6::STATE_EXPIRED_RECLAIMED, l->state_);
 
     // get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(type, *client.getDuid(), iaid,
@@ -873,10 +888,16 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     EXPECT_EQ(l->preferred_lft_, 0);
     EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, l->state_);
 
-    stat = StatsMgr::instance().getObservation(name);
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
     ASSERT_TRUE(stat);
     uint64_t count = stat->getInteger().first;
-    ASSERT_EQ(count, after);
+    ASSERT_EQ(count, global_after);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
+    count = stat->getInteger().first;
+    ASSERT_EQ(count, subnet_after);
 }
 
 void
@@ -1016,9 +1037,13 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     OptionPtr clientid = generateClientId();
 
     // Pretend we have allocated 1 lease
+    StatsMgr::instance().setValue(type == Lease::TYPE_NA ?
+                                  "assigned-nas" : "assigned-pds",
+                                  static_cast<int64_t>(1));
+
     std::string name = StatsMgr::generateName("subnet", subnet_->getID(),
-                                              type == Lease::TYPE_NA ? "assigned-nas" :
-                                              "assigned-pds");
+                                              type == Lease::TYPE_NA ?
+                                              "assigned-nas" : "assigned-pds");
     StatsMgr::instance().setValue(name, static_cast<int64_t>(1));
 
     // Check that the lease is NOT in the database
@@ -1051,7 +1076,12 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     ASSERT_FALSE(l);
 
     // Verify we didn't decrement the stats counter
-    ObservationPtr stat = StatsMgr::instance().getObservation(name);
+    ObservationPtr stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                                              "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
+    stat = StatsMgr::instance().getObservation(name);
     ASSERT_TRUE(stat);
     EXPECT_EQ(1, stat->getInteger().first);
 
@@ -1084,6 +1114,13 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     ASSERT_TRUE(l);
 
     // Verify we didn't decrement the stats counter
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
     EXPECT_EQ(1, stat->getInteger().first);
 
     // CASE 3: Lease belongs to a client with different client-id
@@ -1111,6 +1148,13 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     ASSERT_TRUE(l);
 
     // Verify we didn't decrement the stats counter
+    stat = StatsMgr::instance().getObservation(type == Lease::TYPE_NA ?
+                                               "assigned-nas" : "assigned-pds");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
+    stat = StatsMgr::instance().getObservation(name);
+    ASSERT_TRUE(stat);
     EXPECT_EQ(1, stat->getInteger().first);
 
     // Finally, let's cleanup the database

@@ -4124,6 +4124,8 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
                 }
 
                 // Need to decrease statistic for assigned addresses.
+                StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(-1));
+
                 StatsMgr::instance().addValue(
                     StatsMgr::generateName("subnet", lease->subnet_id_, "assigned-addresses"),
                     static_cast<int64_t>(-1));
