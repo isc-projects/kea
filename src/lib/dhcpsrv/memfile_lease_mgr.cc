@@ -2268,6 +2268,25 @@ Memfile_LeaseMgr::isLFCProcessRunning(const std::string file_name, Universe u) {
     return (!pid_lock.isLocked() || pid_file.check());
 }
 
+ElementPtr
+Memfile_LeaseMgr::getStatus() const {
+    std::string file_name;
+    if (lease_file4_) {
+        file_name = lease_file4_->getFilename();
+    } else if (lease_file6_) {
+        file_name = lease_file6_->getFilename();
+    } else {
+        return (ElementPtr());
+    }
+    if (file_name.empty()) {
+        // Should not happen.
+        return (ElementPtr());
+    }
+    ElementPtr status = Element::createMap();
+    status->set("csv-lease-file", Element::create(file_name));
+    return (status);
+}
+
 std::string
 Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
                                const LFCFileType& file_type) {

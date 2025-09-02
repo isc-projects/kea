@@ -445,6 +445,9 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     EXPECT_TRUE(lease_mgr->getExtendedInfoTablesEnabled());
 
+    // Persist is false so no csv file.
+    EXPECT_FALSE(lease_mgr->getStatus());
+
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
     pmap["lfc-interval"] = "10";
@@ -514,6 +517,10 @@ TEST_F(MemfileLeaseMgrTest, dataDirEnvVarOverride) {
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
               "/tmp/leasefile6_1.csv");
+    ConstElementPtr status = lease_mgr->getStatus();
+    ASSERT_TRUE(status);
+    EXPECT_EQ(status->str(),
+              "{ \"csv-lease-file\": \"/tmp/leasefile6_1.csv\" }");
 }
 
 /// @brief Verifies that the supported path may be overridden with
@@ -533,6 +540,10 @@ TEST_F(MemfileLeaseMgrTest, dataDirExplicitOveride) {
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
               "/tmp/leasefile6_1.csv");
+    ConstElementPtr status = lease_mgr->getStatus();
+    ASSERT_TRUE(status);
+    EXPECT_EQ(status->str(),
+              "{ \"csv-lease-file\": \"/tmp/leasefile6_1.csv\" }");
 }
 
 /// @brief Checks if there is no lease manager NoLeaseManager is thrown.
@@ -567,6 +578,7 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4).empty());
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
+    EXPECT_FALSE(lease_mgr->getStatus());
 }
 
 /// @brief Check if the persistLeases correctly checks that leases should not be written

@@ -968,6 +968,12 @@ public:
     /// @return True if LFC is running, false otherwise (memfile only).
     static bool isLFCProcessRunning(const std::string file_name, Universe u);
 
+    /// @brief Return status information.
+    ///
+    /// @return Null or a map with the lease file name to add to
+    /// status-get command output.
+    virtual data::ElementPtr getStatus() const override;
+
     //@}
 
     /// @name Public type and method used to determine file names for LFC.
