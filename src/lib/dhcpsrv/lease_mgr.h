@@ -1065,6 +1065,13 @@ public:
     /// @return Always 0.
     virtual size_t byRemoteId6size() const;
 
+    /// @brief Return status information.
+    ///
+    /// Can be derived by backends (currently memfile).
+    ///
+    /// @return Null or a map to add to status-get command output.
+    virtual data::ElementPtr getStatus() const;
+
     /// @brief Handler for kea-lfc-start command.
     ///
     /// Derived by the memfile backend.

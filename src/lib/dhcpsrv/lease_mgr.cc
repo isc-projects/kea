@@ -1306,6 +1306,11 @@ LeaseMgr::byRemoteId6size() const {
     return (0);
 }
 
+ElementPtr
+LeaseMgr::getStatus() const {
+    return (ElementPtr());
+}
+
 ConstElementPtr
 LeaseMgr::lfcStartHandler() {
     ostringstream msg;

@@ -922,6 +922,17 @@ ControlledDhcpv6Srv::commandStatusGetHandler(const string&,
         status->set("multi-threading-enabled", Element::create(false));
     }
 
+    // Merge lease manager status.
+    ElementPtr lm_info;
+    if (LeaseMgrFactory::haveInstance()) {
+        lm_info = LeaseMgrFactory::instance().getStatus();
+    }
+    if (lm_info && (lm_info->getType() == Element::map)) {
+        for (auto const& entry : lm_info->mapValue()) {
+            status->set(entry.first, entry.second);
+        }
+    }
+
     status->set("extended-info-tables", Element::create(
                     CfgMgr::instance().getCurrentCfg()->getCfgDbAccess()->getExtendedInfoTablesEnabled()));
 
