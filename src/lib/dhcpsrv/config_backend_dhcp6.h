@@ -567,11 +567,14 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
+    /// @param force When true, delete is done without checking for
+    /// dependent options. Defaults to false.
     /// @return Number of deleted option definitions.
     virtual uint64_t
     deleteOptionDef6(const db::ServerSelector& server_selector,
                      const uint16_t code,
-                     const std::string& space) = 0;
+                     const std::string& space,
+                     bool force = false) = 0;
 
     /// @brief Deletes all option definitions.
     ///

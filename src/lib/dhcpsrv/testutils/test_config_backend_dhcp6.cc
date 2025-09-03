@@ -1205,7 +1205,15 @@ TestConfigBackendDHCPv6::deleteAllSharedNetworks6(const db::ServerSelector& serv
 uint64_t
 TestConfigBackendDHCPv6::deleteOptionDef6(const db::ServerSelector& server_selector,
                                           const uint16_t code,
-                                          const std::string& space) {
+                                          const std::string& space,
+                                          bool force /* = false */) {
+    if (!force) {
+        auto option = getOption6(server_selector, code, space);
+        if (option) {
+            isc_throw(InvalidOperation, "option exists for option definition");
+        }
+    }
+
     auto const& tag = getServerTag(server_selector);
     uint64_t erased = 0;
     for (auto option_def_it = option_defs_.begin(); option_def_it != option_defs_.end(); ) {

@@ -474,11 +474,10 @@ public:
         auto option = mgr.getPool()->getOption4(BackendSelector::UNSPEC(),
                                                 ServerSelector::ALL(),
                                                 code, space);
-
         if (option) {
-            mgr.getPool()->deleteOptionDef4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                            code, space);
-            addDeleteAuditEntry("dhcp4_option_def", option->getId());
+            mgr.getPool()->deleteOption4(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                         code, space);
+            addDeleteAuditEntry("dhcp4_option", option->getId());
         }
     }
 
@@ -719,19 +718,6 @@ public:
         }
 
         {
-            SCOPED_TRACE("option definitions");
-            // One of the option definitions should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgOptionDef()->get("isc", "two"));
-            auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
-            if (deleteConfigElement("dhcp4_option_def", 1)) {
-                EXPECT_FALSE(found_def);
-
-            } else {
-                EXPECT_TRUE(found_def);
-            }
-        }
-
-        {
             SCOPED_TRACE("global options");
             // One of the options should still be there.
             EXPECT_TRUE(srv_cfg->getCfgOption()->get(DHCP4_OPTION_SPACE,
@@ -743,6 +729,19 @@ public:
 
             } else {
                 EXPECT_TRUE(found_opt.option_);
+            }
+        }
+
+        {
+            SCOPED_TRACE("option definitions");
+            // One of the option definitions should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgOptionDef()->get("isc", "two"));
+            auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
+            if (deleteConfigElement("dhcp4_option_def", 1)) {
+                EXPECT_FALSE(found_def);
+
+            } else {
+                EXPECT_TRUE(found_def);
             }
         }
 
@@ -825,8 +824,8 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyAll) {
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteAll) {
     testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
         remoteDeleteGlobalParameter("comment", 1);
-        remoteDeleteOptionDef(101, "isc");
         remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
+        remoteDeleteOptionDef(101, "isc");
         remoteDeleteSharedNetwork("one");
         remoteDeleteSubnet(SubnetID(1));
         remoteDeleteClientClass("first-class");
@@ -1395,9 +1394,9 @@ public:
                                                 code, space);
 
         if (option) {
-            mgr.getPool()->deleteOptionDef6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
-                                            code, space);
-            addDeleteAuditEntry("dhcp6_option_def", option->getId());
+            mgr.getPool()->deleteOption6(BackendSelector::UNSPEC(), ServerSelector::ALL(),
+                                         code, space);
+            addDeleteAuditEntry("dhcp6_option", option->getId());
         }
     }
 
@@ -1631,19 +1630,6 @@ public:
         }
 
         {
-            SCOPED_TRACE("option definitions");
-            // One of the option definitions should still be there.
-            EXPECT_TRUE(srv_cfg->getCfgOptionDef()->get("isc", "two"));
-            auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
-            if (deleteConfigElement("dhcp6_option_def", 1)) {
-                EXPECT_FALSE(found_def);
-
-            } else {
-                EXPECT_TRUE(found_def);
-            }
-        }
-
-        {
             SCOPED_TRACE("global options");
             // One of the options should still be there.
             EXPECT_TRUE(srv_cfg->getCfgOption()->get(DHCP6_OPTION_SPACE,
@@ -1655,6 +1641,19 @@ public:
 
             } else {
                 EXPECT_TRUE(found_opt.option_);
+            }
+        }
+
+        {
+            SCOPED_TRACE("option definitions");
+            // One of the option definitions should still be there.
+            EXPECT_TRUE(srv_cfg->getCfgOptionDef()->get("isc", "two"));
+            auto found_def = srv_cfg->getCfgOptionDef()->get("isc", "one");
+            if (deleteConfigElement("dhcp6_option_def", 1)) {
+                EXPECT_FALSE(found_def);
+
+            } else {
+                EXPECT_TRUE(found_def);
             }
         }
 

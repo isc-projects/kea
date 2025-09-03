@@ -415,10 +415,11 @@ uint64_t
 ConfigBackendPoolDHCPv4::deleteOptionDef4(const BackendSelector& backend_selector,
                                           const ServerSelector& server_selector,
                                           const uint16_t code,
-                                          const std::string& space) {
+                                          const std::string& space,
+                                          bool force /* = false */) {
     return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&>
             (&ConfigBackendDHCPv4::deleteOptionDef4, backend_selector,
-             server_selector, code, space));
+             server_selector, code, space, force));
 }
 
 uint64_t

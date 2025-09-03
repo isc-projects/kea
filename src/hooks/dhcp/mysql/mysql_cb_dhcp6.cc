@@ -2575,10 +2575,24 @@ public:
     /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param name Option name.
+    /// @param force When true, delete is done without checking for
+    /// dependent options.
     /// @return Number of deleted option definitions.
+    /// @throw NotImplemented if server selector is "unassigned".
+    /// @throw InvalidOperation if force is false and there is an option
+    /// matching server, code, and space.
     uint64_t deleteOptionDef6(const ServerSelector& server_selector,
                               const uint16_t code,
-                              const std::string& space) {
+                              const std::string& space,
+                              bool force) {
+        if (!force) {
+            auto option = getOption(GET_OPTION6_CODE_SPACE, Option::V6,
+                                    server_selector, code, space);
+            if (option) {
+                isc_throw(InvalidOperation, "option exists for option defintion");
+            }
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint16_t>(code),
             MySqlBinding::createString(space)
@@ -4668,10 +4682,11 @@ MySqlConfigBackendDHCPv6::deleteAllSharedNetworks6(const ServerSelector& server_
 uint64_t
 MySqlConfigBackendDHCPv6::deleteOptionDef6(const ServerSelector& server_selector,
                                            const uint16_t code,
-                                           const std::string& space) {
+                                           const std::string& space,
+                                           bool force /* = false*/) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF6)
         .arg(code).arg(space);
-    uint64_t result = impl_->deleteOptionDef6(server_selector, code, space);
+    uint64_t result = impl_->deleteOptionDef6(server_selector, code, space, force);
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF6_RESULT)
         .arg(result);
     return (result);
