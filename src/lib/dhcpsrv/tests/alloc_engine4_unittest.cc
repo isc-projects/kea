@@ -59,6 +59,7 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
+    EXPECT_TRUE(testStatistics("assigned-addresses", 0));
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
 
     // Get the cumulative count of assigned addresses.
@@ -335,6 +336,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     ASSERT_TRUE(engine);
 
     // Assigned addresses should be zero.
+    EXPECT_TRUE(testStatistics("assigned-addresses", 0));
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
 
     // Get the cumulative count of assigned addresses.
@@ -561,6 +563,7 @@ TEST_F(AllocEngine4Test, simpleRenew4) {
     ASSERT_NO_THROW(engine.reset(new AllocEngine(0)));
     ASSERT_TRUE(engine);
 
+    EXPECT_TRUE(testStatistics("assigned-addresses", 0));
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());
@@ -1737,6 +1740,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
     IOAddress addr("192.0.2.105");
 
+    EXPECT_TRUE(testStatistics("assigned-addresses", 0));
     EXPECT_TRUE(testStatistics("assigned-addresses", 0, subnet_->getID()));
     int64_t cumulative = getStatistics("cumulative-assigned-addresses",
                                        subnet_->getID());

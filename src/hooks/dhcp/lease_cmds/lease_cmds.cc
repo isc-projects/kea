@@ -2482,7 +2482,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
             int64_t previous_assigned_pd = 0;
 
             if (assigned_pd_observation) {
-                previous_assigned_na = assigned_pd_observation->getInteger().first;
+                previous_assigned_pd = assigned_pd_observation->getInteger().first;
             }
 
             auto declined_observation = StatsMgr::instance().getObservation(

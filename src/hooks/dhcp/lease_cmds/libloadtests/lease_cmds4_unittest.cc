@@ -136,13 +136,21 @@ public:
     /// @assigned The expected value of assigned addresses in subnet.
     /// @declined The expected value of declined addresses in subnet.
     void checkLease4Stats(isc::dhcp::SubnetID id, int32_t assigned, int32_t declined) {
-        ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                isc::stats::StatsMgr::generateName("subnet", id,
-                          "assigned-addresses"))->getInteger().first, assigned);
+        if (id == SUBNET_ID_GLOBAL) {
+            ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
+                    "assigned-addresses")->getInteger().first, assigned);
 
-        ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
-                isc::stats::StatsMgr::generateName("subnet", id,
-                          "declined-addresses"))->getInteger().first, declined);
+            ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
+                    "declined-addresses")->getInteger().first, declined);
+        } else {
+            ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
+                    isc::stats::StatsMgr::generateName("subnet", id,
+                              "assigned-addresses"))->getInteger().first, assigned);
+
+            ASSERT_EQ(isc::stats::StatsMgr::instance().getObservation(
+                    isc::stats::StatsMgr::generateName("subnet", id,
+                              "declined-addresses"))->getInteger().first, declined);
+        }
     }
 
     /// @brief Check that lease4-add with missing parameters will fail.
@@ -636,6 +644,8 @@ void Lease4CmdsTest::testLease4Add() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -652,6 +662,8 @@ void Lease4CmdsTest::testLease4Add() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -681,6 +693,8 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -698,6 +712,8 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 1);
 
     checkLease4Stats(44, 1, 1);
 
@@ -727,6 +743,8 @@ void Lease4CmdsTest::testLease4AddReleasedLeases() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -744,6 +762,8 @@ void Lease4CmdsTest::testLease4AddReleasedLeases() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -773,6 +793,8 @@ void Lease4CmdsTest::testLease4AddExisting() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -790,6 +812,8 @@ void Lease4CmdsTest::testLease4AddExisting() {
     string exp_rsp = "IPv4 lease already exists.";
     testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -798,6 +822,8 @@ void Lease4CmdsTest::testLease4AddExisting() {
 void Lease4CmdsTest::testLease4AddSubnetIdMissing() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -816,6 +842,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissing() {
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 1, 0);
+
     checkLease4Stats(44, 1, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -829,6 +857,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissing() {
 void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -848,6 +878,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 1, 1);
+
     checkLease4Stats(44, 1, 1);
 
     checkLease4Stats(88, 0, 0);
@@ -861,6 +893,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
 void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -880,6 +914,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
                      "address 192.0.55.1";
     testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -892,6 +928,8 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
 void Lease4CmdsTest::testLease4AddNegativeExpireTime() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -910,6 +948,8 @@ void Lease4CmdsTest::testLease4AddNegativeExpireTime() {
     string exp_rsp = "expiration time must be positive for address 192.0.2.202";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -922,6 +962,8 @@ void Lease4CmdsTest::testLease4AddNegativeExpireTime() {
 void Lease4CmdsTest::testLease4AddNegativeCltt() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -942,6 +984,8 @@ void Lease4CmdsTest::testLease4AddNegativeCltt() {
         "address 192.0.2.202";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -954,6 +998,8 @@ void Lease4CmdsTest::testLease4AddNegativeCltt() {
 void Lease4CmdsTest::testLease4AddFullAddr() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -979,6 +1025,8 @@ void Lease4CmdsTest::testLease4AddFullAddr() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -1006,6 +1054,8 @@ void Lease4CmdsTest::testLease4AddComment() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -1023,6 +1073,8 @@ void Lease4CmdsTest::testLease4AddComment() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -1042,6 +1094,8 @@ void Lease4CmdsTest::testLease4AddComment() {
 void Lease4CmdsTest::testLease4AddExtendedInfo() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -1076,6 +1130,8 @@ void Lease4CmdsTest::testLease4AddExtendedInfo() {
         "}";
     string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -2141,6 +2197,8 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2161,6 +2219,8 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
         "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2169,6 +2229,8 @@ void Lease4CmdsTest::testLease4UpdateNoLease() {
 void Lease4CmdsTest::testLease4Update() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2188,6 +2250,8 @@ void Lease4CmdsTest::testLease4Update() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2209,6 +2273,8 @@ void Lease4CmdsTest::testLease4UpdateDeclinedLeases() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
 
+    checkLease4Stats(0, 4, 4);
+
     checkLease4Stats(44, 2, 2);
 
     checkLease4Stats(88, 2, 2);
@@ -2227,6 +2293,8 @@ void Lease4CmdsTest::testLease4UpdateDeclinedLeases() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 3);
 
     checkLease4Stats(44, 2, 1);
 
@@ -2248,6 +2316,8 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetId() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2264,6 +2334,8 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetId() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2287,6 +2359,8 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
 
+    checkLease4Stats(0, 4, 4);
+
     checkLease4Stats(44, 2, 2);
 
     checkLease4Stats(88, 2, 2);
@@ -2303,6 +2377,8 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 3);
 
     checkLease4Stats(44, 2, 1);
 
@@ -2326,6 +2402,8 @@ void Lease4CmdsTest::testLease4UpdateForceCreate() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2344,6 +2422,8 @@ void Lease4CmdsTest::testLease4UpdateForceCreate() {
         "}";
     string exp_rsp = "IPv4 lease added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -2364,6 +2444,8 @@ void Lease4CmdsTest::testLease4UpdateForceCreateNoSubnetId() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2381,6 +2463,8 @@ void Lease4CmdsTest::testLease4UpdateForceCreateNoSubnetId() {
         "}";
     string exp_rsp = "IPv4 lease added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 1, 0);
 
     checkLease4Stats(44, 1, 0);
 
@@ -2404,6 +2488,8 @@ void Lease4CmdsTest::testLease4UpdateDoNotForceCreate() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2425,6 +2511,8 @@ void Lease4CmdsTest::testLease4UpdateDoNotForceCreate() {
         "database, in both cases a retry might succeed";
     testCommand(txt, CONTROL_RESULT_CONFLICT, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2433,6 +2521,8 @@ void Lease4CmdsTest::testLease4UpdateDoNotForceCreate() {
 void Lease4CmdsTest::testLease4UpdateComment() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2452,6 +2542,8 @@ void Lease4CmdsTest::testLease4UpdateComment() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2478,6 +2570,8 @@ void Lease4CmdsTest::testLease4UpdateComment() {
 void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2512,6 +2606,8 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
         "}";
     string exp_rsp = "IPv4 lease updated.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2627,6 +2723,8 @@ void Lease4CmdsTest::testLease4DelByAddrNotFound() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2646,6 +2744,8 @@ void Lease4CmdsTest::testLease4DelByAddrNotFound() {
     // just didn't found the lease.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2654,6 +2754,8 @@ void Lease4CmdsTest::testLease4DelByAddrNotFound() {
 void Lease4CmdsTest::testLease4DelByAddr() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2672,6 +2774,8 @@ void Lease4CmdsTest::testLease4DelByAddr() {
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 3, 0);
+
     checkLease4Stats(44, 1, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2683,6 +2787,8 @@ void Lease4CmdsTest::testLease4DelByAddr() {
 void Lease4CmdsTest::testLease4DelByAddrDeclinedLeases() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true, true);
+
+    checkLease4Stats(0, 4, 4);
 
     checkLease4Stats(44, 2, 2);
 
@@ -2701,6 +2807,8 @@ void Lease4CmdsTest::testLease4DelByAddrDeclinedLeases() {
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 3, 3);
+
     checkLease4Stats(44, 1, 1);
 
     checkLease4Stats(88, 2, 2);
@@ -2712,6 +2820,8 @@ void Lease4CmdsTest::testLease4DelByAddrDeclinedLeases() {
 void Lease4CmdsTest::testLease4DelByAddrBadParam() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2727,6 +2837,8 @@ void Lease4CmdsTest::testLease4DelByAddrBadParam() {
         "}";
     string exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2748,6 +2860,8 @@ void Lease4CmdsTest::testLease4DelByHWAddrNotFound() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2765,6 +2879,8 @@ void Lease4CmdsTest::testLease4DelByHWAddrNotFound() {
     string exp_rsp = "IPv4 lease not found.";
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2776,6 +2892,8 @@ void Lease4CmdsTest::testLease4DelByHWAddrNotFound() {
 void Lease4CmdsTest::testLease4DelByHWAddr() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2796,6 +2914,8 @@ void Lease4CmdsTest::testLease4DelByHWAddr() {
     // The status expected is success. The lease should be deleted.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 3, 0);
+
     checkLease4Stats(44, 1, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2807,6 +2927,8 @@ void Lease4CmdsTest::testLease4DelByHWAddr() {
 void Lease4CmdsTest::testLease4DelByClientIdNotFound() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2825,6 +2947,8 @@ void Lease4CmdsTest::testLease4DelByClientIdNotFound() {
     string exp_rsp = "IPv4 lease not found.";
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2836,6 +2960,8 @@ void Lease4CmdsTest::testLease4DelByClientIdNotFound() {
 void Lease4CmdsTest::testLease4DelByClientId() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2856,6 +2982,8 @@ void Lease4CmdsTest::testLease4DelByClientId() {
     // The status expected is success. The lease should be deleted.
     ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 3, 0);
+
     checkLease4Stats(44, 1, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2867,6 +2995,8 @@ void Lease4CmdsTest::testLease4DelByClientId() {
 void Lease4CmdsTest::testLease4Wipe() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
 
     checkLease4Stats(44, 2, 0);
 
@@ -2885,6 +3015,8 @@ void Lease4CmdsTest::testLease4Wipe() {
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
+    checkLease4Stats(0, 2, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2902,6 +3034,8 @@ void Lease4CmdsTest::testLease4WipeAll() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2918,6 +3052,8 @@ void Lease4CmdsTest::testLease4WipeAll() {
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -2936,6 +3072,8 @@ void Lease4CmdsTest::testLease4WipeAllNoArgs() {
     // Initialize lease manager (false = v4, true = add leases)
     initLeaseMgr(false, true);
 
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     checkLease4Stats(88, 2, 0);
@@ -2949,6 +3087,8 @@ void Lease4CmdsTest::testLease4WipeAllNoArgs() {
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -2967,6 +3107,8 @@ void Lease4CmdsTest::testLease4WipeNoLeases() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2982,6 +3124,8 @@ void Lease4CmdsTest::testLease4WipeNoLeases() {
     string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     checkLease4Stats(88, 0, 0);
@@ -2990,6 +3134,8 @@ void Lease4CmdsTest::testLease4WipeNoLeases() {
 void Lease4CmdsTest::testLease4WipeNoLeasesAll() {
     // Initialize lease manager (false = v4, false = don't add leases)
     initLeaseMgr(false, false);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -3005,6 +3151,8 @@ void Lease4CmdsTest::testLease4WipeNoLeasesAll() {
         "}";
     string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    checkLease4Stats(0, 0, 0);
 
     checkLease4Stats(44, 0, 0);
 
@@ -3390,6 +3538,8 @@ void Lease4CmdsTest::testLease4ConflictingAdd() {
     ASSERT_FALSE(lease);
 
     // Verify stats show no leases.
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 
     // Lock the address.
@@ -3416,6 +3566,8 @@ void Lease4CmdsTest::testLease4ConflictingAdd() {
     ASSERT_FALSE(lease);
 
     // Stats should not have changed.
+    checkLease4Stats(0, 0, 0);
+
     checkLease4Stats(44, 0, 0);
 }
 
@@ -3426,6 +3578,8 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
     initLeaseMgr(false, true);
 
     // Verify stats show no leases.
+    checkLease4Stats(0, 4, 0);
+
     checkLease4Stats(44, 2, 0);
 
     // Make sure the lease exists.
@@ -3460,6 +3614,11 @@ void Lease4CmdsTest::testLease4ConflictingUpdate() {
 
     // Lease should not have been changed.
     EXPECT_EQ(original_lease, *lease);
+
+    // Stats should not have changed.
+    checkLease4Stats(0, 4, 0);
+
+    checkLease4Stats(44, 2, 0);
 }
 
 void Lease4CmdsTest::testLease4Write() {

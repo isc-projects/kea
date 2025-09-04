@@ -1,3 +1,11 @@
+2393.	[func]		razvan
+	Added global counters for 'assigned-addresses',
+	'assigned-nas' and 'assigned-pds'. The 'stat-lease4-get'
+	and 'stat-lease6-get' now properly return
+	'assigned-addresses' and 'assigned-nas' containing also
+	the 'declined-addresses' address count.
+	(Gitlab #3239, #3925)
+
 2392.	[func]		razvan
 	Reject 'config-set' and 'config-reload' commands when lease
 	file cleanup process is running.

@@ -7331,8 +7331,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | This statistic is expected to grow |
    |                                                    |                | every time the server transmits a  |
    |                                                    |                | packet. In general, it should      |
-   |                                                    |                | roughly match ``pkt4-received``, as|
-   |                                                    |                | most incoming packets cause the    |
+   |                                                    |                | roughly match ``pkt4-received``,   |
+   |                                                    |                | as most incoming packets cause the |
    |                                                    |                | server to respond. There are       |
    |                                                    |                | exceptions (e.g. DHCPRELEASE), so  |
    |                                                    |                | do not worry if it is less than    |
@@ -7379,9 +7379,9 @@ The DHCPv4 server supports the following statistics:
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
-   |                                                    |                | the most common reasons may be that|
-   |                                                    |                | an unacceptable packet type was    |
-   |                                                    |                | received, direct responses are     |
+   |                                                    |                | the most common reasons may be     |
+   |                                                    |                | that an unacceptable packet type   |
+   |                                                    |                | was received, direct responses are |
    |                                                    |                | forbidden, or the server ID sent   |
    |                                                    |                | by the client does not match the   |
    |                                                    |                | server's server ID.                |
@@ -7419,13 +7419,14 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | reconfiguration event.             |
    +----------------------------------------------------+----------------+------------------------------------+
    | assigned-addresses                                 | integer        | Number of assigned addresses. It   |
-   |                                                    |                | increases every time a new lease is|
-   |                                                    |                | allocated (as a result of receiving|
-   |                                                    |                | a DHCPREQUEST message) and         |
-   |                                                    |                | decreases every time a lease is    |
-   |                                                    |                | released (a DHCPRELEASE message is |
-   |                                                    |                | received) or expires and is reset  |
-   |                                                    |                | during a reconfiguration event.    |
+   |                                                    |                | increases every time a new lease   |
+   |                                                    |                | is allocated (as a result of       |
+   |                                                    |                | receiving a DHCPREQUEST message)   |
+   |                                                    |                | and decreases every time a lease   |
+   |                                                    |                | is released (a DHCPRELEASE message |
+   |                                                    |                | is received) or expires, and is    |
+   |                                                    |                | reset during a reconfiguration     |
+   |                                                    |                | event.                             |
    +----------------------------------------------------+----------------+------------------------------------+
    | cumulative-assigned-addresses                      | integer        | Cumulative number of addresses     |
    |                                                    |                | that have been assigned since      |
@@ -7569,37 +7570,38 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | recovered. Unlike                  |
    |                                                    |                | ``declined-addresses``, this       |
    |                                                    |                | statistic never decreases. It can  |
-   |                                                    |                | be used as a long-term indicator of|
-   |                                                    |                | how many actual valid declines were|
-   |                                                    |                | processed and recovered from. This |
-   |                                                    |                | is a global statistic that covers  |
-   |                                                    |                | all subnets.                       |
+   |                                                    |                | be used as a long-term indicator   |
+   |                                                    |                | of how many actual valid declines  |
+   |                                                    |                | were processed and recovered from. |
+   |                                                    |                | This is a global statistic that    |
+   |                                                    |                | covers all subnets.                |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].reclaimed-declined-addresses            | integer        | Number of IPv4 addresses that were |
    |                                                    |                | declined, but have now been        |
    |                                                    |                | recovered. Unlike                  |
    |                                                    |                | ``declined-addresses``, this       |
    |                                                    |                | statistic never decreases. It can  |
-   |                                                    |                | be used as a long-term indicator of|
-   |                                                    |                | how many actual valid declines were|
-   |                                                    |                | processed and recovered from. The  |
-   |                                                    |                | *id* is the subnet ID of a given   |
-   |                                                    |                | subnet. This statistic is exposed  |
-   |                                                    |                | for each subnet separately.        |
+   |                                                    |                | be used as a long-term indicator   |
+   |                                                    |                | of how many actual valid declines  |
+   |                                                    |                | were processed and recovered from. |
+   |                                                    |                | The *id* is the subnet ID of a     |
+   |                                                    |                | given subnet. This statistic is    |
+   |                                                    |                | exposed for each subnet            |
+   |                                                    |                | separately.                        |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].pool[pid].reclaimed-declined-addresses  | integer        | Number of IPv4 addresses that were |
    |                                                    |                | declined, but have now been        |
    |                                                    |                | recovered. Unlike                  |
    |                                                    |                | ``declined-addresses``, this       |
    |                                                    |                | statistic never decreases. It can  |
-   |                                                    |                | be used as a long-term indicator of|
-   |                                                    |                | how many actual valid declines were|
-   |                                                    |                | processed and recovered from. The  |
-   |                                                    |                | *id* is the subnet ID of a given   |
-   |                                                    |                | subnet. The *pid* is the pool ID   |
-   |                                                    |                | of the pool. This statistic is     |
-   |                                                    |                | exposed for each subnet pool       |
-   |                                                    |                | separately.                        |
+   |                                                    |                | be used as a long-term indicator   |
+   |                                                    |                | of how many actual valid declines  |
+   |                                                    |                | were processed and recovered from. |
+   |                                                    |                | The *id* is the subnet ID of a     |
+   |                                                    |                | given subnet. The *pid* is the     |
+   |                                                    |                | pool ID of the pool. This          |
+   |                                                    |                | statistic is exposed for each      |
+   |                                                    |                | subnet pool separately.            |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-lease-query-received                          | integer        | Number of IPv4 DHCPLEASEQUERY      |
    |                                                    |                | packets received. (Only exists if  |
@@ -7625,8 +7627,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | failures for a particular client.  |
    |                                                    |                | This consists of the number of     |
    |                                                    |                | lease allocation attempts that the |
-   |                                                    |                | server made before giving up, if it|
-   |                                                    |                | was unable to use any of the       |
+   |                                                    |                | server made before giving up, if   |
+   |                                                    |                | it was unable to use any of the    |
    |                                                    |                | address pools. This is a global    |
    |                                                    |                | statistic that covers all subnets. |
    +----------------------------------------------------+----------------+------------------------------------+
@@ -7634,8 +7636,8 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | failures for a particular client.  |
    |                                                    |                | This consists of the number of     |
    |                                                    |                | lease allocation attempts that the |
-   |                                                    |                | server made before giving up, if it|
-   |                                                    |                | was unable to use any of the       |
+   |                                                    |                | server made before giving up, if   |
+   |                                                    |                | it was unable to use any of the    |
    |                                                    |                | address pools. The *id* is the     |
    |                                                    |                | subnet ID of a given subnet. This  |
    |                                                    |                | statistic is exposed for each      |

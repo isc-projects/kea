@@ -4209,7 +4209,7 @@ void deleteAssignedLease(Lease4Ptr lease) {
             if (pool) {
                 StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet->getID(),
                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
+                                                                     "assigned-addresses")),
                                               static_cast<int64_t>(-1));
             }
         }

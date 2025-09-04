@@ -442,6 +442,7 @@ public:
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 99, "declined-addresses"),
                         int64_t(2));
+                    isc::stats::StatsMgr::instance().setValue("declined-addresses", int64_t(4));
                 } else {
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 66, "declined-addresses"),
@@ -449,6 +450,7 @@ public:
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 99, "declined-addresses"),
                         int64_t(0));
+                    isc::stats::StatsMgr::instance().setValue("declined-addresses", int64_t(0));
                 }
                 isc::stats::StatsMgr::instance().setValue(
                         isc::stats::StatsMgr::generateName("subnet", 66, "assigned-nas" ),
@@ -469,6 +471,7 @@ public:
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 88, "declined-addresses"),
                         int64_t(2));
+                    isc::stats::StatsMgr::instance().setValue("declined-addresses", int64_t(4));
                 } else {
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 44, "declined-addresses"),
@@ -476,6 +479,7 @@ public:
                     isc::stats::StatsMgr::instance().setValue(
                             isc::stats::StatsMgr::generateName("subnet", 88, "declined-addresses"),
                         int64_t(0));
+                    isc::stats::StatsMgr::instance().setValue("declined-addresses", int64_t(0));
                 }
                 isc::stats::StatsMgr::instance().setValue(
                         isc::stats::StatsMgr::generateName("subnet", 44, "assigned-addresses"),
