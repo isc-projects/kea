@@ -577,7 +577,7 @@ def _prepare_installed_packages_cache_for_alpine():
     return pkg_cache
 
 
-def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
+def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, one_package_at_a_time=False):
     """Install native packages in a system.
 
     :param dict pkgs: specifies a list of packages to be installed
@@ -640,9 +640,26 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None):
     else:
         raise NotImplementedError('no implementation for %s' % system)
 
-    pkgs = ' '.join(pkgs)
-    cmd += ' ' + pkgs
-    execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
+    if one_package_at_a_time:
+        for p in pkgs:
+            execute(
+                f"{cmd} {p}",
+                timeout=timeout,
+                env=env,
+                check_times=check_times,
+                attempts=3,
+                sleep_time_after_attempt=10,
+            )
+    else:
+        pkgs = ' '.join(pkgs)
+        execute(
+            f"{cmd} {pkgs}",
+            timeout=timeout,
+            env=env,
+            check_times=check_times,
+            attempts=3,
+            sleep_time_after_attempt=10,
+        )
 
 
 def get_image_template(key, variant):
@@ -1732,13 +1749,13 @@ def require_minimum_package_version(package: str, minimum: str):
         raise UnexpectedError(message)
 
 
-def prepare_system_local(features, check_times, ignore_errors_for, just_configure):
+def prepare_system_local(features, check_times, ignore_errors_for, just_configure, one_package_at_a_time):
     """Prepare local system for Kea development based on requested features."""
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s...', system, revision)
 
     if not just_configure:
-        install_packages_local(system, revision, features, check_times, ignore_errors_for)
+        install_packages_local(system, revision, features, check_times, ignore_errors_for, one_package_at_a_time)
 
     if 'mysql' in features:
         _configure_mysql(system, revision, features)
@@ -1749,7 +1766,7 @@ def prepare_system_local(features, check_times, ignore_errors_for, just_configur
     log.info('Preparing deps completed successfully.')
 
 
-def install_packages_local(system, revision, features, check_times, ignore_errors_for):
+def install_packages_local(system, revision, features, check_times, ignore_errors_for, one_package_at_a_time):
     """Install packages for Kea development based on requested features."""
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
@@ -2104,7 +2121,13 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['wget'])
             deferred_functions.append(_install_gtest_sources)
 
-        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
+        install_pkgs(
+            packages,
+            env=env,
+            timeout=6 * 60,
+            check_times=check_times,
+            one_package_at_a_time=one_package_at_a_time,
+        )
 
         if 'mysql' in features:
             execute('sudo sysrc mysql_enable="yes"', env=env, check_times=check_times)
@@ -2922,6 +2945,8 @@ def parse_args():
     parser.add_argument('--just-configure', action='store_true',
                         help='Whether to prevent installation of packages and only proceed to set them up. '
                              'Only has an effect when preparing system locally, as opposed to inside vagrant.')
+    parser.add_argument('--one-package-at-a-time', action='store_true',
+                        help='Whether to install packages one at a time instead of all at once.')
     parser.add_argument('--ccache-dir', default=None,
                         help='Path to CCache directory on host system.')
     parser.add_argument('--repository-url', default=None,
@@ -3137,7 +3162,13 @@ def prepare_system_cmd(args):
     log.info('Enabled features: %s', ' '.join(features))
 
     if args.provider == 'local':
-        prepare_system_local(features, args.check_times, args.ignore_errors_for, args.just_configure)
+        prepare_system_local(
+            features,
+            args.check_times,
+            args.ignore_errors_for,
+            args.just_configure,
+            args.one_package_at_a_time,
+        )
         return
 
     ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
