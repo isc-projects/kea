@@ -10,6 +10,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/dhcpsrv_log.h>
 #include <util/encode/encode.h>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -19,6 +20,7 @@
 #include <vector>
 
 using namespace isc::data;
+using namespace isc::log;
 
 namespace isc {
 namespace dhcp {
@@ -189,9 +191,14 @@ CfgOption::createOptions(CfgOptionDefPtr cfg_def) {
     // based on the given definitions.
     for (auto const& space : getOptionSpaceNames()) {
         for (auto opt_desc : *(getAll(space))) {
-            if (createDescriptorOption(cfg_def, space, opt_desc)) {
-                // Option was recreated, let's replace the descriptor.
-                replace(opt_desc, space);
+            try {
+                if (createDescriptorOption(cfg_def, space, opt_desc)) {
+                    // Option was recreated, let's replace the descriptor.
+                    replace(opt_desc, space);
+                }
+            } catch (const InvalidOperation& ex) {
+                LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH)
+                         .arg(ex.what());
             }
         }
     }

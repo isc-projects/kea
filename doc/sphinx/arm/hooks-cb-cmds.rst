@@ -990,10 +990,43 @@ option space. For example:
 deletes the definition of the option associated with "server1", having the
 code of 1 and belonging to the option space "isc". The default option spaces are
 "dhcp4" and "dhcp6" for the DHCPv4 and DHCPv6 top-level options, respectively. If
-there is no such option explicitly associated with "server1", no option is
-deleted. To delete an option belonging to "all" servers, the keyword
-"all" must be used as the server tag. The ``server-tags`` list must contain exactly
-one tag and cannot include the ``null`` value.
+there is no such option definition explicitly associated with "server1", no option
+definition is deleted. To delete an option definition belonging to "all" servers,
+the keyword "all" must be used as the server tag. The ``server-tags`` list must
+contain exactly one tag and cannot include the ``null`` value.
+
+As of Kea 3.1.2, before deleting an option definition, the server will first
+check if there are any options specified that depend upon that defintion. If
+so the delete command will be rejected with an error message explaining why.
+This default behavior may be overridden by ihcluding an optional ``force``
+parameter as shown below:
+
+.. code-block:: json
+
+   {
+       "command": "remote-option-def6-del",
+       "arguments": {
+           "option-defs": [
+               {
+                   "code": 1,
+                   "space": "isc",
+                   "force": true
+               }
+           ],
+           "remote": {
+               "type": "mysql"
+           },
+           "server-tags": [ "server1" ]
+       }
+   }
+
+.. note::
+
+    The ``force`` parameter should only be used after careful consideration.
+    Removing an option definition while a dependent option specfication exists
+    will cause that option to be excluded from the running configuration.
+    This parameter is provided to handle use cases where a definition may
+    need to be corrected while leaving the option in place.
 
 .. isccmd:: remote-option-def4-get
 .. _command-remote-option-def4-get:

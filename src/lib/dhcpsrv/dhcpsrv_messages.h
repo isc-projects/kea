@@ -28,6 +28,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATE
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_RENEW_GTR_REBIND;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED;

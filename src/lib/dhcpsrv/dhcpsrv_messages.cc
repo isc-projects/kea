@@ -27,6 +27,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATE
 extern const isc::log::MessageID DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE = "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET4 = "DHCPSRV_CFGMGR_NEW_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_NEW_SUBNET6 = "DHCPSRV_CFGMGR_NEW_SUBNET6";
+extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH = "DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_OPTION_DUPLICATE = "DHCPSRV_CFGMGR_OPTION_DUPLICATE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_RENEW_GTR_REBIND = "DHCPSRV_CFGMGR_RENEW_GTR_REBIND";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED = "DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED";
@@ -206,6 +207,7 @@ const char* values[] = {
     "DHCPSRV_CFGMGR_IP_RESERVATIONS_UNIQUE_DUPLICATES_POSSIBLE", "setting \"ip-reservations-unique\" from false to true poses a risk that some host backends may still contain multiple reservations for the same IP address",
     "DHCPSRV_CFGMGR_NEW_SUBNET4", "a new subnet has been added to configuration: %1",
     "DHCPSRV_CFGMGR_NEW_SUBNET6", "a new subnet has been added to configuration: %1",
+    "DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH", "failed to create option: %1",
     "DHCPSRV_CFGMGR_OPTION_DUPLICATE", "multiple options with the code: %1 added to the subnet: %2",
     "DHCPSRV_CFGMGR_RENEW_GTR_REBIND", "in %1, the value of renew-timer %2 is greater than the value of rebind-timer %3, ignoring renew-timer",
     "DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED", "use of raw sockets is unsupported on this OS, UDP sockets will be used",
