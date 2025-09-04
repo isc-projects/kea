@@ -423,6 +423,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, poolOption4WithClientClassesTest) {
     poolOption4WithClientClassesTest();
 }
 
+TEST_F(MySqlConfigBackendDHCPv4Test, optionDef4DeleteForceTest) {
+    optionDef4DeleteForceTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class MySqlConfigBackendDHCPv4DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

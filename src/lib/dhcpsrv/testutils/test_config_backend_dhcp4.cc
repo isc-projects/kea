@@ -1155,7 +1155,7 @@ TestConfigBackendDHCPv4::deleteOptionDef4(const db::ServerSelector& server_selec
     if (!force) {
         auto option = getOption4(server_selector, code, space);
         if (option) {
-            isc_throw(InvalidOperation, "option exists for option definition " 
+            isc_throw(InvalidOperation, "option exists for option definition: " 
                       << space << "." << code);
         }
     }

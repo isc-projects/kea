@@ -1210,7 +1210,9 @@ TestConfigBackendDHCPv6::deleteOptionDef6(const db::ServerSelector& server_selec
     if (!force) {
         auto option = getOption6(server_selector, code, space);
         if (option) {
-            isc_throw(InvalidOperation, "option exists for option definition");
+            isc_throw(InvalidOperation, "option exists for option definition: "
+                      << space << "." << code);
+
         }
     }
 

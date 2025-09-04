@@ -2069,7 +2069,8 @@ public:
             auto option = getOption(GET_OPTION4_CODE_SPACE, Option::V4,
                                     server_selector, code, space);
             if (option) {
-                isc_throw(InvalidOperation, "option exists for option defintion");
+                isc_throw(InvalidOperation, "option exists for option defintion: "
+                          << space << "." << code);
             }
         }
 

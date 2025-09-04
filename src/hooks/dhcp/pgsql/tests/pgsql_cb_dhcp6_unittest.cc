@@ -429,6 +429,10 @@ TEST_F(PgSqlConfigBackendDHCPv6Test, pdPoolOption6WithClientClassesTest) {
     pdPoolOption6WithClientClassesTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv6Test, optionDef6DeleteForceTest) {
+    optionDef6DeleteForceTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv6DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

@@ -421,6 +421,10 @@ TEST_F(PgSqlConfigBackendDHCPv4Test, poolOption4WithClientClassesTest) {
     poolOption4WithClientClassesTest();
 }
 
+TEST_F(PgSqlConfigBackendDHCPv4Test, optionDef4DeleteForceTest) {
+    optionDef4DeleteForceTest();
+}
+
 /// @brief Test fixture for verifying database connection loss-recovery
 /// behavior.
 class PgSqlConfigBackendDHCPv4DbLostCallbackTest : public GenericConfigBackendDbLostCallbackTest {

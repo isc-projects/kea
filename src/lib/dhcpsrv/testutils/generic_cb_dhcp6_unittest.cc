@@ -5387,3 +5387,37 @@ GenericConfigBackendDHCPv6Test::pdPoolOption6WithClientClassesTest() {
     auto cfg_option = returned_pool->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     EXPECT_TRUE(cfg_option->empty());
 }
+
+void
+GenericConfigBackendDHCPv6Test::optionDef6DeleteForceTest() {
+    // Create an option definition.
+    OptionDefinitionPtr option_def(new OptionDefinition("foo", 700,
+                                                        DHCP6_OPTION_SPACE,
+                                                        "string"));
+
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateOptionDef6(ServerSelector::ALL(),
+                                                       option_def));
+
+    // Create an option which uses the definition.
+    auto desc = createOption<OptionString>(Option::V6, 700, true, false, false, "my-option");
+    OptionDescriptorPtr option((new OptionDescriptor(desc)));
+    option->space_name_ = DHCP6_OPTION_SPACE;
+
+    ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ALL(), option));
+
+    // Attempting to delete the defintion should fail by default.
+    uint64_t deleted_num = 0;
+    ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
+                                                            700, DHCP6_OPTION_SPACE),
+                     InvalidOperation, "option exists for option defintion: dhcp6.700");
+    EXPECT_EQ(0, deleted_num);
+
+    ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
+                                                            700, DHCP6_OPTION_SPACE, false),
+                     InvalidOperation, "option exists for option defintion: dhcp6.700");
+    EXPECT_EQ(0, deleted_num);
+
+    ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
+                                                            700, DHCP6_OPTION_SPACE, true));
+    EXPECT_EQ(1, deleted_num);
+}

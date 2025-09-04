@@ -400,6 +400,15 @@ public:
     /// by their client-classes content.
     void poolOption4WithClientClassesTest();
 
+    /// @brief This test verifies that option defintion delete:
+    /// 1. Does not delete a defintion if the force parameter is omitted and a
+    /// dependent option exists.
+    /// 2. Does not delete a defintion if the force parameter is false and a
+    /// dependent option exists.
+    /// 3. Deletes a defintion if the force parameter is true and a
+    /// dependent option exists.
+    void optionDef4DeleteForceTest();
+
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;
 
