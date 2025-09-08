@@ -983,6 +983,12 @@ BaseCtrlChannelDhcpv6Test::testControlChannelStats() {
 
     EXPECT_EQ(stats_get_all, response);
 
+    // Check statistic-global-get-all
+    sendHttpCommand("{ \"command\" : \"statistic-global-get-all\", "
+                    "  \"arguments\": {}}", response);
+
+    EXPECT_EQ(stats_get_all, response);
+
     // Check statistic-reset
     sendHttpCommand("{ \"command\" : \"statistic-reset\", "
                     "  \"arguments\": {"
@@ -2611,6 +2617,7 @@ BaseCtrlChannelDhcpv6Test::testListCommands() {
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
+    checkListCommands(rsp, "statistic-global-get-all");
     checkListCommands(rsp, "statistic-remove");
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");

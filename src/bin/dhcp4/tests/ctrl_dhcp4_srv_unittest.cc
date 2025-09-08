@@ -546,6 +546,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-get-all\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"statistic-global-get-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-remove-all\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"statistic-reset\"") != string::npos);
@@ -653,6 +654,12 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
     s << " }, \"result\": 0 }";
 
     auto stats_get_all = s.str();
+
+    EXPECT_EQ(stats_get_all, response);
+
+    // Check statistic-global-get-all
+    sendUnixCommand("{ \"command\" : \"statistic-global-get-all\", "
+                    "  \"arguments\": {}}", response);
 
     EXPECT_EQ(stats_get_all, response);
 
@@ -1668,6 +1675,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, listCommands) {
     checkListCommands(rsp, "shutdown");
     checkListCommands(rsp, "statistic-get");
     checkListCommands(rsp, "statistic-get-all");
+    checkListCommands(rsp, "statistic-global-get-all");
     checkListCommands(rsp, "statistic-remove");
     checkListCommands(rsp, "statistic-remove-all");
     checkListCommands(rsp, "statistic-reset");

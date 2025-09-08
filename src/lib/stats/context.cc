@@ -77,6 +77,20 @@ StatContext::getAll() const {
     return (map);
 }
 
+ConstElementPtr
+StatContext::getAllGlobal() const {
+    ElementPtr map = Element::createMap(); // a map
+    // Let's iterate over all stored statistics...
+    for (auto const& s : stats_) {
+        // ... and add each of them to the map omitting
+        // subnet statistics.
+        if (s.first.find("subnet") != 0) {
+            map->set(s.first, s.second->getJSON());
+        }
+    }
+    return (map);
+}
+
 void
 StatContext::setMaxSampleCountAll(uint32_t max_samples) {
     // Let's iterate over all stored statistics...

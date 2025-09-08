@@ -259,6 +259,11 @@ public:
     /// @return JSON structures representing all statistics
     isc::data::ConstElementPtr getAll() const;
 
+    /// @brief Returns all global statistics (omitting subnet statistics) as a JSON structure.
+    ///
+    /// @return JSON structures representing all global statistics (omitting subnet statistics)
+    isc::data::ConstElementPtr getAllGlobal() const;
+
     /// @}
 
     /// @brief Returns an observation.
@@ -413,10 +418,22 @@ public:
     ///
     /// @param name name of the command (ignored, should be "statistic-get-all")
     /// @param params ignored
-    /// @return answer containing values of all statistic
+    /// @return answer containing values of all statistics
     static isc::data::ConstElementPtr
     statisticGetAllHandler(const std::string& name,
                            const isc::data::ConstElementPtr& params);
+
+    /// @brief Handles statistic-global-get-all command
+    ///
+    /// This method handles statistic-global-get-all command, which returns values
+    /// of all global statistics (omitting subnet statistics). Params parameter is ignored.
+    ///
+    /// @param name name of the command (ignored, should be "statistic-global-get-all")
+    /// @param params ignored
+    /// @return answer containing values of all global statistics (omitting subnet statistics)
+    static isc::data::ConstElementPtr
+    statisticGlobalGetAllHandler(const std::string& name,
+                                 const isc::data::ConstElementPtr& params);
 
     /// @brief Handles statistic-reset-all command
     ///
@@ -730,6 +747,13 @@ private:
     ///
     /// @return JSON structures representing all statistics
     isc::data::ConstElementPtr getAllInternal() const;
+
+    /// @brief Returns all global statistics (omitting subnet statistics) as a JSON structure.
+    ///
+    /// Should be called in a thread safe context.
+    ///
+    /// @return JSON structures representing all global statistics (omitting subnet statistics)
+    isc::data::ConstElementPtr getAllGlobalInternal() const;
 
     /// @private
 

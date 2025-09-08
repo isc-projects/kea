@@ -214,7 +214,7 @@ version_test() {
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet4-select-test\", \"subnet4o6-select-test\", \"version-get\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"config-backend-pull\", \"config-get\", \"config-hash-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"dhcp-disable\", \"dhcp-enable\", \"leases-reclaim\", \"list-commands\", \"server-tag-get\", \"shutdown\", \"statistic-get\", \"statistic-get-all\", \"statistic-global-get-all\", \"statistic-remove\", \"statistic-remove-all\", \"statistic-reset\", \"statistic-reset-all\", \"statistic-sample-age-set\", \"statistic-sample-age-set-all\", \"statistic-sample-count-set\", \"statistic-sample-count-set-all\", \"status-get\", \"subnet4-select-test\", \"subnet4o6-select-test\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
 "[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported.\" } ]" ""
 shell_command_test "shell.empty-config-test" "config-test" \

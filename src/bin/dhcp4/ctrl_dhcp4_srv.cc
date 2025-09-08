@@ -1544,6 +1544,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("statistic-get-all",
         std::bind(&StatsMgr::statisticGetAllHandler, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("statistic-global-get-all",
+        std::bind(&StatsMgr::statisticGlobalGetAllHandler, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("statistic-reset-all",
         std::bind(&StatsMgr::statisticResetAllHandler, ph::_1, ph::_2));
 
@@ -1607,6 +1610,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
+        CommandMgr::instance().deregisterCommand("statistic-global-get-all");
         CommandMgr::instance().deregisterCommand("statistic-remove");
         CommandMgr::instance().deregisterCommand("statistic-remove-all");
         CommandMgr::instance().deregisterCommand("statistic-reset");

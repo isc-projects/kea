@@ -171,6 +171,7 @@ src/share/api/server-tag-get.json
 src/share/api/shutdown.json
 src/share/api/statistic-get.json
 src/share/api/statistic-get-all.json
+src/share/api/statistic-global-get-all.json
 src/share/api/statistic-remove.json
 src/share/api/statistic-remove-all.json
 src/share/api/statistic-reset.json

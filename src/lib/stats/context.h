@@ -75,6 +75,12 @@ public:
     /// @return map with all observations
     isc::data::ConstElementPtr getAll() const;
 
+    /// @brief Returns a map with all observations omitting those
+    /// related to subnet statistics.
+    ///
+    /// @return map with all observations
+    isc::data::ConstElementPtr getAllGlobal() const;
+
 private:
 
     /// @brief Statistics container

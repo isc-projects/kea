@@ -296,8 +296,19 @@ StatsMgr::getAll() const {
 }
 
 ConstElementPtr
+StatsMgr::getAllGlobal() const {
+    MultiThreadingLock lock(*mutex_);
+    return (getAllGlobalInternal());
+}
+
+ConstElementPtr
 StatsMgr::getAllInternal() const {
     return (global_->getAll());
+}
+
+ConstElementPtr
+StatsMgr::getAllGlobalInternal() const {
+    return (global_->getAllGlobal());
 }
 
 void
@@ -434,6 +445,13 @@ ConstElementPtr
 StatsMgr::statisticGetAllHandler(const string& /*name*/,
                                  const ConstElementPtr& /*params*/) {
     ConstElementPtr all_stats = StatsMgr::instance().getAll();
+    return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
+}
+
+ConstElementPtr
+StatsMgr::statisticGlobalGetAllHandler(const string& /*name*/,
+                                       const ConstElementPtr& /*params*/) {
+    ConstElementPtr all_stats = StatsMgr::instance().getAllGlobal();
     return (createAnswer(CONTROL_RESULT_SUCCESS, all_stats));
 }
 

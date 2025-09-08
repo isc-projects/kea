@@ -693,17 +693,85 @@ TEST_F(StatsMgrTest, commandGetAll) {
     StatsMgr::instance().setValue("beta", 12.34);
     StatsMgr::instance().setValue("gamma", dur1234);
     StatsMgr::instance().setValue("delta", "Lorem ipsum");
+    StatsMgr::instance().setValue("subnet", static_cast<int64_t>(5678));
 
     // Now get them. They're used to generate expected output
     ConstElementPtr rep_alpha = StatsMgr::instance().get("alpha");
     ConstElementPtr rep_beta = StatsMgr::instance().get("beta");
     ConstElementPtr rep_gamma = StatsMgr::instance().get("gamma");
     ConstElementPtr rep_delta = StatsMgr::instance().get("delta");
+    ConstElementPtr rep_subnet = StatsMgr::instance().get("subnet");
 
     ASSERT_TRUE(rep_alpha);
     ASSERT_TRUE(rep_beta);
     ASSERT_TRUE(rep_gamma);
     ASSERT_TRUE(rep_delta);
+    ASSERT_TRUE(rep_subnet);
+
+    std::string exp_str_alpha = "[ [ 1234, \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("alpha")
+                                   ->getInteger().second) + "\" ] ]";
+    std::string exp_str_beta = "[ [ 12.34, \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("beta")
+                                   ->getFloat().second) + "\" ] ]";
+    std::string exp_str_gamma = "[ [ \"01:02:03.004000\", \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("gamma")
+                                   ->getDuration().second) + "\" ] ]";
+    std::string exp_str_delta = "[ [ \"Lorem ipsum\", \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("delta")
+                                   ->getString().second) + "\" ] ]";
+    std::string exp_str_subnet = "[ [ 5678, \"" +
+        isc::util::clockToText(StatsMgr::instance().getObservation("subnet")
+                                   ->getInteger().second) + "\" ] ]";
+
+    // Check that all of them can be reported at once
+    ConstElementPtr rsp = StatsMgr::instance().statisticGetAllHandler(
+        "statistic-get-all", ElementPtr());
+    ASSERT_TRUE(rsp);
+    int status_code;
+    ConstElementPtr rep_all = parseAnswer(status_code, rsp);
+    ASSERT_EQ(0, status_code);
+    ASSERT_TRUE(rep_all);
+
+    // Verifying this is a bit more involved, as we don't know whether the
+    // order would be preserved or not.
+    EXPECT_EQ(5, rep_all->size());
+    ASSERT_TRUE(rep_all->get("alpha"));
+    ASSERT_TRUE(rep_all->get("beta"));
+    ASSERT_TRUE(rep_all->get("delta"));
+    ASSERT_TRUE(rep_all->get("gamma"));
+    ASSERT_TRUE(rep_all->get("subnet"));
+    EXPECT_FALSE(rep_all->get("epsilon"));
+
+    EXPECT_EQ(exp_str_alpha, rep_all->get("alpha")->str());
+    EXPECT_EQ(exp_str_beta, rep_all->get("beta")->str());
+    EXPECT_EQ(exp_str_gamma, rep_all->get("gamma")->str());
+    EXPECT_EQ(exp_str_delta, rep_all->get("delta")->str());
+    EXPECT_EQ(exp_str_subnet, rep_all->get("subnet")->str());
+}
+
+// This test checks whether statistic-global-get-all command returns all statistics
+// correctly.
+TEST_F(StatsMgrTest, commandGlobalGetAll) {
+    // Set a couple of statistics
+    StatsMgr::instance().setValue("alpha", static_cast<int64_t>(1234));
+    StatsMgr::instance().setValue("beta", 12.34);
+    StatsMgr::instance().setValue("gamma", dur1234);
+    StatsMgr::instance().setValue("delta", "Lorem ipsum");
+    StatsMgr::instance().setValue("subnet", static_cast<int64_t>(5678));
+
+    // Now get them. They're used to generate expected output
+    ConstElementPtr rep_alpha = StatsMgr::instance().get("alpha");
+    ConstElementPtr rep_beta = StatsMgr::instance().get("beta");
+    ConstElementPtr rep_gamma = StatsMgr::instance().get("gamma");
+    ConstElementPtr rep_delta = StatsMgr::instance().get("delta");
+    ConstElementPtr rep_subnet = StatsMgr::instance().get("subnet");
+
+    ASSERT_TRUE(rep_alpha);
+    ASSERT_TRUE(rep_beta);
+    ASSERT_TRUE(rep_gamma);
+    ASSERT_TRUE(rep_delta);
+    ASSERT_TRUE(rep_subnet);
 
     std::string exp_str_alpha = "[ [ 1234, \"" +
         isc::util::clockToText(StatsMgr::instance().getObservation("alpha")
@@ -719,8 +787,8 @@ TEST_F(StatsMgrTest, commandGetAll) {
                                    ->getString().second) + "\" ] ]";
 
     // Check that all of them can be reported at once
-    ConstElementPtr rsp = StatsMgr::instance().statisticGetAllHandler(
-        "statistic-get-all", ElementPtr());
+    ConstElementPtr rsp = StatsMgr::instance().statisticGlobalGetAllHandler(
+        "statistic-global-get-all", ElementPtr());
     ASSERT_TRUE(rsp);
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
@@ -734,6 +802,7 @@ TEST_F(StatsMgrTest, commandGetAll) {
     ASSERT_TRUE(rep_all->get("beta"));
     ASSERT_TRUE(rep_all->get("delta"));
     ASSERT_TRUE(rep_all->get("gamma"));
+    ASSERT_FALSE(rep_all->get("subnet"));
     EXPECT_FALSE(rep_all->get("epsilon"));
 
     EXPECT_EQ(exp_str_alpha, rep_all->get("alpha")->str());

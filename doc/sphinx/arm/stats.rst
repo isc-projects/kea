@@ -928,6 +928,439 @@ or
        "result": 0
    }
 
+.. isccmd:: statistic-global-get-all
+.. _command-statistic-global-get-all:
+
+The ``statistic-global-get-all`` Command
+----------------------------------------
+
+The :isccmd:`statistic-global-get-all` command retrieves all global statistics recorded
+(same as :isccmd:`statistic-global-get-all` but omitting subnet statistics). An example
+command may look like this:
+
+::
+
+   {
+       "command": "statistic-global-get-all",
+       "arguments": { }
+   }
+
+The server responds with details of all recorded statistics, with a
+result set to 0 to indicate that it iterated over all statistics (even
+when the total number of statistics is zero).
+
+Here is an example response returning all collected statistics:
+
+::
+
+   {
+       "command": "statistic-global-get-all",
+       "arguments": {
+           "assigned-addresses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836096"
+               ]
+           ],
+           "cumulative-assigned-addresses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836166"
+               ]
+           ],
+           "declined-addresses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836156"
+               ]
+           ],
+           "pkt4-ack-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616247"
+               ]
+           ],
+           "pkt4-ack-sent": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616290"
+               ]
+           ],
+           "pkt4-decline-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616296"
+               ]
+           ],
+           "pkt4-discover-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616303"
+               ]
+           ],
+           "pkt4-inform-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616308"
+               ]
+           ],
+           "pkt4-nak-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616312"
+               ]
+           ],
+           "pkt4-nak-sent": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616314"
+               ]
+           ],
+           "pkt4-offer-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616318"
+               ]
+           ],
+           "pkt4-offer-sent": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616323"
+               ]
+           ],
+           "pkt4-parse-failed": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616326"
+               ]
+           ],
+           "pkt4-receive-drop": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616330"
+               ]
+           ],
+           "pkt4-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616335"
+               ]
+           ],
+           "pkt4-release-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616339"
+               ]
+           ],
+           "pkt4-request-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616343"
+               ]
+           ],
+           "pkt4-sent": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616348"
+               ]
+           ],
+           "pkt4-unknown-received": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616354"
+               ]
+           ],
+           "reclaimed-declined-addresses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836159"
+               ]
+           ],
+           "reclaimed-leases": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.836163"
+               ]
+           ],
+           "v4-allocation-fail": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616358"
+               ]
+           ],
+           "v4-allocation-fail-classes": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616363"
+               ]
+           ],
+           "v4-allocation-fail-no-pools": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616368"
+               ]
+           ],
+           "v4-allocation-fail-shared-network": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616372"
+               ]
+           ],
+           "v4-allocation-fail-subnet": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616376"
+               ]
+           ],
+           "v4-lease-reuses": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616410"
+               ]
+           ],
+           "v4-reservation-conflicts": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616412"
+               ]
+           ]
+       },
+       "result": 0
+   }
+
+or
+
+::
+
+   {
+       "command": "statistic-global-get-all",
+       "arguments": {
+           "assigned-nas": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196757"
+               ]
+           ],
+           "assigned-pds": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196757"
+               ]
+           ],
+           "cumulative-assigned-nas": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196757"
+               ]
+           ],
+           "cumulative-assigned-pds": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196758"
+               ]
+           ],
+           "cumulative-registered": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196758"
+               ]
+           ],
+           "declined-addresses": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196754"
+               ]
+           ],
+           "pkt6-addr-reg-inform-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-addr-reg-reply-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-addr-reg-reply-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-advertise-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-advertise-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177739"
+               ]
+           ],
+           "pkt6-decline-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177739"
+               ]
+           ],
+           "pkt6-dhcpv4-query-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177740"
+               ]
+           ],
+           "pkt6-dhcpv4-response-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177740"
+               ]
+           ],
+           "pkt6-dhcpv4-response-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177741"
+               ]
+           ],
+           "pkt6-infrequest-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-parse-failed": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-rebind-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177743"
+               ]
+           ],
+           "pkt6-receive-drop": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177743"
+               ]
+           ],
+           "pkt6-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177744"
+               ]
+           ],
+           "pkt6-release-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177744"
+               ]
+           ],
+           "pkt6-renew-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177745"
+               ]
+           ],
+           "pkt6-reply-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177745"
+               ]
+           ],
+           "pkt6-reply-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177746"
+               ]
+           ],
+           "pkt6-request-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-solicit-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177748"
+               ]
+           ],
+           "pkt6-unknown-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177748"
+               ]
+           ],
+           "reclaimed-declined-addresses": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196755"
+               ]
+           ],
+           "reclaimed-leases": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.196756"
+               ]
+           ],
+           "v6-allocation-fail": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177749"
+               ]
+           ],
+           "v6-allocation-fail-classes": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177755"
+               ]
+           ],
+           "v6-allocation-fail-no-pools": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177756"
+               ]
+           ],
+           "v6-allocation-fail-shared-network": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177756"
+               ]
+           ],
+           "v6-allocation-fail-subnet": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177757"
+               ]
+           ],
+           "v6-ia-na-lease-reuses": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177757"
+               ]
+           ],
+           "v6-ia-pd-lease-reuses": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177758"
+               ]
+           ]
+       },
+       "result": 0
+   }
+
 .. isccmd:: statistic-reset-all
 .. _command-statistic-reset-all:
 
