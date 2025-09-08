@@ -998,8 +998,8 @@ contain exactly one tag and cannot include the ``null`` value.
 As of Kea 3.1.2, before deleting an option definition, the server will first
 check if there are any options specified that depend upon that defintion. If
 so the delete command will be rejected with an error message explaining why.
-This default behavior may be overridden by ihcluding an optional ``force``
-parameter as shown below:
+This default behavior may be overridden by setting the optional ``force``
+parameter to true as shown below:
 
 .. code-block:: json
 
