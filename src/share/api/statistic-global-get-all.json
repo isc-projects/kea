@@ -5,7 +5,7 @@
         "This command retrieves all recorded global statistics (omitting subnet statistics)."
     ],
     "cmd-comment": [
-        "The server responds with the details of all recorded global statistics (omitting subnet statistics), with a result of 0 indicating that it iterated over all global statistics (even when the total number of global statistics is zero)."
+        "The server responds with the details of all recorded global statistics (omitting subnet statistics)."
     ],
     "cmd-syntax": [
         "{",

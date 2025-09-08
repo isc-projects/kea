@@ -219,10 +219,6 @@ example command may look like this:
        "arguments": { }
    }
 
-The server responds with details of all recorded statistics, with a
-result set to 0 to indicate that it iterated over all statistics (even
-when the total number of statistics is zero).
-
 Here is an example response returning all collected statistics:
 
 ::
@@ -935,7 +931,7 @@ The ``statistic-global-get-all`` Command
 ----------------------------------------
 
 The :isccmd:`statistic-global-get-all` command retrieves all global statistics recorded
-(same as :isccmd:`statistic-global-get-all` but omitting subnet statistics). An example
+(same as :isccmd:`statistic-get-all` but omitting subnet statistics). An example
 command may look like this:
 
 ::
@@ -944,10 +940,6 @@ command may look like this:
        "command": "statistic-global-get-all",
        "arguments": { }
    }
-
-The server responds with details of all recorded statistics, with a
-result set to 0 to indicate that it iterated over all statistics (even
-when the total number of statistics is zero).
 
 Here is an example response returning all collected statistics:
 

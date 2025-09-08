@@ -1,3 +1,9 @@
+2394.	[func]		razvan
+	Added new 'statistic-global-get-all' command for kea-dhcp4
+	and kea-dhcp6 servers, which returns all statistica except
+	subnet counters.
+	(Gitlab #3213)
+
 2393.	[func]		razvan
 	Added global counters for 'assigned-addresses',
 	'assigned-nas' and 'assigned-pds'. The 'stat-lease4-get'
