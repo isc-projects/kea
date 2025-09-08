@@ -2071,8 +2071,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'openssl'])
-        deferred_functions.append(install_meson)
+        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'meson', 'openssl', 'ninja'])
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
