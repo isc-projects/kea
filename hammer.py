@@ -632,7 +632,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         env['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
-        cmd = 'sudo pkg install --no-repo-update --yes'
+        cmd = 'sudo pkg clean --all --yes; sudo pkg install --no-repo-update --yes'
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
