@@ -3739,7 +3739,7 @@ UPDATE schema_version
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
--- column matching option defintions with client classes.
+-- column matching option definitions with client classes.
 -- -----------------------------------------------------------------------
 ALTER TABLE dhcp4_option_def
     ADD COLUMN class_id BIGINT NULL DEFAULT NULL;
@@ -3753,7 +3753,7 @@ ALTER TABLE dhcp4_option_def
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv6 option definitions with a nullable
--- column matching option defintions with client classes.
+-- column matching option definitions with client classes.
 -- -----------------------------------------------------------------------
 ALTER TABLE dhcp6_option_def
     ADD COLUMN class_id BIGINT NULL DEFAULT NULL;

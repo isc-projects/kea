@@ -551,7 +551,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_client_class_server (
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv4 option definitions with a nullable
--- column matching option defintions with client classes.
+-- column matching option definitions with client classes.
 -- -----------------------------------------------------------------------
 ALTER TABLE dhcp4_option_def
     ADD COLUMN class_id BIGINT UNSIGNED NULL DEFAULT NULL;
@@ -1011,7 +1011,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_client_class_server (
 
 -- -----------------------------------------------------------------------
 -- Extend the table holding DHCPv6 option definitions with a nullable
--- column matching option defintions with client classes.
+-- column matching option definitions with client classes.
 -- -----------------------------------------------------------------------
 ALTER TABLE dhcp6_option_def
     ADD COLUMN class_id BIGINT UNSIGNED NULL DEFAULT NULL;
