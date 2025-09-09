@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <testutils/log_utils.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <iterator>
@@ -28,6 +29,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -139,7 +141,7 @@ TEST(OptionDescriptorTest, allowedForClientClassesTest) {
 
 /// This class fixture for testing @c CfgOption class, holding option
 /// configuration.
-class CfgOptionTest : public ::testing::Test {
+class CfgOptionTest : public LogContentTest {
 public:
 
     /// @brief Generates encapsulated options and adds them to CfgOption
@@ -620,22 +622,23 @@ TEST_F(CfgOptionTest, mergeInvalid) {
     OptionDescriptor desc(option, false, false, "one,two,three");
     ASSERT_NO_THROW(other_cfg.add(desc, "isc"));
 
-    // When we attempt to merge, it should fail, recognizing that
+    // When we attempt to merge, we should get a warning, recognizing that
     // option 2, which has a formatted value,  has no definition.
-    ASSERT_THROW_MSG(this_cfg.merge(defs, other_cfg), InvalidOperation,
-                     "option: isc.2 has a formatted value: "
-                     "'one,two,three' but no option definition");
+    ASSERT_NO_THROW_LOG(this_cfg.merge(defs, other_cfg));
+    EXPECT_EQ(countFile("DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to "
+              "create option: option: isc.2 has a formatted value: "
+              "'one,two,three' but no option definition"), 1);
 
     // Now let's add an option definition that will force data truncated
     // error for option 1.
     defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "isc", "uint16"))));
 
-    // When we attempt to merge, it should fail because option 1's data
+    // When we attempt to merge, we should get a warning because option 1's data
     // is not valid per its definition.
-    EXPECT_THROW_MSG(this_cfg.merge(defs, other_cfg), InvalidOperation,
-                     "could not create option: isc.1"
-                     " from data specified, reason:"
-                     " OptionInt 1 truncated");
+    ASSERT_NO_THROW_LOG(this_cfg.merge(defs, other_cfg));
+    EXPECT_EQ(countFile("DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to "
+                        "create option: could not create option: isc.1 from data"
+                        " specified, reason: OptionInt 1 truncated"), 1);
 }
 
 // This test verifies the all of the valid option cases
