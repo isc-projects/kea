@@ -215,7 +215,7 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
     Option::Universe universe = opt_desc.option_->getUniverse();
     uint16_t code = opt_desc.option_->getType();
 
-    // Find the option's defintion, if it has one.
+    // Find the option's definition, if it has one.
     // First, check for a standard definition.
     OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
 

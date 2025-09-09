@@ -55,7 +55,7 @@ public:
     /// @throw MissingKey if the type is not present.
     static void checkType(isc::data::ConstElementPtr option);
 
-    /// @brief Check if code is specified in option defintion.
+    /// @brief Check if code is specified in option definition.
     ///
     /// @param option The option.
     /// @throw MissingKey if the code is not present.

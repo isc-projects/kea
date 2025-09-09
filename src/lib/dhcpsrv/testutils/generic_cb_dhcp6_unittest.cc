@@ -5390,6 +5390,14 @@ GenericConfigBackendDHCPv6Test::pdPoolOption6WithClientClassesTest() {
 
 void
 GenericConfigBackendDHCPv6Test::optionDef6DeleteForceTest() {
+    /// @brief This test verifies that option definition delete:
+    /// 1. Does not delete a definition if the force parameter is omitted and a
+    /// dependent option exists.
+    /// 2. Does not delete a definition if the force parameter is false and a
+    /// dependent option exists.
+    /// 3. Deletes a definition if the force parameter is true and a
+    /// dependent option exists.
+
     // Create an option definition.
     OptionDefinitionPtr option_def(new OptionDefinition("foo", 700,
                                                         DHCP6_OPTION_SPACE,
@@ -5405,19 +5413,19 @@ GenericConfigBackendDHCPv6Test::optionDef6DeleteForceTest() {
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption6(ServerSelector::ALL(), option));
 
-    // Attempting to delete the defintion should fail by default.
+    // Attempting to delete the definition should fail by default.
     uint64_t deleted_num = 0;
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
                                                             700, DHCP6_OPTION_SPACE),
-                     InvalidOperation, "option exists for option defintion: dhcp6.700");
+                     InvalidOperation, "option exists for option definition: dhcp6.700");
     EXPECT_EQ(0, deleted_num);
 
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
                                                             700, DHCP6_OPTION_SPACE, false),
-                     InvalidOperation, "option exists for option defintion: dhcp6.700");
+                     InvalidOperation, "option exists for option definition: dhcp6.700");
     EXPECT_EQ(0, deleted_num);
 
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef6(ServerSelector::ALL(),
-                                                            700, DHCP6_OPTION_SPACE, true));
+                                                               700, DHCP6_OPTION_SPACE, true));
     EXPECT_EQ(1, deleted_num);
 }

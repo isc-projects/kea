@@ -2589,7 +2589,7 @@ public:
             auto option = getOption(GET_OPTION6_CODE_SPACE, Option::V6,
                                     server_selector, code, space);
             if (option) {
-                isc_throw(InvalidOperation, "option exists for option defintion: "
+                isc_throw(InvalidOperation, "option exists for option definition: "
                           << space << "." << code);
             }
         }
@@ -4684,7 +4684,7 @@ uint64_t
 MySqlConfigBackendDHCPv6::deleteOptionDef6(const ServerSelector& server_selector,
                                            const uint16_t code,
                                            const std::string& space,
-                                           bool force /* = false*/) {
+                                           bool force /* = false */) {
     LOG_DEBUG(mysql_cb_logger, DBGLVL_TRACE_BASIC, MYSQL_CB_DELETE_OPTION_DEF6)
         .arg(code).arg(space);
     uint64_t result = impl_->deleteOptionDef6(server_selector, code, space, force);

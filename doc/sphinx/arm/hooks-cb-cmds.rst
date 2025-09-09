@@ -996,7 +996,7 @@ the keyword "all" must be used as the server tag. The ``server-tags`` list must
 contain exactly one tag and cannot include the ``null`` value.
 
 As of Kea 3.1.2, before deleting an option definition, the server will first
-check if there are any options specified that depend upon that defintion. If
+check if there are any options specified that depend upon that definition. If
 so the delete command will be rejected with an error message explaining why.
 This default behavior may be overridden by setting the optional ``force``
 parameter to true as shown below:
@@ -1023,7 +1023,7 @@ parameter to true as shown below:
 .. note::
 
     The ``force`` parameter should only be used after careful consideration.
-    Removing an option definition while a dependent option specfication exists
+    Removing an option definition while a dependent option specification exists
     will cause that option to be excluded from the running configuration.
     This parameter is provided to handle use cases where a definition may
     need to be corrected while leaving the option in place.

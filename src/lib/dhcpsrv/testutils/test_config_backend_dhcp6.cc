@@ -1212,7 +1212,6 @@ TestConfigBackendDHCPv6::deleteOptionDef6(const db::ServerSelector& server_selec
         if (option) {
             isc_throw(InvalidOperation, "option exists for option definition: "
                       << space << "." << code);
-
         }
     }
 

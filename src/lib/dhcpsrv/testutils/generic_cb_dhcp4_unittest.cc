@@ -5141,14 +5141,13 @@ GenericConfigBackendDHCPv4Test::poolOption4WithClientClassesTest() {
 
 void
 GenericConfigBackendDHCPv4Test::optionDef4DeleteForceTest() {
-    /// @brief This test verifies that option defintion delete:
-    /// 1. Does not delete a defintion if the force parameter is omitted and a
+    /// @brief This test verifies that option definition delete:
+    /// 1. Does not delete a definition if the force parameter is omitted and a
     /// dependent option exists.
-    /// 2. Does not delete a defintion if the force parameter is false and a
+    /// 2. Does not delete a definition if the force parameter is false and a
     /// dependent option exists.
-    /// 3. Deletes a defintion if the force parameter is true and a
+    /// 3. Deletes a definition if the force parameter is true and a
     /// dependent option exists.
-
 
     // Create an option definition.
     OptionDefinitionPtr option_def(new OptionDefinition("foo", 234,
@@ -5165,19 +5164,19 @@ GenericConfigBackendDHCPv4Test::optionDef4DeleteForceTest() {
 
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption4(ServerSelector::ALL(), option));
 
-    // Attempting to delete the defintion should fail by default.
+    // Attempting to delete the definition should fail by default.
     uint64_t deleted_num = 0;
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                                             234, DHCP4_OPTION_SPACE),
-                     InvalidOperation, "option exists for option defintion: dhcp4.234");
+                     InvalidOperation, "option exists for option definition: dhcp4.234");
     EXPECT_EQ(0, deleted_num);
 
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                                             234, DHCP4_OPTION_SPACE, false),
-                     InvalidOperation, "option exists for option defintion: dhcp4.234");
+                     InvalidOperation, "option exists for option definition: dhcp4.234");
     EXPECT_EQ(0, deleted_num);
 
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
-                                                            234, DHCP4_OPTION_SPACE, true));
+                                                               234, DHCP4_OPTION_SPACE, true));
     EXPECT_EQ(1, deleted_num);
 }

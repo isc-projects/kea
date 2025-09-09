@@ -5,7 +5,7 @@
         "This command deletes a DHCPv6 option definition from the configuration database."
     ],
     "cmd-comment": [
-        "This command includes a list with exactly one option definition specification, comprising an option name and code. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. As of Kea 3.1.2, before deleting an option definition, the server will first check if there are any options specified that depend upon that defintion. If so the delete command will be rejected with an error message explaining why.  This default behavior may be overridden by setting the optional ``force`` parameter to true."
+        "This command includes a list with exactly one option definition specification, comprising an option name and code. The ``server-tags`` list is mandatory and must contain exactly one server tag. Specifying an empty list, a value of ``null``, or multiple server tags will result in an error. As of Kea 3.1.2, before deleting an option definition, the server will first check if there are any options specified that depend upon that definition. If so the delete command will be rejected with an error message explaining why.  This default behavior may be overridden by setting the optional ``force`` parameter to true."
     ],
     "cmd-syntax": [
         "{",

@@ -400,12 +400,12 @@ public:
     /// by their client-classes content.
     void poolOption4WithClientClassesTest();
 
-    /// @brief This test verifies that option defintion delete:
-    /// 1. Does not delete a defintion if the force parameter is omitted and a
+    /// @brief This test verifies that option definition delete:
+    /// 1. Does not delete a definition if the force parameter is omitted and a
     /// dependent option exists.
-    /// 2. Does not delete a defintion if the force parameter is false and a
+    /// 2. Does not delete a definition if the force parameter is false and a
     /// dependent option exists.
-    /// 3. Deletes a defintion if the force parameter is true and a
+    /// 3. Deletes a definition if the force parameter is true and a
     /// dependent option exists.
     void optionDef4DeleteForceTest();
 

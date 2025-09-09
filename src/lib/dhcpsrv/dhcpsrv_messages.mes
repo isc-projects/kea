@@ -1024,8 +1024,8 @@ pose a security risk.
 
 % DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to create option: %1
 This warning message is issued when an option has been specified for which
-there is no suitable option definition. Either there is no defintion at all
-or the option contents do not fit the option defintion. The argument will
+there is no suitable option definition. Either there is no definition at all
+or the option contents do not fit the option definition. The argument will
 provide a detailed reason for the failure. The server will continue to
 operate but it will exclude the option from packet processing until the
 situation is corrected. This is considered a configuration error.

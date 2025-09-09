@@ -607,7 +607,7 @@ TEST_F(CfgOptionTest, mergeInvalid) {
     CfgOption this_cfg;
     CfgOption other_cfg;
 
-    // Create an empty dictionary of defintions pass into option merge.
+    // Create an empty dictionary of definitions pass into option merge.
     CfgOptionDefPtr defs(new CfgOptionDef());
 
     // Create our other config that will be merged from.

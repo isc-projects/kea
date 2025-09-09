@@ -2363,6 +2363,7 @@ public:
     /// @param force When true, delete is done without checking for
     /// dependent options.
     /// @return Number of deleted option definitions.
+    /// @throw NotImplemented if server selector is "unassigned".
     /// @throw InvalidOperation if force is false and there is an option
     /// matching server, code, and space.
     uint64_t deleteOptionDef6(const ServerSelector& server_selector,
@@ -2373,7 +2374,7 @@ public:
             auto option = getOption(GET_OPTION6_CODE_SPACE, Option::V6,
                                     server_selector, code, space);
             if (option) {
-                isc_throw(InvalidOperation, "option exists for option defintion: "
+                isc_throw(InvalidOperation, "option exists for option definition: "
                           << space << "." << code);
             }
         }

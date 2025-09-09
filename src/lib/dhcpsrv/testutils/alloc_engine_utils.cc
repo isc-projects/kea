@@ -347,7 +347,7 @@ AllocEngine6Test::simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
     subnet_->setValid(Triplet<uint32_t>(300, 400, 500));
 
     if (class_def) {
-        std::cout << "adding class defintion" << std::endl;
+        std::cout << "adding class definition" << std::endl;
         CfgMgr::instance().getStagingCfg()->getClientClassDictionary()->addClass(class_def);
         ctx.query_->addClass(class_def->getName());
     }
