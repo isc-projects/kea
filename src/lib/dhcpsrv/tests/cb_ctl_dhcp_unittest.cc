@@ -824,8 +824,8 @@ TEST_F(CBControlDHCPv4Test, databaseConfigApplyAll) {
 TEST_F(CBControlDHCPv4Test, databaseConfigApplyDeleteAll) {
     testDatabaseConfigApplyDelete(getTimestamp(-5), [this]() {
         remoteDeleteGlobalParameter("comment", 1);
-        remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
         remoteDeleteOptionDef(101, "isc");
+        remoteDeleteOption(DHO_HOST_NAME, DHCP4_OPTION_SPACE);
         remoteDeleteSharedNetwork("one");
         remoteDeleteSubnet(SubnetID(1));
         remoteDeleteClientClass("first-class");
