@@ -191,7 +191,7 @@ and as shown for global values:
 
 The results are reported to StatsMgr, an internal Kea component that reports data as statistics
 that can be retrieved using statistics commands. They can be fetched using the commands
-:isccmd:`statistic-get-all`, isccmd:`statistic-global-get-all`, or :isccmd:`statistic-get`.
+:isccmd:`statistic-get-all`, :isccmd:`statistic-global-get-all`, or :isccmd:`statistic-get`.
 
 Alarms
 ~~~~~~
