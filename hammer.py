@@ -470,8 +470,8 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
-    """ Install meson with pyinstaller or venv.
+def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None):
+    """ Install meson and ninja with pyinstaller or venv.
 
     Pyinstaller is needed as opposed to venv to overcome package building errors such as:
     venv/bin/python3 is needed by isc-kea-admin-2.7.7-isc20250320085254.el9.x86_64
@@ -480,8 +480,9 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     :type python_v: str
     :param mode: whether installation is through pyinstaller or plain venv
     :type mode: str
+    :param only: what to install: meson or ninja. None (default) means both.
+    :type only: str
     """
-
     meson_version = '1.8.1'
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
@@ -490,21 +491,26 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller'):
     execute('sudo rm -fr .meson-src')
     execute(f'sudo {python_v} -m venv /usr/local/share/.venv')
     execute('sudo /usr/local/share/.venv/bin/pip install --upgrade pip setuptools wheel')
-    execute('sudo /usr/local/share/.venv/bin/pip install ninja')
+    if only is None or only == 'ninja':
+        execute('sudo /usr/local/share/.venv/bin/pip install ninja')
     if mode == 'pyinstaller':
-        execute('git clone https://github.com/mesonbuild/meson .meson-src')
-        execute(f'git checkout {meson_version}', cwd='.meson-src')
-        execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
-        execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
-                '--dist ../.meson --onefile ./meson.py',
-                cwd='.meson-src')
-        execute('sudo cp .meson/meson /usr/local/bin')
-        execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
+        if only is None or only == 'meson':
+            execute('git clone https://github.com/mesonbuild/meson .meson-src')
+            execute(f'git checkout {meson_version}', cwd='.meson-src')
+            execute('sudo /usr/local/share/.venv/bin/pip install pyinstaller')
+            execute('sudo /usr/local/share/.venv/bin/pyinstaller --additional-hooks-dir=packaging --clean '
+                    '--dist ../.meson --onefile ./meson.py',
+                    cwd='.meson-src')
+            execute('sudo cp .meson/meson /usr/local/bin')
+        if only is None or only == 'ninja':
+            execute('sudo cp /usr/local/share/.venv/bin/ninja /usr/local/bin')
 
     elif mode == 'venv':
-        execute(f'sudo /usr/local/share/.venv/bin/pip install meson=={meson_version}')
-        execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
-        execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
+        if only is None or only == 'meson':
+            execute(f'sudo /usr/local/share/.venv/bin/pip install meson=={meson_version}')
+            execute('sudo ln -s /usr/local/share/.venv/bin/meson /usr/local/bin/meson')
+        if only is None or only == 'ninja':
+            execute('sudo ln -s /usr/local/share/.venv/bin/ninja /usr/local/bin/ninja')
     else:
         raise UnexpectedError(f'Unknown mode in install_meson(mode={mode})')
 
@@ -2071,7 +2077,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'meson', 'openssl', 'ninja'])
+        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
+        deferred_functions.append(lambda: install_meson(only='meson'))
 
         if revision.startswith('14'):
             packages.extend(['bash', 'pkgconf'])
@@ -2080,7 +2087,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             # Get the python version from the remote repositories.
             pyv = _get_package_version('python')
             pyv = pyv.split('_')[0].replace('.', '')
-            log.info(">>>>> Detected Sphinx packages version: py%s-sphinx", pyv)
+            log.info(">>>>> Detected python package version: py%s", pyv)
             packages.extend([f'py{pyv}-sphinx', f'py{pyv}-sphinx_rtd_theme', 'texlive-full'])
 
         if 'mysql' in features:
@@ -2094,7 +2101,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             # unless any postgresql-client or postgresql-server version is already installed.
             for i in ['client', 'server']:
                 # Check if already installed.
-                _, output = execute('pkg info', capture=True)
+                _, output = execute('pkg info', capture=True, quiet=True)
                 m = re.search(f'postgresql[0-9]+-{i}', output)
                 if m is None:
                     # If not, go ahead and install.
