@@ -99,6 +99,9 @@ TEST(IOService, runOneForStopped) {
     // Sleep for 5 ms.
     usleep(5 * 1000);
 
+    // Cancel the timer.
+    timer.cancel();
+
     // Stop the service.
     io_service->stop();
 
