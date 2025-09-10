@@ -29,7 +29,9 @@ about: Create a new issue using this checklist for each release.
 
 Some of these checks and updates can be made before the actual freeze.
 
-1. <mark>Security Release Only</mark>: The release will be done from the isc-private/kea. Rebase the private branch you are releasing on the public branch. If there are changes after the rebase, push them. If there are conflicts, you may ask developers for help on resolving them.
+1. [ ] <mark>Security Release Only</mark>: Should be done before the first security fix is merged. Make sure mirroring is turned off for both Github and Gitlab [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it off, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+   Example command: `GITLAB_TOKEN='...' ./toggle-repo-mirroring.py --off isc-projects/kea`.
+1. [ ] <mark>Security Release Only</mark>: The release will be done from the isc-private/kea. Rebase the private branch you are releasing on the public branch. If there are changes after the rebase, push them. If there are conflicts, you may ask developers for help on resolving them.
 1. [ ] Check Jenkins results:
    1. [ ] Check Jenkins jobs for failures: [ut-dist](https://jenkins.aws.isc.org/job/kea-dev/job/ut-dist/), etc...
    1. [ ] Check [Jenkins Tests Report](https://jenkins.aws.isc.org/job/kea-dev/job/jenkins-tests-report/).
@@ -55,7 +57,7 @@ Some of these checks and updates can be made before the actual freeze.
 1. [ ] Check that packages can be uploaded to Cloudsmith.
    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
    1. Click `Build with Parameters`.
-   1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field. Leave the rest as they are `PrivPubRepos: "private"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
+   1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field. Leave the rest as they are `PrivPubRepos: "both"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
@@ -88,7 +90,7 @@ The following steps may involve changing files in the repository.
    1. Commits and pushes the changes to the GitLab server.
 1. [ ] Check manually the User's Guide sections:
    1. [ ] Chapter 1. Introduction
-      1. [ ] On what platforms are we running tests using Jenkins? Update Supported Platforms in platforms.rst file.
+      1. [ ] On what platforms are we running tests using Jenkins? Update `Supported Platforms` in `platforms.rst` and `SYSTEMS` in `hammer.py`.
       1. [ ] Did we add any additional 3rd party software? Update if needed.
       1. [ ] Is there a new tool installed in bin or sbin released this time? If yes, is it documented?
    1. [ ] Chapter 2. Quick Start
@@ -243,4 +245,6 @@ Now it's time to publish the code.
 
 ## QA
 
+1. [ ] <mark>Security Release Only</mark>: Mirroring can be turned back on for both Github and Gitlab. You an check it [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it on, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+   Example command: `GITLAB_TOKEN='...' ./toggle-repo-mirroring.py --on isc-projects/kea`.
 1. [ ] Close this ticket.
