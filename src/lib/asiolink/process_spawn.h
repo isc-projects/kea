@@ -15,6 +15,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include <unordered_set>
+
 namespace isc {
 namespace asiolink {
 
@@ -85,7 +87,9 @@ public:
     ~ProcessSpawn() = default;
 
     /// @brief Returns full command line, including arguments, for the process.
-    std::string getCommandLine() const;
+    ///
+    /// @param redact_args list of arguments to redact
+    std::string getCommandLine(std::unordered_set<std::string> redact_args = {}) const;
 
     /// @brief Spawn the new process.
     ///

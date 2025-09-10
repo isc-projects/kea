@@ -93,7 +93,8 @@ public:
     ~ProcessSpawnImpl();
 
     /// @brief Returns full command line, including arguments, for the process.
-    std::string getCommandLine() const;
+    /// @param redact_args list of arguments to redact.
+    std::string getCommandLine(std::unordered_set<std::string> redact_args = {}) const;
 
     /// @brief Spawn the new process.
     ///
@@ -316,15 +317,26 @@ ProcessSpawnImpl::~ProcessSpawnImpl() {
 }
 
 std::string
-ProcessSpawnImpl::getCommandLine() const {
+ProcessSpawnImpl::getCommandLine(std::unordered_set<std::string> redact_args /* = {} */) const {
     std::ostringstream s;
     s << executable_;
     // Start with index 1, because the first argument duplicates the
     // path to the executable. Note, that even if there are no parameters
     // the minimum size of the table is 2.
     int i = 1;
+    bool redact_next = false;
     while (args_[i] != NULL) {
-        s << " " << args_[i];
+        if (redact_next) {
+            s << " " << "*****";
+            redact_next = false;
+        } else {
+            if (redact_args.contains(args_[i])) {
+                redact_next = true;
+            }
+
+            s << " " << args_[i];
+        }
+
         ++i;
     }
     return (s.str());
@@ -489,8 +501,8 @@ ProcessSpawn::ProcessSpawn(const SpawnMode mode,
 }
 
 std::string
-ProcessSpawn::getCommandLine() const {
-    return (impl_->getCommandLine());
+ProcessSpawn::getCommandLine(std::unordered_set<std::string> redact_args /* = {} */) const {
+    return (impl_->getCommandLine(redact_args));
 }
 
 pid_t
