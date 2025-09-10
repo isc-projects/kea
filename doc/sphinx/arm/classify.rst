@@ -276,14 +276,14 @@ This does not apply to the ``KNOWN`` or ``UNKNOWN`` classes.
    | Binary content of the | option[123].hex               | '(content of the      |
    | option                |                               | option)'              |
    +-----------------------+-------------------------------+-----------------------+
-   | Option existence      | option[123].exists            | 'true'                |
+   | Option existence      | option[123].exists            | ``true``              |
    +-----------------------+-------------------------------+-----------------------+
    | Binary content of the | option[12].option[34].hex     | '(content of the      |
    | sub-option            |                               | sub-option)'          |
    +-----------------------+-------------------------------+-----------------------+
-   | Sub-Option existence  | option[12].option[34].exists  | 'true'                |
+   | Sub-Option existence  | option[12].option[34].exists  | ``true``              |
    +-----------------------+-------------------------------+-----------------------+
-   | Client class          | member('foobar')              | 'true'                |
+   | Client class          | member('foobar')              | ``true``              |
    | membership            |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
    | Known client          | known                         | member('KNOWN')       |
@@ -345,28 +345,28 @@ This does not apply to the ``KNOWN`` or ``UNKNOWN`` classes.
    | Transaction ID in     | pkt6.transid                  | 12345                 |
    | DHCPv6 packet         |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor option         | vendor[*].exists              | 'true'                |
+   | Vendor option         | vendor[*].exists              | ``true``              |
    | existence (any        |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor option         | vendor[4491].exists           | 'true'                |
+   | Vendor option         | vendor[4491].exists           | ``true``              |
    | existence (specific   |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
    | Enterprise-id from    | vendor.enterprise             | 4491                  |
    | vendor option         |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor sub-option     | vendor[4491].option[1].exists | 'true'                |
+   | Vendor sub-option     | vendor[4491].option[1].exists | ``true``              |
    | existence             |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
    | Vendor sub-option     | vendor[4491].option[1].hex    | docsis3.0             |
    | content               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor class option   | vendor-class[*].exists        | 'true'                |
+   | Vendor class option   | vendor-class[*].exists        | ``true``              |
    | existence (any        |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
-   | Vendor class option   | vendor-class[4491].exists     | 'true'                |
+   | Vendor class option   | vendor-class[4491].exists     | ``true``              |
    | existence (specific   |                               |                       |
    | vendor)               |                               |                       |
    +-----------------------+-------------------------------+-----------------------+
