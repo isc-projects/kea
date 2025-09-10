@@ -99,9 +99,6 @@ TEST(IOService, runOneForStopped) {
     // Sleep for 5 ms.
     usleep(5 * 1000);
 
-    // Cancel the timer.
-    timer.cancel();
-
     // Stop the service.
     io_service->stop();
 
@@ -113,6 +110,12 @@ TEST(IOService, runOneForStopped) {
     EXPECT_EQ(0, cnt);
     EXPECT_FALSE(timed_out);
     EXPECT_FALSE(timer_fired);
+
+    // Cancel the timer.
+    timer.cancel();
+
+    io_service->restart();
+    io_service->poll();
 }
 
 }

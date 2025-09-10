@@ -129,7 +129,7 @@ anything e.g. `DEBUG=true`. `unset DEBUG` to remove this behavior.
 
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
 
-  With the use of databases requiring separate authorisation, there are
+  With the use of databases requiring separate authorization, there are
   certain database-specific pre-requisites for successfully running the unit
   tests.  These are listed in the following sections.
 
