@@ -544,6 +544,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-hash-get\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"kea-lfc-start\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"subnet6-select-test\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"server-tag-get\"") != string::npos);
@@ -1672,6 +1673,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
+    checkListCommands(rsp, "kea-lfc-start");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "version-get");

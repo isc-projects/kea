@@ -2610,6 +2610,7 @@ BaseCtrlChannelDhcpv4Test::testListCommands() {
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
+    checkListCommands(rsp, "kea-lfc-start");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "version-get");
