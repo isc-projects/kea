@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_custom.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -29,6 +30,7 @@
 #include <time.h>
 
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
@@ -1302,6 +1304,13 @@ LeaseMgr::byRelayId6size() const {
 size_t
 LeaseMgr::byRemoteId6size() const {
     return (0);
+}
+
+ConstElementPtr
+LeaseMgr::lfcStartHandler() {
+    ostringstream msg;
+    msg << "lease backend `" << getName() << "' is not 'memfile'";
+    return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED, msg.str()));
 }
 
 } // namespace isc::dhcp

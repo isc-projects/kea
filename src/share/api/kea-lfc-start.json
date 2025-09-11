@@ -1,0 +1,19 @@
+{
+    "access": "write",
+    "avail": "3.1.2",
+    "brief": [
+        "This command starts the kea-lfc process which cleas nup the lease file. ",
+        "This command does not take any parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"kea-lfc-start\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-kea-lfc-start\"/>",
+    "name": "kea-lfc-start",
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/addr_utilities.h>
+#include <cc/command_interpreter.h>
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
@@ -42,6 +43,7 @@ const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 }  // namespace
 
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::util;
@@ -2465,8 +2467,6 @@ Memfile_LeaseMgr::getLFCExitStatus() const {
 
 void
 Memfile_LeaseMgr::lfcCallback() {
-    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_START);
-
     // Check if we're in the v4 or v6 space and use the appropriate file.
     if (lease_file4_) {
         MultiThreadingCriticalSection cs;
@@ -2494,15 +2494,15 @@ Memfile_LeaseMgr::lfcSetup(bool conversion_needed) {
                   << lfc_interval_str << " specified");
     }
 
-    if (lfc_interval > 0 || conversion_needed) {
-        lfc_setup_.reset(new LFCSetup(std::bind(&Memfile_LeaseMgr::lfcCallback, this)));
-        lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, conversion_needed);
-    }
+    lfc_setup_.reset(new LFCSetup(std::bind(&Memfile_LeaseMgr::lfcCallback, this)));
+    lfc_setup_->setup(lfc_interval, lease_file4_, lease_file6_, conversion_needed);
 }
 
 template<typename LeaseFileType>
 void
 Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_START);
+
     bool do_lfc = true;
 
     // Check the status of the LFC instance.
@@ -2559,6 +2559,29 @@ Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
     if (do_lfc) {
         lfc_setup_->execute();
     }
+}
+
+ConstElementPtr
+Memfile_LeaseMgr::lfcStartHandler() {
+    if (!persistLeases(V4) && !persistLeases(V6)) {
+        std::ostringstream msg;
+        msg << "'persist` parameter of `memfile` lease backend "
+            << "was configured to `false`";
+        return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED, msg.str()));
+    }
+    MultiThreadingCriticalSection cs;
+    // Reschedule the periodic lfc run.
+    if (TimerMgr::instance()->isTimerRegistered("memfile-lfc")) {
+        TimerMgr::instance()->cancel("memfile-lfc");
+        TimerMgr::instance()->setup("memfile-lfc");
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_RESCHEDULED);
+    }
+    if (lease_file4_) {
+        lfcExecute(lease_file4_);
+    } else if (lease_file6_) {
+        lfcExecute(lease_file6_);
+    }
+    return (createAnswer(CONTROL_RESULT_SUCCESS, "kea-lfc started"));
 }
 
 LeaseStatsQueryPtr

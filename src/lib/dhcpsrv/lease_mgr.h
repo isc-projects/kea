@@ -1065,6 +1065,13 @@ public:
     /// @return Always 0.
     virtual size_t byRemoteId6size() const;
 
+    /// @brief Handler for kea-lfc-start command.
+    ///
+    /// Derived by the memfile backend.
+    ///
+    /// @returns By default an error saying the backend is not the memfile one.
+    virtual isc::data::ConstElementPtr lfcStartHandler();
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

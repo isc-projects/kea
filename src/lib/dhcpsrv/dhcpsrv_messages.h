@@ -134,6 +134,7 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_EXECUTE;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL;
+extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_RESCHEDULED;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_SETUP;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_SPAWN_FAIL;
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_START;

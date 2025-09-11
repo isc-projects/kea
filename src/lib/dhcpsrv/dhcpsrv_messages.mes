@@ -748,6 +748,11 @@ failed to re-open or re-create the lease file after renaming the
 lease file for lease file cleanup. The server continues to
 operate but leases do not persist to disk.
 
+% DHCPSRV_MEMFILE_LFC_RESCHEDULED rescheduled Lease File Cleanup
+An informational message issued when the memfile lease database backend
+rescheduled the periodic Lease File Cleanup at the reception of a
+"kea-lfc-start" command.
+
 % DHCPSRV_MEMFILE_LFC_SETUP setting up the Lease File Cleanup interval to %1 sec
 An informational message logged when the memfile lease database backend
 configures the LFC to be executed periodically. The argument holds the

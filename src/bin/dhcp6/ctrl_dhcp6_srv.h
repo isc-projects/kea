@@ -12,6 +12,7 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <util/reconnect_ctl.h>
+#include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
@@ -354,6 +355,19 @@ private:
     isc::data::ConstElementPtr
     commandStatisticSetMaxSampleAgeAllHandler(const std::string& command,
                                               isc::data::ConstElementPtr args);
+
+    /// @brief handler for processing 'kea-lfc-start' command
+    ///
+    /// This handler processes kea-lfc-start command, which cleans up
+    /// the lease file (the backup file of the memfile lease backend).
+    /// @ref isc::dhcp::LeaseMgr::lfcStartHandler
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return process information wrapped in a response
+    isc::data::ConstElementPtr
+    commandLfcStartHandler(const std::string& command,
+                           isc::data::ConstElementPtr args);
 
     /// @brief Reclaims expired IPv6 leases and reschedules timer.
     ///

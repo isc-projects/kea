@@ -1212,6 +1212,15 @@ ControlledDhcpv4Srv::commandStatisticSetMaxSampleAgeAllHandler(const string&,
     return (answer);
 }
 
+ConstElementPtr
+ControlledDhcpv4Srv::commandLfcStartHandler(const string&, ConstElementPtr) {
+    if (LeaseMgrFactory::haveInstance()) {
+        return (LeaseMgrFactory::instance().lfcStartHandler());
+    }
+    return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED,
+                         "no lease backend"));
+}
+
 isc::data::ConstElementPtr
 ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     ControlledDhcpv4Srv* srv = ControlledDhcpv4Srv::getInstance();
@@ -1510,6 +1519,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("dhcp-disable",
         std::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("kea-lfc-start",
+        std::bind(&ControlledDhcpv4Srv::commandLfcStartHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("leases-reclaim",
         std::bind(&ControlledDhcpv4Srv::commandLeasesReclaimHandler, this, ph::_1, ph::_2));
 
@@ -1603,6 +1615,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("kea-lfc-start");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("subnet4-select-test");
         CommandMgr::instance().deregisterCommand("subnet4o6-select-test");

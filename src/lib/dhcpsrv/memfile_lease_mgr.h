@@ -1552,6 +1552,11 @@ public:
     /// @return Always return 0 as this function is a noop for not SQL backends.
     virtual size_t upgradeExtendedInfo4(const LeasePageSize& page_size) override;
 
+    /// @brief Handler for kea-lfc-start command.
+    ///
+    /// @returns Status of command.
+    virtual isc::data::ConstElementPtr lfcStartHandler() override;
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

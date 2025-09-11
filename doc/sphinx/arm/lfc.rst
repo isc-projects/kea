@@ -14,7 +14,8 @@ the files used to provide persistent storage for the memfile database
 backend. This service is written to run as a standalone process.
 
 While :iscman:`kea-lfc` can be started externally, there is usually no need to
-do so. :iscman:`kea-lfc` is run on a periodic basis by the Kea DHCP servers.
+do so. :iscman:`kea-lfc` is run on a periodic basis by the Kea DHCP servers,
+and since Kea 3.1.2 can be started using the ``kea-lfc-start`` command.
 
 The process operates on a set of files, using them to receive input and
 output of the lease entries and to indicate what stage the process is
