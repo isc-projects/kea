@@ -227,7 +227,7 @@ At the service level, three sections can be configured:
       It specifies an evaluation expression on the DHCP query packet.
 
    -  ``vendor`` -  since Kea 3.1.2 is the vendor id of the attribute.
-      It allways contents a string with the vendor name or an integer litteral.
+      It always contains a string with the vendor name or an integer literal.
 
     Attributes are supported only for the access service.
 
@@ -529,7 +529,7 @@ RADIUS dictionary. There are differences:
 
     * - Support for Attribute Data Types
 
-      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, abinary, byte, ether, short, signed, octets
+      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, binary, byte, ether, short, signed, octets
 
       - string (can simulate any other unsupported data type too), ipaddr, integer, date (interpreted as integer), ipv6addr, ipv6prefix
 
