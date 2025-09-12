@@ -1309,7 +1309,7 @@ LeaseMgr::byRemoteId6size() const {
 ConstElementPtr
 LeaseMgr::lfcStartHandler() {
     ostringstream msg;
-    msg << "lease backend `" << getName() << "' is not 'memfile'";
+    msg << "lease backend '" << getName() << "' is not 'memfile'";
     return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED, msg.str()));
 }
 

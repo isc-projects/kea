@@ -3581,8 +3581,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, keaLfcStartPersistFalse) {
 
     sendUnixCommand("{ \"command\" : \"kea-lfc-start\" }", response);
     std::string expected = "{ \"result\": 2, \"text\": ";
-    expected += "\"'persist` parameter of `memfile` lease backend ";
-    expected += "was configured to `false`\" }";
+    expected += "\"'persist' parameter of 'memfile' lease backend ";
+    expected += "was configured to 'false'\" }";
     EXPECT_EQ(expected, response);
 }
 

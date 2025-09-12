@@ -82,6 +82,20 @@ TEST_F(LeaseMgrTest, getLease6) {
                  MultipleRecords);
 }
 
+// Verify generic lfcStartHandler.
+TEST_F(LeaseMgrTest, lfcStartHandler) {
+
+    DatabaseConnection::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 2, \"text\": ";
+    expected += "\"lease backend 'concrete' is not 'memfile'\" }";
+    EXPECT_EQ(expected, response->str());
+}
+
 // Verify LeaseStatsQuery default construction
 TEST (LeaseStatsQueryTest, defaultCtor) {
     LeaseStatsQueryPtr qry;

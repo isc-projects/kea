@@ -106,80 +106,28 @@ public:
     using Memfile_LeaseMgr::buildExtendedInfoTables6;
 };
 
-/// @brief Test fixture class for @c Memfile_LeaseMgr
-class MemfileLeaseMgrTest : public GenericLeaseMgrTest {
+/// @brief Common part of test fixture classes managing lease files.
+class BaseMemfileLeaseMgrTest {
 public:
-    /// @brief memfile lease mgr test constructor
-    ///
-    /// Creates memfile and stores it in lmptr_ pointer
-    MemfileLeaseMgrTest() :
+    /// @brief constructor
+    BaseMemfileLeaseMgrTest() :
         io_service_(getIOService()),
         timer_mgr_(TimerMgr::instance()),
-        extra_files_(),
-        data_dir_env_var_("KEA_DHCP_DATA_DIR") {
-
-        // Reset the env variable.
-        data_dir_env_var_.setValue();
-
-        // Save the pre-test data dir and set it to the test directory.
-        CfgMgr::instance().clear();
-        original_datadir_ = CfgMgr::instance().getDataDir();
-        CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
-
+        extra_files_() {
         timer_mgr_->setIOService(io_service_);
         DatabaseConnection::setIOService(io_service_);
         ProcessSpawn::setIOService(io_service_);
 
         setenv("KEA_LFC_EXECUTABLE", KEA_LFC_EXECUTABLE, 1);
-
-        // Remove lease files and products of Lease File Cleanup.
-        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
-        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
-
-        // Reset staging extended info sanitizer to its default.
-        CfgMgr::instance().getStagingCfg()->getConsistency()->
-            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
-
-        MultiThreadingMgr::instance().setMode(false);
-        file::PathChecker::enableEnforcement(true);
-    }
-
-    /// @brief Reopens the connection to the backend.
-    ///
-    /// This function is called by unit tests to force reconnection of the
-    /// backend to check that the leases are stored and can be retrieved
-    /// from the storage.
-    ///
-    /// @param u Universe (V4 or V6)
-    virtual void reopen(Universe u) {
-        LeaseMgrFactory::destroy();
-        startBackend(u);
     }
 
     /// @brief destructor
-    ///
-    /// destroys lease manager backend.
-    virtual ~MemfileLeaseMgrTest() {
+    virtual ~BaseMemfileLeaseMgrTest() {
         // Stop TimerMgr worker thread if it is running.
         // Make sure there are no timers registered.
         timer_mgr_->unregisterTimers();
-        LeaseMgrFactory::destroy();
-        // Remove lease files and products of Lease File Cleanup.
-        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
-        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
-        // Remove other files.
-        removeOtherFiles();
-        // Reset staging extended info sanitizer to its default.
-        CfgMgr::instance().getStagingCfg()->getConsistency()->
-            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
-        // Disable multi-threading.
-        MultiThreadingMgr::instance().setMode(false);
 
         getIOService()->stopAndPoll();
-
-        // Revert to original data directory.
-        CfgMgr::instance().getDataDir(true, original_datadir_);
-        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Remove files being products of Lease File Cleanup.
@@ -219,6 +167,114 @@ public:
         std::ostringstream s;
         s << CfgMgr::instance().getDataDir() << "/" << filename;
         return (s.str());
+    }
+
+    /// @brief Single instance of IOService.
+    static asiolink::IOServicePtr getIOService() {
+        static asiolink::IOServicePtr io_service(new asiolink::IOService());
+        return (io_service);
+    }
+
+    /// @brief Waits for the specified process to finish.
+    ///
+    /// @param process An object which started the process.
+    /// @param timeout Timeout in seconds.
+    ///
+    /// @return true if the process ended, false otherwise
+    bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
+                        const uint8_t timeout) {
+        const uint32_t iterations_max = timeout * 1000;
+        IntervalTimer fast_path_timer(io_service_);
+        IntervalTimer timer(io_service_);
+        bool elapsed = false;
+        timer.setup([&]() {
+            io_service_->stop();
+            elapsed = true;
+        }, iterations_max, IntervalTimer::ONE_SHOT);
+
+        fast_path_timer.setup([&]() {
+            if (!lease_mgr.isLFCRunning()) {
+                io_service_->stop();
+            }
+        }, 1, IntervalTimer::REPEATING);
+
+        io_service_->run();
+        io_service_->stop();
+        io_service_->restart();
+        return (!elapsed);
+    }
+
+    /// @brief Pointer to the IO service used by the tests.
+    IOServicePtr io_service_;
+
+    /// @brief Pointer to the instance of the @c TimerMgr.
+    TimerMgrPtr timer_mgr_;
+
+    /// @brief List of names of other files to removed.
+    vector<string> extra_files_;
+};
+
+/// @brief Test fixture class for @c Memfile_LeaseMgr
+class MemfileLeaseMgrTest : public GenericLeaseMgrTest,
+                            public BaseMemfileLeaseMgrTest {
+public:
+    /// @brief memfile lease mgr test constructor
+    ///
+    /// Creates memfile and stores it in lmptr_ pointer
+    MemfileLeaseMgrTest() :
+        data_dir_env_var_("KEA_DHCP_DATA_DIR") {
+
+        // Reset the env variable.
+        data_dir_env_var_.setValue();
+
+        // Save the pre-test data dir and set it to the test directory.
+        CfgMgr::instance().clear();
+        original_datadir_ = CfgMgr::instance().getDataDir();
+        CfgMgr::instance().getDataDir(true, TEST_DATA_BUILDDIR);
+
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+
+        MultiThreadingMgr::instance().setMode(false);
+        file::PathChecker::enableEnforcement(true);
+    }
+
+    /// @brief Reopens the connection to the backend.
+    ///
+    /// This function is called by unit tests to force reconnection of the
+    /// backend to check that the leases are stored and can be retrieved
+    /// from the storage.
+    ///
+    /// @param u Universe (V4 or V6)
+    virtual void reopen(Universe u) {
+        LeaseMgrFactory::destroy();
+        startBackend(u);
+    }
+
+    /// @brief destructor
+    ///
+    /// destroys lease manager backend.
+    virtual ~MemfileLeaseMgrTest() {
+        LeaseMgrFactory::destroy();
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+        // Remove other files.
+        removeOtherFiles();
+        // Reset staging extended info sanitizer to its default.
+        CfgMgr::instance().getStagingCfg()->getConsistency()->
+            setExtendedInfoSanityCheck(CfgConsistency::EXTENDED_INFO_CHECK_FIX);
+        // Disable multi-threading.
+        MultiThreadingMgr::instance().setMode(false);
+
+        // Revert to original data directory.
+        CfgMgr::instance().getDataDir(true, original_datadir_);
+        file::PathChecker::enableEnforcement(true);
     }
 
     /// @brief Returns the configuration string for the backend.
@@ -266,41 +322,6 @@ public:
         io_service_->run();
         io_service_->stop();
         io_service_->restart();
-    }
-
-    /// @brief Waits for the specified process to finish.
-    ///
-    /// @param process An object which started the process.
-    /// @param timeout Timeout in seconds.
-    ///
-    /// @return true if the process ended, false otherwise
-    bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
-                        const uint8_t timeout) {
-        const uint32_t iterations_max = timeout * 1000;
-        IntervalTimer fast_path_timer(io_service_);
-        IntervalTimer timer(io_service_);
-        bool elapsed = false;
-        timer.setup([&]() {
-            io_service_->stop();
-            elapsed = true;
-        }, iterations_max, IntervalTimer::ONE_SHOT);
-
-        fast_path_timer.setup([&]() {
-            if (!lease_mgr.isLFCRunning()) {
-                io_service_->stop();
-            }
-        }, 1, IntervalTimer::REPEATING);
-
-        io_service_->run();
-        io_service_->stop();
-        io_service_->restart();
-        return (!elapsed);
-    }
-
-    /// @brief Single instance of IOService.
-    static asiolink::IOServicePtr getIOService() {
-        static asiolink::IOServicePtr io_service(new asiolink::IOService());
-        return (io_service);
     }
 
     /// @brief Generates a DHCPv4 lease with random content.
@@ -400,15 +421,6 @@ public:
         lease->cltt_ = timestamp;
         return (lease);
     }
-
-    /// @brief Pointer to the IO service used by the tests.
-    IOServicePtr io_service_;
-
-    /// @brief Pointer to the instance of the @c TimerMgr.
-    TimerMgrPtr timer_mgr_;
-
-    /// @brief List of names of other files to removed.
-    vector<string> extra_files_;
 
     /// @brief RAII wrapper for KEA_DHCP_DATA_DIR env variable.
     EnvVarWrapper data_dir_env_var_;
@@ -4543,7 +4555,8 @@ TEST_F(MemfileLeaseMgrTest, bigStats) {
 }
 
 /// @brief Test fixture which allows log content to be tested.
-class MemfileLeaseMgrLogTest : public LogContentTest {
+class MemfileLeaseMgrLogTest : public LogContentTest,
+                               public BaseMemfileLeaseMgrTest {
 public:
     /// @brief memfile lease mgr test constructor
     ///
@@ -4568,6 +4581,11 @@ public:
     /// destroys lease manager backend.
     virtual ~MemfileLeaseMgrLogTest() {
         LeaseMgrFactory::destroy();
+        // Remove lease files and products of Lease File Cleanup.
+        removeFiles(getLeaseFilePath("leasefile4_0.csv"));
+        removeFiles(getLeaseFilePath("leasefile6_0.csv"));
+        // Remove other files.
+        removeOtherFiles();
 
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
@@ -4594,12 +4612,12 @@ TEST_F(MemfileLeaseMgrLogTest, warnWhenSecurityDisabled) {
     pmap["universe"] = "6";
     pmap["persist"] = "true";
     pmap["lfc-interval"] = "0";
-    pmap["name"] = "/tmp/leasefile6_1.csv";
+    pmap["name"] = "/tmp/leasefile6_0.csv";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     EXPECT_EQ(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6),
-              "/tmp/leasefile6_1.csv");
+              "/tmp/leasefile6_0.csv");
 
     std::ostringstream oss;
     oss << "DHCPSRV_MEMFILE_PATH_SECURITY_WARNING Lease file path specified is NOT SECURE:"
@@ -4607,6 +4625,109 @@ TEST_F(MemfileLeaseMgrLogTest, warnWhenSecurityDisabled) {
         << CfgMgr::instance().getDataDir() << "'";
 
     EXPECT_EQ(1, countFile(oss.str()));
+}
+
+/// @brief Verifies that lfcStartHandler requires persist true.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPersistFalse) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "4";
+    pmap["persist"] = "false";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is false so there is no lease file...
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 2, \"text\": ";
+    expected += "\"'persist' parameter of 'memfile' lease backend ";
+    expected += "was configured to 'false'\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // No reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(0, countFile(msg));
+
+    // No start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(0, countFile(msg));
+}
+
+/// @brief Verifies that lfcStartHandler does not requires lfc-interval > 0.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "4";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "0";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is false so there is no lease file...
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 0, \"text\": \"kea-lfc started\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "environment not available to LFC";
+
+    // No reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(0, countFile(msg));
+
+    // Start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+}
+
+/// @brief Verifies that lfcStartHandler reschedules and starts lfc.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "4";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is false so there is no lease file...
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 0, \"text\": \"kea-lfc started\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // Wait for the LFC process to complete.
+    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+
+    // And make sure it has returned an exit status of 0.
+    EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
+        << "environment not available to LFC";
+
+    // Reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
 }
 
 }  // namespace

@@ -164,11 +164,6 @@ LFCSetup::setup(const uint32_t lfc_interval,
                 const boost::shared_ptr<CSVLeaseFile6>& lease_file6,
                 bool run_once_now) {
 
-    // If to nothing to do, punt
-    if (lfc_interval == 0 && !run_once_now) {
-        return;
-    }
-
     // Start preparing the command line for kea-lfc.
     std::string executable;
     char* c_executable = getenv(KEA_LFC_EXECUTABLE_ENV_NAME);
@@ -2565,8 +2560,8 @@ ConstElementPtr
 Memfile_LeaseMgr::lfcStartHandler() {
     if (!persistLeases(V4) && !persistLeases(V6)) {
         std::ostringstream msg;
-        msg << "'persist` parameter of `memfile` lease backend "
-            << "was configured to `false`";
+        msg << "'persist' parameter of 'memfile' lease backend "
+            << "was configured to 'false'";
         return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED, msg.str()));
     }
     MultiThreadingCriticalSection cs;
