@@ -2850,6 +2850,29 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestClass) {
     EXPECT_EQ(expected, response);
 }
 
+/// Verify that kea-lfc-start requires a lease backend.
+TEST_F(CtrlChannelDhcpv6SrvTest, keaLfcStartNoBackend) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv6Srv()));
+    ConstElementPtr command = createCommand("kea-lfc-start");
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = CommandMgr::instance().processCommand(command));
+    ASSERT_TRUE(response);
+    EXPECT_EQ("{ \"result\": 2, \"text\": \"no lease backend\" }",
+              response->str());
+}
+
+/// Verify that kea-lfc-start requires persist true.
+TEST_F(CtrlChannelDhcpv6SrvTest, keaLfcStartPersistFalse) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\" : \"kea-lfc-start\" }", response);
+    std::string expected = "{ \"result\": 2, \"text\": ";
+    expected += "\"'persist` parameter of `memfile` lease backend ";
+    expected += "was configured to `false`\" }";
+    EXPECT_EQ(expected, response);
+}
+
 /// Verify that concurrent connections over the control channel can be
 ///  established.
 /// @todo Future Kea 1.3 tickets will modify the behavior of the CommandMgr

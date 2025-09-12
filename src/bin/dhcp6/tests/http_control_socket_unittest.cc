@@ -582,6 +582,9 @@ public:
     // the origin-id.
     void testDhcpEnableOriginId();
 
+    // This test verifies that kea-lfc-start requires persist true.
+    void testKeaLfcStartPersistFalse();
+
     // This test verifies that the server can receive and process a
     // large command.
     void testLongCommand();
@@ -3516,6 +3519,27 @@ TEST_F(HttpCtrlChannelDhcpv6Test, dhcpEnableOriginId) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, dhcpEnableOriginId) {
     testDhcpEnableOriginId();
+}
+
+/// Verify that kea-lfc-start requires persist true.
+void
+BaseCtrlChannelDhcpv6Test::testKeaLfcStartPersistFalse() {
+    createHttpChannelServer();
+    std::string response;
+
+    sendHttpCommand("{ \"command\" : \"kea-lfc-start\" }", response);
+    std::string expected = "[ { \"result\": 2, \"text\": ";
+    expected += "\"'persist` parameter of `memfile` lease backend ";
+    expected += "was configured to `false`\" } ]";
+    EXPECT_EQ(expected, response);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, keaLfcStartPersistFalse) {
+    testKeaLfcStartPersistFalse();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, keaLfcStartPersistFalse) {
+    testKeaLfcStartPersistFalse();
 }
 
 /// Verify that concurrent connections over the HTTP control channel can be
