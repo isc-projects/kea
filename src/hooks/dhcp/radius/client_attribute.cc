@@ -658,7 +658,7 @@ AttrVsa::AttrVsa(const uint8_t type, const uint32_t vendor,
 }
 
 AttributePtr
-AttrVsa::fromText(const uint8_t type, const string& repr) {
+AttrVsa::fromText(const uint8_t /* type */, const string& /* repr */) {
     isc_throw(NotImplemented, "Can't decode vsa from text");
 }
 

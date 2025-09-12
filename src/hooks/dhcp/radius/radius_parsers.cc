@@ -109,7 +109,7 @@ RadiusConfigParser::parse(ElementPtr& config) {
         if (!AttrDefs::instance().getByType(1)) {
             uint32_t vendor = 0;
             try {
-              AttrDefs::instance().readDictionary(riref.dictionary_, vendor);
+                AttrDefs::instance().readDictionary(riref.dictionary_, vendor);
             } catch (const exception& ex) {
                 isc_throw(BadValue, "can't read radius dictionary: "
                           << ex.what());

@@ -813,7 +813,6 @@ private:
     std::string value_;
 };
 
-
 /// @brief Collection of attributes.
 ///
 /// Designed to not handle vendor attributes so can be keyed by type only.
@@ -839,12 +838,6 @@ public:
 
     /// @brief constructor.
     Attributes() : container_() {
-    }
-
-    /// @brief Copy constructor.
-    ///
-    /// @param other source attributes.
-    Attributes(const Attributes& other) : container_(other.container_) {
     }
 
     /// @brief Destructor.

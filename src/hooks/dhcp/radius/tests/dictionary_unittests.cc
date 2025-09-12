@@ -98,7 +98,7 @@ public:
     static const char* TEST_FILE;
 };
 
-const char* DictionaryTest::TEST_FILE  = "test-dictionary";
+const char* DictionaryTest::TEST_FILE = "test-dictionary";
 
 // Verifies standards definitions can be read from the dictionary.
 TEST_F(DictionaryTest, standard) {
@@ -160,11 +160,11 @@ TEST_F(DictionaryTest, parseLine) {
                      "0 is reserved at line 1");
     EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR"), BadValue,
                      "expected 2 tokens, got 1 at line 1");
-    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR  my-vendor 1"), BadValue,
+    EXPECT_THROW_MSG(parseLine("BEGIN-VENDOR my-vendor 1"), BadValue,
                      "expected 2 tokens, got 3 at line 1");
     EXPECT_THROW_MSG(parseLine("END-VENDOR", 1), BadValue,
                      "expected 2 tokens, got 1 at line 1");
-    EXPECT_THROW_MSG(parseLine("END-VENDOR  my-vendor 1", 1), BadValue,
+    EXPECT_THROW_MSG(parseLine("END-VENDOR my-vendor 1", 1), BadValue,
                      "expected 2 tokens, got 3 at line 1");
 
     EXPECT_THROW_MSG(parseLine("BEGIN-TLV my-vendor"), BadValue,
@@ -237,7 +237,7 @@ TEST_F(DictionaryTest, integerConstant) {
         "VENDOR DSL-Forum 3561",
         "BEGIN-VENDOR DSL-Forum",
         "ATTRIBUTE Agent-Circuit-Id 1 string",
-        "VALUE  Agent-Circuit-Id My-Value 1",
+        "VALUE Agent-Circuit-Id My-Value 1",
         "END-VENDOR DSL-Forum"
     };
     expected = "attribute 'Agent-Circuit-Id' in vendor 3561";
@@ -321,7 +321,7 @@ TEST_F(DictionaryTest, beginEndVendor) {
     list<string> begin_unknown = {
         "BEGIN-VENDOR foo"
     };
-    string expected =  "unsupported embedded begin vendor, ";
+    string expected = "unsupported embedded begin vendor, ";
     expected += "1 is still open at line 1";
     EXPECT_THROW_MSG(parseLines(begin_unknown, 1), BadValue, expected);
     // Value must be a known name or integer.
@@ -362,7 +362,7 @@ TEST_F(DictionaryTest, beginEndVendor) {
         "ATTRIBUTE Actual-Data-Rate-Upstream 129 integer"
     };
     EXPECT_NO_THROW_LOG(parseLines(positive_n, 0, 3561));
-    auto adru =  AttrDefs::instance().getByType(129, 3561);
+    auto adru = AttrDefs::instance().getByType(129, 3561);
     ASSERT_TRUE(adru);
     EXPECT_EQ(129, adru->type_);
     EXPECT_EQ(PW_TYPE_INTEGER, adru->value_type_);
@@ -421,7 +421,7 @@ TEST_F(DictionaryTest, hookAttributes) {
 // Verifies the $INCLUDE entry.
 TEST_F(DictionaryTest, include) {
     list<string> include;
-    include.push_back("# Including the dictonary");
+    include.push_back("# Including the dictionary");
     include.push_back(string("$INCLUDE ") + string(TEST_DICTIONARY));
     include.push_back("# Dictionary included");
     include.push_back("VENDOR ISC 2495");

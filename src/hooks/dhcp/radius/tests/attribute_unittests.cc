@@ -243,8 +243,7 @@ TEST_F(AttributeTest, attrInt) {
     EXPECT_THROW_MSG(attr->toIpv6Prefix(), TypeError,
                      "the attribute value type must be ipv6prefix, not integer");
     EXPECT_THROW_MSG(attr->toIpv6PrefixLen(), TypeError,
-                     "the attribute value type must be ipv6prefix, not integer"
-);
+                     "the attribute value type must be ipv6prefix, not integer");
     EXPECT_THROW_MSG(attr->toVendorId(), TypeError,
                      "the attribute value type must be vsa, not integer");
     EXPECT_THROW_MSG(attr->toVsaData(), TypeError,
@@ -584,8 +583,8 @@ TEST_F(AttributeTest, attrVsa) {
                                         too_big_binary), BadValue,
                      "value is too large 250 > 249");
 
-    vector<uint8_t> too_bigvalue(MAX_STRING_LEN + 1, 0x87);
-    EXPECT_THROW_MSG(Attribute::fromBytes(def, too_bigvalue), BadValue,
+    vector<uint8_t> too_big_value(MAX_STRING_LEN + 1, 0x87);
+    EXPECT_THROW_MSG(Attribute::fromBytes(def, too_big_value), BadValue,
                      "value is too large 254 > 253");
 
     EXPECT_THROW_MSG(attr->toString(), TypeError,

@@ -235,7 +235,7 @@ At the service level, three sections can be configured:
 
    Vendor-Specific attribute can be specified in two ways: using a ``raw``
    value which must include the vendor and the vsa data, note that the ``data``
-   value is no longer supported sine Kea 3.1.2, and the ``expr`` value
+   value is no longer supported since Kea 3.1.2, and the ``expr`` value
    is evaluated to the content of the attribute. The second way was added
    by 3.1.2 and allows to specify a vendor attribute which is automatically
    embedded into a Vendor-Specific attribute.

@@ -76,7 +76,7 @@ public:
     static const char* TEST_FILE;
 };
 
-const char* ConfigTest::TEST_FILE  = "test-dictonary";
+const char* ConfigTest::TEST_FILE = "test-dictionary";
 
 // Verify that a configuration must be a map.
 TEST_F(ConfigTest, notMap) {
