@@ -301,7 +301,9 @@ AttrString::toBytes() const {
     output.resize(2 + getValueLen());
     output[0] = getType();
     output[1] = 2 + getValueLen();
-    memmove(&output[2], &value_[0], output.size() - 2);
+    if (output.size() > 2) {
+        memmove(&output[2], &value_[0], output.size() - 2);
+    }
     return (output);
 }
 

@@ -257,3 +257,7 @@ VALUE           Acct-Terminate-Cause    Host-Request            18
 
 #$INCLUDE	foobar
 #VENDOR		DSL-Forum		3561
+#BEGIN-VENDOR	DSL-Forum
+#ATTRIBUTE	Agent-Circuit-Id	1	string
+#END-VENDOR	DSL-Forum
+
