@@ -176,6 +176,15 @@ Daemon::getPIDFileName() const {
     return ("");
 }
 
+std::string
+Daemon::getPIDLockName() const {
+    if (pid_file_) {
+        return (pid_file_->getLockname());
+    }
+
+    return ("");
+}
+
 void
 Daemon::setPIDFileName(const std::string& pid_file_name) {
     if (pid_file_) {
@@ -226,6 +235,13 @@ Daemon::createPIDFile(int pid) {
     // using the default name.
     if (!pid_file_) {
         setPIDFileName(makePIDFileName());
+    }
+
+    // Acquire a lock for check and write operations.
+    util::PIDLock pid_lock(getPIDLockName());
+    if (!pid_lock.isLocked()) {
+        isc_throw(DaemonPIDExists, "Daemon::createPIDFile: can't lock, "
+                  "PID lock file: " << getPIDLockName());
     }
 
     // If we find a pre-existing file containing a live PID we bail.

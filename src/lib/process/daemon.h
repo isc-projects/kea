@@ -189,6 +189,10 @@ public:
     /// @return text string
     std::string getPIDFileName() const;
 
+    /// @brief Returns the current PID lock file name
+    /// @return text string
+    std::string getPIDLockName() const;
+
     /// @brief Sets PID file name
     ///
     /// If this method is called prior to calling createPIDFile,
@@ -202,11 +206,13 @@ public:
     /// @brief Creates the PID file
     ///
     /// If the PID file name has not been previously set, the method
-    /// uses manufacturePIDFileName() to set it.  If the PID file
+    /// uses makePIDFileName() to set it.  If the PID file
     /// name refers to an existing file whose contents are a PID whose
     /// process is still alive, the method will throw a DaemonPIDExists
     /// exception.  Otherwise, the file created (or truncated) and
     /// the given pid (if not zero) is written to the file.
+    /// As there is a race condition between the check and write phases
+    /// a lock is taken.
     ///
     /// @param pid PID to write to the file if not zero, otherwise the
     /// PID of the current process is used.

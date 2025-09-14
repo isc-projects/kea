@@ -83,7 +83,10 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
     PIDFile pid_file(pid_file_);
 
     try {
-        if (pid_file.check()) {
+        // Acquire a lock for check and write operations.
+        PIDLock pid_lock(pid_file.getLockname());
+
+        if (!pid_lock.isLocked() || pid_file.check()) {
             // Already running instance, bail out
             LOG_FATAL(lfc_logger, LFC_RUNNING);
             return;

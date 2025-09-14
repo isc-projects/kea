@@ -42,10 +42,12 @@ public:
     /// @brief Constructor
     ///
     /// @param filename PID filename.
-    PIDFile(const std::string& filename);
+    PIDFile(const std::string& filename)
+        : filename_(filename) {
+    }
 
     /// @brief Destructor
-    ~PIDFile();
+    virtual ~PIDFile() = default;
 
     /// @brief Read the PID in from the file and check it.
     ///
@@ -55,6 +57,8 @@ public:
     /// If the file exists but can't be read or it doesn't have
     /// the proper format treat it as the process existing.
     ///
+    /// The PID file should be locked to avoid a race condition.
+    ///
     /// @return returns the PID if it is in, 0 otherwise.
     ///
     /// @throw throws PIDCantReadPID if it was able to open the file
@@ -63,6 +67,8 @@ public:
 
     /// @brief Write the PID to the file.
     ///
+    /// The PID file must be locked to avoid a race condition.
+    ///
     /// @param pid the pid to write to the file.
     ///
     /// @throw throws PIDFileError if it can't open or write to the PID file.
@@ -70,10 +76,14 @@ public:
 
     /// @brief Get PID of the current process and write it to the file.
     ///
+    /// The PID file must be locked to avoid a race condition.
+    ///
     /// @throw throws PIDFileError if it can't open or write to the PID file.
     void write() const;
 
     /// @brief Delete the PID file.
+    ///
+    /// This is an atomic operation not subject to a race condition.
     ///
     /// @throw throws PIDFileError if it can't delete the PID file
     void deleteFile() const;
@@ -83,6 +93,11 @@ public:
         return (filename_);
     }
 
+    /// @brief  Returns the path to the lock file.
+    std::string getLockname() const {
+        return (filename_ + ".lock");
+    }
+
 private:
     /// @brief PID filename
     std::string filename_;
@@ -90,6 +105,37 @@ private:
 
 /// @brief Defines a shared pointer to a PIDFile
 typedef boost::shared_ptr<PIDFile> PIDFilePtr;
+
+/// @brief RAII device to handle a lock file to avoid race conditions.
+class PIDLock {
+public:
+    /// @brief Constructor
+    ///
+    /// Try to get a lock.
+    ///
+    /// @param lockname Lock filename.
+    PIDLock(const std::string& lockname);
+
+    /// @brief Destructor
+    ///
+    /// Release the lock when taken and delete the lock file.
+    ~PIDLock();
+
+    /// @brief Return the lock status.
+    bool isLocked() {
+        return (locked_);
+    }
+
+private:
+    /// @brief Name of the Lock file.
+    std::string lockname_;
+
+    /// @brief File descriptor to the lock file.
+    int fd_;
+
+    /// @brief Lock status.
+    bool locked_;
+};
 
 } // namespace isc::util
 } // namespace isc

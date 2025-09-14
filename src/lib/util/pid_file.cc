@@ -11,16 +11,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <cerrno>
+#include <sys/file.h>
 
 namespace isc {
 namespace util {
-
-PIDFile::PIDFile(const std::string& filename)
-    : filename_(filename) {
-}
-
-PIDFile::~PIDFile() {
-}
 
 int
 PIDFile::check() const {
@@ -87,6 +81,46 @@ PIDFile::deleteFile() const {
         isc_throw(PIDFileError, "Unable to delete PID file '"
                   << filename_ << "'");
     }
+}
+
+PIDLock::PIDLock(const std::string& lockname)
+    : lockname_(lockname), fd_(-1), locked_(false) {
+    // Open the lock file.
+    fd_ = open(lockname_.c_str(), O_RDONLY | O_CREAT, 0600);
+    if (fd_ == -1) {
+        if (errno == ENOENT) {
+            // Ignoring missing component in the path.
+            locked_ = true;
+            return;
+        }
+        std::string errmsg = strerror(errno);
+        isc_throw(PIDFileError, "cannot create pid lockfile '"
+                  << lockname_ << "': " << errmsg);
+    }
+    // Try to acquire the lock. If we can't somebody else is actively
+    // using it.
+    int ret = flock(fd_, LOCK_EX | LOCK_NB);
+    if (ret == 0) {
+        locked_ = true;
+        return;
+    }
+    if (errno != EWOULDBLOCK) {
+        std::string errmsg = strerror(errno);
+        isc_throw(PIDFileError, "cannot lock pid lockfile '"
+                  << lockname_ << "': " << errmsg);
+    }
+}
+
+PIDLock::~PIDLock() {
+    if (fd_ != -1) {
+        if (locked_) {
+            // For symmetry as the close releases the lock...
+            static_cast<void>(flock(fd_, LOCK_UN));
+        }
+        static_cast<void>(close(fd_));
+    }
+    fd_ = -1;
+    locked_ = false;
 }
 
 } // namespace isc::util

@@ -2267,7 +2267,8 @@ Memfile_LeaseMgr::isLFCProcessRunning(const std::string file_name, Universe u) {
         lease_file = Memfile_LeaseMgr::getDefaultLeaseFilePath(u);
     }
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(lease_file, FILE_PID));
-    return (pid_file.check());
+    PIDLock pid_lock(pid_file.getLockname());
+    return (!pid_lock.isLocked() || pid_file.check());
 }
 
 std::string
