@@ -234,7 +234,7 @@ PgSqlConnection::initializeSchema(const ParameterMap& parameters) {
     ProcessSpawn kea_admin(ProcessSpawn::SYNC, KEA_ADMIN_, kea_admin_parameters, vars,
                            /* inherit_env = */ true);
     DB_LOG_INFO(PGSQL_INITIALIZE_SCHEMA)
-        .arg(kea_admin.getCommandLine(std::unordered_set<std::string>{"--user", "--password"}));
+        .arg(kea_admin.getCommandLine(std::unordered_set<std::string>{"--password"}));
     pid_t const pid(kea_admin.spawn());
     if (kea_admin.isRunning(pid)) {
         isc_throw(SchemaInitializationFailed, "kea-admin still running");

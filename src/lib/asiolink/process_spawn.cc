@@ -93,6 +93,7 @@ public:
     ~ProcessSpawnImpl();
 
     /// @brief Returns full command line, including arguments, for the process.
+    ///
     /// @param redact_args list of arguments to redact.
     std::string getCommandLine(std::unordered_set<std::string> redact_args = {}) const;
 

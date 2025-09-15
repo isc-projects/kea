@@ -582,27 +582,25 @@ TEST_F(ProcessSpawnTest, inheritEnvWithParentVarSync) {
 // This test verifies that the full command line for the process is
 // returned with specific arguments redacted.
 TEST_F(ProcessSpawnTest, getCommandLineRedacted) {
-    {
-        // Case 1: arguments present.
-        ProcessArgs args;
-        args.push_back("db-init");
-        args.push_back("mysql");
-        args.push_back("--host");
-        args.push_back("example.com");
-        args.push_back("--user");
-        args.push_back("someone");
-        args.push_back("--password");
-        args.push_back("sesame");
-        args.push_back("--other");
-        args.push_back("stuff");
-        args.push_back("foo");
+    // Case 1: arguments present.
+    ProcessArgs args;
+    args.push_back("db-init");
+    args.push_back("mysql");
+    args.push_back("--host");
+    args.push_back("example.com");
+    args.push_back("--user");
+    args.push_back("someone");
+    args.push_back("--password");
+    args.push_back("sesame");
+    args.push_back("--other");
+    args.push_back("stuff");
+    args.push_back("foo");
 
-        ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
-        std::string expected = TEST_SCRIPT_SH;
-        expected += " db-init mysql --host example.com --user ***** --password ***** --other stuff foo";
-        std::unordered_set<std::string> redact_args = { "--user", "--password", "--not-there" };
-        EXPECT_EQ(expected, process.getCommandLine(redact_args));
-    }
+    ProcessSpawn process(ProcessSpawn::ASYNC, TEST_SCRIPT_SH, args);
+    std::string expected = TEST_SCRIPT_SH;
+    expected += " db-init mysql --host example.com --user ***** --password ***** --other stuff foo";
+    std::unordered_set<std::string> redact_args = { "--user", "--password", "--not-there" };
+    EXPECT_EQ(expected, process.getCommandLine(redact_args));
 }
 
 } // end of anonymous namespace
