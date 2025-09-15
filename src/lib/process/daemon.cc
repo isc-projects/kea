@@ -23,6 +23,7 @@
 #include <errno.h>
 
 using namespace isc::data;
+using namespace isc::util;
 using namespace isc::util::file;
 
 /// @brief provides default implementation for basic daemon operations
@@ -238,7 +239,7 @@ Daemon::createPIDFile(int pid) {
     }
 
     // Acquire a lock for check and write operations.
-    util::PIDLock pid_lock(getPIDLockName());
+    PIDLock pid_lock(getPIDLockName());
     if (!pid_lock.isLocked()) {
         isc_throw(DaemonPIDExists, "Daemon::createPIDFile: can't lock, "
                   "PID lock file: " << getPIDLockName());

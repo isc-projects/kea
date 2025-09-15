@@ -127,7 +127,7 @@ public:
     }
 
 private:
-    /// @brief Name of the Lock file.
+    /// @brief Name of the lock file.
     std::string lockname_;
 
     /// @brief File descriptor to the lock file.
