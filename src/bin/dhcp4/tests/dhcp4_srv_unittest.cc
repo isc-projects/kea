@@ -30,6 +30,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <process/redact_config.h>
@@ -4944,6 +4945,77 @@ TEST_F(Dhcpv4SrvTest, statisticsUnknownRcvd) {
     // This statistic must be present and must be set to 1.
     ASSERT_TRUE(drop_stat);
     EXPECT_EQ(1, drop_stat->getInteger().first);
+}
+
+// Test checks if reception of a packet when the service is disabled
+// increases pkt4-service-disabled and pkt4-receive-drop.
+TEST_F(Dhcpv4SrvTest, receiveServiceDisabledStat) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Apply the configuration we just received.
+    configure(CONFIGS[0]);
+
+    // Let's get a simple DHCPDISCOVER...
+    Pkt4Ptr pkt = PktCaptures::captureRelayedDiscover();
+
+    // And disable the service.
+    ASSERT_TRUE(srv_->network_state_);
+    srv_->network_state_->disableService(NetworkState::USER_COMMAND);
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(pkt);
+    srv_->run();
+
+    // All expected statistics must be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
+    ObservationPtr parse_fail = mgr.getObservation("pkt4-service-disabled");
+    ObservationPtr recv_drop = mgr.getObservation("pkt4-receive-drop");
+    ASSERT_TRUE(pkt4_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
+    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, recv_drop->getInteger().first);
+}
+
+// Test checks if reception of a malformed packet increases pkt4-parse-failed
+// and pkt4-receive-drop
+TEST_F(Dhcpv4SrvTest, receiveParseFailedStat) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    // Apply the configuration we just received.
+    configure(CONFIGS[0]);
+
+    // Let's get a simple DHCPDISCOVER...
+    Pkt4Ptr pkt = PktCaptures::captureRelayedDiscover();
+
+    // And pretend its packet is only 100 bytes long.
+    pkt->data_.resize(100);
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(pkt);
+    srv_->run();
+
+    // All expected statistics must be present.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
+    ObservationPtr parse_fail = mgr.getObservation("pkt4-parse-failed");
+    ObservationPtr recv_drop = mgr.getObservation("pkt4-receive-drop");
+    ASSERT_TRUE(pkt4_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
+    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 
 // This test verifies that the server is able to handle an empty client-id

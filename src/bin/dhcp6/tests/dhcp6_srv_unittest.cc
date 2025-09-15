@@ -29,6 +29,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/utils.h>
 #include <process/redact_config.h>
@@ -3624,6 +3625,52 @@ TEST_F(Dhcpv6SrvTest, receiveDhcpv4QueryStat) {
 // Test checks if pkt6-addr-reg-inform-received is bumped up correctly.
 TEST_F(Dhcpv6SrvTest, receiveAddrRegInformStat) {
     testReceiveStats(DHCPV6_ADDR_REG_INFORM, "pkt6-addr-reg-inform-received");
+}
+
+// Test checks if reception of a packet when the service is disabled
+// increases pkt6-service-disabled and pkt6-receive-drop.
+TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+
+    // Let's get a simple SOLICIT...
+    Pkt6Ptr pkt = PktCaptures::captureSimpleSolicit();
+
+    // And disable the service.
+    ASSERT_TRUE(srv_->network_state_);
+    srv_->network_state_->disableService(NetworkState::USER_COMMAND);
+
+    // Check that the tested statistics is initially set to 0
+    ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
+    ObservationPtr parse_fail = mgr.getObservation("pkt6-service-disabled");
+    ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+    EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(0, parse_fail->getInteger().first);
+    EXPECT_EQ(0, recv_drop->getInteger().first);
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(pkt);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv_->run();
+
+    // All expected statistics must be present.
+    pkt6_rcvd = mgr.getObservation("pkt6-received");
+    parse_fail = mgr.getObservation("pkt6-service-disabled");
+    recv_drop = mgr.getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(pkt6_rcvd);
+    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(recv_drop);
+
+    // They also must have expected values.
+    EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
+    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 
 // Test checks if reception of a malformed packet increases pkt6-parse-failed

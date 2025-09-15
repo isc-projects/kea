@@ -319,6 +319,7 @@ public:
     using Dhcpv4Srv::alloc_engine_;
     using Dhcpv4Srv::server_port_;
     using Dhcpv4Srv::client_port_;
+    using Dhcpv4Srv::network_state_;
 
     /// @brief Mutex to protect the packet buffers.
     std::mutex mutex_;

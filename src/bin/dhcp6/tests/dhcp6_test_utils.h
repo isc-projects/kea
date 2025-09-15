@@ -406,6 +406,7 @@ public:
     using Dhcpv6Srv::initContext;
     using Dhcpv6Srv::server_port_;
     using Dhcpv6Srv::client_port_;
+    using Dhcpv6Srv::network_state_;
 
     /// @brief packets we pretend to receive.
     ///
