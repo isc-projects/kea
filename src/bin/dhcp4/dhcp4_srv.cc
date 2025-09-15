@@ -1245,6 +1245,13 @@ Dhcpv4Srv::runOne() {
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getLocalPort())
                 .arg(query->getIface());
+
+            // Log reception of the packet. We need to increase it early, as
+            // any failures in unpacking will cause the packet to be dropped.
+            // We will increase type specific statistic further down the road.
+            // See processStatsReceived().
+            isc::stats::StatsMgr::instance().addValue("pkt4-received",
+                                                      static_cast<int64_t>(1));
         }
 
         // We used to log that the wait was interrupted, but this is no longer
@@ -1325,13 +1332,6 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
 
     // All packets belong to ALL.
     query->addClass("ALL");
-
-    // Log reception of the packet. We need to increase it early, as any
-    // failures in unpacking will cause the packet to be dropped. We
-    // will increase type specific statistic further down the road.
-    // See processStatsReceived().
-    isc::stats::StatsMgr::instance().addValue("pkt4-received",
-                                              static_cast<int64_t>(1));
 
     bool skip_unpack = false;
 
