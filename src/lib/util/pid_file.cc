@@ -118,6 +118,7 @@ PIDLock::~PIDLock() {
             static_cast<void>(flock(fd_, LOCK_UN));
         }
         static_cast<void>(close(fd_));
+        static_cast<void>(remove(lockname_.c_str()));
     }
     fd_ = -1;
     locked_ = false;

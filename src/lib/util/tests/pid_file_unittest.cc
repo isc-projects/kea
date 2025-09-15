@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <util/filesystem.h>
 #include <util/pid_file.h>
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -157,7 +158,9 @@ TEST_F(PIDFileTest, pidNotInUse) {
     }
 
     // get a pid between 40000 and 50000
-    pid = randomizePID(10000, 40000);
+    do {
+        pid = randomizePID(10000, 40000);
+    } while (kill(pid, 0) == 0);
 
     // write it
     pid_file.write(pid);
@@ -217,6 +220,8 @@ TEST_F(PIDFileTest, lock) {
 
     PIDLock lock2(absolutePath(TESTLOCKNAME));
     EXPECT_FALSE(lock2.isLocked());
+
+    EXPECT_TRUE(file::isFile(absolutePath(TESTLOCKNAME)));
 }
 
 /// @brief Test getting and releasing a lock.
@@ -229,6 +234,7 @@ TEST_F(PIDFileTest, lock2) {
         PIDLock lock2(absolutePath(TESTLOCKNAME));
         EXPECT_TRUE(lock2.isLocked());
     }
+    EXPECT_FALSE(file::isFile(absolutePath(TESTLOCKNAME)));
 }
 
 /// @brief Test ignoring a path with a missing component.

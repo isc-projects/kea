@@ -198,7 +198,7 @@ Daemon::setPIDFileName(const std::string& pid_file_name) {
                   " file name may not be empty");
     }
 
-    pid_file_.reset(new util::PIDFile(pid_file_name));
+    pid_file_.reset(new PIDFile(pid_file_name));
 }
 
 std::string

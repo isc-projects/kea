@@ -107,6 +107,10 @@ private:
 typedef boost::shared_ptr<PIDFile> PIDFilePtr;
 
 /// @brief RAII device to handle a lock file to avoid race conditions.
+/// @note If there is a missing component in the path the lock is considered
+/// as being acquired: this does not change the behavior of PIDFile methods
+/// (check() will succeed and write() throw) and does not require unit test
+/// updates as if the constructor throws.
 class PIDLock {
 public:
     /// @brief Constructor
