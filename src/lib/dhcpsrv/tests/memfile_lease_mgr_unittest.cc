@@ -4661,10 +4661,10 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPersistFalse) {
 /// @brief Verifies that lfcStartHandler does not requires lfc-interval > 0.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
     DatabaseConnection::ParameterMap pmap;
-    pmap["universe"] = "4";
+    pmap["universe"] = "6";
     pmap["persist"] = "true";
     pmap["lfc-interval"] = "0";
-    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
     // Persist is false so there is no lease file...

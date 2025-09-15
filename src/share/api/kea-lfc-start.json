@@ -2,7 +2,7 @@
     "access": "write",
     "avail": "3.1.2",
     "brief": [
-        "This command starts the kea-lfc process which cleas nup the lease file. ",
+        "This command starts the kea-lfc process which cleans up the lease file. ",
         "This command does not take any parameters."
     ],
     "cmd-syntax": [
