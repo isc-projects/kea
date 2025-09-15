@@ -241,6 +241,7 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-reply-sent",
     "pkt6-dhcpv4-response-sent",
     "pkt6-addr-reg-reply-sent",
+    "pkt6-service-disabled",
     "pkt6-parse-failed",
     "pkt6-receive-drop",
     "v6-allocation-fail",
@@ -763,6 +764,11 @@ Dhcpv6Srv::runOne() {
     if (!network_state_->isServiceEnabled()) {
         LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DHCP_DISABLED)
             .arg(query->getLabel());
+        // Increase the statistics of service disabled and dropped packets.
+        StatsMgr::instance().addValue("pkt6-service-disabled",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {

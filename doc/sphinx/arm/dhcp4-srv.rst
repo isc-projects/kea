@@ -7373,6 +7373,10 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | ``pkt4-nak-sent`` should be close  |
    |                                                    |                | to ``pkt4-request-received``.      |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-service-disabled                              | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped when the DHCP service |
+   |                                                    |                | was disabled.                      |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-parse-failed                                  | integer        | Number of incoming packets that    |
    |                                                    |                | could not be parsed. A non-zero    |
    |                                                    |                | value of this statistic indicates  |
@@ -7779,6 +7783,11 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | leased to another client, this     |
    |                                                    |                | counter is increased by 1.         |
    +----------------------------------------------------+----------------+------------------------------------+
+
+Dropped incoming packets can be counted in the ``pkt4-receive-drop`` and
+a second counter detailing the drop cause:
+- ``pkt4-service-disabled`` - DHCP service is disabled
+- ``pkt4-parse-failed`` - packet parsing raised a fatal error
 
 .. note::
 

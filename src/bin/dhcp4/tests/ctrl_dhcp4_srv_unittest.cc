@@ -628,6 +628,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, controlChannelStats) {
         "pkt4-offer-sent",
         "pkt4-ack-sent",
         "pkt4-nak-sent",
+        "pkt4-service-disabled",
         "pkt4-parse-failed",
         "pkt4-receive-drop",
         "v4-allocation-fail",

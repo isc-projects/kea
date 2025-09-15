@@ -334,6 +334,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616348"
                ]
            ],
+           "pkt4-service-disabled": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-unknown-received": [
                [
                    0,
@@ -640,6 +646,12 @@ or
                ]
            ],
            "pkt6-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-service-disabled": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"
@@ -1056,6 +1068,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616348"
                ]
            ],
+           "pkt4-service-disabled": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-unknown-received": [
                [
                    0,
@@ -1278,6 +1296,12 @@ or
                ]
            ],
            "pkt6-sent": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-service-disabled": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"

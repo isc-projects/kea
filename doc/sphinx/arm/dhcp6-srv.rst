@@ -6952,6 +6952,10 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | server's server ID, or the packet  |
    |                                                   |                | is malformed.                      |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-service-disabled                             | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped when the DHCP service |
+   |                                                   |                | was disabled.                      |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-parse-failed                                 | integer        | Number of incoming packets that    |
    |                                                   |                | could not be parsed. A non-zero    |
    |                                                   |                | value of this statistic indicates  |
@@ -7679,6 +7683,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | separately, and is reset during a  |
    |                                                   |                | reconfiguration event.             |
    +---------------------------------------------------+----------------+------------------------------------+
+
+Dropped incoming packets can be counted in the ``pkt6-receive-drop`` and
+a second counter detailing the drop cause:
+- ``pkt6-service-disabled`` - DHCP service is disabled
+- ``pkt6-parse-failed`` - packet parsing raised a fatal error
 
 .. note::
 

@@ -181,6 +181,7 @@ std::set<std::string> dhcp4_statistics = {
     "pkt4-offer-sent",
     "pkt4-ack-sent",
     "pkt4-nak-sent",
+    "pkt4-service-disabled",
     "pkt4-parse-failed",
     "pkt4-receive-drop",
     "v4-allocation-fail",
@@ -1284,6 +1285,11 @@ Dhcpv4Srv::runOne() {
     if (!network_state_->isServiceEnabled()) {
         LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
+        // Increase the statistics of service disabled and dropped packets.
+        isc::stats::StatsMgr::instance().addValue("pkt4-service-disabled",
+                                                  static_cast<int64_t>(1));
+        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {
