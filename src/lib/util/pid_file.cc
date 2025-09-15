@@ -55,7 +55,7 @@ PIDFile::write() const {
 
 void
 PIDFile::write(int pid) const {
-  std::ofstream fs(filename_.c_str(), std::ofstream::trunc);
+    std::ofstream fs(filename_.c_str(), std::ofstream::trunc);
 
     if (!fs.is_open()) {
         isc_throw(PIDFileError, "Unable to open PID file '"
