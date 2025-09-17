@@ -972,6 +972,8 @@ public:
     ///
     /// @return Null or a map with the lease file name to add to
     /// status-get command output.
+    ///
+    /// E.g. { "csv-lease-file": "/var/lib/kea/kea-leases4.csv" }
     virtual data::ElementPtr getStatus() const override;
 
     //@}

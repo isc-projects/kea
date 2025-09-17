@@ -1,5 +1,5 @@
 [func]		fdupont
-	When Kea is configured to use a CSV backup file for leases,
-	the "status-get" command returns its location is the
-	"csv-lease-file" entry.
+	When Kea is configured to use the memfile lease backend,
+	the "status-get" command returns the location of the
+	CVS backup file in the "csv-lease-file" entry.
 	(Gitlab #2305)
