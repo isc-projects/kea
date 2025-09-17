@@ -331,7 +331,7 @@ ProcessSpawnImpl::getCommandLine(std::unordered_set<std::string> redact_args /* 
             s << " " << "*****";
             redact_next = false;
         } else {
-            if (redact_args.contains(args_[i])) {
+            if (redact_args.count(args_[i])) {
                 redact_next = true;
             }
 
