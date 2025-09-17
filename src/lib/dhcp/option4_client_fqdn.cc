@@ -143,7 +143,8 @@ Option4ClientFqdnImpl(const uint8_t flags,
 Option4ClientFqdnImpl::Option4ClientFqdnImpl(OptionBufferConstIter first,
                                              OptionBufferConstIter last)
     : rcode1_(Option4ClientFqdn::RCODE_CLIENT()),
-      rcode2_(Option4ClientFqdn::RCODE_CLIENT()) {
+      rcode2_(Option4ClientFqdn::RCODE_CLIENT()),
+      domain_name_type_(Option4ClientFqdn::PARTIAL) {
     parseWireData(first, last);
     // Verify that flags value was correct. This constructor is used to parse
     // incoming packet, so don't check MBZ bits. They are ignored because we
