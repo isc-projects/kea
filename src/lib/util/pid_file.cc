@@ -9,6 +9,7 @@
 #include <util/pid_file.h>
 
 #include <cerrno>
+#include <cstring>
 
 #include <fcntl.h>
 #include <signal.h>
