@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/process_spawn.h>
 #include <exceptions/exceptions.h>
 #include <cc/data.h>
 #include <process/daemon.h>
@@ -18,6 +19,7 @@
 #include <sys/wait.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::process;
 using namespace isc::data;
 
@@ -256,26 +258,10 @@ TEST_F(DaemonTest, createPIDFile) {
 TEST_F(DaemonTest, createPIDFileOverwrite) {
     DaemonImpl instance;
 
-    // We're going to use fork to generate a PID we KNOW is dead.
-    int pid = fork();
-    ASSERT_GE(pid, 0);
-
-    if (pid == 0) {
-        char name[] = TEST_SCRIPT_SH;
-        char* argv[] = { name, 0 };
-        char* envp[] = { 0 };
-        execve(name, argv, envp);
-        _exit(0);
-    }
-
-    // Back in the parent test, we need to wait for the child to die
-    // As with debugging waitpid() can be interrupted ignore EINTR.
-    int stat;
-    int ret;
-    do {
-        ret = waitpid(pid, &stat, 0);
-    } while ((ret == -1) && (errno == EINTR));
-    ASSERT_EQ(ret, pid);
+    // We're going to generate a PID we KNOW is dead.
+    ProcessSpawn process(ProcessSpawn::SYNC, TEST_SCRIPT_SH);
+    pid_t pid = 0;
+    ASSERT_NO_THROW(pid = process.spawn());
 
     // Ok, so we should now have a PID that we know to be dead.
     // Let's use it to create a PID file.
