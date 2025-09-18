@@ -155,6 +155,11 @@ Now it's time to publish the code.
     1. Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
        1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
        1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
+1. Create a signed tag. Run QA script [sign-tag.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign-tag.py).
+    1. [ ] Once for `isc-projects/kea`.
+    1. [ ] Once for `isc-private/kea-premium`.
+    * Example command: `./sign-tag.py --project isc-projects/kea --tag Kea-2.3.4 --branch master --key 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
+    * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
 1. [ ] Upload final tarballs to repo.isc.org.
     1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
     1. Click `Build with Parameters`.
