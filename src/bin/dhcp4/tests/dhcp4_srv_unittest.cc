@@ -4971,15 +4971,15 @@ TEST_F(Dhcpv4SrvTest, receiveServiceDisabledStat) {
     using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr pkt4_rcvd = mgr.getObservation("pkt4-received");
-    ObservationPtr parse_fail = mgr.getObservation("pkt4-service-disabled");
+    ObservationPtr srv_disable = mgr.getObservation("pkt4-service-disabled");
     ObservationPtr recv_drop = mgr.getObservation("pkt4-receive-drop");
     ASSERT_TRUE(pkt4_rcvd);
-    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(srv_disable);
     ASSERT_TRUE(recv_drop);
 
     // They also must have expected values.
     EXPECT_EQ(1, pkt4_rcvd->getInteger().first);
-    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, srv_disable->getInteger().first);
     EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 

@@ -3642,13 +3642,13 @@ TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
 
     // Check that the tested statistics is initially set to 0
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
-    ObservationPtr parse_fail = mgr.getObservation("pkt6-service-disabled");
+    ObservationPtr srv_disable = mgr.getObservation("pkt6-service-disabled");
     ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
     ASSERT_TRUE(pkt6_rcvd);
-    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(srv_disable);
     ASSERT_TRUE(recv_drop);
     EXPECT_EQ(0, pkt6_rcvd->getInteger().first);
-    EXPECT_EQ(0, parse_fail->getInteger().first);
+    EXPECT_EQ(0, srv_disable->getInteger().first);
     EXPECT_EQ(0, recv_drop->getInteger().first);
 
     // Simulate that we have received that traffic
@@ -3661,15 +3661,15 @@ TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
 
     // All expected statistics must be present.
     pkt6_rcvd = mgr.getObservation("pkt6-received");
-    parse_fail = mgr.getObservation("pkt6-service-disabled");
+    srv_disable = mgr.getObservation("pkt6-service-disabled");
     recv_drop = mgr.getObservation("pkt6-receive-drop");
     ASSERT_TRUE(pkt6_rcvd);
-    ASSERT_TRUE(parse_fail);
+    ASSERT_TRUE(srv_disable);
     ASSERT_TRUE(recv_drop);
 
     // They also must have expected values.
     EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
-    EXPECT_EQ(1, parse_fail->getInteger().first);
+    EXPECT_EQ(1, srv_disable->getInteger().first);
     EXPECT_EQ(1, recv_drop->getInteger().first);
 }
 
