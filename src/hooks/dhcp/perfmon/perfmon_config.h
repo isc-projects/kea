@@ -22,7 +22,7 @@ namespace perfmon {
 ///
 /// @code
 ///    {
-///        "library": "lib/kea/hooks/libdhcp_perf_mon.so",
+///        "library": "libdhcp_perf_mon.so",
 ///        "parameters": {
 ///            "enable-monitoring": true,
 ///            "interval-width-secs": 5,
