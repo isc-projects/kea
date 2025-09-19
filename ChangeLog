@@ -1,3 +1,53 @@
+Kea 3.1.2 (development) released on September 24, 2025
+
+2403.	[func]		fdupont
+	Added "pkt4-service-disabled" and "pkt6-service-disabled"
+	statistics which are increased when an incoming packet
+	was dropped because the DHCP service is disabled.
+	(Gitlab #4096)
+
+2402.	[func]		fdupont
+	When Kea is configured to use the memfile lease backend,
+	the "status-get" command returns the location of the
+	CVS backup file in the "csv-lease-file" entry.
+	(Gitlab #2305)
+
+2401.	[sec]		tmark
+	Removed logging of database password as clear
+	text when kea-dhcp4 or kea-dhcp6 initializes
+	the schema.
+	(Gitlab #4086)
+
+2400.	[bug]		fdupont
+	Fixed a race condition in pid file handling (used by
+	servers, agents and lease file cleanup).
+	(Gitlab #4107)
+
+2399.	[func]		fdupont
+	Added support of RADIUS dictionary includes, vendor
+	attributes and integer translations to the RADIUS hook
+	library for compatibility with previous versions using
+	the FreeRADIUS client library.
+	(Gitlab #3860)
+
+2398.	[sec]		fdupont
+	Added the "basic-auth-user-file" parameter to the HA
+	hook library. This allows the basic HTTP auth user
+	ID to be read from a file rather than specified as
+	clear text in the configuration.
+	(Gitlab #4070)
+
+2397.	[func]		tmark
+	Additional packet details are now emitted in
+	debug level logs by kea-dhcp4 for both inbound
+	and outbound packets.
+	(Gitlab #3531)
+
+2396.	[func]		tmark
+	The flex-id hook library parameter, ``identifier-expression``,
+	is now optional. Prior to this, it was mandatory.
+	(Gitlab #4011)
+
 2395.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.1.2
 	development release.
@@ -22,7 +72,7 @@
 	file cleanup process is running.
 	(Gitlab #3986)
 
-Kea 3.1.1 (development) released on September 27, 2025
+Kea 3.1.1 (development) released on August 27, 2025
 
 2391.	[bug]		fdupont
 	When reusing an expired lease, kea-dhcp6 now correctly saves

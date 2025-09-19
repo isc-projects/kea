@@ -5646,7 +5646,8 @@ DHCP4_QUERY_DATA
 Logged at debug log level 55.
 A debug message printing the details of the received packet. The first
 argument includes the client and the transaction identification
-information.
+information. Packet fields ciaddr, yiaddr, siaddr, giaddr, sname, and file
+will be included when not empty.
 
 DHCP4_QUERY_LABEL
 =================
@@ -5843,7 +5844,8 @@ A debug message including the detailed data about the packet being sent
 to the client. The first argument contains the client and the transaction
 identification information. The second and third argument contains the
 packet name and type respectively. The fourth argument contains detailed
-packet information.
+packet information. Packet fields ciaddr, yiaddr, siaddr, giaddr, sname,
+and file will be included when not empty.
 
 DHCP4_RESPONSE_FQDN_DATA
 ========================
@@ -8718,6 +8720,20 @@ DHCPSRV_CFGMGR_NEW_SUBNET6
 This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
 
+DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH
+=========================================
+
+.. code-block:: text
+
+    failed to create option: %1
+
+This warning message is issued when an option has been specified for which
+there is no suitable option definition. Either there is no definition at all
+or the option contents do not fit the option definition. The argument will
+provide a detailed reason for the failure. The server will continue to
+operate but it will exclude the option from packet processing until the
+situation is corrected. This is considered a configuration error.
+
 DHCPSRV_CFGMGR_OPTION_DUPLICATE
 ===============================
 
@@ -9971,6 +9987,17 @@ An error message logged when the memfile lease database backend
 failed to re-open or re-create the lease file after renaming the
 lease file for lease file cleanup. The server continues to
 operate but leases do not persist to disk.
+
+DHCPSRV_MEMFILE_LFC_RESCHEDULED
+===============================
+
+.. code-block:: text
+
+    rescheduled Lease File Cleanup
+
+An informational message issued when the memfile lease database backend
+rescheduled the periodic Lease File Cleanup at the reception of a
+"kea-lfc-start" command.
 
 DHCPSRV_MEMFILE_LFC_SETUP
 =========================
@@ -12254,18 +12281,6 @@ and vendor option was not found.
 FLEX
 ****
 
-FLEX_ID_EXPRESSION_EMPTY
-========================
-
-.. code-block:: text
-
-    Specified identifier-expression is empty
-
-This warning message is printed when the flex-id library is being loaded,
-but the expression used to generate the identifier is empty. The library
-will load, but will not generate any identifiers. Please make sure that
-the identifier-expression parameter is specified.
-
 FLEX_ID_EXPRESSION_EVALUATED
 ============================
 
@@ -12312,18 +12327,6 @@ FLEX_ID_EXPRESSION_INVALID_JSON_TYPE
 This error message is printed when the flex-id library is being loaded,
 but the expression used to generate the identifier is malformed. It has
 a different JSON type (e.g. is a map) rather than expected string.
-
-FLEX_ID_EXPRESSION_NOT_DEFINED
-==============================
-
-.. code-block:: text
-
-    Expression (identifier-expression) is not defined.
-
-This warning message is printed when the flex-id library is loaded, but the
-expression used to generate the identifier is not specified. The library
-will load, but will not generate any identifiers. Please make sure that
-the identifier-expression parameter is specified for your library.
 
 FLEX_ID_EXPRESSION_PARSE_FAILED
 ===============================
@@ -12414,6 +12417,20 @@ FLEX_ID_LOAD_ERROR
 This error message will be printed when an error is encountered during
 loading of the library. Details of the problem are printed as parameter
 to this message.
+
+FLEX_ID_NO_IDENTIFIER_EXPRESSION
+================================
+
+.. code-block:: text
+
+    identifier-expression is either not specified or empty
+
+Logged at debug log level 40.
+This debug message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier was either omitted or
+is empty. The library will load, but will neither generate nor replace
+client identifiers. Typically this occurs when users are only interested
+in using ignore-iaid, which operates independently of the expression.
 
 FLEX_ID_REPLACE_CLIENT_ID_JSON_TYPE
 ===================================

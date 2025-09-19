@@ -4,14 +4,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-% FLEX_ID_NO_IDENTIFIER_EXPRESSION identifier-expression is either not specified or empty
-Logged at debug log level 40.
-This debug message is printed when the flex-id library is being loaded,
-but the expression used to generate the identifier was either omitted or
-is empty. The library will load, but will neither generate nor replace
-client identifiers. Typically this occurs when users are only interested
-in using ignore-iaid, which operates independently of the expression.
-
 % FLEX_ID_EXPRESSION_EVALUATED Expression evaluated for packet to "%1" (size: %2)
 Logged at debug log level 40.
 This debug message is printed every time a packet evaluation is successful.
@@ -76,6 +68,14 @@ ignore-iaid flag because the received packet contains more than one IA_PD.
 This error message will be printed when an error is encountered during
 loading of the library. Details of the problem are printed as parameter
 to this message.
+
+% FLEX_ID_NO_IDENTIFIER_EXPRESSION identifier-expression is either not specified or empty
+Logged at debug log level 40.
+This debug message is printed when the flex-id library is being loaded,
+but the expression used to generate the identifier was either omitted or
+is empty. The library will load, but will neither generate nor replace
+client identifiers. Typically this occurs when users are only interested
+in using ignore-iaid, which operates independently of the expression.
 
 % FLEX_ID_REPLACE_CLIENT_ID_JSON_TYPE the replace-client-id is %1 but expected boolean value
 This error message is printed when the flex-id library is being loaded,

@@ -1,5 +1,0 @@
-[func]		fdupont
-	Added "pkt4-service-disabled" and "pkt6-service-disabled"
-	statistics which are increased when an incoming packet
-	was dropped because the DHCP service is disabled.
-	(Gitlab #4096)

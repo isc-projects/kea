@@ -1,4 +1,0 @@
-[bug]		fdupont
-	Fixed a race condition in pid file handling (used by
-	servers, agents and lease file cleanup).
-	(Gitlab #4107)

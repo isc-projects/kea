@@ -124,6 +124,14 @@ been extended to include the specified IPv4 subnet.
 This is an informational message reporting that the configuration has
 been extended to include the specified subnet.
 
+% DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to create option: %1
+This warning message is issued when an option has been specified for which
+there is no suitable option definition. Either there is no definition at all
+or the option contents do not fit the option definition. The argument will
+provide a detailed reason for the failure. The server will continue to
+operate but it will exclude the option from packet processing until the
+situation is corrected. This is considered a configuration error.
+
 % DHCPSRV_CFGMGR_OPTION_DUPLICATE multiple options with the code: %1 added to the subnet: %2
 This warning message is issued on an attempt to configure multiple options with the
 same option code for the particular subnet. Adding multiple options is uncommon
@@ -1026,11 +1034,3 @@ disabled and the path specified for forensic logging output
 does not comply with the supported path. The server will
 still use the specified path but is warning that doing so may
 pose a security risk.
-
-% DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to create option: %1
-This warning message is issued when an option has been specified for which
-there is no suitable option definition. Either there is no definition at all
-or the option contents do not fit the option definition. The argument will
-provide a detailed reason for the failure. The server will continue to
-operate but it will exclude the option from packet processing until the
-situation is corrected. This is considered a configuration error.

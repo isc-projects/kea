@@ -1,5 +1,0 @@
-[func]		tmark
-	Additional packet details are now emitted in
-	debug level logs by kea-dhcp4 for both inbound
-	and outbound packets.
-	(Gitlab #3531)
