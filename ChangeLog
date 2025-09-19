@@ -1,3 +1,8 @@
+2395.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 3.1.2
+	development release.
+	(Gitlab #4120)
+
 2394.	[func]		razvan
 	Added new 'statistic-global-get-all' command for kea-dhcp4
 	and kea-dhcp6 servers, which returns all statistica except

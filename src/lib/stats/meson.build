@@ -9,7 +9,7 @@ kea_stats_lib = shared_library(
     install_rpath: INSTALL_RPATH,
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
-    version: '63.0.0',
+    version: '64.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_stats_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
