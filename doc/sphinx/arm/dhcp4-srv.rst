@@ -6321,7 +6321,7 @@ useful as a way of making the clients known.
             { "hw-address": "aa:bb:cc:dd:ee:fe" },
             { "hw-address": "11:22:33:44:55:66" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet4": [
             {
@@ -6336,33 +6336,35 @@ useful as a way of making the clients known.
         ]
     }
 
-This concept can be extended further. A good real-life scenario might be a
-situation where some customers of an ISP have not paid their bills. A new class can be
-defined to use an alternative default router that, instead of relaying traffic,
-redirects those customers to a captive portal urging them to bring their accounts up to date.
+This concept can be extended further by using reservations in conjunction with
+option class-tagging (see :ref:`option-class-tagging`).  A good real-life scenario
+might be a situation where some customers of an ISP have not paid their bills.
+These customers need to be assigned an alternate router, that instead of relaying
+traffic, redirects those customers to a captive portal urging them to bring their
+accounts up to date.  Reservations can be used to assign a client to the "blocked"
+class that is subsequently used to determine the router option value as shown
+below:
 
 ::
 
     "Dhcp4": {
         "client-classes": [
             {
-                "name": "blocked",
-                "option-data": [
-                    {
-                        "name": "routers",
-                        "data": "192.0.2.251"
-                    }
-                ]
+                "name": "blocked"
             }
         ],
         "reservations": [
-            // Clients on this list will be added to the KNOWN class. Some
+            // Clients in this list will be added to the KNOWN class. Some
             // will also be added to the blocked class.
-            { "hw-address": "aa:bb:cc:dd:ee:fe",
-              "client-classes": [ "blocked" ] },
-            { "hw-address": "11:22:33:44:55:66" }
+            {
+              "hw-address": "aa:bb:cc:dd:ee:fe",
+              "client-classes": [ "blocked" ]
+            },
+            {
+                "hw-address": "11:22:33:44:55:66"
+            }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet4": [
             {
@@ -6375,6 +6377,13 @@ redirects those customers to a captive portal urging them to bring their account
                 ],
                 "option-data": [
                     {
+                        // Router for blocked customers.
+                        "client-classes": [ "blocked" ]
+                        "name": "routers",
+                        "data": "192.0.2.251"
+                    },
+                    {
+                        // Router for customers in good standing.
                         "name": "routers",
                         "data": "192.0.2.250"
                     }
