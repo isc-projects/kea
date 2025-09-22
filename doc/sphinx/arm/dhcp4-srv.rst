@@ -6378,7 +6378,7 @@ below:
                 "option-data": [
                     {
                         // Router for blocked customers.
-                        "client-classes": [ "blocked" ]
+                        "client-classes": [ "blocked" ],
                         "name": "routers",
                         "data": "192.0.2.251"
                     },
