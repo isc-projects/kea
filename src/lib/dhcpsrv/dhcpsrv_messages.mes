@@ -744,6 +744,10 @@ This may indicate a corrupt lease file.
 An informational message issued when the memfile lease database backend
 starts a new process to perform Lease File Cleanup.
 
+% DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE Lease File Cleanup pid file create: %1
+This error message is issued if the LFC execute code detects a failure
+when trying to create the PID file. It includes a more specific error string.
+
 % DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL failed to rename the current lease file %1 to %2, reason: %3
 An error message logged when the memfile lease database backend fails to
 move the current lease file to a new file on which the cleanup should
@@ -760,6 +764,10 @@ operate but leases do not persist to disk.
 An informational message issued when the memfile lease database backend
 rescheduled the periodic Lease File Cleanup at the reception of a
 "kea-lfc-start" command.
+
+% DHCPSRV_MEMFILE_LFC_RUNNING Lease File Cleanup instance already running
+This informational message is issued when the LFC execute code detects that
+a previous instance of the LFC process is still running via the PID check.
 
 % DHCPSRV_MEMFILE_LFC_SETUP setting up the Lease File Cleanup interval to %1 sec
 An informational message logged when the memfile lease database backend

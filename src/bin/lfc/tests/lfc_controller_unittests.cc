@@ -8,11 +8,13 @@
 
 #include <lfc/lfc_controller.h>
 #include <util/csv_file.h>
+#include <util/pid_file.h>
 #include <gtest/gtest.h>
 #include <fstream>
 #include <cerrno>
 
 using namespace isc::lfc;
+using namespace isc::util;
 using namespace std;
 
 namespace {
@@ -106,8 +108,6 @@ protected:
     void launch(LFCController lfc_controller, int argc, char* argv[]) {
         lfc_controller.launch(argc, argv, true);
     }
-
-private:
 };
 
 std::string
@@ -673,6 +673,77 @@ TEST_F(LFCControllerTest, launch6) {
     EXPECT_TRUE(noExistIOFP());
 }
 
-// @todo double launch (how to do that)
+/// @brief Verify that the directory of the pid file must exists.
+TEST_F(LFCControllerTest, badPidPath) {
+    /// LogContentTest does not work with lfc so to see errors
+    /// set the KEA_LOGGER_DESTINATION env var.
+    string bad_pid_file("/does/not/exists.pid");
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-x"),
+                     const_cast<char*>(xstr_.c_str()),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>(istr_.c_str()),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>(ostr_.c_str()),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(cstr_.c_str()),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>(fstr_.c_str()),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>(bad_pid_file.c_str())
+
+    };
+    int argc = 14;
+    LFCController lfc_controller;
+    launch(lfc_controller, argc, argv);
+}
+
+/// @brief Verify that two instances can run at the same time.
+/// LogContentTest does not work with lfc so to see errors
+/// set the KEA_LOGGER_DESTINATION env var.
+TEST_F(LFCControllerTest, alreadyRunning) {
+    char* argv[] = { const_cast<char*>("progName"),
+                     const_cast<char*>("-4"),
+                     const_cast<char*>("-x"),
+                     const_cast<char*>(xstr_.c_str()),
+                     const_cast<char*>("-i"),
+                     const_cast<char*>(istr_.c_str()),
+                     const_cast<char*>("-o"),
+                     const_cast<char*>(ostr_.c_str()),
+                     const_cast<char*>("-c"),
+                     const_cast<char*>(cstr_.c_str()),
+                     const_cast<char*>("-f"),
+                     const_cast<char*>(fstr_.c_str()),
+                     const_cast<char*>("-p"),
+                     const_cast<char*>(pstr_.c_str())
+
+    };
+    int argc = 14;
+    PIDFile pid_file(pstr_);
+    string lockname = pstr_ + ".lock";
+    int parent_pid = getpid();
+    int child_pid;
+    LFCController lfc_controller;
+    {
+        PIDLock parent_lock(lockname);
+        ASSERT_TRUE(parent_lock.isLocked());
+        ASSERT_EQ(0, pid_file.check());
+        ASSERT_NO_THROW(pid_file.write());
+
+        child_pid = fork();
+        ASSERT_NE(-1, child_pid);
+        if (child_pid == 0) {
+            launch(lfc_controller, argc, argv);
+            _exit(0);
+        }
+    }
+    int status;
+    // If this stalls add a timeout...
+    static_cast<void>(waitpid(child_pid, &status, 0));
+    EXPECT_EQ(parent_pid, pid_file.check());
+}
+
+// @todo double launch.
 
 } // end of anonymous namespace

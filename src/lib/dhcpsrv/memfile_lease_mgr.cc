@@ -101,7 +101,7 @@ public:
                bool run_once_now = false);
 
     /// @brief Spawns a new process.
-    void execute();
+    void execute(const std::string& lease_file);
 
     /// @brief Checks if the lease file cleanup is in progress.
     ///
@@ -110,6 +110,9 @@ public:
 
     /// @brief Returns exit code of the last completed cleanup.
     int getExitStatus() const;
+
+    /// @brief Returns pid of the last lease file cleanup.
+    int getLastPid() const;
 
 private:
 
@@ -231,14 +234,74 @@ LFCSetup::setup(const uint32_t lfc_interval,
 }
 
 void
-LFCSetup::execute() {
+LFCSetup::execute(const std::string& lease_file) {
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(lease_file,
+                                                    Memfile_LeaseMgr::FILE_PID));
     try {
+        // Look at lfc.dox for a description of this.
+
+        // Try to recover a deleted pid file.
+        bool is_running = false;
+        if (pid_ != 0) {
+            try {
+                is_running = isRunning();
+            } catch (...) {
+                // Ignore errors.
+            }
+        }
+        // Do not trust the process spawn isRunning method.
+        if (is_running && (kill(pid_, 0) != 0)) {
+            is_running = false;
+        }
+
+        // Try to acquire the lock for the pid file.
+        PIDLock pid_lock(pid_file.getLockname());
+
+        // Verify that no lfc is still running.
+        if (is_running || !pid_lock.isLocked() || pid_file.check()) {
+            LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_RUNNING);
+            if (is_running && pid_lock.isLocked() && !pid_file.check()) {
+                // The pid file was deleted and the process is still running!
+                pid_file.write(pid_);
+            }
+            return;
+        }
+
+        // Cleanup the state (memory leak fix).
+        if (pid_ != 0) {
+            try {
+                process_->clearState(pid_);
+            } catch (...) {
+                // Ignore errors (and keep a possible slow memory leak).
+            }
+        }
+        // Reset pid to -1.
+        pid_ = -1;
+
+        // Check the pid file is writable.
+        pid_file.write(0);
+
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_EXECUTE)
             .arg(process_->getCommandLine());
         pid_ = process_->spawn();
 
+        // Write the pid of the child in the pid file.
+        pid_file.write(pid_);
+
+    } catch (const PIDFileError& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE)
+            .arg(ex.what());
     } catch (const ProcessSpawnError&) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SPAWN_FAIL);
+        // Reacquire the lock to remove the pid file.
+        PIDLock pid_lock(pid_file.getLockname());
+        if (pid_lock.isLocked() && !pid_file.check()) {
+            try {
+                pid_file.deleteFile();
+            } catch (...) {
+                // Ignore errors.
+            }
+        }
     }
 }
 
@@ -256,6 +319,10 @@ LFCSetup::getExitStatus() const {
     return (process_->getExitStatus(pid_));
 }
 
+int
+LFCSetup::getLastPid() const {
+    return (pid_);
+}
 
 /// @brief Base Memfile derivation of the statistical lease data query
 ///
@@ -2468,7 +2535,6 @@ Memfile_LeaseMgr::loadLeasesFromFiles(Universe u, const std::string& filename,
     return (conversion_needed);
 }
 
-
 bool
 Memfile_LeaseMgr::isLFCRunning() const {
     return (lfc_setup_->isRunning());
@@ -2477,6 +2543,11 @@ Memfile_LeaseMgr::isLFCRunning() const {
 int
 Memfile_LeaseMgr::getLFCExitStatus() const {
     return (lfc_setup_->getExitStatus());
+}
+
+int
+Memfile_LeaseMgr::getLFCLastPid() const {
+    return (lfc_setup_->getLastPid());
 }
 
 void
@@ -2571,7 +2642,7 @@ Memfile_LeaseMgr::lfcExecute(boost::shared_ptr<LeaseFileType>& lease_file) {
     // Once the files have been rotated, or untouched if another LFC had
     // not finished, a new process is started.
     if (do_lfc) {
-        lfc_setup_->execute();
+        lfc_setup_->execute(lease_file->getFilename());
     }
 }
 
@@ -2590,12 +2661,20 @@ Memfile_LeaseMgr::lfcStartHandler() {
         TimerMgr::instance()->setup("memfile-lfc");
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_RESCHEDULED);
     }
+    int previous_pid = getLFCLastPid();
     if (lease_file4_) {
         lfcExecute(lease_file4_);
     } else if (lease_file6_) {
         lfcExecute(lease_file6_);
     }
-    return (createAnswer(CONTROL_RESULT_SUCCESS, "kea-lfc started"));
+    int new_pid = getLFCLastPid();
+    if (new_pid == -1) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "failed to start kea-lfc"));
+    } else if (new_pid != previous_pid) {
+        return (createAnswer(CONTROL_RESULT_SUCCESS, "kea-lfc started"));
+    } else {
+        return (createAnswer(CONTROL_RESULT_EMPTY, "kea-lfc already running"));
+    }
 }
 
 LeaseStatsQueryPtr

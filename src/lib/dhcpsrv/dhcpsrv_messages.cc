@@ -131,9 +131,11 @@ extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_FILE_LOAD = "DHCPSRV_MEMF
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_LOAD = "DHCPSRV_MEMFILE_LEASE_LOAD";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR = "DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_EXECUTE = "DHCPSRV_MEMFILE_LFC_EXECUTE";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE = "DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL = "DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL = "DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_RESCHEDULED = "DHCPSRV_MEMFILE_LFC_RESCHEDULED";
+extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_RUNNING = "DHCPSRV_MEMFILE_LFC_RUNNING";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_SETUP = "DHCPSRV_MEMFILE_LFC_SETUP";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_SPAWN_FAIL = "DHCPSRV_MEMFILE_LFC_SPAWN_FAIL";
 extern const isc::log::MessageID DHCPSRV_MEMFILE_LFC_START = "DHCPSRV_MEMFILE_LFC_START";
@@ -312,9 +314,11 @@ const char* values[] = {
     "DHCPSRV_MEMFILE_LEASE_LOAD", "loading lease %1",
     "DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR", "discarding row %1, error: %2",
     "DHCPSRV_MEMFILE_LFC_EXECUTE", "executing Lease File Cleanup using: %1",
+    "DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE", "Lease File Cleanup pid file create: %1",
     "DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL", "failed to rename the current lease file %1 to %2, reason: %3",
     "DHCPSRV_MEMFILE_LFC_LEASE_FILE_REOPEN_FAIL", "failed to reopen lease file %1 after preparing input file for lease file cleanup, reason: %2, new leases will not persist!",
     "DHCPSRV_MEMFILE_LFC_RESCHEDULED", "rescheduled Lease File Cleanup",
+    "DHCPSRV_MEMFILE_LFC_RUNNING", "Lease File Cleanup instance already running",
     "DHCPSRV_MEMFILE_LFC_SETUP", "setting up the Lease File Cleanup interval to %1 sec",
     "DHCPSRV_MEMFILE_LFC_SPAWN_FAIL", "lease file cleanup failed to run because kea-lfc process couldn't be spawned",
     "DHCPSRV_MEMFILE_LFC_START", "starting Lease File Cleanup",

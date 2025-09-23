@@ -4598,6 +4598,10 @@ public:
         removeFiles(getLeaseFilePath("leasefile6_0.csv"));
         // Remove other files.
         removeOtherFiles();
+        // Remove pid file.
+        if (pid_file_) {
+            static_cast<void>(remove(pid_file_->getFilename().c_str()));
+        }
 
         // Disable multi-threading.
         MultiThreadingMgr::instance().setMode(false);
@@ -4612,6 +4616,8 @@ public:
 
     /// @brief Stores the pre-test DHCP data directory.
     std::string original_datadir_;
+
+    boost::scoped_ptr<PIDFile> pid_file_;
 };
 
 /// @brief Verifies that a warning is logged when given
@@ -4679,7 +4685,7 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
     pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
-    // Persist is false so there is no lease file...
+    // Persist is true so there is a lease file.
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     ASSERT_TRUE(lease_mgr);
     ConstElementPtr response;
@@ -4694,6 +4700,11 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
         << "environment not available to LFC";
+
+    // Pid file should no longer exist.
+    pid_file_.reset(new PIDFile(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                         Memfile_LeaseMgr::FILE_PID)));
+    EXPECT_FALSE(file::exists(pid_file_->getFilename()));
 
     // No reschedule.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
@@ -4715,7 +4726,7 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
-    // Persist is false so there is no lease file...
+    // Persist is true so there is a lease file.
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
     ASSERT_TRUE(lease_mgr);
     ConstElementPtr response;
@@ -4731,6 +4742,11 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
         << "environment not available to LFC";
 
+    // Pid file should no longer exist.
+    pid_file_.reset(new PIDFile(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                         Memfile_LeaseMgr::FILE_PID)));
+    EXPECT_FALSE(file::exists(pid_file_->getFilename()));
+
     // Reschedule.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
@@ -4741,5 +4757,143 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 }
+
+/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
+/// if the pid file lock is already taken.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLocked) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is true so there is a lease file.
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+
+    // Acquire the pid file lock.
+    pid_file_.reset(new PIDFile(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                         Memfile_LeaseMgr::FILE_PID)));
+    PIDLock pid_lock(pid_file_->getLockname());
+    ASSERT_TRUE(pid_lock.isLocked());
+
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 3, \"text\": \"kea-lfc already running\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // Reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Locked.
+    msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
+    msg += "Lease File Cleanup instance already running";
+    EXPECT_EQ(1, countFile(msg));
+}
+
+/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
+/// if the pid file check says lfc is already running.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "4";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
+    pmap["name"] = getLeaseFilePath("leasefile4_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is true so there is a lease file.
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+
+    // Write the pid file.
+    pid_file_.reset(new PIDFile(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                         Memfile_LeaseMgr::FILE_PID)));
+    {
+        PIDLock pid_lock(pid_file_->getLockname());
+        ASSERT_TRUE(pid_lock.isLocked());
+        pid_file_->write();
+    }
+
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 3, \"text\": \"kea-lfc already running\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // Reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Already running.
+    msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
+    msg += "Lease File Cleanup instance already running";
+    EXPECT_EQ(1, countFile(msg));
+}
+
+/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
+/// if the pid file is not writable.
+TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "true";
+    pmap["lfc-interval"] = "10";
+    pmap["name"] = getLeaseFilePath("leasefile6_0.csv");
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    // Persist is true so there is a lease file.
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    ASSERT_TRUE(lease_mgr);
+
+    // Write the pid file and change it mode to read only.
+    pid_file_.reset(new PIDFile(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                         Memfile_LeaseMgr::FILE_PID)));
+    {
+        PIDLock pid_lock(pid_file_->getLockname());
+        ASSERT_TRUE(pid_lock.isLocked());
+        pid_file_->write(0);
+        static_cast<void>(chmod(pid_file_->getFilename().c_str(), 0400));
+    }
+
+    ConstElementPtr response;
+    EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
+    ASSERT_TRUE(response);
+    string expected = "{ \"result\": 1, \"text\": \"failed to start kea-lfc\" }";
+    EXPECT_EQ(expected, response->str());
+
+    // Reschedule.
+    string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
+    msg += "rescheduled Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // Start.
+    msg = "DHCPSRV_MEMFILE_LFC_START ";
+    msg += "starting Lease File Cleanup";
+    EXPECT_EQ(1, countFile(msg));
+
+    // PID file is not writable.
+    msg = "DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE ";
+    msg += "Lease File Cleanup pid file create: ";
+    msg += "Unable to open PID file '";
+    msg += pid_file_->getFilename();
+    msg += "' for write";
+    EXPECT_EQ(1, countFile(msg));
+}
+
+/// Check ProcessSpawnError (no known way to trigger it).
 
 }  // namespace

@@ -84,16 +84,24 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
 
     try {
         // Acquire a lock for check and write operations.
-        PIDLock pid_lock(pid_file.getLockname());
+        PIDLock pid_lock(pid_file.getLockname(), true);
 
-        if (!pid_lock.isLocked() || pid_file.check()) {
+        if (!pid_lock.isLocked()) {
+            isc_throw(Unexpected, "failed to acquire the lock?");
+        }
+
+        int existing = pid_file.check();
+
+        if ((existing != 0) && (existing != getpid())) {
             // Already running instance, bail out
             LOG_FATAL(lfc_logger, LFC_RUNNING);
             return;
         }
 
         // create the pid file for this instance
-        pid_file.write();
+        if (existing == 0) {
+            pid_file.write();
+        }
     } catch (const PIDFileError& pid_ex) {
         LOG_FATAL(lfc_logger, LFC_FAIL_PID_CREATE).arg(pid_ex.what());
         return;

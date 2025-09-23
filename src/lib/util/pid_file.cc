@@ -86,12 +86,12 @@ PIDFile::deleteFile() const {
     }
 }
 
-PIDLock::PIDLock(const std::string& lockname)
+  PIDLock::PIDLock(const std::string& lockname, bool blocking)
     : lockname_(lockname), fd_(-1), locked_(false) {
     // Open the lock file.
     fd_ = open(lockname_.c_str(), O_RDONLY | O_CREAT, 0600);
     if (fd_ == -1) {
-        if (errno == ENOENT) {
+        if ((errno == ENOENT) && !blocking) {
             // Ignoring missing component in the path.
             locked_ = true;
             return;
@@ -102,7 +102,7 @@ PIDLock::PIDLock(const std::string& lockname)
     }
     // Try to acquire the lock. If we can't somebody else is actively
     // using it.
-    int ret = flock(fd_, LOCK_EX | LOCK_NB);
+    int ret = flock(fd_, LOCK_EX | (blocking ? 0 : LOCK_NB));
     if (ret == 0) {
         locked_ = true;
         return;

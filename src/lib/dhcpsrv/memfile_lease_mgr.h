@@ -1168,6 +1168,9 @@ public:
     /// @brief Returns the status code returned by the last executed
     /// LFC process.
     int getLFCExitStatus() const;
+
+    /// @brief Returns the last lfc process id.
+    int getLFCLastPid() const;
     //@}
 
     /// @brief Creates and runs the IPv4 lease stats query

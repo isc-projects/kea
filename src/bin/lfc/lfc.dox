@@ -42,7 +42,13 @@ It uses isc::util::PIDFile to manipulate a PID file to mediate access to the
 leases.  When a new process is started it will check the PID file.  If the
 PID file exists and a process with that ID is still running already the new
 process will be terminated.  If no other process is running the PID of the
-new process is written to the file.
+new process is written to the file. Since kea 3.1.3 this part of the code
+was moved to the memfile lease manager which acquires the file lock,
+checks running lfc, spawn lfc, write the lfc pid to the PID file and
+release the lock. The lfc process waits for the lock and is prepared
+to an already existing PID file containing its own pid. Note the lfc
+process is still responsible to delete the PID file before existing even
+this is not critical.
 
 It uses the isc::dhcp::LeaseFileLoader class to first read all of the leases
 into either isc::dhcp::Lease6Storage or isc::dhcp::Lease4Storage containers.

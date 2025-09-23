@@ -243,6 +243,8 @@ TEST_F(PIDFileTest, lockNoent) {
     ASSERT_NO_THROW(lock.reset(new PIDLock("/does/not/exist.lock")));
     ASSERT_TRUE(lock);
     EXPECT_TRUE(lock->isLocked());
+    EXPECT_THROW(lock.reset(new PIDLock("/does/not/exist.lock", true)),
+                 PIDFileError);
 }
 
 } // end of anonymous namespace
