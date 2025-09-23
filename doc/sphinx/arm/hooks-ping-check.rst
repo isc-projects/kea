@@ -155,10 +155,12 @@ The following excerpt demonstrates a subnet-level configuration:
         }],
 
         "user-context": {
-            "enable-ping-check" : true,
-            "min-ping-requests" : 2,
-            "reply-timeout" : 250,
-            "ping-cltt-secs" : 120
+            "ping-check": {
+                "enable-ping-check" : true,
+                "min-ping-requests" : 2,
+                "reply-timeout" : 250,
+                "ping-cltt-secs" : 120
+            }
         }
     }]
    }
