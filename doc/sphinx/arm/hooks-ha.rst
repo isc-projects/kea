@@ -917,7 +917,7 @@ list:
 
 -  ``basic-auth-user-file`` - is an alternative to ``basic-auth-user``:
    instead of presenting the user ID in the configuration file it is specified
-   in the file indicated by this parameter.
+   in the first line of the file indicated by this parameter.
 
 -  ``basic-auth-password`` - specifies the password for basic HTTP
    authentication. This parameter is ignored when the user ID is not specified
@@ -926,7 +926,7 @@ list:
 
 -  ``basic-auth-password-file`` - is an alternative to ``basic-auth-password``:
    instead of presenting the password in the configuration file it is specified
-   in the file indicated by this parameter.
+   in the first line of the file indicated by this parameter.
 
 -  ``role`` - denotes the role of the server in the HA setup. The following
    roles are supported in the ``load-balancing`` configuration: ``primary``,

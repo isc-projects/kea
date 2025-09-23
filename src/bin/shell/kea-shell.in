@@ -128,6 +128,8 @@ def shell_body():
             try:
                 file = open(cmd_args.auth_password_file, 'r')
                 password = file.readline()
+                if len(password) > 0 and password[-1] == '\n':
+                    password = password[:-1]
                 file.close()
             except Exception as exc:
                 print("Failed to run: " + str(exc))

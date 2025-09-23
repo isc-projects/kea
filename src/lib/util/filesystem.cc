@@ -42,7 +42,7 @@ getContent(string const& file_name) {
         isc_throw(BadValue, "Cannot open '" << file_name);
     }
     string content;
-    file >> content;
+    getline(file, content);
     return (content);
 }
 

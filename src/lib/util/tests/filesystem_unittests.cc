@@ -58,6 +58,18 @@ TEST_F(FileUtilTest, getContent) {
     EXPECT_EQ("abdc", content);
 }
 
+/// @brief Check getContent with embedded spaces.
+TEST_F(FileUtilTest, getContentSpaces) {
+    string file_name(TEST_DATA_BUILDDIR "/fu.test");
+    ofstream fs(file_name.c_str(), ofstream::out | ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "ab\tc d\nxxx";
+    fs.close();
+    string content;
+    EXPECT_NO_THROW_LOG(content = getContent(file_name));
+    EXPECT_EQ("ab\tc d", content);
+}
+
 /// @brief Check isDir.
 TEST_F(FileUtilTest, isDir) {
     EXPECT_TRUE(isDir("/dev"));

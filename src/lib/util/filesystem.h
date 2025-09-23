@@ -34,6 +34,9 @@ public:
 
 /// @brief Get the content of a regular file.
 ///
+/// @note Here the content is the first line not including the final
+/// line feed character if there is one.
+///
 /// @param file_name The file name.
 ///
 /// @return The content of the file.
