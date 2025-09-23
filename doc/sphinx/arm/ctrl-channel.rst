@@ -898,9 +898,11 @@ The ``kea-lfc-start`` Command
 
 The :isccmd:`kea-lfc-start` command starts the ``kea-lfc`` process which
 cleans up the lease file (see :ref:`kea-lfc`). It takes no arguments and
-returns an error when the lease backend is not the ``memfile`` or when
+does not returns success when the lease backend is not the ``memfile``, when
 the ``persist`` parameter of the ``lease-database`` was configured to
-``false`` (but not when ``lfc-interval`` is ``0``).
+``false`` (but not when ``lfc-interval`` is ``0``), when it detected
+a LFC process is currently running or an error prevented a new LFC process
+to be started.
 
 Commands Supported by the DHCPv4 Server
 =======================================
