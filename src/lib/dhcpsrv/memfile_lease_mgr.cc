@@ -240,30 +240,12 @@ LFCSetup::execute(const std::string& lease_file) {
     try {
         // Look at lfc.dox for a description of this.
 
-        // Try to recover a deleted pid file.
-        bool is_running = false;
-        if (pid_ != 0) {
-            try {
-                is_running = isRunning();
-            } catch (...) {
-                // Ignore errors.
-            }
-        }
-        // Do not trust the process spawn isRunning method.
-        if (is_running && (kill(pid_, 0) != 0)) {
-            is_running = false;
-        }
-
         // Try to acquire the lock for the pid file.
         PIDLock pid_lock(pid_file.getLockname());
 
         // Verify that no lfc is still running.
-        if (is_running || !pid_lock.isLocked() || pid_file.check()) {
+        if (!pid_lock.isLocked() || pid_file.check()) {
             LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_RUNNING);
-            if (is_running && pid_lock.isLocked() && !pid_file.check()) {
-                // The pid file was deleted and the process is still running!
-                pid_file.write(pid_);
-            }
             return;
         }
 
