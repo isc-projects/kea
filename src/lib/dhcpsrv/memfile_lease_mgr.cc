@@ -265,7 +265,17 @@ LFCSetup::execute(const std::string& lease_file) {
 
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_EXECUTE)
             .arg(process_->getCommandLine());
-        pid_ = process_->spawn();
+        try {
+            pid_ = process_->spawn();
+        } catch (const ProcessSpawnError&) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SPAWN_FAIL);
+            try {
+                pid_file.deleteFile();
+            } catch (...) {
+                // Ignore errors.
+            }
+            return;
+        }
 
         // Write the pid of the child in the pid file.
         pid_file.write(pid_);
@@ -273,17 +283,6 @@ LFCSetup::execute(const std::string& lease_file) {
     } catch (const PIDFileError& ex) {
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE)
             .arg(ex.what());
-    } catch (const ProcessSpawnError&) {
-        LOG_ERROR(dhcpsrv_logger, DHCPSRV_MEMFILE_LFC_SPAWN_FAIL);
-        // Reacquire the lock to remove the pid file.
-        PIDLock pid_lock(pid_file.getLockname());
-        if (pid_lock.isLocked() && !pid_file.check()) {
-            try {
-                pid_file.deleteFile();
-            } catch (...) {
-                // Ignore errors.
-            }
-        }
     }
 }
 

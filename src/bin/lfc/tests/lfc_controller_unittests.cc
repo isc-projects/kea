@@ -721,7 +721,7 @@ TEST_F(LFCControllerTest, alreadyRunning) {
     };
     int argc = 14;
     PIDFile pid_file(pstr_);
-    string lockname = pstr_ + ".lock";
+    string lockname = pid_file.getLockname();
     int parent_pid = getpid();
     int child_pid;
     LFCController lfc_controller;

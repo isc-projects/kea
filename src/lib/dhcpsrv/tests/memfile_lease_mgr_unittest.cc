@@ -4665,12 +4665,12 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPersistFalse) {
     expected += "was configured to 'false'\" }";
     EXPECT_EQ(expected, response->str());
 
-    // No reschedule.
+    // Verify that LFC reschedule was not logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(0, countFile(msg));
 
-    // No start.
+    // Verify that LFC start was not logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(0, countFile(msg));
@@ -4706,18 +4706,18 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
                                          Memfile_LeaseMgr::FILE_PID)));
     EXPECT_FALSE(file::exists(pid_file_->getFilename()));
 
-    // No reschedule.
+    // Verify that LFC reschedule was not logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(0, countFile(msg));
 
-    // Start.
+    // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 }
 
-/// @brief Verifies that lfcStartHandler reschedules and starts lfc.
+/// @brief Verifies that lfcStartHandler reschedules and starts LFC.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "4";
@@ -4747,19 +4747,19 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
                                          Memfile_LeaseMgr::FILE_PID)));
     EXPECT_FALSE(file::exists(pid_file_->getFilename()));
 
-    // Reschedule.
+    // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Start.
+    // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 }
 
-/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
-/// if the pid file lock is already taken.
+/// @brief Verifies that lfcStartHandler reschedules and but does not start
+/// LFC if the pid file lock is already taken.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLocked) {
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "6";
@@ -4784,24 +4784,24 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLocked) {
     string expected = "{ \"result\": 3, \"text\": \"kea-lfc already running\" }";
     EXPECT_EQ(expected, response->str());
 
-    // Reschedule.
+    // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Start.
+    // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Locked.
+    // Locked: verify that LFC running was logged.
     msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
     msg += "Lease File Cleanup instance already running";
     EXPECT_EQ(1, countFile(msg));
 }
 
-/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
-/// if the pid file check says lfc is already running.
+/// @brief Verifies that lfcStartHandler reschedules and but does not start
+/// LFC if the pid file check says lfc is already running.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "4";
@@ -4829,24 +4829,24 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
     string expected = "{ \"result\": 3, \"text\": \"kea-lfc already running\" }";
     EXPECT_EQ(expected, response->str());
 
-    // Reschedule.
+    // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Start.
+    // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Already running.
+    // Verify that LFC running was logged.
     msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
     msg += "Lease File Cleanup instance already running";
     EXPECT_EQ(1, countFile(msg));
 }
 
-/// @brief Verifies that lfcStartHandler reschedules and but not start lfc
-/// if the pid file is not writable.
+/// @brief Verifies that lfcStartHandler reschedules and but does not start
+/// LFC if the pid file is not writable.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "6";
@@ -4875,17 +4875,17 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     string expected = "{ \"result\": 1, \"text\": \"failed to start kea-lfc\" }";
     EXPECT_EQ(expected, response->str());
 
-    // Reschedule.
+    // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // Start.
+    // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
     EXPECT_EQ(1, countFile(msg));
 
-    // PID file is not writable.
+    // PID file is not writable: verify that PID create failure was logged.
     msg = "DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE ";
     msg += "Lease File Cleanup pid file create: ";
     msg += "Unable to open PID file '";
