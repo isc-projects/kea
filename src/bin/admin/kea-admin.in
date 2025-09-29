@@ -185,8 +185,8 @@ mysql_can_create() {
 
     # SQL to create our test trigger
     trigger_sql="\
-CREATE TRIGGER kea_dummy_trigger BEFORE insert ON kea_dummy_table FOR EACH ROW\n \
-BEGIN\n \
+CREATE TRIGGER kea_dummy_trigger BEFORE insert ON kea_dummy_table FOR EACH ROW \
+BEGIN \
 END;"
 
     # Let's clean up just in case.
