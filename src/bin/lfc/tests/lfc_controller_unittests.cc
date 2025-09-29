@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,12 @@
 #include <lfc/lfc_controller.h>
 #include <util/csv_file.h>
 #include <util/pid_file.h>
-#include <gtest/gtest.h>
-#include <fstream>
+
 #include <cerrno>
+#include <fstream>
+
+#include <gtest/gtest.h>
+#include <sys/wait.h>
 
 using namespace isc::lfc;
 using namespace isc::util;

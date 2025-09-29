@@ -7,16 +7,14 @@
 #include <config.h>
 
 #include <asiolink/process_spawn.h>
-#include <exceptions/exceptions.h>
 #include <cc/data.h>
-#include <process/daemon.h>
-#include <process/config_base.h>
-#include <process/log_parser.h>
+#include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <process/config_base.h>
+#include <process/daemon.h>
+#include <process/log_parser.h>
 
 #include <gtest/gtest.h>
-
-#include <sys/wait.h>
 
 using namespace isc;
 using namespace isc::asiolink;
