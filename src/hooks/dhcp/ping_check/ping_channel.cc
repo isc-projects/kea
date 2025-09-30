@@ -310,10 +310,12 @@ PingChannel::startRead() {
 void
 PingChannel::sendNext() {
     try {
-        MultiThreadingLock lock(*mutex_);
-        if (!canSend()) {
+        {
+            MultiThreadingLock lock(*mutex_);
+            if (!canSend()) {
             // Can't send right now, get out.
-            return;
+                return;
+            }
         }
 
         // Fetch the next one to send.
@@ -324,14 +326,21 @@ PingChannel::sendNext() {
         }
 
         // Have an target IP, build an ECHO REQUEST for it.
-        sending_ = true;
         ICMPMsgPtr next_echo(new ICMPMsg());
-        next_echo->setType(ICMPMsg::ECHO_REQUEST);
-        next_echo->setDestination(target);
+        {
+            MultiThreadingLock lock(*mutex_);
+            if (!canSend()) {
+                return;
+            }
 
-        uint32_t instance_num = nextEchoInstanceNum();
-        next_echo->setId(static_cast<uint16_t>(instance_num >> 16));
-        next_echo->setSequence(static_cast<uint16_t>(instance_num & 0x0000FFFF));
+            sending_ = true;
+            next_echo->setType(ICMPMsg::ECHO_REQUEST);
+            next_echo->setDestination(target);
+
+            uint32_t instance_num = nextEchoInstanceNum();
+            next_echo->setId(static_cast<uint16_t>(instance_num >> 16));
+            next_echo->setSequence(static_cast<uint16_t>(instance_num & 0x0000FFFF));
+        }
 
         // Get packed wire-form.
         ICMPPtr echo_icmp = next_echo->pack();
