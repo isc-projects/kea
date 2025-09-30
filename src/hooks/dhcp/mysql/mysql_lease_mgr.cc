@@ -1080,8 +1080,7 @@ public:
         // Convert user_context to string as well.
         std::string user_context;
         if (user_context_null_ == MLM_FALSE) {
-            user_context_[user_context_length_] = '\0';
-            user_context.assign(user_context_);
+            user_context.assign(user_context_, user_context_length_);
         }
 
         // Set the user context if there is one.
@@ -1738,8 +1737,7 @@ public:
         // Convert user_context to string as well.
         std::string user_context;
         if (user_context_null_ == MLM_FALSE) {
-            user_context_[user_context_length_] = '\0';
-            user_context.assign(user_context_);
+            user_context.assign(user_context_, user_context_length_);
         }
 
         // Set the user context if there is one.
