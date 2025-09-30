@@ -971,7 +971,7 @@ private:
             // Convert client classes to string.
             std::string client_classes;
             if (client_classes_null_ == MLM_FALSE) {
-                client_classes.assign(client_classes_,client_classes_length_);
+                client_classes.assign(client_classes_, client_classes_length_);
             }
 
             // Options are held in a binary or textual format in the database.
