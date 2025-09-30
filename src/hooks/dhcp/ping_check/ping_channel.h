@@ -13,6 +13,7 @@
 #include <util/watch_socket.h>
 #include <icmp_msg.h>
 #include <icmp_socket.h>
+#include <ping_context.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -66,8 +67,12 @@ typedef ICMPSocket<SocketCallback> PingSocket;
 /// @brief Defines a pointer to PingSocket.
 typedef boost::shared_ptr<PingSocket> PingSocketPtr;
 
-/// @brief Function type for callback that fetches next IOAddress to ping.
-typedef std::function<bool(asiolink::IOAddress& target)> NextToSendCallback;
+/// @brief Function type for callback that fetches next target to ping.
+/// Returns the context selected to send, and outputs its target address.
+typedef std::function<PingContextPtr(asiolink::IOAddress& target)> NextToSendCallback;
+
+/// @brief Function type for callback to update a context to SENDING state.
+typedef std::function<void(PingContextPtr context)> UpdateToSendCallback;
 
 /// @brief Function type for callback to invoke upon ECHO send completion.
 typedef std::function<void(ICMPMsgPtr& echo, bool send_failed)> EchoSentCallback;
@@ -108,8 +113,10 @@ public:
     ///
     /// @param io_service pointer to the IOService instance that will manage
     /// the channel's IO. Must not be empty
-    /// @param next_to_send_cb callback to invoke to fetch the next IOAddress
-    /// to ping
+    /// @param next_to_send_cb callback to invoke to fetch the next context and
+    /// its target address to ping (called outside the mutex)
+    /// @param update_to_send_cb callback to invoke to update the selected
+    /// context to SENDING and persist it (called inside the mutex)
     /// @param echo_sent_cb callback to invoke when an ECHO send has completed
     /// @param reply_received_cb callback to invoke when an ICMP reply has been
     /// received.  This callback is passed all inbound ICMP messages (e.g. ECHO
@@ -120,6 +127,7 @@ public:
     /// @throw BadValue if io_service is empty.
     PingChannel(asiolink::IOServicePtr& io_service,
                 NextToSendCallback next_to_send_cb,
+                UpdateToSendCallback update_to_send_cb,
                 EchoSentCallback echo_sent_cb,
                 ReplyReceivedCallback reply_received_cb,
                 ShutdownCallback shutdown_cb = ShutdownCallback());
@@ -315,8 +323,11 @@ protected:
     /// @brief IOService instance the drives socket IO
     asiolink::IOServicePtr io_service_;
 
-    /// @brief Callback to invoke to fetch the next address to ping.
+    /// @brief Callback to invoke to fetch the next context/address to ping.
     NextToSendCallback next_to_send_cb_;
+
+    /// @brief Callback to invoke to update selected context to SENDING state.
+    UpdateToSendCallback update_to_send_cb_;
 
     /// @brief Callback to invoke when an ECHO write has completed.
     EchoSentCallback echo_sent_cb_;

@@ -36,11 +36,13 @@ PingChannel::nextEchoInstanceNum() {
 
 PingChannel::PingChannel(IOServicePtr& io_service,
                          NextToSendCallback next_to_send_cb,
+                         UpdateToSendCallback update_to_send_cb,
                          EchoSentCallback echo_sent_cb,
                          ReplyReceivedCallback reply_received_cb,
                          ShutdownCallback shutdown_cb)
     : io_service_(io_service),
       next_to_send_cb_(next_to_send_cb),
+      update_to_send_cb_(update_to_send_cb),
       echo_sent_cb_(echo_sent_cb),
       reply_received_cb_(reply_received_cb),
       shutdown_cb_(shutdown_cb),
@@ -310,19 +312,25 @@ PingChannel::startRead() {
 void
 PingChannel::sendNext() {
     try {
+        // Fetch the next one to send (outside the mutex).
+        IOAddress target("0.0.0.0");
+        PingContextPtr context = ((next_to_send_cb_)(target));
+        if (!context) {
+            // Nothing to send.
+            return;
+        }
+
         MultiThreadingLock lock(*mutex_);
         if (!canSend()) {
             // Can't send right now, get out.
             return;
         }
-
-        // Fetch the next one to send.
-        IOAddress target("0.0.0.0");
-        if (!((next_to_send_cb_)(target))) {
-            // Nothing to send.
-            return;
+        
+        // Update context to SENDING inside the mutex.
+        if (update_to_send_cb_) {
+            (update_to_send_cb_)(context);
         }
-
+        
         // Have an target IP, build an ECHO REQUEST for it.
         sending_ = true;
         ICMPMsgPtr next_echo(new ICMPMsg());
