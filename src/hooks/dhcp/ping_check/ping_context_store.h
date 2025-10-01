@@ -43,9 +43,6 @@ struct NextToSendIndexTag { };
 /// @brief Tag for index by expiration time.
 struct ExpirationIndexTag { };
 
-/// @brief Tag for index by state.
-struct StateIndexTag { };
-
 /// @brief A multi index container holding pointers to PingContexts.
 ///
 /// The contexts in the container may be accessed using different indexes:
@@ -108,14 +105,6 @@ typedef boost::multi_index_container<
                 boost::multi_index::const_mem_fun<PingContext, const TimeStamp&,
                                                   &PingContext::getNextExpiry>
             >
-        >,
-
-        // Specification of the fifth index starts here.
-        // This index sorts contexts by State.
-        boost::multi_index::ordered_non_unique<
-            boost::multi_index::tag<StateIndexTag>,
-            boost::multi_index::const_mem_fun<PingContext, PingContext::State,
-                                              &PingContext::getState>
         >
     >
 > PingContextContainer;

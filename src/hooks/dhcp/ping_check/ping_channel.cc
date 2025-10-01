@@ -320,7 +320,8 @@ PingChannel::sendNext() {
         // with this mutex locked.
         MultiThreadingLock send_lock(*send_mutex_);
 
-        // Fetch the next one to send (outside the mutex).
+        // Fetch the next one to send (outside the mutex) to avoid a possible
+        // deadlock with the mutex in the @ref PingCheckMgr::nextToSend callback.
         PingContextPtr context = ((next_to_send_cb_)());
         if (!context) {
             // Nothing to send.
