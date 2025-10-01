@@ -317,3 +317,7 @@ We have received the following contributions:
 
  - Darwin4053
    2025-06: Fixed arguments order in flex option hook library debug messages.
+
+ - liyunqing_kylin
+   2025-09: Reported and provided a patch that fixes a dead lock in ping-check
+            hooks library.

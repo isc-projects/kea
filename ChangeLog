@@ -1,3 +1,8 @@
+2404.	[bug]		razvan, liyunqing_kylin
+	Fixed deadlock in ping-check hooks library. Thanks to
+	liyunqing_kylin for reporting and providing a patch.
+	(Gitlab #4140)
+
 Kea 3.1.2 (development) released on September 24, 2025
 
 2403.	[func]		fdupont

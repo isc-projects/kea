@@ -13,6 +13,7 @@
 #include <util/watch_socket.h>
 #include <icmp_msg.h>
 #include <icmp_socket.h>
+#include <ping_context.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -66,8 +67,11 @@ typedef ICMPSocket<SocketCallback> PingSocket;
 /// @brief Defines a pointer to PingSocket.
 typedef boost::shared_ptr<PingSocket> PingSocketPtr;
 
-/// @brief Function type for callback that fetches next IOAddress to ping.
-typedef std::function<bool(asiolink::IOAddress& target)> NextToSendCallback;
+/// @brief Function type for callback to fetch a context with next target to ping.
+typedef std::function<PingContextPtr()> NextToSendCallback;
+
+/// @brief Function type for callback to update a context to SENDING state.
+typedef std::function<void(PingContextPtr context)> UpdateToSendCallback;
 
 /// @brief Function type for callback to invoke upon ECHO send completion.
 typedef std::function<void(ICMPMsgPtr& echo, bool send_failed)> EchoSentCallback;
@@ -108,8 +112,10 @@ public:
     ///
     /// @param io_service pointer to the IOService instance that will manage
     /// the channel's IO. Must not be empty
-    /// @param next_to_send_cb callback to invoke to fetch the next IOAddress
-    /// to ping
+    /// @param next_to_send_cb callback to invoke to fetch the next context and
+    /// its target address to ping (called outside the mutex)
+    /// @param update_to_send_cb callback to invoke to update the selected
+    /// context to SENDING (called inside the mutex)
     /// @param echo_sent_cb callback to invoke when an ECHO send has completed
     /// @param reply_received_cb callback to invoke when an ICMP reply has been
     /// received.  This callback is passed all inbound ICMP messages (e.g. ECHO
@@ -120,6 +126,7 @@ public:
     /// @throw BadValue if io_service is empty.
     PingChannel(asiolink::IOServicePtr& io_service,
                 NextToSendCallback next_to_send_cb,
+                UpdateToSendCallback update_to_send_cb,
                 EchoSentCallback echo_sent_cb,
                 ReplyReceivedCallback reply_received_cb,
                 ShutdownCallback shutdown_cb = ShutdownCallback());
@@ -167,7 +174,7 @@ protected:
     /// @brief Receive data on the socket asynchronously
     ///
     /// Calls the underlying socket's asyncReceive() method to read a
-    /// packet of data from a remote endpoint.  Arrival of the data is signalled
+    /// packet of data from a remote endpoint.  Arrival of the data is signaled
     /// via a call to the callback function.
     ///
     /// This virtual function is provided as means to inject errors during
@@ -315,8 +322,11 @@ protected:
     /// @brief IOService instance the drives socket IO
     asiolink::IOServicePtr io_service_;
 
-    /// @brief Callback to invoke to fetch the next address to ping.
+    /// @brief Callback to invoke to fetch the next context with target address to ping.
     NextToSendCallback next_to_send_cb_;
+
+    /// @brief Callback to invoke to update selected context to SENDING state.
+    UpdateToSendCallback update_to_send_cb_;
 
     /// @brief Callback to invoke when an ECHO write has completed.
     EchoSentCallback echo_sent_cb_;
@@ -347,6 +357,16 @@ protected:
 
     /// @brief The mutex used to protect internal state.
     const boost::scoped_ptr<std::mutex> mutex_;
+
+    /// @brief The mutex used to protect internal state on send events.
+    ///
+    /// Mutex used to do atomic read of the store entry using
+    /// @ref PingContextStore::getNextToSend and update the context from
+    /// WAITING_TO_SEND state to SENDING state using
+    /// @ref PingContext::setState. Both functions (when transitioning from
+    /// WAITING_TO_SEND state to SENDING state) should be called only
+    /// with this mutex locked.
+    const boost::scoped_ptr<std::mutex> send_mutex_;
 
     /// @brief True if channel was opened in single-threaded mode, false
     /// otherwise.

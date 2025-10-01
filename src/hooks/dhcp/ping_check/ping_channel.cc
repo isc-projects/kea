@@ -36,17 +36,19 @@ PingChannel::nextEchoInstanceNum() {
 
 PingChannel::PingChannel(IOServicePtr& io_service,
                          NextToSendCallback next_to_send_cb,
+                         UpdateToSendCallback update_to_send_cb,
                          EchoSentCallback echo_sent_cb,
                          ReplyReceivedCallback reply_received_cb,
                          ShutdownCallback shutdown_cb)
     : io_service_(io_service),
       next_to_send_cb_(next_to_send_cb),
+      update_to_send_cb_(update_to_send_cb),
       echo_sent_cb_(echo_sent_cb),
       reply_received_cb_(reply_received_cb),
       shutdown_cb_(shutdown_cb),
       socket_(0), input_buf_(256),
       reading_(false), sending_(false), stopping_(false), mutex_(new std::mutex),
-      single_threaded_(!MultiThreadingMgr::instance().getMode()),
+      send_mutex_(new std::mutex), single_threaded_(!MultiThreadingMgr::instance().getMode()),
       watch_socket_(0), registered_write_fd_(-1), registered_read_fd_(-1) {
     if (!io_service_) {
         isc_throw(BadValue,
@@ -310,24 +312,37 @@ PingChannel::startRead() {
 void
 PingChannel::sendNext() {
     try {
+        // Mutex used to do atomic read of the store entry using
+        // @ref PingContextStore::getNextToSend and update the context from
+        // WAITING_TO_SEND state to SENDING state using
+        // @ref PingContext::setState. Both functions (when transitioning from
+        // WAITING_TO_SEND state to SENDING state) should be called only
+        // with this mutex locked.
+        MultiThreadingLock send_lock(*send_mutex_);
+
+        // Fetch the next one to send (outside the mutex).
+        PingContextPtr context = ((next_to_send_cb_)());
+        if (!context) {
+            // Nothing to send.
+            return;
+        }
+
         MultiThreadingLock lock(*mutex_);
         if (!canSend()) {
             // Can't send right now, get out.
             return;
         }
 
-        // Fetch the next one to send.
-        IOAddress target("0.0.0.0");
-        if (!((next_to_send_cb_)(target))) {
-            // Nothing to send.
-            return;
+        // Update context to SENDING (inside the mutex).
+        if (update_to_send_cb_) {
+            (update_to_send_cb_)(context);
         }
 
         // Have an target IP, build an ECHO REQUEST for it.
         sending_ = true;
         ICMPMsgPtr next_echo(new ICMPMsg());
         next_echo->setType(ICMPMsg::ECHO_REQUEST);
-        next_echo->setDestination(target);
+        next_echo->setDestination(context->getTarget());
 
         uint32_t instance_num = nextEchoInstanceNum();
         next_echo->setId(static_cast<uint16_t>(instance_num >> 16));
@@ -345,7 +360,7 @@ PingChannel::sendNext() {
                                     ph::_1,   // error
                                     ph::_2)); // bytes_transferred
 
-        ICMPEndpoint target_endpoint(target);
+        ICMPEndpoint target_endpoint(context->getTarget());
         asyncSend(echo_icmp.get(), sizeof(struct icmp), &target_endpoint, cb);
     } catch (const std::exception& ex) {
         // Normal IO failures should be passed to the callback.  A failure here

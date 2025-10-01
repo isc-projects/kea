@@ -322,9 +322,9 @@ protected:
     virtual PingChannelPtr createChannel(asiolink::IOServicePtr io_service) {
         return (TestablePingChannelPtr(
             new TestablePingChannel(io_service,
-                                    std::bind(&PingCheckMgr::nextToSend, this, ph::_1),
-                                    std::bind(&TestablePingCheckMgr::sendCompleted,
-                                              this, ph::_1, ph::_2),
+                                    std::bind(&PingCheckMgr::nextToSend, this),
+                                    std::bind(&PingCheckMgr::updateContextToSend, this, ph::_1),
+                                    std::bind(&TestablePingCheckMgr::sendCompleted, this, ph::_1, ph::_2),
                                     std::bind(&TestablePingCheckMgr::replyReceived, this, ph::_1),
                                     std::bind(&PingCheckMgr::channelShutdown, this))));
     }
@@ -845,9 +845,8 @@ public:
         // ST mode should ignore requested thread number.
         createMgr(3, 2, 250, true);
 
-        // Calling nextToSend() should return false.
-        IOAddress next("0.0.0.0");
-        ASSERT_FALSE(mgr_->nextToSend(next));
+        // Calling nextToSend() should return null.
+        ASSERT_FALSE(mgr_->nextToSend());
 
         // Now let's start 3 contexts.
         size_t num_targets = 3;
@@ -877,15 +876,19 @@ public:
 
         // Consecutive calls to nextToSend() should return target addresses
         // in the order they were created.
+        PingContextPtr ctx;
         for (auto const& lqp : lease_query_pairs_) {
             // Next to send should return the next address to send.
-            ASSERT_TRUE(mgr_->nextToSend(next));
+            ASSERT_TRUE(ctx = mgr_->nextToSend());
+
+            // Update the context state explicitly.
+            ASSERT_NO_THROW(mgr_->updateContextToSend(ctx));
 
             // It should match the lease as created.
-            ASSERT_EQ(next, lqp.lease_->addr_);
+            ASSERT_EQ(ctx->getTarget(), lqp.lease_->addr_);
 
             // Fetch the corresponding context.
-            PingContextPtr context = getContext(next);
+            PingContextPtr context = getContext(ctx->getTarget());
             ASSERT_TRUE(context);
 
             // Verify the state has properly moved to SENDING.
@@ -895,8 +898,8 @@ public:
             EXPECT_EQ(PingContext::SENDING, context->getState());
         }
 
-        // A final call to nextToSend should return false.
-        ASSERT_FALSE(mgr_->nextToSend(next));
+        // A final call to nextToSend should return null.
+        ASSERT_FALSE(mgr_->nextToSend());
     }
 
     /// @brief Exercises PingCheckMgr::setNextExpiration.
@@ -1322,9 +1325,8 @@ public:
         ASSERT_NO_THROW_LOG(mgr_->stop());
         ASSERT_TRUE(mgr_->isStopped());
 
-        // Calling nextToSend() should return false.
-        IOAddress next("0.0.0.0");
-        ASSERT_FALSE(mgr_->nextToSend(next));
+        // Calling nextToSend() should return null.
+        ASSERT_FALSE(mgr_->nextToSend());
 
         // We should have as many declines as we have pairs created.
         compareLeaseQueryPairs(declines_);
@@ -1423,9 +1425,8 @@ public:
         ASSERT_NO_THROW_LOG(mgr_->stop());
         ASSERT_TRUE(mgr_->isStopped());
 
-        // Calling nextToSend() should return false.
-        IOAddress next("0.0.0.0");
-        ASSERT_FALSE(mgr_->nextToSend(next));
+        // Calling nextToSend() should return null.
+        ASSERT_FALSE(mgr_->nextToSend());
 
         // We should have as many declines as we have pairs created.
         compareLeaseQueryPairs(declines_);
