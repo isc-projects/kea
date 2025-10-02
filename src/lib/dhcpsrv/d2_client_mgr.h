@@ -30,6 +30,14 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
+/// to the subnet that already exists.
+class FQDNScrubbedEmpty : public Exception {
+public:
+    FQDNScrubbedEmpty(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { }
+};
+
 /// @brief Defines the type for D2 IO error handler.
 /// This callback is invoked when a send to kea-dhcp-ddns completes with a
 /// failed status.  This provides the application layer (Kea) with a means to
@@ -264,6 +272,9 @@ public:
     /// @param ddns_params DDNS behavioral configuration parameters
     /// @tparam T  FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
+    ///
+    /// @throw FQDNScrubbedEmtpy if hostname sanitizing reduces the input domain
+    /// name to an empty string.
     template <class T>
     void adjustDomainName(const T& fqdn, T& fqdn_resp,
                           const DdnsParams& ddns_params);
@@ -515,7 +526,12 @@ D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp, const DdnsParams& ddn
                 ss << sanitizer->scrub(label);
             }
 
-            client_name = ss.str();
+            std::string clean_name = ss.str();
+            if (clean_name.empty() || clean_name == ".") {
+                isc_throw(FQDNScrubbedEmpty, client_name);
+            }
+
+            client_name = clean_name;
         }
 
         // If the supplied name is partial, qualify it by adding the suffix.
