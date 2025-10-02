@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@ namespace dhcp {
 /// This is an implementation of the DHCPv4-query/response DHCPv6 messages
 /// defined in RFC 7341 (http://ietf.org/rfc/rfc7341.txt).
 /// See also
-/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design
+/// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/dhcpv4o6-design
 /// for design discussions.
 class Pkt4o6 : public Pkt4 {
 public:

@@ -612,7 +612,7 @@ public:
     ///
     /// This method retrieves a collection of expired leases and reclaims them.
     /// See
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/lease-expiration#leases-reclamation-routine
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-expiration#leases-reclamation-routine
     /// for the details.
     ///
     /// This method is executed periodically to act upon expired leases. This
@@ -688,7 +688,7 @@ public:
     ///
     /// This method retrieves a collection of expired leases and reclaims them.
     /// See
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/lease-expiration#leases-reclamation-routine
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-expiration#leases-reclamation-routine
     /// for the details.
     ///
     /// This method is executed periodically to act upon expired leases. This

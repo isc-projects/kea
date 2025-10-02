@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,7 +56,7 @@ public:
     /// Provides the control logic to combine two lease files and
     /// weed out duplicate and expired leases. A description of
     /// the design can be found at
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design
     ///
     /// -# parse command line arguments
     /// -# verify that it is the only instance

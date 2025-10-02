@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ public:
 /// uses the command as an input and invokes appropriate handlers.
 ///
 /// The commands and responses are formatted using JSON.
-/// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+/// See https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design
 /// for details.
 ///
 /// Below is an example of the command using JSON format:

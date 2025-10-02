@@ -42,7 +42,7 @@ class LFCSetup;
 /// file will contain many entries for each lease. In order to mitigate this
 /// problem, the backend implements the Lease File Cleanup mechanism which is
 /// described on the Kea wiki:
-/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design.
+/// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design.
 ///
 /// The backend installs an @c asiolink::IntervalTimer to periodically execute
 /// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
@@ -1006,7 +1006,7 @@ public:
     /// - LFC PID File: ".pid"
     ///
     /// See
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design
     /// for details.
     ///
     /// @param file_name A base file name to which suffix is appended.
@@ -1094,7 +1094,7 @@ private:
     /// The <filename>.2, <filename>.1 and <filename>.completed are the
     /// products of the lease file cleanups (LFC).
     /// See:
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design
     /// for details.
     ///
     /// @note: When the server starts up or is reconfigured it will try to
@@ -1313,7 +1313,7 @@ private:
     /// the lease files.
     ///
     /// For the design and the terminology used in this description refer to
-    /// the https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design.
+    /// the https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design.
     ///
     /// If the method finds that the %Lease File Copy exists it simply runs
     /// the @c kea-lfc application.

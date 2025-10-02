@@ -1426,7 +1426,7 @@ The specific loggers are ``kea-dhcp4.eval`` and ``kea-dhcp6.eval``.
 
 To understand the logging statements, it is essential to understand a bit about
 how expressions are evaluated; for a more complete description, refer to
-[the design document](https://gitlab.isc.org/isc-projects/kea/-/wikis/designs/client-classification-design).
+[the design document](https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/client-classification-design).
 In brief, there are two structures used during the evaluation of an
 expression: a list of tokens which represent the expressions, and a value
 stack which represents the values being manipulated.

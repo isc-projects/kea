@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2023 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -49,7 +49,7 @@ As with other hooks, this one keeps its code in a separate namespace which
 corresponds to the file name of the library: isc::stat_cmds.
 
 For background on the design and design choices please refer to: <a
-href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/shared-lease-storage-statistics">Shared Lease Stats Design</a>
+href="https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/shared-lease-storage-statistics">Shared Lease Stats Design</a>
 
 @section stat_cmdsCode Stat Commands Code Overview
 

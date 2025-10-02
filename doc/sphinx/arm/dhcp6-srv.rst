@@ -4766,7 +4766,7 @@ configure Kea to use reservations stored in MySQL or PostgreSQL.
 Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`hooks-host-cmds` provides detailed information.
 The `Kea wiki
-<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
+<https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
 operations.
 

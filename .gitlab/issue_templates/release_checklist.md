@@ -51,7 +51,7 @@ Some of these checks and updates can be made before the actual freeze.
    1. [ ] Check that a previously released schema has not been changed.
    1. [ ] Check that the additions to `dhcpdb_create.*sql`, and nothing more nor less than what was added in this release, is present in a `upgrade_*_to_*.sh.in` script that should also have been added in this release.
 1. [ ] Prepare release notes.
-   1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Releases directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Releases), like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/Releases/Release-notes-2.3.4.
+   1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Release-Notes directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes), like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes/release-notes-2.3.4.
    1. [ ] Notify @tomek that the draft is ready to be redacted. Wait for that to be done.
    1. [ ] Notify support that release notes are ready for review. To avoid conflicts in edits wait with next step after review is done. Due to the time difference, please do this at least 36 hours before the planned release.
 1. [ ] Check that packages can be uploaded to Cloudsmith.

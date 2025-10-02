@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -289,7 +289,7 @@ public:
     ///   received over.
     ///
     /// @todo: Add additional selection criteria. See
-    ///  https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design for details.
+    ///  https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/dhcpv4o6-design for details.
     ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used
