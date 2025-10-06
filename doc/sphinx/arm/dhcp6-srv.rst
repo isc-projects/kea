@@ -5570,7 +5570,7 @@ useful as a way of making the clients known.
             { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E" },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet6": [
             {
@@ -5585,24 +5585,21 @@ useful as a way of making the clients known.
         ]
     }
 
-This concept can be extended further. A good real-life scenario might be a
-situation where some customers of an ISP have not paid their bills. A new class can be
-defined to use an alternative default DNS server that, instead of giving access
-to the Internet, redirects those customers to a captive portal urging them to bring
-their accounts up to date.
+This concept can be extended further by using reservations in conjunction with
+option class-tagging (see :ref:`option-class-tagging`).  A good real-life scenario
+might be a situation where some customers of an ISP have not paid their bills.
+These customers need to be assigned an alternate DNS server that, instead of giving
+acces to the internet, redirects those  customers to a captive portal urging them
+to bring their accounts up to date.  Reservations can be used to assign a client
+to the "blocked" class that is subsequently used to determine the DNS server option
+value as shown below:
 
 ::
 
     "Dhcp6": {
         "client-classes": [
             {
-                "name": "blocked",
-                "option-data": [
-                    {
-                        "name": "dns-servers",
-                        "data": "2001:db8::2"
-                    }
-                ]
+                "name": "blocked"
             }
         ],
         "reservations": [
@@ -5612,7 +5609,7 @@ their accounts up to date.
               "client-classes": [ "blocked" ] },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet6": [
             {
@@ -5625,6 +5622,13 @@ their accounts up to date.
                 ],
                 "option-data": [
                     {
+                        // DNS server for blocked customers.
+                        "client-classes": [ "blocked" ],
+                        "name": "dns-servers",
+                        "data": "2001:db8::2"
+                    },
+                    {
+                        // DNS server for customers in good standing.
                         "name": "dns-servers",
                         "data": "2001:db8::1"
                     }
