@@ -628,6 +628,11 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost.suffix.com", qualified_name);
 
+    // Verify that an empty name does not crash.
+    partial_name = "";
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
+    EXPECT_EQ("", qualified_name);
+
     // Verify that an empty suffix and false flag, does not change the name
     subnet_->setDdnsQualifyingSuffix("");
     partial_name = "somehost";
@@ -660,6 +665,11 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     // suffix is blank and trailing dot is false
     qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
+
+    // Verify that an empty name and an empty suffix does not crash.
+    partial_name = "";
+    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
+    EXPECT_EQ("", qualified_name);
 }
 
 /// @brief Tests the qualifyName method's ability to avoid duplicating

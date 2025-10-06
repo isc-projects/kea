@@ -189,7 +189,8 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
     std::ostringstream gen_name;
     gen_name << partial_name;
     std::string suffix = ddns_params.getQualifyingSuffix();
-    if (!suffix.empty() && partial_name.back() != '.') {
+    if ((!suffix.empty()) && (!partial_name.empty())
+        && (partial_name.back() != '.')) {
         bool suffix_present = true;
         std::string str = gen_name.str();
         auto suffix_rit = suffix.rbegin();

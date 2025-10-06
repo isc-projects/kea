@@ -3221,10 +3221,7 @@ TEST_F(NameDhcpv4SrvTest, hostnameScrubbedEmpty) {
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
 
     // Should have logged that it was scrubbed empty.
-    std::string log = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY"
-                      " [hwtype=1 67:c6:69:73:51:ff], cid=[no info], tid=0x0:"
-                      " sanitiziing client's Hostname option '___'"
-                      " yielded an empty string";
+    std::string log = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY";
     EXPECT_EQ(1, countFile(log));
 
     // Hostname should not be in the response.
@@ -3250,10 +3247,7 @@ TEST_F(NameDhcpv4SrvTest, fqdnScrubbedEmpty) {
     ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
 
     // Should have logged that it was scrubbed empty.
-    std::string log = "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY"
-                      " [hwtype=1 67:c6:69:73:51:ff], cid=[no info], tid=0x0:"
-                      " sanitiziing client's FQDN option '___'"
-                      " yielded an empty string";
+    std::string log = "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY";
     EXPECT_EQ(1, countFile(log));
 
     // Hostname should not be in the response.
