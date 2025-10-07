@@ -39,7 +39,7 @@ if [ -f "${base}.yy" ]; then
     # bison may produce language specific wording (like "symbole terminalne"
     # if you system is set to Polish, rather than "Terminals") and this will
     # confuse our script.
-    LANG=en_US LANGUAGE=en_US LC_ALL=en_US @YACC@ -v "${base}.yy" -o output
+    LANG=en_US LANGUAGE=en_US LC_ALL=C @YACC@ -v "${base}.yy" -o output
     rm -f output output.h ./*.hh
     mv output.output /tmp/output
     output=/tmp/output
