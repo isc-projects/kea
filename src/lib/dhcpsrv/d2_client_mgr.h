@@ -274,7 +274,7 @@ public:
     /// @tparam T  FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     ///
-    /// @throw FQDNScrubbedEmtpy if hostname sanitizing reduces the input domain
+    /// @throw FQDNScrubbedEmpty if hostname sanitizing reduces the input domain
     /// name to an empty string.
     template <class T>
     void adjustDomainName(const T& fqdn, T& fqdn_resp,
