@@ -164,14 +164,14 @@ This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
 
-% DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY %1: sanitiziing client's Hostname option '%2' yielded an empty string
+% DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY %1: sanitizing client's Hostname option '%2' yielded an empty string
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
 hostname option(12) sent by the client is an empty string. When this occurs
 the server will ignore the hostname option. The arguments include the
 client and the hostname option it sent.
 
-% DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitiziing client's FQDN option '%2' yielded an empty string
+% DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitizing client's FQDN option '%2' yielded an empty string
 Logged at debug log level 50.
 This debug message is issued when the result of sanitizing the
 FQDN option(81) sent by the client is an empty string. When this occurs

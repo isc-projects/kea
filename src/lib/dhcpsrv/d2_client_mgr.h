@@ -30,8 +30,8 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
-/// to the subnet that already exists.
+/// @brief Exception thrown when host name sanitizing reduces
+/// the domain name to an empty string.
 class FQDNScrubbedEmpty : public Exception {
 public:
     FQDNScrubbedEmpty(const char* file, size_t line, const char* what) :
@@ -205,6 +205,7 @@ public:
     /// suffix itself is empty (i.e. "").
     ///
     /// @return std::string containing the qualified name.
+    /// @throw BadValue if partial_name is empty.
     std::string qualifyName(const std::string& partial_name,
                             const DdnsParams& ddns_params,
                             const bool trailing_dot) const;

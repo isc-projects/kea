@@ -628,10 +628,9 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost.suffix.com", qualified_name);
 
-    // Verify that an empty name does not crash.
+    // Verify that an empty name throws.
     partial_name = "";
-    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
-    EXPECT_EQ("", qualified_name);
+    ASSERT_THROW(mgr.qualifyName(partial_name, *ddns_params_, do_not_dot), BadValue);
 
     // Verify that an empty suffix and false flag, does not change the name
     subnet_->setDdnsQualifyingSuffix("");
@@ -665,11 +664,6 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     // suffix is blank and trailing dot is false
     qualified_name = mgr.qualifyName("somehost.", *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost", qualified_name);
-
-    // Verify that an empty name and an empty suffix does not crash.
-    partial_name = "";
-    qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
-    EXPECT_EQ("", qualified_name);
 }
 
 /// @brief Tests the qualifyName method's ability to avoid duplicating
@@ -1304,7 +1298,5 @@ TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6ScrubbedEmpty) {
     ASSERT_THROW_MSG(mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_),
                      FQDNScrubbedEmpty, "___.");
 }
-
-
 
 } // end of anonymous namespace
