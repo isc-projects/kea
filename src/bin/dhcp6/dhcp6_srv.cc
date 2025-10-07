@@ -2332,7 +2332,14 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     } else {
         // Adjust the domain name based on domain name value and type sent by
         // the client and current configuration.
-        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
+        try {
+            d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
+        } catch(const FQDNScrubbedEmpty& scrubbed) {
+            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY)
+                .arg(question->getLabel())
+                .arg(scrubbed.what());
+            return;
+        }
     }
 
     // Once we have the FQDN setup to use it for the lease hostname.  This

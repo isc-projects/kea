@@ -2253,7 +2253,7 @@ TEST_F(NameDhcpv4SrvTest, sanitizeHostDefault) {
         },
         {
             "qualified host name with nuls",
-            std::string("four-ok-host\000.other.org",23),
+            std::string("four-ok-host\000.other.org", 23),
             "four-ok-host.other.org"
         }
     };
@@ -3202,5 +3202,57 @@ TEST_F(NameDhcpv4SrvTest, poolDdnsParametersTest) {
         }
     }
 }
+
+// Verifies that when the FQDN option is scrubbed empty it is logged
+// and ignored.
+TEST_F(NameDhcpv4SrvTest, hostnameScrubbedEmpty) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[2], *client.getServer());
+
+    // Set the hostname option.
+    ASSERT_NO_THROW(client.includeHostname("___"));
+
+    // Send the DHCPDISCOVER and make sure that the server responded.
+    ASSERT_NO_THROW(client.doDiscover());
+    auto resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Should have logged that it was scrubbed empty.
+    std::string log = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY";
+    EXPECT_EQ(1, countFile(log));
+
+    // Hostname should not be in the response.
+    ASSERT_FALSE(resp->getOption(DHO_HOST_NAME));
+}
+
+// Verifies that when the FQDN option is scrubbed empty it is logged
+// and ignored.
+TEST_F(NameDhcpv4SrvTest, fqdnScrubbedEmpty) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[2], *client.getServer());
+
+    // Include the Client FQDN option.
+    ASSERT_NO_THROW(client.includeFQDN(Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,
+                                       "___", Option4ClientFqdn::PARTIAL));
+
+    // Send the DHCPDISCOVER and make sure that the server responded.
+    ASSERT_NO_THROW(client.doDiscover());
+    auto resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+    // Should have logged that it was scrubbed empty.
+    std::string log = "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY";
+    EXPECT_EQ(1, countFile(log));
+
+    // Hostname should not be in the response.
+    ASSERT_FALSE(resp->getOption(DHO_FQDN));
+}
+
 
 } // end of anonymous namespace

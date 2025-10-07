@@ -9,6 +9,7 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <testutils/test_to_element.h>
+#include <testutils/gtest_utils.h>
 #include <exceptions/exceptions.h>
 #include <util/str.h>
 
@@ -626,6 +627,10 @@ TEST_F(D2ClientMgrParamsTest, qualifyName) {
     partial_name = "somehost";
     qualified_name = mgr.qualifyName(partial_name, *ddns_params_, do_not_dot);
     EXPECT_EQ("somehost.suffix.com", qualified_name);
+
+    // Verify that an empty name throws.
+    partial_name = "";
+    ASSERT_THROW(mgr.qualifyName(partial_name, *ddns_params_, do_not_dot), BadValue);
 
     // Verify that an empty suffix and false flag, does not change the name
     subnet_->setDdnsQualifyingSuffix("");
@@ -1255,6 +1260,43 @@ TEST_F(D2ClientMgrParamsTest, sanitizeFqdnV6) {
             EXPECT_EQ(Option6ClientFqdn::FULL, response.getDomainNameType());
         }
     }
+}
+
+/// @brief Tests adjustDomainName template method with Option4ClientFqdn
+/// when sanitizing scrubs input name empty.
+TEST_F(D2ClientMgrParamsTest, adjustDomainNameV4ScrubbedEmpty) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration
+    subnet_->setDdnsSendUpdates(false);
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
+    subnet_->setHostnameCharReplacement("");
+
+    Option4ClientFqdn request(0, Option4ClientFqdn::RCODE_CLIENT(),
+                              "___", Option4ClientFqdn::FULL);
+
+    Option4ClientFqdn response(request);
+    ASSERT_THROW_MSG(mgr.adjustDomainName<Option4ClientFqdn>(request, response, *ddns_params_),
+                     FQDNScrubbedEmpty, "___.");
+}
+
+/// @brief Tests adjustDomainName template method with Option4ClientFqdn
+/// when sanitizing scrubs input name empty.
+TEST_F(D2ClientMgrParamsTest, adjustDomainNameV6ScrubbedEmpty) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration
+    subnet_->setDdnsSendUpdates(false);
+    subnet_->setDdnsQualifyingSuffix("suffix.com");
+    subnet_->setHostnameCharSet("[^A-Za-z0-9.-]");
+    subnet_->setHostnameCharReplacement("");
+
+    Option6ClientFqdn request(0, "___", Option6ClientFqdn::FULL);
+
+    Option6ClientFqdn response(request);
+    ASSERT_THROW_MSG(mgr.adjustDomainName<Option6ClientFqdn>(request, response, *ddns_params_),
+                     FQDNScrubbedEmpty, "___.");
 }
 
 } // end of anonymous namespace

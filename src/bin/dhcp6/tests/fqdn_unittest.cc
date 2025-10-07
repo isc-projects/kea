@@ -2425,4 +2425,27 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
     }
 }
 
+// Verify an FQDN with all invalid chars is ignored.
+TEST_F(FqdnDhcpv6SrvTest, fqdnScrubbedEmpty) {
+    // Create the query.
+    Pkt6Ptr question = generateMessage(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+                                       "___" , Option6ClientFqdn::FULL, true);
+    ASSERT_TRUE(getClientFqdnOption(question));
+    subnet_->setHostnameCharReplacement("");
+
+    // Create the response with an "assigned" lease.
+    // Set the selected subnet so ddns params get returned correctly.
+    AllocEngine::ClientContext6 ctx;
+    ctx.subnet_ = subnet_;
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_ADVERTISE);
+    addIA(1234, IOAddress("2001:db8:1::1"), answer, ctx);
+
+    // Process the client's FQDN.
+    ASSERT_NO_THROW(srv_->processClientFqdn(question, answer, ctx));
+
+    // Should not have an FQDN option in the answer.
+    EXPECT_FALSE(answer->getOption(D6O_CLIENT_FQDN));
+    countFile("DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY");
+}
+
 } // end of anonymous namespace

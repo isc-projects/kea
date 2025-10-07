@@ -2714,8 +2714,15 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     } else {
         // Adjust the domain name based on domain name value and type sent by the
         // client and current configuration.
-        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp,
-                                                   *(ex.getContext()->getDdnsParams()));
+        try {
+            d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp,
+                                                       *(ex.getContext()->getDdnsParams()));
+        } catch (const FQDNScrubbedEmpty& scrubbed) {
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(scrubbed.what());
+            return;
+        }
     }
 
     // Add FQDN option to the response message. Note that, there may be some
@@ -2857,7 +2864,15 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             ex.getContext()->getDdnsParams()->getHostnameSanitizer();
 
         if (sanitizer) {
-            hostname = sanitizer->scrub(hostname);
+            auto tmp = sanitizer->scrub(hostname);
+            if (tmp.empty()) {
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(hostname);
+                return;
+            }
+
+            hostname = tmp;
         }
 
         // Convert hostname to lower case.

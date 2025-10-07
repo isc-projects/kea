@@ -1167,3 +1167,10 @@ such modification. The clients will remember previous server-id, and will
 use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
+
+% DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitizing client's FQDN option '%2' yielded an empty string
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(39) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
