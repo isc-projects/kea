@@ -961,6 +961,7 @@ BaseCtrlChannelDhcpv6Test::testControlChannelStats() {
         "pkt6-admin-filtered",
         "pkt6-not-for-us",
         "pkt6-processing-failed",
+        "pkt6-limit-exceeded",
         "pkt6-receive-drop",
         "v6-allocation-fail",
         "v6-allocation-fail-shared-network",
