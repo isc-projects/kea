@@ -2247,7 +2247,7 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
     return env
 
 
-def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir):
+def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir, jobs):
     if tarball_paths is not None:
         # unpack tarball with sources
         execute('sudo rm -rf kea-src')
@@ -2290,7 +2290,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, c
     if 'distcheck' in features:
         cmd = 'meson dist -C build'
     else:
-        cmd = 'meson compile -C build'
+        cmd = f'meson compile -C build -j {jobs}'
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
@@ -2661,7 +2661,7 @@ def _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_p
 
 
 def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_run, ccache_dir, pkg_version,
-                pkg_isc_version, repository_url, pkgs_dir):
+                pkg_isc_version, repository_url, pkgs_dir, jobs):
     """Prepare local system for Kea development based on requested features.
 
     If tarball_paths is provided then instead of Kea sources from current directory
@@ -2679,7 +2679,9 @@ def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_ru
         _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
                           ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir)
     else:
-        _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir)
+        _build_binaries_and_run_ut(
+            system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir, jobs
+        )
 
     execute('sudo df -h', dry_run=dry_run)
 
@@ -2927,7 +2929,7 @@ def parse_args():
                                    help="List system supported by Hammer for doing Kea development.")
     parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
                                    parents=[parent_parser1, parent_parser2])
-    parser.add_argument('-j', '--jobs', default=0,
+    parser.add_argument('-j', '--jobs', default=os.cpu_count(), type=int,
                         help='Number of processes used in compilation. Override make -j default value. Obsolete.')
     parser.add_argument('--kea-packaging-path', metavar='KEA_PACKAGING_PATH',
                         help='Path to the kea-packaging directory when building packages.')
@@ -3250,7 +3252,7 @@ def build_cmd(args):
 
         tarball_paths = None if args.from_tarballs is None else list(map(pathlib.Path.resolve, args.from_tarballs))
         build_local(features, tarball_paths, args.kea_packaging_path, args.check_times, args.dry_run,
-                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir)
+                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir, args.jobs)
         # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
         if args.upload:
             upload_to_repo(args, pkgs_dir)
@@ -3300,7 +3302,7 @@ def build_cmd(args):
         ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
         tarball_paths = list(map(pathlib.Path.resolve, args.from_tarballs))
         result = build_in_vagrant(provider, system, revision, features, args.leave_system, tarball_paths,
-                                  args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs),
+                                  args.dry_run, args.quiet, args.clean_start, args.check_times, args.jobs,
                                   ccache_dir, args.pkg_version, args.pkg_isc_version, args.upload, args.repository_url)
         results[(provider, system, revision)] = result
 
