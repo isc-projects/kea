@@ -3857,6 +3857,14 @@ qualifying suffix (if one is defined and needed).
    or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
    documentation for the configuration options.
 
+.. note::
+
+    Beginning with Kea 3.1.3, when sanitizing results in an empty string, the
+    FQDN option will be ignored as if the client had not sent it.  This can
+    happen if the value sent by the client contains only characters that are
+    deemed invalid by the expression in 'hostname-char-set' and
+    'hostname-char-replacement' is empty, "".
+
 .. _dhcp6-dhcp4o6-config:
 
 DHCPv4-over-DHCPv6: DHCPv6 Side
