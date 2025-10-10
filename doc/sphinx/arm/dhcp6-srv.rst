@@ -7001,6 +7001,10 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | exception was thrown during        |
    |                                                   |                | processing.                        |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-limit-exceeded                               | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped by the ``limits``     |
+   |                                                   |                | hook library.                      |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow; its increase     |
@@ -7725,6 +7729,7 @@ a second counter detailing the drop cause:
 - ``pkt6-service-disabled`` - DHCP service is disabled
 
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
+- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:``hooks-limits``) hook library
 
 - ``pkt6-queue-full`` - parked packet in a queue which became full
 

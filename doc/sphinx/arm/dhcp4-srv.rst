@@ -7426,6 +7426,10 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | exception was thrown during        |
    |                                                    |                | processing.                        |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-limit-exceeded                                | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped by the ``limits``     |
+   |                                                    |                | hook library.                      |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
@@ -7830,6 +7834,7 @@ a second counter detailing the drop cause:
 - ``pkt4-service-disabled`` - DHCP service is disabled
 
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
+- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:``hooks-limits``) hook library
 
 - ``pkt4-queue-full`` - parked packet in a queue which became full
 

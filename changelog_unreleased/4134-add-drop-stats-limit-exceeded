@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added "pkt4-limit-exceeded" and "pkt6-limit-exceeded"
+	statistics which are increased when an incoming packet
+	was dropped by the limits hook library.
+	(Gitlab #4134)
