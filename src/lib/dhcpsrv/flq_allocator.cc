@@ -137,7 +137,14 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
 
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
-                                          const ClientClasses& client_classes) const {
+                                          const ClientClasses& client_classes) {
+    MultiThreadingLock lock(mutex_);
+    return (getOccupancyRateInternal(addr, client_classes));
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRateInternal(const IOAddress& addr,
+                                                  const ClientClasses& client_classes) {
     // Sanity.
     if (!addr.isV4()) {
         return (0.);
@@ -185,7 +192,15 @@ FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& pref,
                                           const uint8_t plen,
-                                          const ClientClasses& client_classes) const {
+                                          const ClientClasses& client_classes) {
+    MultiThreadingLock lock(mutex_);
+    return (getOccupancyRateInternal(pref, plen, client_classes));
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRateInternal(const IOAddress& pref,
+                                                  const uint8_t plen,
+                                                  const ClientClasses& client_classes) {
     // Sanity.
     if (!pref.isV6()) {
         return (0.);

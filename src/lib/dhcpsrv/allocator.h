@@ -152,7 +152,7 @@ public:
     /// @param client_classes list of classes client belongs to.
     virtual double
     getOccupancyRate(const asiolink::IOAddress& addr,
-                     const ClientClasses& client_classes) const;
+                     const ClientClasses& client_classes);
 
     /// @brief Returns the occupancy rate (v6 prefixes).
     ///
@@ -168,7 +168,7 @@ public:
     virtual double
     getOccupancyRate(const asiolink::IOAddress& pref,
                      const uint8_t plen,
-                     const ClientClasses& client_classes) const;
+                     const ClientClasses& client_classes);
 
     /// @brief Check if the pool matches the selection criteria relative to the
     /// provided hint prefix length.
