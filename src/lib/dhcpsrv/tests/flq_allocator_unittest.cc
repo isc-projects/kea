@@ -9,10 +9,12 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/flq_allocator.h>
 #include <dhcpsrv/testutils/alloc_engine_utils.h>
+#include <testutils/multi_threading_utils.h>
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
+using namespace isc::test;
 using namespace std;
 
 namespace isc {
@@ -39,16 +41,54 @@ public:
                                                 3600, time(0), subnet_->getID());
         return (lease);
     }
+
+    /// @brief test get type.
+    void testGetType();
+
+    /// @brief test populating.
+    void testPopulateFreeAddressLeases();
+
+    /// @brief test single pool.
+    void testSinglePool();
+
+    /// @brief test single pool with allocations.
+    void testSinglePoolWithAllocations();
+
+    /// @brief test single pool with reclamations.
+    void testSinglePoolWithReclamations();
+
+    /// @brief test many pools.
+    void testManyPools();
+
+    /// @brief test no pools.
+    void testNoPools();
+
+    /// @brief test single pool of a single address.
+    void testSinglePoolSingleAddress();
+
+    /// @brief test client class guards.
+    void testClientClassGuards();
 };
 
 // Test that the allocator returns the correct type.
-TEST_F(FreeLeaseQueueAllocatorTest4, getType) {
+void
+FreeLeaseQueueAllocatorTest4::testGetType() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
     EXPECT_EQ("flq", alloc.getType());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, getType) {
+    testGetType();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, getTypeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetType();
+}
+
 // Test populating free DHCPv4 leases to the queue.
-TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
+void
+FreeLeaseQueueAllocatorTest4::testPopulateFreeAddressLeases() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     auto& lease_mgr = LeaseMgrFactory::instance();
@@ -84,8 +124,18 @@ TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
     EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.109")));
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
+    testPopulateFreeAddressLeases();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testPopulateFreeAddressLeases();
+}
+
 // Test allocating IPv4 addresses when a subnet has a single pool.
-TEST_F(FreeLeaseQueueAllocatorTest4, singlePool) {
+void
+FreeLeaseQueueAllocatorTest4::testSinglePool() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     ASSERT_NO_THROW(alloc.initAfterConfigure());
@@ -103,9 +153,19 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePool) {
     EXPECT_EQ(10U, addresses.size());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePool) {
+    testSinglePool();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePool();
+}
+
 // Test allocating IPv4 addresses and re-allocating these that are
 // deleted (released).
-TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
+void
+FreeLeaseQueueAllocatorTest4::testSinglePoolWithAllocations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     ASSERT_NO_THROW(alloc.initAfterConfigure());
@@ -158,9 +218,19 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
+    testSinglePoolWithAllocations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolWithAllocations();
+}
+
 // Test allocating IPv4 addresses and re-allocating these that are
 // reclaimed.
-TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
+void
+FreeLeaseQueueAllocatorTest4::testSinglePoolWithReclamations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     ASSERT_NO_THROW(alloc.initAfterConfigure());
@@ -214,8 +284,18 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
+    testSinglePoolWithReclamations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolWithReclamations();
+}
+
 // Test allocating DHCPv4 leases for many pools in a subnet.
-TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
+void
+FreeLeaseQueueAllocatorTest4::testManyPools() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     // Add several more pools.
@@ -289,9 +369,19 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
     EXPECT_LT(consecutive_pools, pools_vector.size()/2);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
+    testManyPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, manyPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPools();
+}
+
 // Test that the allocator returns a zero address when there are no pools
 // in a subnet.
-TEST_F(FreeLeaseQueueAllocatorTest4, noPools) {
+void
+FreeLeaseQueueAllocatorTest4::testNoPools() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     subnet_->delPools(Lease::TYPE_V4);
@@ -304,8 +394,18 @@ TEST_F(FreeLeaseQueueAllocatorTest4, noPools) {
     EXPECT_EQ(0., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, noPools) {
+    testNoPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, noPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoPools();
+}
+
 // Test that the allocator still works with a single pool of a single address.
-TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolSingleAddress) {
+void
+FreeLeaseQueueAllocatorTest4::testSinglePoolSingleAddress() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
     subnet_->delPools(Lease::TYPE_V4);
@@ -332,8 +432,18 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolSingleAddress) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolSingleAddress) {
+    testSinglePoolSingleAddress();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolSingleAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolSingleAddress();
+}
+
 // Test that the allocator respects client class guards.
-TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
+void
+FreeLeaseQueueAllocatorTest4::testClientClassGuards() {
    FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
 
    // First pool only allows the client class foo.
@@ -409,6 +519,15 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
    EXPECT_EQ(0., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest4, clientClassGuards) {
+    testClientClassGuards();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest4, clientClassGuardsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testClientClassGuards();
+}
+
 /// @brief Test fixture class for the DHCPv6 Free Lease Queue allocator.
 class FreeLeaseQueueAllocatorTest6 : public AllocEngine6Test {
 public:
@@ -431,10 +550,67 @@ public:
         return (lease);
     }
 
+    /// @brief test get type.
+    void testGetType();
+
+    /// @brief test populating.
+    void testPopulateFreeAddressLeases();
+
+    /// @brief test single pool.
+    void testSinglePool();
+
+    /// @brief test single pool with allocations.
+    void testSinglePoolWithAllocations();
+
+    /// @brief test single pool with reclamations.
+    void testSinglePoolWithReclamations();
+
+    /// @brief test many pools.
+    void testManyPools();
+
+    /// @brief test no pools.
+    void testNoPools();
+
+    /// @brief test single pool of a single address.
+    void testSinglePoolSingleAddress();
+
+    /// @brief test client class guards
+    void testClientClassGuards();
+
+    /// @brief test populating PDs.
+    void testPopulateFreePrefixDelegationLeases();
+
+    /// @brief test single PD pool.
+    void testSinglePdPool();
+
+    /// @brief test single PD pool with allocations.
+    void testSinglePdPoolWithAllocations();
+
+    /// @brief test single PD pool with reclamations.
+    void testSinglePdPoolWithReclamations();
+
+    /// @brief test many PD pools.
+    void testManyPdPools();
+
+    /// @brief test many PD pools / prefer lower.
+    void testManyPdPoolsPreferLower();
+
+    /// @brief test many PD pools / prefer equal.
+    void testManyPdPoolsPreferEqual();
+
+    /// @brief test many PD pools / prefer higher.
+    void testManyPdPoolsPreferHigher();
+
+    /// @brief test single PD pool of a single prefix.
+    void testSinglePdPoolSinglePrefix();
+
+    /// @brief test PD client class guards.
+    void testPdPoolsClientClassGuards();
 };
 
 // Test that the allocator returns the correct type.
-TEST_F(FreeLeaseQueueAllocatorTest6, getType) {
+void
+FreeLeaseQueueAllocatorTest6::testGetType() {
     FreeLeaseQueueAllocator allocNA(Lease::TYPE_NA, subnet_);
     EXPECT_EQ("flq", allocNA.getType());
 
@@ -442,8 +618,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, getType) {
     EXPECT_EQ("flq", allocPD.getType());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, getType) {
+    testGetType();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, getTypeMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetType();
+}
+
 // Test populating free DHCPv6 address leases to the queue.
-TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {
+void
+FreeLeaseQueueAllocatorTest6::testPopulateFreeAddressLeases() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
 
     auto& lease_mgr = LeaseMgrFactory::instance();
@@ -485,8 +671,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {
     EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::20")));
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {
+    testPopulateFreeAddressLeases();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testPopulateFreeAddressLeases();
+}
+
 // Test allocating IPv6 addresses when a subnet has a single pool.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePool) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePool() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
@@ -504,9 +700,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePool) {
     EXPECT_EQ(17U, addresses.size());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePool) {
+    testSinglePool();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePool();
+}
+
 // Test allocating IPv6 addresses and re-allocating these that are
 // deleted (released).
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePoolWithAllocations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
@@ -550,9 +756,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
     EXPECT_TRUE(candidate.isV6Zero());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
+    testSinglePoolWithAllocations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolWithAllocations();
+}
+
 // Test allocating IPv6 addresses and re-allocating these that are
 // reclaimed.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePoolWithReclamations() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
@@ -599,8 +815,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
     EXPECT_TRUE(candidate.isV6Zero());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
+    testSinglePoolWithReclamations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolWithReclamations();
+}
+
 // Test allocating DHCPv6 leases for many pools in a subnet.
-TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
+void
+FreeLeaseQueueAllocatorTest6::testManyPools() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
 
     // Add several more pools.
@@ -666,9 +892,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
     EXPECT_LT(consecutive_pools, pools_vector.size()/2);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
+    testManyPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPools();
+}
+
 // Test that the allocator returns a zero address when there are no pools
 // in a subnet.
-TEST_F(FreeLeaseQueueAllocatorTest6, noPools) {
+void
+FreeLeaseQueueAllocatorTest6::testNoPools() {
    FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
 
    subnet_->delPools(Lease::TYPE_NA);
@@ -677,8 +913,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, noPools) {
    EXPECT_TRUE(candidate.isV6Zero());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, noPools) {
+    testNoPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, noPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testNoPools();
+}
+
 // Test that the allocator still works with a single pool of a single address.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolSingleAddress) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePoolSingleAddress() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
 
     subnet_->delPools(Lease::TYPE_NA);
@@ -702,8 +948,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolSingleAddress) {
     EXPECT_TRUE(candidate.isV6Zero());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolSingleAddress) {
+    testSinglePoolSingleAddress();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolSingleAddressMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePoolSingleAddress();
+}
+
 // Test that the allocator respects client class guards.
-TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
+void
+FreeLeaseQueueAllocatorTest6::testClientClassGuards() {
    FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
 
    // First pool only allows the client class foo.
@@ -766,8 +1022,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
    EXPECT_EQ(47U, addresses_set.size());
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, clientClassGuards) {
+    testClientClassGuards();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, clientClassGuardsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testClientClassGuards();
+}
+
 // Test populating free DHCPv6 prefix leases to the queue.
-TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeases) {
+void
+FreeLeaseQueueAllocatorTest6::testPopulateFreePrefixDelegationLeases() {
     subnet_->delPools(Lease::TYPE_PD);
 
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
@@ -806,8 +1072,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeases) {
     EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::4000")));
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeases) {
+    testPopulateFreePrefixDelegationLeases();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeasesMultiThreading) {
+    MultiThreadingTest mt(true);
+    testPopulateFreePrefixDelegationLeases();
+}
+
 // Test allocating delegated prefixes when a subnet has a single pool.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPool) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePdPool() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
     ASSERT_NO_THROW(alloc.initAfterConfigure());
     auto& lease_mgr = LeaseMgrFactory::instance();
@@ -832,9 +1108,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPool) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPool) {
+    testSinglePdPool();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePdPool();
+}
+
 // Test allocating delegated prefixes and re-allocating these that are
 // deleted (released).
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePdPoolWithAllocations() {
     // Remove the default pool because it is too large for this test case.
     subnet_->delPools(Lease::TYPE_PD);
     // Add a smaller pool.
@@ -894,9 +1180,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
+    testSinglePdPoolWithAllocations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePdPoolWithAllocations();
+}
+
 // Test allocating delegated prefixes and re-allocating these that are
 // reclaimed.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePdPoolWithReclamations() {
     // Remove the default pool because it is too large for this test case.
     subnet_->delPools(Lease::TYPE_PD);
     // Add a smaller pool.
@@ -959,8 +1255,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
+    testSinglePdPoolWithReclamations();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamationsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePdPoolWithReclamations();
+}
+
 // Test allocating delegated prefixes from multiple pools.
-TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
+void
+FreeLeaseQueueAllocatorTest6::testManyPdPools() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -996,8 +1302,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
     EXPECT_EQ(1., r);
 }
 
-// Test allocating delegated prefixes from multiple pools.
-TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLower) {
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPools) {
+    testManyPdPools();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPdPools();
+}
+
+// Test allocating delegated prefixes from multiple pools / prefer lower.
+void
+FreeLeaseQueueAllocatorTest6::testManyPdPoolsPreferLower() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -1037,8 +1353,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLower) {
     EXPECT_EQ(0., r);
 }
 
-// Test allocating delegated prefixes from multiple pools.
-TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqual) {
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLower) {
+    testManyPdPoolsPreferLower();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferLowerMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPdPoolsPreferLower();
+}
+
+// Test allocating delegated prefixes from multiple pools / prefer equal.
+void
+FreeLeaseQueueAllocatorTest6::testManyPdPoolsPreferEqual() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -1073,8 +1399,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqual) {
     EXPECT_EQ(2560. / 68096., r);
 }
 
-// Test allocating delegated prefixes from multiple pools.
-TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqual) {
+    testManyPdPoolsPreferEqual();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferEqualMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPdPoolsPreferEqual();
+}
+
+// Test allocating delegated prefixes from multiple pools / prefer higher.
+void
+FreeLeaseQueueAllocatorTest6::testManyPdPoolsPreferHigher() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     for (auto i = 0; i < 10; ++i) {
@@ -1114,8 +1450,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
     EXPECT_EQ((assigned ? 2560. : 2561.) / 68096., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
+    testManyPdPoolsPreferHigher();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigherMultiThreading) {
+    MultiThreadingTest mt(true);
+    testManyPdPoolsPreferHigher();
+}
+
 // Test that the allocator still works with a single pd pool of a single prefix.
-TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolSinglePrefix) {
+void
+FreeLeaseQueueAllocatorTest6::testSinglePdPoolSinglePrefix() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     subnet_->delPools(Lease::TYPE_PD);
@@ -1148,8 +1494,18 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolSinglePrefix) {
     EXPECT_EQ(1., r);
 }
 
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolSinglePrefix) {
+    testSinglePdPoolSinglePrefix();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolSinglePrefixMultiThreading) {
+    MultiThreadingTest mt(true);
+    testSinglePdPoolSinglePrefix();
+}
+
 // Test that the allocator respects client class guards.
-TEST_F(FreeLeaseQueueAllocatorTest6, pdPoolsClientClasses) {
+void
+FreeLeaseQueueAllocatorTest6::testPdPoolsClientClassGuards() {
     FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
 
     // First pool only allows the client class foo.
@@ -1191,6 +1547,15 @@ TEST_F(FreeLeaseQueueAllocatorTest6, pdPoolsClientClasses) {
     cc_.clear();
     r = alloc.getOccupancyRate(IOAddress("3000:1::"), 128, cc_);
     EXPECT_EQ(0., r);
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, pdPoolsClientClassGuards) {
+    testPdPoolsClientClassGuards();
+}
+
+TEST_F(FreeLeaseQueueAllocatorTest6, pdPoolsClientClassGuardsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testPdPoolsClientClassGuards();
 }
 
 } // end of isc::dhcp::test namespace
