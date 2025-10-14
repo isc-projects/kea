@@ -7834,7 +7834,9 @@ a second counter detailing the drop cause:
 - ``pkt4-service-disabled`` - DHCP service is disabled
 
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
-- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:``hooks-limits``) hook library
+
+- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 - ``pkt4-queue-full`` - parked packet in a queue which became full
 

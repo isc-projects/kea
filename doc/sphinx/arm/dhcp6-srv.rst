@@ -7729,7 +7729,9 @@ a second counter detailing the drop cause:
 - ``pkt6-service-disabled`` - DHCP service is disabled
 
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
-- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:``hooks-limits``) hook library
+
+- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 - ``pkt6-queue-full`` - parked packet in a queue which became full
 
