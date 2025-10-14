@@ -25,4 +25,6 @@ test(
     dhcp_lease_cmds_libload_tests,
     depends: [dhcp_lease_cmds_lib],
     protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
 )

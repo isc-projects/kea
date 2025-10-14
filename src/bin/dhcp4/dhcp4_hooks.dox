@@ -361,7 +361,7 @@ called before "subnet4_select".
    "offer_address_in_use" to false if the address is available and the offer should
    be sent to the client. If the address should be declined, callouts should set
    the argument to true. This will cause the server to discard the DHCPOFFER, mark
-   the lease DECLINED in the lease store, update the relevant statitics, and then
+   the lease DECLINED in the lease store, update the relevant statistics, and then
    invoke callouts installed for lease4_server_decline.
 
 @subsection dhcpv4Lease4ServerDecline lease4_server_decline

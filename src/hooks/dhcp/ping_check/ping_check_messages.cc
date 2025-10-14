@@ -9,6 +9,7 @@ extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REPLY_RECEIVED = "PING_
 extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REQUEST_SENT = "PING_CHECK_CHANNEL_ECHO_REQUEST_SENT";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED = "PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR = "PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR";
+extern const isc::log::MessageID PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED = "PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSED = "PING_CHECK_CHANNEL_SOCKET_CLOSED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR = "PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_OPENED = "PING_CHECK_CHANNEL_SOCKET_OPENED";
@@ -54,6 +55,7 @@ const char* values[] = {
     "PING_CHECK_CHANNEL_ECHO_REQUEST_SENT", "to address %1, id %2, sequence %3",
     "PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED", "error occurred unpacking message %1, discarding it",
     "PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR", "occurred trying to ping %1, error %2",
+    "PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED", "Ping check skipped: no lease",
     "PING_CHECK_CHANNEL_SOCKET_CLOSED", "ICMP socket has been closed.",
     "PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR", "an attempt to close the ICMP socket failed %1",
     "PING_CHECK_CHANNEL_SOCKET_OPENED", "ICMP socket been opened successfully.",

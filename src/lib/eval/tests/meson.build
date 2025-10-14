@@ -14,4 +14,10 @@ kea_eval_tests = executable(
     include_directories: [include_directories('.')] + INCLUDES,
     link_with: [kea_testutils_lib, kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
-test('kea-eval-tests', kea_eval_tests, protocol: 'gtest')
+test(
+    'kea-eval-tests',
+    kea_eval_tests,
+    protocol: 'gtest',
+    is_parallel: false,
+    priority: -1,
+)

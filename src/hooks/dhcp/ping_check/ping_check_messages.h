@@ -10,6 +10,7 @@ extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REPLY_RECEIVED;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REQUEST_SENT;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR;
+extern const isc::log::MessageID PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSED;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR;
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_OPENED;

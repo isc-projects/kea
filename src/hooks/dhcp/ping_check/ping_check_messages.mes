@@ -119,6 +119,11 @@ This debug message is emitted when the minimum number of ECHO REQUESTs
 is greater than 1 and the next ECHO REQUEST for a given lease address has
 been scheduled.
 
+% PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED Ping check skipped: no lease
+Logged at debug log level 50.
+This debug message is emitted when the ping check is omitted because there is no lease.
+This could be caused by the fact that the lease has been reused.
+
 % PING_CHECK_MGR_RECEIVED_ECHO_REPLY from %1, id %2, sequence %3
 Logged at debug log level 40.
 This debug message is emitted when an ECHO REPLY message has been received.
