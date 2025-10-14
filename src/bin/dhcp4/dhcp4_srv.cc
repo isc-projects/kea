@@ -1371,6 +1371,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
+
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it.
             return (Pkt4Ptr());;
         }
 
@@ -1388,6 +1391,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         }
 
         callout_handle->getArgument("query4", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt4Ptr());
+        }
     }
 
     // Unpack the packet information unless the buffer4_receive callouts
@@ -1498,10 +1505,16 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it.
             return (Pkt4Ptr());
         }
 
         callout_handle->getArgument("query4", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt4Ptr());
+        }
     }
 
     // Check the DROP special class.

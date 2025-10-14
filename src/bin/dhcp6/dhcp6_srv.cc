@@ -862,10 +862,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
                 .arg(query->getIface());
 
             // Not increasing the statistics of the dropped packets because it
-            // is the callouts' responsibility to increase it. There are some
-            // cases when the callouts may elect to not increase the statistics.
-            // For example, packets dropped by the load-balancing algorithm must
-            // not increase the statistics.
+            // is the callouts' responsibility to increase it.
             return (Pkt6Ptr());
         }
 
@@ -980,10 +977,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
             // Not increasing the statistics of the dropped packets because it
-            // is the callouts' responsibility to increase it. There are some
-            // cases when the callouts may elect to not increase the statistics.
-            // For example, packets dropped by the load-balancing algorithm must
-            // not increase the statistics.
+            // is the callouts' responsibility to increase it.
             return (Pkt6Ptr());
         }
 

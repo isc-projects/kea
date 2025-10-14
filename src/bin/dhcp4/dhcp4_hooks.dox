@@ -37,7 +37,9 @@
  - Next step status: the action taken by the server when a callout chooses to set
    status to specified value. Actions not listed explicitly are not supported.
    If a callout sets status to unsupported value, this specific value will be
-   ignored and treated as if the status was CONTINUE.
+   ignored and treated as if the status was CONTINUE. If the action is to
+   drop the incoming query it is the responsibilty of the hook to increase
+   statistics.
 
 @section dhcpv4HooksHookPoints Hooks in the DHCPv4 Server
 
