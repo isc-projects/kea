@@ -941,6 +941,7 @@ BaseCtrlChannelDhcpv4Test::testControlChannelStats() {
         "pkt4-nak-sent",
         "pkt4-service-disabled",
         "pkt4-parse-failed",
+        "pkt4-queue-full",
         "pkt4-receive-drop",
         "v4-allocation-fail",
         "v4-allocation-fail-shared-network",

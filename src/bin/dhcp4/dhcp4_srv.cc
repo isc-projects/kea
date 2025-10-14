@@ -183,6 +183,7 @@ std::set<std::string> dhcp4_statistics = {
     "pkt4-nak-sent",
     "pkt4-service-disabled",
     "pkt4-parse-failed",
+    "pkt4-queue-full",
     "pkt4-receive-drop",
     "v4-allocation-fail",
     "v4-allocation-fail-shared-network",
@@ -818,6 +819,10 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop, bool allow_answer_park
                       DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
+            isc::stats::StatsMgr::instance().addValue("pkt4-queue-full",
+                                                      static_cast<int64_t>(1));
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<int64_t>(1));
             return (ConstSubnet4Ptr());
         }
 
@@ -985,6 +990,10 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
+            isc::stats::StatsMgr::instance().addValue("pkt4-queue-full",
+                                                      static_cast<int64_t>(1));
+            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                      static_cast<int64_t>(1));
             return (ConstSubnet4Ptr());
         }
 
@@ -1789,6 +1798,8 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
                     LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, parking_lot_full_msg)
                         .arg(limit)
                         .arg(query->getLabel());
+                    isc::stats::StatsMgr::instance().addValue("pkt4-queue-full",
+                                                              static_cast<int64_t>(1));
                     isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                                 static_cast<int64_t>(1));
                     return (Pkt4Ptr());

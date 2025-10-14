@@ -134,6 +134,8 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
                 .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
                 .arg(holder->query_->toText())
                 .arg(holder->thread_);
+            stats::StatsMgr::instance().addValue("pkt6-queue-full",
+                                                 static_cast<int64_t>(1));
             stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                                  static_cast<int64_t>(1));
         }
@@ -147,6 +149,8 @@ ClientHandler::tryLock(Pkt6Ptr query, ContinuationPtr cont) {
             .arg(holder->query_->makeLabel(holder->query_->getClientId(), nullptr))
             .arg(holder->query_->toText())
             .arg(holder->thread_);
+        stats::StatsMgr::instance().addValue("pkt6-queue-full",
+                                             static_cast<int64_t>(1));
         stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                              static_cast<int64_t>(1));
     }

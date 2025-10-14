@@ -6978,6 +6978,10 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | relay agents, or a bug in the      |
    |                                                   |                | server.                            |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-queue-full                                   | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped when the queue they   |
+   |                                                   |                | were parked became full.           |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow; its increase     |
@@ -7698,8 +7702,12 @@ The DHCPv6 server supports the following statistics:
 
 Dropped incoming packets can be counted in the ``pkt6-receive-drop`` and
 a second counter detailing the drop cause:
+
 - ``pkt6-service-disabled`` - DHCP service is disabled
+
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
+
+- ``pkt6-queue-full`` - parked packet in a queue which became full
 
 .. note::
 

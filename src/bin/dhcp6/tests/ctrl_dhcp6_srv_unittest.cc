@@ -638,6 +638,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "pkt6-addr-reg-reply-sent",
         "pkt6-service-disabled",
         "pkt6-parse-failed",
+        "pkt6-queue-full",
         "pkt6-receive-drop",
         "v6-allocation-fail",
         "v6-allocation-fail-shared-network",

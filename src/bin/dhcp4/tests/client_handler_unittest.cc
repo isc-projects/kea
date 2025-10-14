@@ -26,9 +26,10 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Creates the pkt4-receive-drop statistic.
+    /// Creates the pkt4-queue-full and pkt4-receive-drop statistics.
     ClientHandleTest() : called1_(false), called2_(false), called3_(false) {
         MultiThreadingMgr::instance().apply(false, 0, 0);
+        StatsMgr::instance().setValue("pkt4-queue-full", static_cast<int64_t>(0));
         StatsMgr::instance().setValue("pkt4-receive-drop", static_cast<int64_t>(0));
     }
 
@@ -71,15 +72,21 @@ public:
 
     /// @brief Check statistics.
     ///
-    /// @param bumped True if pkt4-receive-drop should have been bumped by one,
+    /// @param bumped True if statistics should have been bumped by one,
     /// false otherwise.
     void checkStat(bool bumped) {
-        ObservationPtr obs = StatsMgr::instance().getObservation("pkt4-receive-drop");
-        ASSERT_TRUE(obs);
+        ObservationPtr obs_qf =
+            StatsMgr::instance().getObservation("pkt4-queue-full");
+        ObservationPtr obs_rd =
+            StatsMgr::instance().getObservation("pkt4-receive-drop");
+        ASSERT_TRUE(obs_qf);
+        ASSERT_TRUE(obs_rd);
         if (bumped) {
-            EXPECT_EQ(1, obs->getInteger().first);
+            EXPECT_EQ(1, obs_qf->getInteger().first);
+            EXPECT_EQ(1, obs_rd->getInteger().first);
         } else {
-            EXPECT_EQ(0, obs->getInteger().first);
+            EXPECT_EQ(0, obs_qf->getInteger().first);
+            EXPECT_EQ(0, obs_rd->getInteger().first);
         }
     }
 

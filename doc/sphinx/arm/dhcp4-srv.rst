@@ -7403,6 +7403,10 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | network, faulty clients, or a bug  |
    |                                                    |                | in the server.                     |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-queue-full                                    | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped when the queue they   |
+   |                                                    |                | were parked became full.           |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
@@ -7803,8 +7807,12 @@ The DHCPv4 server supports the following statistics:
 
 Dropped incoming packets can be counted in the ``pkt4-receive-drop`` and
 a second counter detailing the drop cause:
+
 - ``pkt4-service-disabled`` - DHCP service is disabled
+
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
+
+- ``pkt6-queue-full`` - parked packet in a queue which became full
 
 .. note::
 

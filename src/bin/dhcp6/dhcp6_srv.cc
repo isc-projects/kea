@@ -243,6 +243,7 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-addr-reg-reply-sent",
     "pkt6-service-disabled",
     "pkt6-parse-failed",
+    "pkt6-queue-full",
     "pkt6-receive-drop",
     "v6-allocation-fail",
     "v6-allocation-fail-shared-network",
@@ -1316,6 +1317,8 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
                           DHCP6_HOOK_LEASES6_PARKING_LOT_FULL)
                           .arg(parked_packet_limit)
                           .arg(query->getLabel());
+                isc::stats::StatsMgr::instance().addValue("pkt6-queue-full",
+                                                          static_cast<int64_t>(1));
                 isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
                                                           static_cast<int64_t>(1));
                 rsp.reset();
@@ -2140,6 +2143,10 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                       DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(question->getLabel());
+            isc::stats::StatsMgr::instance().addValue("pkt6-queue-full",
+                                                      static_cast<int64_t>(1));
+            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
+                                                      static_cast<int64_t>(1));
             return (ConstSubnet6Ptr());
         }
 
