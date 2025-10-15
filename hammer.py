@@ -3359,6 +3359,7 @@ def main():
         prepare_system_cmd(args)
 
     elif args.command == "build":
+        os.environ['MESON_NUM_PROCESSES'] = str(args.jobs)
         build_cmd(args)
 
     elif args.command == "ssh":
