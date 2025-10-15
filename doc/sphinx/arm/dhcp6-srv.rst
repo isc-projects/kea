@@ -6986,6 +6986,12 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | were dropped following protocol    |
    |                                                   |                | specifications.                    |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-admin-filtered                               | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped because the server    |
+   |                                                   |                | was configured to do so, e.g. by   |
+   |                                                   |                | classifying the query into the     |
+   |                                                   |                | ``DROP`` class.                    |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow; its increase     |
@@ -7714,6 +7720,8 @@ a second counter detailing the drop cause:
 - ``pkt6-queue-full`` - parked packet in a queue which became full
 
 - ``pkt6-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
+
+- ``pkt6-admin-filtered`` - admin filtered out
 
 .. note::
 

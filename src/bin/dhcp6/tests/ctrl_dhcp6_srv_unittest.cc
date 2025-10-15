@@ -640,6 +640,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "pkt6-parse-failed",
         "pkt6-queue-full",
         "pkt6-rfc-violation",
+        "pkt6-admin-filtered",
         "pkt6-receive-drop",
         "v6-allocation-fail",
         "v6-allocation-fail-shared-network",

@@ -7411,6 +7411,12 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | were dropped following protocol    |
    |                                                    |                | specifications.                    |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-admin-filtered                                | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped because the server    |
+   |                                                    |                | was configured to do so, e.g. by   |
+   |                                                    |                | classifying the query into the     |
+   |                                                    |                | ``DROP`` class.                    |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
@@ -7819,6 +7825,8 @@ a second counter detailing the drop cause:
 - ``pkt4-queue-full`` - parked packet in a queue which became full
 
 - ``pkt4-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
+
+- ``pkt4-admin-filtered`` - admin filtered out
 
 .. note::
 

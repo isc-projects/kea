@@ -256,6 +256,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616290"
                ]
            ],
+           "pkt4-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-decline-received": [
                [
                    0,
@@ -559,6 +565,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-advertise-received": [
@@ -1014,6 +1026,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616290"
                ]
            ],
+           "pkt4-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-decline-received": [
                [
                    0,
@@ -1233,6 +1251,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177731"
+               ]
+           ],
+           "pkt6-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-advertise-received": [

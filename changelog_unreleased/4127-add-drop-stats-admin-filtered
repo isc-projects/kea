@@ -1,0 +1,6 @@
+[func]		fdupont
+	Added "pkt4-admin-filtered" and "pkt6-admin-filtered"
+	statistics which are increased when an incoming packet
+	was dropped because the server was configured to do so,
+	e.g. by classifying the query into the DROP class.
+	(Gitlab #4127)
