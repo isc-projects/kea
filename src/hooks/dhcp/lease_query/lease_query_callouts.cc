@@ -230,6 +230,11 @@ int buffer6_receive(CalloutHandle& handle) {
                   DHCP6_LEASE_QUERY_PROCESS_FAILED)
                   .arg(LeaseQueryImpl6::leaseQueryLabel(query))
                   .arg(ex.what());
+
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        return (0);
     }
 
     // We always set status to DROP as the query has been handled.

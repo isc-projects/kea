@@ -15,8 +15,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_impl4.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <lease_query_impl4.h>
 
 #include <gtest/gtest.h>
 #include <sstream>
@@ -28,6 +29,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::lease_query;
+using namespace isc::stats;
 using namespace isc::util;
 
 namespace {
@@ -643,10 +645,18 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
                      "giaddr cannot be 0.0.0.0");
 
+    // Set the pkt4-admin-filtered stat to 0.
+    StatsMgr::instance().setValue("pkt4-admin-filtered", static_cast<int64_t>(0));
+
     // An unknown giaddr should fail.
     lq->setGiaddr(IOAddress("192.0.2.2"));
     ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
                      "rejecting query from unauthorized requester: 192.0.2.2");
+
+    // Check the stat which was bumped by one.
+    ObservationPtr stat = StatsMgr::instance().getObservation("pkt4-admin-filtered");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
 
     // Now we'll iterate over all invalid combinations of ciaddr, HWAddr, client id.
     struct Scenario {

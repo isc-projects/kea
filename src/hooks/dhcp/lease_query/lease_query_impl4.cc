@@ -61,6 +61,8 @@ LeaseQueryImpl4::processQuery(PktPtr base_query) const {
     }
 
     if (!isRequester(requester_ip)) {
+        StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "rejecting query from unauthorized requester: "
                   << requester_ip.toText());
     }

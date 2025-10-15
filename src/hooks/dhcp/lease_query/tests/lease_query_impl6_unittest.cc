@@ -18,8 +18,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_impl6.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <lease_query_impl6.h>
 #include <test_lease_mgr.h>
 
 #include <gtest/gtest.h>
@@ -33,6 +34,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::lease_query;
+using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
 
@@ -704,12 +706,20 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
                      "DHCPV6_LEASEQUERY source address cannot be ::");
 
+    // Set the pkt6-admin-filtered stat to 0.
+    StatsMgr::instance().setValue("pkt6-admin-filtered", static_cast<int64_t>(0));
+
     // Set source address to an unknown requester address.
     lq->setRemoteAddr(IOAddress("de:ad:be:ef::"));
 
     // An unknown requester should fail.
     ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
                      "rejecting DHCPV6_LEASEQUERY from unauthorized requester: de:ad:be:ef::");
+
+    // Check the stat which was bumped by one.
+    ObservationPtr stat = StatsMgr::instance().getObservation("pkt6-admin-filtered");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
 
     // Set source address to a known requester address.
     lq->setRemoteAddr(IOAddress("2001:db8:2::1"));

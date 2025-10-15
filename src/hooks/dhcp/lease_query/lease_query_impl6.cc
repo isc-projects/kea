@@ -115,6 +115,8 @@ LeaseQueryImpl6::processQuery(PktPtr base_query) const {
 
     if (!isRequester(requester_ip)) {
         // RFC 5007 says we may discard or return STATUS_NotAllowed
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue,
                  "rejecting DHCPV6_LEASEQUERY from unauthorized requester: "
                   << requester_ip.toText());
