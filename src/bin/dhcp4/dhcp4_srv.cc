@@ -318,6 +318,8 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
             .arg(query_->getHWAddrLabel())
             .arg(query_->toText());
+        isc::stats::StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                                  static_cast<int64_t>(1));
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
         drop = true;
@@ -1162,6 +1164,8 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
                           DHCP4_PACKET_DROP_0014)
                     .arg(query->getHWAddrLabel())
                     .arg(query->toText());
+                isc::stats::StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                                          static_cast<int64_t>(1));
                 isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                           static_cast<int64_t>(1));
                 return (false);
@@ -1533,6 +1537,8 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
             .arg(query->getHWAddrLabel())
             .arg(query->toText());
+        isc::stats::StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                                  static_cast<int64_t>(1));
         isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                   static_cast<int64_t>(1));
         return (Pkt4Ptr());

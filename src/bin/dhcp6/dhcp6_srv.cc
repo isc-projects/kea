@@ -544,6 +544,8 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
                           DHCP6_PACKET_DROP_DROP_CLASS_EARLY)
                     .arg(query->makeLabel(query->getClientId(), nullptr))
                     .arg(query->toText());
+                StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                              static_cast<int64_t>(1));
                 StatsMgr::instance().addValue("pkt6-receive-drop",
                                               static_cast<int64_t>(1));
                 return (false);
@@ -643,6 +645,8 @@ Dhcpv6Srv::initContext(AllocEngine::ClientContext6& ctx, bool& drop) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
             .arg(ctx.query_->makeLabel(ctx.query_->getClientId(), 0))
             .arg(ctx.query_->toText());
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         drop = true;
@@ -1001,6 +1005,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS)
             .arg(query->makeLabel(query->getClientId(), nullptr))
             .arg(query->toText());
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         return (Pkt6Ptr());
