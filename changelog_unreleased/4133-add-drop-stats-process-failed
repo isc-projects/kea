@@ -1,0 +1,6 @@
+[func]		fdupont
+	Added "pkt4-processing-failed" and "pkt6-processing-failed"
+	statistics which are increased when an incoming packet
+	was dropped because an unexpected exception was thrown
+	during processing.
+	(Gitlab #4133)

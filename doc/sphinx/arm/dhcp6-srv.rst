@@ -6996,6 +6996,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | was dropped because they had to be |
    |                                                   |                | handled by another server.         |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-processing-failed                            | integer        | Number of incoming packets that    |
+   |                                                   |                | was dropped because an unexpected  |
+   |                                                   |                | exception was thrown during        |
+   |                                                   |                | processing.                        |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow; its increase     |
@@ -7728,6 +7733,8 @@ a second counter detailing the drop cause:
 - ``pkt6-admin-filtered`` - admin filtered out
 
 - ``pkt6-not-for-us`` - to be handled by another server
+
+- ``pkt6-processing-failed`` - git an unexpected exception during processing
 
 .. note::
 

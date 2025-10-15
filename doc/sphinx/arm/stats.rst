@@ -316,6 +316,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616326"
                ]
            ],
+           "pkt4-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-queue-full": [
                [
                    0,
@@ -631,6 +637,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-queue-full": [
@@ -1098,6 +1110,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616326"
                ]
            ],
+           "pkt4-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-queue-full": [
                [
                    0,
@@ -1329,6 +1347,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-queue-full": [

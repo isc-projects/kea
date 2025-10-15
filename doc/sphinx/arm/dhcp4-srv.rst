@@ -7421,6 +7421,11 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | was dropped because they had to be |
    |                                                    |                | handled by another server.         |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-processing-failed                             | integer        | Number of incoming packets that    |
+   |                                                    |                | was dropped because an unexpected  |
+   |                                                    |                | exception was thrown during        |
+   |                                                    |                | processing.                        |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
@@ -7833,6 +7838,8 @@ a second counter detailing the drop cause:
 - ``pkt4-admin-filtered`` - admin filtered out
 
 - ``pkt4-not-for-us`` - to be handled by another server
+
+- ``pkt4-processing-failed`` - git an unexpected exception during processing
 
 .. note::
 

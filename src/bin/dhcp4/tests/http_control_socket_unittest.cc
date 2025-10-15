@@ -945,6 +945,7 @@ BaseCtrlChannelDhcpv4Test::testControlChannelStats() {
         "pkt4-rfc-violation",
         "pkt4-admin-filtered",
         "pkt4-not-for-us",
+        "pkt4-processing-failed",
         "pkt4-receive-drop",
         "v4-allocation-fail",
         "v4-allocation-fail-shared-network",
