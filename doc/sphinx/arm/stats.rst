@@ -304,6 +304,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616326"
                ]
            ],
+           "pkt4-queue-full": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-receive-drop": [
                [
                    0,
@@ -338,12 +344,6 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616351"
-               ]
-           ],
-           "pkt4-queue-full": [
-               [
-                   0,
-                   "2023-06-13 20:42:46.616352"
                ]
            ],
            "pkt4-unknown-received": [
@@ -603,6 +603,12 @@ or
                    "2023-06-13 21:28:57.177742"
                ]
            ],
+           "pkt6-queue-full": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-rebind-received": [
                [
                    0,
@@ -658,12 +664,6 @@ or
                ]
            ],
            "pkt6-service-disabled": [
-               [
-                   0,
-                   "2023-06-13 21:28:57.177747"
-               ]
-           ],
-           "pkt6-queue-full": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"
@@ -1050,6 +1050,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616326"
                ]
            ],
+           "pkt4-queue-full": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-receive-drop": [
                [
                    0,
@@ -1084,12 +1090,6 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616351"
-               ]
-           ],
-           "pkt4-queue-full": [
-               [
-                   0,
-                   "2023-06-13 20:42:46.616352"
                ]
            ],
            "pkt4-unknown-received": [
@@ -1265,6 +1265,12 @@ or
                    "2023-06-13 21:28:57.177742"
                ]
            ],
+           "pkt6-queue-full": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-rebind-received": [
                [
                    0,
@@ -1320,12 +1326,6 @@ or
                ]
            ],
            "pkt6-service-disabled": [
-               [
-                   0,
-                   "2023-06-13 21:28:57.177747"
-               ]
-           ],
-           "pkt6-queue-full": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"
