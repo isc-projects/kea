@@ -84,7 +84,7 @@ int load(LibraryHandle& handle) {
                 return (1);
             }
 
-            std::string expr = param->stringValue();
+            expr = param->stringValue();
             if (!expr.empty() && !checkExpression(v6, expr)) {
                 // The error was logged.
                 return (1);
@@ -93,7 +93,7 @@ int load(LibraryHandle& handle) {
 
         if (expr.empty()) {
             // Ok, we can continue without the expression. This is likely the
-            // case when users are only interested in ignore-iaid. 
+            // case when users are only interested in ignore-iaid.
             LOG_DEBUG(flex_id_logger, DBGLVL_TRACE_BASIC,
                       FLEX_ID_NO_IDENTIFIER_EXPRESSION);
         }
