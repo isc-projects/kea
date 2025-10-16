@@ -11,4 +11,8 @@
 	statistics which are increased when an incoming packet
 	was dropped because the server was configured to do so,
 	e.g. by classifying the query into the DROP class.
-	(Gitlab #3140, #4157, #4146, #4127)
+
+	Added "pkt4-not-for-us" and "pkt6-not-for-us"
+	statistics which are increased when an incoming packet
+	was dropped bease it has to be handled by another server.
+	(Gitlab #3140, #4157, #4146, #4127, #4126)
