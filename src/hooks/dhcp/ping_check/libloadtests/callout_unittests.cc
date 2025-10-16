@@ -124,7 +124,7 @@ TEST_F(CalloutTest, lease4Offer) {
                                                *handle));
     EXPECT_EQ(CalloutHandle::CalloutNextStep::NEXT_STEP_CONTINUE, handle->getStatus());
 
-    EXPECT_EQ(1, countFile("PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED Ping check skipped: no lease"));
+    EXPECT_EQ(1, countFile("PING_CHECK_NO_LEASE_OR_LEASE_REUSED Ping check skipped: no lease"));
 }
 
 } // end of anonymous namespace

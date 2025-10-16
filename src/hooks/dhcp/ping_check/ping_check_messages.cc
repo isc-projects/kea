@@ -9,7 +9,6 @@ extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REPLY_RECEIVED = "PING_
 extern const isc::log::MessageID PING_CHECK_CHANNEL_ECHO_REQUEST_SENT = "PING_CHECK_CHANNEL_ECHO_REQUEST_SENT";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED = "PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR = "PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR";
-extern const isc::log::MessageID PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED = "PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSED = "PING_CHECK_CHANNEL_SOCKET_CLOSED";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR = "PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR";
 extern const isc::log::MessageID PING_CHECK_CHANNEL_SOCKET_OPENED = "PING_CHECK_CHANNEL_SOCKET_OPENED";
@@ -39,6 +38,7 @@ extern const isc::log::MessageID PING_CHECK_MGR_START_PING_CHECK = "PING_CHECK_M
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPED = "PING_CHECK_MGR_STOPPED";
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPING = "PING_CHECK_MGR_STOPPING";
 extern const isc::log::MessageID PING_CHECK_MGR_SUBNET_CONFIG_FAILED = "PING_CHECK_MGR_SUBNET_CONFIG_FAILED";
+extern const isc::log::MessageID PING_CHECK_NO_LEASE_OR_LEASE_REUSED = "PING_CHECK_NO_LEASE_OR_LEASE_REUSED";
 extern const isc::log::MessageID PING_CHECK_PAUSE_FAILED = "PING_CHECK_PAUSE_FAILED";
 extern const isc::log::MessageID PING_CHECK_PAUSE_ILLEGAL = "PING_CHECK_PAUSE_ILLEGAL";
 extern const isc::log::MessageID PING_CHECK_PAUSE_PERMISSIONS_FAILED = "PING_CHECK_PAUSE_PERMISSIONS_FAILED";
@@ -55,7 +55,6 @@ const char* values[] = {
     "PING_CHECK_CHANNEL_ECHO_REQUEST_SENT", "to address %1, id %2, sequence %3",
     "PING_CHECK_CHANNEL_MALFORMED_PACKET_RECEIVED", "error occurred unpacking message %1, discarding it",
     "PING_CHECK_CHANNEL_NETWORK_WRITE_ERROR", "occurred trying to ping %1, error %2",
-    "PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED", "Ping check skipped: no lease",
     "PING_CHECK_CHANNEL_SOCKET_CLOSED", "ICMP socket has been closed.",
     "PING_CHECK_CHANNEL_SOCKET_CLOSE_ERROR", "an attempt to close the ICMP socket failed %1",
     "PING_CHECK_CHANNEL_SOCKET_OPENED", "ICMP socket been opened successfully.",
@@ -85,6 +84,7 @@ const char* values[] = {
     "PING_CHECK_MGR_STOPPED", "channel operations have stopped",
     "PING_CHECK_MGR_STOPPING", "ping channel operations are stopping",
     "PING_CHECK_MGR_SUBNET_CONFIG_FAILED", "user-context for subnet id %1, contains invalid ping-check %2",
+    "PING_CHECK_NO_LEASE_OR_LEASE_REUSED", "Ping check skipped: no lease",
     "PING_CHECK_PAUSE_FAILED", "Pausing ping channel operations failed %1",
     "PING_CHECK_PAUSE_ILLEGAL", "Pausing ping channel operations not allowed %1",
     "PING_CHECK_PAUSE_PERMISSIONS_FAILED", "Permissions check for ping-channel pause failed %1",

@@ -148,7 +148,7 @@ int lease4_offer(CalloutHandle& handle) {
         if (!lease4) {
             // lease has been reused or there is no address available to check.
             LOG_DEBUG(ping_check_logger, isc::log::DBGLVL_TRACE_DETAIL,
-                      PING_CHECK_CHANNEL_NO_LEASE_OR_LEASE_REUSED);
+                      PING_CHECK_NO_LEASE_OR_LEASE_REUSED);
             return (0);
         }
 
