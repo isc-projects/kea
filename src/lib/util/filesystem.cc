@@ -312,7 +312,6 @@ PathChecker::validatePath(const std::string input_path_str,
 std::string
 PathChecker::validateDirectory(const std::string input_path_str,
                                bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
-    std::string input_copy = trim(input_path_str);
     // We only allow absolute path equal to default. Catch an invalid path.
     if (!input_path_str.empty()) {
         std::string input_copy = input_path_str;
