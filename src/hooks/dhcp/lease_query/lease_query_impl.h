@@ -111,7 +111,12 @@ public:
     ///
     /// @param base_query lease query to process. (Implementations
     /// must use dynamic_casting).
-    virtual void processQuery(isc::dhcp::PktPtr base_query) const = 0;
+    /// @param invalid Reference to a flag set to true when the query
+    /// is invalid (used to detect unexpected exceptions).
+    /// @param sending  Reference to a flag set to true when the query was
+    /// processed and response will be built and sent.
+    virtual void processQuery(isc::dhcp::PktPtr base_query,
+                              bool& invalid, bool& sending) const = 0;
 
     /// @brief Keywords for Lease Query configuration.
     static const isc::data::SimpleKeywords LEASE_QUERY_KEYWORDS;

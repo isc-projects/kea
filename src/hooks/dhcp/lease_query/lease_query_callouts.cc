@@ -139,8 +139,10 @@ int buffer4_receive(CalloutHandle& handle) {
               .arg(LeaseQueryImpl4::leaseQueryLabel(query));
     StatsMgr::instance().addValue("pkt4-lease-query-received", static_cast<int64_t>(1));
 
+    bool invalid = false;
+    bool sending = false;
     try {
-        LeaseQueryImplFactory::getImpl().processQuery(query);
+        LeaseQueryImplFactory::getImpl().processQuery(query, invalid, sending);
     } catch (const std::exception& ex) {
         // Failed to parse the packet.
         LOG_DEBUG(lease_query_logger, DBGLVL_TRACE_BASIC,
@@ -148,9 +150,16 @@ int buffer4_receive(CalloutHandle& handle) {
                   .arg(LeaseQueryImpl4::leaseQueryLabel(query))
                   .arg(ex.what());
 
+        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        if (sending) {
+            return (0);
+        }
+        if (!invalid) {
+            StatsMgr::instance().addValue("pkt4-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
         StatsMgr::instance().addValue("pkt4-receive-drop",
                                       static_cast<int64_t>(1));
-        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (0);
     }
 
@@ -222,8 +231,10 @@ int buffer6_receive(CalloutHandle& handle) {
               .arg(LeaseQueryImpl6::leaseQueryLabel(query));
     StatsMgr::instance().addValue("pkt6-lease-query-received", static_cast<int64_t>(1));
 
+    bool invalid = false;
+    bool sending = false;
     try {
-        LeaseQueryImplFactory::getImpl().processQuery(query);
+        LeaseQueryImplFactory::getImpl().processQuery(query, invalid, sending);
     } catch (const std::exception& ex) {
         // Log that we failed to process the packet.
         LOG_DEBUG(lease_query_logger, DBGLVL_TRACE_BASIC,
@@ -231,9 +242,16 @@ int buffer6_receive(CalloutHandle& handle) {
                   .arg(LeaseQueryImpl6::leaseQueryLabel(query))
                   .arg(ex.what());
 
+        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        if (sending) {
+            return (0);
+        }
+        if (!invalid) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
-        handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (0);
     }
 

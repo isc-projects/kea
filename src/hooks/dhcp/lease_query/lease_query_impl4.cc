@@ -47,7 +47,8 @@ LeaseQueryImpl4::LeaseQueryImpl4(const ConstElementPtr config)
 };
 
 void
-LeaseQueryImpl4::processQuery(PktPtr base_query) const {
+LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
+                              bool& sending) const {
     Pkt4Ptr query = boost::dynamic_pointer_cast<Pkt4>(base_query);
     if (!query) {
         // Shouldn't happen.
@@ -57,10 +58,12 @@ LeaseQueryImpl4::processQuery(PktPtr base_query) const {
     /// - Validates query content
     IOAddress requester_ip = query->getGiaddr();
     if (requester_ip.isV4Zero())  {
+        invalid = true;
         isc_throw(BadValue, "giaddr cannot be 0.0.0.0");
     }
 
     if (!isRequester(requester_ip)) {
+        invalid = true;
         StatsMgr::instance().addValue("pkt4-admin-filtered",
                                       static_cast<int64_t>(1));
         isc_throw(BadValue, "rejecting query from unauthorized requester: "
@@ -69,6 +72,7 @@ LeaseQueryImpl4::processQuery(PktPtr base_query) const {
 
     OptionPtr client_server_id;
     if (!acceptServerId(query, client_server_id)) {
+        invalid = true;
         isc_throw(BadValue, "rejecting query from: "
                   << requester_ip.toText() << ", unknown server-id: "
                   << (client_server_id ? client_server_id->toText() : "malformed"));
@@ -110,6 +114,7 @@ LeaseQueryImpl4::processQuery(PktPtr base_query) const {
         break;
     default:
         // We have some combination of the three which is invalid.
+        invalid = true;
         isc_throw(BadValue, "malformed lease query: "
                   << "ciaddr: [" << ciaddr
                   << "] HWAddr: [" << hwaddr->toText()
@@ -117,6 +122,7 @@ LeaseQueryImpl4::processQuery(PktPtr base_query) const {
                   << "]");
     }
 
+    sending = true;
     Pkt4Ptr response = buildResponse(response_type, query, leases);
     /// Send the response if we have one
     if (response) {

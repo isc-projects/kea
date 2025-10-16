@@ -637,21 +637,33 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
 
     // A v6 packet should get tossed.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_LEASEQUERY, 0));
-    ASSERT_THROW_MSG(impl->processQuery(pkt6), BadValue,
+    bool invalid = false;
+    bool sending = false;
+    ASSERT_THROW_MSG(impl->processQuery(pkt6, invalid, sending), BadValue,
                      "LeaseQueryImpl4 query is not DHCPv4 packet");
+    EXPECT_FALSE(invalid);
+    EXPECT_FALSE(sending);
 
     // An empty giaddr should fail.
     Pkt4Ptr lq(new Pkt4(DHCPLEASEQUERY, 123));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    sending = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
                      "giaddr cannot be 0.0.0.0");
+    EXPECT_TRUE(invalid);
+    EXPECT_FALSE(sending);
 
     // Set the pkt4-admin-filtered stat to 0.
     StatsMgr::instance().setValue("pkt4-admin-filtered", static_cast<int64_t>(0));
 
     // An unknown giaddr should fail.
     lq->setGiaddr(IOAddress("192.0.2.2"));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    sending = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
                      "rejecting query from unauthorized requester: 192.0.2.2");
+    EXPECT_TRUE(invalid);
+    EXPECT_FALSE(sending);
 
     // Check the stat which was bumped by one.
     ObservationPtr stat = StatsMgr::instance().getObservation("pkt4-admin-filtered");
@@ -724,7 +736,12 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
             lq->addOption(client_id);
         }
 
-        ASSERT_THROW_MSG(impl->processQuery(lq), BadValue, scenario.exp_message_);
+        invalid = false;
+        sending = false;
+        ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+                         scenario.exp_message_);
+        EXPECT_TRUE(invalid);
+        EXPECT_FALSE(sending);
     }
 }
 
