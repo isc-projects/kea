@@ -59,6 +59,8 @@ LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
     IOAddress requester_ip = query->getGiaddr();
     if (requester_ip.isV4Zero())  {
         invalid = true;
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "giaddr cannot be 0.0.0.0");
     }
 
@@ -73,6 +75,7 @@ LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
     OptionPtr client_server_id;
     if (!acceptServerId(query, client_server_id)) {
         invalid = true;
+        // Drop statistic updated by acceptServerId.
         isc_throw(BadValue, "rejecting query from: "
                   << requester_ip.toText() << ", unknown server-id: "
                   << (client_server_id ? client_server_id->toText() : "malformed"));
@@ -115,6 +118,8 @@ LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
     default:
         // We have some combination of the three which is invalid.
         invalid = true;
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "malformed lease query: "
                   << "ciaddr: [" << ciaddr
                   << "] HWAddr: [" << hwaddr->toText()
@@ -565,10 +570,14 @@ LeaseQueryImpl4::acceptServerId(const Pkt4Ptr& query, OptionPtr& server_id_opt) 
     // Unable to convert the option to the option type which encapsulates it.
     // We treat this as non-matching server id.
     if (!option_custom) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
     // The server identifier option should carry exactly one IPv4 address.
     if (option_custom->getDataFieldsNum() != 1) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -576,6 +585,8 @@ LeaseQueryImpl4::acceptServerId(const Pkt4Ptr& query, OptionPtr& server_id_opt) 
     IOAddress client_server_id = option_custom->readAddress();
     if (!client_server_id.isV4() ||
         (client_server_id == IOAddress::IPV4_ZERO_ADDRESS())) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -627,7 +638,14 @@ LeaseQueryImpl4::acceptServerId(const Pkt4Ptr& query, OptionPtr& server_id_opt) 
     OptionCustomPtr cfg_server_id = boost::dynamic_pointer_cast<OptionCustom>
         (cfg->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
 
-    return (cfg_server_id && (cfg_server_id->readAddress() == client_server_id));
+    if (cfg_server_id && (cfg_server_id->readAddress() == client_server_id)) {
+        return (true);
+    }
+
+    // Everything failed so the query is not for us.
+    StatsMgr::instance().addValue("pkt4-not-for-us",
+                                  static_cast<int64_t>(1));
+    return (false);
 }
 
 void
