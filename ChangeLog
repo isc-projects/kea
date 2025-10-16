@@ -1,7 +1,13 @@
-2405.	[bug]		razvan
+2406.	[bug]		razvan
 	Removed logging an error in ping check hook library if
 	using lease cache treshold.
 	(Gitlab #4129)
+
+2405.	[bug]		razvan, liyunqing_kylin
+	Fixed a data race in ping-check hooks library. Thanks to
+	liyunqing_kylin for reporting and testing the fix for this
+	issue.
+	(Gitlab #4164)
 
 2404.	[bug]		razvan, liyunqing_kylin
 	Fixed deadlock in ping-check hooks library. Thanks to
