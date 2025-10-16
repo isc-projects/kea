@@ -6,4 +6,9 @@
 	Added "pkt4-rfc-violation" and "pkt6-rfc-violation"
 	statistics which are increased when an incoming packet
 	has to be dropped according to protocol specifications.
-	(Gitlab #3140, #4157, #4146)
+
+	Added "pkt4-admin-filtered" and "pkt6-admin-filtered"
+	statistics which are increased when an incoming packet
+	was dropped because the server was configured to do so,
+	e.g. by classifying the query into the DROP class.
+	(Gitlab #3140, #4157, #4146, #4127)

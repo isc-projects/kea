@@ -955,6 +955,7 @@ BaseCtrlChannelDhcpv6Test::testControlChannelStats() {
         "pkt6-dhcpv4-response-sent",
         "pkt6-addr-reg-reply-sent",
         "pkt6-service-disabled",
+        "pkt6-parse-failed",
         "pkt6-queue-full",
         "pkt6-rfc-violation",
         "pkt6-admin-filtered",
