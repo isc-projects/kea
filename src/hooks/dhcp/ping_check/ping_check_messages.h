@@ -39,6 +39,7 @@ extern const isc::log::MessageID PING_CHECK_MGR_START_PING_CHECK;
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPED;
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPING;
 extern const isc::log::MessageID PING_CHECK_MGR_SUBNET_CONFIG_FAILED;
+extern const isc::log::MessageID PING_CHECK_NO_LEASE_OR_LEASE_REUSED;
 extern const isc::log::MessageID PING_CHECK_PAUSE_FAILED;
 extern const isc::log::MessageID PING_CHECK_PAUSE_ILLEGAL;
 extern const isc::log::MessageID PING_CHECK_PAUSE_PERMISSIONS_FAILED;

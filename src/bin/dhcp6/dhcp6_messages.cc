@@ -283,7 +283,7 @@ const char* values[] = {
     "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1 %2",
     "DHCP6_PACKET_DROP_DROP_CLASS2", "dropped as member of the special class 'DROP' after host reservation lookup: %1 %2",
     "DHCP6_PACKET_DROP_DROP_CLASS_EARLY", "dropped as member of the special class 'DROP' after early global host reservations lookup: %1 %2",
-    "DHCP6_PACKET_DROP_DUPLICATE", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by %6",
+    "DHCP6_PACKET_DROP_DUPLICATE", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6",
     "DHCP6_PACKET_DROP_PARSE_FAIL", "%1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",

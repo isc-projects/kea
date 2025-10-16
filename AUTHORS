@@ -321,3 +321,4 @@ We have received the following contributions:
  - liyunqing_kylin
    2025-09: Reported and provided a patch that fixes a dead lock in ping-check
             hooks library.
+   2025-10: Reported and tested a data race issue in ping-check hooks library.

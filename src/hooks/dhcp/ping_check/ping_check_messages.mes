@@ -190,6 +190,13 @@ and its 'user-context' contains invalid 'ping-check' configuration.  The
 server will log the error once and then use global ping-check parameters
 for the subnet until the configuration is corrected.
 
+% PING_CHECK_NO_LEASE_OR_LEASE_REUSED Ping check skipped: no lease
+Logged at debug log level 50.
+This debug message is emitted when the ping check request made by the
+server does not contain a lease. This typically happens when a lease is
+being reused. The ping check will be skipped and the offer processing will
+continue as normal.
+
 % PING_CHECK_PAUSE_FAILED Pausing ping channel operations failed %1
 This error message is emitted when an unexpected error occurred while
 attempting to pause the ping channel's thread pool. This error is highly

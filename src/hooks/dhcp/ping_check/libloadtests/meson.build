@@ -4,6 +4,7 @@ endif
 
 dhcp_ping_check_libloadtests = executable(
     'dhcp-ping-check-libload-tests',
+    'callout_unittests.cc',
     'load_unload_unittests.cc',
     'run_unittests.cc',
     cpp_args: [
@@ -11,7 +12,7 @@ dhcp_ping_check_libloadtests = executable(
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,
-    link_with: LIBS_BUILT_SO_FAR,
+    link_with: [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(
     'dhcp-ping-check-libloadtests',
