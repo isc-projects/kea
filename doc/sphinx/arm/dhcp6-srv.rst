@@ -6952,18 +6952,6 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | This statistic is expected to grow |
    |                                                   |                | rapidly.                           |
    +---------------------------------------------------+----------------+------------------------------------+
-   | pkt6-receive-drop                                 | integer        | Number of incoming packets that    |
-   |                                                   |                | were dropped. The exact reason for |
-   |                                                   |                | dropping packets is logged, but    |
-   |                                                   |                | the most common reasons may be     |
-   |                                                   |                | that an unacceptable or            |
-   |                                                   |                | not-supported packet type is       |
-   |                                                   |                | received, direct responses are     |
-   |                                                   |                | forbidden, the server ID sent by   |
-   |                                                   |                | the client does not match the      |
-   |                                                   |                | server's server ID, or the packet  |
-   |                                                   |                | is malformed.                      |
-   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-service-disabled                             | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped when the DHCP service |
    |                                                   |                | was disabled.                      |
@@ -7004,6 +6992,18 @@ The DHCPv6 server supports the following statistics:
    | pkt6-limit-exceeded                               | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped by the ``limits``     |
    |                                                   |                | hook library.                      |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-receive-drop                                 | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped. The exact reason for |
+   |                                                   |                | dropping packets is logged, but    |
+   |                                                   |                | the most common reasons may be     |
+   |                                                   |                | that an unacceptable or            |
+   |                                                   |                | not-supported packet type is       |
+   |                                                   |                | received, direct responses are     |
+   |                                                   |                | forbidden, the server ID sent by   |
+   |                                                   |                | the client does not match the      |
+   |                                                   |                | server's server ID, or the packet  |
+   |                                                   |                | is malformed.                      |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
@@ -7730,9 +7730,6 @@ a second counter detailing the drop cause:
 
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
 
-- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
-  hook library
-
 - ``pkt6-queue-full`` - parked packet in a queue which became full
 
 - ``pkt6-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
@@ -7742,6 +7739,9 @@ a second counter detailing the drop cause:
 - ``pkt6-not-for-us`` - to be handled by another server
 
 - ``pkt6-processing-failed`` - git an unexpected exception during processing
+
+- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 .. note::
 

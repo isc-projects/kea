@@ -7835,9 +7835,6 @@ a second counter detailing the drop cause:
 
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
 
-- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
-  hook library
-
 - ``pkt4-queue-full`` - parked packet in a queue which became full
 
 - ``pkt4-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
@@ -7847,6 +7844,9 @@ a second counter detailing the drop cause:
 - ``pkt4-not-for-us`` - to be handled by another server
 
 - ``pkt4-processing-failed`` - git an unexpected exception during processing
+
+- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 .. note::
 

@@ -20,4 +20,8 @@
 	statistics which are increased when an incoming packet
 	was dropped because an unexpected exception was thrown
 	during processing.
-	(Gitlab #3140, #4157, #4146, #4127, #4126, #4133)
+
+	Added "pkt4-limit-exceeded" and "pkt6-limit-exceeded"
+	statistics which are increased when an incoming packet
+	was dropped by the limits hook library.
+	(Gitlab #3140, #4157, #4146, #4127, #4126, #4133, #4134)

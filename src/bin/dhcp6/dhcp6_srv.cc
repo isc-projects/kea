@@ -2190,10 +2190,10 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                       DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(question->getLabel());
-            isc::stats::StatsMgr::instance().addValue("pkt6-queue-full",
-                                                      static_cast<int64_t>(1));
-            isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-queue-full",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
             return (ConstSubnet6Ptr());
         }
 
