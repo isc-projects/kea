@@ -203,6 +203,8 @@ PingCheckMgr::sendCompleted(const ICMPMsgPtr& echo, bool send_failed) {
     }
 
     try {
+        MultiThreadingLock lock(*mutex_);
+
         if (!echo) {
             isc_throw(BadValue, "PingCheckMgr::sendCompleted() - echo is empty");
         }
@@ -230,7 +232,7 @@ PingCheckMgr::sendCompleted(const ICMPMsgPtr& echo, bool send_failed) {
         }
 
         // Update the expiration timer if necessary.
-        setNextExpiration();
+        setNextExpirationInternal();
     } catch (const std::exception& ex) {
         LOG_ERROR(ping_check_logger, PING_CHECK_MGR_SEND_COMPLETED_ERROR)
             .arg(ex.what());
@@ -244,6 +246,8 @@ PingCheckMgr::replyReceived(const ICMPMsgPtr& reply) {
     }
 
     try {
+        MultiThreadingLock lock(*mutex_);
+
         if (!reply) {
             isc_throw(BadValue, "PingCheckMgr::replyReceived() - echo is empty");
         }
@@ -261,7 +265,7 @@ PingCheckMgr::replyReceived(const ICMPMsgPtr& reply) {
             return;
         }
 
-        setNextExpiration();
+        setNextExpirationInternal();
     } catch (const std::exception& ex) {
         LOG_ERROR(ping_check_logger, PING_CHECK_MGR_REPLY_RECEIVED_ERROR)
             .arg(ex.what());
