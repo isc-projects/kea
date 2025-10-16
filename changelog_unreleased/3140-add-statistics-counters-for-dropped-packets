@@ -15,4 +15,9 @@
 	Added "pkt4-not-for-us" and "pkt6-not-for-us"
 	statistics which are increased when an incoming packet
 	was dropped bease it has to be handled by another server.
-	(Gitlab #3140, #4157, #4146, #4127, #4126)
+
+	Added "pkt4-processing-failed" and "pkt6-processing-failed"
+	statistics which are increased when an incoming packet
+	was dropped because an unexpected exception was thrown
+	during processing.
+	(Gitlab #3140, #4157, #4146, #4127, #4126, #4133)
