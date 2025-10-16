@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added "pkt4-not-for-us" and "pkt6-not-for-us"
+	statistics which are increased when an incoming packet
+	was dropped bease it has to be handled by another server.
+	(Gitlab #4126)

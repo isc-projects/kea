@@ -6992,6 +6992,10 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | classifying the query into the     |
    |                                                   |                | ``DROP`` class.                    |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-not-for-us                                   | integer        | Number of incoming packets that    |
+   |                                                   |                | was dropped because they had to be |
+   |                                                   |                | handled by another server.         |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow; its increase     |
@@ -7722,6 +7726,8 @@ a second counter detailing the drop cause:
 - ``pkt6-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
 
 - ``pkt6-admin-filtered`` - admin filtered out
+
+- ``pkt6-not-for-us`` - to be handled by another server
 
 .. note::
 

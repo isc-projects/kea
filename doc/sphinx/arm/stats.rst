@@ -292,6 +292,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616314"
                ]
            ],
+           "pkt4-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-offer-received": [
                [
                    0,
@@ -613,6 +619,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-parse-failed": [
@@ -1062,6 +1074,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616314"
                ]
            ],
+           "pkt4-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-offer-received": [
                [
                    0,
@@ -1299,6 +1317,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-parse-failed": [
