@@ -184,6 +184,7 @@ std::set<std::string> dhcp4_statistics = {
     "pkt4-service-disabled",
     "pkt4-parse-failed",
     "pkt4-queue-full",
+    "pkt4-rfc-violation",
     "pkt4-receive-drop",
     "v4-allocation-fail",
     "v4-allocation-fail-shared-network",

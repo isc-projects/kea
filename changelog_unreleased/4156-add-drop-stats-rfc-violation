@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added "pkt4-rfc-violation" and "pkt6-rfc-violation"
+	statistics which are increased when an incoming packet
+	has to be dropped according to protocol specifications.
+	(Gitlab #4156)

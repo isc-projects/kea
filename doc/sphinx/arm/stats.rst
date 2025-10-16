@@ -334,6 +334,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616343"
                ]
            ],
+           "pkt4-rfc-violation": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-sent": [
                [
                    0,
@@ -652,6 +658,12 @@ or
                ]
            ],
            "pkt6-request-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-rfc-violation": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"
@@ -1080,6 +1092,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616343"
                ]
            ],
+           "pkt4-rfc-violation": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
            "pkt4-sent": [
                [
                    0,
@@ -1314,6 +1332,12 @@ or
                ]
            ],
            "pkt6-request-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-rfc-violation": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"

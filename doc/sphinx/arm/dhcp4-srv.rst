@@ -7407,6 +7407,10 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | were dropped when the queue they   |
    |                                                    |                | were parked became full.           |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-rfc-violation                                 | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped following protocol    |
+   |                                                    |                | specifications.                    |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
@@ -7813,6 +7817,8 @@ a second counter detailing the drop cause:
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
 
 - ``pkt4-queue-full`` - parked packet in a queue which became full
+
+- ``pkt4-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
 
 .. note::
 
