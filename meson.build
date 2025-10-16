@@ -681,7 +681,7 @@ warnings = [
     '-Wnon-virtual-dtor',
     '-Wwrite-strings',
     '-Wno-missing-field-initializers',
-    #   '-Wshadow',
+    '-Wshadow',
 ]
 no_warnings = ['-Wno-sign-compare']
 # Clang++ specific settings.
