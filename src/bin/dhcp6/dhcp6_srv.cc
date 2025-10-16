@@ -311,7 +311,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
 }
 
 void Dhcpv6Srv::setPacketStatisticsDefaults() {
-    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Iterate over set of observed statistics
     for (auto const& it : dhcp6_statistics) {
@@ -790,7 +790,7 @@ Dhcpv6Srv::runOne() {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
             }
         } else {
-            processPacketAndSendResponse(query);
+            processPacketAndSendResponseNoThrow(query);
         }
     }
 }
@@ -811,7 +811,16 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr query) {
 
 void
 Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr query) {
-    Pkt6Ptr rsp = processPacket(query);
+    Pkt6Ptr rsp;
+    try {
+        rsp = processPacket(query);
+    } catch (...) {
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        throw;
+    }
     if (!rsp) {
         return;
     }
@@ -1020,9 +1029,18 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
 void
 Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
     try {
-        Pkt6Ptr rsp = processDhcp6Query(query);
-        if (!rsp) {
-            return;
+        Pkt6Ptr rsp;
+        try {
+            rsp = processDhcp6Query(query);
+            if (!rsp) {
+                return;
+            }
+        } catch (...) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
+            throw;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1083,14 +1101,22 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
     return (processLocalizedQuery6(ctx));
 }
 
-
 void
 Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
                                                  AllocEngine::ClientContext6& ctx) {
     try {
-        Pkt6Ptr rsp = processLocalizedQuery6(ctx);
-        if (!rsp) {
-            return;
+        Pkt6Ptr rsp;
+        try {
+            rsp = processLocalizedQuery6(ctx);
+            if (!rsp) {
+                return;
+            }
+        } catch (...) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
+            throw;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1133,48 +1159,53 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
     }
 
     Pkt6Ptr rsp;
+    bool rfc_violation = false;
     try {
-        switch (query->getType()) {
-        case DHCPV6_SOLICIT:
-            rsp = processSolicit(ctx);
-            break;
+        try {
+            switch (query->getType()) {
+            case DHCPV6_SOLICIT:
+                rsp = processSolicit(ctx);
+                break;
 
-        case DHCPV6_REQUEST:
-            rsp = processRequest(ctx);
-            break;
+            case DHCPV6_REQUEST:
+                rsp = processRequest(ctx);
+                break;
 
-        case DHCPV6_RENEW:
-            rsp = processRenew(ctx);
-            break;
+            case DHCPV6_RENEW:
+                rsp = processRenew(ctx);
+                break;
 
-        case DHCPV6_REBIND:
-            rsp = processRebind(ctx);
-            break;
+            case DHCPV6_REBIND:
+                rsp = processRebind(ctx);
+                break;
 
-        case DHCPV6_CONFIRM:
-            rsp = processConfirm(ctx);
-            break;
+            case DHCPV6_CONFIRM:
+                rsp = processConfirm(ctx);
+                break;
 
-        case DHCPV6_RELEASE:
-            rsp = processRelease(ctx);
-            break;
+            case DHCPV6_RELEASE:
+                rsp = processRelease(ctx);
+                break;
 
-        case DHCPV6_DECLINE:
-            rsp = processDecline(ctx);
-            break;
+            case DHCPV6_DECLINE:
+                rsp = processDecline(ctx);
+                break;
 
-        case DHCPV6_INFORMATION_REQUEST:
-            rsp = processInfRequest(ctx);
-            break;
+            case DHCPV6_INFORMATION_REQUEST:
+                rsp = processInfRequest(ctx);
+                break;
 
-        case DHCPV6_ADDR_REG_INFORM:
-            rsp = processAddrRegInform(ctx);
-            break;
+            case DHCPV6_ADDR_REG_INFORM:
+                rsp = processAddrRegInform(ctx);
+                break;
 
-        default:
-            return (rsp);
+            default:
+                return (rsp);
+            }
+        } catch (const RFCViolation&) {
+            rfc_violation = true;
+            throw;
         }
-
     } catch (const std::exception& e) {
 
         // Catch-all exception (at least for ones based on the isc Exception
@@ -1191,7 +1222,12 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        if (!rfc_violation) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 
     if (!rsp) {
@@ -1327,10 +1363,10 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
                           DHCP6_HOOK_LEASES6_PARKING_LOT_FULL)
                           .arg(parked_packet_limit)
                           .arg(query->getLabel());
-                isc::stats::StatsMgr::instance().addValue("pkt6-queue-full",
-                                                          static_cast<int64_t>(1));
-                isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                          static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
                 rsp.reset();
                 return (rsp);
             }
@@ -2442,7 +2478,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // holds the Client Identifier. It is a programming error if supplied
     // message is NULL.
     if (!answer) {
-        isc_throw(isc::Unexpected, "an instance of the object"
+        isc_throw(Unexpected, "an instance of the object"
                   << " encapsulating server's message must not be"
                   << " NULL when creating DNS NameChangeRequest");
     }
@@ -2467,7 +2503,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // Unexpected if it is missing as it is a programming error.
     OptionPtr opt_duid = answer->getOption(D6O_CLIENTID);
     if (!opt_duid) {
-        isc_throw(isc::Unexpected,
+        isc_throw(Unexpected,
                   "client identifier is required when creating a new"
                   " DNS NameChangeRequest");
     }
