@@ -7812,7 +7812,7 @@ a second counter detailing the drop cause:
 
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
 
-- ``pkt6-queue-full`` - parked packet in a queue which became full
+- ``pkt4-queue-full`` - parked packet in a queue which became full
 
 .. note::
 

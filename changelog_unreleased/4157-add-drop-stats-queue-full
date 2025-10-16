@@ -1,5 +1,0 @@
-[func]		fdupont
-	Added "pkt4-queue-full" and "pkt6-queue-full"
-	statistics which are increased when an incoming packet
-	was dropped because it was queued and the queue is full.
-	(Gitlab #4157)
