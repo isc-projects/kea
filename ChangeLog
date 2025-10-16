@@ -1,4 +1,9 @@
-2405.	[bug]		razvan, liyunqing_kylin
+2380.	[bug]		razvan, liyunqing_kylin
+	Fixed deadlock in ping-check hooks library. Thanks to
+	liyunqing_kylin for reporting and providing a patch.
+	(Gitlab #4140, #4177)
+
+2379.	[bug]		razvan, liyunqing_kylin
 	Fixed a data race in ping-check hooks library. Thanks to
 	liyunqing_kylin for reporting and testing the fix for this
 	issue.

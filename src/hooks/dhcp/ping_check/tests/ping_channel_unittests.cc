@@ -126,20 +126,24 @@ public:
     /// only meaningful if the function returns true.
     ///
     /// @return True another target address exists, false otherwise.
-    virtual bool nextToSend(IOAddress& next) {
+    virtual PingContextPtr nextToSend() {
         if (stopped_) {
-            return (false);
+            return (PingContextPtr());
         }
         MultiThreadingLock lock(*mutex_);
-        bool use_next = true;
-        if (send_queue_.empty()) {
-            use_next = false;
-        } else {
-            next = send_queue_.front();
+        if (!send_queue_.empty()) {
+            Lease4Ptr lease(new Lease4());
+            lease->addr_ = send_queue_.front();
+            Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+            return (PingContextPtr(new PingContext(lease, pkt)));
         }
 
         stopIfDone();
-        return (use_next);
+        return (PingContextPtr());
+    }
+
+    /// @brief Callback to call to update context state (does nothing).
+    virtual void updateContextToSend(PingContextPtr /* context */) {
     }
 
     /// @brief Callback to invoke when an ECHO write has completed.
@@ -315,7 +319,8 @@ PingChannelTest::sendReceiveTest(size_t num_threads, size_t num_targets /* = 25 
     // Create the channel instance with the appropriate io_service.
     ASSERT_NO_THROW_LOG(channel_.reset(new TestablePingChannel(
         channel_ios,
-        std::bind(&PingChannelTest::nextToSend, this, ph::_1),
+        std::bind(&PingChannelTest::nextToSend, this),
+        std::bind(&PingChannelTest::updateContextToSend, this, ph::_1),
         std::bind(&PingChannelTest::echoSent, this, ph::_1, ph::_2),
         std::bind(&PingChannelTest::replyReceived, this, ph::_1)
     )));
@@ -410,7 +415,8 @@ PingChannelTest::ioErrorTest(const std::function<void()>& set_error_trigger,
     // Create the channel instance with the appropriate io_service.
     ASSERT_NO_THROW_LOG(channel_.reset(new TestablePingChannel(
         channel_ios,
-        std::bind(&PingChannelTest::nextToSend, this, ph::_1),
+        std::bind(&PingChannelTest::nextToSend, this),
+        std::bind(&PingChannelTest::updateContextToSend, this, ph::_1),
         std::bind(&PingChannelTest::echoSent, this, ph::_1, ph::_2),
         std::bind(&PingChannelTest::replyReceived, this, ph::_1),
         ([this, &shutdown_cb_called]() {
@@ -525,7 +531,8 @@ TEST_F(RootPingChannelTest, openCloseST) {
     // Create the channel instance.
     ASSERT_NO_THROW_LOG(channel_.reset(new TestablePingChannel(
         test_io_service_,
-        std::bind(&PingChannelTest::nextToSend, this, ph::_1),
+        std::bind(&PingChannelTest::nextToSend, this),
+        std::bind(&PingChannelTest::updateContextToSend, this, ph::_1),
         std::bind(&PingChannelTest::echoSent, this, ph::_1, ph::_2),
         std::bind(&PingChannelTest::replyReceived, this, ph::_1)
     )));
@@ -590,7 +597,8 @@ TEST_F(RootPingChannelTest, openCloseMT) {
     // Create the channel instance.
     ASSERT_NO_THROW_LOG(channel_.reset(new TestablePingChannel(
         test_io_service_,
-        std::bind(&PingChannelTest::nextToSend, this, ph::_1),
+        std::bind(&PingChannelTest::nextToSend, this),
+        std::bind(&PingChannelTest::updateContextToSend, this, ph::_1),
         std::bind(&PingChannelTest::echoSent, this, ph::_1, ph::_2),
         std::bind(&PingChannelTest::replyReceived, this, ph::_1)
     )));

@@ -118,16 +118,23 @@ public:
                    hooks::ParkingLotHandlePtr& parking_lot);
 
     /// @brief Callback passed to PingChannel to use to retrieve the next
-    /// address to check.
+    /// context with address to check.
     ///
     /// Fetches the context which has been in the WAITING_TO_SEND state the
-    /// longest and returns its lease address.
+    /// longest and returns it.
     ///
-    /// @param[out] next upon return it will contain the next target address.
-    /// Contents are only meaningful if the function returns true.
+    /// @return The context selected to send, or null if none available.
+    virtual PingContextPtr nextToSend();
+
+    /// @brief Callback passed to PingChannel to update a context to SENDING
+    /// state just before sending.
     ///
-    /// @return True another target address exists, false otherwise.
-    virtual bool nextToSend(asiolink::IOAddress& next);
+    /// This is invoked inside the channel mutex.
+    /// Must not call @ref PingCheckMgr::checkSuspended() or
+    /// it will cause a deadlock.
+    ///
+    /// @param context The context to update.
+    virtual void updateContextToSend(PingContextPtr context);
 
     /// @brief Callback passed to PingChannel to invoke when an ECHO REQUEST
     /// send has completed.

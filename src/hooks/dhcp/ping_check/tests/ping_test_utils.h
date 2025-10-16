@@ -106,10 +106,11 @@ public:
     /// @throw BadValue if io_service is empty.
     TestablePingChannel(asiolink::IOServicePtr& io_service,
                         NextToSendCallback next_to_send_cb,
+                        UpdateToSendCallback update_to_send_cb,
                         EchoSentCallback echo_sent_cb,
                         ReplyReceivedCallback reply_received_cb,
                         ShutdownCallback shutdown_cb = ShutdownCallback())
-        : PingChannel(io_service, next_to_send_cb, echo_sent_cb, reply_received_cb, shutdown_cb),
+        : PingChannel(io_service, next_to_send_cb, update_to_send_cb, echo_sent_cb, reply_received_cb, shutdown_cb),
           read_number_(0), throw_on_read_number_(0), ec_on_read_number_(0), read_error_ec_(),
           write_number_(0), throw_on_write_number_(0), ec_on_write_number_(0), write_error_ec_(),
           route_loopback_(true), loopback_map_(), stopped_(false) {

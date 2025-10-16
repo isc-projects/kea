@@ -178,23 +178,22 @@ PingCheckMgr::startPing(dhcp::Lease4Ptr& lease, dhcp::Pkt4Ptr& query, hooks::Par
     startPing(lease, query, parking_lot, getGlobalConfig());
 }
 
-bool
-PingCheckMgr::nextToSend(IOAddress& next) {
-    if (checkSuspended()) {
-        return (false);
+PingContextPtr
+PingCheckMgr::nextToSend() {
+    if (!checkSuspended()) {
+        return (store_->getNextToSend());
     }
 
-    PingContextPtr context = store_->getNextToSend();
-    if (!context) {
-        return (false);
-    }
+    return (PingContextPtr());
+}
 
-    next = context->getTarget();
+void
+PingCheckMgr::updateContextToSend(PingContextPtr context) {
     // Transition to sending.
+    // Must not call @ref PingCheckMgr::checkSuspended() or
+    // it will cause a deadlock.
     context->setState(PingContext::SENDING);
     store_->updateContext(context);
-
-    return (true);
 }
 
 void
@@ -635,6 +634,8 @@ PingChannelPtr
 PingCheckMgr::createChannel(IOServicePtr io_service) {
     return (PingChannelPtr(new PingChannel(io_service,
                                            std::bind(&PingCheckMgr::nextToSend,
+                                                     this),
+                                           std::bind(&PingCheckMgr::updateContextToSend,
                                                      this, ph::_1),
                                            std::bind(&PingCheckMgr::sendCompleted,
                                                      this, ph::_1, ph::_2),
