@@ -1,6 +1,12 @@
+2405.	[bug]		razvan, liyunqing_kylin
+	Fixed a data race in ping-check hooks library. Thanks to
+	liyunqing_kylin for reporting and testing the fix for this
+	issue.
+	(Gitlab #4164, #4178)
+
 Kea 3.0.1 (stable) released on August 27, 2025
 
-2378.	[build]*		fdupont, razvan
+2378.	[build]*	fdupont, razvan
 	Moved Botan crypto backend support to version 3.
 	(Gitlab #4057, #3553)
 
