@@ -1,3 +1,12 @@
+Kea 3.0.2 (stable) released on October 29, 2025
+
+2383.	[sec]		tmark
+	When a hostname or FQDN received from a client is
+	reduced to an empty string by hostname sanitizing,
+	kea-dhcp4 and kea-dhcp6 will now drop the option.
+	CVE:2025-11232
+	(Gitlab #4142)
+
 2382.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.0.2
 	stable release.
