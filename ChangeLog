@@ -1,34 +1,39 @@
 Kea 3.0.2 (stable) released on October 29, 2025
 
-2383.	[sec]		tmark
+2384.	[sec]		tmark
 	When a hostname or FQDN received from a client is
 	reduced to an empty string by hostname sanitizing,
 	kea-dhcp4 and kea-dhcp6 will now drop the option.
 	CVE:2025-11232
-	(Gitlab #4142)
+	(Gitlab #4142, #4155)
 
-2382.	[build]		razvan
+2383.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.0.2
 	stable release.
 	(Gitlab #4173)
 
-2381.	[bug]		razvan
+2382.	[bug]		razvan
 	Removed logging an error in ping check hook library if
 	using lease cache treshold.
 	(Gitlab #4129, #4182)
 
-2380.	[bug]		razvan, liyunqing_kylin
+2381.	[bug]		razvan, liyunqing_kylin
 	Fixed deadlock in ping-check hooks library. Thanks to
 	liyunqing_kylin for reporting and providing a patch.
 	(Gitlab #4140, #4177)
 
-2379.	[bug]		razvan, liyunqing_kylin
+2380.	[bug]		razvan, liyunqing_kylin
 	Fixed a data race in ping-check hooks library. Thanks to
 	liyunqing_kylin for reporting and testing the fix for this
 	issue.
 	(Gitlab #4164, #4178)
 
 Kea 3.0.1 (stable) released on August 27, 2025
+
+2379.	[build]		tmark
+	The library version numbers have been bumped up for the Kea 3.0.1
+	stable release.
+	(Gitlab #4060)
 
 2378.	[build]*	fdupont, razvan
 	Moved Botan crypto backend support to version 3.
