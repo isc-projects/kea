@@ -688,6 +688,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     EXPECT_FALSE(invalid);
     EXPECT_FALSE(sending);
 
+    // Set the pkt6-rfc-violation stat to 0.
+    StatsMgr::instance().setValue("pkt6-rfc-violation", static_cast<int64_t>(0));
+
     // No client-id option should fail.
     Pkt6Ptr lq(new Pkt6(DHCPV6_LEASEQUERY_REPLY, 123));
     invalid = false;
@@ -696,6 +699,14 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
                      "DHCPV6_LEASEQUERY must supply a D6O_CLIENTID");
     EXPECT_TRUE(invalid);
     EXPECT_FALSE(sending);
+
+    // Check the pkt6-rfc-violation stat which was bumped by one.
+    ObservationPtr stat_rv = StatsMgr::instance().getObservation("pkt6-rfc-violation");
+    ASSERT_TRUE(stat_rv);
+    EXPECT_EQ(1, stat_rv->getInteger().first);
+
+    // Set the pkt6-not-for-us stat to 0.
+    StatsMgr::instance().setValue("pkt6-not-for-us", static_cast<int64_t>(0));
 
     // Add a client-id option.
     lq->addOption(makeClientIdOption(std::vector<uint8_t>{ 01, 02, 03, 04, 05, 06}));
@@ -709,6 +720,11 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
                      " unknown server-id: type=00002, len=00007: 0a:0b:0c:0d:0e:0f:10");
     EXPECT_TRUE(invalid);
     EXPECT_FALSE(sending);
+
+    // Check the pkt6-not-for-us stat which was bumped by one.
+    ObservationPtr stat_nfu = StatsMgr::instance().getObservation("pkt6-not-for-us");
+    ASSERT_TRUE(stat_nfu);
+    EXPECT_EQ(1, stat_nfu->getInteger().first);
 
     // Add a matching server id.
     lq->delOption(D6O_SERVERID);
@@ -736,10 +752,10 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     EXPECT_TRUE(invalid);
     EXPECT_FALSE(sending);
 
-    // Check the stat which was bumped by one.
-    ObservationPtr stat = StatsMgr::instance().getObservation("pkt6-admin-filtered");
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(1, stat->getInteger().first);
+    // Check the pkt6-admin-filtered stat which was bumped by one.
+    ObservationPtr stat_af = StatsMgr::instance().getObservation("pkt6-admin-filtered");
+    ASSERT_TRUE(stat_af);
+    EXPECT_EQ(1, stat_af->getInteger().first);
 
     // Set source address to a known requester address.
     lq->setRemoteAddr(IOAddress("2001:db8:2::1"));

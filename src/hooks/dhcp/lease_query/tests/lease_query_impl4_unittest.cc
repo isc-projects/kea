@@ -644,6 +644,9 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     EXPECT_FALSE(invalid);
     EXPECT_FALSE(sending);
 
+    // Set the pkt4-rfc-violation stat to 0.
+    StatsMgr::instance().setValue("pkt4-rfc-violation", static_cast<int64_t>(0));
+
     // An empty giaddr should fail.
     Pkt4Ptr lq(new Pkt4(DHCPLEASEQUERY, 123));
     invalid = false;
@@ -652,6 +655,12 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
                      "giaddr cannot be 0.0.0.0");
     EXPECT_TRUE(invalid);
     EXPECT_FALSE(sending);
+
+    // Check the pkt4-rfc-violation stat which was bumped by one.
+    ObservationPtr stat_rv =
+        StatsMgr::instance().getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat_rv);
+    EXPECT_EQ(1, stat_rv->getInteger().first);
 
     // Set the pkt4-admin-filtered stat to 0.
     StatsMgr::instance().setValue("pkt4-admin-filtered", static_cast<int64_t>(0));
@@ -665,10 +674,11 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     EXPECT_TRUE(invalid);
     EXPECT_FALSE(sending);
 
-    // Check the stat which was bumped by one.
-    ObservationPtr stat = StatsMgr::instance().getObservation("pkt4-admin-filtered");
-    ASSERT_TRUE(stat);
-    EXPECT_EQ(1, stat->getInteger().first);
+    // Check the pkt4-admin-filtered stat which was bumped by one.
+    ObservationPtr stat_af =
+        StatsMgr::instance().getObservation("pkt4-admin-filtered");
+    ASSERT_TRUE(stat_af);
+    EXPECT_EQ(1, stat_af->getInteger().first);
 
     // Now we'll iterate over all invalid combinations of ciaddr, HWAddr, client id.
     struct Scenario {
