@@ -2475,6 +2475,14 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
     // Message should be dropped
     EXPECT_FALSE(srv_->testServerID(req));
 
+
+    // Check the pkt6-not-for-us stat was bumped by one.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt6-not-for-us");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
     // Delete server identifier option and add new one, with same value as
     // server's server identifier.
     req->delOption(D6O_SERVERID);
@@ -2511,6 +2519,14 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
             << "being sent to unicast address; this message should"
             " be discarded according to section 18.4 of RFC 8415";
     }
+
+    // The pkt6-rfc-violation stat should be bumped by one each time.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt6-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(sizeof(not_allowed_unicast), stat->getInteger().first);
+
     // Explicitly list client/relay message types which are allowed to
     // be sent to unicast.
     const uint8_t allowed_unicast[] = {

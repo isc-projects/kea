@@ -393,6 +393,8 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
                 .arg(pkt->getLabel())
                 .arg(duidToString(server_id))
                 .arg(duidToString(getServerID()));
+            StatsMgr::instance().addValue("pkt6-not-for-us",
+                                          static_cast<int64_t>(1));
             return (false);
         }
     }
@@ -411,6 +413,8 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
             LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
                 .arg(pkt->getLabel())
                 .arg(pkt->getName());
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             return (false);
         }
         break;
@@ -815,15 +819,15 @@ Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr query) {
     Pkt6Ptr rsp;
     try {
         rsp = processPacket(query);
+        if (!rsp) {
+            return;
+        }
     } catch (...) {
         StatsMgr::instance().addValue("pkt6-processing-failed",
                                       static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         throw;
-    }
-    if (!rsp) {
-        return;
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -939,7 +943,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!testServerID(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        // The drop cause statistic was increased by testServerID.
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
@@ -949,7 +955,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!testUnicast(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
@@ -1008,6 +1015,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     }
 
     // Reject the message if it doesn't pass the sanity check.
+    // Statistics were updated by sanityCheck.
     if (!sanityCheck(query)) {
         return (Pkt6Ptr());
     }
@@ -1160,6 +1168,7 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
     }
 
     Pkt6Ptr rsp;
+    // The only expected exception is RFCViolation.
     bool rfc_violation = false;
     try {
         try {
@@ -1223,12 +1232,14 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
+        // The RFCViolation thrower updated the drop cause statistic.
         if (!rfc_violation) {
             StatsMgr::instance().addValue("pkt6-processing-failed",
                                           static_cast<int64_t>(1));
         }
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
+        return (Pkt6Ptr());
     }
 
     if (!rsp) {
@@ -2069,6 +2080,8 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
             .arg(pkt->getName())
             .arg(pkt->getRemoteAddr().toText())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
     }
 
     // Increase the statistic of dropped packets.
@@ -4567,19 +4580,29 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     const uint32_t no_iaid = 0; /* there's no IAID in the ADDR-REG-INFORM */
 
     // Check if the message is bad and shout be dropped.
+    bool invalid = false;
     try {
         // Check there is no IA_NA option.
         if (addr_reg_inf->getOption(D6O_IA_NA)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_NA option");
         }
 
         // Check there is no IA_TA option.
         if (addr_reg_inf->getOption(D6O_IA_TA)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_TA option");
         }
 
         // Check there is no IA_PD option.
         if (addr_reg_inf->getOption(D6O_IA_PD)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_PD option");
         }
 
@@ -4587,22 +4610,33 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         // There must be one.
         OptionCollection addrs = addr_reg_inf->getOptions(D6O_IAADDR);
         if (addrs.size() != 1) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Exactly 1 IAADDR option expected, but "
                       << addrs.size() << " received");
         }
         iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(addrs.begin()->second);
         if (!iaaddr) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(Unexpected, "can't convert the IAADDR option");
         }
 
         // Client and IADDR addresses must match.
         if (addr != iaaddr->getAddress()) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address mismatch: client at " << addr
                       << " wants to register " << iaaddr->getAddress());
         }
 
         // Should be in the subnet.
         if (!subnet->inRange(addr)) {
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " is not in subnet "
                       << subnet->toText() << " (id " << subnet->getID() << ")");
         }
@@ -4613,6 +4647,9 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
 
         // Address registration can't be mixed with standard allocation.
         if (old_lease && (old_lease->state_ != Lease6::STATE_REGISTERED)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " already in use "
                       << *old_lease);
         }
@@ -4620,6 +4657,9 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         // Address must not be reserved.
         auto hosts = HostMgr::instance().getAll6(addr);
         if (!hosts.empty()) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " is reserved");
         }
     } catch (const std::exception &ex) {
@@ -4627,6 +4667,12 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         LOG_INFO(packet6_logger, DHCP6_ADDR_REG_INFORM_FAIL)
             .arg(addr)
             .arg(ex.what());
+        if (!invalid) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
