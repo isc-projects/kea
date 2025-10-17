@@ -10,6 +10,7 @@
 #include <ping_check_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
 
@@ -18,6 +19,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 using namespace std::chrono;
@@ -505,6 +507,11 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
                   PING_CHECK_DUPLICATE_CHECK)
                   .arg(lease->addr_)
                   .arg(query->getLabel());
+        // Duplicates are a trivial instance of queue full.
+        StatsMgr::instance().addValue("pkt4-queue-full",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         return (CalloutHandle::CalloutNextStep::NEXT_STEP_DROP);
     }
 

@@ -14,6 +14,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <util/chrono_time_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
@@ -1582,9 +1583,23 @@ public:
         auto lqp2 = makeLeaseQueryPair(IOAddress("127.0.0.2"), 333);
         lqp2.lease_->client_id_ = old_lease->client_id_;
 
+        // Initialize statistics.
+        using namespace isc::stats;
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        stats_mgr.setValue("pkt4-queue-full", static_cast<int64_t>(0));
+        stats_mgr.setValue("pkt4-receive-drop", static_cast<int64_t>(0));
+
         // Trying to start a ping for an address already being checked should return DROP.
         ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp2.lease_, lqp2.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_DROP);
+
+        // The pkt4-queue-full and pkt4-receive-drop stats was bumped by one.
+        ObservationPtr stat_qf = stats_mgr.getObservation("pkt4-queue-full");
+        ObservationPtr stat_rd = stats_mgr.getObservation("pkt4-receive-drop");
+        ASSERT_TRUE(stat_qf);
+        ASSERT_TRUE(stat_rd);
+        EXPECT_EQ(1, stat_qf->getInteger().first);
+        EXPECT_EQ(1, stat_rd->getInteger().first);
 
         // Stop the mgr.
         ASSERT_NO_THROW(mgr_->stop());
