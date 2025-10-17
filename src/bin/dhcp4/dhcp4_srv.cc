@@ -1344,6 +1344,9 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr query) {
     Pkt4Ptr rsp;
     try {
         rsp = processPacket(query);
+        if (!rsp) {
+            return;
+        }
     } catch (...) {
         StatsMgr::instance().addValue("pkt4-processing-failed",
                                       static_cast<int64_t>(1));
@@ -1351,12 +1354,8 @@ Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr query) {
                                       static_cast<int64_t>(1));
         throw;
     }
-    if (!rsp) {
-        return;
-    }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
     processPacketBufferSend(callout_handle, rsp);
 }
 
@@ -1486,6 +1485,7 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     // There is no need to log anything here. This function logs by itself.
     if (!accept(query)) {
         // Increase the statistic of dropped packets.
+        // Specific drop cause stat was increased by accept* methods.
         StatsMgr::instance().addValue("pkt4-receive-drop",
                                       static_cast<int64_t>(1));
         return (Pkt4Ptr());
@@ -1614,6 +1614,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
         return (Pkt4Ptr());
     }
 
+    // The only expected exception is RFCViolation.
     bool rfc_violation = false;
     try {
         try {
@@ -1647,6 +1648,7 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
+        // The RFCViolation thrower updated the drop cause statistic.
         if (!rfc_violation) {
             StatsMgr::instance().addValue("pkt4-processing-failed",
                                           static_cast<int64_t>(1));
@@ -1686,7 +1688,8 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
             .arg(query->getLabel())
             .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -1716,6 +1719,7 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
     }
     Pkt4Ptr query = ctx->query_;
     Pkt4Ptr rsp;
+    // The only expected exception is RFCViolation.
     bool rfc_violation = false;
     try {
         try {
@@ -1767,12 +1771,14 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
+        // The RFCViolation thrower updated the drop cause statistic.
         if (!rfc_violation) {
             StatsMgr::instance().addValue("pkt4-processing-failed",
                                           static_cast<int64_t>(1));
         }
         StatsMgr::instance().addValue("pkt4-receive-drop",
                                       static_cast<int64_t>(1));
+        return (Pkt4Ptr());
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -4276,6 +4282,8 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& cont
         OptionCustom>(decline->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     if (!opt_requested_address) {
 
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
                   " in DHCPDECLINE sent from " << decline->getLabel());
     }
@@ -4748,21 +4756,26 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) {
     // The source address must not be zero for the DHCPINFORM message from
     // the directly connected client because the server will not know where
     // to respond if the ciaddr was not present.
+    bool result = true;
     try {
         if (pkt->getType() == DHCPINFORM) {
             if (pkt->getRemoteAddr().isV4Zero() &&
                 pkt->getCiaddr().isV4Zero()) {
-                return (false);
+                result = false;
             }
         }
     } catch (...) {
         // If we got here, it is probably because the message type hasn't
         // been set. But, this should not really happen assuming that
         // we validate the message type prior to calling this function.
-        return (false);
+        result = false;
     }
 
-    return (true);
+    if (!result) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
+    }
+    return (result);
 }
 
 bool
@@ -4777,6 +4790,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0004)
             .arg(query->getLabel())
             .arg(query->getIface());
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4818,6 +4833,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
             break;
     }
 
+    StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                  static_cast<int64_t>(1));
     return (false);
 }
 
@@ -4843,6 +4860,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // Unable to convert the option to the option type which encapsulates it.
     // We treat this as non-matching server id.
     if (!option_custom) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
     // The server identifier option should carry exactly one IPv4 address.
@@ -4851,6 +4870,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // this check is somewhat redundant. On the other hand, if someone
     // breaks option it may be better to check that here.
     if (option_custom->getDataFieldsNum() != 1) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4858,6 +4879,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // v6, it is wrong.
     IOAddress server_id = option_custom->readAddress();
     if (!server_id.isV4()) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4950,7 +4973,13 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     OptionCustomPtr opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
         (cfg_global_options->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
 
-    return (opt_server_id && (opt_server_id->readAddress() == server_id));
+    if (opt_server_id && (opt_server_id->readAddress() == server_id)) {
+        return (true);
+    }
+
+    // No matching...
+    StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
+    return (false);
 }
 
 void
@@ -4989,6 +5018,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     switch (serverid) {
     case FORBIDDEN:
         if (server_id) {
+            StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Server-id option was not expected, but"
                       << " received in message "
                       << query->getName());
@@ -4997,6 +5028,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
 
     case MANDATORY:
         if (!server_id) {
+            StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Server-id option was expected, but not"
                       " received in message "
                       << query->getName());
@@ -5019,6 +5052,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
 
     // If there's no client-id (or a useless one is provided, i.e. 0 length)
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(RFCViolation, "Missing or useless client-id and no HW address"
                   " provided in message "
                   << query->getName());

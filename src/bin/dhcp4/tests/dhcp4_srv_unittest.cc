@@ -1087,6 +1087,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     EXPECT_THROW_MSG(srv_->processDiscover(pkt), RFCViolation,
                      "Server-id option was not expected,"
                      " but received in message DHCPDISCOVER");
+
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(2, stat->getInteger().first);
 }
 
 // Verifies that DHCPREQEUSTs are sanity checked correctly.
@@ -1100,6 +1107,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRequest) {
     ASSERT_THROW_MSG(srv_->processRequest(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPREQUEST");
+
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
 
     // Add a hardware address. Should not throw.
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1149,6 +1163,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDecline) {
                     "Mandatory 'Requested IP address' option missing in DHCPDECLINE"
                     " sent from [hwtype=1 00:fe:fe:fe:fe:fe], cid=[no info], tid=0x4d2");
 
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(2, stat->getInteger().first);
+
     // Now let's add a requested address. This should not throw.
     const OptionDefinition& req_addr_def = LibDHCP::DHO_DHCP_REQUESTED_ADDRESS_DEF();
     OptionCustomPtr req_addr(new OptionCustom(req_addr_def, Option::V4));
@@ -1182,6 +1203,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckRelease) {
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPRELEASE");
 
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
     // Add a hardware address. Should not throw.
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     HWAddrPtr hwaddr(new HWAddr(data, HTYPE_ETHER));
@@ -1213,6 +1241,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheckInform) {
     ASSERT_THROW_MSG(srv_->processInform(pkt), RFCViolation,
                      "Missing or useless client-id and no HW address"
                      " provided in message DHCPINFORM");
+
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
 
     // Add a hardware address. Should not throw.
     std::vector<uint8_t> data = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2482,6 +2517,13 @@ TEST_F(Dhcpv4SrvTest, acceptServerId) {
     pkt->addOption(other_serverid);
     EXPECT_FALSE(srv_->acceptServerId(pkt));
 
+    // The pkt4-not-for-us stat should be bumped up.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-not-for-us");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
     // Configure the DHCP Server Identifier to be ignored.
     ASSERT_FALSE(CfgMgr::instance().getCurrentCfg()->getIgnoreServerIdentifier());
     CfgMgr::instance().getCurrentCfg()->setIgnoreServerIdentifier(true);
@@ -2632,6 +2674,13 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     pkt->setHWAddr(generateHWAddr(0));
     EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
                  RFCViolation);
+
+    // The pkt4-rfc-violation stat should be bumped by one before each throw.
+    using namespace isc::stats;
+    StatsMgr& mgr = StatsMgr::instance();
+    ObservationPtr stat = mgr.getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(3, stat->getInteger().first);
 }
 
 } // end of anonymous namespace
