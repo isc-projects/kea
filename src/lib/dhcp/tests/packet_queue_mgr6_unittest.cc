@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,9 +47,9 @@ public:
             mgr().registerPacketQueueFactory(queue_type,
                                             [](data::ConstElementPtr parameters)
                                             -> PacketQueue6Ptr {
-                std::string queue_type ;
+                std::string queue_type_from_parameters;
                 try {
-                    queue_type = data::SimpleParser::getString(parameters, "queue-type");
+                    queue_type_from_parameters = data::SimpleParser::getString(parameters, "queue-type");
                 } catch (const std::exception& ex) {
                     isc_throw(InvalidQueueParameter,
                               "queue-type missing or invalid: " << ex.what());
@@ -63,7 +63,7 @@ public:
                               "'capacity' missing or invalid: " << ex.what());
                 }
 
-                return (PacketQueue6Ptr(new PacketQueueRing6(queue_type, capacity)));
+                return (PacketQueue6Ptr(new PacketQueueRing6(queue_type_from_parameters, capacity)));
             });
 
         return did_it;

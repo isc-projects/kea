@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -390,42 +390,42 @@ TEST_F(MasterLexerStateTest, quotedString) {
 
     // If QSTRING is specified in option, '"' is regarded as a beginning of
     // a quoted string.
-    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    const MasterLexer::Options my_options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     EXPECT_FALSE(s_string.wasLastEOL(lexer)); // EOL is canceled due to '"'
     s_qstring.handle(lexer);
     stringTokenCheck("quoted string", s_string.getToken(lexer), true);
 
     // Empty string is okay as qstring
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("", s_string.getToken(lexer), true);
 
     // Also checks other separator characters within a qstring
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("quoted()\t\rstring", s_string.getToken(lexer), true);
 
     // escape character mostly doesn't have any effect in the qstring
     // processing
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("escape\\ in quote", s_string.getToken(lexer), true);
 
     // The only exception is the quotation mark itself.  Note that the escape
     // only works on the quotation mark immediately after it.
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("escaped\"", s_string.getToken(lexer), true);
 
     // quoted '\' then '"'.  Unlike the previous case '"' shouldn't be
     // escaped.
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("escaped backslash\\\\", s_string.getToken(lexer), true);
 
     // ';' has no meaning in a quoted string (not indicating a comment)
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("no;comment", s_string.getToken(lexer), true);
 }
@@ -437,28 +437,28 @@ TEST_F(MasterLexerStateTest, brokenQuotedString) {
     lexer.pushSource(ss);
 
     // EOL is encountered without closing the quote
-    const MasterLexer::Options options = common_options | MasterLexer::QSTRING;
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    const MasterLexer::Options my_options = common_options | MasterLexer::QSTRING;
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
     EXPECT_EQ(Token::UNBALANCED_QUOTES,
               s_qstring.getToken(lexer).getErrorCode());
     // We can resume after the error from the '\n'
-    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(s_null, State::start(lexer, my_options));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
 
     // \n is okay in a quoted string if escaped
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     stringTokenCheck("quoted\\\n", s_string.getToken(lexer), true);
 
     // EOF is encountered without closing the quote
-    EXPECT_EQ(&s_qstring, State::start(lexer, options));
+    EXPECT_EQ(&s_qstring, State::start(lexer, my_options));
     s_qstring.handle(lexer);
     ASSERT_EQ(Token::ERROR, s_qstring.getToken(lexer).getType());
     EXPECT_EQ(Token::UNEXPECTED_END, s_qstring.getToken(lexer).getErrorCode());
     // If we continue we'll simply see the EOF
-    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(s_null, State::start(lexer, my_options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
@@ -478,52 +478,52 @@ TEST_F(MasterLexerStateTest, basicNumbers) {
     lexer.pushSource(ss);
 
     // Ask the lexer to recognize numbers as well
-    const MasterLexer::Options options = common_options | MasterLexer::NUMBER;
+    const MasterLexer::Options my_options = common_options | MasterLexer::NUMBER;
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(0, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(1, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(12345, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(4294967295u, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(Token::NUMBER_OUT_OF_RANGE,
               s_number.getToken(lexer).getErrorCode());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(Token::NUMBER_OUT_OF_RANGE,
               s_number.getToken(lexer).getErrorCode());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(5, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(42, s_number.getToken(lexer).getNumber());
 
-    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(s_null, State::start(lexer, my_options));
     EXPECT_TRUE(s_crlf.wasLastEOL(lexer));
     EXPECT_EQ(Token::END_OF_LINE, s_crlf.getToken(lexer).getType());
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     EXPECT_EQ(37, s_number.getToken(lexer).getNumber());
 
     // If we continue we'll simply see the EOF
-    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(s_null, State::start(lexer, my_options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 
@@ -554,52 +554,52 @@ TEST_F(MasterLexerStateTest, stringNumbers) {
     stringTokenCheck("123", s_string.getToken(lexer), false);
 
     // Ask the lexer to recognize numbers as well
-    const MasterLexer::Options options = common_options | MasterLexer::NUMBER;
+    const MasterLexer::Options my_options = common_options | MasterLexer::NUMBER;
 
-    EXPECT_EQ(&s_string, State::start(lexer, options));
+    EXPECT_EQ(&s_string, State::start(lexer, my_options));
     s_string.handle(lexer);
     stringTokenCheck("-1", s_string.getToken(lexer), false);
 
     // Starts out as a number, but ends up being a string
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     stringTokenCheck("123abc456", s_number.getToken(lexer), false);
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer);
     stringTokenCheck("123\\456", s_number.getToken(lexer), false);
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\ space", s_number.getToken(lexer));
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\\ttab", s_number.getToken(lexer));
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\(paren", s_number.getToken(lexer));
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\)close", s_number.getToken(lexer));
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("3scaped\\;comment", s_number.getToken(lexer));
 
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' in mid
     stringTokenCheck("3scaped\\\\", s_number.getToken(lexer));
 
     // Confirm the word that follows the escaped '\' is correctly recognized.
-    EXPECT_EQ(&s_number, State::start(lexer, options));
+    EXPECT_EQ(&s_number, State::start(lexer, my_options));
     s_number.handle(lexer); // recognize str, see ' ' at end
     stringTokenCheck("8ackslash", s_number.getToken(lexer));
 
     // If we continue we'll simply see the EOF
-    EXPECT_EQ(s_null, State::start(lexer, options));
+    EXPECT_EQ(s_null, State::start(lexer, my_options));
     EXPECT_EQ(Token::END_OF_FILE, s_crlf.getToken(lexer).getType());
 }
 

@@ -577,9 +577,9 @@ AccountingTest::server() {
                 IntervalTimer::ONE_SHOT);
 
     // Get the requests.
-    auto receive_handler = [this](boost::system::error_code ec, size_t size) {
+    auto receive_handler = [this](boost::system::error_code erc, size_t size) {
         lock_guard<mutex> lock(mutex_);
-        error_codes_.push_back(ec);
+        error_codes_.push_back(erc);
         sizes_.push_back(size);
     };
     vector<boost::asio::ip::udp::endpoint> clients(expected_received_);

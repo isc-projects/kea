@@ -315,9 +315,9 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
                 // tag is provided), it takes precedence over the same parameter
                 // specified for all servers. Therefore, we check if the given
                 // parameter already exists and belongs to 'all'.
-                auto& index = local_parameters.get<StampedValueNameIndexTag>();
-                auto existing = index.find(name);
-                if (existing != index.end()) {
+                auto& name_index = local_parameters.get<StampedValueNameIndexTag>();
+                auto existing = name_index.find(name);
+                if (existing != name_index.end()) {
                     // This parameter was already fetched. Let's check if we should
                     // replace it or not.
                     if (!last_param_server_tag.amAll() && (*existing)->hasAllServerTag()) {
@@ -332,7 +332,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
                 // If there is no such parameter yet or the existing parameter
                 // belongs to a different server and the inserted parameter is
                 // not for all servers.
-                if ((existing == index.end()) ||
+                if ((existing == name_index.end()) ||
                     (!(*existing)->hasServerTag(last_param_server_tag) &&
                      !last_param_server_tag.amAll())) {
                     local_parameters.insert(last_param);
@@ -448,8 +448,8 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             // the same option definition specified for all servers.
             // Therefore, we check if the given option already exists and
             // belongs to 'all'.
-            auto& index = local_option_defs.get<1>();
-            auto existing_it_pair = index.equal_range(last_def->getCode());
+            auto& code_index = local_option_defs.get<1>();
+            auto existing_it_pair = code_index.equal_range(last_def->getCode());
             auto existing_it = existing_it_pair.first;
             bool found = false;
             for ( ; existing_it != existing_it_pair.second; ++existing_it) {
@@ -458,7 +458,7 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
                     // This option definition was already fetched. Let's check
                     // if we should replace it or not.
                     if (!last_def_server_tag.amAll() && (*existing_it)->hasAllServerTag()) {
-                        index.replace(existing_it, last_def);
+                        code_index.replace(existing_it, last_def);
                         return;
                     }
                     break;
@@ -793,8 +793,8 @@ MySqlConfigBackendImpl::getOptions(const int index,
                 // tag is provided), it takes precedence over the same option
                 // specified for all servers. Therefore, we check if the given
                 // option already exists and belongs to 'all'.
-                auto& index = local_options.get<1>();
-                auto existing_it_pair = index.equal_range(desc->option_->getType());
+                auto& type_index = local_options.get<1>();
+                auto existing_it_pair = type_index.equal_range(desc->option_->getType());
                 auto existing_it = existing_it_pair.first;
                 bool found = false;
                 for ( ; existing_it != existing_it_pair.second; ++existing_it) {
@@ -804,7 +804,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
                         // This option was already fetched. Let's check if we should
                         // replace it or not.
                         if (!last_option_server_tag.amAll() && existing_it->hasAllServerTag()) {
-                            index.replace(existing_it, *desc);
+                            type_index.replace(existing_it, *desc);
                             return;
                         }
                         break;

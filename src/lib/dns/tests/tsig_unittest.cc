@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -361,9 +361,9 @@ TEST_F(TSIGTest, signAtActualTime) {
 
 TEST_F(TSIGTest, signBadData) {
     // some specific bad data should be rejected proactively.
-    const unsigned char dummy_data = 0;
+    const unsigned char dummy = 0;
     EXPECT_THROW(tsig_ctx->sign(0, 0, 10), InvalidParameter);
-    EXPECT_THROW(tsig_ctx->sign(0, &dummy_data, 0), InvalidParameter);
+    EXPECT_THROW(tsig_ctx->sign(0, &dummy, 0), InvalidParameter);
 }
 
 TEST_F(TSIGTest, verifyBadData) {

@@ -136,9 +136,9 @@ public:
                 }
 
             if (useTls()) {
-                SocketCallback socket_cb(
-                    [this](boost::system::error_code ec, size_t /*length */) {
-                        if (ec) {
+                SocketCallback tls_socket_cb(
+                    [this](boost::system::error_code erc, size_t /*length */) {
+                        if (erc) {
                             handshake_failed_ = true;
                             done_callback_();
                         } else {
@@ -146,7 +146,7 @@ public:
                         }
                 });
 
-                tls_socket_->handshake(socket_cb);
+                tls_socket_->handshake(tls_socket_cb);
             } else {
                 sendNextRequest();
             }

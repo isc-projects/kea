@@ -338,12 +338,12 @@ public:
             }
 
             // Get stringified thread-id.
-            std::stringstream ss;
-            ss << std::this_thread::get_id();
+            std::stringstream tid_ss;
+            tid_ss << std::this_thread::get_id();
 
             // Create the ClientRR.
             ClientRRPtr clientRR(new ClientRR());
-            clientRR->thread_id_ = ss.str();
+            clientRR->thread_id_ = tid_ss.str();
             clientRR->request_ = request_json;
             clientRR->response_ = response_json;
 
@@ -400,12 +400,12 @@ public:
             ASSERT_FALSE(ec) << "asyncSendRequest failed, ec: " << ec;
 
             // Get stringified thread-id.
-            std::stringstream ss;
-            ss << std::this_thread::get_id();
+            std::stringstream tid_ss;
+            tid_ss << std::this_thread::get_id();
 
             // Create the ClientRR.
             ClientRRPtr clientRR(new ClientRR());
-            clientRR->thread_id_ = ss.str();
+            clientRR->thread_id_ = tid_ss.str();
             clientRR->request_ = request_json;
             clientRR->response_ = response_json;
 

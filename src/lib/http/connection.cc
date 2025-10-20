@@ -548,7 +548,9 @@ HttpConnection::socketReadCallback(HttpConnection::TransactionPtr transaction,
 
         defer_shutdown_ = true;
 
-        std::unique_ptr<HttpConnection, void(*)(HttpConnection*)> p(this, [](HttpConnection* p) { p->defer_shutdown_ = false; });
+        std::unique_ptr<HttpConnection, void (*)(HttpConnection*)> p(this, [](HttpConnection* c) {
+            c->defer_shutdown_ = false;
+        });
 
         // Create the response from the received request using the custom
         // response creator.

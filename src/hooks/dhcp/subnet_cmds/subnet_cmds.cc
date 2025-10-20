@@ -161,7 +161,6 @@ public:
         /// @brief function which returns true if the pair of option elements
         /// refer to the same option in the configuration.
         auto const& option_match = [&](ElementPtr& left, ElementPtr& right) -> bool {
-            std::string space = space_;
             std::string left_space = space;
             std::string right_space = space;
             if (left->get("space")) {

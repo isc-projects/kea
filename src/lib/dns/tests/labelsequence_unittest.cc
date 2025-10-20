@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -653,8 +653,8 @@ TEST_F(LabelSequenceTest, toRawText) {
 
     // toRawText is not supposed to do any sanity checks.
     // Let's try with a very weird name.
-    Name n2("xtra\tchars\n.in.name");
-    LabelSequence l2(n2);
+    Name name2("xtra\tchars\n.in.name");
+    LabelSequence l2(name2);
     EXPECT_EQ("xtra\tchars\n.in.name.", l2.toRawText(false));
 }
 

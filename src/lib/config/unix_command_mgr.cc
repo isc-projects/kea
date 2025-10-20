@@ -365,7 +365,9 @@ Connection::receiveHandler(const boost::system::error_code& ec,
 
             defer_shutdown_ = true;
 
-            std::unique_ptr<Connection, void(*)(Connection*)> p(this, [](Connection* p) { p->defer_shutdown_ = false; });
+            std::unique_ptr<Connection, void (*)(Connection*)> p(this, [](Connection* c) {
+                c->defer_shutdown_ = false;
+            });
 
             // Cancel the timer to make sure that long lasting command
             // processing doesn't cause the timeout.

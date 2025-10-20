@@ -1345,7 +1345,9 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configSetLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
 
     // Send the config-set command
     sendHttpCommand(os.str(), response);
@@ -1690,7 +1692,9 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, configSetLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
 
     // Send the config-set command
     sendHttpCommand(os.str(), response);
@@ -2877,8 +2881,9 @@ BaseCtrlChannelDhcpv6Test::testConfigReloadLFCRunning() {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
-
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* pf) {
+        reinterpret_cast<PIDFile*>(pf)->deleteFile();
+    });
 
     // This command should reload test8.json config.
     sendHttpCommand("{ \"command\": \"config-reload\" }", response);

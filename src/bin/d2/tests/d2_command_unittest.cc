@@ -1418,8 +1418,8 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int timeout_15 = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout_15));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();
@@ -1466,8 +1466,8 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int timeout_15 = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout_15));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

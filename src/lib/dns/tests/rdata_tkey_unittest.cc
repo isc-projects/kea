@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -238,7 +238,7 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithOtherData) {
     matchWireData(&expect_key[0], expect_key.size(),
                   tkey.getKey(), tkey.getKeyLen());
 
-    vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
+    expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
     matchWireData(&expect_data[0], expect_data.size(),
                   tkey.getOtherData(), tkey.getOtherLen());
 }
@@ -250,7 +250,7 @@ TEST_F(Rdata_TKEY_Test, createFromWireWithoutKey) {
     EXPECT_EQ(0, tkey.getKeyLen());
     EXPECT_FALSE(tkey.getKey());
 
-    vector<uint8_t> expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
+    expect_data = { 'a', 'b', 'c', 'd', '0', '1', '2', '3' };
     matchWireData(&expect_data[0], expect_data.size(),
                   tkey.getOtherData(), tkey.getOtherLen());
 }

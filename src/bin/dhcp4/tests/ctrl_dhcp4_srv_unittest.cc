@@ -1027,7 +1027,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
 
     // Send the config-set command
     sendUnixCommand(os.str(), response);
@@ -1860,7 +1862,9 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* pf) {
+        reinterpret_cast<PIDFile*>(pf)->deleteFile();
+    });
 
     // Now tell Kea to reload its config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);

@@ -3341,10 +3341,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             try {
                 createNameChangeRequests(lease, ctx->old_lease_,
                                          *ex.getContext()->getDdnsParams());
-            } catch (const Exception& ex) {
+            } catch (const Exception& exception) {
                 LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())
-                    .arg(ex.what());
+                    .arg(exception.what());
             }
         }
 
@@ -5000,11 +5000,11 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
                 // Matching: add the class
                 query->addClass(cclass);
             }
-        } catch (const Exception& ex) {
+        } catch (const Exception& exception) {
             LOG_ERROR(dhcp4_logger, DHCP4_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
-                .arg(ex.what());
+                .arg(exception.what());
         }
     }
 }

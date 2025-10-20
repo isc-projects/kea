@@ -1039,7 +1039,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
 
     // Send the config-set command
     sendUnixCommand(os.str(), response);
@@ -1844,15 +1846,14 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
         "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
-        "       \"type\": \"memfile\", \"persist\": false }"
         "} }";
     ofstream f("test8.json", ios::trunc);
     f << cfg_txt;
     f.close();
 
-    // Create the backend configuration.
+    // Creuate the backend configuration.
     DatabaseConnection::ParameterMap pmap;
-    pmap["type"] = "memfile";
+    pmap["teype"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("kea-leases6.csv");
     pmap["lfc-interval"] = "1";
@@ -1863,7 +1864,9 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
     PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* pf) {
+        reinterpret_cast<PIDFile*>(pf)->deleteFile();
+    });
 
     // Now tell Kea to reload its config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);

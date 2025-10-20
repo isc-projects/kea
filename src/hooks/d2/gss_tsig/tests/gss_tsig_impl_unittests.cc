@@ -220,9 +220,9 @@ TEST_F(GssTsigImplTest, envVars) {
     char* ktname = getenv("KRB5_CLIENT_KTNAME");
     ASSERT_TRUE(ktname);
     EXPECT_EQ("foo", string(ktname));
-    char* ccname = getenv("KRB5CCNAME");
-    ASSERT_TRUE(ccname);
-    EXPECT_EQ("bar", string(ccname));
+    char* krb5ccname = getenv("KRB5CCNAME");
+    ASSERT_TRUE(krb5ccname);
+    EXPECT_EQ("bar", string(krb5ccname));
 }
 
 /// @brief Tests status-get command processed handler.

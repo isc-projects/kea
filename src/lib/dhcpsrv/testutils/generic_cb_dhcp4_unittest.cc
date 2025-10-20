@@ -1044,24 +1044,25 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
         SCOPED_TRACE(test_case_name);
 
         // Test fetching subnet by id.
-        Subnet4Ptr returned_subnet;
-        ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(server_selector, subnet->getID()));
-        ASSERT_TRUE(returned_subnet);
+        Subnet4Ptr returned_subnet_2;
+        ASSERT_NO_THROW_LOG(
+            returned_subnet_2 = cbptr_->getSubnet4(server_selector, subnet->getID()));
+        ASSERT_TRUE(returned_subnet_2);
 
-        ASSERT_EQ(1, returned_subnet->getServerTags().size());
-        EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
+        ASSERT_EQ(1, returned_subnet_2->getServerTags().size());
+        EXPECT_TRUE(returned_subnet_2->hasServerTag(ServerTag(expected_tag)));
 
-        ASSERT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+        ASSERT_EQ(subnet->toElement()->str(), returned_subnet_2->toElement()->str());
 
         // Test fetching subnet by prefix.
-        ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(server_selector,
-                                                                 subnet->toText()));
-        ASSERT_TRUE(returned_subnet);
+        ASSERT_NO_THROW_LOG(
+            returned_subnet_2 = cbptr_->getSubnet4(server_selector, subnet->toText()));
+        ASSERT_TRUE(returned_subnet_2);
 
-        ASSERT_EQ(1, returned_subnet->getServerTags().size());
-        EXPECT_TRUE(returned_subnet->hasServerTag(ServerTag(expected_tag)));
+        ASSERT_EQ(1, returned_subnet_2->getServerTags().size());
+        EXPECT_TRUE(returned_subnet_2->hasServerTag(ServerTag(expected_tag)));
 
-        EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+        EXPECT_EQ(subnet->toElement()->str(), returned_subnet_2->toElement()->str());
     };
 
     {
