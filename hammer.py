@@ -483,7 +483,7 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: st
     :param only: what to install: meson or ninja. None (default) means both.
     :type only: str
     """
-    meson_version = '1.8.1'
+    meson_version = '1.9.1'
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
     if exit_code == 0:
