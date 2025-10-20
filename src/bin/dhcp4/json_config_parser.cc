@@ -753,7 +753,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
-    MtTestMode();
+    std::unique_ptr<MtTestMode> mt_test_mode;
+    if (check_only) {
+        mt_test_mode.reset(new MtTestMode());
+    }
 
     auto answer = processDhcp4Config(config_set);
 
