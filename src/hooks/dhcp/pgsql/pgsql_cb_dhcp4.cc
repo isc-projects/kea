@@ -2504,13 +2504,13 @@ public:
             // reporting the parsing error. The dependency check is performed later
             // at the database level.
             parser.parse(expression, Element::create(client_class->getTest()), AF_INET,
-                         [&dependencies, &depend_on_known](const ClientClass& client_class) -> bool {
-                if (isClientClassBuiltIn(client_class)) {
-                    if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+                         [&dependencies, &depend_on_known](const ClientClass& cc) -> bool {
+                if (isClientClassBuiltIn(cc)) {
+                    if ((cc == "KNOWN") || (cc == "UNKNOWN")) {
                         depend_on_known = true;
                     }
                 } else {
-                    dependencies.push_back(client_class);
+                    dependencies.push_back(cc);
                 }
                 return (true);
             });
