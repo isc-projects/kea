@@ -870,9 +870,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
-    if (check_only) {
-        MultiThreadingMgr::instance().setTestMode(true);
-    }
+    MtTestMode();
 
     auto answer = processDhcp6Config(config_set);
 

@@ -387,6 +387,20 @@ public:
     virtual ~MultiThreadingCriticalSection();
 };
 
+/// @brief RAII wrapper for MT test mode.
+///
+/// The constructor enables test mode, the destructor disables it.
+class MtTestMode : public boost::noncopyable {
+public:
+    MtTestMode() {
+        MultiThreadingMgr::instance().setTestMode(true);
+    }
+
+    ~MtTestMode() {
+        MultiThreadingMgr::instance().setTestMode(false);
+    }
+};
+
 }  // namespace util
 }  // namespace isc
 

@@ -753,9 +753,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
-    if (check_only) {
-        MultiThreadingMgr::instance().setTestMode(true);
-    }
+    MtTestMode();
 
     auto answer = processDhcp4Config(config_set);
 

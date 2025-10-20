@@ -515,3 +515,14 @@ TEST_F(CriticalSectionCallbackTest, invocationsWithExceptions) {
     // Retest CriticalSections.
     runCriticalSections({}, {});
 }
+
+/// @brief Verifies that the RAII wrapper for MT test mode works.
+TEST_F(CriticalSectionCallbackTest, mtTestMode) {
+    ASSERT_FALSE(MultiThreadingMgr::instance().isTestMode());
+    {
+        MtTestMode mt;
+        ASSERT_TRUE(MultiThreadingMgr::instance().isTestMode());
+    }
+
+    ASSERT_FALSE(MultiThreadingMgr::instance().isTestMode());
+}

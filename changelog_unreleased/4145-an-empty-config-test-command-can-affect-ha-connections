@@ -1,0 +1,6 @@
+[bug]		tmark
+	Corrected an issue that was causing an
+	HA peer to not restart its dedicated listener
+	after handling a config-test command.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4145)
