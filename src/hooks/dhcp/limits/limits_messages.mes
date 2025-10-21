@@ -48,7 +48,7 @@ prefixes for a client class or a subnet is exceeding the limit.
 % LIMITS_LEASE_WITHIN_LIMITS Lease with address %1 is within limits.
 Logged at debug log level 40.
 Debug message logged to indicate that the current number of leased addresses or
-prefixes for a client class or a subnet is exceeding the limit.
+prefixes for a client class or a subnet has not exceeded the limit.
 
 // -- Rate limiting messages --
 
