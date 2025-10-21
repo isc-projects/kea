@@ -7,7 +7,15 @@
 #ifndef ASIOLINK_INTERVAL_TIMER_H
 #define ASIOLINK_INTERVAL_TIMER_H 1
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#endif
 #include <boost/asio/deadline_timer.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 #include <boost/shared_ptr.hpp>
 #include <functional>
 

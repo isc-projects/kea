@@ -10,9 +10,16 @@
 #include <cc/data.h>
 #include <yang/netconf_error.h>
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
+#endif
 #include <sysrepo-cpp/Connection.hpp>
 #include <sysrepo-cpp/Enum.hpp>
 #include <sysrepo-cpp/Session.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #include <unordered_map>
 

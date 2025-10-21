@@ -73,6 +73,7 @@
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #pragma GCC diagnostic ignored "-Wshadow"
 #if (((GNU_CC_VERSION >= 50200) && (GNU_CC_VERSION < 60000))    \
      && defined(BOOST_ERROR_CODE_HEADER_ONLY))

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,10 +7,19 @@
 #include <config.h>
 
 #include <http/date_time.h>
-#include <boost/date_time/time_facet.hpp>
-#include <boost/date_time/local_time/local_time.hpp>
+
 #include <locale>
 #include <sstream>
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#include <boost/date_time/local_time/local_time.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+#include <boost/date_time/time_facet.hpp>
 
 using namespace boost::local_time;
 using namespace boost::posix_time;

@@ -16,7 +16,14 @@
 #error "Boost ASIO older than 1.66 are not supported"
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#endif
 #include <boost/asio/io_context.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 namespace isc {
 namespace asiolink {
