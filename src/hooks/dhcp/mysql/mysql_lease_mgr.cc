@@ -2380,7 +2380,7 @@ bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_ADD_ADDR6)
         .arg(lease->addr_.toText())
-        .arg(lease->type_);
+        .arg(Lease::typeToText(lease->type_));
 
     lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
@@ -2847,7 +2847,7 @@ MySqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const IOAddress& addr) const {
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_ADDR6)
         .arg(addr.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[2];
@@ -2928,7 +2928,7 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_IAID_DUID)
         .arg(iaid)
         .arg(duid.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[3];
@@ -2992,7 +2992,7 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
         .arg(iaid)
         .arg(subnet_id)
         .arg(duid.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     MYSQL_BIND inbind[4];
@@ -3386,7 +3386,7 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_UPDATE_ADDR6)
         .arg(lease->addr_.toText())
-        .arg(lease->type_);
+        .arg(Lease::typeToText(lease->type_));
 
     // Get the recorded action and reset it.
     Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;

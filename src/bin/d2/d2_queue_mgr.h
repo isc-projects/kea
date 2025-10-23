@@ -10,12 +10,13 @@
 /// @file d2_queue_mgr.h This file defines the class D2QueueMgr.
 
 #include <asiolink/io_service.h>
-#include <exceptions/exceptions.h>
-#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcp_ddns/ncr_msg.h>
+#include <exceptions/exceptions.h>
+
+#include <deque>
 
 #include <boost/noncopyable.hpp>
-#include <deque>
 
 namespace isc {
 namespace d2 {
@@ -144,6 +145,25 @@ public:
       STOPPED_RECV_ERROR = 5,
       STOPPED = 6,
     };
+
+    /// @brief Convert enum to string.
+    ///
+    /// @param state input enum
+    ///
+    /// @return reference to static string
+    static std::string const& stateToText(State const& state) {
+        static std::vector<std::string> const text_vector {
+            "NOT_INITTED",
+            "INITTED",
+            "RUNNING",
+            "STOPPING",
+            "STOPPED_QUEUE_FULL",
+            "STOPPED_RECV_ERROR",
+            "STOPPED",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (state < text_vector.size() ? text_vector[state] : unknown);
+    }
 
     /// @brief Constructor
     ///

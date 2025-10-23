@@ -63,6 +63,23 @@ public:
         OTHER = 4,              ///< Other, unclassified error.
     };
 
+    /// @brief Convert enum to string.
+    ///
+    /// @param status input enum
+    ///
+    /// @return reference to static string
+    static std::string const& statusToText(Status const& status) {
+        static std::vector<std::string> const text_vector {
+            "SUCCESS",
+            "TIMEOUT",
+            "IO_STOPPED",
+            "INVALID_RESPONSE",
+            "OTHER",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (status < text_vector.size() ? text_vector[status] : unknown);
+    }
+
     /// @brief Callback for the @c DNSClient class.
     ///
     /// This is an abstract class which represents the external callback for the

@@ -339,7 +339,7 @@ public:
         IDENT_DUID = 1,
         IDENT_CIRCUIT_ID = 2,
         IDENT_CLIENT_ID = 3,
-        IDENT_FLEX = 4,  ///< Flexible host identifier.
+        IDENT_FLEX = 4, ///< Flexible host identifier.
     };
 
     /// @brief Constant pointing to the last identifier of the

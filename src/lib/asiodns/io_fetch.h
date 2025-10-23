@@ -17,9 +17,9 @@
 
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/deadline_timer.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/system/error_code.hpp>
 
 namespace isc {
@@ -60,8 +60,24 @@ public:
         SUCCESS = 0,       // Success, fetch completed
         TIME_OUT = 1,      // Failure, fetch timed out
         STOPPED = 2,       // Control code, fetch has been stopped
-        NOTSET = 3         // For testing, indicates value not set
+        NOTSET = 3,        // For testing, indicates value not set
     };
+
+    /// @brief Convert enum to string.
+    ///
+    /// @param result input enum
+    ///
+    /// @return reference to static string
+    static std::string const& resultToText(Result const& result) {
+        static std::vector<std::string> const text_vector {
+            "SUCCESS",
+            "TIME_OUT",
+            "STOPPED",
+            "NOTSET",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (result < text_vector.size() ? text_vector[result] : unknown);
+    }
 
     /// @note The next enum is a "trick" to allow constants to be defined in a class
     /// declaration.

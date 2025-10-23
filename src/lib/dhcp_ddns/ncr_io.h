@@ -52,11 +52,11 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
-
 #include <deque>
 #include <mutex>
+
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/scoped_ptr.hpp>
 
 namespace isc {
 namespace dhcp_ddns {
@@ -481,6 +481,22 @@ public:
         STOPPED = 2,
         ERROR = 3,
     };
+
+    /// @brief Convert enum to string.
+    ///
+    /// @param result input enum
+    ///
+    /// @return reference to static string
+    static std::string const& resultToText(Result const& result) {
+        static std::vector<std::string> const text_vector {
+            "SUCCESS",
+            "TIME_OUT",
+            "STOPPED",
+            "ERROR",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (result < text_vector.size() ? text_vector[result] : unknown);
+    }
 
     /// @brief Abstract class for defining application layer send callbacks.
     ///

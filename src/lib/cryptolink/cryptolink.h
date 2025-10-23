@@ -32,7 +32,7 @@ enum HashAlgorithm : int {
     SHA256 = 3,         // SHA-256
     SHA224 = 4,         // SHA-224
     SHA384 = 5,         // SHA-384
-    SHA512 = 6          // SHA-512
+    SHA512 = 6,         // SHA-512
 };
 
 /// @brief Forward declaration for createHash().

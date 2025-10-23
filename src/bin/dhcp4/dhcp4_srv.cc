@@ -5106,11 +5106,11 @@ Dhcpv4Srv::stopD2() {
 }
 
 void
-Dhcpv4Srv::d2ClientErrorHandler(const
-                                dhcp_ddns::NameChangeSender::Result result,
+Dhcpv4Srv::d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(ddns4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
-              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    LOG_ERROR(ddns4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED)
+        .arg(NameChangeSender::resultToText(result))
+        .arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
     /// them off.
