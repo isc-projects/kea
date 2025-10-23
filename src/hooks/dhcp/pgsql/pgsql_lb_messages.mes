@@ -234,7 +234,7 @@ This message is issued only once.
 
 % PGSQL_LB_ROLLBACK rolling back PostgreSQL database
 Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
+The code has issued a rollback call. All outstanding transactions will
 be rolled back and not committed to the database.
 
 % PGSQL_LB_UPDATE_ADDR4 updating IPv4 lease for address %1

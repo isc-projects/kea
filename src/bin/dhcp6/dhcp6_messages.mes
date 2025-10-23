@@ -424,7 +424,7 @@ This debug message is printed when a callout installed on buffer6_send
 hook point set the next step to SKIP value. For this particular hook point, the
 SKIP setting a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
-or released leases), but the response will not be send to the client.
+or released leases), but the response will not be sent to the client.
 The argument includes the client and transaction identification
 information.
 
@@ -467,7 +467,7 @@ This debug message is printed when a callout installed on lease6_release
 hook point set the next step to SKIP value. For this particular hook point, that
 setting by a callout instructs the server to not release
 a lease. If client requested release of multiples leases (by sending
-multiple IA options), the server will retains this particular lease and
+multiple IA options), the server will retain this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
 
@@ -496,7 +496,7 @@ This debug message is printed when a callout installed on the pkt6_receive
 hook point sets the next step to SKIP. For this particular hook point, the
 value setting instructs the server to drop the packet.
 
-% DHCP6_HOOK_PACKET_SEND_DROP %1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP
+% DHCP6_HOOK_PACKET_SEND_DROP %1: prepared DHCPv6 response was not sent because a callout set the next step to DROP
 Logged at debug log level 15.
 This debug message is printed when a callout installed on the pkt6_send
 hook point set the next step to DROP. For this particular hook point, the setting
