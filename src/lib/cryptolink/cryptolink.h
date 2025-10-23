@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ namespace isc {
 namespace cryptolink {
 
 /// @brief Hash algorithm identifiers.
-enum HashAlgorithm {
+enum HashAlgorithm : int {
     UNKNOWN_HASH = 0,   // This value can be used in conversion
                         // functions, to be returned when the
                         // input is unknown (but a value MUST be

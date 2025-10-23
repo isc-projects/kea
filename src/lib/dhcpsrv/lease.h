@@ -43,12 +43,12 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     static std::string lifetimeToText(uint32_t lifetime);
 
     /// @brief Type of lease or pool
-    typedef enum {
+    enum Type : int {
         TYPE_NA = 0, ///< the lease contains non-temporary IPv6 address
         TYPE_TA = 1, ///< the lease contains temporary IPv6 address
         TYPE_PD = 2, ///< the lease contains IPv6 prefix (for prefix delegation)
-        TYPE_V4 = 3  ///< IPv4 lease
-    } Type;
+        TYPE_V4 = 3, ///< IPv4 lease
+    };
 
     /// @brief returns text representation of a lease type
     /// @param type lease or pool type to be converted

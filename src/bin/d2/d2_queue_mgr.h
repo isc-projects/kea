@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,14 +135,14 @@ public:
     static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the list of possible states for D2QueueMgr.
-    enum State {
-      NOT_INITTED,
-      INITTED,
-      RUNNING,
-      STOPPING,
-      STOPPED_QUEUE_FULL,
-      STOPPED_RECV_ERROR,
-      STOPPED,
+    enum State : int {
+      NOT_INITTED = 0,
+      INITTED = 1,
+      RUNNING = 2,
+      STOPPING = 3,
+      STOPPED_QUEUE_FULL = 4,
+      STOPPED_RECV_ERROR = 5,
+      STOPPED = 6,
     };
 
     /// @brief Constructor

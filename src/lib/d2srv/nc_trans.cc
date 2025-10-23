@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -158,8 +158,7 @@ NameChangeTransaction::responseString() const {
             stream << "OTHER";
             break;
         default:
-            stream << "UNKNOWN("
-                   << static_cast<int>(getDnsUpdateStatus()) << ")";
+            stream << "UNKNOWN(" << getDnsUpdateStatus() << ")";
             break;
 
     }

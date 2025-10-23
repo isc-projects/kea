@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -475,11 +475,11 @@ public:
     static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the outcome of an asynchronous NCR send.
-    enum Result {
-        SUCCESS,
-        TIME_OUT,
-        STOPPED,
-        ERROR
+    enum Result : int {
+        SUCCESS = 0,
+        TIME_OUT = 1,
+        STOPPED = 2,
+        ERROR = 3,
     };
 
     /// @brief Abstract class for defining application layer send callbacks.
