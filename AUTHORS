@@ -276,6 +276,7 @@ We have received the following contributions:
 
  - Khem Raj
    2021-05: gcc11 compilation fixes.
+   2025-10: clang++21 compilation fixes.
 
  - Sriram Rajagopalan
    2021-08: fix for a type mismatch in libdhcp which could have lead to an
