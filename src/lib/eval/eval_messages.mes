@@ -11,7 +11,7 @@ $NAMESPACE isc::dhcp
 % EVAL_DEBUG_AND %1: Popping %2 and %3 pushing %4
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  Then are then combined via logical and and
+the value stack.  They are then combined via logical and and
 the result is pushed onto the value stack.
 
 # For use with TokenBranch
@@ -145,7 +145,7 @@ option or a sub-option as requested in the classification statement.
 % EVAL_DEBUG_OR %1: Popping %2 and %3 pushing %4
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  Then are then combined via logical or and
+the value stack.  They are then combined via logical or and
 the result is pushed onto the value stack. The string is displayed
 in text.
 

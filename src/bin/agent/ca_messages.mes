@@ -45,7 +45,7 @@ encounters an unrecoverable error from within the event loop.
 
 % CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED failed to reuse HTTPS service bound to address: %1 port: %2
 This error message indicates that the server has failed reusing existing
-HTTPS service on the specified address and port. The server can not swith from
+HTTPS service on the specified address and port. The server can not switch from
 HTTPS to HTTP sockets using the same address and port.
 
 % CTRL_AGENT_HTTPS_SERVICE_STARTED HTTPS service bound to address: %1 port: %2
@@ -58,9 +58,9 @@ This informational message indicates that the server has reused existing
 HTTPS service on the specified address and port. Note that any change in
 the TLS setup has been applied.
 
-% CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED failed to reused HTTP service bound to address: %1 port: %2
+% CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED failed to reuse HTTP service bound to address: %1 port: %2
 This error message indicates that the server has failed reusing existing
-HTTP service on the specified address and port. The server can not swith from
+HTTP service on the specified address and port. The server can not switch from
 HTTP to HTTPS sockets using the same address and port.
 
 % CTRL_AGENT_HTTP_SERVICE_STARTED HTTP service bound to address: %1 port: %2
@@ -74,7 +74,7 @@ HTTP service on the specified address and port.
 
 % CTRL_AGENT_IS_DEPRECATED Kea Control Agent is deprecated. Its function has been moved to Kea servers.
 This warning message indicates that the Control Agent has been deprecated.
-All its function has been moved to Kea servers.
+All its functions have been moved to Kea servers.
 
 % CTRL_AGENT_RUN_EXIT application is exiting the event loop
 Logged at debug log level 0.

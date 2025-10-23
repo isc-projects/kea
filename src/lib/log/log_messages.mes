@@ -65,13 +65,13 @@ This error is generated when the compiler finds a $NAMESPACE directive
 with no arguments.
 
 % LOG_NO_MESSAGE_ID line %1: message definition line found without a message ID
-Within a message file, message are defined by lines starting with a "%".
+Within a message file, messages are defined by lines starting with a "%".
 The rest of the line should comprise the message ID and text describing
 the message.  This error indicates the message compiler found a line in
 the message file comprising just the "%" and nothing else.
 
 % LOG_NO_MESSAGE_TEXT line %1: line found containing a message ID ('%2') and no text
-Within a message file, message are defined by lines starting with a "%".
+Within a message file, messages are defined by lines starting with a "%".
 The rest of the line should comprise the message ID and text describing
 the message.  This error indicates the message compiler found a line
 in the message file comprising just the "%" and message identification,

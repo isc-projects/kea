@@ -523,7 +523,7 @@ This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the next step to SKIP. For this particular hook point, the
 value setting of the flag instructs the server to drop the packet.
 
-% DHCP4_HOOK_PACKET_SEND_DROP %1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP
+% DHCP4_HOOK_PACKET_SEND_DROP %1: prepared DHCPv4 response was not sent because a callout set the next step to DROP
 Logged at debug log level 15.
 This debug message is printed when a callout installed on the pkt4_send
 hook point set the next step to DROP. For this particular hook point, the setting
@@ -533,7 +533,7 @@ the server processed client's request and acted on it (e.g. possibly
 allocated a lease). The argument specifies the client and transaction
 identification information.
 
-% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next stp to SKIP
+% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next step to SKIP
 Logged at debug log level 40.
 This debug message is printed when a callout installed on the pkt4_send
 hook point sets the next step to SKIP. For this particular hook point, this
@@ -803,7 +803,7 @@ requested-ip-address option (if present).
 Logged at debug log level 50.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
-server will still attempt to service the packet.
+still attempt to service the packet.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
 Logged at debug log level 50.
@@ -1188,7 +1188,7 @@ and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
 
-% DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED All packets will be send to source address of an incoming packet - use only for testing
+% DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED All packets will be sent to source address of an incoming packet - use only for testing
 This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE
 environment variable is set. It's causing Kea to send packets to
 source address of incoming packet. Usable just in testing environment
