@@ -1846,14 +1846,15 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
         "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
         "} }";
     ofstream f("test8.json", ios::trunc);
     f << cfg_txt;
     f.close();
 
-    // Creuate the backend configuration.
+    // Create the backend configuration.
     DatabaseConnection::ParameterMap pmap;
-    pmap["teype"] = "memfile";
+    pmap["type"] = "memfile";
     pmap["universe"] = "6";
     pmap["name"] = getLeaseFilePath("kea-leases6.csv");
     pmap["lfc-interval"] = "1";
