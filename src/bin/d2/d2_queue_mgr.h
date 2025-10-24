@@ -136,7 +136,7 @@ public:
     static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the list of possible states for D2QueueMgr.
-    enum State : int {
+    enum State : uint16_t {
       NOT_INITTED = 0,
       INITTED = 1,
       RUNNING = 2,

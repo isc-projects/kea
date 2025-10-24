@@ -56,7 +56,7 @@ public:
     /// @note that this applies to the status of I/Os in the fetch - a fetch that
     /// resulted in a packet being received from the server is a SUCCESS, even if
     /// the contents of the packet indicate that some error occurred.
-    enum Result : int {
+    enum Result : uint16_t {
         SUCCESS = 0,       // Success, fetch completed
         TIME_OUT = 1,      // Failure, fetch timed out
         STOPPED = 2,       // Control code, fetch has been stopped

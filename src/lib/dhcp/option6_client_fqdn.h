@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,7 +102,7 @@ public:
     static const uint16_t FLAG_FIELD_LEN = 1;
 
     /// @brief Type of the domain-name: partial or full.
-    enum DomainNameType : int {
+    enum DomainNameType : uint16_t {
         PARTIAL,
         FULL
     };

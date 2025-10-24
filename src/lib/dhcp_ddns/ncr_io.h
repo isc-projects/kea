@@ -475,7 +475,7 @@ public:
     static const size_t MAX_QUEUE_DEFAULT = 1024;
 
     /// @brief Defines the outcome of an asynchronous NCR send.
-    enum Result : int {
+    enum Result : uint16_t {
         SUCCESS = 0,
         TIME_OUT = 1,
         STOPPED = 2,

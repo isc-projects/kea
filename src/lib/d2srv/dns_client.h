@@ -55,7 +55,7 @@ public:
     };
 
     /// @brief A status code of the DNSClient.
-    enum Status : int {
+    enum Status : uint16_t {
         SUCCESS = 0,            ///< Response received and is ok.
         TIMEOUT = 1,            ///< No response, timeout.
         IO_STOPPED = 2,         ///< IO was stopped.

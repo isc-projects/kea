@@ -570,7 +570,7 @@ class TokenPkt : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum MetadataType : int {
+    enum MetadataType : uint16_t {
         IFACE, ///< interface name (string)
         SRC,   ///< source (IP address)
         DST,   ///< destination (IP address)
@@ -620,7 +620,7 @@ class TokenPkt4 : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum FieldType : int {
+    enum FieldType : uint16_t {
         CHADDR, ///< chaddr field (up to 16 bytes link-layer address)
         GIADDR, ///< giaddr (IPv4 address)
         CIADDR, ///< ciaddr (IPv4 address)
@@ -674,7 +674,7 @@ private:
 class TokenPkt6 : public Token {
 public:
     /// @brief enum value that determines the field.
-    enum FieldType : int {
+    enum FieldType : uint16_t {
         MSGTYPE, ///< msg type
         TRANSID  ///< transaction id (integer but manipulated as a string)
     };
@@ -727,7 +727,7 @@ class TokenRelay6Field : public Token {
 public:
 
     /// @brief enum value that determines the field.
-    enum FieldType : int {
+    enum FieldType : uint16_t {
         PEERADDR, ///< Peer address field (IPv6 address)
         LINKADDR  ///< Link address field (IPv6 address)
     };
@@ -1137,7 +1137,7 @@ class TokenVendor : public TokenOption {
 public:
 
     /// @brief Specifies a field of the vendor option
-    enum FieldType : int {
+    enum FieldType : uint16_t {
         SUBOPTION,     ///< If this token fetches a suboption, not a field.
         ENTERPRISE_ID, ///< enterprise-id field (vendor-info, vendor-class)
         EXISTS,        ///< vendor[123].exists

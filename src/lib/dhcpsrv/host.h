@@ -334,7 +334,7 @@ public:
     /// - DUID (DHCPv4 and DHCPv6) (identifier name: "duid"),
     /// - circuit identifier (DHCPv4) (identifier name: "circuit-id"),
     /// - client identifier (DHCPv4) (identifier name: "client-id")
-    enum IdentifierType : int {
+    enum IdentifierType : uint16_t {
         IDENT_HWADDR = 0,
         IDENT_DUID = 1,
         IDENT_CIRCUIT_ID = 2,

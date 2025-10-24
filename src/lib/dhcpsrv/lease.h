@@ -43,7 +43,7 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
     static std::string lifetimeToText(uint32_t lifetime);
 
     /// @brief Type of lease or pool
-    enum Type : int {
+    enum Type : uint16_t {
         TYPE_NA = 0, ///< the lease contains non-temporary IPv6 address
         TYPE_TA = 1, ///< the lease contains temporary IPv6 address
         TYPE_PD = 2, ///< the lease contains IPv6 prefix (for prefix delegation)

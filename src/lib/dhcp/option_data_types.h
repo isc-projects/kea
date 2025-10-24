@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ public:
 /// must always be and OPT_RECORD_TYPE must be at second to last.
 /// This is because some functions perform sanity checks on data type
 /// values using '>' operators, assuming that all values beyond the
-enum OptionDataType : int {
+enum OptionDataType : uint16_t {
     OPT_EMPTY_TYPE          = 0,
     OPT_BINARY_TYPE         = 1,
     OPT_BOOLEAN_TYPE        = 2,

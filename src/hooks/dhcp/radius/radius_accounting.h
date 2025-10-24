@@ -22,7 +22,7 @@ namespace isc {
 namespace radius {
 
 /// @brief Type of accounting events.
-enum Event : int {
+enum Event : uint16_t {
     EVENT_CREATE = 0,  //< A new lease was created (leaseX_select hooks).
     EVENT_RENEW = 1,   //< A lease was renewed (leaseX_renew hooks).
     EVENT_REBIND = 2,  //< A lease was rebound (lease6_rebind hook).

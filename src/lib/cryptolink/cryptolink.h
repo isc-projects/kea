@@ -20,7 +20,7 @@ namespace isc {
 namespace cryptolink {
 
 /// @brief Hash algorithm identifiers.
-enum HashAlgorithm : int {
+enum HashAlgorithm : uint16_t {
     UNKNOWN_HASH = 0,   // This value can be used in conversion
                         // functions, to be returned when the
                         // input is unknown (but a value MUST be
