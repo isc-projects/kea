@@ -181,13 +181,13 @@ MySqlConfigBackendImpl::createAuditRevision(const int index,
         tag = tags.begin()->get();
     }
 
-    MySqlBindingCollection in_binds = {
+    MySqlBindingCollection in__bindings = {
         MySqlBinding::createTimestamp(audit_ts),
         MySqlBinding::createString(tag),
         MySqlBinding::createString(log_message),
         MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))
     };
-    conn_.insertQuery(index, in_binds);
+    conn_.insertQuery(index, in__bindings);
 }
 
 void
@@ -205,7 +205,7 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                               const uint64_t& modification_id,
                                               AuditEntryCollection& audit_entries) {
     // Create the output bindings for receiving the data.
-    MySqlBindingCollection out_binds = {
+    MySqlBindingCollection out__bindings = {
         MySqlBinding::createInteger<uint64_t>(), // id
         MySqlBinding::createString(AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH), // object_type
         MySqlBinding::createInteger<uint64_t>(), // object_id
@@ -219,14 +219,14 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
     for (auto const& tag : tags) {
 
         // There are only a few input bindings
-        MySqlBindingCollection in_binds = {
+        MySqlBindingCollection in__bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time),
             MySqlBinding::createInteger<uint64_t>(modification_id)
         };
 
         // Execute select.
-        conn_.selectQuery(index, in_binds, out_binds,
+        conn_.selectQuery(index, in__bindings, out__bindings,
                           [&audit_entries] (MySqlBindingCollection& out_bindings) {
              // Convert the numeric modification type into modification type enum.
             AuditEntry::ModificationType mod_type =
@@ -256,13 +256,13 @@ MySqlConfigBackendImpl::deleteFromTable(const int index,
                                     " supported");
     }
 
-    MySqlBindingCollection in_binds;
-    return (deleteFromTable(index, server_selector, operation, in_binds));
+    MySqlBindingCollection in__bindings;
+    return (deleteFromTable(index, server_selector, operation, in__bindings));
 }
 
 void
 MySqlConfigBackendImpl::getGlobalParameters(const int index,
-                                            const MySqlBindingCollection& in_binds,
+                                            const MySqlBindingCollection& in__bindings,
                                             StampedValueCollection& parameters) {
     // The following parameters from the dhcp[46]_global_parameter table are
     // returned:
@@ -270,7 +270,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
     // - name - parameter name
     // - value - parameter value
     // - modification_ts - modification timestamp.
-    MySqlBindingCollection out_binds = {
+    MySqlBindingCollection out__bindings = {
         MySqlBinding::createInteger<uint64_t>(), // id
         MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
         MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
@@ -283,7 +283,7 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
 
     StampedValueCollection local_parameters;
 
-    conn_.selectQuery(index, in_binds, out_binds,
+    conn_.selectQuery(index, in__bindings, out__bindings,
                       [&last_param, &local_parameters]
                       (MySqlBindingCollection& out_bindings) {
 
@@ -358,12 +358,12 @@ MySqlConfigBackendImpl::getOptionDef(const int index,
     auto tag = getServerTag(server_selector, "fetching option definition");
 
     OptionDefContainer option_defs;
-    MySqlBindingCollection in_binds = {
+    MySqlBindingCollection in__bindings = {
         MySqlBinding::createString(tag),
         MySqlBinding::createInteger<uint16_t>(code),
         MySqlBinding::createString(space)
     };
-    getOptionDefs(index, in_binds, option_defs);
+    getOptionDefs(index, in__bindings, option_defs);
     return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
 }
 
@@ -373,10 +373,10 @@ MySqlConfigBackendImpl::getAllOptionDefs(const int index,
                                          OptionDefContainer& option_defs) {
     auto const& tags = server_selector.getTags();
     for (auto const& tag : tags) {
-        MySqlBindingCollection in_binds = {
+        MySqlBindingCollection in__bindings = {
             MySqlBinding::createString(tag.get())
         };
-        getOptionDefs(index, in_binds, option_defs);
+        getOptionDefs(index, in__bindings, option_defs);
     }
 }
 
@@ -387,21 +387,21 @@ MySqlConfigBackendImpl::getModifiedOptionDefs(const int index,
                                               OptionDefContainer& option_defs) {
     auto const& tags = server_selector.getTags();
     for (auto const& tag : tags) {
-        MySqlBindingCollection in_binds = {
+        MySqlBindingCollection in__bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
-        getOptionDefs(index, in_binds, option_defs);
+        getOptionDefs(index, in__bindings, option_defs);
     }
 }
 
 void
 MySqlConfigBackendImpl::getOptionDefs(const int index,
-                                      const MySqlBindingCollection& in_binds,
+                                      const MySqlBindingCollection& in__bindings,
                                       OptionDefContainer& option_defs) {
     // Create output bindings. The order must match that in the prepared
     // statement.
-    MySqlBindingCollection out_binds = {
+    MySqlBindingCollection out__bindings = {
         MySqlBinding::createInteger<uint64_t>(), // id
         MySqlBinding::createInteger<uint16_t>(), // code
         MySqlBinding::createString(OPTION_NAME_BUF_LENGTH), // name
@@ -420,7 +420,7 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     OptionDefContainer local_option_defs;
 
     // Run select query.
-    conn_.selectQuery(index, in_binds, out_binds,
+    conn_.selectQuery(index, in__bindings, out__bindings,
                       [this, &local_option_defs, &last_def_id]
                       (MySqlBindingCollection& out_bindings) {
         // Get pointer to last fetched option definition.
@@ -511,7 +511,7 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
     MySqlBindingPtr client_class_binding = client_class_name.empty() ?
         MySqlBinding::createNull() : MySqlBinding::createString(client_class_name);
 
-    MySqlBindingCollection in_binds = {
+    MySqlBindingCollection in__bindings = {
         MySqlBinding::createInteger<uint16_t>(option_def->getCode()),
         MySqlBinding::createString(option_def->getName()),
         MySqlBinding::createString(option_def->getOptionSpaceName()),
@@ -537,10 +537,10 @@ MySqlConfigBackendImpl::createUpdateOptionDef(const db::ServerSelector& server_s
                                        "option definition set",
                                        true);
 
-    if (conn_.updateDeleteQuery(update_option_def, in_binds) == 0) {
+    if (conn_.updateDeleteQuery(update_option_def, in__bindings) == 0) {
         // Remove the bindings used only during the update.
-        in_binds.resize(in_binds.size() - 3);
-        conn_.insertQuery(insert_option_def, in_binds);
+        in__bindings.resize(in__bindings.size() - 3);
+        conn_.insertQuery(insert_option_def, in__bindings);
 
         // Fetch unique identifier of the inserted option definition and use it
         // as input to the next query.
@@ -572,17 +572,17 @@ MySqlConfigBackendImpl::getOption(const int index,
     auto tag = getServerTag(server_selector, "fetching global option");
 
     OptionContainer options;
-    MySqlBindingCollection in_binds;
-    in_binds.push_back(MySqlBinding::createString(tag));
+    MySqlBindingCollection in__bindings;
+    in__bindings.push_back(MySqlBinding::createString(tag));
     if (universe == Option::V4) {
-        in_binds.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+        in__bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
-        in_binds.push_back(MySqlBinding::createInteger<uint16_t>(code));
+        in__bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
     }
-    in_binds.push_back(MySqlBinding::createString(space));
-    in_binds.push_back(createClientClassesForWhereClause(client_classes));
+    in__bindings.push_back(MySqlBinding::createString(space));
+    in__bindings.push_back(createClientClassesForWhereClause(client_classes));
 
-    getOptions(index, in_binds, universe, options);
+    getOptions(index, in__bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
@@ -595,10 +595,10 @@ MySqlConfigBackendImpl::getAllOptions(const int index,
 
     auto const& tags = server_selector.getTags();
     for (auto const& tag : tags) {
-        MySqlBindingCollection in_binds = {
+        MySqlBindingCollection in__bindings = {
             MySqlBinding::createString(tag.get())
         };
-        getOptions(index, in_binds, universe, options);
+        getOptions(index, in__bindings, universe, options);
     }
 
     return (options);
@@ -613,11 +613,11 @@ MySqlConfigBackendImpl::getModifiedOptions(const int index,
 
     auto const& tags = server_selector.getTags();
     for (auto const& tag : tags) {
-        MySqlBindingCollection in_binds = {
+        MySqlBindingCollection in__bindings = {
             MySqlBinding::createString(tag.get()),
             MySqlBinding::createTimestamp(modification_time)
         };
-        getOptions(index, in_binds, universe, options);
+        getOptions(index, in__bindings, universe, options);
     }
 
     return (options);
@@ -639,17 +639,17 @@ MySqlConfigBackendImpl::getOption(const int index,
     auto tag = getServerTag(server_selector, "fetching subnet level option");
 
     OptionContainer options;
-    MySqlBindingCollection in_binds;
-    in_binds.push_back(MySqlBinding::createString(tag));
+    MySqlBindingCollection in__bindings;
+    in__bindings.push_back(MySqlBinding::createString(tag));
     uint32_t id = static_cast<uint32_t>(subnet_id);
-    in_binds.push_back(MySqlBinding::createInteger<uint32_t>(id));
+    in__bindings.push_back(MySqlBinding::createInteger<uint32_t>(id));
     if (universe == Option::V4) {
-        in_binds.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+        in__bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
-        in_binds.push_back(MySqlBinding::createInteger<uint16_t>(code));
+        in__bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
     }
-    in_binds.push_back(MySqlBinding::createString(space));
-    getOptions(index, in_binds, universe, options);
+    in__bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in__bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
@@ -678,17 +678,17 @@ MySqlConfigBackendImpl::getOption(const int index,
 
     Option::Universe universe = Option::V4;
     OptionContainer options;
-    MySqlBindingCollection in_binds;
-    in_binds.push_back(MySqlBinding::createString(tag));
-    in_binds.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
+    MySqlBindingCollection in__bindings;
+    in__bindings.push_back(MySqlBinding::createString(tag));
+    in__bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
     if (pool_type == Lease::TYPE_V4) {
-        in_binds.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+        in__bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
-        in_binds.push_back(MySqlBinding::createInteger<uint16_t>(code));
+        in__bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
         universe = Option::V6;
     }
-    in_binds.push_back(MySqlBinding::createString(space));
-    getOptions(index, in_binds, universe, options);
+    in__bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in__bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
@@ -709,72 +709,72 @@ MySqlConfigBackendImpl::getOption(const int index,
     auto tag = getServerTag(server_selector, "fetching shared network level option");
 
     OptionContainer options;
-    MySqlBindingCollection in_binds;
-    in_binds.push_back(MySqlBinding::createString(tag));
-    in_binds.push_back(MySqlBinding::createString(shared_network_name));
+    MySqlBindingCollection in__bindings;
+    in__bindings.push_back(MySqlBinding::createString(tag));
+    in__bindings.push_back(MySqlBinding::createString(shared_network_name));
     if (universe == Option::V4) {
-        in_binds.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+        in__bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
-        in_binds.push_back(MySqlBinding::createInteger<uint16_t>(code));
+        in__bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
     }
-    in_binds.push_back(MySqlBinding::createString(space));
-    getOptions(index, in_binds, universe, options);
+    in__bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in__bindings, universe, options);
     return (options.empty() ? OptionDescriptorPtr() :
             OptionDescriptor::create(*options.begin()));
 }
 
 void
 MySqlConfigBackendImpl::getOptions(const int index,
-                                   const db::MySqlBindingCollection& in_binds,
+                                   const db::MySqlBindingCollection& in__bindings,
                                    const Option::Universe& universe,
                                    OptionContainer& options) {
     // Create output bindings. The order must match that in the prepared
     // statement.
-    MySqlBindingCollection out_binds;
+    MySqlBindingCollection out__bindings;
     // option_id
-    out_binds.push_back(MySqlBinding::createInteger<uint64_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     // code
     if (universe == Option::V4) {
-        out_binds.push_back(MySqlBinding::createInteger<uint8_t>());
+        out__bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     } else {
-        out_binds.push_back(MySqlBinding::createInteger<uint16_t>());
+        out__bindings.push_back(MySqlBinding::createInteger<uint16_t>());
     }
     // value
-    out_binds.push_back(MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH));
     // formatted_value
-    out_binds.push_back(MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
     // space
-    out_binds.push_back(MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH));
     // persistent
-    out_binds.push_back(MySqlBinding::createInteger<uint8_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     // cancelled
-    out_binds.push_back(MySqlBinding::createInteger<uint8_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     // dhcp[46]_subnet_id
-    out_binds.push_back(MySqlBinding::createInteger<uint32_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint32_t>());
     // scope_id
-    out_binds.push_back(MySqlBinding::createInteger<uint8_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     // user_context
-    out_binds.push_back(MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH));
     // shared_network_name
-    out_binds.push_back(MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH));
     // pool_id
-    out_binds.push_back(MySqlBinding::createInteger<uint64_t>());
+    out__bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     // modification_ts
-    out_binds.push_back(MySqlBinding::createTimestamp());
+    out__bindings.push_back(MySqlBinding::createTimestamp());
     // client_classes
-    out_binds.push_back(MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH));
     // server_tag
-    out_binds.push_back(MySqlBinding::createString(SERVER_TAG_BUF_LENGTH));
+    out__bindings.push_back(MySqlBinding::createString(SERVER_TAG_BUF_LENGTH));
     // pd_pool_id
     if (universe == Option::V6) {
-        out_binds.push_back(MySqlBinding::createInteger<uint64_t>());
+        out__bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     }
 
     uint64_t last_option_id = 0;
 
     OptionContainer local_options;
 
-    conn_.selectQuery(index, in_binds, out_binds,
+    conn_.selectQuery(index, in__bindings, out__bindings,
                       [this, universe, &local_options, &last_option_id]
                       (MySqlBindingCollection& out_bindings) {
         // Parse option.
@@ -952,9 +952,9 @@ void
 MySqlConfigBackendImpl::attachElementToServers(const int index,
                                                const ServerSelector& server_selector,
                                                const MySqlBindingPtr& first_binding,
-                                               const MySqlBindingPtr& in_binds) {
+                                               const MySqlBindingPtr& in__bindings) {
     // Create the vector from the parameter pack.
-    MySqlBindingCollection in_server_bindings = { first_binding, in_binds };
+    MySqlBindingCollection in_server_bindings = { first_binding, in__bindings };
     for (auto const& tag : server_selector.getTags()) {
         in_server_bindings.push_back(MySqlBinding::createString(tag.get()));
         // Handles the case where the server does not exists.
@@ -1002,32 +1002,32 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
 ServerPtr
 MySqlConfigBackendImpl::getServer(const int index, const ServerTag& server_tag) {
     ServerCollection servers;
-    MySqlBindingCollection in_binds = {
+    MySqlBindingCollection in__bindings = {
         MySqlBinding::createString(server_tag.get())
     };
-    getServers(index, in_binds, servers);
+    getServers(index, in__bindings, servers);
 
     return (servers.empty() ? ServerPtr() : *servers.begin());
 }
 
 void
 MySqlConfigBackendImpl::getAllServers(const int index, db::ServerCollection& servers) {
-    MySqlBindingCollection in_binds;
-    getServers(index, in_binds, servers);
+    MySqlBindingCollection in__bindings;
+    getServers(index, in__bindings, servers);
 }
 
 void
 MySqlConfigBackendImpl::getServers(const int index,
-                                   const MySqlBindingCollection& in_binds,
+                                   const MySqlBindingCollection& in__bindings,
                                    ServerCollection& servers) {
-    MySqlBindingCollection out_binds = {
+    MySqlBindingCollection out__bindings = {
         MySqlBinding::createInteger<uint64_t>(),
         MySqlBinding::createString(SERVER_TAG_BUF_LENGTH),
         MySqlBinding::createString(SERVER_DESCRIPTION_BUF_LENGTH),
         MySqlBinding::createTimestamp()
     };
 
-    conn_.selectQuery(index, in_binds, out_binds,
+    conn_.selectQuery(index, in__bindings, out__bindings,
                       [&servers](MySqlBindingCollection& out_bindings) {
 
         ServerPtr last_server;
@@ -1074,18 +1074,18 @@ MySqlConfigBackendImpl::createUpdateServer(const int& create_audit_revision,
 
     MySqlTransaction transaction(conn_);
 
-    MySqlBindingCollection in_binds = {
+    MySqlBindingCollection in__bindings = {
         MySqlBinding::createString(server->getServerTagAsText()),
         MySqlBinding::createString(server->getDescription()),
         MySqlBinding::createTimestamp(server->getModificationTime())
     };
 
     try {
-        conn_.insertQuery(create_index, in_binds);
+        conn_.insertQuery(create_index, in__bindings);
 
     } catch (const DuplicateEntry&) {
-        in_binds.push_back(MySqlBinding::createString(server->getServerTagAsText()));
-        conn_.updateDeleteQuery(update_index, in_binds);
+        in__bindings.push_back(MySqlBinding::createString(server->getServerTagAsText()));
+        conn_.updateDeleteQuery(update_index, in__bindings);
     }
 
     transaction.commit();

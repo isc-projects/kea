@@ -67,6 +67,10 @@
 // Another problem is some boost versions raise a warning with -Wshadow
 // so disable it.
 
+// Another problem is as of Boost 1.89, with g++ on Linux, Woverloaded-virtual is raised in
+// boost/system/detail/error_category_impl.hpp:44. Lots of occurrences, but one location, so it is
+// worth checking if future Boost versions fix it.
+
 #define GNU_CC_VERSION (__GNUC__ * 10000 \
                      + __GNUC_MINOR__ * 100 \
                      + __GNUC_PATCHLEVEL__)

@@ -58,9 +58,9 @@ public:
             mgr().registerPacketQueueFactory(queue_type,
                                             [](data::ConstElementPtr parameters)
                                             -> PacketQueue4Ptr {
-                std::string queue_type_from_parameters;
+                std::string queue_type_fp;
                 try {
-                    queue_type_from_parameters = data::SimpleParser::getString(parameters, "queue-type");
+                    queue_type_fp = data::SimpleParser::getString(parameters, "queue-type");
                 } catch (const std::exception& ex) {
                     isc_throw(InvalidQueueParameter,
                               "queue-type missing or invalid: " << ex.what());
@@ -74,7 +74,7 @@ public:
                               "'capacity' missing or invalid: " << ex.what());
                 }
 
-                return (PacketQueue4Ptr(new PacketQueueRing4(queue_type_from_parameters, capacity)));
+                return (PacketQueue4Ptr(new PacketQueueRing4(queue_type_fp, capacity)));
             });
 
         return did_it;
