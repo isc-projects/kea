@@ -25,6 +25,7 @@ kea_eval_headers = [
     'eval_log.h',
     'eval_messages.h',
     'evaluate.h',
+    'location.hh',
     'parser.h',
     'token.h',
 ]
