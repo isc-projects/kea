@@ -17,14 +17,14 @@
 
 #include <map>
 
-#ifdef __GNUC__
+#ifdef WDEPRECATED_LITERAL_OPERATOR_FLAG_SUPPORTED
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
 #endif
 // #include <sysrepo-cpp/Changes.hpp>  // Will be required on newer sysrepo-cpp
 #include <sysrepo-cpp/Session.hpp>
 // #include <sysrepo-cpp/Subscription.hpp>  // Will be required on newer sysrepo-cpp
-#ifdef __GNUC__
+#ifdef WDEPRECATED_LITERAL_OPERATOR_FLAG_SUPPORTED
 #pragma GCC diagnostic pop
 #endif
 

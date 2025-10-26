@@ -691,6 +691,9 @@ if cxx_id == 'clang' and cpp_args_opt.length() == 0
     compile_args += '-Qunused-arguments'
     no_warnings += ['-Wno-unused-variable', '-Wno-unused-parameter']
 endif
+if cpp.has_argument('-Wdeprecated-literal-operator')
+    conf_data.set('WDEPRECATED_LITERAL_OPERATOR_FLAG_SUPPORTED', 'yes')
+endif
 if werror_opt
     warnings += no_warnings
 endif
