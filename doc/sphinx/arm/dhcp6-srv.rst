@@ -5597,7 +5597,7 @@ This concept can be extended further by using reservations in conjunction with
 option class-tagging (see :ref:`option-class-tagging`).  A good real-life scenario
 might be a situation where some customers of an ISP have not paid their bills.
 These customers need to be assigned an alternate DNS server that, instead of giving
-acces to the internet, redirects those  customers to a captive portal urging them
+access to the internet, redirects those  customers to a captive portal urging them
 to bring their accounts up to date.  Reservations can be used to assign a client
 to the "blocked" class that is subsequently used to determine the DNS server option
 value as shown below:
@@ -6915,7 +6915,7 @@ added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
    registered leases are independent: when a lease in another state already
    exists for an address this address in considered as in use and can't be
    registered. Similarly a registered lease can't change to another
-   state, e.g. reclaimation of expired registered leases removes them.
+   state, e.g. reclamation of expired registered leases removes them.
 
 .. note::
 

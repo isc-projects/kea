@@ -449,7 +449,7 @@
             "reclaim-timer-wait-time": 10,
 
             // Specifies the maximum number of expired lease-processing cycles
-            // which didn't result in full cleanup of exired leases from the
+            // which didn't result in full cleanup of expired leases from the
             // lease database, after which a warning message is issued.
             "unwarned-reclaim-cycles": 5
         },
@@ -1080,7 +1080,7 @@
                         // ddns-ttl-max. They are mutually exclusive.
                         "ddns-ttl": 500,
 
-                        // Subnet-evel value. See description at the global level.
+                        // Subnet-level value. See description at the global level.
                         // "ddns-ttl-min": 10000,
 
                         // Subnet-level value. See description at the global level.
@@ -1203,7 +1203,7 @@
                                 // ddns-ttl-min, or ddns-ttl-max. They are mutually exclusive.
                                 // "ddns-ttl": 500,
 
-                                // Pool-evel value. See description at the global level.
+                                // Pool-level value. See description at the global level.
                                 "ddns-ttl-min": 10000,
 
                                 // Pool-level value. See description at the global level.

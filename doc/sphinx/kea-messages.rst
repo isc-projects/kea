@@ -2699,7 +2699,7 @@ COMMAND_HTTP_SOCKET_SECURITY_WARNING
     command socket configuration is NOT SECURE: %1
 
 This warning message is issued when security enforcement is disabled
-and command socket configuration does not use HTTPS/TLS or  baseic HTTP
+and command socket configuration does not use HTTPS/TLS or  basic HTTP
 authentication. The server will still use the socket as configured but
 is warning that doing so may pose a security risk.
 
@@ -21547,7 +21547,7 @@ PERFMON_ALARM_TRIGGERED
 
 This warning message is emitted when the reported mean duration for
 an alarm exceeds its high-water-ms value.  As long as the reported
-averges remain above the low-water-ms value, the alarm will remain
+averages remain above the low-water-ms value, the alarm will remain
 triggered and this message will be repeated every alarm-report-secs.
 Arguments detail the alarm's key, the time the alarm was first
 triggered, the most recent reported mean, and the high-water-ms
@@ -25619,7 +25619,7 @@ RADIUS_THREAD_POOL_STARTED
 
     RADIUS thread pool started with %1 threads.
 
-This informational message is issued when the thread pool is starrted.
+This informational message is issued when the thread pool is started.
 The number of threads is displayed.
 
 ****

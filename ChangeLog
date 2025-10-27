@@ -108,7 +108,7 @@ Kea 3.1.2 (development) released on September 24, 2025
 
 2394.	[func]		razvan
 	Added new 'statistic-global-get-all' command for kea-dhcp4
-	and kea-dhcp6 servers, which returns all statistica except
+	and kea-dhcp6 servers, which returns all statistics except
 	subnet counters.
 	(Gitlab #3213)
 
@@ -363,7 +363,7 @@ Kea 3.0.0 (stable) released on June 25, 2025
 
 2352.	[bug]		razvan
 	Fix error handling when detecting a global reservation for the
-	client and global reservatons are explicitly disabled in the
+	client and global reservations are explicitly disabled in the
 	configuration.
 	(Gitlab #3911)
 
@@ -942,7 +942,7 @@ Kea 2.7.1 (development) released on July 31, 2024
 
 2263.	[func]		fdupont
 	RFC 8925 "IPv6-Only Preferred Option for DHCPv4" is now
-	fully implemented: 0.0.0.0 address can be offerred.
+	fully implemented: 0.0.0.0 address can be offered.
 	(Gitlab #3094)
 
 2262.	[bug]		marcin
@@ -1900,7 +1900,7 @@ Kea 2.3.6 (development) released on March 29, 2023
 	multi-threading settings if there is a configuration error
 	detected. Also hooks now set DROP flag on the
 	dhcp4_srv_configured and dhcp6_srv_configured callouts if the
-	configuration is invalid or an error occured. Proper shutdown
+	configuration is invalid or an error occurred. Proper shutdown
 	of the HTTP listener is performed now instead of generating a
 	server crash if the provided address is not valid.
 	(Gitlab #2799)
