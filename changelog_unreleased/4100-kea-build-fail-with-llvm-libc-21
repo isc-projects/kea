@@ -1,4 +1,0 @@
-[build]		andrei
-	Kea now builds with Clang 21. Thanks to Khem Raj for reporting
-	the problem and suggesting a fix.
-	(Gitlab #4100)

@@ -1,5 +1,0 @@
-[bug]		andrei
-	Fixed a bug introduced in flex-id in 3.1.2 which caused the
-	expression to always be empty even when a value was configured
-	under "identifier-expression".
-	(Gitlab #4181)

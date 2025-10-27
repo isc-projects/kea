@@ -4118,6 +4118,19 @@ This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
 client and transaction identification information.
 
+DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY
+================================
+
+.. code-block:: text
+
+    %1: sanitizing client's FQDN option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(81) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
+
 DHCP4_CLIENT_HOSTNAME_DATA
 ==========================
 
@@ -4156,6 +4169,19 @@ Logged at debug log level 50.
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
+
+DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY
+====================================
+
+.. code-block:: text
+
+    %1: sanitizing client's Hostname option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+hostname option(12) sent by the client is an empty string. When this occurs
+the server will ignore the hostname option. The arguments include the
+client and the hostname option it sent.
 
 DHCP4_CLIENT_NAME_PROC_FAIL
 ===========================
@@ -5317,7 +5343,7 @@ DHCP4_PACKET_DROP_0011
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -5331,7 +5357,7 @@ DHCP4_PACKET_DROP_0012
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -6437,6 +6463,19 @@ This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
+
+DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY
+================================
+
+.. code-block:: text
+
+    %1: sanitizing client's FQDN option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(39) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
 
 DHCP6_CONFIG_COMPLETE
 =====================
@@ -7551,7 +7590,7 @@ DHCP6_PACKET_DROP_DUPLICATE
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -9964,6 +10003,16 @@ DHCPSRV_MEMFILE_LFC_EXECUTE
 An informational message issued when the memfile lease database backend
 starts a new process to perform Lease File Cleanup.
 
+DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE
+===================================
+
+.. code-block:: text
+
+    Lease File Cleanup pid file create: %1
+
+This error message is issued if the LFC execute code detects a failure
+when trying to create the PID file. It includes a more specific error string.
+
 DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL
 ==========================================
 
@@ -9998,6 +10047,16 @@ DHCPSRV_MEMFILE_LFC_RESCHEDULED
 An informational message issued when the memfile lease database backend
 rescheduled the periodic Lease File Cleanup at the reception of a
 "kea-lfc-start" command.
+
+DHCPSRV_MEMFILE_LFC_RUNNING
+===========================
+
+.. code-block:: text
+
+    Lease File Cleanup instance already running
+
+This informational message is issued when the LFC execute code detects that
+a previous instance of the LFC process is still running via the PID check.
 
 DHCPSRV_MEMFILE_LFC_SETUP
 =========================
@@ -18057,7 +18116,7 @@ LIMITS_LEASE_LIMIT_EXCEEDED
 
 Logged at debug log level 40.
 Debug message logged to indicate that the current number of leased addresses or
-prefixes for a client class or a subnet is exceeding the limit.
+prefixes for a client class or a subnet has exceeded the limit.
 
 LIMITS_LEASE_WITHIN_LIMITS
 ==========================
@@ -18068,7 +18127,7 @@ LIMITS_LEASE_WITHIN_LIMITS
 
 Logged at debug log level 40.
 Debug message logged to indicate that the current number of leased addresses or
-prefixes for a client class or a subnet is exceeding the limit.
+prefixes for a client class or a subnet has not exceeded the limit.
 
 LIMITS_PACKET_WIIH_SUBNET_ID_RATE_NO_SUBNET
 ===========================================
@@ -24578,6 +24637,19 @@ This error message indicates that a subnet was updated via subnet commands
 and its 'user-context' contains invalid 'ping-check' configuration.  The
 server will log the error once and then use global ping-check parameters
 for the subnet until the configuration is corrected.
+
+PING_CHECK_NO_LEASE_OR_LEASE_REUSED
+===================================
+
+.. code-block:: text
+
+    Ping check skipped: no lease
+
+Logged at debug log level 50.
+This debug message is emitted when the ping check request made by the
+server does not contain a lease. This typically happens when a lease is
+being reused. The ping check will be skipped and the offer processing will
+continue as normal.
 
 PING_CHECK_PAUSE_FAILED
 =======================

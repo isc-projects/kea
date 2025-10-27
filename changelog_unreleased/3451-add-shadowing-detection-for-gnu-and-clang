@@ -1,4 +1,0 @@
-[build]		andrei
-	-Wshadow was added to the compiler flags and its warnings
-	addressed.
-	(Gitlab #3451)
