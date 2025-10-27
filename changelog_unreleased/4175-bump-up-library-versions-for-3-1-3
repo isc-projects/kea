@@ -1,0 +1,4 @@
+[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.1.3
+	development release.
+	(Gitlab #4175)
