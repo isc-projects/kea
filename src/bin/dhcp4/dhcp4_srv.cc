@@ -3356,10 +3356,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             try {
                 createNameChangeRequests(lease, ctx->old_lease_,
                                          *ex.getContext()->getDdnsParams());
-            } catch (const Exception& exception) {
+            } catch (const Exception& e) {
                 LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())
-                    .arg(exception.what());
+                    .arg(e.what());
             }
         }
 
@@ -3412,7 +3412,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
 void
 Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, const Lease4Ptr& lease,
-                                 const Pkt4Ptr& query, const Pkt4Ptr& resp, bool client_name_changed) {
+                                  const Pkt4Ptr& query, const Pkt4Ptr& resp, bool client_name_changed) {
     // We may need to update FQDN or hostname if the server is to generate
     // new name from the allocated IP address or if the allocation engine
     // has switched to a different subnet within a shared network.  Get
@@ -5015,11 +5015,11 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
                 // Matching: add the class
                 query->addClass(cclass);
             }
-        } catch (const Exception& exception) {
+        } catch (const Exception& e) {
             LOG_ERROR(dhcp4_logger, DHCP4_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
-                .arg(exception.what());
+                .arg(e.what());
         }
     }
 }

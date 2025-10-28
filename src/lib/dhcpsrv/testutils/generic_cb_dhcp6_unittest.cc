@@ -1064,9 +1064,9 @@ GenericConfigBackendDHCPv6Test::getSubnet6Test() {
                  isc::InvalidOperation);
 
     // Test that this subnet will be fetched for various server selectors.
-    auto test_get_subnet = [this, &subnet](const std::string& test_case_name,
-                                           const ServerSelector& server_selector,
-                                           const std::string& expected_tag = ServerTag::ALL) {
+    auto test_get_subnet = [this, &subnet] (const std::string& test_case_name,
+                                            const ServerSelector& server_selector,
+                                            const std::string& expected_tag = ServerTag::ALL) {
         SCOPED_TRACE(test_case_name);
 
         // Test fetching subnet by id.
