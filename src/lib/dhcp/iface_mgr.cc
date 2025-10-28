@@ -135,7 +135,7 @@ Iface::getPlainMac() const {
     for (unsigned i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << static_cast<int>(mac_[i]);
-        if (i < mac_len_-1) {
+        if (i < mac_len_ - 1) {
             tmp << ":";
         }
     }
@@ -439,7 +439,7 @@ IfaceMgr::setPacketFilter(const PktFilter6Ptr& packet_filter) {
                   << " filter when there are open IPv6 sockets - need"
                   << " to close them first");
     }
-
+    // Everything is fine, so replace packet filter.
     packet_filter6_ = packet_filter;
 }
 
@@ -519,30 +519,30 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         // allowed
         if (iface->flag_loopback_ && !allow_loopback_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "must not open socket on the loopback"
-                            " interface " << iface->getName());
+                           "must not open socket on the loopback"
+                           " interface " << iface->getName());
             continue;
         }
 
         if (!iface->flag_up_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is down");
+                           "the interface " << iface->getName()
+                           << " is down");
             continue;
         }
 
         if (!iface->flag_running_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is not running");
+                           "the interface " << iface->getName()
+                           << " is not running");
             continue;
         }
 
         IOAddress out_address("0.0.0.0");
         if (!iface->getAddress4(out_address)) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " has no usable IPv4 addresses configured");
+                           "the interface " << iface->getName()
+                           << " has no usable IPv4 addresses configured");
             continue;
         }
 
@@ -1391,6 +1391,10 @@ IfaceMgr::addFDtoSet(int fd, int& maxfd, fd_set* sockets) {
         isc_throw(BadValue, "addFDtoSet: sockets can't be null");
     }
 
+    if (fd >= FD_SETSIZE) {
+        isc_throw(BadValue, "addFDtoSet: sockets fd too large: " << fd << " >= " << FD_SETSIZE);
+    }
+
     FD_SET(fd, sockets);
     if (maxfd < fd) {
         maxfd = fd;
@@ -1889,10 +1893,8 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt->getRemoteAddr().isV6LinkLocal() &&
-                s->addr_.isV6LinkLocal()) ||
-                 (!pkt->getRemoteAddr().isV6LinkLocal() &&
-                  !s->addr_.isV6LinkLocal()) ) {
+            if ((pkt->getRemoteAddr().isV6LinkLocal() && s->addr_.isV6LinkLocal()) ||
+                (!pkt->getRemoteAddr().isV6LinkLocal() && !s->addr_.isV6LinkLocal())) {
                 candidate = s;
             }
         }

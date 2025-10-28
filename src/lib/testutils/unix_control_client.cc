@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 #include <testutils/unix_control_client.h>
+#include <util/ready_check.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -138,44 +139,14 @@ int UnixControlClient::selectCheck(const unsigned int timeout_sec,
                                    bool write_check) {
     if (socket_fd_ < 0) {
         ADD_FAILURE() << "select check with closed socket";
-        return -1;
+        return (-1);
     }
-    if (socket_fd_ > 1023) {
+    if (socket_fd_ >= FD_SETSIZE) {
         ADD_FAILURE() << "select check with out of bound socket";
-        return -1;
-    }
-    int maxfd = 0;
-
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-
-    fd_set write_fds;
-    FD_ZERO(&write_fds);
-
-    maxfd = socket_fd_;
-
-    // Add this socket to read set
-    FD_SET(socket_fd_, &read_fds);
-
-    // Add this socket to write set
-    FD_SET(socket_fd_, &write_fds);
-
-    struct timeval select_timeout;
-    select_timeout.tv_sec = static_cast<time_t>(timeout_sec);
-    select_timeout.tv_usec = 0;
-
-    fd_set* read_p = 0;
-    fd_set* write_p = 0;
-
-    if (read_check) {
-        read_p = &read_fds;
+        return (-1);
     }
 
-    if (write_check) {
-        write_p = &write_fds;
-    }
-
-    return (select(maxfd + 1, read_p, write_p, NULL, &select_timeout));
+    return (util::selectCheck(socket_fd_, timeout_sec, read_check, write_check));
 }
 
 }

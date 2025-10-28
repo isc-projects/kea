@@ -54,7 +54,7 @@ public:
     /// @param timeout_sec Select timeout in seconds
     /// @param read_check flag to check socket for read ready state
     /// @param write_check flag to check socket for write ready state
-    /// @return -1 on error, 0 if no data is available,  1 if data is ready
+    /// @return -1 on error, 0 if no data is available, 1 if data is ready
     int selectCheck(const unsigned int timeout_sec, bool read_check, bool write_check);
 
     /// @brief Retains the fd of the open socket

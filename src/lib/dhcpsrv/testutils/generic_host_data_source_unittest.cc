@@ -81,7 +81,7 @@ GenericHostDataSourceTest::compareHostsIdentifier(const ConstHostPtr& host1,
     if (count1 > count2) {
         count1 = count2;
     }
-    for (uint8_t i = 0; i < count1; ++i) {
+    for (size_t i = 0; i < count1; ++i) {
         if (host1_i[i] != host2_i[i]) {
             return (host1_i[i] < host2_i[i]);
         }

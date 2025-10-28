@@ -255,6 +255,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
             }
             struct timeval tm;
             tm.tv_sec = tm.tv_usec = 0;
+            // r4z: should move to epoll/kqueue?
             int n = select(nfd + 1, &fds, 0, 0, &tm);
             if ((n < 0) && (errno == EINTR)) {
                 cerr << "interrupted" << endl;
