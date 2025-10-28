@@ -2426,22 +2426,22 @@ HAService::synchronize(std::string& status_message,
             // partner.
             if (success) {
                 asyncSyncCompleteNotify(client, remote_config,
-                                        [&](const bool /* success */,
-                                            const std::string& error_message_1,
+                                        [&](const bool success_complete_notify,
+                                            const std::string& error_message_complete_notify,
                                             const int rcode) {
                     // This command may not be supported by the partner when it
                     // runs an older Kea version. In that case, send the dhcp-enable
                     // command as in previous Kea version.
                     if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
                         asyncEnableDHCPService(client, remote_config,
-                                               [&](const bool is_success,
-                                                   const std::string& error_message_2,
+                                               [&](const bool success_enable_dhcp,
+                                                   const std::string& error_message_enable_dhcp,
                                                    const int) {
                             // It is possible that we have already recorded an error
                             // message while synchronizing the lease database. Don't
                             // override the existing error message.
-                            if (!is_success && status_message.empty()) {
-                                status_message = error_message_2;
+                            if (!success_enable_dhcp && status_message.empty()) {
+                                status_message = error_message_enable_dhcp;
                             }
 
                             // The synchronization process is completed, so let's break
@@ -2453,8 +2453,8 @@ HAService::synchronize(std::string& status_message,
                     } else {
                         // ha-sync-complete-notify command was delivered to the partner.
                         // The synchronization process ends here.
-                        if (!success && status_message.empty()) {
-                            status_message = error_message_1;
+                        if (!success_complete_notify && status_message.empty()) {
+                            status_message = error_message_complete_notify;
                         }
 
                         io_service->stop();
@@ -2467,11 +2467,11 @@ HAService::synchronize(std::string& status_message,
                 // ha-sync-complete-notify command in this case. It is only sent in
                 // the case when synchronization ends successfully.
                 asyncEnableDHCPService(client, remote_config,
-                                       [&](const bool is_success,
-                                           const std::string& error_message_1,
+                                       [&](const bool success_enable_dhcp,
+                                           const std::string& error_message_enable_dhcp,
                                            const int) {
-                    if (!is_success && status_message.empty()) {
-                        status_message = error_message_1;
+                    if (!success_enable_dhcp && status_message.empty()) {
+                        status_message = error_message_enable_dhcp;
                     }
 
                     // The synchronization process is completed, so let's break
