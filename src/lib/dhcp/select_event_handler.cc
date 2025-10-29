@@ -43,7 +43,6 @@ void SelectEventHandler::add(int fd, bool read /* = true */, bool write /* = fal
     }
 }
 
-// @brief Wait for events on registered file descriptors.
 int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
@@ -54,28 +53,18 @@ int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
 
-    FD_COPY(&read_fd_set_, &ready_read_fd_set_);
-    FD_COPY(&write_fd_set_, &ready_write_fd_set_);
+    FD_COPY(&read_fd_set_, &read_fd_set_data_);
+    FD_COPY(&write_fd_set_, &write_fd_set_data_);
 
-    return (select(max_fd_ + 1, &ready_read_fd_set_, &ready_write_fd_set_, 0, &select_timeout));
+    return (select(max_fd_ + 1, &read_fd_set_data_, &write_fd_set_data_, 0, &select_timeout));
 }
 
-// @brief Check if file descriptor is ready for read operation.
-//
-// @param fd The file descriptor.
-//
-// @return True if file descriptor is ready for reading.
 bool SelectEventHandler::readReady(int fd) {
-    return (FD_ISSET(fd, &ready_read_fd_set_));
+    return (FD_ISSET(fd, &read_fd_set_data_));
 }
 
-// @brief Check if file descriptor is ready for write operation.
-//
-// @param fd The file descriptor.
-//
-// @return True if file descriptor is ready for writing.
 bool SelectEventHandler::writeReady(int fd) {
-    return (FD_ISSET(fd, &ready_write_fd_set_));
+    return (FD_ISSET(fd, &write_fd_set_data_));
 }
 
 void SelectEventHandler::clear() {

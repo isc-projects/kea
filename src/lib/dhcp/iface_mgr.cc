@@ -1258,6 +1258,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
+    /// @note: this can be achieved with FDEventHandler (initialize only if max_fd_ is 0)
+    /// and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv4 addresses.
@@ -1340,6 +1342,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Let's find out which interface/socket has the data
+    // @todo: fix iface starvation
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
@@ -1387,6 +1390,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
+    /// @note: this can be achieved with FDEventHandler (initialize only if max_fd_ is 0)
+    /// and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv6 addresses.
@@ -1469,6 +1474,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // Let's find out which interface/socket has the data
+    // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             if (fd_event_handler_->readReady(s.sockfd_)) {

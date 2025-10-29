@@ -7,7 +7,7 @@
 #ifndef SELECT_EVENT_HANDLER_H
 #define SELECT_EVENT_HANDLER_H
 
-#include <fd_event_handler.h>
+#include <dhcp/fd_event_handler.h>
 
 #include <sys/select.h>
 
@@ -69,10 +69,10 @@ private:
     fd_set write_fd_set_;
 
     /// @brief The read event FD set.
-    fd_set ready_read_fd_set_;
+    fd_set read_fd_set_data_;
 
     /// @brief The write event FD set.
-    fd_set ready_write_fd_set_;
+    fd_set write_fd_set_data_;
 };
 
 }  // namespace isc::dhcp
