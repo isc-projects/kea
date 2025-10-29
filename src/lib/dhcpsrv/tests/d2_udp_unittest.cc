@@ -19,7 +19,6 @@
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <sys/select.h>
 
 using namespace std;
 using namespace isc::asiolink;

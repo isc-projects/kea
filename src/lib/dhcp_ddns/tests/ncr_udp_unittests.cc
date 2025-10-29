@@ -19,8 +19,6 @@
 #include <functional>
 #include <algorithm>
 
-#include <sys/select.h>
-
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;

@@ -504,7 +504,7 @@ protected:
     /// @brief local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
 
-    // @brief List of deferred option codes
+    /// @brief List of deferred option codes
     std::list<uint16_t> deferred_options_;
 
     /// @brief message operation code

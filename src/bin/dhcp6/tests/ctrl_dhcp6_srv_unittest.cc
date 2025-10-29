@@ -41,9 +41,7 @@
 #include <sstream>
 #include <thread>
 
-#include <sys/select.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <cstdlib>
 #include <unistd.h>
 

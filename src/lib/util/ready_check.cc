@@ -7,13 +7,14 @@
 #include <config.h>
 
 #include <sys/select.h>
-#include <sys/ioctl.h>
 
 namespace isc {
 namespace util {
 
 int selectCheck(const int fd_to_check, const unsigned int timeout_sec,
                 bool read_check, bool write_check) {
+    // @todo implement this using SelectEventHandler
+    // @todo: should move to epoll/kqueue?
     if (fd_to_check < 0) {
         return (-1);
     }

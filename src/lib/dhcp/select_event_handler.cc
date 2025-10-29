@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,13 @@
 
 #include <exceptions/exceptions.h>
 #include <select_event_handler.h>
+
+#ifndef FD_COPY
+#define FD_COPY(orig, copy) \
+    do { \
+        memcpy(copy, orig, sizeof(fd_set)); \
+    } while (0)
+#endif
 
 namespace isc {
 namespace dhcp {
@@ -31,6 +38,9 @@ void SelectEventHandler::add(int fd, bool read /* = true */, bool write /* = fal
         // Add this socket to write set
         FD_SET(fd, &write_fd_set_);
     }
+    if (fd > max_fd_) {
+        max_fd_ = fd;
+    }
 }
 
 // @brief Wait for events on registered file descriptors.
@@ -44,7 +54,10 @@ int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
     select_timeout.tv_sec = timeout_sec;
     select_timeout.tv_usec = timeout_usec;
 
-    return (select(max_fd_ + 1, &read_fd_set_, &write_fd_set_, 0, &select_timeout));
+    FD_COPY(&read_fd_set_, &ready_read_fd_set_);
+    FD_COPY(&write_fd_set_, &ready_write_fd_set_);
+
+    return (select(max_fd_ + 1, &ready_read_fd_set_, &ready_write_fd_set_, 0, &select_timeout));
 }
 
 // @brief Check if file descriptor is ready for read operation.
@@ -53,7 +66,7 @@ int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
 //
 // @return True if file descriptor is ready for reading.
 bool SelectEventHandler::readReady(int fd) {
-    return (FD_ISSET(fd, &read_fd_set_));
+    return (FD_ISSET(fd, &ready_read_fd_set_));
 }
 
 // @brief Check if file descriptor is ready for write operation.
@@ -62,7 +75,7 @@ bool SelectEventHandler::readReady(int fd) {
 //
 // @return True if file descriptor is ready for writing.
 bool SelectEventHandler::writeReady(int fd) {
-    return (FD_ISSET(fd, &write_fd_set_));
+    return (FD_ISSET(fd, &ready_write_fd_set_));
 }
 
 void SelectEventHandler::clear() {

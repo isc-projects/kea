@@ -8,7 +8,6 @@
 
 #include <config.h>
 
-//#include <dhcp_ddns/dhcp_ddns_log.h>
 #include <util/watch_socket.h>
 
 #include <fcntl.h>

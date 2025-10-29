@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/fd_event_handler_factory.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/packet_queue_mgr4.h>
@@ -713,6 +714,9 @@ public:
     /// Closes open sockets.
     virtual ~IfaceMgr();
 
+    /// @brief Initialize the FD event handler;
+    void initializeFDEventHandler();
+
     /// @brief Sets or clears the test mode for @c IfaceMgr.
     ///
     /// Various unit test may set this flag to true, to indicate that the
@@ -1343,15 +1347,6 @@ public:
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);
 
-    /// @brief Convenience method for adding an descriptor to a set
-    ///
-    /// @param fd descriptor to add
-    /// @param[out] maxfd maximum fd value in the set.  If the new fd is
-    /// larger than it's current value, it will be updated to new fd value
-    /// @param sockets pointer to the set of sockets
-    /// @throw BadValue if sockets is null
-    static void addFDtoSet(int fd, int& maxfd, fd_set* sockets);
-
     // don't use private, we need derived classes in tests
 protected:
 
@@ -1633,6 +1628,12 @@ private:
 
     /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
+
+    /// @brief The FDEventHandler instance.
+    FDEventHandlerPtr fd_event_handler_;
+
+    /// @brief The receiver FDEventHandler instance.
+    FDEventHandlerPtr receiver_fd_event_handler_;
 };
 
 }  // namespace isc::dhcp

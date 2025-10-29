@@ -14,6 +14,7 @@
 #include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
+#include <dhcp/fd_event_handler_factory.h>
 #include <exceptions/exceptions.h>
 #include <util/io/pktinfo_utilities.h>
 #include <util/multi_threading_mgr.h>
@@ -30,15 +31,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-
-#ifndef FD_COPY
-#define FD_COPY(orig, copy) \
-    do { \
-        memmove(copy, orig, sizeof(fd_set)); \
-    } while (0)
-#endif
 
 using namespace std;
 using namespace isc::asiolink;
@@ -208,6 +200,13 @@ IfaceMgr::IfaceMgr()
     } catch (const std::exception& ex) {
         isc_throw(IfaceDetectError, ex.what());
     }
+
+    initializeFDEventHandler();
+}
+
+void IfaceMgr::initializeFDEventHandler() {
+    fd_event_handler_ = FDEventHandlerFactory::factoryFDEventHandler();
+    receiver_fd_event_handler_ = FDEventHandlerFactory::factoryFDEventHandler();
 }
 
 void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
@@ -1137,10 +1136,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                   " one million microseconds");
     }
 
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     // if there are any callbacks for external sockets registered...
     {
@@ -1148,16 +1144,16 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         if (!callbacks_.empty()) {
             for (const SocketCallbackInfo& s : callbacks_) {
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
 
     // Add Receiver ready watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::READY));
 
     // Add Receiver error watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::ERROR));
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1165,19 +1161,15 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // poll (timeout = 0 secs).  We need to poll, even if
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
-    struct timeval select_timeout;
-    if (getPacketQueue4()->empty()) {
-        select_timeout.tv_sec = timeout_sec;
-        select_timeout.tv_usec = timeout_usec;
-    } else {
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
+    if (!getPacketQueue4()->empty()) {
+        timeout_sec = 0;
+        timeout_usec = 0;
     }
 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if ((result == 0) && getPacketQueue4()->empty()) {
         // nothing received and timeout has been reached
@@ -1217,7 +1209,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
-                if (!FD_ISSET(s.socket_, &sockets)) {
+                if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
                 found = true;
@@ -1258,11 +1250,10 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-    boost::scoped_ptr<SocketInfo> candidate;
-    fd_set sockets;
-    int maxfd = 0;
 
-    FD_ZERO(&sockets);
+    boost::scoped_ptr<SocketInfo> candidate;
+
+    fd_event_handler_->clear();
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
@@ -1272,7 +1263,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1283,19 +1274,15 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         if (!callbacks_.empty()) {
             for (const SocketCallbackInfo& s : callbacks_) {
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
 
-    struct timeval select_timeout;
-    select_timeout.tv_sec = timeout_sec;
-    select_timeout.tv_usec = timeout_usec;
-
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -1327,7 +1314,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
+            if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
             found = true;
@@ -1356,7 +1343,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (FD_ISSET(s.sockfd_, &sockets)) {
+            if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
             }
@@ -1385,22 +1372,6 @@ IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     return (receive6Direct(timeout_sec, timeout_usec));
 }
 
-void
-IfaceMgr::addFDtoSet(int fd, int& maxfd, fd_set* sockets) {
-    if (!sockets) {
-        isc_throw(BadValue, "addFDtoSet: sockets can't be null");
-    }
-
-    if (fd >= FD_SETSIZE) {
-        isc_throw(BadValue, "addFDtoSet: sockets fd too large: " << fd << " >= " << FD_SETSIZE);
-    }
-
-    FD_SET(fd, sockets);
-    if (maxfd < fd) {
-        maxfd = fd;
-    }
-}
-
 Pkt6Ptr
 IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
     // Sanity check for microsecond timeout.
@@ -1410,10 +1381,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     boost::scoped_ptr<SocketInfo> candidate;
-    fd_set sockets;
-    int maxfd = 0;
 
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
@@ -1423,7 +1392,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1434,19 +1403,15 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         if (!callbacks_.empty()) {
             for (const SocketCallbackInfo& s : callbacks_) {
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
 
-    struct timeval select_timeout;
-    select_timeout.tv_sec = timeout_sec;
-    select_timeout.tv_usec = timeout_usec;
-
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if (result == 0) {
         // nothing received and timeout has been reached
@@ -1478,7 +1443,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
+            if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
             found = true;
@@ -1506,7 +1471,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // Let's find out which interface/socket has the data
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (FD_ISSET(s.sockfd_, &sockets)) {
+            if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
             }
@@ -1531,10 +1496,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                   " one million microseconds");
     }
 
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     // if there are any callbacks for external sockets registered...
     {
@@ -1542,16 +1504,16 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         if (!callbacks_.empty()) {
             for (const SocketCallbackInfo& s : callbacks_) {
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
 
     // Add Receiver ready watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::READY));
 
     // Add Receiver error watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::ERROR));
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1559,19 +1521,15 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // poll (timeout = 0 secs).  We need to poll, even if
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
-    struct timeval select_timeout;
-    if (getPacketQueue6()->empty()) {
-        select_timeout.tv_sec = timeout_sec;
-        select_timeout.tv_usec = timeout_usec;
-    } else {
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
+    if (!getPacketQueue6()->empty()) {
+        timeout_sec = 0;
+        timeout_usec = 0;
     }
 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if ((result == 0) && getPacketQueue6()->empty()) {
         // nothing received and timeout has been reached
@@ -1611,7 +1569,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
-                if (!FD_ISSET(s.socket_, &sockets)) {
+                if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
                 found = true;
@@ -1648,13 +1606,10 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
 void
 IfaceMgr::receiveDHCP4Packets() {
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    receiver_fd_event_handler_->clear();
 
     // Add terminate watch socket.
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+    receiver_fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE));
 
     // Add Interface sockets.
     for (const IfacePtr& iface : ifaces_) {
@@ -1662,7 +1617,7 @@ IfaceMgr::receiveDHCP4Packets() {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set.
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                receiver_fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1673,14 +1628,11 @@ IfaceMgr::receiveDHCP4Packets() {
             return;
         }
 
-        fd_set rd_set;
-        FD_COPY(&sockets, &rd_set);
-
         // zero out the errno to be safe.
         errno = 0;
 
         // Select with null timeouts to wait indefinitely an event
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+        int result = receiver_fd_event_handler_->waitEvent(0, 0);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
@@ -1707,7 +1659,7 @@ IfaceMgr::receiveDHCP4Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
-                if (FD_ISSET(s.sockfd_, &sockets)) {
+                if (receiver_fd_event_handler_->readReady(s.sockfd_)) {
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {
@@ -1717,18 +1669,14 @@ IfaceMgr::receiveDHCP4Packets() {
             }
         }
     }
-
 }
 
 void
 IfaceMgr::receiveDHCP6Packets() {
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    receiver_fd_event_handler_->clear();
 
     // Add terminate watch socket.
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+    receiver_fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE));
 
     // Add Interface sockets.
     for (const IfacePtr& iface : ifaces_) {
@@ -1736,7 +1684,7 @@ IfaceMgr::receiveDHCP6Packets() {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set.
-                addFDtoSet(s.sockfd_ , maxfd, &sockets);
+                receiver_fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1747,14 +1695,11 @@ IfaceMgr::receiveDHCP6Packets() {
             return;
         }
 
-        fd_set rd_set;
-        FD_COPY(&sockets, &rd_set);
-
         // zero out the errno to be safe.
         errno = 0;
 
-        // Note we wait until something happen.
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+        // Select with null timeouts to wait indefinitely an event
+        int result = receiver_fd_event_handler_->waitEvent(0, 0);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
@@ -1780,7 +1725,7 @@ IfaceMgr::receiveDHCP6Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
-                if (FD_ISSET(s.sockfd_, &sockets)) {
+                if (receiver_fd_event_handler_->readReady(s.sockfd_)) {
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {

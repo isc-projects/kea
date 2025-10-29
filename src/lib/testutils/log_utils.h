@@ -10,14 +10,10 @@
 #include <string>
 #include <fstream>
 
-//#include <config.h>
-
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 #include <log/logger_support.h>
 
-//#include <boost/shared_ptr.hpp>
-//#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
