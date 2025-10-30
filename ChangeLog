@@ -37,7 +37,7 @@ Kea 3.1.3 (development) released on October 29, 2025
 
 2406.	[bug]		razvan
 	Removed logging an error in ping check hook library if
-	using lease cache treshold.
+	using lease cache threshold.
 	(Gitlab #4129)
 
 2405.	[bug]		razvan, liyunqing_kylin
