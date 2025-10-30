@@ -86,7 +86,7 @@ LeaseQueryImpl::LeaseQueryImpl(uint16_t family,
         isc_throw(BadValue, "Lease Query config is empty or not a map");
     }
 
-    parserRequesters(config-get("requesters"));
+    parserRequesters(config->get("requesters"));
 
     ConstElementPtr advanced = config->get("advanced");
     if (advanced) {
