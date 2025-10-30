@@ -6,13 +6,18 @@
 
 #include <config.h>
 
-#include <dhcp/fd_event_handler.h>
-#include <dhcp/select_event_handler.h>
+#include <exceptions/exceptions.h>
+#include <util/fd_event_handler.h>
+#include <util/select_event_handler.h>
 
 #include <gtest/gtest.h>
 
+#include <thread>
+
+#include <signal.h>
+
 using namespace isc;
-using namespace isc::dhcp;
+using namespace isc::util;
 
 const unsigned char MARKER = 0;
 
@@ -26,7 +31,7 @@ class FDEventHandlerTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     FDEventHandlerTest() {
-        handler_.reset(new isc::dhcp::FDEventHandlerType);
+        handler_.reset(new FDEventHandlerType);
         pipe(pipefd);
     }
 
@@ -39,7 +44,7 @@ public:
     /// @brief The tested fd event handler.
     FDEventHandlerPtr handler_;
 
-    /// @brief The pipe used tor testing read and write operations.
+    /// @brief The pipe used for testing read and write operations.
     int pipefd[2];
 };
 
@@ -47,6 +52,8 @@ TEST_F(FDEventHandlerTest, events) {
     EXPECT_NO_THROW(handler_->clear());
 
     EXPECT_EQ(0, handler_->waitEvent(0, 1000));
+
+    EXPECT_THROW(handler_->add(-1), BadValue);
 
     handler_->add(pipefd[0], true, false);
     handler_->add(pipefd[1], false, true);

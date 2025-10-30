@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 /// @brief File descriptor event handler class handles events for registered
 /// file descriptors.
@@ -77,7 +77,7 @@ private:
 /// @brief Shared pointer to an FD event handler.
 typedef boost::shared_ptr<FDEventHandler> FDEventHandlerPtr;
 
-}  // namespace isc::dhcp
+}  // namespace isc::util
 }  // namespace isc
 
 #endif  // FD_EVENT_HANDLER_H

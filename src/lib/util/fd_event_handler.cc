@@ -6,16 +6,17 @@
 
 #include <config.h>
 
-#include <dhcp/fd_event_handler_factory.h>
-#include <dhcp/select_event_handler.h>
+#include <util/fd_event_handler.h>
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
-FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
-    // todo: use configuration to initialize the FDEventHandler.
-    return (FDEventHandlerPtr(new SelectEventHandler()));
+FDEventHandler::FDEventHandler(HandlerType type) : type_(type) {
 }
 
-} // end of namespace isc::dhcp
+FDEventHandler::HandlerType FDEventHandler::type() {
+    return (type_);
+}
+
+} // end of namespace isc::util
 } // end of namespace isc

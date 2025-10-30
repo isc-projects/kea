@@ -10,13 +10,13 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
-#include <dhcp/fd_event_handler_factory.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/packet_queue_mgr4.h>
 #include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
+#include <util/fd_event_handler_factory.h>
 #include <util/optional.h>
 #include <util/watch_socket.h>
 #include <util/watched_thread.h>
@@ -35,7 +35,6 @@
 #include <mutex>
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
@@ -1630,10 +1629,10 @@ private:
     isc::util::WatchedThreadPtr dhcp_receiver_;
 
     /// @brief The FDEventHandler instance.
-    FDEventHandlerPtr fd_event_handler_;
+    util::FDEventHandlerPtr fd_event_handler_;
 
     /// @brief The receiver FDEventHandler instance.
-    FDEventHandlerPtr receiver_fd_event_handler_;
+    util::FDEventHandlerPtr receiver_fd_event_handler_;
 };
 
 }  // namespace isc::dhcp

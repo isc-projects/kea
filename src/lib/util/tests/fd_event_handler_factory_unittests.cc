@@ -6,14 +6,14 @@
 
 #include <config.h>
 
-#include <dhcp/fd_event_handler_factory.h>
 #include <exceptions/exceptions.h>
+#include <util/fd_event_handler_factory.h>
 
 #include <gtest/gtest.h>
 #include <sys/select.h>
 
 using namespace isc;
-using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 

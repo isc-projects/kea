@@ -7,10 +7,10 @@
 #ifndef FD_EVENT_HANDLER_FACTORY_H
 #define FD_EVENT_HANDLER_FACTORY_H
 
-#include <dhcp/fd_event_handler.h>
+#include <util/fd_event_handler.h>
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 /// @brief File descriptor event handler factory class handles the creation of
 /// the FDEventHangler instance according to configuration and OS supported
@@ -28,7 +28,7 @@ public:
     static FDEventHandlerPtr factoryFDEventHandler();
 };
 
-}  // namespace isc::dhcp
+}  // namespace isc::util
 }  // namespace isc
 
 #endif  // FD_EVENT_HANDLER_FACTORY_H

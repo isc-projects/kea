@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <exceptions/exceptions.h>
-#include <select_event_handler.h>
+#include <util/select_event_handler.h>
 
 #ifndef FD_COPY
 #define FD_COPY(orig, copy) \
@@ -17,7 +17,7 @@
 #endif
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 SelectEventHandler::SelectEventHandler() : FDEventHandler(TYPE_SELECT), max_fd_(0) {
     clear();
@@ -73,5 +73,5 @@ void SelectEventHandler::clear() {
     max_fd_ = 0;
 }
 
-} // end of namespace isc::dhcp
+} // end of namespace isc::util
 } // end of namespace isc

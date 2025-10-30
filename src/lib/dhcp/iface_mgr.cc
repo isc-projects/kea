@@ -14,8 +14,8 @@
 #include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
-#include <dhcp/fd_event_handler_factory.h>
 #include <exceptions/exceptions.h>
+#include <util/fd_event_handler_factory.h>
 #include <util/io/pktinfo_utilities.h>
 #include <util/multi_threading_mgr.h>
 

@@ -7,12 +7,12 @@
 #ifndef SELECT_EVENT_HANDLER_H
 #define SELECT_EVENT_HANDLER_H
 
-#include <dhcp/fd_event_handler.h>
+#include <util/fd_event_handler.h>
 
 #include <sys/select.h>
 
 namespace isc {
-namespace dhcp {
+namespace util {
 
 /// @brief File descriptor event handler class handles events for registered
 /// file descriptors. This class uses the OS select syscall for event handling.
@@ -75,7 +75,7 @@ private:
     fd_set write_fd_set_data_;
 };
 
-}  // namespace isc::dhcp
+}  // namespace isc::util;
 }  // namespace isc
 
 #endif  // SELECT_EVENT_HANDLER_H

@@ -228,29 +228,29 @@ CloseHATest::runPartners(bool const backup /* = true */) {
         }
 
         wthread_->markReady(WatchedThread::READY);
-        FDEventHandlerPtr ev_handler_ = FDEventHandlerFactory::factoryFDEventHandler();
+        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
 
         for (;;) {
-            ev_handler_->clear();
-            ev_handler_->add(wthread_->getWatchFd(WatchedThread::TERMINATE));
-            ev_handler_->add(accept_partner1);
-            ev_handler_->add(accept_partner2);
+            handler->clear();
+            handler->add(wthread_->getWatchFd(WatchedThread::TERMINATE));
+            handler->add(accept_partner1);
+            handler->add(accept_partner2);
             for (auto const& reader : readers) {
                 if (!reader.second) {
                     continue;
                 }
-                ev_handler_->add(reader.first);
+                handler->add(reader.first);
             }
 
-            int n = ev_handler_->waitEvent(0, 0);
+            int n = handler->waitEvent(0, 0);
             if ((n < 0) && (errno == EINTR)) {
                 cerr << "interrupted" << endl;
                 continue;
             }
-            if (ev_handler_->readReady(wthread_->getWatchFd(WatchedThread::TERMINATE))) {
+            if (handler->readReady(wthread_->getWatchFd(WatchedThread::TERMINATE))) {
                 break;
             }
-            if (ev_handler_->readReady(accept_partner1)) {
+            if (handler->readReady(accept_partner1)) {
                 int fd = accept(accept_partner1, 0, 0);
                 if (fd < 0) {
                     cerr << "accept1 failed " << strerror(errno) << endl;
@@ -261,7 +261,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
                     readers[fd] = true;
                 }
             }
-            if (ev_handler_->readReady(accept_partner2)) {
+            if (handler->readReady(accept_partner2)) {
                 int fd = accept(accept_partner2, 0, 0);
                 if (fd < 0) {
                     cerr << "accept2 failed " << strerror(errno) << endl;
@@ -277,7 +277,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
                     continue;
                 }
                 int fd = reader.first;
-                if (ev_handler_->readReady(fd)) {
+                if (handler->readReady(fd)) {
                     char buf[128];
                     int cc = read(fd, buf, 128);
                     if (cc < 0) {
