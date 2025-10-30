@@ -14,7 +14,7 @@ Kea 3.0.2 (stable) released on October 29, 2025
 
 2382.	[bug]		razvan
 	Removed logging an error in ping check hook library if
-	using lease cache treshold.
+	using lease cache threshold.
 	(Gitlab #4129, #4182)
 
 2381.	[bug]		razvan, liyunqing_kylin
