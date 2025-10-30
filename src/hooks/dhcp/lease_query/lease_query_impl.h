@@ -11,6 +11,7 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <dhcp/pkt.h>
+#include <dhcpsrv/pool.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 
@@ -77,6 +78,81 @@ private:
     std::unordered_set<asiolink::IOAddress, boost::hash<asiolink::IOAddress> > addresses_;
 };
 
+/// @brief Hash for a Pool based on it's address range.
+struct PoolRangeHash {
+    std::size_t operator()(const isc::dhcp::PoolPtr& p) const noexcept {
+        const auto& f = p->getFirstAddress();
+        const auto& l = p->getLastAddress();
+
+        isc::asiolink::IOAddress::Hash haddr;
+        std::size_t h1 = haddr(f);
+        std::size_t h2 = haddr(l);
+
+        // hash_combine
+        return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+/// @brief Equality comparator for two pools based on their address range.
+struct PoolRangeEqual {
+    bool operator()(const isc::dhcp::PoolPtr& a,
+                    const isc::dhcp::PoolPtr& b) const noexcept {
+        return a->getFirstAddress() == b->getFirstAddress() &&
+               a->getLastAddress()  == b->getLastAddress();
+    }
+};
+
+/// @brief Defines an alias for a set of pools hashed by range.
+using PoolRangeSet = std::unordered_set<isc::dhcp::PoolPtr, PoolRangeHash, PoolRangeEqual>;
+
+/// @brief Manages a unique set of Pools of a given protocol family.
+/// The pools are hashed by their address range.
+class PoolSet {
+public:
+    /// @brief Constructor
+    ///
+    /// @param family protocol family of the set (AF_INET or AF_INET6)
+    PoolSet(uint16_t family)
+    : family_(family) { };
+
+    /// @brief Inserts an pool into the set.
+    ///
+    /// Creates a pool and adds it to the set, assuming it is not
+    /// already in the set.
+    ///
+    /// @param prefix prefix of the pool
+    /// @param prefix_len length of the pool prefix
+    /// @throw BadValue if the prefix family does not match
+    /// the set's family, prefix length is invalid, or the pool is
+    /// already in the set.
+    void insert(const isc::asiolink::IOAddress& prefix, uint8_t prefix_len);
+
+    /// @brief Checks if an address is present in the set.
+    ///
+    /// @param address address to look for.
+    /// @return true if the address is within a pool in the pool set
+    /// @throw BadValue if the address's family does not match
+    /// the set's family.
+    bool contains(const isc::asiolink::IOAddress& address) const;
+
+    /// @brief Returns the number of pools in the set.
+    size_t size() const {
+        return (pools_.size());
+    }
+
+    /// @brief Returns the protocol family of the address set.
+    uint16_t getFamily() const {
+        return (family_);
+    }
+
+private:
+    /// @brief protocol family of the set (AF_INET or AF_INET6)
+    uint16_t family_;
+
+    /// @brief Unique set of pools.
+    PoolRangeSet pools_;
+};
+
 /// @brief Provides configuration and control flow for processing queries.
 class LeaseQueryImpl : public boost::noncopyable {
 public:
@@ -99,6 +175,11 @@ public:
     /// @brief Returns the number of valid requester.
     size_t getNumRequesters() const {
         return (address_list_.size());
+    }
+
+    /// @brief Returns the number of valid requester pools.
+    size_t getNumRequesterPools() const {
+        return (pool_set_.size());
     }
 
     /// @brief Processes a single client Lease Query
@@ -145,12 +226,23 @@ public:
     static size_t PageSize;
 
 private:
+    /// @brief Parses 'requesters' list element.
+    ///
+    /// @param requesters pointer to the list element containing requestor
+    /// entris. Entries may be a mix of IP addresses or subnets in CIDR format.
+    ///
+    /// @throw BadValue if the list is empty or if any of the entries are
+    /// not valid addresses or  CIDRs.
+    void parserRequesters(isc::data::ConstElementPtr requesters);
 
     /// @brief The I/O context.
     isc::asiolink::IOServicePtr io_service_;
 
     /// @param list of addresses from which queries can be accepted.
     AddressList address_list_;
+
+    /// @param set of valid requester pools.
+    PoolSet pool_set_;
 };
 
 /// @brief Defines a smart pointer to LeaseQueryImpl instance.

@@ -585,23 +585,41 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
         {
             "requesters list is empty",
             Element::fromJSON("{ \"requesters\" : [] }"),
-            "'requesters' address list cannot be empty"
+            "'requesters' list cannot be empty"
         },
         {
             "requesters entry not an address",
             Element::fromJSON("{ \"requesters\" : [ \"foo\" ] }"),
-            "'requesters' entry 'foo' is invalid: Failed to convert"
-            " string to address 'foo': Invalid argument"
+            "'requesters' address entry 'foo' is invalid: Failed to convert string"
+            " to address 'foo': Invalid argument"
         },
         {
             "requesters entry not a v6 address",
             Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\" ] }"),
-            "'requesters' entry '192.0.2.1' is invalid: not a IPv6 address"
+            "'requesters' address entry '192.0.2.1' is invalid: not a IPv6 address"
         },
         {
             "requesters entry is a duplicate",
             Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\", \"2001:db8:1::\" ] }"),
-            "'requesters' entry '2001:db8:1::' is invalid: address is already in the list"
+            "'requesters' address entry '2001:db8:1::' is invalid: address is already in the list"
+        },
+        {
+            "requesters CIDR entry address is invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::x/64\" ] }"),
+            "'requesters' CIDR entry '2001:db8:1::x/64' is invalid:"
+            " Failed to convert string to address '2001:db8:1::x': Invalid argument"
+
+        },
+        {
+            "requesters CIDR entry length is invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/777\" ] }"),
+            "'requesters' CIDR entry '2001:db8:1::/777' is invalid:"
+            " prefix length 777 is out of range"
+        },
+        {
+            "requesters CIDR is a duplicate",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/64\", \"2001:db8:1::/64\"] }"),
+            "'requesters' CIDR entry '2001:db8:1::/64' is invalid: entry already exists"
         },
         {
             "prefix_lengths not a list",

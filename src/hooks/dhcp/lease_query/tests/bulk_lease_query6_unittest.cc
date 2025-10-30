@@ -1062,7 +1062,7 @@ class MemfileBulkLeaseQuery6ProcessTest : public
 TEST_F(MemfileBulkLeaseQuery6ProcessTest, validConfig6) {
     // Create an implementation with two requesters.
     const string json = "{\n"
-        " \"requesters\" : [ \"2001:db8:1::1\", \"2001:db8:1::3\" ],\n"
+        " \"requesters\" : [ \"2001:db8:1::1\", \"2001:db8:1::3\", \"3001::/64\" ],\n"
         " \"prefix-lengths\": [ 72, 64 ],\n"
         " \"advanced\": {\n"
         "  \"bulk-query-enabled\": true,\n"
@@ -1090,6 +1090,7 @@ TEST_F(MemfileBulkLeaseQuery6ProcessTest, validConfig6) {
     EXPECT_TRUE(impl->isRequester(IOAddress("2001:db8:1::1")));
     EXPECT_FALSE(impl->isRequester(IOAddress("2001:db8:1::2")));
     EXPECT_TRUE(impl->isRequester(IOAddress("2001:db8:1::3")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("3001::1")));
 
     // Make sure a test with a v4 address complains.
     ASSERT_THROW_MSG(impl->isRequester(IOAddress("192.0.2.1")), BadValue,

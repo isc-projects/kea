@@ -575,23 +575,40 @@ TEST(LeaseQueryImpl4Test, invalidConfig4) {
         {
             "requesters list is empty",
             Element::fromJSON("{ \"requesters\" : [] }"),
-            "'requesters' address list cannot be empty"
+            "'requesters' list cannot be empty"
         },
         {
             "requesters entry not an address",
             Element::fromJSON("{ \"requesters\" : [ \"foo\" ] }"),
-            "'requesters' entry 'foo' is invalid: Failed to convert"
+            "'requesters' address entry 'foo' is invalid: Failed to convert"
             " string to address 'foo': Invalid argument"
         },
         {
             "requesters entry not a v4 address",
             Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ] }"),
-            "'requesters' entry '2001:db8:1::' is invalid: not a IPv4 address"
+            "'requesters' address entry '2001:db8:1::' is invalid: not a IPv4 address"
         },
         {
             "requesters entry is a duplicate",
             Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\", \"192.0.2.1\" ] }"),
-            "'requesters' entry '192.0.2.1' is invalid: address is already in the list"
+            "'requesters' address entry '192.0.2.1' is invalid: address is already in the list"
+        },
+        {
+            "requesters CIDR entry address is a invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.x/24\" ] }"),
+            "'requesters' CIDR entry '192.0.2.x/24' is invalid:"
+            " Failed to convert string to address '192.0.2.x': Invalid argument"
+        },
+        {
+            "requesters CIDR length is a invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1/777\" ] }"),
+            "'requesters' CIDR entry '192.0.2.1/777' is invalid:"
+            " prefix length 777 is out of range"
+        },
+        {
+            "requesters CIDR entry is a duplicate",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.2.0/24\" ] }"),
+            "'requesters' CIDR entry '192.0.2.0/24' is invalid: entry already exists"
         }
     };
 
@@ -623,6 +640,45 @@ TEST(LeaseQueryImpl4Test, validConfig4) {
     // Make sure a test with a v6 address complains.
     ASSERT_THROW_MSG(impl->isRequester(IOAddress("2001:db8:1::")), BadValue,
                      "not a IPv4 address");
+}
+
+// Verifies that valid v4 configuration using only CIDR entries
+// parses and that requesters can be validated.
+TEST(LeaseQueryImpl4Test, validConfig4CIDROnly) {
+    // Create an implementation with two requesters.
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.3.0/24\" ] }";
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+
+    LeaseQueryImpl4Ptr impl;
+    ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl4(config)));
+
+    // Verify known and unknown requesters check correctly.
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.0")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.10")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.255")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.80")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.255")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.4.255")));
+}
+
+// Verifies that valid v4 configuration both address and CIDR entries
+// parses and that requesters can be validated.
+TEST(LeaseQueryImpl4Test, validConfig4Mix) {
+    // Create an implementation with two requesters.
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.3.25\" ] }";
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+
+    LeaseQueryImpl4Ptr impl;
+    ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl4(config)));
+
+    // Verify known and unknown requesters check correctly.
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.0")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.10")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.25")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.3.255")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.4.255")));
 }
 
 // Verifies the invalid combinations of query parameters (ciaddr, HWAddr,
