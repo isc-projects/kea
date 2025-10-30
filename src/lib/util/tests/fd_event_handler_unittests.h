@@ -8,6 +8,7 @@
 
 #include <exceptions/exceptions.h>
 #include <util/fd_event_handler.h>
+#include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 
 #include <gtest/gtest.h>

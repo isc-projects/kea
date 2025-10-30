@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <config.h>
 
+#include <util/fd_event_handler_factory.h>
 #include <util/ready_check.h>
 #include <util/watch_socket.h>
 
@@ -131,7 +132,11 @@ TEST(WatchSocketTest, closedWhileReady) {
     ASSERT_NO_THROW(watch->clearReady());
 
     // Verify the select_fd fails as socket is invalid/closed.
-    EXPECT_EQ(-1, selectCheck(select_fd));
+    if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
+        EXPECT_EQ(-1, selectCheck(select_fd));
+    } else {
+        EXPECT_EQ(1, selectCheck(select_fd));
+    }
 
     // Verify that subsequent attempts to mark it will fail.
     ASSERT_THROW(watch->markReady(), WatchSocketError);
@@ -202,7 +207,11 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     // Verify the select_fd does not evaluate to ready.
     EXPECT_FALSE(watch->isReady());
-    EXPECT_NE(1, selectCheck(select_fd));
+    if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
+        EXPECT_NE(1, selectCheck(select_fd));
+    } else {
+        EXPECT_EQ(1, selectCheck(select_fd));
+    }
 
     // Verify that getSelectFd() returns INVALID.
     ASSERT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());

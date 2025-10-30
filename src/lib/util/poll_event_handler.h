@@ -4,34 +4,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef FD_EVENT_HANDLER_H
-#define FD_EVENT_HANDLER_H
+#ifndef POLL_EVENT_HANDLER_H
+#define POLL_EVENT_HANDLER_H
 
-#include <boost/shared_ptr.hpp>
-#include <stdint.h>
+#include <util/fd_event_handler.h>
+
+#include <sys/poll.h>
 
 namespace isc {
 namespace util {
 
 /// @brief File descriptor event handler class handles events for registered
-/// file descriptors.
-class FDEventHandler {
+/// file descriptors. This class uses the OS select syscall for event handling.
+class PollEventHandler : public FDEventHandler {
 public:
-    enum HandlerType : uint16_t {
-        TYPE_UNKNOWN = 0,
-        TYPE_SELECT = 1,
-        TYPE_EPOLL = 2, // Linux OS (Linux like OS) only
-        TYPE_KQUEUE = 3, // BSD OS (BSD like OS) only
-        TYPE_POLL = 4,
-    };
-
     /// @brief Constructor.
-    ///
-    /// @param type The file descriptor event handler type.
-    FDEventHandler(HandlerType type = TYPE_UNKNOWN);
+    PollEventHandler();
 
     /// @brief Destructor.
-    virtual ~FDEventHandler() = default;
+    virtual ~PollEventHandler() = default;
 
     /// @brief Add file descriptor to watch for events.
     ///
@@ -40,48 +31,42 @@ public:
     /// registered for read ready events.
     /// @param write The flag indicating if the file descriptor should be
     /// registered for write ready events.
-    virtual void add(int fd, bool read = true, bool write = false) = 0;
+    void add(int fd, bool read = true, bool write = false);
 
     /// @brief Wait for events on registered file descriptors.
     ///
     /// @param timeout_sec The wait timeout in seconds.
-    /// @param timeout_usec The wait timeout in micro seconds.
-    /// @param use_timeout Flag which indicates if function should wait
-    /// with no timeout (wait forever).
+    /// @param timeout_usec The wait timeout in micro seconds
     /// @return -1 on error, 0 if no data is available (timeout expired),
     /// 1 if data is ready.
-    virtual int waitEvent(uint32_t timeout_sec, uint32_t timeout_usec = 0,
-                          bool use_timeout = true) = 0;
+    int waitEvent(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Check if file descriptor is ready for read operation.
     ///
     /// @param fd The file descriptor.
     ///
     /// @return True if file descriptor is ready for reading.
-    virtual bool readReady(int fd) = 0;
+    bool readReady(int fd);
 
     /// @brief Check if file descriptor is ready for write operation.
     ///
     /// @param fd The file descriptor.
     ///
     /// @return True if file descriptor is ready for writing.
-    virtual bool writeReady(int fd) = 0;
+    bool writeReady(int fd);
 
     /// @brief Clear registered file descriptors.
-    virtual void clear() = 0;
-
-    /// @brief Return the event handler type.
-    HandlerType type();
+    void clear();
 
 private:
-    /// @brief The event handler type.
-    HandlerType type_;
+    /// @brief The poll file descriptors data.
+    std::vector<struct pollfd> data_;
+
+    /// @brief The map with file descriptor to data reference.
+    std::unordered_map<int, struct pollfd*> map_;
 };
 
-/// @brief Shared pointer to an FD event handler.
-typedef boost::shared_ptr<FDEventHandler> FDEventHandlerPtr;
-
-}  // namespace isc::util
+}  // namespace isc::util;
 }  // namespace isc
 
-#endif  // FD_EVENT_HANDLER_H
+#endif  // POLL_EVENT_HANDLER_H

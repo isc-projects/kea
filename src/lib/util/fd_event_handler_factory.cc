@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <util/fd_event_handler_factory.h>
+#include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 
 namespace isc {
@@ -14,7 +15,7 @@ namespace util {
 
 FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
     // todo: use configuration to initialize the FDEventHandler.
-    return (FDEventHandlerPtr(new SelectEventHandler()));
+    return (FDEventHandlerPtr(new PollEventHandler()));
 }
 
 } // end of namespace isc::util

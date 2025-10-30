@@ -21,8 +21,9 @@ namespace {
 // and process passed parameters.
 TEST(FDEventHandlerFactory, factory) {
     FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
-    EXPECT_EQ(handler->type(), FDEventHandler::TYPE_SELECT);
-    EXPECT_THROW(handler->add(FD_SETSIZE), BadValue);
+    if (handler->type() == FDEventHandler::TYPE_SELECT) {
+        EXPECT_THROW(handler->add(FD_SETSIZE), BadValue);
+    }
 }
 
 } // end of anonymous namespace

@@ -23,6 +23,7 @@ kea_util_tests = executable(
     'multi_threading_mgr_unittest.cc',
     'optional_unittest.cc',
     'pid_file_unittest.cc',
+    'poll_event_handler_unittests.cc',
     'range_utilities_unittest.cc',
     'readwrite_mutex_unittest.cc',
     'run_unittests.cc',
