@@ -13,6 +13,7 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST;
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED;
+extern const isc::log::MessageID DHCP6_ADDR6_REGISTER_DISABLED_DROP;
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE;
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL;
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE;

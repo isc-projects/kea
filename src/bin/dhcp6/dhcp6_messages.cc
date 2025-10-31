@@ -12,6 +12,7 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP6_ADDI
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDITIONAL_CLASS_UNDEFINED";
+extern const isc::log::MessageID DHCP6_ADDR6_REGISTER_DISABLED_DROP = "DHCP6_ADDR6_REGISTER_DISABLED_DROP";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL = "DHCP6_ADDR_REG_INFORM_FAIL";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
@@ -190,6 +191,7 @@ const char* values[] = {
     "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
     "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
+    "DHCP6_ADDR6_REGISTER_DISABLED_DROP", "ADDR-REG-INFORM from %1 was dropped because address registration is disabled.",
     "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE", "received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'",
     "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1: %2",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",

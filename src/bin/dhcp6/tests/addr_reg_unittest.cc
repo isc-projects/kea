@@ -1861,4 +1861,100 @@ TEST_F(AddrRegTest, clientRenew) {
     EXPECT_EQ(1, countFile(expected));
 }
 
+// Test the global allow-address-registration = false;
+TEST_F(AddrRegTest, allowAddressRegistrationFalse) {
+    IfaceMgrTestConfig test_config(true);
+
+    /// @brief Basic configuration.
+    string config = "{\n"
+        "\"interfaces-config\": { \"interfaces\": [ \"*\" ] },\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000,\n"
+        "\"subnet6\": [ {\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"interface\": \"eth0\"\n"
+        "} ],\n"
+        "\"reservations\": [ {\n"
+        "    \"duid\": \"01:02:03:04:05:0A:0B:0C:0D:0E\",\n"
+        "    \"ip-addresses\": [ \"2001:db8:1::10\" ]\n"
+        "} ],\n"
+        "\"option-data\": [ {\n"
+        "    \"name\": \"dns-servers\",\n"
+        "    \"data\": \"2001:db8:1::45, 2001:db8:1::100\"\n"
+        "} ],\n"
+        "\"dhcp-ddns\": { \"enable-updates\": true },\n"
+        "\"ddns-qualifying-suffix\": \"example.com\",\n"
+        "\"ddns-update-on-renew\": false\n,"
+        "\"allow-address-registration\" : false\n"
+        "}\n";
+
+    ASSERT_NO_THROW(configure(config));
+
+    IOAddress addr("2001:db8:1::1");
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf_->addOption(clientid);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify no response.
+    ASSERT_FALSE(srv_->processAddrRegInform(ctx));
+
+    // Drop stat should have been bumped by one and the log emitted.
+    ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+    EXPECT_EQ(1, countFile("DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM"));
+}
+
+// Test the global allow-address-registration = true;
+TEST_F(AddrRegTest, allowAddressRegistrationTrue) {
+    IfaceMgrTestConfig test_config(true);
+
+    /// @brief Basic configuration.
+    string config = "{\n"
+        "\"interfaces-config\": { \"interfaces\": [ \"*\" ] },\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000,\n"
+        "\"subnet6\": [ {\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"interface\": \"eth0\"\n"
+        "} ],\n"
+        "\"reservations\": [ {\n"
+        "    \"duid\": \"01:02:03:04:05:0A:0B:0C:0D:0E\",\n"
+        "    \"ip-addresses\": [ \"2001:db8:1::10\" ]\n"
+        "} ],\n"
+        "\"option-data\": [ {\n"
+        "    \"name\": \"dns-servers\",\n"
+        "    \"data\": \"2001:db8:1::45, 2001:db8:1::100\"\n"
+        "} ],\n"
+        "\"dhcp-ddns\": { \"enable-updates\": true },\n"
+        "\"ddns-qualifying-suffix\": \"example.com\",\n"
+        "\"ddns-update-on-renew\": false\n,"
+        "\"allow-address-registration\" : true\n"
+        "}\n";
+
+    ASSERT_NO_THROW(configure(config));
+    testBasic();
+}
+
 } // end of anonymous namespace

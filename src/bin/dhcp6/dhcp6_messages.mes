@@ -1180,3 +1180,8 @@ such modification. The clients will remember previous server-id, and will
 use it to extend their leases. As a result, they will have to go through
 a rebinding phase to re-acquire their leases and associate them with a
 new server id.
+
+% DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM from %1 was dropped because address registration is disabled.
+Logged at debug log level 40.
+This debug message is printed when the server drops an ADDR-REG-INFORM packet
+because 'allow-address-regisration' is false.

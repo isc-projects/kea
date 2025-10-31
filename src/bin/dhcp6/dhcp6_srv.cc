@@ -4558,7 +4558,6 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 Pkt6Ptr
 Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
-
     ConstSubnetPtr subnet = ctx.subnet_;
     // Silently ignore message which can't be localized
     if (!subnet) {
@@ -4566,6 +4565,19 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     }
 
     Pkt6Ptr addr_reg_inf = ctx.query_;
+
+    // Get the allow-address-resgistration flag value.
+    // If it's false, punt.
+    auto allow_address_registration = CfgMgr::instance().getCurrentCfg()->
+         getConfiguredGlobal(CfgGlobals::ALLOW_ADDRESS_REGISTRATION);
+
+    if (allow_address_registration && !allow_address_registration->boolValue()) {
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_ADDR6_REGISTER_DISABLED_DROP)
+                .arg(addr_reg_inf->getLabel());
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        return(Pkt6Ptr());
+    }
 
     // Get the client source address.
     IOAddress addr = addr_reg_inf->getRemoteAddr();

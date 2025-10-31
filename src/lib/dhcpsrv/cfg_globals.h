@@ -103,6 +103,7 @@ public:
         MAX_PREFERRED_LIFETIME,
         PD_ALLOCATOR,
         SERVER_ID,
+        ALLOW_ADDRESS_REGISTRATION,
 
         // Size sentinel.
         SIZE

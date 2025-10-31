@@ -6909,6 +6909,17 @@ as defined in `RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ i.e.
 when a valid ADDR-REG-INFORM (36) message is received a registered lease is
 added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
 
+As of Kea 3.1.4, this feature can be enabled or disabled globally by
+setting the parameter, ``allow-address-registration`` to true or false
+respectively. It is enabled by default.
+
+`RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ calls for servers
+that support address registration to return option 148 to clients that
+request it via the ORO option. As with any other standard option, this
+option must be specified in the server configuration in order to be
+sent to clients and that this behavior is independent of
+``allow-address-resgistration``.
+
 .. note::
 
    Even if they share a common lease database with leases in other states,

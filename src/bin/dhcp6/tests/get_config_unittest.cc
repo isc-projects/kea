@@ -2780,6 +2780,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 0
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -2898,6 +2899,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 1
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3016,6 +3018,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 2
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3107,6 +3110,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 3
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3235,6 +3239,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 4
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3455,6 +3460,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 5
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3675,6 +3681,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 6
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"compatibility\": {\n"
@@ -3802,6 +3809,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 7
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -3930,6 +3938,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 8
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4055,6 +4064,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 9
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4180,6 +4190,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 10
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4344,6 +4355,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 11
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4468,6 +4480,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 12
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4594,6 +4607,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 13
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4722,6 +4736,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 14
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4865,6 +4880,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 15
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -4991,6 +5007,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 16
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5089,6 +5106,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 17
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5187,6 +5205,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 18
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5294,6 +5313,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 19
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5392,6 +5412,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 20
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5490,6 +5511,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 21
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5588,6 +5610,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 22
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5686,6 +5709,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 23
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5829,6 +5853,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 24
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -5972,6 +5997,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 25
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6125,6 +6151,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 26
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6254,6 +6281,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 27
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6434,6 +6462,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 28
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6587,6 +6616,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 29
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6763,6 +6793,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 30
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -6906,6 +6937,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 31
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7087,6 +7119,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 32
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7228,6 +7261,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 33
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7372,6 +7406,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 34
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7463,6 +7498,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 35
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7554,6 +7590,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 36
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7678,6 +7715,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 37
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -7802,6 +7840,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 38
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8025,6 +8064,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 39
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8164,6 +8204,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 40
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8311,6 +8352,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 41
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8435,6 +8477,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 42
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8704,6 +8747,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 43
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8852,6 +8896,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 44
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -8943,6 +8988,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 45
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9034,6 +9080,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 46
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9366,6 +9413,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 47
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9525,6 +9573,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 48
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9613,6 +9662,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 49
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9704,6 +9754,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 50
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9792,6 +9843,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 51
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9880,6 +9932,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 52
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -9968,6 +10021,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 53
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -10106,6 +10160,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 54
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -10235,6 +10290,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 55
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -10366,6 +10422,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 56
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -10490,6 +10547,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 57
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -10615,6 +10673,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 58
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -10745,6 +10804,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 59
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -10875,6 +10935,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 60
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -11005,6 +11066,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 61
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -11131,6 +11193,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 62
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -11258,6 +11321,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 63
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -11390,6 +11454,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 64
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -11496,6 +11561,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 65
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -11777,6 +11843,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 66
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12011,6 +12078,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 67
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12213,6 +12281,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 68
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12369,6 +12438,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 69
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12525,6 +12595,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 70
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12616,6 +12687,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 71
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12704,6 +12776,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 72
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -12792,6 +12865,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 73
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -12924,6 +12998,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 74
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -13058,6 +13133,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 75
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"no-check-with-dhcid\",\n"
@@ -13298,6 +13374,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 76
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -13545,6 +13622,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 77
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -13646,6 +13724,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 78
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -13798,6 +13877,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 79
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"client-classes\": [\n"
@@ -13895,6 +13975,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 80
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -14047,6 +14128,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 81
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -14180,6 +14262,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 82
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -14313,6 +14396,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 83
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -14446,6 +14530,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 84
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"
@@ -14579,6 +14664,7 @@ const char* UNPARSED_CONFIGS[] = {
     // CONFIGURATION 85
 "{\n"
 "        \"allocator\": \"iterative\",\n"
+"        \"allow-address-registration\": true,\n"
 "        \"cache-threshold\": 0.25,\n"
 "        \"calculate-tee-times\": true,\n"
 "        \"ddns-conflict-resolution-mode\": \"check-with-dhcid\",\n"

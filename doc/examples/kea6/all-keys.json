@@ -15,6 +15,10 @@
         // subnets.
         "allocator": "iterative",
 
+        // Global flag that enables or disables client address registration
+        // via ADDR-REG-INFORM packets (see RFC 9686). It defaults to true. 
+        "allow-address-registration": true,
+
         // Global flag selecting a delegated prefix allocation strategy
         // for all subnets.
         "pd-allocator": "random",
