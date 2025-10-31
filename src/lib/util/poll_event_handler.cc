@@ -9,6 +9,8 @@
 #include <exceptions/exceptions.h>
 #include <util/poll_event_handler.h>
 
+#include <cstring>
+
 namespace isc {
 namespace util {
 
@@ -34,13 +36,17 @@ void PollEventHandler::add(int fd, bool read /* = true */, bool write /* = false
     data_.push_back(data);
 }
 
-int PollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+int PollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */,
+                                bool use_timeout /* = true */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-    int timeout = timeout_sec * 1000 + timeout_usec / 1000;
+    int timeout = -1;
+    if (use_timeout) {
+        timeout = timeout_sec * 1000 + timeout_usec / 1000;
+    }
     map_.clear();
     for (size_t i = 0; i < data_.size(); ++i) {
         map_[data_[i].fd] = &data_[i];

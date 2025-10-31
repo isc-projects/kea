@@ -166,11 +166,17 @@ TEST_F(FDEventHandlerTest, badFD) {
 
     errno = 0;
 
-    EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
-
-    EXPECT_EQ(EBADF, errno);
-
-    EXPECT_TRUE(handler_->readReady(fd));
+    if (handler_->type() == FDEventHandler::TYPE_SELECT) {
+        EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
+        EXPECT_TRUE(handler_->readReady(fd));
+        EXPECT_FALSE(handler_->hasError(fd));
+        EXPECT_EQ(EBADF, errno);
+    } else {
+        EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+        EXPECT_FALSE(handler_->readReady(fd));
+        EXPECT_TRUE(handler_->hasError(fd));
+        EXPECT_EQ(0, errno);
+    }
 }
 
 } // end of anonymous namespace

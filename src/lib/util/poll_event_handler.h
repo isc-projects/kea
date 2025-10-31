@@ -9,6 +9,9 @@
 
 #include <util/fd_event_handler.h>
 
+#include <unordered_map>
+#include <vector>
+
 #include <sys/poll.h>
 
 namespace isc {
@@ -36,10 +39,13 @@ public:
     /// @brief Wait for events on registered file descriptors.
     ///
     /// @param timeout_sec The wait timeout in seconds.
-    /// @param timeout_usec The wait timeout in micro seconds
+    /// @param timeout_usec The wait timeout in micro seconds.
+    /// @param use_timeout Flag which indicates if function should wait
+    /// with no timeout (wait forever).
     /// @return -1 on error, 0 if no data is available (timeout expired),
     /// 1 if data is ready.
-    int waitEvent(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+    int waitEvent(uint32_t timeout_sec, uint32_t timeout_usec = 0,
+                  bool use_timeout = true);
 
     /// @brief Check if file descriptor is ready for read operation.
     ///

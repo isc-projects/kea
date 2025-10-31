@@ -211,7 +211,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     // Verify the select_fd does not evaluate to ready.
     EXPECT_FALSE(watch->isReady());
     if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
-        EXPECT_NE(1, selectCheck(select_fd));
+        EXPECT_EQ(-1, selectCheck(select_fd));
     } else {
         FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
         handler->add(select_fd);

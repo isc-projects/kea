@@ -10,12 +10,34 @@
 #include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 
+#include <string>
+
+using namespace std;
+
 namespace isc {
 namespace util {
 
 FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
     // todo: use configuration to initialize the FDEventHandler.
-    return (FDEventHandlerPtr(new PollEventHandler()));
+    FDEventHandler::HandlerType type = FDEventHandler::TYPE_SELECT;
+    const char* env_type = getenv("KEA_EVENT_HANDLER_TYPE");
+    if (env_type) {
+        if (string(env_type) == string("select")) {
+            type = FDEventHandler::TYPE_SELECT;
+        }
+        if (string(env_type) == string("poll")) {
+            type = FDEventHandler::TYPE_POLL;
+        }
+    }
+    switch(type) {
+    case FDEventHandler::TYPE_SELECT:
+        return (FDEventHandlerPtr(new SelectEventHandler()));
+    case FDEventHandler::TYPE_POLL:
+        return (FDEventHandlerPtr(new PollEventHandler()));
+    default:
+        return (FDEventHandlerPtr(new SelectEventHandler()));
+    }
+    return (FDEventHandlerPtr(new SelectEventHandler()));
 }
 
 } // end of namespace isc::util

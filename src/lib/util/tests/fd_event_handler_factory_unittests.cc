@@ -23,6 +23,8 @@ TEST(FDEventHandlerFactory, factory) {
     FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
     if (handler->type() == FDEventHandler::TYPE_SELECT) {
         EXPECT_THROW(handler->add(FD_SETSIZE), BadValue);
+    } else {
+        EXPECT_NO_THROW(handler->add(FD_SETSIZE));
     }
 }
 
