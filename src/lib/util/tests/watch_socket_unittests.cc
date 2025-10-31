@@ -135,7 +135,10 @@ TEST(WatchSocketTest, closedWhileReady) {
     if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
         EXPECT_EQ(-1, selectCheck(select_fd));
     } else {
-        EXPECT_EQ(1, selectCheck(select_fd));
+        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+        EXPECT_TRUE(handler->hasError(select_fd));
     }
 
     // Verify that subsequent attempts to mark it will fail.
@@ -210,7 +213,10 @@ TEST(WatchSocketTest, badReadOnClear) {
     if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
         EXPECT_NE(1, selectCheck(select_fd));
     } else {
-        EXPECT_EQ(1, selectCheck(select_fd));
+        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+        EXPECT_TRUE(handler->hasError(select_fd));
     }
 
     // Verify that getSelectFd() returns INVALID.

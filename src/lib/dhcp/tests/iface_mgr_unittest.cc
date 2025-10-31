@@ -736,7 +736,7 @@ public:
             pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
             ADD_FAILURE() << "receive4 should have failed";
         } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
+            EXPECT_EQ(std::string("Event handler interrupted by one invalid sockets,"
                                   " purged 1 socket descriptors"),
                       std::string(ex.what()));
         } catch (const std::exception& ex) {
@@ -826,7 +826,7 @@ public:
             pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
             ADD_FAILURE() << "receive6 should have failed";
         } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
+            EXPECT_EQ(std::string("Event handler interrupted by one invalid sockets,"
                                   " purged 1 socket descriptors"),
                       std::string(ex.what()));
         } catch (const std::exception& ex) {

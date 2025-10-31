@@ -62,6 +62,13 @@ bool PollEventHandler::writeReady(int fd) {
     return (map_[fd]->revents & POLLOUT);
 }
 
+bool PollEventHandler::hasError(int fd) {
+    if (map_.find(fd) == map_.end()) {
+        return (false);
+    }
+    return (map_[fd]->revents & (POLLHUP | POLLERR | POLLNVAL));
+}
+
 void PollEventHandler::clear() {
     data_.clear();
     map_.clear();

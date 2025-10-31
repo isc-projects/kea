@@ -1188,7 +1188,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         } else if (errno == EBADF) {
             int cnt = purgeBadSockets();
             isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
+                      "Event handler interrupted by one invalid sockets, purged "
                        << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
@@ -1207,9 +1207,14 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
+        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
+                if (fd_event_handler_->hasError(s.socket_)) {
+                    fd_error = true;
+                    break;
+                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1223,6 +1228,12 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                     break;
                 }
             }
+        }
+        if (fd_error) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "Event handler interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         }
 
         if (ex_sock.callback_) {
@@ -1290,7 +1301,6 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // null
-
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received or for some other
@@ -1304,7 +1314,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         } else if (errno == EBADF) {
             int cnt = purgeBadSockets();
             isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
+                      "Event handler interrupted by one invalid sockets, purged "
                        << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
@@ -1314,9 +1324,14 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
+    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
+            if (fd_event_handler_->hasError(s.socket_)) {
+                fd_error = true;
+                break;
+            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1330,6 +1345,12 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 break;
             }
         }
+    }
+    if (fd_error) {
+        int cnt = purgeBadSockets();
+        isc_throw(SocketReadError,
+                  "Event handler interrupted by one invalid sockets, purged "
+                   << cnt << " socket descriptors");
     }
 
     if (ex_sock.callback_) {
@@ -1422,7 +1443,6 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt6Ptr()); // null
-
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received or for some other
@@ -1436,7 +1456,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         } else if (errno == EBADF) {
             int cnt = purgeBadSockets();
             isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
+                      "Event handler interrupted by one invalid sockets, purged "
                        << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
@@ -1446,9 +1466,14 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
+    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
+            if (fd_event_handler_->hasError(s.socket_)) {
+                fd_error = true;
+                break;
+            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1462,6 +1487,12 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 break;
             }
         }
+    }
+    if (fd_error) {
+        int cnt = purgeBadSockets();
+        isc_throw(SocketReadError,
+                  "Event handler interrupted by one invalid sockets, purged "
+                   << cnt << " socket descriptors");
     }
 
     if (ex_sock.callback_) {
@@ -1554,7 +1585,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         } else if (errno == EBADF) {
             int cnt = purgeBadSockets();
             isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
+                      "Event handler interrupted by one invalid sockets, purged "
                        << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
@@ -1573,9 +1604,14 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
+        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
+                if (fd_event_handler_->hasError(s.socket_)) {
+                    fd_error = true;
+                    break;
+                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1589,6 +1625,12 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                     break;
                 }
             }
+        }
+        if (fd_error) {
+            int cnt = purgeBadSockets();
+            isc_throw(SocketReadError,
+                      "Event handler interrupted by one invalid sockets, purged "
+                       << cnt << " socket descriptors");
         }
 
         if (ex_sock.callback_) {
@@ -1649,7 +1691,6 @@ IfaceMgr::receiveDHCP4Packets() {
         if (result == 0) {
             // nothing received?
             continue;
-
         } else if (result < 0) {
             // This thread should not get signals?
             if (errno != EINTR) {
