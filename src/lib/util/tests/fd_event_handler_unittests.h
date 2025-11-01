@@ -14,7 +14,9 @@
 
 #include <thread>
 
+#include <fcntl.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 
 using namespace isc;
 using namespace isc::util;
@@ -55,8 +57,8 @@ TEST_F(FDEventHandlerTest, events) {
 
     EXPECT_THROW(handler_->add(-1), BadValue);
 
-    handler_->add(pipefd[0], true, false);
-    handler_->add(pipefd[1], false, true);
+    EXPECT_NO_THROW(handler_->add(pipefd[0], true, false));
+    EXPECT_NO_THROW(handler_->add(pipefd[1], false, true));
 
     EXPECT_FALSE(handler_->readReady(pipefd[0]));
     EXPECT_FALSE(handler_->writeReady(pipefd[0]));
@@ -137,6 +139,133 @@ TEST_F(FDEventHandlerTest, events) {
     tr.join();
 
     sigaction(SIGINT, &original, NULL);
+}
+
+TEST_F(FDEventHandlerTest, badFD) {
+    int fd = open("/dev/zero", O_RDONLY, 0);
+
+    ASSERT_GE(fd, 0);
+
+    EXPECT_NO_THROW(handler_->add(fd));
+
+    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+
+    EXPECT_TRUE(handler_->readReady(fd));
+
+    close(fd);
+
+    int len = 0;
+    int result = ioctl(fd, FIONREAD, &len);
+
+    EXPECT_EQ(-1, result);
+
+    EXPECT_EQ(0, len);
+
+    EXPECT_EQ(EBADF, errno);
+
+    errno = 0;
+
+    EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
+
+    EXPECT_EQ(EBADF, errno);
+
+    EXPECT_TRUE(handler_->readReady(fd));
+
+    EXPECT_NO_THROW(handler_->clear());
+    errno = 0;
+
+    {
+        EXPECT_NO_THROW(handler_->add(pipefd[0], true, false));
+
+        std::thread tr([this]() {
+            usleep(500);
+            close(pipefd[1]);
+        });
+
+        EXPECT_EQ(1, handler_->waitEvent(1, 0));
+
+        EXPECT_EQ(0, errno);
+
+        EXPECT_TRUE(handler_->readReady(pipefd[0]));
+        EXPECT_FALSE(handler_->writeReady(pipefd[0]));
+
+        tr.join();
+
+        close(pipefd[0]);
+        pipe(pipefd);
+    }
+
+    EXPECT_NO_THROW(handler_->clear());
+    errno = 0;
+
+    {
+        EXPECT_NO_THROW(handler_->add(pipefd[0], true, false));
+
+        std::thread tr([this]() {
+            usleep(500);
+            close(pipefd[0]);
+        });
+
+        EXPECT_EQ(1, handler_->waitEvent(1, 0));
+
+        EXPECT_EQ(0, errno);
+
+        EXPECT_TRUE(handler_->readReady(pipefd[0]));
+        EXPECT_FALSE(handler_->writeReady(pipefd[0]));
+
+        tr.join();
+
+        close(pipefd[1]);
+        pipe(pipefd);
+    }
+
+    EXPECT_NO_THROW(handler_->clear());
+    errno = 0;
+
+    {
+        EXPECT_NO_THROW(handler_->add(pipefd[1], true, false));
+
+        std::thread tr([this]() {
+            usleep(500);
+            close(pipefd[1]);
+        });
+
+        EXPECT_EQ(1, handler_->waitEvent(1, 0));
+
+        EXPECT_EQ(0, errno);
+
+        EXPECT_TRUE(handler_->readReady(pipefd[1]));
+        EXPECT_FALSE(handler_->writeReady(pipefd[1]));
+
+        tr.join();
+
+        close(pipefd[0]);
+        pipe(pipefd);
+    }
+
+    EXPECT_NO_THROW(handler_->clear());
+    errno = 0;
+
+    {
+        EXPECT_NO_THROW(handler_->add(pipefd[1], true, false));
+
+        std::thread tr([this]() {
+            usleep(500);
+            close(pipefd[0]);
+        });
+
+        EXPECT_EQ(1, handler_->waitEvent(1, 0));
+
+        EXPECT_EQ(0, errno);
+
+        EXPECT_TRUE(handler_->readReady(pipefd[1]));
+        EXPECT_FALSE(handler_->writeReady(pipefd[1]));
+
+        tr.join();
+
+        close(pipefd[1]);
+        pipe(pipefd);
+    }
 }
 
 } // end of anonymous namespace
