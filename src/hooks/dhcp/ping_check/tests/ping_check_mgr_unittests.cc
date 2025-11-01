@@ -1482,6 +1482,9 @@ public:
 
         // We should have one free that matches our lease query pair.
         compareLeaseQueryPairs(frees_);
+
+        // Stop the mgr.
+        ASSERT_NO_THROW(mgr_->stop());
     }
 
     /// @brief Exercises shouldPing().

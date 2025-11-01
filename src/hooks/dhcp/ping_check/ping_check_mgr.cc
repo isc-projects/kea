@@ -722,6 +722,10 @@ PingCheckMgr::stop() {
     // Cancel the expiration timer.
     cancelExpirationTimer();
 
+    if (thread_pool_) {
+        thread_pool_->pause();
+    }
+
     if (channel_) {
         channel_->close();
     }
