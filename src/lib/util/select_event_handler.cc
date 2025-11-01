@@ -9,6 +9,8 @@
 #include <exceptions/exceptions.h>
 #include <util/select_event_handler.h>
 
+#include <cstring>
+
 #ifndef FD_COPY
 #define FD_COPY(orig, copy) \
     do { \
@@ -43,20 +45,25 @@ void SelectEventHandler::add(int fd, bool read /* = true */, bool write /* = fal
     }
 }
 
-int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */,
+                                  bool use_timeout /* = true */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
     struct timeval select_timeout;
-    select_timeout.tv_sec = timeout_sec;
-    select_timeout.tv_usec = timeout_usec;
+    struct timeval* select_timeout_p = 0;
+    if (use_timeout) {
+        select_timeout.tv_sec = timeout_sec;
+        select_timeout.tv_usec = timeout_usec;
+        select_timeout_p = &select_timeout;
+    }
 
     FD_COPY(&read_fd_set_, &read_fd_set_data_);
     FD_COPY(&write_fd_set_, &write_fd_set_data_);
 
-    return (select(max_fd_ + 1, &read_fd_set_data_, &write_fd_set_data_, 0, &select_timeout));
+    return (select(max_fd_ + 1, &read_fd_set_data_, &write_fd_set_data_, 0, select_timeout_p));
 }
 
 bool SelectEventHandler::readReady(int fd) {

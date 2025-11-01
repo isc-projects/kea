@@ -30,6 +30,7 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
 #include <string.h>
 
 using namespace std;
@@ -1258,8 +1259,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    /// @note: this can be achieved with FDEventHandler (initialize only if max_fd_ is 0)
-    /// and do not clear the state.
+    /// @note: this can be achieved with FDEventHandler (initialize only if
+    /// max_fd_ is 0) and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv4 addresses.
@@ -1390,8 +1391,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
-    /// @note: this can be achieved with FDEventHandler (initialize only if max_fd_ is 0)
-    /// and do not clear the state.
+    /// @note: this can be achieved with FDEventHandler (initialize only if
+    /// max_fd_ is 0) and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv6 addresses.
@@ -1638,7 +1639,7 @@ IfaceMgr::receiveDHCP4Packets() {
         errno = 0;
 
         // Select with null timeouts to wait indefinitely an event
-        int result = receiver_fd_event_handler_->waitEvent(0, 0);
+        int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
@@ -1705,7 +1706,7 @@ IfaceMgr::receiveDHCP6Packets() {
         errno = 0;
 
         // Select with null timeouts to wait indefinitely an event
-        int result = receiver_fd_event_handler_->waitEvent(0, 0);
+        int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
 
         // Re-check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
@@ -1844,8 +1845,10 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ((pkt->getRemoteAddr().isV6LinkLocal() && s->addr_.isV6LinkLocal()) ||
-                (!pkt->getRemoteAddr().isV6LinkLocal() && !s->addr_.isV6LinkLocal())) {
+            if ((pkt->getRemoteAddr().isV6LinkLocal() &&
+                 s->addr_.isV6LinkLocal()) ||
+                (!pkt->getRemoteAddr().isV6LinkLocal() &&
+                 !s->addr_.isV6LinkLocal())) {
                 candidate = s;
             }
         }
