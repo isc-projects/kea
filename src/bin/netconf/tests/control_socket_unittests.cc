@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <config/unix_command_config.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
 #include <http/response_creator.h>
@@ -19,7 +20,6 @@
 #include <netconf/netconf_config.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
-#include <testutils/sandbox.h>
 #include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 
@@ -33,6 +33,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
@@ -140,8 +141,6 @@ const long TEST_TIMEOUT = 1500;
 /// @brief Test fixture class for unix control sockets.
 class UnixControlSocketTest : public ThreadedTest {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Constructor.
     UnixControlSocketTest()
         : ThreadedTest(), io_service_(new IOService()) {
@@ -172,7 +171,7 @@ public:
         if (env) {
             socket_path = string(env) + "/test-socket";
         } else {
-            socket_path = sandbox.join("test-socket");
+            socket_path = UnixCommandConfig::getSocketPath() + "/test-socket";
         }
         return (socket_path);
     }

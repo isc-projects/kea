@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,13 +33,13 @@ const char* valid_netconf_config =
     "    \"dhcp4\": {"
     "      \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/first/dhcp4/socket\""
+    "        \"socket-name\": \"dhcp4-socket\""
     "      }"
     "    },"
     "    \"dhcp6\": {"
     "      \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/first/dhcp6/socket\""
+    "        \"socket-name\": \"dhcp6-socket\""
     "      }"
     "    }"
     "  }"

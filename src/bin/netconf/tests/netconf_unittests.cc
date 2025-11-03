@@ -10,13 +10,13 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
 #include <netconf/simple_parser.h>
 #include <netconf/unix_control_socket.h>
 #include <testutils/log_utils.h>
-#include <testutils/sandbox.h>
 #include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 #include <yang/testutils/translator_test.h>
@@ -107,8 +107,6 @@ ElementPtr sortSubnets(ElementPtr const& map) {
 /// @brief Test fixture class for netconf agent.
 class NetconfAgentTest : public ThreadedTest {
 public:
-    isc::test::Sandbox sandbox;
-
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
         removeUnixSocketFile();
@@ -144,7 +142,7 @@ public:
         if (env) {
             socket_path = string(env) + "/" + TEST_SOCKET;
         } else {
-            socket_path = sandbox.join(TEST_SOCKET);
+            socket_path = UnixCommandConfig::getSocketPath() + "/" + TEST_SOCKET;
         }
         return (socket_path);
     }
