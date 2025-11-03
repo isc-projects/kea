@@ -31,11 +31,9 @@ using namespace std;
 namespace isc {
 namespace db {
 
-std::string MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
+static MySqlLibraryInit init;
 
-int MySqlHolder::atexit_ = [] {
-    return atexit([] { mysql_library_end(); });
-}();
+std::string MySqlConnection::KEA_ADMIN_ = KEA_ADMIN;
 
 /// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
 const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
