@@ -1,0 +1,5 @@
+[sec]*		andrei
+	Restrict the path of the unix socket to which kea-netconf
+	connects the same way the path is restricted for others servers
+	on creation of unix sockets.
+	(Gitlab #3969)
