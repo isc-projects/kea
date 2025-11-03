@@ -12,6 +12,7 @@
 #include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
+#include <util/filesystem.h>
 
 #include <gtest/gtest.h>
 
@@ -20,6 +21,7 @@ using namespace isc::netconf;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -44,6 +46,20 @@ const char* valid_netconf_config =
     "    }"
     "  }"
     "}";
+
+string const bad_socket_name_config(R"(
+{
+  "managed-servers": {
+    "dhcp6": {
+      "control-socket": {
+        "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+        "socket-type": "unix"
+      },
+      "model": "kea-dhcp6-server"
+    }
+  }
+}
+)");
 
 /// @brief test fixture class for testing NetconfController class.
 ///
@@ -184,6 +200,14 @@ TEST_F(NetconfControllerTest, sigtermShutdown) {
     // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Check that a bad socket path is refused.
+TEST_F(NetconfControllerTest, badSocketPath) {
+    time_duration elapsed_time;
+    EXPECT_THROW_MSG(runWithConfig(bad_socket_name_config, 200, elapsed_time), ProcessInitError,
+                     "Could Not load configuration file: invalid path specified: '/tmp', supported "
+                     "path is '/opt/kea/var/run/kea'");
 }
 
 }  // namespace

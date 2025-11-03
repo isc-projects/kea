@@ -42,6 +42,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::test;
+using namespace isc::util::file;
 using namespace isc::yang;
 using namespace isc::yang::test;
 using namespace libyang;
@@ -1163,6 +1164,41 @@ TEST_F(NetconfAgentTest, noValidate) {
     });
     EXPECT_THROW_MSG(repr.set(tree1, *agent_->running_sess_), sysrepo::Error,
                      "Session::applyChanges: Couldn't apply changes: SR_ERR_VALIDATION_FAILED\n Validation failed (SR_ERR_VALIDATION_FAILED)");
+}
+
+// Check that a bad socket path is refused.
+TEST_F(NetconfAgentTest, badSocketPath) {
+    string config(R"(
+{
+  "Netconf": {
+    "managed-servers": {
+      "dhcp6": {
+        "control-socket": {
+          "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+          "socket-type": "unix"
+        },
+        "model": "kea-dhcp6-server"
+      }
+    }
+  }
+}
+)");
+
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW_LOG(json = parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = copy(netconf_json, 0);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    EXPECT_THROW_MSG(parser.parse(ctx, json, false), SecurityError,
+                     "invalid path specified: '/tmp', supported path is '/opt/kea/var/run/kea'");
 }
 
 }  // namespace
