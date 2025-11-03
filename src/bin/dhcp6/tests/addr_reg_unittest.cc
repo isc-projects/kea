@@ -642,13 +642,8 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-#if 0
-    expected += "error on ADDR-REG-INFORM from client fe80::ef01: ";
-    expected += "Address mismatch: client at fe80::ef01 ";
-#else
     expected += "error on ADDR-REG-INFORM from client fe80::1, ";
     expected += "Address mismatch: client at fe80::1 ";
-#endif
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
 }
