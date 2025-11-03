@@ -42,7 +42,7 @@ This information message is issued when a lease for another client already
 exists for an address being registered. The address, the new client and
 previous client identifiers are printed.
 
-% DHCP6_ADDR_REG_INFORM_FAIL error on ADDR-REG-INFORM from client %1: %2
+% DHCP6_ADDR_REG_INFORM_FAIL error on ADDR-REG-INFORM from client %1, %2
 This information message is issued when the processing of an ADDR-REG-INFORM
 message failed. The address of the client, usually also the address to
 register, and the description of the problem are printed.

@@ -193,7 +193,7 @@ const char* values[] = {
     "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
     "DHCP6_ADDR6_REGISTER_DISABLED_DROP", "ADDR-REG-INFORM from %1 was dropped because address registration is disabled.",
     "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE", "received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'",
-    "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1: %2",
+    "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1, %2",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",

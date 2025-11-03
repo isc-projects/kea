@@ -398,7 +398,7 @@ TEST_F(AddrRegTest, unexpectedIA_NA) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_NA option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -432,7 +432,7 @@ TEST_F(AddrRegTest, unexpectedIA_TA) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_TA option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -465,7 +465,7 @@ TEST_F(AddrRegTest, unexpectedIA_PD) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_PD option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -497,7 +497,7 @@ TEST_F(AddrRegTest, noIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 0 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -531,7 +531,7 @@ TEST_F(AddrRegTest, twoIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 2 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -569,7 +569,7 @@ TEST_F(AddrRegTest, badIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "can't convert the IAADDR option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -602,7 +602,7 @@ TEST_F(AddrRegTest, noAddrMatch) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Address mismatch: client at fe80::abcd ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
@@ -642,8 +642,13 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
+#if 0
     expected += "error on ADDR-REG-INFORM from client fe80::ef01: ";
     expected += "Address mismatch: client at fe80::ef01 ";
+#else
+    expected += "error on ADDR-REG-INFORM from client fe80::1, ";
+    expected += "Address mismatch: client at fe80::1 ";
+#endif
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -665,7 +670,7 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     // Add a relay: it will be the outer one.
     Pkt6::RelayInfo relay;
     relay.linkaddr_ = IOAddress("fe80::ef01");
-    relay.peeraddr_ = IOAddress("fe80::1");
+    relay.peeraddr_ = IOAddress("fe80::2345");
     addr_reg_inf->relay_info_.push_back(relay);
 
     // Add a second relay: it will be the inner one.
@@ -688,8 +693,8 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::2345: ";
-    expected += "Address mismatch: client at fe80::2345 ";
+    expected += "error on ADDR-REG-INFORM from client fe80::1, ";
+    expected += "Address mismatch: client at fe80::1 ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -722,7 +727,7 @@ TEST_F(AddrRegTest, noInSubnet) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8::1, ";
     expected += "Address 2001:db8::1 is not in subnet ";
     expected += "2001:db8:1::/64 (id 1)";
     EXPECT_EQ(1, countFile(expected));
@@ -756,7 +761,7 @@ TEST_F(AddrRegTest, reserved) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10, ";
     expected += "Address 2001:db8:1::10 is reserved";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -797,7 +802,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1, ";
     expected +=  "Address 2001:db8:1::1 already in use Type:";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -916,8 +921,8 @@ TEST_F(AddrRegTest, relayed) {
 
     // Add a second relay: it will be the inner one.
     Pkt6::RelayInfo relay2;
-    relay2.linkaddr_ = addr;
-    relay2.peeraddr_ = IOAddress("fe80::1");
+    relay2.linkaddr_ = IOAddress("fe80::1");
+    relay2.peeraddr_ = addr;
     addr_reg_inf->relay_info_.push_back(relay2);
 
     // Pass it to the server.

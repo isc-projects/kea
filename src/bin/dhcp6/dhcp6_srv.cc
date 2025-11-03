@@ -4585,7 +4585,7 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     // to the client.
     size_t relay_level = addr_reg_inf->relay_info_.size();
     if (relay_level > 0) {
-        addr = addr_reg_inf->getRelay6LinkAddress(relay_level - 1);
+        addr = addr_reg_inf->getRelay6PeerAddress(relay_level - 1);
     }
 
     Option6IAAddrPtr iaaddr;
