@@ -113,7 +113,7 @@ using ControlSocketBasePtr = std::shared_ptr<ControlSocketBase>;
 /// @throw NotImplemented if no specialization was called.
 template <CfgControlSocket::Type TYPE>
 ControlSocketBasePtr
-createControlSocket(CfgControlSocketPtr ctrl_sock) {
+createControlSocket(CfgControlSocketPtr /* ctrl_sock */) {
     isc_throw(NotImplemented, "not specialized createControlSocket");
 }
 
