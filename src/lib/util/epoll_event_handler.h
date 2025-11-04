@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef POLL_EVENT_HANDLER_H
-#define POLL_EVENT_HANDLER_H
+#ifndef EPOLL_EVENT_HANDLER_H
+#define EPOLL_EVENT_HANDLER_H
 
 #include <util/fd_event_handler.h>
 
@@ -13,20 +13,20 @@
 #include <unordered_set>
 #include <vector>
 
-#include <sys/poll.h>
+#include <sys/epoll.h>
 
 namespace isc {
 namespace util {
 
 /// @brief File descriptor event handler class handles events for registered
 /// file descriptors. This class uses the OS select syscall for event handling.
-class PollEventHandler : public FDEventHandler {
+class EPollEventHandler : public FDEventHandler {
 public:
     /// @brief Constructor.
-    PollEventHandler();
+    EPollEventHandler();
 
     /// @brief Destructor.
-    virtual ~PollEventHandler() = default;
+    virtual ~EPollEventHandler();
 
     /// @brief Add file descriptor to watch for events.
     ///
@@ -73,14 +73,27 @@ public:
     void clear();
 
 private:
-    /// @brief The poll file descriptors data.
-    std::vector<struct pollfd> data_;
+    /// @brief The epoll file descriptor.
+    int epollfd_;
+
+    /// @brief The epoll file descriptors data.
+    std::vector<struct epoll_event> data_;
+
+    /// @brief The epoll file descriptors data.
+    std::vector<struct epoll_event> used_data_;
+
+    /// @brief The set of file descriptors with errors.
+    std::unordered_set<int> errors_;
 
     /// @brief The map with file descriptor to data reference.
-    std::unordered_map<int, struct pollfd*> map_;
+    std::unordered_map<int, struct epoll_event*> map_;
+
+    /// @brief The pipe used to permit calling @ref waitEvent with no
+    /// registered file descriptors.
+    int pipefd[2];
 };
 
 }  // namespace isc::util;
 }  // namespace isc
 
-#endif  // POLL_EVENT_HANDLER_H
+#endif  // EPOLL_EVENT_HANDLER_H

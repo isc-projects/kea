@@ -20,11 +20,29 @@ SocketInfo
 PktFilter6TestStub::openSocket(const Iface&,
            const isc::asiolink::IOAddress& addr,
            const uint16_t port, const bool) {
-    if (open_socket_callback_) {
-        open_socket_callback_(port);
+    int pipefd[2];
+
+    int ret = pipe(pipefd);
+    if (ret < 0) {
+        const char* errmsg = strerror(errno);
+        isc_throw(Unexpected,
+                  "PktFilter6TestStub: cannot open pipe: " << errmsg);
     }
 
-    return (SocketInfo(addr, port, 0));
+    try {
+        if (open_socket_callback_) {
+            open_socket_callback_(port);
+        }
+    } catch (...) {
+        // Don't leak fd on simulated errors.
+        close(pipefd[0]);
+        close(pipefd[1]);
+        throw;
+    }
+
+    close(pipefd[1]);
+
+    return (SocketInfo(addr, port, pipefd[0]));
 }
 
 Pkt6Ptr

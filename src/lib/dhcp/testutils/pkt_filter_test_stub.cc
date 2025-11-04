@@ -37,24 +37,29 @@ SocketInfo
 PktFilterTestStub::openSocket(Iface&,
            const isc::asiolink::IOAddress& addr,
            const uint16_t port, const bool, const bool) {
-    int fd = open("/dev/null", O_RDONLY);
-    if (fd < 0) {
+    int pipefd[2];
+
+    int ret = pipe(pipefd);
+    if (ret < 0) {
         const char* errmsg = strerror(errno);
         isc_throw(Unexpected,
-                  "PktFilterTestStub: cannot open /dev/null:" << errmsg);
+                  "PktFilterTestStub: cannot open pipe: " << errmsg);
     }
 
     try {
         if (open_socket_callback_) {
             open_socket_callback_(port);
         }
-    } catch(...) {
+    } catch (...) {
         // Don't leak fd on simulated errors.
-        close(fd);
+        close(pipefd[0]);
+        close(pipefd[1]);
         throw;
     }
 
-    return (SocketInfo(addr, port, fd));
+    close(pipefd[1]);
+
+    return (SocketInfo(addr, port, pipefd[0]));
 }
 
 Pkt4Ptr

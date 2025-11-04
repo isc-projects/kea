@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <util/epoll_event_handler.h>
 #include <util/fd_event_handler_factory.h>
 #include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
@@ -28,10 +29,15 @@ FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
         if (string(env_type) == string("poll")) {
             type = FDEventHandler::TYPE_POLL;
         }
+        if (string(env_type) == string("epoll")) {
+            type = FDEventHandler::TYPE_EPOLL;
+        }
     }
     switch(type) {
     case FDEventHandler::TYPE_SELECT:
         return (FDEventHandlerPtr(new SelectEventHandler()));
+    case FDEventHandler::TYPE_EPOLL:
+        return (FDEventHandlerPtr(new EPollEventHandler()));
     case FDEventHandler::TYPE_POLL:
         return (FDEventHandlerPtr(new PollEventHandler()));
     default:

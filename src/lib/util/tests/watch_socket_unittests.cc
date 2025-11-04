@@ -119,6 +119,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     EXPECT_EQ(1, selectCheck(select_fd));
     EXPECT_TRUE(watch->isReady());
 
+    // The epoll event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT;
+
     // Interfere by closing the fd.
     ASSERT_EQ(0, close(select_fd));
 
@@ -132,13 +138,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     ASSERT_NO_THROW(watch->clearReady());
 
     // Verify the select_fd fails as socket is invalid/closed.
-    if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
-        EXPECT_EQ(-1, selectCheck(select_fd));
+    if (use_select) {
+        ASSERT_EQ(-1, selectCheck(select_fd));
     } else {
-        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
         handler->add(select_fd);
         EXPECT_EQ(1, handler->waitEvent(0, 0));
-        EXPECT_TRUE(handler->hasError(select_fd));
+        ASSERT_TRUE(handler->hasError(select_fd));
     }
 
     // Verify that subsequent attempts to mark it will fail.
@@ -198,6 +203,12 @@ TEST(WatchSocketTest, badReadOnClear) {
     EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
+    // The epoll event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT;
+
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
@@ -210,10 +221,9 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     // Verify the select_fd does not evaluate to ready.
     EXPECT_FALSE(watch->isReady());
-    if (FDEventHandlerFactory::factoryFDEventHandler()->type() == FDEventHandler::TYPE_SELECT) {
+    if (use_select) {
         EXPECT_EQ(-1, selectCheck(select_fd));
     } else {
-        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
         handler->add(select_fd);
         EXPECT_EQ(1, handler->waitEvent(0, 0));
         EXPECT_TRUE(handler->hasError(select_fd));

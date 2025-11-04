@@ -12,6 +12,7 @@ kea_util_tests = executable(
     'dhcp_space_unittest.cc',
     'doubles_unittest.cc',
     'encode_unittest.cc',
+    'epoll_event_handler_unittests.cc',
     'fd_event_handler_factory_unittests.cc',
     'fd_tests.cc',
     'filesystem_unittests.cc',
