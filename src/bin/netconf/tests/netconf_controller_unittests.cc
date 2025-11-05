@@ -206,8 +206,9 @@ TEST_F(NetconfControllerTest, sigtermShutdown) {
 TEST_F(NetconfControllerTest, badSocketPath) {
     time_duration elapsed_time;
     EXPECT_THROW_MSG(runWithConfig(bad_socket_name_config, 200, elapsed_time), ProcessInitError,
-                     "Could Not load configuration file: invalid path specified: '/tmp', supported "
-                     "path is '/opt/kea/var/run/kea'");
+                     string("Could Not load configuration file: invalid path specified: '/tmp', "
+                            "supported path is '") +
+                         UnixCommandConfig::getSocketPath() + "'");
 }
 
 }  // namespace

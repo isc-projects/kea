@@ -1198,7 +1198,8 @@ TEST_F(NetconfAgentTest, badSocketPath) {
     NetconfSimpleParser parser;
     NetconfConfigPtr ctx(new NetconfConfig());
     EXPECT_THROW_MSG(parser.parse(ctx, json, false), SecurityError,
-                     "invalid path specified: '/tmp', supported path is '/opt/kea/var/run/kea'");
+                     string("invalid path specified: '/tmp', supported path is '") +
+                         UnixCommandConfig::getSocketPath() + "'");
 }
 
 }  // namespace
