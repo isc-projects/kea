@@ -152,7 +152,7 @@ TEST_F(FDEventHandlerTest, badFD) {
     errno = 0;
     int fd;
 
-    if (handler_->type() == FDEventHandler::TYPE_EPOLL) {
+    if (handler_->type() != FDEventHandler::TYPE_SELECT) {
         // epoll does not allow add of /dev/zero to registered events.
         fd = pipefd_[0];
         EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
@@ -198,7 +198,7 @@ TEST_F(FDEventHandlerTest, badFD) {
         EXPECT_EQ(EBADF, errno);
     }
 
-    if (handler_->type() == FDEventHandler::TYPE_EPOLL) {
+    if (handler_->type() != FDEventHandler::TYPE_SELECT) {
         close(pipefd_[1]);
         pipe(pipefd_);
     }

@@ -11,6 +11,8 @@
 
 #include <cstring>
 
+#include <unistd.h>
+
 using namespace std;
 
 namespace isc {
@@ -21,7 +23,7 @@ EPollEventHandler::EPollEventHandler() : FDEventHandler(TYPE_EPOLL), epollfd_(-1
     if (epollfd_ == -1) {
         isc_throw(Unexpected, "error opening epoll: " << strerror(errno));
     }
-    if (pipe(pipefd)) {
+    if (pipe(pipefd_)) {
         close(epollfd_);
         isc_throw(Unexpected, "error opening internal epoll pipe: " << strerror(errno));
     }
@@ -30,8 +32,8 @@ EPollEventHandler::EPollEventHandler() : FDEventHandler(TYPE_EPOLL), epollfd_(-1
 
 EPollEventHandler::~EPollEventHandler() {
     close(epollfd_);
-    close(pipefd[1]);
-    close(pipefd[0]);
+    close(pipefd_[1]);
+    close(pipefd_[0]);
 }
 
 void EPollEventHandler::add(int fd, bool read /* = true */, bool write /* = false */) {
@@ -78,7 +80,7 @@ int EPollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
     struct epoll_event dummy;
     memset(&dummy, 0, sizeof(dummy));
-    dummy.data.fd = pipefd[0];
+    dummy.data.fd = pipefd_[0];
     dummy.events |= EPOLLIN;
     epoll_ctl(epollfd_, EPOLL_CTL_ADD, dummy.data.fd, &dummy);
     used_data_.push_back(dummy);

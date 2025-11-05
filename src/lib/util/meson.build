@@ -1,15 +1,11 @@
 epoll_event_handler_cc = []
-epoll_event_handler_h = []
 if HAVE_EPOLL
     epoll_event_handler_cc = 'epoll_event_handler.cc'
-    epoll_event_handler_h = 'epoll_event_handler.h'
 endif
 
 kqueue_event_handler_cc = []
-kqueue_event_handler_h = []
 if HAVE_KQUEUE
     kqueue_event_handler_cc = 'kqueue_event_handler.cc'
-    kqueue_event_handler_h = 'kqueue_event_handler.h'
 endif
 
 kea_util_lib = shared_library(
@@ -63,7 +59,7 @@ kea_util_headers = [
     'doubles.h',
     'encode/encode.h',
     'encode/utf8.h',
-    epoll_event_handler_h,
+    'epoll_event_handler.h',
     'fd_event_handler.h',
     'fd_event_handler_factory.h',
     'filesystem.h',
@@ -72,7 +68,7 @@ kea_util_headers = [
     'io/sockaddr_util.h',
     'hash.h',
     'io.h',
-    kqueue_event_handler_h,
+    'kqueue_event_handler.h',
     'labeled_value.h',
     'memory_segment.h',
     'memory_segment_local.h',

@@ -33,11 +33,14 @@ FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
         if (string(env_type) == string("select")) {
             type = FDEventHandler::TYPE_SELECT;
         }
-        if (string(env_type) == string("poll")) {
-            type = FDEventHandler::TYPE_POLL;
-        }
         if (string(env_type) == string("epoll")) {
             type = FDEventHandler::TYPE_EPOLL;
+        }
+        if (string(env_type) == string("kqueue")) {
+            type = FDEventHandler::TYPE_KQUEUE;
+        }
+        if (string(env_type) == string("poll")) {
+            type = FDEventHandler::TYPE_POLL;
         }
     }
     switch(type) {

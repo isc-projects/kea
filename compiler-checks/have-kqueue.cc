@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 int main() {
-    int kq = kqueue();
-    close(kq);
+    int kqueuefd = kqueue();
+    close(kqueuefd);
     return 0;
 }
