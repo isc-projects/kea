@@ -8,7 +8,12 @@
 
 #include <exceptions/exceptions.h>
 #include <util/fd_event_handler.h>
+#ifdef HAVE_EPOLL
 #include <util/epoll_event_handler.h>
+#endif
+#ifdef HAVE_KQUEUE
+#include <util/kqueue_event_handler.h>
+#endif
 #include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 

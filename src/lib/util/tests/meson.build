@@ -2,6 +2,16 @@ if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
+epoll_event_handler_unittests_cc = []
+if HAVE_EPOLL
+    epoll_event_handler_unittests_cc = 'epoll_event_handler_unittests.cc'
+endif
+
+kqueue_event_handler_unittests_cc = []
+if HAVE_KQUEUE
+    kqueue_event_handler_unittests_cc = 'kqueue_event_handler_unittests.cc'
+endif
+
 kea_util_tests = executable(
     'kea-util-tests',
     'bigint_unittest.cc',
@@ -12,12 +22,13 @@ kea_util_tests = executable(
     'dhcp_space_unittest.cc',
     'doubles_unittest.cc',
     'encode_unittest.cc',
-    'epoll_event_handler_unittests.cc',
+    epoll_event_handler_unittests_cc,
     'fd_event_handler_factory_unittests.cc',
     'fd_tests.cc',
     'filesystem_unittests.cc',
     'hash_unittest.cc',
     'io_unittests.cc',
+    kqueue_event_handler_unittests_cc,
     'labeled_value_unittest.cc',
     'memory_segment_common_unittest.cc',
     'memory_segment_local_unittest.cc',

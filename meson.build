@@ -493,6 +493,26 @@ result = cpp.run(
 )
 conf_data.set('HAVE_OPTRESET', result.returncode() == 0)
 
+HAVE_EPOLL = false
+result = cpp.run(
+    fs.read('compiler-checks/have-epoll.cc'),
+    name: 'HAVE_EPOLL',
+)
+if result.returncode() == 0
+    conf_data.set('HAVE_EPOLL', true)
+    HAVE_EPOLL = true
+endif
+
+HAVE_KQUEUE = false
+result = cpp.run(
+    fs.read('compiler-checks/have-kqueue.cc'),
+    name: 'HAVE_KQUEUE',
+)
+if result.returncode() == 0
+    conf_data.set('HAVE_KQUEUE', true)
+    HAVE_KQUEUE = true
+endif
+
 result = cpp.run(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
 conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
 

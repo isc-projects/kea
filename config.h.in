@@ -31,6 +31,12 @@
 /* MySQL uses my_bool */
 #mesondefine HAVE_MYSQL_MY_BOOL
 
+/* epoll capabilities enabled */
+#mesondefine HAVE_EPOLL
+
+/* kqueue capabilities enabled */
+#mesondefine HAVE_KQUEUE
+
 /* NETCONF capabilities enabled */
 #mesondefine HAVE_NETCONF
 
