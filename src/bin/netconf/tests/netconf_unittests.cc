@@ -113,6 +113,7 @@ public:
         removeUnixSocketFile();
         io_service_.reset(new IOService());
         agent_.reset(new NakedNetconfAgent());
+        setSocketTestPath();
     }
 
     void TearDown() override {
@@ -130,6 +131,7 @@ public:
         removeUnixSocketFile();
         SysrepoSetup::cleanSharedMemory();
         io_service_->stopAndPoll();
+        resetSocketPath();
     }
 
     /// @brief Returns socket file path.
@@ -151,6 +153,21 @@ public:
     /// @brief Removes unix socket descriptor.
     void removeUnixSocketFile() {
         static_cast<void>(remove(unixSocketFilePath().c_str()));
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Create configuration of the control socket.

@@ -8,6 +8,7 @@
 
 #include <asiolink/testutils/timed_signal.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
@@ -17,6 +18,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink::test;
+using namespace isc::config;
 using namespace isc::netconf;
 using namespace isc::data;
 using namespace isc::http;
@@ -71,6 +73,11 @@ public:
     /// @brief Constructor.
     NetconfControllerTest()
         : DControllerTest(NetconfController::instance) {
+        setSocketTestPath();
+    }
+
+    void TearDown() override {
+        resetSocketPath();
     }
 
     /// @brief Returns pointer to NetconfProcess instance.
@@ -94,6 +101,21 @@ public:
             p = getNetconfCfgMgr()->getNetconfConfig();
         }
         return (p);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 };  // NetconfControllerTest
 

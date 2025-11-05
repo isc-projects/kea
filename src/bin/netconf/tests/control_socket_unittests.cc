@@ -38,6 +38,7 @@ using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::test;
+using namespace isc::util::file;
 
 using isc::yang::test::SysrepoSetup;
 
@@ -149,6 +150,7 @@ public:
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
         removeUnixSocketFile();
+        setSocketTestPath();
     }
 
     void TearDown() override {
@@ -158,6 +160,7 @@ public:
         }
         removeUnixSocketFile();
         io_service_->stopAndPoll();
+        resetSocketPath();
     }
 
     /// @brief Returns socket file path.
@@ -174,6 +177,21 @@ public:
             socket_path = UnixCommandConfig::getSocketPath() + "/test-socket";
         }
         return (socket_path);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Removes unix socket descriptor.

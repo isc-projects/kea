@@ -8,6 +8,7 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
 #include <process/testutils/d_test_stubs.h>
@@ -26,6 +27,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::process;
 using namespace isc::test;
+using namespace isc::util::file;
 
 namespace {
 
@@ -123,10 +125,12 @@ public:
         srv_.reset(new NakedNetconfCfgMgr());
         // Create fresh context.
         resetConfiguration();
+        setSocketTestPath();
     }
 
     ~NetconfGetCfgTest() {
         resetConfiguration();
+        resetSocketPath();
     }
 
     /// @brief Parse and Execute configuration
@@ -217,6 +221,21 @@ public:
     void resetConfiguration() {
         string config = "{ \"Netconf\": { } }";
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     unique_ptr<NakedNetconfCfgMgr> srv_;    ///< Netconf server under test
