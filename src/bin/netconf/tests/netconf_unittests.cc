@@ -11,6 +11,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/unix_command_config.h>
+#include <config/testutils/socket_test.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
@@ -39,6 +40,7 @@ using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::test;
@@ -587,6 +589,10 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
 
 // Verifies that the keaConfig method works as expected.
 TEST_F(NetconfAgentTest, keaConfig) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -601,7 +607,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -668,6 +674,10 @@ TEST_F(NetconfAgentTest, keaConfig) {
 // Verifies that the yangConfig method works as expected: apply YANG config
 // to the server.
 TEST_F(NetconfAgentTest, yangConfig) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // YANG configuration.
     const YRTree tree = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -698,7 +708,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -776,6 +786,10 @@ TEST_F(NetconfAgentTest, yangConfig) {
 
 // Verifies that the subscribeToDataChanges method works as expected.
 TEST_F(NetconfAgentTest, subscribeToDataChanges) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -790,7 +804,7 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -827,6 +841,10 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
 // Verifies that the update method works as expected: apply new YANG configuration
 // to the server. Note it is called by the subscription callback.
 TEST_F(NetconfAgentTest, update) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -859,7 +877,7 @@ TEST_F(NetconfAgentTest, update) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -954,6 +972,10 @@ TEST_F(NetconfAgentTest, update) {
 // with the server. Note it is called by the subscription callback and
 // update is called after.
 TEST_F(NetconfAgentTest, validate) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -984,7 +1006,7 @@ TEST_F(NetconfAgentTest, validate) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -1116,6 +1138,10 @@ TEST_F(NetconfAgentTest, validate) {
 
 // Verifies what happens when the validate method returns an error.
 TEST_F(NetconfAgentTest, noValidate) {
+    string const socket_path(unixSocketFilePath());
+    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -1142,7 +1168,7 @@ TEST_F(NetconfAgentTest, noValidate) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;

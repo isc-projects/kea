@@ -9,6 +9,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <config/testutils/socket_test.h>
 #include <config/unix_command_config.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
@@ -34,6 +35,7 @@ using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
@@ -321,6 +323,8 @@ TEST_F(UnixControlSocketTest, createControlSocket) {
 
 // Verifies that unix control sockets handle configGet() as expected.
 TEST_F(UnixControlSocketTest, configGet) {
+    bool const socket_name_too_long(SocketName::isTooLong(unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -345,6 +349,8 @@ TEST_F(UnixControlSocketTest, configGet) {
 
 // Verifies that unix control sockets handle configTest() as expected.
 TEST_F(UnixControlSocketTest, configTest) {
+    bool const socket_name_too_long(SocketName::isTooLong(unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -372,6 +378,8 @@ TEST_F(UnixControlSocketTest, configTest) {
 
 // Verifies that unix control sockets handle configSet() as expected.
 TEST_F(UnixControlSocketTest, configSet) {
+    bool const socket_name_too_long(SocketName::isTooLong(unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -399,6 +407,8 @@ TEST_F(UnixControlSocketTest, configSet) {
 
 // Verifies that unix control sockets handle timeouts.
 TEST_F(UnixControlSocketTest, timeout) {
+    bool const socket_name_too_long(SocketName::isTooLong(unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));

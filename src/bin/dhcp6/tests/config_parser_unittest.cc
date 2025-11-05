@@ -9,6 +9,7 @@
 #include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
 #include <config/http_command_config.h>
+#include <config/testutils/socket_test.h>
 #include <dhcp/classify.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/iface_mgr.h>
@@ -60,6 +61,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -495,12 +497,21 @@ public:
 
         int rcode;
         ConstElementPtr comment = parseAnswerText(rcode, status);
-        EXPECT_EQ(expected_code, rcode);
 
         string text;
         ASSERT_TRUE(comment);
         ASSERT_NO_THROW(text = comment->stringValue());
 
+        // Socket name too long?
+        bool const too_long(SocketName::isTooLongFromConfig(json));
+        if (too_long) {
+            EXPECT_EQ(CONTROL_RESULT_ERROR, rcode);
+            exp_error = "name too long";
+            EXPECT_NE(std::string::npos, text.find(exp_error));
+            return;
+        }
+
+        EXPECT_EQ(expected_code, rcode);
         if (expected_code != rcode) {
             std::cout << "Reported status: " << text << std::endl;
         }
@@ -7739,6 +7750,13 @@ TEST_F(Dhcp6ParserTest, comments) {
     ASSERT_EQ(1, ctx_iface->size());
     ASSERT_TRUE(ctx_iface->get("comment"));
     EXPECT_EQ("\"Use wildcard\"", ctx_iface->get("comment")->str());
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW_LOG(json = parseDHCP6(config, true));
+    bool const too_long(SocketName::isTooLongFromConfig(json));
+    if (too_long) {
+        return;
+    }
 
     // There is a global option definition.
     const OptionDefinitionPtr& opt_def =

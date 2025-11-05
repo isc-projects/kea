@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <agent/ca_cfg_mgr.h>
 #include <agent/ca_command_mgr.h>
 #include <agent/ca_controller.h>
@@ -15,19 +16,25 @@
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/testutils/socket_test.h>
 #include <config/unix_command_config.h>
 #include <process/testutils/d_test_stubs.h>
+#include <testutils/gtest_utils.h>
 #include <util/filesystem.h>
-#include <boost/pointer_cast.hpp>
-#include <gtest/gtest.h>
-#include <testutils/sandbox.h>
+
 #include <cstdlib>
 #include <functional>
-#include <vector>
 #include <thread>
+#include <vector>
+
+#include <boost/pointer_cast.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace isc::agent;
 using namespace isc::asiolink;
+using namespace isc::asiolink::test;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::process;
 using namespace isc::config;
@@ -45,14 +52,12 @@ const long TEST_TIMEOUT = 10000;
 /// Meanwhile, this is just a placeholder for the tests.
 class CtrlAgentCommandMgrTest : public DControllerTest {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Constructor.
     ///
     /// Deregisters all commands except 'list-commands'.
     CtrlAgentCommandMgrTest()
-        : DControllerTest(CtrlAgentController::instance),
-          mgr_(CtrlAgentCommandMgr::instance()) {
+        : DControllerTest(CtrlAgentController::instance), mgr_(CtrlAgentCommandMgr::instance()),
+          skipped_(false) {
         mgr_.deregisterAll();
         setSocketTestPath();
         removeUnixSocketFile();
@@ -167,9 +172,15 @@ public:
         ASSERT_TRUE(ctx);
 
         ElementPtr control_socket = Element::createMap();
-        control_socket->set("validated-socket-name",
-                            Element::create(unixSocketFilePath()));
+        std::string const socket_path(unixSocketFilePath());
+        control_socket->set("validated-socket-name", Element::create(socket_path));
         ctx->setControlSocketInfo(control_socket, service);
+
+        bool const too_long(SocketName::isTooLong(socket_path));
+        if (too_long) {
+            skipped_ = true;
+            SKIP_IF("Socket name too long.");
+        }
     }
 
     /// @brief Create and bind server side socket.
@@ -179,9 +190,9 @@ public:
     /// @param use_thread Indicates if the IO service will be ran in thread.
     void bindServerSocket(const std::string& response,
                           const bool use_thread = false) {
-        server_socket_.reset(new test::TestServerUnixSocket(getIOService(),
-                                                            unixSocketFilePath(),
-                                                            response));
+        server_socket_.reset(new TestServerUnixSocket(getIOService(),
+                                                      unixSocketFilePath(),
+                                                      response));
         server_socket_->startTimer(TEST_TIMEOUT);
         server_socket_->bindServerSocket(use_thread);
     }
@@ -230,6 +241,7 @@ public:
                      const std::string& server_response = "{ \"result\": 0 }") {
         // Configure client side socket.
         configureControlSocket(configured_service);
+        SKIP_IF(skipped_);
         // Create server side socket.
         bindServerSocket(server_response, true);
 
@@ -267,7 +279,10 @@ public:
     CtrlAgentCommandMgr& mgr_;
 
     /// @brief Pointer to the test server unix socket.
-    test::TestServerUnixSocketPtr server_socket_;
+    TestServerUnixSocketPtr server_socket_;
+
+    /// @brief Whether the current test was skipped.
+    bool skipped_;
 };
 
 /// Just a basic test checking that non-existent command is handled
@@ -317,6 +332,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardToD2Server) {
 /// Check that the same command is forwarded to multiple servers.
 TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
     configureControlSocket("dhcp6");
+    SKIP_IF(skipped_);
 
     testForward("dhcp4", "dhcp4,dhcp6", isc::config::CONTROL_RESULT_SUCCESS,
                 isc::config::CONTROL_RESULT_SUCCESS, -1, 2);
@@ -326,6 +342,7 @@ TEST_F(CtrlAgentCommandMgrTest, forwardToBothDHCPServers) {
 TEST_F(CtrlAgentCommandMgrTest, forwardToAllServers) {
     configureControlSocket("dhcp6");
     configureControlSocket("d2");
+    SKIP_IF(skipped_);
 
     testForward("dhcp4", "dhcp4,dhcp6,d2", isc::config::CONTROL_RESULT_SUCCESS,
                 isc::config::CONTROL_RESULT_SUCCESS,
@@ -381,6 +398,7 @@ TEST_F(CtrlAgentCommandMgrTest, noClientSocket) {
 /// which the control command is to be forwarded is not available.
 TEST_F(CtrlAgentCommandMgrTest, noServerSocket) {
     configureControlSocket("dhcp6");
+    SKIP_IF(skipped_);
 
     ConstElementPtr command = createCommand("foo", "dhcp6");
     ConstElementPtr answer = mgr_.handleCommand("foo", ConstElementPtr(),
@@ -394,6 +412,7 @@ TEST_F(CtrlAgentCommandMgrTest, noServerSocket) {
 TEST_F(CtrlAgentCommandMgrTest, forwardListCommands) {
     // Configure client side socket.
     configureControlSocket("dhcp4");
+    SKIP_IF(skipped_);
     // Create server side socket.
     bindServerSocket("{ \"result\" : 3 }", true);
 

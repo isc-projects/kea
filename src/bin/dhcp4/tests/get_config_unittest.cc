@@ -9,6 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <config/testutils/socket_test.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_srv.h>
@@ -30,6 +31,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
@@ -14650,6 +14652,16 @@ public:
             if (comment_) {
                 reason = string(" (") + comment_->stringValue() + string(")");
             }
+
+            bool const too_long(SocketName::isTooLongFromConfig(json));
+            if (too_long) {
+                EXPECT_EQ(CONTROL_RESULT_ERROR, rcode_);
+                string const exp_error("name too long");
+                string const error(comment_->stringValue());
+                EXPECT_NE(std::string::npos, error.find(exp_error));
+                return (true);
+            }
+
             ADD_FAILURE() << "configure for " << operation
                           << " returned error code "
                           << rcode_ << reason << " on\n"
