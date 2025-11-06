@@ -793,6 +793,10 @@ Dhcpv6Srv::runOne() {
                                                        this, query));
             if (!MultiThreadingMgr::instance().getThreadPool().add(call_back)) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
+                StatsMgr::instance().addValue("pkt6-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
             }
         } else {
             processPacketAndSendResponseNoThrow(query);

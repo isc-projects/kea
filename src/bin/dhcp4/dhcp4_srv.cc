@@ -1318,6 +1318,10 @@ Dhcpv4Srv::runOne() {
                                                        this, query));
             if (!MultiThreadingMgr::instance().getThreadPool().add(call_back)) {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
+                StatsMgr::instance().addValue("pkt4-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt4-receive-drop",
+                                              static_cast<int64_t>(1));
             }
         } else {
             processPacketAndSendResponseNoThrow(query);

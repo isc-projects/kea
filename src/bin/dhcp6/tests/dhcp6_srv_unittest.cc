@@ -66,6 +66,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::process;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
@@ -2477,7 +2478,6 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
 
 
     // Check the pkt6-not-for-us stat was bumped by one.
-    using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr stat = mgr.getObservation("pkt6-not-for-us");
     ASSERT_TRUE(stat);
@@ -2521,7 +2521,6 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     }
 
     // The pkt6-rfc-violation stat should be bumped by one each time.
-    using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
     ObservationPtr stat = mgr.getObservation("pkt6-rfc-violation");
     ASSERT_TRUE(stat);
@@ -3646,7 +3645,6 @@ TEST_F(Dhcpv6SrvTest, receiveAddrRegInformStat) {
 // Test checks if reception of a packet when the service is disabled
 // increases pkt6-service-disabled and pkt6-receive-drop.
 TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
-    using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
 
     // Let's get a simple SOLICIT...
@@ -3660,6 +3658,7 @@ TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr srv_disable = mgr.getObservation("pkt6-service-disabled");
     ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt6_rcvd);
     ASSERT_TRUE(srv_disable);
     ASSERT_TRUE(recv_drop);
@@ -3675,15 +3674,7 @@ TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
     // fakeReceive()
     srv_->run();
 
-    // All expected statistics must be present.
-    pkt6_rcvd = mgr.getObservation("pkt6-received");
-    srv_disable = mgr.getObservation("pkt6-service-disabled");
-    recv_drop = mgr.getObservation("pkt6-receive-drop");
-    ASSERT_TRUE(pkt6_rcvd);
-    ASSERT_TRUE(srv_disable);
-    ASSERT_TRUE(recv_drop);
-
-    // They also must have expected values.
+    // All statistics should have been dumped by one.
     EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
     EXPECT_EQ(1, srv_disable->getInteger().first);
     EXPECT_EQ(1, recv_drop->getInteger().first);
@@ -3692,7 +3683,6 @@ TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
 // Test checks if reception of a malformed packet increases pkt6-parse-failed
 // and pkt6-receive-drop
 TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
-    using namespace isc::stats;
     StatsMgr& mgr = StatsMgr::instance();
 
     // Let's get a simple SOLICIT...
@@ -3705,6 +3695,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     ObservationPtr pkt6_rcvd = mgr.getObservation("pkt6-received");
     ObservationPtr parse_fail = mgr.getObservation("pkt6-parse-failed");
     ObservationPtr recv_drop = mgr.getObservation("pkt6-receive-drop");
+    // All expected statistics must be present.
     ASSERT_TRUE(pkt6_rcvd);
     ASSERT_TRUE(parse_fail);
     ASSERT_TRUE(recv_drop);
@@ -3720,15 +3711,7 @@ TEST_F(Dhcpv6SrvTest, receiveParseFailedStat) {
     // fakeReceive()
     srv_->run();
 
-    // All expected statistics must be present.
-    pkt6_rcvd = mgr.getObservation("pkt6-received");
-    parse_fail = mgr.getObservation("pkt6-parse-failed");
-    recv_drop = mgr.getObservation("pkt6-receive-drop");
-    ASSERT_TRUE(pkt6_rcvd);
-    ASSERT_TRUE(parse_fail);
-    ASSERT_TRUE(recv_drop);
-
-    // They also must have expected values.
+    // All statistics should have been dumped by one.
     EXPECT_EQ(1, pkt6_rcvd->getInteger().first);
     EXPECT_EQ(1, parse_fail->getInteger().first);
     EXPECT_EQ(1, recv_drop->getInteger().first);

@@ -6986,8 +6986,7 @@ The DHCPv6 server supports the following statistics:
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-processing-failed                            | integer        | Number of incoming packets that    |
    |                                                   |                | was dropped because an unexpected  |
-   |                                                   |                | exception was thrown during        |
-   |                                                   |                | processing.                        |
+   |                                                   |                | error occurred during processing.  |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-limit-exceeded                               | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped by the ``limits``     |
@@ -7738,7 +7737,7 @@ a second counter detailing the drop cause:
 
 - ``pkt6-not-for-us`` - to be handled by another server
 
-- ``pkt6-processing-failed`` - git an unexpected exception during processing
+- ``pkt6-processing-failed`` - got an unexpected error during processing
 
 - ``pkt6-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
   hook library

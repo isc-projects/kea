@@ -385,7 +385,7 @@ public:
         : Dhcpv6SrvTest(),
           iface_mgr_test_config_(true) {
         // Let's wipe all existing statistics.
-        isc::stats::StatsMgr::instance().removeAll();
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Destructor.
@@ -396,7 +396,7 @@ public:
         CfgMgr::instance().setD2ClientConfig(cfg);
 
         // Let's wipe all existing statistics.
-        isc::stats::StatsMgr::instance().removeAll();
+        StatsMgr::instance().removeAll();
     }
 
     /// @brief Check that server processes correctly a prefix hint sent by the
@@ -1054,14 +1054,15 @@ SARRTest::pkt6ReceiveDropStat1() {
     client.useServerId(bogus_srv_id);
     client.doRequest();
 
-    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
-    using namespace isc::stats;
+    // Ok, let's check the statistics. pkt6-receive-drop should be set to 1.
     StatsMgr& mgr = StatsMgr::instance();
-
     ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
     ASSERT_TRUE(pkt6_recv_drop);
-
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+    // and pkt6-not-for-us should be set to 1.
+    ObservationPtr pkt6_not_for_us = mgr.getObservation("pkt6-not-for-us");
+    ASSERT_TRUE(pkt6_not_for_us);
+    EXPECT_EQ(1, pkt6_not_for_us->getInteger().first);
 }
 
 TEST_F(SARRTest, pkt6ReceiveDropStat1) {
@@ -1087,14 +1088,14 @@ SARRTest::pkt6ReceiveDropStat2() {
     client.setDestAddress(asiolink::IOAddress("2001:db8::1")); // Pretend it's unicast
     client.doSolicit();
 
-    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
-    using namespace isc::stats;
+    // Ok, let's check the statistics. pkt6-receive-drop should be set to 1.
     StatsMgr& mgr = StatsMgr::instance();
-
     ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
     ASSERT_TRUE(pkt6_recv_drop);
-
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+    // and pkt6-rfc-violation should be set to 1.
+    ObservationPtr pkt6_rfc_violation = mgr.getObservation("pkt6-rfc-violation");
+    EXPECT_EQ(1, pkt6_rfc_violation->getInteger().first);
 }
 
 TEST_F(SARRTest, pkt6ReceiveDropStat2) {
@@ -1123,14 +1124,14 @@ SARRTest::pkt6ReceiveDropStat3() {
     client.useServerId(client.getClientId());
     client.doSolicit();
 
-    // Ok, let's check the statistic. pkt6-receive-drop should be set to 1.
-    using namespace isc::stats;
+    // Ok, let's check the statistics. pkt6-receive-drop should be set to 1.
     StatsMgr& mgr = StatsMgr::instance();
-
     ObservationPtr pkt6_recv_drop = mgr.getObservation("pkt6-receive-drop");
     ASSERT_TRUE(pkt6_recv_drop);
-
     EXPECT_EQ(1, pkt6_recv_drop->getInteger().first);
+    // and pkt6-rfc-violation should be set to 1.
+    ObservationPtr pkt6_rfc_violation = mgr.getObservation("pkt6-rfc-violation");
+    EXPECT_EQ(1, pkt6_rfc_violation->getInteger().first);
 }
 
 TEST_F(SARRTest, pkt6ReceiveDropStat3) {

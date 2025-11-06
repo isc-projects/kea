@@ -18,8 +18,8 @@
 
 	Added "pkt4-processing-failed" and "pkt6-processing-failed"
 	statistics which are increased when an incoming packet
-	was dropped because an unexpected exception was thrown
-	during processing.
+	was dropped because an unexpected error occurred during
+	processing.
 
 	Added "pkt4-limit-exceeded" and "pkt6-limit-exceeded"
 	statistics which are increased when an incoming packet
