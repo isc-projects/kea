@@ -3644,7 +3644,7 @@ TEST_F(Dhcpv6SrvTest, receiveAddrRegInformStat) {
 
 // Test checks if reception of a packet when the service is disabled
 // increases pkt6-service-disabled and pkt6-receive-drop.
-TEST_F(Dhcpv6SrvTest, receiveServiceDisableddStat) {
+TEST_F(Dhcpv6SrvTest, receiveServiceDisabledStat) {
     StatsMgr& mgr = StatsMgr::instance();
 
     // Let's get a simple SOLICIT...

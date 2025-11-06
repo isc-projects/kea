@@ -14,7 +14,7 @@
 
 	Added "pkt4-not-for-us" and "pkt6-not-for-us"
 	statistics which are increased when an incoming packet
-	was dropped bease it has to be handled by another server.
+	was dropped because it has to be handled by another server.
 
 	Added "pkt4-processing-failed" and "pkt6-processing-failed"
 	statistics which are increased when an incoming packet

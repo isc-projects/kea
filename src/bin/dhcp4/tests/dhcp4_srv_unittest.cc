@@ -1105,7 +1105,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheckDiscover) {
     EXPECT_EQ(2, stat->getInteger().first);
 }
 
-// Verifies that DHCPREQEUSTs are sanity checked correctly.
+// Verifies that DHCPREQUESTs are sanity checked correctly.
 // 1. They must have either hardware address or client id
 // 2. They must have a requested address
 // 3. They may or may not have a server id
