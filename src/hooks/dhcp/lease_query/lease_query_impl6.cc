@@ -90,8 +90,7 @@ LeaseQueryImpl6::LeaseQueryImpl6(const ConstElementPtr config)
 }
 
 void
-LeaseQueryImpl6::processQuery(PktPtr base_query, bool& invalid,
-                              bool& sending) const {
+LeaseQueryImpl6::processQuery(PktPtr base_query, bool& invalid) const {
     Pkt6Ptr query = boost::dynamic_pointer_cast<Pkt6>(base_query);
     if (!query) {
         // Shouldn't happen.
@@ -202,7 +201,6 @@ LeaseQueryImpl6::processQuery(PktPtr base_query, bool& invalid,
     }
 
     // Construct the reply.
-    sending = true;
     Pkt6Ptr reply = buildReply(status_opt, query, leases);
     if (reply) {
         sendResponse(reply);

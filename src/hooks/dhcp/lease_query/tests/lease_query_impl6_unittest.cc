@@ -682,11 +682,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // A v4 packet should get tossed.
     Pkt4Ptr pkt4(new Pkt4(DHCPLEASEQUERY, 0));
     bool invalid = false;
-    bool sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(pkt4, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(pkt4, invalid), BadValue,
                      "LeaseQueryImpl6 query is not DHCPv6 packet");
     EXPECT_FALSE(invalid);
-    EXPECT_FALSE(sending);
 
     // Set the pkt6-rfc-violation stat to 0.
     StatsMgr::instance().setValue("pkt6-rfc-violation", static_cast<int64_t>(0));
@@ -694,11 +692,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // No client-id option should fail.
     Pkt6Ptr lq(new Pkt6(DHCPV6_LEASEQUERY_REPLY, 123));
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY must supply a D6O_CLIENTID");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Check the pkt6-rfc-violation stat which was bumped by one.
     ObservationPtr stat_rv = StatsMgr::instance().getObservation("pkt6-rfc-violation");
@@ -714,12 +710,10 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // Add an a non-matching server id.
     lq->addOption(makeServerIdOption(std::vector<uint8_t>{ 10, 11, 12, 13, 14, 15, 16 }));
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting DHCPV6_LEASEQUERY from: ::,"
                      " unknown server-id: type=00002, len=00007: 0a:0b:0c:0d:0e:0f:10");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Check the pkt6-not-for-us stat which was bumped by one.
     ObservationPtr stat_nfu = StatsMgr::instance().getObservation("pkt6-not-for-us");
@@ -732,11 +726,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
 
     // Source address cannot be ::.
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY source address cannot be ::");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Set the pkt6-admin-filtered stat to 0.
     StatsMgr::instance().setValue("pkt6-admin-filtered", static_cast<int64_t>(0));
@@ -746,11 +738,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
 
     // An unknown requester should fail.
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting DHCPV6_LEASEQUERY from unauthorized requester: de:ad:be:ef::");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Check the pkt6-admin-filtered stat which was bumped by one.
     ObservationPtr stat_af = StatsMgr::instance().getObservation("pkt6-admin-filtered");
@@ -762,11 +752,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
 
     // A query without a D6O_LQ_QUERY option should fail.
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY must supply a D6O_LQ_QUERY option");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 }
 
 // Verifies the operation of LeaseQueryImpl6::initReply().
@@ -1448,10 +1436,8 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidWithStatus) {
                                     scenario.qry_cid_);
         // Process the query.
         bool invalid = false;
-        bool sending = false;
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
         EXPECT_FALSE(invalid);
-        EXPECT_TRUE(sending);
 
         // We should have generated a LEASE_QUERY_REPLY with a
         // status option containing the expected status.
@@ -1551,10 +1537,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressNoActiveLe
 
         // Process the query.
         bool invalid = false;
-        bool sending = false;
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
         EXPECT_FALSE(invalid);
-        EXPECT_TRUE(sending);
 
         // We should have generated a DHCPV6_LEASEQUERY_REPLY with a
         // status option containing the expected status.
@@ -1607,10 +1591,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressActiveLeas
 
     // Process the query.
     bool invalid = false;
-    bool sending = false;
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
     EXPECT_FALSE(invalid);
-    EXPECT_TRUE(sending);
 
     // We should have generated a DHCPV6_LEASEQUERY_REPLY with a
     // status option containing the successful status.
@@ -1694,10 +1676,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdNoActiveLea
 
     // Process the query.
     bool invalid = false;
-    bool sending = false;
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
     EXPECT_FALSE(invalid);
-    EXPECT_TRUE(sending);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -1744,10 +1724,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // Process the query.
     bool invalid = false;
-    bool sending = false;
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
     EXPECT_FALSE(invalid);
-    EXPECT_TRUE(sending);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -1821,10 +1799,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
 
     // Process the query.
     bool invalid = false;
-    bool sending = false;
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
     EXPECT_FALSE(invalid);
-    EXPECT_TRUE(sending);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -2085,10 +2061,8 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpaddressPDLeases()
 
         // Process the query.
         bool invalid = false;
-        bool sending = false;
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid, sending));
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
         EXPECT_FALSE(invalid);
-        EXPECT_TRUE(sending);
 
         // We should have generated a LEASE_QUERY_REPLY with a
         // status option containing the expected status.

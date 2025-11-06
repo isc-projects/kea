@@ -1337,29 +1337,29 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr query) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
 void
 Dhcpv4Srv::processPacketAndSendResponse(Pkt4Ptr query) {
-    Pkt4Ptr rsp;
-    try {
-        rsp = processPacket(query);
-        if (!rsp) {
-            return;
-        }
-    } catch (...) {
-        StatsMgr::instance().addValue("pkt4-processing-failed",
-                                      static_cast<int64_t>(1));
-        StatsMgr::instance().addValue("pkt4-receive-drop",
-                                      static_cast<int64_t>(1));
-        throw;
+    Pkt4Ptr rsp = processPacket(query);
+    if (!rsp) {
+        return;
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
     processPacketBufferSend(callout_handle, rsp);
 }
 
@@ -1568,18 +1568,9 @@ void
 Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
                                             bool allow_answer_park) {
     try {
-        Pkt4Ptr rsp;
-        try {
-            rsp = processDhcp4Query(query, allow_answer_park);
-            if (!rsp) {
-                return;
-            }
-        } catch (...) {
-            StatsMgr::instance().addValue("pkt4-processing-failed",
-                                          static_cast<int64_t>(1));
-            StatsMgr::instance().addValue("pkt4-receive-drop",
-                                          static_cast<int64_t>(1));
-            throw;
+        Pkt4Ptr rsp = processDhcp4Query(query, allow_answer_park);
+        if (!rsp) {
+            return;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1588,9 +1579,17 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1670,18 +1669,9 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
                                                  AllocEngine::ClientContext4Ptr& ctx,
                                                  bool allow_answer_park) {
     try {
-        Pkt4Ptr rsp;
-        try {
-            rsp = processLocalizedQuery4(ctx, allow_answer_park);
-            if (!rsp) {
-                return;
-            }
-        } catch (...) {
-            StatsMgr::instance().addValue("pkt4-processing-failed",
-                                          static_cast<int64_t>(1));
-            StatsMgr::instance().addValue("pkt4-receive-drop",
-                                          static_cast<int64_t>(1));
-            throw;
+        Pkt4Ptr rsp = processLocalizedQuery4(ctx, allow_answer_park);
+        if (!rsp) {
+            return;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1691,9 +1681,17 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 

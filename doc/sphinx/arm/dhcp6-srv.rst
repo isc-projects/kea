@@ -7001,8 +7001,9 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | received, direct responses are     |
    |                                                   |                | forbidden, the server ID sent by   |
    |                                                   |                | the client does not match the      |
-   |                                                   |                | server's server ID, or the packet  |
-   |                                                   |                | is malformed.                      |
+   |                                                   |                | server's server ID, the packet     |
+   |                                                   |                | is malformed, or an unexpected     |
+   |                                                   |                | error occurred during processing.  |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |

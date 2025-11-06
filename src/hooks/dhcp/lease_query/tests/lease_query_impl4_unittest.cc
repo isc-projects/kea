@@ -638,11 +638,9 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     // A v6 packet should get tossed.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_LEASEQUERY, 0));
     bool invalid = false;
-    bool sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(pkt6, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(pkt6, invalid), BadValue,
                      "LeaseQueryImpl4 query is not DHCPv4 packet");
     EXPECT_FALSE(invalid);
-    EXPECT_FALSE(sending);
 
     // Set the pkt4-rfc-violation stat to 0.
     StatsMgr::instance().setValue("pkt4-rfc-violation", static_cast<int64_t>(0));
@@ -650,11 +648,9 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     // An empty giaddr should fail.
     Pkt4Ptr lq(new Pkt4(DHCPLEASEQUERY, 123));
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "giaddr cannot be 0.0.0.0");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Check the pkt4-rfc-violation stat which was bumped by one.
     ObservationPtr stat_rv =
@@ -668,11 +664,9 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     // An unknown giaddr should fail.
     lq->setGiaddr(IOAddress("192.0.2.2"));
     invalid = false;
-    sending = false;
-    ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting query from unauthorized requester: 192.0.2.2");
     EXPECT_TRUE(invalid);
-    EXPECT_FALSE(sending);
 
     // Check the pkt4-admin-filtered stat which was bumped by one.
     ObservationPtr stat_af =
@@ -747,11 +741,9 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
         }
 
         invalid = false;
-        sending = false;
-        ASSERT_THROW_MSG(impl->processQuery(lq, invalid, sending), BadValue,
+        ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                          scenario.exp_message_);
         EXPECT_TRUE(invalid);
-        EXPECT_FALSE(sending);
     }
 }
 

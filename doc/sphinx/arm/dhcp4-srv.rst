@@ -7435,9 +7435,11 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | the most common reasons may be     |
    |                                                    |                | that an unacceptable packet type   |
    |                                                    |                | was received, direct responses are |
-   |                                                    |                | forbidden, or the server ID sent   |
-   |                                                    |                | by the client does not match the   |
-   |                                                    |                | server's server ID.                |
+   |                                                    |                | forbidden, the server ID sent by   |
+   |                                                    |                | the client does not match the      |
+   |                                                    |                | server's server ID, or an          |
+   |                                                    |                | unexpected error occurred during   |
+   |                                                    |                | processing.                        |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].total-addresses                         | integer        | Total number of addresses          |
    |                                                    |                | available for DHCPv4 management    |

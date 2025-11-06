@@ -812,26 +812,25 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr query) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
 void
 Dhcpv6Srv::processPacketAndSendResponse(Pkt6Ptr query) {
-    Pkt6Ptr rsp;
-    try {
-        rsp = processPacket(query);
-        if (!rsp) {
-            return;
-        }
-    } catch (...) {
-        StatsMgr::instance().addValue("pkt6-processing-failed",
-                                      static_cast<int64_t>(1));
-        StatsMgr::instance().addValue("pkt6-receive-drop",
-                                      static_cast<int64_t>(1));
-        throw;
+    Pkt6Ptr rsp = processPacket(query);
+    if (!rsp) {
+        return;
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1042,18 +1041,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
 void
 Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
     try {
-        Pkt6Ptr rsp;
-        try {
-            rsp = processDhcp6Query(query);
-            if (!rsp) {
-                return;
-            }
-        } catch (...) {
-            StatsMgr::instance().addValue("pkt6-processing-failed",
-                                          static_cast<int64_t>(1));
-            StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
-            throw;
+        Pkt6Ptr rsp = processDhcp6Query(query);
+        if (!rsp) {
+            return;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1062,9 +1052,17 @@ Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1118,18 +1116,9 @@ void
 Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
                                                  AllocEngine::ClientContext6& ctx) {
     try {
-        Pkt6Ptr rsp;
-        try {
-            rsp = processLocalizedQuery6(ctx);
-            if (!rsp) {
-                return;
-            }
-        } catch (...) {
-            StatsMgr::instance().addValue("pkt6-processing-failed",
-                                          static_cast<int64_t>(1));
-            StatsMgr::instance().addValue("pkt6-receive-drop",
-                                          static_cast<int64_t>(1));
-            throw;
+        Pkt6Ptr rsp = processLocalizedQuery6(ctx);
+        if (!rsp) {
+            return;
         }
 
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1138,9 +1127,17 @@ Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 

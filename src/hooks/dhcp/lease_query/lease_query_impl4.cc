@@ -47,8 +47,7 @@ LeaseQueryImpl4::LeaseQueryImpl4(const ConstElementPtr config)
 };
 
 void
-LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
-                              bool& sending) const {
+LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid) const {
     Pkt4Ptr query = boost::dynamic_pointer_cast<Pkt4>(base_query);
     if (!query) {
         // Shouldn't happen.
@@ -127,7 +126,6 @@ LeaseQueryImpl4::processQuery(PktPtr base_query, bool& invalid,
                   << "]");
     }
 
-    sending = true;
     Pkt4Ptr response = buildResponse(response_type, query, leases);
     /// Send the response if we have one
     if (response) {
