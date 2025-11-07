@@ -4565,10 +4565,9 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
 
     if (allow_address_registration && !allow_address_registration->boolValue()) {
         LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_ADDR6_REGISTER_DISABLED_DROP)
-                .arg(addr_reg_inf->getLabel());
+                .arg(ctx.query_->getLabel());
         StatsMgr::instance().addValue("pkt6-admin-filtered",
                                       static_cast<int64_t>(1));
-
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         return(Pkt6Ptr());

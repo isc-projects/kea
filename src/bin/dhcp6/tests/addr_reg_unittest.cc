@@ -1915,11 +1915,15 @@ TEST_F(AddrRegTest, allowAddressRegistrationFalse) {
     // Verify no response.
     ASSERT_FALSE(srv_->processAddrRegInform(ctx));
 
-    // Drop stat should have been bumped by one and the log emitted.
+    // Admin-filtered and drop stat should have been bumped by one and the log emitted.
     ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation("pkt6-admin-filtered");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
     stat = StatsMgr::instance().getObservation("pkt6-receive-drop");
     ASSERT_TRUE(stat);
     EXPECT_EQ(1, stat->getInteger().first);
+
     EXPECT_EQ(1, countFile("DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM"));
 }
 
