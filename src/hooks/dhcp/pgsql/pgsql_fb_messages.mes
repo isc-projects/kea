@@ -25,7 +25,7 @@ is typically a network or database server issue.
 
 % LEGAL_LOG_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL log database: %1
 This is an error message issued when a legal log hook library experienced
-and error freeing database SQL resources as part of closing its connection to
+an error freeing database SQL resources as part of closing its connection to
 the PostgreSQL database.  The connection is closed as part of normal server
 shutdown.  This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
@@ -51,7 +51,7 @@ should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
 % LEGAL_LOG_PGSQL_ROLLBACK rolling back PostgreSQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % LEGAL_LOG_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction

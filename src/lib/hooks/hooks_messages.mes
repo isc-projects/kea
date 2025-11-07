@@ -104,7 +104,7 @@ has been successfully loaded.
 % HOOKS_LIBRARY_LOADING loading hooks library %1
 Logged at debug log level 40.
 This is a debug message output just before the specified library is loaded.
-If the action is successfully, it will be followed by the
+If the action is successful, it will be followed by the
 HOOKS_LIBRARY_LOADED informational message.
 
 % HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE hooks library %1 reports its multi-threading compatibility as %2

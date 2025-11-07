@@ -53,7 +53,7 @@ and the client's packet belongs to one or more classes. There may be several
 reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
-useful is to point out that the pool reserved to a given class has ran
+useful is to point out that the pool reserved to a given class has run
 out of addresses. When you see this message, you may consider checking your
 pool size and your classification definitions.
 
@@ -335,7 +335,7 @@ and the client's packet belongs to one or more classes. There may be several
 reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
-useful is to point out that the pool reserved to a given class has ran
+useful is to point out that the pool reserved to a given class has run
 out of addresses. When you see this message, you may consider checking your
 pool size and your classification definitions.
 
@@ -410,7 +410,7 @@ and returned.
 
 % ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR no reservations found but leases exist for client %1
 Logged at debug log level 40.
-This message is logged when the allocation engine is in the process if
+This message is logged when the allocation engine is in the process of
 allocating leases for the client, there are no static reservations,
 but lease(s) exist for the client. The allocation engine will remove
 leases which are reserved for other clients, and return all

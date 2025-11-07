@@ -957,7 +957,7 @@ selection.
 
 % DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS No subnet selected because no suitable address to use for subnet selection was found.
 Logged at debug log level 40.
-A debug message issued when the server was find a suitable address to use for
+A debug message issued when the server could not find a suitable address to use for
 subnet selection.
 
 % DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH No subnet matches address: %1

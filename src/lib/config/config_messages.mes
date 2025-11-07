@@ -50,7 +50,7 @@ at the given address and port, has begun to shutdown.
 
 % COMMAND_HTTP_SOCKET_SECURITY_WARNING command socket configuration is NOT SECURE: %1
 This warning message is issued when security enforcement is disabled
-and command socket configuration does not use HTTPS/TLS or  baseic HTTP
+and command socket configuration does not use HTTPS/TLS or  basic HTTP
 authentication. The server will still use the socket as configured but
 is warning that doing so may pose a security risk.
 

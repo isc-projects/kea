@@ -237,7 +237,7 @@ configuration needs to be updated or the source of the FQDN itself should be
 investigated.
 
 % DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
-This an error message indicating that DHCP-DDNS is receiving DNS update
+This is an error message indicating that DHCP-DDNS is receiving DNS update
 requests faster than they can be processed.  This may mean the maximum queue
 needs to be increased, the DHCP-DDNS clients are simply generating too many
 requests too quickly, or perhaps upstream DNS servers are experiencing
@@ -404,12 +404,12 @@ server or others as appropriate.
 Logged at debug log level 55.
 This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
-reverse update will not performed.
+reverse update will not be performed.
 
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
 Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
-event lo
+event loop
 
 % DHCP_DDNS_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
 This warning is emitted when internal security checks normally

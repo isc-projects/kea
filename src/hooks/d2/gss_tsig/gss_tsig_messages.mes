@@ -49,7 +49,7 @@ created a new GSS-TSIG key. The name of the new key is displayed.
 This warning message is issued when the setup of a new GSS-TSIG key failed.
 The name of the new key and the error are displayed.
 
-% GSS_TSIG_NEW_KEY_SETUP_SUCCEED new GSS-TSIG key '%1' setup succeed.
+% GSS_TSIG_NEW_KEY_SETUP_SUCCEED new GSS-TSIG key '%1' setup succeeded.
 Logged at debug log level 40.
 This debug message is issued when the setup of a new GSS-TSIG key
 successfully finished. The name of the new key is displayed.
@@ -63,7 +63,7 @@ TKEY lifetime) were removed. The number of removed keys is displayed.
 This info message indicates that the GSS-TSIG hooks library has
 been unloaded successfully.
 
-% GSS_TSIG_VERIFIED GSS-TSIG verify successed.
+% GSS_TSIG_VERIFIED GSS-TSIG verify succeeded.
 Logged at debug log level 40.
 A debug message issued when GSS-TSIG verification succeeded.
 
@@ -160,7 +160,7 @@ is null.
 
 % TKEY_EXCHANGE_FAIL_RESPONSE_ERROR GSS-TKEY exchange failed because the response contains an error: %1.
 This error message indicated that GSS-TKEY exchange failed because the response
-contains an error. The argument details the reponse error.
+contains an error. The argument details the response error.
 
 % TKEY_EXCHANGE_FAIL_TKEY_ERROR GSS-TKEY exchange failed because the response contains TKEY error: %1.
 This error message indicated that GSS-TKEY exchange failed because the response
