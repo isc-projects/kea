@@ -107,10 +107,6 @@ LeaseQueryImpl::parserRequesters(ConstElementPtr requesters) {
 
     for (auto const& address_elem : requesters->listValue()) {
         auto entry_txt = address_elem->stringValue();
-        // first let's remove any whitespaces
-        boost::erase_all(entry_txt, " "); // space
-        boost::erase_all(entry_txt, "\t"); // tabulation
-
         // Is this just an address or is it CIDR?
         size_t pos = entry_txt.find("/");
         if (pos == std::string::npos) {
