@@ -6918,7 +6918,7 @@ that support address registration to return option 148 to clients that
 request it via the ORO option. As with any other standard option, this
 option must be specified in the server configuration in order to be
 sent to clients and that this behavior is independent of
-``allow-address-resgistration``.
+``allow-address-registration``.
 
 .. note::
 
