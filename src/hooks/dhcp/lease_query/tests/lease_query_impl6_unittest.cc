@@ -590,24 +590,29 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
         {
             "requesters entry not an address",
             Element::fromJSON("{ \"requesters\" : [ \"foo\" ] }"),
-            "'requesters' address entry 'foo' is invalid: Failed to convert string"
+            "'requesters' address entry 'foo' is invalid:"
+            " Failed to convert string"
             " to address 'foo': Invalid argument"
         },
         {
             "requesters entry not a v6 address",
             Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\" ] }"),
-            "'requesters' address entry '192.0.2.1' is invalid: not a IPv6 address"
+            "'requesters' address entry '192.0.2.1' is invalid:"
+            " not a IPv6 address"
         },
         {
             "requesters entry is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\", \"2001:db8:1::\" ] }"),
-            "'requesters' address entry '2001:db8:1::' is invalid: address is already in the list"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\","
+                              " \"2001:db8:1::\" ] }"),
+            "'requesters' address entry '2001:db8:1::' is invalid:"
+            " address is already in the list"
         },
         {
             "requesters CIDR entry address is invalid",
             Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::x/64\" ] }"),
             "'requesters' CIDR entry '2001:db8:1::x/64' is invalid:"
-            " Failed to convert string to address '2001:db8:1::x': Invalid argument"
+            " Failed to convert string to address '2001:db8:1::x':"
+            " Invalid argument"
 
         },
         {
@@ -618,29 +623,37 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
         },
         {
             "requesters CIDR is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/64\", \"2001:db8:1::/64\"] }"),
-            "'requesters' CIDR entry '2001:db8:1::/64' is invalid: entry already exists"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/64\","
+                              " \"2001:db8:1::/64\"] }"),
+            "'requesters' CIDR entry '2001:db8:1::/64' is invalid:"
+            " entry already exists"
         },
         {
             "prefix_lengths not a list",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": 77 }"),
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": 77 }"),
             "'prefix-lengths' is not a list"
         },
         {
             "prefix_lengths entry is not an int",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ \"boo\" ] }"),
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ \"boo\" ] }"),
             "'prefix-lengths' entry '\"boo\"' is invalid: must be an integer"
         },
         {
             "prefix_lengths entry is 0",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ 0 ] }"),
-            "'prefix-lengths' entry '0' is invalid: must be greater than 0 and less than or equal to 128"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ 0 ] }"),
+            "'prefix-lengths' entry '0' is invalid: must be greater"
+            " than 0 and less than or equal to 128"
 
         },
         {
             "prefix_lengths entry is 129",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ 4, 129 ] }"),
-            "'prefix-lengths' entry '129' is invalid: must be greater than 0 and less than or equal to 128"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ 4, 129 ] }"),
+            "'prefix-lengths' entry '129' is invalid:"
+            " must be greater than 0 and less than or equal to 128"
 
         }
     };
@@ -657,7 +670,8 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
 // can be validated.
 TEST(LeaseQueryImpl6Test, validConfig6) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"2001:db8:1::1\", \"2001:db8:1::3\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"2001:db8:1::1\","
+                             " \"2001:db8:1::3\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
 
@@ -691,7 +705,8 @@ class MemfileLeaseQueryImpl6ProcessTest : public
 // - No D6O_LQ_QUERY option
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"2001:db8:2::1\", \"2001:db8:3::1\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"2001:db8:2::1\","
+                             " \"2001:db8:3::1\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
     LeaseQueryImpl6Ptr impl;

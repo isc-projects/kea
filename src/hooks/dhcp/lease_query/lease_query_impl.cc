@@ -118,9 +118,9 @@ LeaseQueryImpl::parserRequesters(ConstElementPtr requesters) {
                 IOAddress address(entry_txt);
                 address_list_.insert(address);
             } catch (const std::exception& ex) {
-                isc_throw(BadValue,
-                      "'requesters' address entry '" << address_elem->stringValue()
-                      << "' is invalid: " << ex.what());
+                isc_throw(BadValue, "'requesters' address entry '"
+                          << address_elem->stringValue()
+                          << "' is invalid: " << ex.what());
             }
         } else {
             try {
@@ -132,7 +132,8 @@ LeaseQueryImpl::parserRequesters(ConstElementPtr requesters) {
                 if ((prefix_len < std::numeric_limits<uint8_t>::min()) ||
                     (prefix_len > std::numeric_limits<uint8_t>::max())) {
                     // This exception will be handled 4 line later!
-                    isc_throw(OutOfRange, "prefix length " << len_txt << " is out of range");
+                    isc_throw(OutOfRange, "prefix length "
+                              << len_txt << " is out of range");
                 }
 
                 pool_set_.insert(prefix, prefix_len);

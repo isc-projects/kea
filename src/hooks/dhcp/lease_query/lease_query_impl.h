@@ -75,7 +75,7 @@ private:
     uint16_t family_;
 
     /// @brief Set of unique addresses in the list.
-    std::unordered_set<asiolink::IOAddress, boost::hash<asiolink::IOAddress> > addresses_;
+    std::unordered_set<asiolink::IOAddress, asiolink::IOAddress::Hash> addresses_;
 };
 
 /// @brief Hash for a Pool based on it's address range.
@@ -103,7 +103,9 @@ struct PoolRangeEqual {
 };
 
 /// @brief Defines an alias for a set of pools hashed by range.
-using PoolRangeSet = std::unordered_set<isc::dhcp::PoolPtr, PoolRangeHash, PoolRangeEqual>;
+using PoolRangeSet = std::unordered_set<isc::dhcp::PoolPtr,
+                                        PoolRangeHash,
+                                        PoolRangeEqual>;
 
 /// @brief Manages a unique set of Pools of a given protocol family.
 /// The pools are hashed by their address range.
@@ -228,8 +230,8 @@ public:
 private:
     /// @brief Parses 'requesters' list element.
     ///
-    /// @param requesters pointer to the list element containing requestor
-    /// entris. Entries may be a mix of IP addresses or subnets in CIDR format.
+    /// @param requesters pointer to the list element containing requester
+    /// entries. Entries may be a mix of IP addresses or subnets in CIDR format.
     ///
     /// @throw BadValue if the list is empty or if any of the entries are
     /// not valid addresses or  CIDRs.

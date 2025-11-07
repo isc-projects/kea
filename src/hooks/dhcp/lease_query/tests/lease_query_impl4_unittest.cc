@@ -586,12 +586,15 @@ TEST(LeaseQueryImpl4Test, invalidConfig4) {
         {
             "requesters entry not a v4 address",
             Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ] }"),
-            "'requesters' address entry '2001:db8:1::' is invalid: not a IPv4 address"
+            "'requesters' address entry '2001:db8:1::'"
+            " is invalid: not a IPv4 address"
         },
         {
             "requesters entry is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\", \"192.0.2.1\" ] }"),
-            "'requesters' address entry '192.0.2.1' is invalid: address is already in the list"
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\","
+                              " \"192.0.2.1\" ] }"),
+            "'requesters' address entry '192.0.2.1' is invalid:"
+            " address is already in the list"
         },
         {
             "requesters CIDR entry address is a invalid",
@@ -607,8 +610,10 @@ TEST(LeaseQueryImpl4Test, invalidConfig4) {
         },
         {
             "requesters CIDR entry is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.2.0/24\" ] }"),
-            "'requesters' CIDR entry '192.0.2.0/24' is invalid: entry already exists"
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.0/24\","
+                              " \"192.0.2.0/24\" ] }"),
+            "'requesters' CIDR entry '192.0.2.0/24' is invalid:"
+            " entry already exists"
         }
     };
 
@@ -646,7 +651,8 @@ TEST(LeaseQueryImpl4Test, validConfig4) {
 // parses and that requesters can be validated.
 TEST(LeaseQueryImpl4Test, validConfig4CIDROnly) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.3.0/24\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\","
+                             " \"192.0.3.0/24\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
 
@@ -666,7 +672,8 @@ TEST(LeaseQueryImpl4Test, validConfig4CIDROnly) {
 // parses and that requesters can be validated.
 TEST(LeaseQueryImpl4Test, validConfig4Mix) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\", \"192.0.3.25\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\","
+                             " \"192.0.3.25\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
 
@@ -685,7 +692,8 @@ TEST(LeaseQueryImpl4Test, validConfig4Mix) {
 // and client id) are detected.
 TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"192.0.2.1\", \"192.0.2.3\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.1\","
+                             " \"192.0.2.3\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
     LeaseQueryImpl4Ptr impl;
