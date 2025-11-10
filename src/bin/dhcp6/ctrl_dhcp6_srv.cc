@@ -387,6 +387,11 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
         auto params = parser.getDbAccessParameters();
         if (params["type"] == "memfile") {
             string file_name = params["name"];
+            if (!file_name.empty() &&
+                (file_name.find_first_of('/') == string::npos)) {
+                // Prepend the current datadir to the name.
+                file_name = CfgMgr::instance().getDataDir() + "/" + file_name;
+            }
             if (Memfile_LeaseMgr::isLFCProcessRunning(file_name, Memfile_LeaseMgr::V6)) {
                 return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
                         "Can not update configuration while lease file cleanup process is running."));
