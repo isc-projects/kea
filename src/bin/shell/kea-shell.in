@@ -96,7 +96,7 @@ def shell_body():
         sys.exit(0)
 
     if cmd_args.V:
-        print(EXTENDED_VERSION)
+        print(f'{VERSION} ({EXTENDED_VERSION})')
         sys.exit(0)
 
     # Ok, now it's time to put the parameters parsed into the structure to be

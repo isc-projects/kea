@@ -618,10 +618,7 @@ elif fs.is_dir('.git')
 else
     SOURCE_OF_INSTALLATION = 'tarball'
 endif
-conf_data.set(
-    'EXTENDED_VERSION',
-    f'"@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)"',
-)
+conf_data.set('EXTENDED_VERSION', f'"@SOURCE_OF_INSTALLATION@"')
 
 if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
     package_version_type = 'stable'
