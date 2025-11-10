@@ -16,7 +16,7 @@
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <config/unix_command_config.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
@@ -60,7 +60,7 @@ public:
           skipped_(false) {
         mgr_.deregisterAll();
         setSocketTestPath();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         initProcess();
     }
 
@@ -69,7 +69,7 @@ public:
     /// Deregisters all commands except 'list-commands'.
     virtual ~CtrlAgentCommandMgrTest() {
         mgr_.deregisterAll();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         resetSocketPath();
     }
 
@@ -116,11 +116,6 @@ public:
         }
     }
 
-    /// @brief Returns socket file path.
-    std::string unixSocketFilePath() {
-        return (UnixCommandConfig::getSocketPath() + "/test-socket");
-    }
-
     /// @brief Sets the path in which the socket can be created.
     /// @param explicit_path path to use as the socket path.
     void setSocketTestPath(const std::string explicit_path = "") {
@@ -133,11 +128,6 @@ public:
     void resetSocketPath() {
         UnixCommandConfig::getSocketPath(true);
         UnixCommandConfig::setSocketPathPerms();
-    }
-
-    /// @brief Removes unix socket descriptor.
-    void removeUnixSocketFile() {
-        static_cast<void>(remove(unixSocketFilePath().c_str()));
     }
 
     /// @brief Returns pointer to CtrlAgentProcess instance.
@@ -172,11 +162,11 @@ public:
         ASSERT_TRUE(ctx);
 
         ElementPtr control_socket = Element::createMap();
-        std::string const socket_path(unixSocketFilePath());
+        std::string const socket_path(SocketPath::unixSocketFilePath());
         control_socket->set("validated-socket-name", Element::create(socket_path));
         ctx->setControlSocketInfo(control_socket, service);
 
-        bool const too_long(SocketName::isTooLong(socket_path));
+        bool const too_long(SocketPath::isTooLong(socket_path));
         if (too_long) {
             skipped_ = true;
             SKIP_IF("Socket name too long.");
@@ -191,7 +181,7 @@ public:
     void bindServerSocket(const std::string& response,
                           const bool use_thread = false) {
         server_socket_.reset(new TestServerUnixSocket(getIOService(),
-                                                      unixSocketFilePath(),
+                                                      SocketPath::unixSocketFilePath(),
                                                       response));
         server_socket_->startTimer(TEST_TIMEOUT);
         server_socket_->bindServerSocket(use_thread);

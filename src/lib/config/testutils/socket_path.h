@@ -21,8 +21,8 @@ namespace config {
 namespace test {
 
 /// @brief Struct exists only to avoid ODR violation of inline functions.
-struct SocketName {
-    /// @brief Check if socket name is too long.
+struct SocketPath {
+    /// @brief Checks if socket name is too long.
     ///
     /// @param socket_name Socket name
     ///
@@ -74,6 +74,16 @@ struct SocketName {
             }
         }
         return too_long;
+    }
+
+    /// @brief Returns socket file path to be used for tests.
+    static std::string unixSocketFilePath() {
+        return (UnixCommandConfig::getSocketPath() + "/test-socket");
+    }
+
+    /// @brief Removes unix socket descriptor.
+    static void removeUnixSocketFile() {
+        static_cast<void>(remove(unixSocketFilePath().c_str()));
     }
 };
 

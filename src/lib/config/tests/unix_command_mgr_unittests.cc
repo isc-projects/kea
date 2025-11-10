@@ -9,7 +9,7 @@
 #include <asiolink/io_service.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <config/unix_command_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <util/filesystem.h>
@@ -88,7 +88,7 @@ TEST_F(UnixCommandMgrTest, unixCreate) {
 
     socket_info->set("socket-name", Element::create("test_socket"));
 
-    bool const too_long(SocketName::isTooLong("test_socket"));
+    bool const too_long(SocketPath::isTooLong("test_socket"));
     if (too_long) {
         // "File name too long"
         EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
@@ -126,7 +126,7 @@ TEST_F(UnixCommandMgrTest, exclusiveOpen) {
     socket_info->set("socket-type", Element::create("unix"));
     socket_info->set("socket-name", Element::create("test_socket"));
 
-    bool const too_long(SocketName::isTooLong("test_socket"));
+    bool const too_long(SocketPath::isTooLong("test_socket"));
     if (too_long) {
         // "File name too long"
         EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);

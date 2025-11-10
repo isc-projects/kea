@@ -11,7 +11,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/unix_command_config.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
@@ -53,9 +53,6 @@ using namespace sysrepo;
 using isc::yang::test::SysrepoSetup;
 
 namespace {
-
-/// @brief Test unix socket file name.
-const string TEST_SOCKET = "test-socket";
 
 /// @brief Type definition for the pointer to Thread objects.
 using ThreadPtr = shared_ptr<thread>;
@@ -112,7 +109,7 @@ class NetconfAgentTest : public ThreadedTest {
 public:
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         io_service_.reset(new IOService());
         agent_.reset(new NakedNetconfAgent());
         setSocketTestPath();
@@ -130,31 +127,10 @@ public:
         agent_.reset();
         requests_.clear();
         responses_.clear();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         SysrepoSetup::cleanSharedMemory();
         io_service_->stopAndPoll();
         resetSocketPath();
-    }
-
-    /// @brief Returns socket file path.
-    ///
-    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
-    /// socket file is created in the location pointed to by this variable.
-    /// Otherwise, it is created in the build directory.
-    string unixSocketFilePath() {
-        string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = string(env) + "/" + TEST_SOCKET;
-        } else {
-            socket_path = UnixCommandConfig::getSocketPath() + "/" + TEST_SOCKET;
-        }
-        return (socket_path);
-    }
-
-    /// @brief Removes unix socket descriptor.
-    void removeUnixSocketFile() {
-        static_cast<void>(remove(unixSocketFilePath().c_str()));
     }
 
     /// @brief Sets the path in which the socket can be created.
@@ -178,7 +154,7 @@ public:
     CfgControlSocketPtr createCfgControlSocket() {
         CfgControlSocketPtr cfg;
         cfg.reset(new CfgControlSocket(CfgControlSocket::Type::UNIX,
-                                       unixSocketFilePath(),
+                                       SocketPath::unixSocketFilePath(),
                                        Url("http://127.0.0.1:8000/")));
         return (cfg);
     }
@@ -275,14 +251,12 @@ NetconfAgentTest::fakeServer() {
     boost::asio::local::stream_protocol::acceptor
         acceptor(io_service_->getInternalIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
-    boost::asio::local::stream_protocol::endpoint
-        endpoint(unixSocketFilePath());
+    boost::asio::local::stream_protocol::endpoint endpoint(SocketPath::unixSocketFilePath());
     boost::asio::socket_base::reuse_address option(true);
     acceptor.set_option(option);
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
-    boost::asio::local::stream_protocol::socket
-        socket(io_service_->getInternalIOService());
+    boost::asio::local::stream_protocol::socket socket(io_service_->getInternalIOService());
 
     // Ready.
     signalReady();
@@ -360,8 +334,8 @@ NetconfAgentTest::fakeServer() {
         EXPECT_NO_THROW_LOG(socket.close());
     }
     EXPECT_NO_THROW_LOG(acceptor.close());
-    // Removed the socket file so it can be called again immediately.
-    removeUnixSocketFile();
+    // Remove the socket file so it can be called again immediately.
+    SocketPath::removeUnixSocketFile();
 
     /// Finished.
     EXPECT_FALSE(timeout);
@@ -589,8 +563,8 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
 
 // Verifies that the keaConfig method works as expected.
 TEST_F(NetconfAgentTest, keaConfig) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // Netconf configuration.
@@ -674,8 +648,8 @@ TEST_F(NetconfAgentTest, keaConfig) {
 // Verifies that the yangConfig method works as expected: apply YANG config
 // to the server.
 TEST_F(NetconfAgentTest, yangConfig) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // YANG configuration.
@@ -786,8 +760,8 @@ TEST_F(NetconfAgentTest, yangConfig) {
 
 // Verifies that the subscribeToDataChanges method works as expected.
 TEST_F(NetconfAgentTest, subscribeToDataChanges) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // Netconf configuration.
@@ -841,8 +815,8 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
 // Verifies that the update method works as expected: apply new YANG configuration
 // to the server. Note it is called by the subscription callback.
 TEST_F(NetconfAgentTest, update) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.
@@ -972,8 +946,8 @@ TEST_F(NetconfAgentTest, update) {
 // with the server. Note it is called by the subscription callback and
 // update is called after.
 TEST_F(NetconfAgentTest, validate) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.
@@ -1138,8 +1112,8 @@ TEST_F(NetconfAgentTest, validate) {
 
 // Verifies what happens when the validate method returns an error.
 TEST_F(NetconfAgentTest, noValidate) {
-    string const socket_path(unixSocketFilePath());
-    bool const socket_name_too_long(SocketName::isTooLong(socket_path));
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
     SKIP_IF(socket_name_too_long);
 
     // Initial YANG configuration.

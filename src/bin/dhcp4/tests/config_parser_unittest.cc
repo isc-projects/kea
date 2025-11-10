@@ -9,7 +9,7 @@
 #include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
 #include <config/http_command_config.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <dhcp/classify.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/iface_mgr.h>
@@ -417,7 +417,7 @@ public:
         ASSERT_NO_THROW(text = comment->stringValue());
 
         // Socket name too long?
-        bool const too_long(SocketName::isTooLongFromConfig(json));
+        bool const too_long(SocketPath::isTooLongFromConfig(json));
         if (too_long) {
             EXPECT_EQ(CONTROL_RESULT_ERROR, rcode);
             exp_error = "name too long";
@@ -6963,7 +6963,7 @@ TEST_F(Dhcp4ParserTest, comments) {
 
     ConstElementPtr json;
     ASSERT_NO_THROW_LOG(json = parseDHCP4(config, true));
-    bool const too_long(SocketName::isTooLongFromConfig(json));
+    bool const too_long(SocketPath::isTooLongFromConfig(json));
     if (too_long) {
         return;
     }

@@ -9,7 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <config/timeouts.h>
 #include <database/database_connection.h>
 #include <config/unix_command_mgr.h>
@@ -277,7 +277,7 @@ public:
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
 
-        bool const too_long(SocketName::isTooLong(socket_path_));
+        bool const too_long(SocketPath::isTooLong(socket_path_));
         if (too_long) {
             skipped_ = true;
             SKIP_IF("Socket name too long.");

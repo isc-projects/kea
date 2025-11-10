@@ -9,7 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_srv.h>
@@ -14971,7 +14971,7 @@ public:
                 reason = string(" (") + comment_->stringValue() + string(")");
             }
 
-            bool const too_long(SocketName::isTooLongFromConfig(json));
+            bool const too_long(SocketPath::isTooLongFromConfig(json));
             if (too_long) {
                 EXPECT_EQ(CONTROL_RESULT_ERROR, rcode_);
                 string const exp_error("name too long");

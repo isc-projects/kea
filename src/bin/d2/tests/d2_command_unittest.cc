@@ -10,7 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
-#include <config/testutils/socket_test.h>
+#include <config/testutils/socket_path.h>
 #include <config/timeouts.h>
 #include <config/unix_command_mgr.h>
 #include <d2/d2_controller.h>
@@ -237,7 +237,7 @@ public:
         int status = 0;
         ConstElementPtr txt = parseAnswer(status, answer);
 
-        bool const too_long(SocketName::isTooLong(socket_path_));
+        bool const too_long(SocketPath::isTooLong(socket_path_));
         if (too_long) {
             skipped_ = true;
             SKIP_IF("Socket name too long.");
@@ -810,7 +810,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
 
-    bool const too_long(SocketName::isTooLong(socket_path_));
+    bool const too_long(SocketPath::isTooLong(socket_path_));
     if (too_long) {
         skipped_ = true;
         SKIP_IF("Socket name too long.");
@@ -955,7 +955,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
 
-    bool const too_long(SocketName::isTooLong(socket_path_));
+    bool const too_long(SocketPath::isTooLong(socket_path_));
     if (too_long) {
         skipped_ = true;
         SKIP_IF("Socket name too long.");
