@@ -71,7 +71,7 @@ version() {
 
 void
 extended_version() {
-    cout << VERSION << " (" << EXTENDED_VERSION << ")\n";
+    cout << VERSION << " (" << SOURCE_OF_INSTALLATION << ")\n";
 }
 
 /// \brief Print Usage

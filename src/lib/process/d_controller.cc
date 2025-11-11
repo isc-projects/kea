@@ -885,7 +885,7 @@ DControllerBase::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << " (" << EXTENDED_VERSION << ")" << std::endl;
+        tmp << " (" << SOURCE_OF_INSTALLATION << ")" << std::endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << "- " << isc::log::Logger::getVersion() << std::endl;

@@ -618,7 +618,9 @@ elif fs.is_dir('.git')
 else
     SOURCE_OF_INSTALLATION = 'tarball'
 endif
-conf_data.set('EXTENDED_VERSION', f'"@SOURCE_OF_INSTALLATION@"')
+EXTENDED_VERSION = f'@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)'
+conf_data.set('EXTENDED_VERSION', f'"@EXTENDED_VERSION@"')
+conf_data.set('SOURCE_OF_INSTALLATION', f'"@SOURCE_OF_INSTALLATION@"')
 
 if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
     package_version_type = 'stable'
@@ -736,10 +738,7 @@ report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 report_conf_data.set('PACKAGE_VERSION_TYPE', package_version_type)
-report_conf_data.set(
-    'EXTENDED_VERSION',
-    f'@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)',
-)
+report_conf_data.set('EXTENDED_VERSION', EXTENDED_VERSION)
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)
