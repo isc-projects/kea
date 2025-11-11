@@ -26,7 +26,8 @@ set -eu
 prefix="@prefix@"
 
 # Expected version
-EXPECTED_VERSION="@PACKAGE_VERSION@"
+VERSION='@VERSION@'
+EXTENDED_VERSION='@EXTENDED_VERSION@'
 
 # Kea environment variables for shell tests.
 # KEA_LOGGER_DESTINATION is set per test with set_logger.
@@ -935,12 +936,32 @@ version_test() {
         run_command \
             "${bin_path}/${bin}" "${v}"
 
-        if test "${OUTPUT}" != "${EXPECTED_VERSION}"; then
+        if test 0 -ne "${EXIT_CODE}"; then
+            printf 'ERROR: Expected exit code 0, got "%s" when calling "%s"\n' \
+                "${EXIT_CODE}" "${bin} -V"
+            clean_exit 1
+        fi
+
+        if test "${OUTPUT}" != "${VERSION}"; then
             printf 'ERROR: Expected version "%s", got "%s" when calling "%s"\n' \
-                "${EXPECTED_VERSION}" "${OUTPUT}" "${bin} ${v}"
+                "${VERSION}" "${OUTPUT}" "${bin} ${v}"
             test_finish 1
         fi
     done
+
+    # Check -V.
+    run_command \
+        "${bin_path}/${bin}" -V
+    if test 0 -ne "${EXIT_CODE}"; then
+        printf 'ERROR: Expected exit code 0, got "%s" when calling "%s"\n' \
+            "${EXIT_CODE}" "${bin} -V"
+        clean_exit 1
+    fi
+    if test "${EXTENDED_VERSION}" != "$(echo "${OUTPUT}" | head -n 1)"; then
+        printf 'ERROR: Expected version "%s", got "%s" when calling "%s"\n' \
+            "${EXTENDED_VERSION}" "${OUTPUT}" "${bin} -V"
+        clean_exit 1
+    fi
 
     test_finish 0
 }
@@ -1080,10 +1101,10 @@ server_pid_file_test() {
 }
 
 # This test verifies that passwords are redacted in logs.
-# This function takes 2 parameters:
-# test_name
-# config - string with a content of the config (will be written to a file)
-# expected_code - expected exit code returned by kea (0 - success, 1 - failure)
+# This function takes 3 parameters:
+# - test_name
+# - config - string with a content of the config (will be written to a file)
+# - expected_code - expected exit code returned by kea (0 - success, 1 - failure)
 password_redact_test() {
     local test_name="${1}"
     local config="${2}"

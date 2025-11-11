@@ -30,3 +30,19 @@ test(
     is_parallel: false,
     priority: -1,
 )
+
+perfdhcp_tests_conf_data = configuration_data()
+perfdhcp_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+perfdhcp_process_tests = configure_file(
+    input: 'perfdhcp_process_tests.sh.in',
+    output: 'perfdhcp_process_tests.sh',
+    configuration: perfdhcp_tests_conf_data,
+)
+test(
+    'perfdhcp_process_tests.sh',
+    perfdhcp_process_tests,
+    workdir: current_build_dir,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)
