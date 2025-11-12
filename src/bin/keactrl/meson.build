@@ -9,7 +9,7 @@ if NETCONF_DEP.found()
 else
     keactrl_conf_data.set('HAVE_NETCONF', 'no')
 endif
-keactrl_conf_data.set('EXTENDED_VERSION', SOURCE_OF_INSTALLATION)
+keactrl_conf_data.set('EXTENDED_VERSION', EXTENDED_VERSION)
 keactrl_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 keactrl_conf_data.set('runstatedir', '${prefix}/' + LOCALSTATEDIR + '/run')
 keactrl_conf_data.set('localstatedir', '${prefix}/' + LOCALSTATEDIR)

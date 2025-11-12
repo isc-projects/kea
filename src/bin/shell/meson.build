@@ -1,7 +1,7 @@
 kea_shell_conf_data = configuration_data()
 kea_shell_conf_data.set('PYTHON', PYTHON.full_path())
 kea_shell_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
-kea_shell_conf_data.set('EXTENDED_VERSION', SOURCE_OF_INSTALLATION)
+kea_shell_conf_data.set('EXTENDED_VERSION', EXTENDED_VERSION)
 kea_shell_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
 
 configure_file(

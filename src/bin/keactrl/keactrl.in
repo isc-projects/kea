@@ -356,7 +356,7 @@ if test "${command}" = "-v" || test "${command}" = "--version"; then
 fi
 
 if test "${command}" = "-V"; then
-    echo "${PACKAGE_VERSION} (${EXTENDED_VERSION})"
+    echo "${EXTENDED_VERSION}"
     exit 0
 fi
 
