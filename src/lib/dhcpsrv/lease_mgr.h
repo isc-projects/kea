@@ -1097,6 +1097,41 @@ public:
     /// @returns By default an error saying the backend is not the memfile one.
     virtual isc::data::ConstElementPtr lfcStartHandler();
 
+
+    /// @brief Update in-memoery stats when adding a v4 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when adding a V6 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v4 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease4Ptr& existing,
+                                    const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v6 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease6Ptr& existing,
+                                    const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v4 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v6 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease6Ptr& lease);
+
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

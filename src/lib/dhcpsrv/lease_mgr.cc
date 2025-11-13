@@ -34,6 +34,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
@@ -1316,6 +1317,638 @@ LeaseMgr::lfcStartHandler() {
     ostringstream msg;
     msg << "lease backend '" << getName() << "' is not 'memfile'";
     return (createAnswer(CONTROL_RESULT_COMMAND_UNSUPPORTED, msg.str()));
+}
+
+void
+LeaseMgr::updateStatsOnAdd(const Lease4Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
+
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "assigned-addresses"),
+            static_cast<int64_t>(1));
+
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "assigned-addresses")),
+                    static_cast<int64_t>(1));
+            }
+        }
+
+        if (lease->stateDeclined()) {
+            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "declined-addresses"),
+                static_cast<int64_t>(1));
+
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "declined-addresses")),
+                    static_cast<int64_t>(1));
+            }
+        }
+    }
+}
+
+void
+LeaseMgr::updateStatsOnAdd(const Lease6Ptr& lease) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_, "registered-nas"),
+            static_cast<int64_t>(1));
+    } else if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
+                                      "assigned-nas" : "assigned-pds",
+                                      static_cast<int64_t>(1));
+
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            static_cast<int64_t>(1));
+
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(lease->type_, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
+                                                                  "pool" : "pd-pool", pool->getID(),
+                                                                  lease->type_ == Lease::TYPE_NA ?
+                                                                  "assigned-nas" : "assigned-pds")),
+                    static_cast<int64_t>(1));
+            }
+        }
+
+        if (lease->stateDeclined()) {
+            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
+
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "declined-addresses"),
+                static_cast<int64_t>(1));
+
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "declined-addresses")),
+                    static_cast<int64_t>(1));
+            }
+        }
+    }
+}
+
+void bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
+    /// @todo TKM take this out
+    std::cout << "bump: " << stat << " subnet: " << subnet_id
+                << " pool: " << (pool ? pool->getID() : 0xFFFF) << " by: " << value << std::endl;
+    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
+                                  static_cast<int64_t>(value));
+    if (pool) {
+        StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id,
+                                        StatsMgr::generateName("pool", pool->getID(), stat)),
+                                      static_cast<int64_t>(value));
+    }
+}
+
+#define STATE_MASK(a,b) ((a << 4) | b)
+
+// New state ASSIGNED
+constexpr uint16_t ASSIGNED_ASSIGNED = STATE_MASK(Lease::STATE_DEFAULT,
+                                                  Lease::STATE_DEFAULT);
+constexpr uint16_t ASSIGNED_DECLINED = STATE_MASK(Lease::STATE_DEFAULT,
+                                                  Lease::STATE_DECLINED);
+constexpr uint16_t ASSIGNED_RECLAIMED = STATE_MASK(Lease::STATE_DEFAULT,
+                                                   Lease::STATE_EXPIRED_RECLAIMED);
+constexpr uint16_t ASSIGNED_RELEASED =  STATE_MASK(Lease::STATE_DEFAULT,
+                                                   Lease::STATE_RELEASED);
+constexpr uint16_t ASSIGNED_REGISTERED = STATE_MASK(Lease::STATE_DEFAULT,
+                                                    Lease::STATE_REGISTERED);
+
+// New state DECLINED
+constexpr uint16_t DECLINED_ASSIGNED = (Lease::STATE_DECLINED << 4);
+constexpr uint16_t DECLINED_DECLINED = (Lease::STATE_DECLINED << 4)
+                                       | Lease::STATE_DECLINED;
+constexpr uint16_t DECLINED_RECLAIMED = (Lease::STATE_DECLINED << 4)
+                                        | Lease::STATE_EXPIRED_RECLAIMED;
+constexpr uint16_t DECLINED_RELEASED = (Lease::STATE_DECLINED << 4) 
+                                       | Lease::STATE_RELEASED;
+constexpr uint16_t DECLINED_REGISTERED = (Lease::STATE_DECLINED << 4) | Lease::STATE_REGISTERED;
+
+// New state EXPIRED_RECLAIMED
+constexpr uint16_t RECLAIMED_ASSIGNED = (Lease::STATE_EXPIRED_RECLAIMED << 4);
+constexpr uint16_t RECLAIMED_DECLINED = (Lease::STATE_EXPIRED_RECLAIMED << 4) | Lease::STATE_DECLINED;
+constexpr uint16_t RECLAIMED_RECLAIMED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
+                                         | Lease::STATE_EXPIRED_RECLAIMED;
+constexpr uint16_t RECLAIMED_RELEASED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
+                                         | Lease::STATE_RELEASED;
+constexpr uint16_t RECLAIMED_REGISTERED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
+                                         | Lease::STATE_REGISTERED;
+// New state RELEASED
+constexpr uint16_t RELEASED_ASSIGNED = (Lease::STATE_RELEASED << 4);
+constexpr uint16_t RELEASED_DECLINED = (Lease::STATE_RELEASED << 4) | Lease::STATE_DECLINED;
+constexpr uint16_t RELEASED_RECLAIMED = (Lease::STATE_RELEASED << 4)
+                                         | Lease::STATE_EXPIRED_RECLAIMED;
+constexpr uint16_t RELEASED_RELEASED = (Lease::STATE_RELEASED << 4) | Lease::STATE_RELEASED;
+constexpr uint16_t RELEASED_REGISTERED = (Lease::STATE_RELEASED << 4) | Lease::STATE_REGISTERED;
+
+// New state REGISTERED
+constexpr uint16_t REGISTERED_ASSIGNED = (Lease::STATE_REGISTERED << 4);
+constexpr uint16_t REGISTERED_DECLINED = (Lease::STATE_REGISTERED << 4)
+                                         | Lease::STATE_DECLINED;
+constexpr uint16_t REGISTERED_RECLAIMED = (Lease::STATE_REGISTERED << 4)
+                                          | Lease::STATE_EXPIRED_RECLAIMED;
+constexpr uint16_t REGISTERED_RELEASED = (Lease::STATE_REGISTERED << 4)
+                                         | Lease::STATE_RELEASED;
+constexpr uint16_t REGISTERED_REGISTERED = (Lease::STATE_REGISTERED << 4)
+                                           | Lease::STATE_REGISTERED;
+
+void
+LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
+                              const Lease4Ptr& lease) {
+    if (existing->subnet_id_ == lease->subnet_id_) {
+        if (existing->state_ == lease->state_) {
+            // Same subnet, same state, nothing to do.
+            return;
+        }
+
+        // State is different so we know we're updating at least one stat.
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->
+                                getCfgSubnets4()->getBySubnetId(existing->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(Lease::TYPE_V4, existing->addr_, false);
+        }
+
+        switch (STATE_MASK(lease->state_ , existing->state_)) {
+        case ASSIGNED_DECLINED:
+            bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
+            break;
+
+        case ASSIGNED_RECLAIMED:
+        case ASSIGNED_RELEASED:
+            bumpStat("assigned-addresses", existing->subnet_id_, pool, 1);
+            break;
+
+        case DECLINED_ASSIGNED:
+            bumpStat("declined-addresses", existing->subnet_id_, pool, 1);
+            break;
+
+        case DECLINED_RECLAIMED:
+        case DECLINED_RELEASED:
+            bumpStat("assigned-addresses", existing->subnet_id_, pool, 1);
+            bumpStat("declined-addresses", existing->subnet_id_, pool, 1);
+            break;
+
+        case RECLAIMED_ASSIGNED:
+        case RELEASED_ASSIGNED:
+            bumpStat("assigned-addresses", existing->subnet_id_, pool, -1);
+            break;
+
+        case RECLAIMED_DECLINED:
+        case RELEASED_DECLINED:
+            bumpStat("assigned-addresses", existing->subnet_id_, pool, -1);
+            bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
+            break;
+        default:
+            // nothing to do.
+            break;
+        };
+
+        return;
+    }
+
+    // Lease moved to a different subnet.
+    // Fetch the new subnet and pool.
+    auto const& new_subnet = CfgMgr::instance().getCurrentCfg()->
+                                getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+    PoolPtr new_pool;
+    if (new_subnet) {
+        new_pool = new_subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+    }
+
+    // Fetch the existing subnet and pool.
+    auto const& existing_subnet = CfgMgr::instance().getCurrentCfg()->
+                                    getCfgSubnets4()->getBySubnetId(existing->subnet_id_);
+    PoolPtr existing_pool;
+    if (existing_subnet) {
+       existing_pool = existing_subnet->getPool(Lease::TYPE_V4, existing->addr_, false);
+    }
+
+    // Make the new state-old state mask.
+    switch (STATE_MASK(lease->state_ , existing->state_)) {
+    case ASSIGNED_ASSIGNED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case ASSIGNED_DECLINED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case ASSIGNED_RECLAIMED:
+    case ASSIGNED_RELEASED:
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_ASSIGNED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_DECLINED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_RECLAIMED:
+    case DECLINED_RELEASED:
+        bumpStat("assigned-addresses", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case RECLAIMED_ASSIGNED:
+    case RELEASED_ASSIGNED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        break;
+
+    case RECLAIMED_DECLINED:
+    case RELEASED_DECLINED:
+        bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        break;
+
+    default:
+        // nothing to do.
+        break;
+    };
+
+    return;
+}
+
+void bumpStatPDPool(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
+    /// @todo TKM take this out
+    std::cout << "bumpPDPool: " << stat << " subnet: " << subnet_id
+                << " pool: " << (pool ? pool->getID() : 0xFFFF) << " by: " << value << std::endl;
+    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
+                                  static_cast<int64_t>(value));
+    if (pool) {
+        StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id,
+                                        StatsMgr::generateName("pd-pool", pool->getID(), stat)),
+                                      static_cast<int64_t>(value));
+    }
+}
+
+void
+LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
+                              const Lease6Ptr& lease) {
+    if (existing->type_ != lease->type_) {
+        // Something is fishy, mismatched types.
+        /// @todo maybe we should throw?
+        return;
+    }
+
+    if (existing->type_ == Lease::TYPE_PD &&
+        (existing->state_ == Lease::STATE_DECLINED ||
+         lease->state_ == Lease::STATE_DECLINED ||
+         existing->state_ == Lease::STATE_REGISTERED ||
+         lease->state_ == Lease::STATE_REGISTERED)) {
+        // Something is fishy. Invalid states for PDs.
+        /// @todo maybe we should throw?
+        return;
+    }
+
+    if (existing->subnet_id_ == lease->subnet_id_) {
+        if (existing->state_ == lease->state_) {
+            // Same subnet, same state, nothing to do.
+            return;
+        }
+
+        // State is different so we know we're updating at least one stat.
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->
+                                getCfgSubnets6()->getBySubnetId(existing->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(existing->type_, existing->addr_, false);
+        }
+
+        // Make the new state-old state mask.
+        uint16_t mask = (lease->state_ << 4) | existing->state_;
+        switch (mask) {
+        case ASSIGNED_DECLINED:
+            bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
+            break;
+
+        case ASSIGNED_RECLAIMED:
+        case ASSIGNED_RELEASED:
+            if (existing->type_ == Lease::TYPE_NA) {
+                bumpStat("assigned-nas", existing->subnet_id_, pool, 1);
+            } else {
+                bumpStatPDPool("assigned-pds", existing->subnet_id_, pool, 1);
+            }
+            break;
+
+        case ASSIGNED_REGISTERED:
+            bumpStat("assigned-nas", existing->subnet_id_, pool, 1);
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+            break;
+
+        case DECLINED_ASSIGNED:
+            bumpStat("declined-addresses", existing->subnet_id_, pool, 1);
+            break;
+
+        case DECLINED_RECLAIMED:
+        case DECLINED_RELEASED:
+            bumpStat("assigned-nas", existing->subnet_id_, pool, 1);
+            bumpStat("declined-addresses", existing->subnet_id_, pool, 1);
+            break;
+
+        case DECLINED_REGISTERED:
+            bumpStat("declined-addresses", existing->subnet_id_, pool, 1);
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+            break;
+
+        case RECLAIMED_ASSIGNED:
+        case RELEASED_ASSIGNED:
+            if (existing->type_ == Lease::TYPE_NA) {
+                bumpStat("assigned-nas", existing->subnet_id_, pool, -1);
+            } else {
+                bumpStatPDPool("assigned-pds", existing->subnet_id_, pool, -1);
+            }
+            break;
+
+        case RECLAIMED_REGISTERED:
+        case RELEASED_REGISTERED:
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+            break;
+
+        case RECLAIMED_DECLINED:
+        case RELEASED_DECLINED:
+            bumpStat("assigned-nas", existing->subnet_id_, pool, -1);
+            bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
+            break;
+
+        case REGISTERED_ASSIGNED:
+            bumpStat("assigned-nas", existing->subnet_id_, pool, -1);
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), 1);
+            break;
+
+        case REGISTERED_DECLINED:
+            bumpStat("assigned-nas", existing->subnet_id_, pool, -1);
+            bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), 1);
+            break;
+
+        case REGISTERED_RECLAIMED:
+        case REGISTERED_RELEASED:
+            bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), 1);
+            break;
+
+        default:
+            // nothing to do.
+            break;
+        };
+
+        return;
+    }
+
+    // Lease moved to a different subnet.
+    // Fetch the new subnet and pool.
+    auto const& new_subnet = CfgMgr::instance().getCurrentCfg()->
+                                getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+    PoolPtr new_pool;
+    if (new_subnet) {
+        new_pool = new_subnet->getPool(lease->type_, lease->addr_, false);
+    }
+
+    // Fetch the existing subnet and pool.
+    auto const& existing_subnet = CfgMgr::instance().getCurrentCfg()->
+                                    getCfgSubnets6()->getBySubnetId(existing->subnet_id_);
+    PoolPtr existing_pool;
+    if (existing_subnet) {
+       existing_pool = existing_subnet->getPool(existing->type_, existing->addr_, false);
+    }
+
+    // Make the new state-old state mask.
+    uint16_t mask = (lease->state_ << 4) | existing->state_;
+    switch (mask) {
+    case ASSIGNED_ASSIGNED:
+        if (lease->type_ == Lease::TYPE_NA) {
+            bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+            bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        } else {
+            bumpStatPDPool("assigned-pds", existing->subnet_id_, existing_pool, -1);
+            bumpStatPDPool("assigned-pds", lease->subnet_id_, new_pool, 1);
+        }
+        break;
+
+    case ASSIGNED_DECLINED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case ASSIGNED_RECLAIMED:
+    case ASSIGNED_RELEASED:
+        if (lease->type_ == Lease::TYPE_NA) {
+            bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        } else {
+            bumpStatPDPool("assigned-pds", lease->subnet_id_, new_pool, 1);
+        }
+        break;
+
+    case ASSIGNED_REGISTERED:
+        bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_ASSIGNED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_DECLINED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_RECLAIMED:
+    case DECLINED_RELEASED:
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case DECLINED_REGISTERED:
+        bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+        bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
+        bumpStat("declined-addresses", lease->subnet_id_, new_pool, 1);
+        break;
+
+    case RECLAIMED_ASSIGNED:
+    case RELEASED_ASSIGNED:
+        if (lease->type_ == Lease::TYPE_NA) {
+            bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        } else {
+            bumpStatPDPool("assigned-pds", existing->subnet_id_, existing_pool, -1);
+        }
+        break;
+
+    case RECLAIMED_DECLINED:
+    case RELEASED_DECLINED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        break;
+
+    case RECLAIMED_REGISTERED:
+    case RELEASED_REGISTERED:
+        bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+        break;
+
+    case REGISTERED_ASSIGNED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("registered-nas", lease->subnet_id_, PoolPtr(), 1);
+        break;
+
+    case REGISTERED_DECLINED:
+        bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
+        bumpStat("declined-addresses", existing->subnet_id_, existing_pool, -1);
+        bumpStat("registered-nas", lease->subnet_id_, PoolPtr(), 1);
+        break;
+
+    case REGISTERED_RECLAIMED:
+    case REGISTERED_RELEASED:
+        bumpStat("registered-nas", lease->subnet_id_, PoolPtr(), 1);
+        break;
+
+    case REGISTERED_REGISTERED:
+        bumpStat("registered-nas", existing->subnet_id_, PoolPtr(), -1);
+        bumpStat("registered-nas", lease->subnet_id_, PoolPtr(), 1);
+        break;
+
+    default:
+        // nothing to do.
+        break;
+    };
+
+    return;
+}
+
+void
+LeaseMgr::updateStatsOnDelete(const Lease4Ptr& lease) {
+    if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(-1));
+
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "assigned-addresses"),
+            static_cast<int64_t>(-1));
+
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "assigned-addresses")),
+                    static_cast<int64_t>(-1));
+            }
+        }
+
+        if (lease->stateDeclined()) {
+            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
+
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "declined-addresses"),
+                static_cast<int64_t>(-1));
+
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "declined-addresses")),
+                    static_cast<int64_t>(-1));
+            }
+        }
+    }
+}
+
+void
+LeaseMgr::updateStatsOnDelete(const Lease6Ptr& lease) {
+    if (lease->stateRegistered()) {
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   "registered-nas"),
+            static_cast<int64_t>(-1));
+    } else if (!lease->stateExpiredReclaimed()) {
+        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
+                                      "assigned-nas" : "assigned-pds",
+                                      static_cast<int64_t>(-1));
+
+        StatsMgr::instance().addValue(
+            StatsMgr::generateName("subnet", lease->subnet_id_,
+                                   lease->type_ == Lease::TYPE_NA ?
+                                   "assigned-nas" : "assigned-pds"),
+            static_cast<int64_t>(-1));
+
+        PoolPtr pool;
+        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
+        if (subnet) {
+            pool = subnet->getPool(lease->type_, lease->addr_, false);
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
+                                                                  "pool" : "pd-pool", pool->getID(),
+                                                                  lease->type_ == Lease::TYPE_NA ?
+                                                                  "assigned-nas" : "assigned-pds")),
+                    static_cast<int64_t>(-1));
+            }
+        }
+
+        if (lease->stateDeclined()) {
+            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
+
+            StatsMgr::instance().addValue(
+                StatsMgr::generateName("subnet", lease->subnet_id_,
+                                       "declined-addresses"),
+                static_cast<int64_t>(-1));
+
+            if (pool) {
+                StatsMgr::instance().addValue(
+                    StatsMgr::generateName("subnet", subnet->getID(),
+                                           StatsMgr::generateName("pool", pool->getID(),
+                                                                  "declined-addresses")),
+                    static_cast<int64_t>(-1));
+            }
+        }
+    }
 }
 
 } // namespace isc::dhcp

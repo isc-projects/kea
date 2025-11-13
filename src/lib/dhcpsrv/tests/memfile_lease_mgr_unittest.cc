@@ -4664,6 +4664,36 @@ TEST_F(MemfileLeaseMgrTest, bigStats) {
     testBigStats();
 }
 
+TEST_F(MemfileLeaseMgrTest, updateStatsOn4SameSubnet) {
+    startBackend(V4);
+    testUpdateStatsOn4SameSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn4DifferentSubnet) {
+    startBackend(V4);
+    testUpdateStatsOn4DifferentSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6SameSubnet) {
+    startBackend(V6);
+    testUpdateStatsOn6SameSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6SameSubnetPD) {
+    startBackend(V6);
+    testUpdateStatsOn6SameSubnetPD();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6DifferentSubnet) {
+    startBackend(V6);
+    testUpdateStatsOn6DifferentSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6DifferentSubnetPD) {
+    startBackend(V6);
+    testUpdateStatsOn6DifferentSubnetPD();
+}
+
 /// @brief Test fixture which allows log content to be tested.
 class MemfileLeaseMgrLogTest : public LogContentTest,
                                public BaseMemfileLeaseMgrTest {

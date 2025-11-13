@@ -2271,7 +2271,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     // There is no such lease, so let's add it.
                                     LeaseMgrFactory::instance().addLease(lease);
                                     ++applied_lease_count;
-
+                                    LeaseMgr::updateStatsOnAdd(lease);
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
@@ -2281,7 +2281,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease4(lease);
                                     ++applied_lease_count;
-
+                                    LeaseMgr::updateStatsOnUpdate(existing_lease, lease);
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
                                         .arg(config_->getThisServerName())
@@ -2311,7 +2311,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     // There is no such lease, so let's add it.
                                     LeaseMgrFactory::instance().addLease(lease);
                                     ++applied_lease_count;
-
+                                    LeaseMgr::updateStatsOnAdd(lease);
                                 } else if (existing_lease->cltt_ < lease->cltt_) {
                                     // If the existing lease is older than the fetched lease, update
                                     // the lease in our local database.
@@ -2321,7 +2321,7 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     Lease::syncCurrentExpirationTime(*existing_lease, *lease);
                                     LeaseMgrFactory::instance().updateLease6(lease);
                                     ++applied_lease_count;
-
+                                    LeaseMgr::updateStatsOnUpdate(existing_lease, lease);
                                 } else {
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE6_SKIP)
                                         .arg(config_->getThisServerName())

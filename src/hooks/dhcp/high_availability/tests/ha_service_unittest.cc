@@ -37,6 +37,7 @@
 #include <http/response_creator.h>
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
@@ -60,6 +61,7 @@ using namespace isc::ha;
 using namespace isc::ha::test;
 using namespace isc::hooks;
 using namespace isc::http;
+using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
 
@@ -3431,11 +3433,21 @@ TEST_F(HAServiceTest, asyncSyncLeases4) {
         }
     }
 
+    // Recount the lease stats, we should have 5 assigned.
+    LeaseMgrFactory::instance().recountLeaseStats4();
+    auto assigned_addrs = StatsMgr::instance().getObservation("assigned-addresses");
+    ASSERT_TRUE(assigned_addrs);
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    auto declined_addrs = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_addrs);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
+
     // Modify cltt of the first lease. This lease should be updated as a result
     // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
-    // existing lease.
+    // existing lease. We set the state to declined so we can verify stats on update.
     ++leases4_[0]->cltt_;
+    leases4_[0]->state_ = Lease::STATE_DECLINED;
 
     // For the second lease, set the wrong subnet identifier. This should be
     // rejected and this lease shouldn't be inserted into the database.
@@ -3524,6 +3536,10 @@ TEST_F(HAServiceTest, asyncSyncLeases4) {
             }
         }
     }
+
+    // We should now have 9 assigned and 1 declined.
+    EXPECT_EQ(9, assigned_addrs->getInteger().first);
+    EXPECT_EQ(1, declined_addrs->getInteger().first);
 }
 
 // This test verifies that IPv4 leases can be fetched from the peer and inserted
@@ -3851,11 +3867,21 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
         }
     }
 
+    // Recount the lease stats, we should have 5 assigned.
+    LeaseMgrFactory::instance().recountLeaseStats6();
+    auto assigned_addrs = StatsMgr::instance().getObservation("assigned-nas");
+    ASSERT_TRUE(assigned_addrs);
+    EXPECT_EQ(5, assigned_addrs->getInteger().first);
+    auto declined_addrs = StatsMgr::instance().getObservation("declined-addresses");
+    ASSERT_TRUE(declined_addrs);
+    EXPECT_EQ(0, declined_addrs->getInteger().first);
+
     // Modify cltt of the first lease. This lease should be updated as a result
     // of synchronization process because cltt is checked and the lease is
     // updated if the cltt of the fetched lease is later than the cltt of the
-    // existing lease.
+    // existing lease. We set the state to declined so we can verify stats on update.
     ++leases6_[0]->cltt_;
+    leases6_[0]->state_ = Lease::STATE_DECLINED;
 
     // For the second lease, set the wrong subnet identifier. This should be
     // rejected and this lease shouldn't be inserted into the database.
@@ -3945,6 +3971,10 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
             }
         }
     }
+
+    // We should now have 9 assigned and 1 declined.
+    EXPECT_EQ(9, assigned_addrs->getInteger().first);
+    EXPECT_EQ(1, declined_addrs->getInteger().first);
 }
 
 // This test verifies that IPv6 leases can be fetched from the peer and inserted

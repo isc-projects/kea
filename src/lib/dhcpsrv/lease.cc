@@ -24,12 +24,6 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-const uint32_t Lease::STATE_DEFAULT = 0;
-const uint32_t Lease::STATE_DECLINED = 1;
-const uint32_t Lease::STATE_EXPIRED_RECLAIMED = 2;
-const uint32_t Lease::STATE_RELEASED = 3;
-const uint32_t Lease::STATE_REGISTERED = 4;
-
 std::string
 Lease::lifetimeToText(uint32_t lifetime) {
     ostringstream repr;

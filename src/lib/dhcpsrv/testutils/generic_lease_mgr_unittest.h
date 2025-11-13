@@ -677,6 +677,20 @@ public:
     /// @brief Checks that statistic with big integer values are handled correctly.
     void testBigStats();
 
+    /// @brief Checks that the static functions updateStatsOn{Add,Update,Delete)
+    /// work for v4. 
+    void testUpdateStatsOn4SameSubnet();
+
+    void testUpdateStatsOn4DifferentSubnet();
+
+    void testUpdateStatsOn6SameSubnet();
+
+    void testUpdateStatsOn6SameSubnetPD();
+
+    void testUpdateStatsOn6DifferentSubnet();
+
+    void testUpdateStatsOn6DifferentSubnetPD();
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;
 
