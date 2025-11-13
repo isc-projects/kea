@@ -1412,10 +1412,15 @@ LeaseMgr::updateStatsOnAdd(const Lease6Ptr& lease) {
     }
 }
 
+/// @brief Helper function that adds a value to an address stat's global,
+/// subnet, and pool level values.
+///
+/// @param stat base name of the statistic e.g. "assigned-addresses", "assigned-nas"
+/// @param subnet_id id of desired subnet
+/// @param pool pointer to the pool (if one) within the subnet, if empty
+/// pool level is skipped.
+/// @param value signed value to add to the statistic
 void bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
-    /// @todo TKM take this out
-    std::cout << "bump: " << stat << " subnet: " << subnet_id
-                << " pool: " << (pool ? pool->getID() : 0xFFFF) << " by: " << value << std::endl;
     StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
                                   static_cast<int64_t>(value));
@@ -1426,8 +1431,29 @@ void bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int va
     }
 }
 
-#define STATE_MASK(a,b) ((a << 4) | b)
+/// @brief Helper function that adds a value to a PD stat's global,
+/// subnet, and pool level values.
+///
+/// @param stat base name of the statistic e.g. "assigned-pds"
+/// @param subnet_id id of desired subnet
+/// @param pool pointer to the pool (if one) within the subnet, if empty
+/// pool level is skipped.
+/// @param value signed value to add to the statistic
+void bumpStatPDPool(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
+    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
+    StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
+                                  static_cast<int64_t>(value));
+    if (pool) {
+        StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id,
+                                       StatsMgr::generateName("pd-pool", pool->getID(), stat)),
+                                      static_cast<int64_t>(value));
+    }
+}
 
+/// @brief Creates a mask out of two states: new state and old state
+#define STATE_MASK(new_state, old_state) ((new_state << 4) | old_state)
+
+/// @brief Constant expression state masks for use in switch statements.
 // New state ASSIGNED
 constexpr uint16_t ASSIGNED_ASSIGNED = STATE_MASK(Lease::STATE_DEFAULT,
                                                   Lease::STATE_DEFAULT);
@@ -1439,44 +1465,49 @@ constexpr uint16_t ASSIGNED_RELEASED =  STATE_MASK(Lease::STATE_DEFAULT,
                                                    Lease::STATE_RELEASED);
 constexpr uint16_t ASSIGNED_REGISTERED = STATE_MASK(Lease::STATE_DEFAULT,
                                                     Lease::STATE_REGISTERED);
-
 // New state DECLINED
-constexpr uint16_t DECLINED_ASSIGNED = (Lease::STATE_DECLINED << 4);
-constexpr uint16_t DECLINED_DECLINED = (Lease::STATE_DECLINED << 4)
-                                       | Lease::STATE_DECLINED;
-constexpr uint16_t DECLINED_RECLAIMED = (Lease::STATE_DECLINED << 4)
-                                        | Lease::STATE_EXPIRED_RECLAIMED;
-constexpr uint16_t DECLINED_RELEASED = (Lease::STATE_DECLINED << 4) 
-                                       | Lease::STATE_RELEASED;
-constexpr uint16_t DECLINED_REGISTERED = (Lease::STATE_DECLINED << 4) | Lease::STATE_REGISTERED;
-
+constexpr uint16_t DECLINED_ASSIGNED = STATE_MASK(Lease::STATE_DECLINED,
+                                                  Lease::STATE_DEFAULT);
+constexpr uint16_t DECLINED_DECLINED = STATE_MASK(Lease::STATE_DECLINED,
+                                                  Lease::STATE_DECLINED);
+constexpr uint16_t DECLINED_RECLAIMED = STATE_MASK(Lease::STATE_DECLINED,
+                                                   Lease::STATE_EXPIRED_RECLAIMED);
+constexpr uint16_t DECLINED_RELEASED = STATE_MASK(Lease::STATE_DECLINED,
+                                                  Lease::STATE_RELEASED);
+constexpr uint16_t DECLINED_REGISTERED = STATE_MASK(Lease::STATE_DECLINED,
+                                                    Lease::STATE_REGISTERED);
 // New state EXPIRED_RECLAIMED
-constexpr uint16_t RECLAIMED_ASSIGNED = (Lease::STATE_EXPIRED_RECLAIMED << 4);
-constexpr uint16_t RECLAIMED_DECLINED = (Lease::STATE_EXPIRED_RECLAIMED << 4) | Lease::STATE_DECLINED;
-constexpr uint16_t RECLAIMED_RECLAIMED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
-                                         | Lease::STATE_EXPIRED_RECLAIMED;
-constexpr uint16_t RECLAIMED_RELEASED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
-                                         | Lease::STATE_RELEASED;
-constexpr uint16_t RECLAIMED_REGISTERED = (Lease::STATE_EXPIRED_RECLAIMED << 4)
-                                         | Lease::STATE_REGISTERED;
+constexpr uint16_t RECLAIMED_ASSIGNED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
+                                                   Lease::STATE_DEFAULT);
+constexpr uint16_t RECLAIMED_DECLINED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
+                                                   Lease::STATE_DECLINED);
+constexpr uint16_t RECLAIMED_RECLAIMED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
+                                                    Lease::STATE_EXPIRED_RECLAIMED);
+constexpr uint16_t RECLAIMED_RELEASED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
+                                                   Lease::STATE_RELEASED);
+constexpr uint16_t RECLAIMED_REGISTERED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
+                                                     Lease::STATE_REGISTERED);
 // New state RELEASED
-constexpr uint16_t RELEASED_ASSIGNED = (Lease::STATE_RELEASED << 4);
-constexpr uint16_t RELEASED_DECLINED = (Lease::STATE_RELEASED << 4) | Lease::STATE_DECLINED;
-constexpr uint16_t RELEASED_RECLAIMED = (Lease::STATE_RELEASED << 4)
-                                         | Lease::STATE_EXPIRED_RECLAIMED;
-constexpr uint16_t RELEASED_RELEASED = (Lease::STATE_RELEASED << 4) | Lease::STATE_RELEASED;
-constexpr uint16_t RELEASED_REGISTERED = (Lease::STATE_RELEASED << 4) | Lease::STATE_REGISTERED;
-
+constexpr uint16_t RELEASED_ASSIGNED = STATE_MASK(Lease::STATE_RELEASED,
+                                                  Lease::STATE_DEFAULT);
+constexpr uint16_t RELEASED_DECLINED = STATE_MASK(Lease::STATE_RELEASED,
+                                                  Lease::STATE_DECLINED);
+constexpr uint16_t RELEASED_RECLAIMED = STATE_MASK(Lease::STATE_RELEASED,
+                                                   Lease::STATE_EXPIRED_RECLAIMED);
+constexpr uint16_t RELEASED_RELEASED = STATE_MASK(Lease::STATE_RELEASED,
+                                                  Lease::STATE_RELEASED);
+constexpr uint16_t RELEASED_REGISTERED = STATE_MASK(Lease::STATE_RELEASED,
+                                                    Lease::STATE_REGISTERED);
 // New state REGISTERED
-constexpr uint16_t REGISTERED_ASSIGNED = (Lease::STATE_REGISTERED << 4);
-constexpr uint16_t REGISTERED_DECLINED = (Lease::STATE_REGISTERED << 4)
-                                         | Lease::STATE_DECLINED;
-constexpr uint16_t REGISTERED_RECLAIMED = (Lease::STATE_REGISTERED << 4)
-                                          | Lease::STATE_EXPIRED_RECLAIMED;
-constexpr uint16_t REGISTERED_RELEASED = (Lease::STATE_REGISTERED << 4)
-                                         | Lease::STATE_RELEASED;
-constexpr uint16_t REGISTERED_REGISTERED = (Lease::STATE_REGISTERED << 4)
-                                           | Lease::STATE_REGISTERED;
+constexpr uint16_t REGISTERED_ASSIGNED = STATE_MASK(Lease::STATE_REGISTERED, Lease::STATE_DEFAULT);
+constexpr uint16_t REGISTERED_DECLINED = STATE_MASK(Lease::STATE_REGISTERED,
+                                                    Lease::STATE_DECLINED);
+constexpr uint16_t REGISTERED_RECLAIMED = STATE_MASK(Lease::STATE_REGISTERED,
+                                                     Lease::STATE_EXPIRED_RECLAIMED);
+constexpr uint16_t REGISTERED_RELEASED = STATE_MASK(Lease::STATE_REGISTERED,
+                                                    Lease::STATE_RELEASED);
+constexpr uint16_t REGISTERED_REGISTERED = STATE_MASK(Lease::STATE_REGISTERED,
+                                                      Lease::STATE_REGISTERED);
 
 void
 LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
@@ -1606,20 +1637,6 @@ LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
     return;
 }
 
-void bumpStatPDPool(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
-    /// @todo TKM take this out
-    std::cout << "bumpPDPool: " << stat << " subnet: " << subnet_id
-                << " pool: " << (pool ? pool->getID() : 0xFFFF) << " by: " << value << std::endl;
-    StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
-    StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
-                                  static_cast<int64_t>(value));
-    if (pool) {
-        StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id,
-                                        StatsMgr::generateName("pd-pool", pool->getID(), stat)),
-                                      static_cast<int64_t>(value));
-    }
-}
-
 void
 LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
                               const Lease6Ptr& lease) {
@@ -1654,8 +1671,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
         }
 
         // Make the new state-old state mask.
-        uint16_t mask = (lease->state_ << 4) | existing->state_;
-        switch (mask) {
+        switch (STATE_MASK(lease->state_, existing->state_)) {
         case ASSIGNED_DECLINED:
             bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
             break;
@@ -1751,8 +1767,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
     }
 
     // Make the new state-old state mask.
-    uint16_t mask = (lease->state_ << 4) | existing->state_;
-    switch (mask) {
+    switch (STATE_MASK(lease->state_, existing->state_)) {
     case ASSIGNED_ASSIGNED:
         if (lease->type_ == Lease::TYPE_NA) {
             bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
