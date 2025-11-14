@@ -83,9 +83,6 @@ int EPollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* 
         result = epoll_wait(epollfd_, used_data_.data(), used_data_.size(), timeout);
         for (int i = 0; i < result; ++i) {
              map_[used_data_[i].data.fd] = &used_data_[i];
-             if (used_data_[i].events & (EPOLLRDHUP | EPOLLERR | EPOLLHUP)) {
-                 errors_.insert(used_data_[i].data.fd);
-             }
         }
     }
     for (auto data : data_) {

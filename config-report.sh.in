@@ -55,6 +55,40 @@ Bison:                @BISON@
 
 HERE_DOCUMENT
 
+add_to_report <<HERE_DOCUMENT
+IO Event Handling:
+  select            yes
+HERE_DOCUMENT
+
+if test '@HAVE_EPOLL@' != 'no'; then
+add_to_report <<HERE_DOCUMENT
+  epoll             yes
+HERE_DOCUMENT
+
+else
+
+add_to_report <<HERE_DOCUMENT
+  epoll             no
+HERE_DOCUMENT
+fi
+
+if test '@HAVE_KQUEUE@' != 'no'; then
+add_to_report <<HERE_DOCUMENT
+  kqueue            yes
+HERE_DOCUMENT
+
+else
+
+add_to_report <<HERE_DOCUMENT
+  kqueue            no
+HERE_DOCUMENT
+fi
+
+add_to_report <<HERE_DOCUMENT
+  poll              yes
+
+HERE_DOCUMENT
+
 if test '@HAVE_MYSQL@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
 MySQL:                @MYSQL_VERSION@

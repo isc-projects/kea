@@ -173,7 +173,7 @@ TEST_F(FDEventHandlerTest, badFD) {
         EXPECT_TRUE(handler_->readReady(fd));
         EXPECT_EQ(EBADF, errno);
     } else if (handler_->type() == FDEventHandler::TYPE_POLL) {
-        EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
+        EXPECT_EQ(1, handler_->waitEvent(0, 1000));
         EXPECT_FALSE(handler_->readReady(fd));
         EXPECT_EQ(0, errno);
     } else {

@@ -45,13 +45,7 @@ int PollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* =
     for (size_t i = 0; i < data_.size(); ++i) {
         map_[data_[i].fd] = &data_[i];
     }
-    int result = poll(data_.data(), data_.size(), timeout);
-    for (auto data : data_) {
-        if (data.revents & (POLLHUP | POLLERR | POLLNVAL)) {
-            return (-1);
-        }
-    }
-    return (result);
+    return (poll(data_.data(), data_.size(), timeout));
 }
 
 bool PollEventHandler::readReady(int fd) {

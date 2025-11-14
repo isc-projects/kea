@@ -84,9 +84,6 @@ int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
         result = kevent(kqueuefd_, 0, 0, used_data_.data(), used_data_.size(), select_timeout_p);
         for (int i = 0; i < result; ++i) {
             map_.emplace(used_data_[i].ident, &used_data_[i]);
-             if (used_data_[i].flags & EV_EOF || used_data_[i].filter == EV_ERROR) {
-                 errors_.insert(used_data_[i].ident);
-             }
         }
     }
     for (auto data : data_) {

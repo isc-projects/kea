@@ -67,8 +67,6 @@ TEST(InterprocessSyncFileTest, TestLock) {
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
             EXPECT_EQ(sizeof(locked), bytes_written);
 
-            sleep(1);
-
             close(fds[1]);
             exit(0);
         } else {
@@ -136,8 +134,6 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
             EXPECT_EQ(sizeof(locked), bytes_written);
-
-            sleep(1);
 
             close(fds[1]);
             exit(0);

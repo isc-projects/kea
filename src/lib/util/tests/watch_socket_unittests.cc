@@ -119,6 +119,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     EXPECT_EQ(1, selectCheck(select_fd));
     EXPECT_TRUE(watch->isReady());
 
+    // The epoll event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() != FDEventHandler::TYPE_POLL;
+
     // Interfere by closing the fd.
     ASSERT_EQ(0, close(select_fd));
 
@@ -132,7 +138,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     ASSERT_NO_THROW(watch->clearReady());
 
     // Verify the select_fd fails as socket is invalid/closed.
-    ASSERT_EQ(-1, selectCheck(select_fd));
+    if (use_select) {
+        ASSERT_EQ(-1, selectCheck(select_fd));
+    } else {
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+    }
 
     // Verify that subsequent attempts to mark it will fail.
     ASSERT_THROW(watch->markReady(), WatchSocketError);
@@ -191,6 +202,12 @@ TEST(WatchSocketTest, badReadOnClear) {
     EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
+    // The epoll event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() != FDEventHandler::TYPE_POLL;
+
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
@@ -203,7 +220,12 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     // Verify the select_fd does not evaluate to ready.
     EXPECT_FALSE(watch->isReady());
-    EXPECT_EQ(-1, selectCheck(select_fd));
+    if (use_select) {
+        EXPECT_EQ(-1, selectCheck(select_fd));
+    } else {
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+    }
 
     // Verify that getSelectFd() returns INVALID.
     ASSERT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());

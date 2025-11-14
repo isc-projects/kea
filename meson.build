@@ -853,6 +853,16 @@ if BISON.found()
 else
     report_conf_data.set('BISON', 'no')
 endif
+if HAVE_EPOLL
+    report_conf_data.set('HAVE_EPOLL', 'yes')
+else
+    report_conf_data.set('HAVE_EPOLL', 'no')
+endif
+if HAVE_KQUEUE
+    report_conf_data.set('HAVE_KQUEUE', 'yes')
+else
+    report_conf_data.set('HAVE_KQUEUE', 'no')
+endif
 if MYSQL_DEP.found()
     report_conf_data.set('HAVE_MYSQL', 'yes')
     version = MYSQL_DEP.version()
