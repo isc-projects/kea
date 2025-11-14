@@ -42,7 +42,8 @@ public:
         setSocketTestPath();
         socket_name_too_long_ = SocketPath::isTooLong(SocketPath::unixSocketFilePath());
         if (!socket_name_too_long_) {
-            test_socket_.reset(new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath()));
+            test_socket_.reset(
+                new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath()));
         }
     }
 

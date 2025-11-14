@@ -56,7 +56,8 @@ public:
     ///
     /// Deregisters all commands except 'list-commands'.
     CtrlAgentCommandMgrTest()
-        : DControllerTest(CtrlAgentController::instance), mgr_(CtrlAgentCommandMgr::instance()),
+        : DControllerTest(CtrlAgentController::instance),
+          mgr_(CtrlAgentCommandMgr::instance()),
           skipped_(false) {
         mgr_.deregisterAll();
         setSocketTestPath();

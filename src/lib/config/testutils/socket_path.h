@@ -29,8 +29,8 @@ struct SocketPath {
     /// @return whether the socket name is too long
     static bool isTooLong(std::string const& socket_name) {
         try {
-            std::string const validated_socket_name(UnixCommandConfig::validatePath(socket_name));
-            isc::asiolink::UnixDomainSocketEndpoint endpoint(validated_socket_name);
+            std::string const validated(UnixCommandConfig::validatePath(socket_name));
+            isc::asiolink::UnixDomainSocketEndpoint endpoint(validated);
         } catch (std::exception const& e) {
             // Check if it starts with it.
             std::string const search_for("name too long");
@@ -65,7 +65,9 @@ struct SocketPath {
             for (ConstElementPtr control_socket : control_sockets->listValue()) {
                 ConstElementPtr socket_name(control_socket->get("socket-name"));
                 ConstElementPtr socket_type(control_socket->get("socket-type"));
-                if (socket_name && socket_name->getType() == Element::string && socket_type &&
+                if (socket_name &&
+                    socket_name->getType() == Element::string &&
+                    socket_type &&
                     socket_type->getType() == Element::string &&
                     socket_type->stringValue() == "unix") {
                     std::string const name(socket_name->stringValue());
