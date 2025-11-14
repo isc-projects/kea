@@ -12,11 +12,8 @@ namespace util {
 
 /// @param fd_to_check The file descriptor to test
 /// @param timeout_sec Select timeout in seconds
-/// @param read_check flag to check socket for read ready state
-/// @param write_check flag to check socket for write ready state
 /// @return -1 on error, 0 if no data is available, 1 if data is ready
-int selectCheck(const int fd_to_check, const unsigned int timeout_sec = 0,
-                bool read_check = true, bool write_check = false);
+int selectCheck(const int fd_to_check, const unsigned int timeout_sec = 0);
 
 } // end of isc::util namespace
 } // end of isc namespace

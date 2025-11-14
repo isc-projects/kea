@@ -36,24 +36,15 @@ KQueueEventHandler::~KQueueEventHandler() {
     close(pipefd_[0]);
 }
 
-void KQueueEventHandler::add(int fd, bool read /* = true */, bool write /* = false */) {
+void KQueueEventHandler::add(int fd) {
     if (fd < 0) {
         isc_throw(BadValue, "invalid negative value for fd");
     }
-    if (read) {
-        // Add this socket to read events
-        struct kevent data;
-        memset(&data, 0, sizeof(data));
-        EV_SET(&data, fd, EVFILT_READ, EV_ADD, 0, 0, 0);
-        data_.push_back(data);
-    }
-    if (write) {
-        // Add this socket to write events
-        struct kevent data;
-        memset(&data, 0, sizeof(data));
-        EV_SET(&data, fd, EVFILT_WRITE, EV_ADD, 0, 0, 0);
-        data_.push_back(data);
-    }
+    struct kevent data;
+    memset(&data, 0, sizeof(data));
+    // Add this socket to read events
+    EV_SET(&data, fd, EVFILT_READ, EV_ADD, 0, 0, 0);
+    data_.push_back(data);
 }
 
 int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */,
@@ -93,6 +84,9 @@ int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
         result = kevent(kqueuefd_, 0, 0, used_data_.data(), used_data_.size(), select_timeout_p);
         for (int i = 0; i < result; ++i) {
             map_.emplace(used_data_[i].ident, &used_data_[i]);
+             if (used_data_[i].flags & EV_EOF || used_data_[i].filter == EV_ERROR) {
+                 errors_.insert(used_data_[i].ident);
+             }
         }
     }
     for (auto data : data_) {
@@ -105,7 +99,7 @@ int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
         errno = saved_errno;
     }
     if (errors_.size()) {
-        return (errors_.size());
+        return (-1);
     }
     return (result);
 }
@@ -114,29 +108,6 @@ bool KQueueEventHandler::readReady(int fd) {
     auto range = map_.equal_range(fd);
     for (auto it = range.first; it != range.second; ++it) {
         if (it->second->filter == EVFILT_READ) {
-            return (true);
-        }
-    }
-    return (false);
-}
-
-bool KQueueEventHandler::writeReady(int fd) {
-    auto range = map_.equal_range(fd);
-    for (auto it = range.first; it != range.second; ++it) {
-        if (it->second->filter == EVFILT_WRITE) {
-            return (true);
-        }
-    }
-    return (false);
-}
-
-bool KQueueEventHandler::hasError(int fd) {
-    if (errors_.count(fd)) {
-        return (true);
-    }
-    auto range = map_.equal_range(fd);
-    for (auto it = range.first; it != range.second; ++it) {
-        if ((it->second->flags & EV_EOF) || (it->second->filter == EV_ERROR)) {
             return (true);
         }
     }

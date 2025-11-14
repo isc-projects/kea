@@ -25,21 +25,15 @@ SelectEventHandler::SelectEventHandler() : FDEventHandler(TYPE_SELECT), max_fd_(
     clear();
 }
 
-void SelectEventHandler::add(int fd, bool read /* = true */, bool write /* = false */) {
+void SelectEventHandler::add(int fd) {
     if (fd < 0) {
         isc_throw(BadValue, "invalid negative value for fd");
     }
     if (fd >= FD_SETSIZE) {
         isc_throw(BadValue, "invalid value for fd exceeds maximum allowed " << FD_SETSIZE);
     }
-    if (read) {
-        // Add this socket to read set
-        FD_SET(fd, &read_fd_set_);
-    }
-    if (write) {
-        // Add this socket to write set
-        FD_SET(fd, &write_fd_set_);
-    }
+    // Add this socket to read set
+    FD_SET(fd, &read_fd_set_);
     if (fd > max_fd_) {
         max_fd_ = fd;
     }
@@ -61,22 +55,16 @@ int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
     }
 
     FD_COPY(&read_fd_set_, &read_fd_set_data_);
-    FD_COPY(&write_fd_set_, &write_fd_set_data_);
 
-    return (select(max_fd_ + 1, &read_fd_set_data_, &write_fd_set_data_, 0, select_timeout_p));
+    return (select(max_fd_ + 1, &read_fd_set_data_, 0, 0, select_timeout_p));
 }
 
 bool SelectEventHandler::readReady(int fd) {
     return (FD_ISSET(fd, &read_fd_set_data_));
 }
 
-bool SelectEventHandler::writeReady(int fd) {
-    return (FD_ISSET(fd, &write_fd_set_data_));
-}
-
 void SelectEventHandler::clear() {
     FD_ZERO(&read_fd_set_);
-    FD_ZERO(&write_fd_set_);
     max_fd_ = 0;
 }
 

@@ -36,21 +36,15 @@ EPollEventHandler::~EPollEventHandler() {
     close(pipefd_[0]);
 }
 
-void EPollEventHandler::add(int fd, bool read /* = true */, bool write /* = false */) {
+void EPollEventHandler::add(int fd) {
     if (fd < 0) {
         isc_throw(BadValue, "invalid negative value for fd");
     }
     struct epoll_event data;
     memset(&data, 0, sizeof(data));
     data.data.fd = fd;
-    if (read) {
-        // Add this socket to read events
-        data.events |= EPOLLIN;
-    }
-    if (write) {
-        // Add this socket to write events
-        data.events |= EPOLLOUT;
-    }
+    // Add this socket to read events
+    data.events |= EPOLLIN;
     data_.push_back(data);
 }
 
@@ -89,6 +83,9 @@ int EPollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* 
         result = epoll_wait(epollfd_, used_data_.data(), used_data_.size(), timeout);
         for (int i = 0; i < result; ++i) {
              map_[used_data_[i].data.fd] = &used_data_[i];
+             if (used_data_[i].events & (EPOLLRDHUP | EPOLLERR | EPOLLHUP)) {
+                 errors_.insert(used_data_[i].data.fd);
+             }
         }
     }
     for (auto data : data_) {
@@ -99,7 +96,7 @@ int EPollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* 
         errno = saved_errno;
     }
     if (errors_.size()) {
-        return (errors_.size());
+        return (-1);
     }
     return (result);
 }
@@ -109,23 +106,6 @@ bool EPollEventHandler::readReady(int fd) {
         return (false);
     }
     return (map_[fd]->events & EPOLLIN);
-}
-
-bool EPollEventHandler::writeReady(int fd) {
-    if (map_.find(fd) == map_.end()) {
-        return (false);
-    }
-    return (map_[fd]->events & EPOLLOUT);
-}
-
-bool EPollEventHandler::hasError(int fd) {
-    if (errors_.count(fd)) {
-        return (true);
-    }
-    if (map_.find(fd) == map_.end()) {
-        return (false);
-    }
-    return (map_[fd]->events & (EPOLLRDHUP | EPOLLERR | EPOLLHUP));
 }
 
 void EPollEventHandler::clear() {

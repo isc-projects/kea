@@ -676,6 +676,14 @@ public:
 
         /// A callback that will be called when data arrives over socket_.
         SocketCallback callback_;
+
+        /// @brief Indicates if the socket can no longer be used for normal
+        /// operations.
+        bool unusable_;
+
+        /// @brief Constructor.
+        SocketCallbackInfo() : socket_(-1), unusable_(false) {
+        }
     };
 
     /// Defines storage container for callbacks for external sockets
@@ -1166,17 +1174,6 @@ public:
     ///
     /// @param socketfd socket descriptor
     void deleteExternalSocket(int socketfd);
-
-    /// @brief Scans registered socket set and removes any that are invalid.
-    ///
-    /// Walks the list of registered external sockets and tests each for
-    /// validity.  If any are found to be invalid they are removed. This is
-    /// primarily a self-defense mechanism against hook libs or other users
-    /// of external sockets that may leave a closed socket registered by
-    /// mistake.
-    ///
-    /// @return A count of the sockets purged.
-    int purgeBadSockets();
 
     /// @brief Deletes all external sockets.
     void deleteAllExternalSockets();

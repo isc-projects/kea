@@ -36,11 +36,7 @@ public:
     /// @brief Add file descriptor to watch for events.
     ///
     /// @param fd The file descriptor.
-    /// @param read The flag indicating if the file descriptor should be
-    /// registered for read ready events.
-    /// @param write The flag indicating if the file descriptor should be
-    /// registered for write ready events.
-    virtual void add(int fd, bool read = true, bool write = false) = 0;
+    virtual void add(int fd) = 0;
 
     /// @brief Wait for events on registered file descriptors.
     ///
@@ -59,20 +55,6 @@ public:
     ///
     /// @return True if file descriptor is ready for reading.
     virtual bool readReady(int fd) = 0;
-
-    /// @brief Check if file descriptor is ready for write operation.
-    ///
-    /// @param fd The file descriptor.
-    ///
-    /// @return True if file descriptor is ready for writing.
-    virtual bool writeReady(int fd) = 0;
-
-    /// @brief Check if file descriptor has error.
-    ///
-    /// @param fd The file descriptor.
-    ///
-    /// @return True if file descriptor has error.
-    virtual bool hasError(int fd);
 
     /// @brief Clear registered file descriptors.
     virtual void clear() = 0;

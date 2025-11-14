@@ -78,18 +78,6 @@ bool UnixControlClient::sendCommand(const std::string& command) {
         ADD_FAILURE() << "send command with closed socket";
         return (false);
     }
-    switch (selectCheck(3, false, true)) {
-    case -1: {
-        const char* errmsg = strerror(errno);
-        ADD_FAILURE() << "sendCommand - select failed: " << errmsg;
-        return (false);
-    }
-    case 0:
-        return (false);
-
-    default:
-        break;
-    }
     // Send command
     int bytes_sent = send(socket_fd_, command.c_str(), command.length(), 0);
     if (bytes_sent < static_cast<int>(command.length())) {
@@ -108,7 +96,7 @@ bool UnixControlClient::getResponse(std::string& response,
     // Receive response
     char buf[65536];
     memset(buf, 0, sizeof(buf));
-    switch (selectCheck(timeout_sec, true, false)) {
+    switch (selectCheck(timeout_sec)) {
     case -1: {
         const char* errmsg = strerror(errno);
         ADD_FAILURE() << "getResponse - select failed: " << errmsg;
@@ -134,9 +122,7 @@ bool UnixControlClient::getResponse(std::string& response,
     return (true);
 }
 
-int UnixControlClient::selectCheck(const unsigned int timeout_sec,
-                                   bool read_check,
-                                   bool write_check) {
+int UnixControlClient::selectCheck(const unsigned int timeout_sec) {
     if (socket_fd_ < 0) {
         ADD_FAILURE() << "select check with closed socket";
         return (-1);
@@ -146,7 +132,7 @@ int UnixControlClient::selectCheck(const unsigned int timeout_sec,
         return (-1);
     }
 
-    return (util::selectCheck(socket_fd_, timeout_sec, read_check, write_check));
+    return (util::selectCheck(socket_fd_, timeout_sec));
 }
 
 }

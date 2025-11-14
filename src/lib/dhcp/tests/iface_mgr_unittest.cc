@@ -676,12 +676,12 @@ public:
     }
 
     /// @brief Verifies that IfaceMgr DHCPv4 receive calls detect and
-    /// purge external sockets that have gone bad without affecting
+    /// ignore external sockets that have gone bad without affecting
     /// affecting normal operations.  It can be run with or without
     /// packet queuing.
     ///
     /// @param use_queue determines if packet queuing is used or not.
-    void purgeExternalSockets4Test(bool use_queue = false) {
+    void unusableExternalSockets4Test(bool use_queue = false) {
         bool callback_ok = false;
         bool callback2_ok = false;
 
@@ -734,10 +734,8 @@ public:
         // We call receive4() which should detect and remove the invalid socket.
         try {
             pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
-            ADD_FAILURE() << "receive4 should have failed";
         } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("Event handler interrupted by one invalid sockets,"
-                                  " purged 1 socket descriptors"),
+            EXPECT_EQ(std::string("Bad file descriptor"),
                       std::string(ex.what()));
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
@@ -766,12 +764,12 @@ public:
     }
 
     /// @brief Verifies that IfaceMgr DHCPv6 receive calls detect and
-    /// purge external sockets that have gone bad without affecting
+    /// ignore external sockets that have gone bad without affecting
     /// affecting normal operations.  It can be run with or without
     /// packet queuing.
     ///
     /// @param use_queue determines if packet queuing is used or not.
-    void purgeExternalSockets6Test(bool use_queue = false) {
+    void unusableExternalSockets6Test(bool use_queue = false) {
         bool callback_ok = false;
         bool callback2_ok = false;
 
@@ -824,10 +822,8 @@ public:
         // We call receive6() which should detect and remove the invalid socket.
         try {
             pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
-            ADD_FAILURE() << "receive6 should have failed";
         } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("Event handler interrupted by one invalid sockets,"
-                                  " purged 1 socket descriptors"),
+            EXPECT_EQ(std::string("Bad file descriptor"),
                       std::string(ex.what()));
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
@@ -3164,18 +3160,18 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
 }
 
 // Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive4() without queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets4Direct) {
-    purgeExternalSockets4Test();
+TEST_F(IfaceMgrTest, unusableExternalSockets4Direct) {
+    unusableExternalSockets4Test();
 }
 
 
 // Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive4() with queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets4Indirect) {
-    purgeExternalSockets4Test(true);
+TEST_F(IfaceMgrTest, unusableExternalSockets4Indirect) {
+    unusableExternalSockets4Test(true);
 }
 
 // Tests if a single external socket and its callback can be passed and
@@ -3347,18 +3343,18 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
 }
 
 // Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive6() without queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets6Direct) {
-    purgeExternalSockets6Test();
+TEST_F(IfaceMgrTest, unusableExternalSockets6Direct) {
+    unusableExternalSockets6Test();
 }
 
 
 // Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive6() with queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets6Indirect) {
-    purgeExternalSockets6Test(true);
+TEST_F(IfaceMgrTest, unusableExternalSockets6Indirect) {
+    unusableExternalSockets6Test(true);
 }
 
 // Test checks if the unicast sockets can be opened.

@@ -37,6 +37,8 @@ TEST(InterprocessSyncFileTest, TestLock) {
     if (!isc::util::unittests::runningOnValgrind()) {
 
         int fds[2];
+        int pid;
+        int status;
 
         // Here, we check that a lock has been taken by forking and
         // checking from the child that a lock exists. This has to be
@@ -46,8 +48,8 @@ TEST(InterprocessSyncFileTest, TestLock) {
         // attempt must fail to pass our check.
 
         EXPECT_EQ(0, pipe(fds));
-
-        if (fork() == 0) {
+        pid = fork();
+        if (pid == 0) {
             unsigned char locked = 0;
             // Child writes to pipe
             close(fds[0]);
@@ -65,6 +67,8 @@ TEST(InterprocessSyncFileTest, TestLock) {
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
             EXPECT_EQ(sizeof(locked), bytes_written);
 
+            sleep(1);
+
             close(fds[1]);
             exit(0);
         } else {
@@ -76,6 +80,8 @@ TEST(InterprocessSyncFileTest, TestLock) {
             close(fds[0]);
 
             EXPECT_EQ(1, locked);
+
+            waitpid(pid, &status, 0);
         }
     }
 
@@ -111,10 +117,12 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
     if (!isc::util::unittests::runningOnValgrind()) {
 
         int fds[2];
+        int pid;
+        int status;
 
         EXPECT_EQ(0, pipe(fds));
-
-        if (fork() == 0) {
+        pid = fork();
+        if (pid == 0) {
             unsigned char locked = 0xff;
             // Child writes to pipe
             close(fds[0]);
@@ -128,6 +136,8 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
             ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
             EXPECT_EQ(sizeof(locked), bytes_written);
+
+            sleep(1);
 
             close(fds[1]);
             exit(0);
@@ -143,6 +153,8 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
         }
 
         EXPECT_EQ (0, remove(TEST_DATA_TOPBUILDDIR "/test2_lockfile"));
+
+        waitpid(pid, &status, 0);
     }
 
     EXPECT_TRUE(locker.unlock());

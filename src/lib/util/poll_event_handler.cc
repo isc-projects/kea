@@ -18,21 +18,15 @@ PollEventHandler::PollEventHandler() : FDEventHandler(TYPE_POLL) {
     clear();
 }
 
-void PollEventHandler::add(int fd, bool read /* = true */, bool write /* = false */) {
+void PollEventHandler::add(int fd) {
     if (fd < 0) {
         isc_throw(BadValue, "invalid negative value for fd");
     }
     struct pollfd data;
     memset(&data, 0, sizeof(data));
     data.fd = fd;
-    if (read) {
-        // Add this socket to read events
-        data.events |= POLLIN;
-    }
-    if (write) {
-        // Add this socket to write events
-        data.events |= POLLOUT;
-    }
+    // Add this socket to read events
+    data.events |= POLLIN;
     data_.push_back(data);
 }
 
@@ -51,7 +45,13 @@ int PollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* =
     for (size_t i = 0; i < data_.size(); ++i) {
         map_[data_[i].fd] = &data_[i];
     }
-    return (poll(data_.data(), data_.size(), timeout));
+    int result = poll(data_.data(), data_.size(), timeout);
+    for (auto data : data_) {
+        if (data.revents & (POLLHUP | POLLERR | POLLNVAL)) {
+            return (-1);
+        }
+    }
+    return (result);
 }
 
 bool PollEventHandler::readReady(int fd) {
@@ -59,20 +59,6 @@ bool PollEventHandler::readReady(int fd) {
         return (false);
     }
     return (map_[fd]->revents & POLLIN);
-}
-
-bool PollEventHandler::writeReady(int fd) {
-    if (map_.find(fd) == map_.end()) {
-        return (false);
-    }
-    return (map_[fd]->revents & POLLOUT);
-}
-
-bool PollEventHandler::hasError(int fd) {
-    if (map_.find(fd) == map_.end()) {
-        return (false);
-    }
-    return (map_[fd]->revents & (POLLHUP | POLLERR | POLLNVAL));
 }
 
 void PollEventHandler::clear() {

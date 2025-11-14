@@ -64,58 +64,45 @@ TEST_F(FDEventHandlerTest, events) {
 
     EXPECT_THROW(handler_->add(-1), BadValue);
 
-    EXPECT_NO_THROW(handler_->add(pipefd_[0], true, false));
-    EXPECT_NO_THROW(handler_->add(pipefd_[1], false, true));
+    EXPECT_NO_THROW(handler_->add(pipefd_[0]));
 
     EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
     EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[1]));
+
+    EXPECT_EQ(0, handler_->waitEvent(0, 1000));
+
+    EXPECT_FALSE(handler_->readReady(pipefd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+
+    EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
 
     EXPECT_EQ(1, handler_->waitEvent(0, 1000));
 
-    EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
+    EXPECT_TRUE(handler_->readReady(pipefd_[0]));
     EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_TRUE(handler_->writeReady(pipefd_[1]));
 
     EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
 
-    EXPECT_EQ(2, handler_->waitEvent(0, 1000));
+    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
 
     EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
     EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_TRUE(handler_->writeReady(pipefd_[1]));
-
-    EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
-
-    EXPECT_EQ(2, handler_->waitEvent(0, 1000));
-
-    EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_TRUE(handler_->writeReady(pipefd_[1]));
 
     unsigned char data;
 
     EXPECT_EQ(1, read(pipefd_[0], &data, sizeof(data)));
 
-    EXPECT_EQ(2, handler_->waitEvent(0, 1000));
+    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
 
     EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
     EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_TRUE(handler_->writeReady(pipefd_[1]));
 
     EXPECT_EQ(1, read(pipefd_[0], &data, sizeof(data)));
 
-    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+    EXPECT_EQ(0, handler_->waitEvent(0, 1000));
 
     EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->writeReady(pipefd_[0]));
     EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-    EXPECT_TRUE(handler_->writeReady(pipefd_[1]));
 
     EXPECT_NO_THROW(handler_->clear());
 
@@ -184,17 +171,14 @@ TEST_F(FDEventHandlerTest, badFD) {
     if (handler_->type() == FDEventHandler::TYPE_SELECT) {
         EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
         EXPECT_TRUE(handler_->readReady(fd));
-        EXPECT_FALSE(handler_->hasError(fd));
         EXPECT_EQ(EBADF, errno);
     } else if (handler_->type() == FDEventHandler::TYPE_POLL) {
-        EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+        EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
         EXPECT_FALSE(handler_->readReady(fd));
-        EXPECT_TRUE(handler_->hasError(fd));
         EXPECT_EQ(0, errno);
     } else {
-        EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+        EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
         EXPECT_FALSE(handler_->readReady(fd));
-        EXPECT_TRUE(handler_->hasError(fd));
         EXPECT_EQ(EBADF, errno);
     }
 

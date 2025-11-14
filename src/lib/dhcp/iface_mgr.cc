@@ -377,24 +377,6 @@ IfaceMgr::isExternalSocket(int fd) {
     return (false);
 }
 
-int
-IfaceMgr::purgeBadSockets() {
-    std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    std::vector<int> bad_fds;
-    for (const SocketCallbackInfo& s : callbacks_) {
-        errno = 0;
-        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-            bad_fds.push_back(s.socket_);
-        }
-    }
-
-    for (auto bad_fd : bad_fds) {
-        deleteExternalSocketInternal(bad_fd);
-    }
-
-    return (bad_fds.size());
-}
-
 void
 IfaceMgr::deleteAllExternalSockets() {
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
@@ -1143,9 +1125,14 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
-                // Add this socket to listening set
-                fd_event_handler_->add(s.socket_);
+            for (SocketCallbackInfo& s : callbacks_) {
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                } else if (!s.unusable_) {
+                    // Add this socket to listening set
+                    fd_event_handler_->add(s.socket_);
+                }
             }
         }
     }
@@ -1185,11 +1172,6 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
-        } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1207,14 +1189,9 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
-        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->hasError(s.socket_)) {
-                    fd_error = true;
-                    break;
-                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1228,12 +1205,6 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                     break;
                 }
             }
-        }
-        if (fd_error) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         }
 
         if (ex_sock.callback_) {
@@ -1286,9 +1257,14 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
-                // Add this socket to listening set
-                fd_event_handler_->add(s.socket_);
+            for (SocketCallbackInfo& s : callbacks_) {
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                } else if (!s.unusable_) {
+                    // Add this socket to listening set
+                    fd_event_handler_->add(s.socket_);
+                }
             }
         }
     }
@@ -1311,11 +1287,6 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
-        } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1324,14 +1295,9 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
-    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->hasError(s.socket_)) {
-                fd_error = true;
-                break;
-            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1345,12 +1311,6 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 break;
             }
         }
-    }
-    if (fd_error) {
-        int cnt = purgeBadSockets();
-        isc_throw(SocketReadError,
-                  "Event handler interrupted by one invalid sockets, purged "
-                   << cnt << " socket descriptors");
     }
 
     if (ex_sock.callback_) {
@@ -1428,9 +1388,14 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
-                // Add this socket to listening set
-                fd_event_handler_->add(s.socket_);
+            for (SocketCallbackInfo& s : callbacks_) {
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                } else if (!s.unusable_) {
+                    // Add this socket to listening set
+                    fd_event_handler_->add(s.socket_);
+                }
             }
         }
     }
@@ -1453,11 +1418,6 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
-        } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1466,14 +1426,9 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
-    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (const SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->hasError(s.socket_)) {
-                fd_error = true;
-                break;
-            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1487,12 +1442,6 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 break;
             }
         }
-    }
-    if (fd_error) {
-        int cnt = purgeBadSockets();
-        isc_throw(SocketReadError,
-                  "Event handler interrupted by one invalid sockets, purged "
-                   << cnt << " socket descriptors");
     }
 
     if (ex_sock.callback_) {
@@ -1540,9 +1489,14 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
-                // Add this socket to listening set
-                fd_event_handler_->add(s.socket_);
+            for (SocketCallbackInfo& s : callbacks_) {
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                } else if (!s.unusable_) {
+                    // Add this socket to listening set
+                    fd_event_handler_->add(s.socket_);
+                }
             }
         }
     }
@@ -1582,11 +1536,6 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
-        } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1604,14 +1553,9 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
-        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (const SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->hasError(s.socket_)) {
-                    fd_error = true;
-                    break;
-                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1625,12 +1569,6 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                     break;
                 }
             }
-        }
-        if (fd_error) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "Event handler interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
         }
 
         if (ex_sock.callback_) {
