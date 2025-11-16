@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -3852,7 +3852,7 @@ TEST_F(TokenTest, invalidRegEx) {
             << "expected to start with " << expected
             << "\nbut got: " << msg;
     } catch (const exception& ex) {
-        ADD_FAILURE() << "unexpected expection: " << ex.what();
+        ADD_FAILURE() << "unexpected exception: " << ex.what();
     }
 }
 

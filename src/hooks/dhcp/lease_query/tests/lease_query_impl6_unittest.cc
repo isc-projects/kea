@@ -740,7 +740,7 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // Add a client-id option.
     lq->addOption(makeClientIdOption(std::vector<uint8_t>{ 01, 02, 03, 04, 05, 06}));
 
-    // Add an a non-matching server id.
+    // Add a non-matching server id.
     lq->addOption(makeServerIdOption(std::vector<uint8_t>{ 10, 11, 12, 13, 14, 15, 16 }));
     invalid = false;
     ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
@@ -2135,7 +2135,7 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, queryByIpaddressPDLeases) {
 // permutations.
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, populatePrefixLengthList) {
 
-    // Struct descibing each test scenario.
+    // Struct describing each test scenario.
     struct Scenario {
         std::string desc_;            // text description
         std::string cfg_prefixes_;    // RHV for "prefix-length-list" if not empty

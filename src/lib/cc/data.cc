@@ -1026,7 +1026,7 @@ MapElement::find(const std::string& id, ConstElementPtr& t) const {
 bool
 IntElement::equals(const Element& other) const {
     // Let's not be very picky with constraining the integer types to be the
-    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // same. Equality is sometimes checked from high-up in the Element hierarchy.
     // That is a context which, most of the time, does not have information on
     // the type of integers stored on Elements lower in the hierarchy. So it
     // would be difficult to differentiate between the integer types.
@@ -1037,7 +1037,7 @@ IntElement::equals(const Element& other) const {
 bool
 BigIntElement::equals(const Element& other) const {
     // Let's not be very picky with constraining the integer types to be the
-    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // same. Equality is sometimes checked from high-up in the Element hierarchy.
     // That is a context which, most of the time, does not have information on
     // the type of integers stored on Elements lower in the hierarchy. So it
     // would be difficult to differentiate between the integer types.

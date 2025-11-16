@@ -56,7 +56,7 @@ TEST_F(HttpCommandConfigTest, default) {
     ASSERT_THROW_MSG(http_config_.reset(new HttpCommandConfig(json)),
                      DhcpConfigError, "Unsecured HTTP control channel (:0:0)");
 
-    // Turn off security enforcment. Configuration will succeed but we
+    // Turn off security enforcement. Configuration will succeed but we
     // should see WARNING logs.
     file::PathChecker::enableEnforcement(false);
     ASSERT_NO_THROW_LOG(http_config_.reset(new HttpCommandConfig(json)));
@@ -365,7 +365,7 @@ TEST_F(HttpCommandConfigTest, authentication) {
     runToElementTest(expected, *http_config_);
 
     // Should be no security warnings.
-    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING")); 
+    ASSERT_EQ(0, countFile("COMMAND_HTTP_SOCKET_SECURITY_WARNING"));
 }
 
 // This test verifies a HTTP control socket configuration with TLS can

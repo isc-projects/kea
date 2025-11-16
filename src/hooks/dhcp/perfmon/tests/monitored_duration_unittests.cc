@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -384,7 +384,7 @@ TEST(MonitoredDuration, copyConstructors) {
     // Sleep past interval duration.
     usleep(20);
 
-    // Add anoter sample to the original.
+    // Add another sample to the original.
     EXPECT_TRUE(mond->addSample(microseconds(2)));
 
     // Make a new copy.

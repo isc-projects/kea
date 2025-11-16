@@ -46,7 +46,7 @@ extract_includes() {
 # extract all header only files and headers and source files found in the external library required by specified library
 # param ${1} name of the current library
 # param ${2} name of the external dependency library required by current library
-# return the list of header only files as 'HEADERS: heaser1.h header2.h' and header and source files as 'HEADERS_AND_SOURCES: source1.h source1.cc source2.h source2.cpp'
+# return the list of header only files as 'HEADERS: header1.h header2.h' and header and source files as 'HEADERS_AND_SOURCES: source1.h source1.cc source2.h source2.cpp'
 extract_non_include_files() {
   # extract folder name for current library Makefile.am
   CURRENT_FOLDER=$(dirname "src/lib/${1}/Makefile.am")"/"

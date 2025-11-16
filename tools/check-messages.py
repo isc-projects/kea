@@ -19,14 +19,14 @@ This script does several verifications regarding logged messages:
 1. Checks that messages are logged only once (outside of an exhonerated list).
 2. Checks that no two messages share the same id.
 3. Checks that there are no unlogged/unused messages.
-4. Removes all occurences of unused messages (when run with -a).
+4. Removes all occurrences of unused messages (when run with -a).
 5. Checks that the debug log level is correctly logged in the message documentation.
 6. Automatically adds or fixes the debug log level in the message documentation (when run with -a).
 7. Checks that the placeholder ids are consecutive, starting with 1, and unique in the same message definition.
 """
 
 
-def check_duplicate_occurences(occurences):
+def check_duplicate_occurrences(occurrences):
     exhonerated = {}
     parent_dir = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
     for exh_txt in [
@@ -42,12 +42,12 @@ def check_duplicate_occurences(occurences):
                     exhonerated[message_id] = int(max_allowed)
 
     failure = False
-    duplicate_occurences = {k: v for k, v in occurences.items() if v > 1}
-    for k, v in duplicate_occurences.items():
+    duplicate_occurrences = {k: v for k, v in occurrences.items() if v > 1}
+    for k, v in duplicate_occurrences.items():
         if k in exhonerated and v <= exhonerated[k]:
             continue
         if not failure:  # in other words: if first
-            print('Duplicate occurences found:')
+            print('Duplicate occurrences found:')
             failure = True
         print(f'    % {k}: {v}')
     return failure
@@ -79,11 +79,11 @@ def check_unlogged_messages(messages, autofix):
 
 # This function is deprecated. Replaced by check_unlogged_messages.
 # Messages can appear outside LOG_* function calls.
-# So checking occurences is not enough.
-def check_unlogged_messages_based_on_occurences(messages, occurences, autofix):
+# So checking occurrences is not enough.
+def check_unlogged_messages_based_on_occurrences(messages, occurrences, autofix):
     failure = False
     for message_id in messages:
-        if message_id not in occurences:
+        if message_id not in occurrences:
             if not failure:  # in other words: if first
                 print('Unlogged messages found:')
                 failure = True
@@ -227,7 +227,7 @@ def main():
     debug_levels = {}
     log_lines = []
     messages = {}
-    occurences = {}
+    occurrences = {}
     debug_level_pattern = re.compile(r'^(extern |)const int (.*DBG.*) =(.*)$')
     message_id_pattern = re.compile(r'^% (\w+) (.*)')
     log_pattern = re.compile(r'\b(LOG_DEBUG|LOG_ERROR|LOG_FATAL|LOG_INFO|LOG_WARN)\(')
@@ -347,7 +347,7 @@ def main():
         if args.generate_debug_messages_page:
             return
 
-    # Get number of occurences for each message id.
+    # Get number of occurrences for each message id.
     for line in log_lines:
         pos = 1
         if line.split('(')[0] == 'LOG_DEBUG':
@@ -355,16 +355,16 @@ def main():
         message_id = line.split(',')[pos]
         message_id = message_id.split(')')[0]
         message_id = message_id.strip()
-        if message_id in occurences:
-            occurences[message_id] += 1
+        if message_id in occurrences:
+            occurrences[message_id] += 1
         else:
-            occurences[message_id] = 1
+            occurrences[message_id] = 1
 
     # 1. Checks that messages are logged only once.
-    failure |= check_duplicate_occurences(occurences)
+    failure |= check_duplicate_occurrences(occurrences)
 
     # 3. Checks that there are no unlogged/unused messages.
-    # 4. Removes all occurences of unused messages (when run with -a).
+    # 4. Removes all occurrences of unused messages (when run with -a).
     failure |= check_unlogged_messages(messages, args.autofix)
 
     # 5. Checks that the debug log level is correctly logged in the message documentation.

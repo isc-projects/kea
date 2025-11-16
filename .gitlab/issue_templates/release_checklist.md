@@ -206,7 +206,7 @@ Now it's time to publish the code.
     * <mark>Latest Stable Release Only</mark>: Tick `latestTag`.
     * Press `Build`.
 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
-1. [ ] <mark>Security Release Only</mark>: Put procedure on hold, procced with documentation and tags after public disclosure.
+1. [ ] <mark>Security Release Only</mark>: Put procedure on hold, proceed with documentation and tags after public disclosure.
 1. [ ] <mark>Security Release Only</mark>: After public disclosure, sync release branches from Kea private repository into Kea public.
 1. [ ] Update docs on https://app.readthedocs.org/projects/kea/.
     1. Click the triple dot button on the `latest` build -> click `Rebuild version`. This is really a workaround for RTD to pull the repo and discover the new tag.

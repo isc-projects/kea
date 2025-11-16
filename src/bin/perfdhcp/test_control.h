@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -429,7 +429,7 @@ protected:
     ///
     /// This factory function creates option with specified universe,
     /// type and buf. It does not have any additional logic validating
-    /// the buffer contents, size  etc.
+    /// the buffer contents, size, etc.
     ///
     /// \param u universe (V6 or V4).
     /// \param type option-type (ignored).

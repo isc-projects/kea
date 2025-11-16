@@ -178,7 +178,7 @@ public:
     ///
     /// @param addr ip address of the lease
     /// @param subnet subnet to which the lease belongs
-    /// @param hwaddr hardware addresss
+    /// @param hwaddr hardware address
     /// @param client_id duid of the lease owner
     /// @param cltt CLTT of the lease
     /// @param json_context user context of the lease as JSON

@@ -498,7 +498,7 @@ public:
 
     /// @brief cache-clear command handler.
     ///
-    /// This command cleares the host cache.
+    /// This command clears the host cache.
     ///
     /// No parameter taken.
     ///

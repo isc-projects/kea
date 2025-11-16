@@ -568,7 +568,7 @@ TEST_F(ExpressionsTest, label) {
     ASSERT_NO_THROW(result = evaluateString(e_, *pkt6_));
     EXPECT_EQ("foo", result);
 
-    // The branch is to the first occurence (of course the parser
+    // The branch is to the first occurrence (of course the parser
     // produces only one).
     e_.push_back(label);
     TokenPtr bar;

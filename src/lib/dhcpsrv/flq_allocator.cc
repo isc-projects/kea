@@ -301,7 +301,7 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
     Stopwatch stopwatch;
 
     // Let's iterate over the lease queue and index them with the
-    // unordered_set. Also, elminate the expired leases and those
+    // unordered_set. Also, eliminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_addresses;
     for (auto const& lease : leases) {
@@ -348,7 +348,7 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
     Stopwatch stopwatch;
 
     // Let's iterate over the lease queue and index them with the
-    // unordered_set. Also, elminate the expired leases and those
+    // unordered_set. Also, eliminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_prefixes;
     for (auto const& lease : leases) {

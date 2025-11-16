@@ -2325,7 +2325,7 @@ pgsql_unused_subnet_id_test() {
     # We have a 4.0 schema with hosts and options. Let's upgrade it to 6.2.
     # For versions higher than 6.2 some new constraints fail to be added
     # with the not empty tables, for instance the 6.2 -> 7.0 upgrade script
-    # can raise a key constraing violation for fk_dhcp6_options_subnet.
+    # can raise a key constraining violation for fk_dhcp6_options_subnet.
     pgsql_upgrade_schema_to_version 6.2
 
     # Version should now be 6.2.

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -582,7 +582,7 @@ public:
             { "socket_received", "buffer_read", 33, 1,  5 }
         };
 
-        // Verify the returne collection is as expected.
+        // Verify the returned collection is as expected.
         DurationKeyPtr exp_key;
         auto exp_row = exp_data_rows.begin();
         for (auto const& d : *durations) {

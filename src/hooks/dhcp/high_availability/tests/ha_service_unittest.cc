@@ -5369,7 +5369,7 @@ TEST_F(HAServiceTest, processMaintenanceNotifyCancelSetPartnerState) {
 }
 
 // This test verifies that the ha-maintenance-notify command is processed
-// and the server transitions to the waiting state when its prvious state
+// and the server transitions to the waiting state when its previous state
 // before the maintenance was in-maintenance.
 TEST_F(HAServiceTest, processMaintenanceNotifyCancelSetAvoidDeadlock) {
     HAConfigPtr config_storage = createValidConfiguration();

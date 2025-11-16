@@ -918,7 +918,7 @@ public:
             throw;
         }
 
-        // Update the statistics for the remaning subnets and pools.
+        // Update the statistics for the remaining subnets and pools.
         cfg->updateStatistics();
 
         std::ostringstream response_text;

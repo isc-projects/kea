@@ -529,7 +529,7 @@ RADIUS dictionary. There are differences:
 
     * - Support for Attribute Data Types
 
-      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, binary, byte, ether, short, signed, octets
+      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, abinary, byte, ether, short, signed, octets
 
       - string (can simulate any other unsupported data type too), ipaddr, integer, date (interpreted as integer), ipv6addr, ipv6prefix
 

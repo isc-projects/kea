@@ -77,7 +77,7 @@ The global configuration flags are:
    consisting of either a subnet id, a subnet prefix, or a shared-network name.
    If the selector is applied to the packet, the NAS port is used instead of the
    subnet id. When the subnet id is 0 or missing, the specified NAS port acts as
-   a default. Its substition happens for all packets that did not match a
+   a default. Its substitution happens for all packets that did not match a
    selector.
 
  - reselect-subnet-* (default false) enables subnet reselection

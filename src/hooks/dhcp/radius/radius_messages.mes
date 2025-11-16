@@ -398,5 +398,5 @@ of stored records before the failure and the expected number of records
 are displayed.
 
 % RADIUS_THREAD_POOL_STARTED RADIUS thread pool started with %1 threads.
-This informational message is issued when the thread pool is starrted.
+This informational message is issued when the thread pool is started.
 The number of threads is displayed.

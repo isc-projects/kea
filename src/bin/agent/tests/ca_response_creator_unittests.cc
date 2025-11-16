@@ -495,7 +495,7 @@ TEST_F(CtrlAgentResponseCreatorTest, hookNoAuth) {
 }
 
 // This test verifies that the server responds with extra headers for no
-// auth response provided by the hool.
+// auth response provided by the hook.
 TEST_F(CtrlAgentResponseCreatorTest, hookNoAuthHeaders) {
     setBasicContext(request_);
     file::PathChecker::enableEnforcement(false);

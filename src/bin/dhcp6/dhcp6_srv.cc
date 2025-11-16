@@ -4558,7 +4558,7 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 Pkt6Ptr
 Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
-    // Get the allow-address-resgistration flag value.
+    // Get the allow-address-registration flag value.
     // If it's false, punt.
     auto allow_address_registration = CfgMgr::instance().getCurrentCfg()->
          getConfiguredGlobal(CfgGlobals::ALLOW_ADDRESS_REGISTRATION);
@@ -4949,7 +4949,7 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
 
 void
 Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
-    // Get additional classes to evaluate added elsewhere, posssibly by hooks.
+    // Get additional classes to evaluate added elsewhere, possibly by hooks.
     ClientClasses classes = pkt->getAdditionalClasses();
     ConstSubnet6Ptr subnet = ctx.subnet_;
 

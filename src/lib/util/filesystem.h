@@ -300,7 +300,7 @@ public:
     /// @brief Indicates security checks should be enforced.
     static bool shouldEnforceSecurity();
 
-    /// @brief Enables or disables security enforcment checks.
+    /// @brief Enables or disables security enforcement checks.
     ///
     /// @param enable true to enable security checks, false to disable.
     static void enableEnforcement(bool enable);

@@ -1241,7 +1241,7 @@ TEST_F(MemfileBulkLeaseQuery6ProcessTest, initQueryInvalidQuery) {
     // Add a client-id option.
     lq->addOption(makeClientIdOption(vector<uint8_t>{ 01, 02, 03, 04, 05, 06}));
 
-    // Add an a non-matching server id.
+    // Add a non-matching server id.
     lq->addOption(makeServerIdOption(vector<uint8_t>{ 10, 11, 12, 13, 14, 15, 16 }));
     string expected = "rejecting DHCPV6_LEASEQUERY from: ::, unknown";
     expected += " server-id: type=00002, len=00007: 0a:0b:0c:0d:0e:0f:10";

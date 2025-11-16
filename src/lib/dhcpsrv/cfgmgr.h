@@ -92,7 +92,7 @@ public:
     std::string getDataDir(bool reset = false,
                            const std::string explicit_path = "");
 
-    /// @brief Validates a file path against the supported directory for DHDP data.
+    /// @brief Validates a file path against the supported directory for DHCP data.
     ///
     /// @param data_path data path to validate.
     ///

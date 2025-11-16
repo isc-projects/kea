@@ -541,7 +541,7 @@ CommunicationState::logFormatClockSkewInternal() const {
 
     if (clock_skew_.total_seconds() == 0) {
         // Most common case.
-        os << "synchroninzed";
+        os << "synchronized";
     } else if (clock_skew_.is_negative()) {
         // Partner's time is behind our time.
         os << clock_skew_.invert_sign().total_seconds() << "s behind";
