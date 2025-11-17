@@ -1526,6 +1526,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
             pool = subnet->getPool(Lease::TYPE_V4, existing->addr_, false);
         }
 
+        // Switch on new-state:old-state mask.
         switch (STATE_MASK(lease->state_ , existing->state_)) {
         case ASSIGNED_DECLINED:
             bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
@@ -1581,7 +1582,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
        existing_pool = existing_subnet->getPool(Lease::TYPE_V4, existing->addr_, false);
     }
 
-    // Make the new state-old state mask.
+    // Switch on new-state:old-state mask.
     switch (STATE_MASK(lease->state_ , existing->state_)) {
     case ASSIGNED_ASSIGNED:
         bumpStat("assigned-addresses", existing->subnet_id_, existing_pool, -1);
@@ -1670,7 +1671,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
             pool = subnet->getPool(existing->type_, existing->addr_, false);
         }
 
-        // Make the new state-old state mask.
+        // Switch on new-state:old-state mask.
         switch (STATE_MASK(lease->state_, existing->state_)) {
         case ASSIGNED_DECLINED:
             bumpStat("declined-addresses", existing->subnet_id_, pool, -1);
@@ -1766,7 +1767,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
        existing_pool = existing_subnet->getPool(existing->type_, existing->addr_, false);
     }
 
-    // Make the new state-old state mask.
+    // Switch on new-state:old-state mask.
     switch (STATE_MASK(lease->state_, existing->state_)) {
     case ASSIGNED_ASSIGNED:
         if (lease->type_ == Lease::TYPE_NA) {

@@ -1434,6 +1434,30 @@ TEST_F(MySqlLeaseMgrTest, bigStats) {
     testBigStats();
 }
 
+TEST_F(MySqlLeaseMgrTest, updateStatsOn4SameSubnet) { 
+    testUpdateStatsOn4SameSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn4DifferentSubnet) { 
+    testUpdateStatsOn4DifferentSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6SameSubnet) { 
+    testUpdateStatsOn6SameSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6SameSubnetPD) { 
+    testUpdateStatsOn6SameSubnetPD();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6DifferentSubnet) { 
+    testUpdateStatsOn6DifferentSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6DifferentSubnetPD) { 
+    testUpdateStatsOn6DifferentSubnetPD();
+}
+
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
 /// backend.
 class CfgMySqlLbDbAccessTest : public ::testing::Test {

@@ -1423,6 +1423,30 @@ TEST_F(PgSqlLeaseMgrTest, bigStats) {
     testBigStats();
 }
 
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn4SameSubnet) {
+    testUpdateStatsOn4SameSubnet();
+}
+
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn4DifferentSubnet) {
+    testUpdateStatsOn4DifferentSubnet();
+}
+
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnet) { 
+    testUpdateStatsOn6SameSubnet();
+}
+
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6SameSubnetPD) { 
+    testUpdateStatsOn6SameSubnetPD();
+}
+
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnet) { 
+    testUpdateStatsOn6DifferentSubnet();
+}
+
+TEST_F(PgSqlLeaseMgrTest, updateStatsOn6DifferentSubnetPD) { 
+    testUpdateStatsOn6DifferentSubnetPD();
+}
+
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using PostgreSQL
 /// backend.
 class CfgPgSqlLbDbAccessTest : public ::testing::Test {
