@@ -102,7 +102,17 @@ bool EPollEventHandler::readReady(int fd) {
     if (map_.find(fd) == map_.end()) {
         return (false);
     }
-    return (map_[fd]->events & EPOLLIN);
+    return (map_[fd]->events & (EPOLLIN | EPOLLRDHUP | EPOLLHUP));
+}
+
+bool EPollEventHandler::hasError(int fd) {
+    if (errors_.count(fd)) {
+        return (true);
+    }
+    if (map_.find(fd) == map_.end()) {
+        return (false);
+    }
+    return (map_[fd]->events & EPOLLERR);
 }
 
 void EPollEventHandler::clear() {

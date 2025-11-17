@@ -663,7 +663,7 @@ public:
         // and (at least under Centos 7.5), this does not interrupt the
         // select.  For now, we'll only test this for direct receive.
         if (!queue_enabled) {
-            EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+            EXPECT_THROW(ifacemgr->receive4(10), SocketFDError);
         }
 
         // Verify write fails.

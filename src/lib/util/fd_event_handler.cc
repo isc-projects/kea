@@ -18,5 +18,9 @@ FDEventHandler::HandlerType FDEventHandler::type() {
     return (type_);
 }
 
+bool FDEventHandler::hasError(int /* fd */) {
+    return (false);
+}
+
 } // end of namespace isc::util
 } // end of namespace isc

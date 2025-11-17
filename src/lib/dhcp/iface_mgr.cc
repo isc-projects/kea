@@ -1195,9 +1195,18 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
+        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo& s : callbacks_) {
+                if (fd_event_handler_->hasError(s.socket_)) {
+                    fd_error = true;
+                    errno = 0;
+                    if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                        s.unusable_ = true;
+                    }
+                    break;
+                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1211,6 +1220,9 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                     break;
                 }
             }
+        }
+        if (fd_error) {
+            isc_throw(SocketFDError, strerror(errno));
         }
 
         if (ex_sock.callback_) {
@@ -1306,9 +1318,18 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
+    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (const SocketCallbackInfo& s : callbacks_) {
+        for (SocketCallbackInfo& s : callbacks_) {
+            if (fd_event_handler_->hasError(s.socket_)) {
+                fd_error = true;
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                }
+                break;
+            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1322,6 +1343,9 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 break;
             }
         }
+    }
+    if (fd_error) {
+        isc_throw(SocketFDError, strerror(errno));
     }
 
     if (ex_sock.callback_) {
@@ -1339,6 +1363,9 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                isc_throw(SocketFDError, strerror(errno));
+            }
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
@@ -1442,9 +1469,18 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
+    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (const SocketCallbackInfo& s : callbacks_) {
+        for (SocketCallbackInfo& s : callbacks_) {
+            if (fd_event_handler_->hasError(s.socket_)) {
+                fd_error = true;
+                errno = 0;
+                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                    s.unusable_ = true;
+                }
+                break;
+            }
             if (!fd_event_handler_->readReady(s.socket_)) {
                 continue;
             }
@@ -1458,6 +1494,9 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 break;
             }
         }
+    }
+    if (fd_error) {
+        isc_throw(SocketFDError, strerror(errno));
     }
 
     if (ex_sock.callback_) {
@@ -1474,6 +1513,9 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                isc_throw(SocketFDError, strerror(errno));
+            }
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
@@ -1574,9 +1616,18 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
+        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo& s : callbacks_) {
+                if (fd_event_handler_->hasError(s.socket_)) {
+                    fd_error = true;
+                    errno = 0;
+                    if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+                        s.unusable_ = true;
+                    }
+                    break;
+                }
                 if (!fd_event_handler_->readReady(s.socket_)) {
                     continue;
                 }
@@ -1590,6 +1641,9 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                     break;
                 }
             }
+        }
+        if (fd_error) {
+            isc_throw(SocketFDError, strerror(errno));
         }
 
         if (ex_sock.callback_) {

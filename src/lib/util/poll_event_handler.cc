@@ -52,7 +52,15 @@ bool PollEventHandler::readReady(int fd) {
     if (map_.find(fd) == map_.end()) {
         return (false);
     }
-    return (map_[fd]->revents & POLLIN);
+    return (map_[fd]->revents & (POLLIN | POLLHUP));
+}
+
+
+bool PollEventHandler::hasError(int fd) {
+    if (map_.find(fd) == map_.end()) {
+        return (false);
+    }
+    return (map_[fd]->revents & (POLLERR | POLLNVAL));
 }
 
 void PollEventHandler::clear() {

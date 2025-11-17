@@ -112,6 +112,19 @@ bool KQueueEventHandler::readReady(int fd) {
     return (false);
 }
 
+bool KQueueEventHandler::hasError(int fd) {
+    if (errors_.count(fd)) {
+        return (true);
+    }
+    auto range = map_.equal_range(fd);
+    for (auto it = range.first; it != range.second; ++it) {
+        if ((it->second->flags & EV_EOF) || (it->second->filter == EV_ERROR)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 void KQueueEventHandler::clear() {
     data_.clear();
     used_data_.clear();
