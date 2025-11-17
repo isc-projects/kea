@@ -23,7 +23,7 @@ KQueueEventHandler::KQueueEventHandler() : FDEventHandler(TYPE_KQUEUE), kqueuefd
     if (kqueuefd_ == -1) {
         isc_throw(Unexpected, "error opening kqueue: " << strerror(errno));
     }
-    if (pipe(pipefd_)) {
+    if (pipe(pipe_fd_)) {
         close(kqueuefd_);
         isc_throw(Unexpected, "error opening internal kqueue pipe: " << strerror(errno));
     }
@@ -32,8 +32,8 @@ KQueueEventHandler::KQueueEventHandler() : FDEventHandler(TYPE_KQUEUE), kqueuefd
 
 KQueueEventHandler::~KQueueEventHandler() {
     close(kqueuefd_);
-    close(pipefd_[1]);
-    close(pipefd_[0]);
+    close(pipe_fd_[0]);
+    close(pipe_fd_[1]);
 }
 
 void KQueueEventHandler::add(int fd) {
@@ -76,12 +76,13 @@ int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
     }
     struct kevent dummy;
     memset(&dummy, 0, sizeof(dummy));
-    EV_SET(&dummy, pipefd_[0], EVFILT_READ, EV_ADD, 0, 0, 0);
+    EV_SET(&dummy, pipe_fd_[0], EVFILT_READ, EV_ADD, 0, 0, 0);
     kevent(kqueuefd_, &dummy, 1, 0, 0, 0);
     used_data_.push_back(dummy);
     int result = 0;
     if (errors_.empty()) {
-        result = kevent(kqueuefd_, 0, 0, used_data_.data(), used_data_.size(), select_timeout_p);
+        result = kevent(kqueuefd_, 0, 0, used_data_.data(), used_data_.size(),
+                        select_timeout_p);
         for (int i = 0; i < result; ++i) {
             map_.emplace(used_data_[i].ident, &used_data_[i]);
         }

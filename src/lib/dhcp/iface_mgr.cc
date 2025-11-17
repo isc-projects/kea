@@ -337,6 +337,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         // Update the callback and we're done
         if (s.socket_ == socketfd) {
             s.callback_ = callback;
+            s.unusable_ = false;
             return;
         }
     }
@@ -1126,6 +1127,9 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             for (SocketCallbackInfo& s : callbacks_) {
+                if (s.unusable_) {
+                    continue;
+                }
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
@@ -1172,6 +1176,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            isc_throw(SocketFDError, strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1258,6 +1264,9 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             for (SocketCallbackInfo& s : callbacks_) {
+                if (s.unusable_) {
+                    continue;
+                }
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
@@ -1287,6 +1296,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            isc_throw(SocketFDError, strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1389,6 +1400,9 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             for (SocketCallbackInfo& s : callbacks_) {
+                if (s.unusable_) {
+                    continue;
+                }
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
@@ -1418,6 +1432,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            isc_throw(SocketFDError, strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1490,6 +1506,9 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
             for (SocketCallbackInfo& s : callbacks_) {
+                if (s.unusable_) {
+                    continue;
+                }
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
@@ -1536,6 +1555,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // signal or for some other reason.
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else if (errno == EBADF) {
+            isc_throw(SocketFDError, strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }

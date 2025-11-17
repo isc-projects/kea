@@ -72,9 +72,9 @@ private:
     /// @brief The map with file descriptor to data reference.
     std::unordered_multimap<int, struct kevent*> map_;
 
-    /// @brief The pipe used to permit calling @ref waitEvent with no
-    /// registered file descriptors.
-    int pipefd_[2];
+    /// @brief The pipe used to permit calling @ref waitEvent
+    /// with no registered file descriptors.
+    int pipe_fd_[2];
 };
 
 }  // namespace isc::util;

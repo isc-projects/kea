@@ -70,9 +70,9 @@ private:
     /// @brief The map with file descriptor to data reference.
     std::unordered_map<int, struct epoll_event*> map_;
 
-    /// @brief The pipe used to permit calling @ref waitEvent with no
-    /// registered file descriptors.
-    int pipefd_[2];
+    /// @brief The pipe used to permit calling @ref waitEvent
+    /// with no registered file descriptors.
+    int pipe_fd_[2];
 };
 
 }  // namespace isc::util;

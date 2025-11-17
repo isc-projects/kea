@@ -96,6 +96,14 @@ public:
         isc::Exception(file, line, what) { }
 };
 
+/// @brief IfaceMgr exception thrown when there is an error detected for
+/// the respective socket file descriptor.
+class SocketFDError : public Exception {
+public:
+    SocketFDError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { }
+};
+
 /// @brief Represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
@@ -151,7 +159,7 @@ public:
     Iface(const std::string& name, unsigned int ifindex);
 
     /// @brief Destructor.
-    ~Iface() { }
+    ~Iface() = default;
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
@@ -196,13 +204,17 @@ public:
     /// @brief Returns MAC length.
     ///
     /// @return length of MAC address
-    size_t getMacLen() const { return mac_len_; }
+    size_t getMacLen() const {
+        return (mac_len_);
+    }
 
     /// @brief Returns pointer to MAC address.
     ///
     /// Note: Returned pointer is only valid as long as the interface object
     /// that returned it.
-    const uint8_t* getMac() const { return mac_; }
+    const uint8_t* getMac() const {
+        return (mac_);
+    }
 
     /// @brief Sets flag_*_ fields based on bitmask value returned by OS
     ///
@@ -216,22 +228,30 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    unsigned int getIndex() const { return ifindex_; }
+    unsigned int getIndex() const {
+        return (ifindex_);
+    }
 
     /// @brief Returns interface name.
     ///
     /// @return interface name
-    std::string getName() const { return name_; }
+    std::string getName() const {
+        return (name_);
+    }
 
     /// @brief Sets up hardware type of the interface.
     ///
     /// @param type hardware type
-    void setHWType(uint16_t type ) { hardware_type_ = type; }
+    void setHWType(uint16_t type ) {
+        hardware_type_ = type;
+    }
 
     /// @brief Returns hardware type of the interface.
     ///
     /// @return hardware type
-    uint16_t getHWType() const { return hardware_type_; }
+    uint16_t getHWType() const {
+        return (hardware_type_);
+    }
 
     /// @brief Returns all addresses available on an interface.
     ///
@@ -251,7 +271,9 @@ public:
     /// mostly be useful for clients with wifi/vpn/virtual interfaces.
     ///
     /// @return collection of addresses
-    const AddressCollection& getAddresses() const { return addrs_; }
+    const AddressCollection& getAddresses() const {
+        return (addrs_);
+    }
 
     /// @brief Returns IPv4 address assigned to the interface.
     ///
@@ -344,7 +366,9 @@ public:
     /// the IfaceMgr object that returned it.
     ///
     /// @return collection of sockets added to interface
-    const SocketCollection& getSockets() const { return sockets_; }
+    const SocketCollection& getSockets() const {
+        return (sockets_);
+    }
 
     /// @brief Removes any unicast addresses
     ///
@@ -364,7 +388,7 @@ public:
     ///
     /// @return address collection (may be empty)
     const AddressCollection& getUnicasts() const {
-        return unicasts_;
+        return (unicasts_);
     }
 
     /// @brief Returns the pointer to the buffer used for data reading.
@@ -807,7 +831,9 @@ public:
     /// main() function completes, you should not worry much about this.
     ///
     /// @return container with all interfaces.
-    const IfaceCollection& getIfaces() { return (ifaces_); }
+    const IfaceCollection& getIfaces() {
+        return (ifaces_);
+    }
 
     /// @brief Removes detected interfaces.
     ///
@@ -1154,9 +1180,11 @@ public:
     /// @brief Returns number of detected interfaces.
     ///
     /// @return number of detected interfaces
-    uint16_t countIfaces() { return ifaces_.size(); }
+    uint16_t countIfaces() {
+        return (ifaces_.size());
+    }
 
-    /// @brief Adds external socket and a callback
+    /// @brief Adds external socket and a callback.
     ///
     /// Specifies external socket and a callback that will be called
     /// when data will be received over that socket.
@@ -1172,10 +1200,16 @@ public:
 
     /// @brief Deletes external socket
     ///
+    /// External sockets should be removed from IfaceMgr before being closed
+    /// by the external API.
+    ///
     /// @param socketfd socket descriptor
     void deleteExternalSocket(int socketfd);
 
     /// @brief Deletes all external sockets.
+    ///
+    /// External sockets should be removed from IfaceMgr before being closed
+    /// by the external API.
     void deleteAllExternalSockets();
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4

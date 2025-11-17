@@ -41,20 +41,20 @@ public:
     /// @brief Constructor.
     FDEventHandlerTest() {
         handler_.reset(new FDEventHandlerType);
-        pipe(pipefd_);
+        pipe(pipe_fd_);
     }
 
     /// @brief Destructor.
     ~FDEventHandlerTest() {
-        close(pipefd_[1]);
-        close(pipefd_[0]);
+        close(pipe_fd_[1]);
+        close(pipe_fd_[0]);
     }
 
     /// @brief The tested fd event handler.
     FDEventHandlerPtr handler_;
 
     /// @brief The pipe used for testing read and write operations.
-    int pipefd_[2];
+    int pipe_fd_[2];
 };
 
 TEST_F(FDEventHandlerTest, events) {
@@ -64,45 +64,45 @@ TEST_F(FDEventHandlerTest, events) {
 
     EXPECT_THROW(handler_->add(-1), BadValue);
 
-    EXPECT_NO_THROW(handler_->add(pipefd_[0]));
+    EXPECT_NO_THROW(handler_->add(pipe_fd_[0]));
 
-    EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
 
     EXPECT_EQ(0, handler_->waitEvent(0, 1000));
 
-    EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
 
-    EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
-
-    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
-
-    EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
-
-    EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
+    EXPECT_EQ(1, write(pipe_fd_[1], &MARKER, sizeof(MARKER)));
 
     EXPECT_EQ(1, handler_->waitEvent(0, 1000));
 
-    EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+    EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
+
+    EXPECT_EQ(1, write(pipe_fd_[1], &MARKER, sizeof(MARKER)));
+
+    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+
+    EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
 
     unsigned char data;
 
-    EXPECT_EQ(1, read(pipefd_[0], &data, sizeof(data)));
+    EXPECT_EQ(1, read(pipe_fd_[0], &data, sizeof(data)));
 
     EXPECT_EQ(1, handler_->waitEvent(0, 1000));
 
-    EXPECT_TRUE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+    EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
 
-    EXPECT_EQ(1, read(pipefd_[0], &data, sizeof(data)));
+    EXPECT_EQ(1, read(pipe_fd_[0], &data, sizeof(data)));
 
     EXPECT_EQ(0, handler_->waitEvent(0, 1000));
 
-    EXPECT_FALSE(handler_->readReady(pipefd_[0]));
-    EXPECT_FALSE(handler_->readReady(pipefd_[1]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[0]));
+    EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
 
     EXPECT_NO_THROW(handler_->clear());
 
@@ -137,15 +137,9 @@ TEST_F(FDEventHandlerTest, events) {
 
 TEST_F(FDEventHandlerTest, badFD) {
     errno = 0;
-    int fd;
-
-    if (handler_->type() != FDEventHandler::TYPE_SELECT) {
-        // epoll does not allow add of /dev/zero to registered events.
-        fd = pipefd_[0];
-        EXPECT_EQ(1, write(pipefd_[1], &MARKER, sizeof(MARKER)));
-    } else {
-        fd = open("/dev/zero", O_RDONLY, 0);
-    }
+    int fd = pipe_fd_[0];
+    // epoll does not allow add of /dev/zero to registered events.
+    EXPECT_EQ(1, write(pipe_fd_[1], &MARKER, sizeof(MARKER)));
 
     ASSERT_GE(fd, 0);
 
@@ -182,10 +176,17 @@ TEST_F(FDEventHandlerTest, badFD) {
         EXPECT_EQ(EBADF, errno);
     }
 
-    if (handler_->type() != FDEventHandler::TYPE_SELECT) {
-        close(pipefd_[1]);
-        pipe(pipefd_);
-    }
+    close(pipe_fd_[1]);
+    pipe(pipe_fd_);
+}
+
+TEST_F(FDEventHandlerTest, hup) {
+    EXPECT_NO_THROW(handler_->add(pipe_fd_[0]));
+    close(pipe_fd_[1]);
+    EXPECT_EQ(1, handler_->waitEvent(0, 1000));
+    EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
+    close(pipe_fd_[0]);
+    pipe(pipe_fd_);
 }
 
 } // end of anonymous namespace
