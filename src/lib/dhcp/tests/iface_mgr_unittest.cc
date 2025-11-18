@@ -734,9 +734,9 @@ public:
         // We call receive4() which should detect and remove the invalid socket.
         try {
             pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
-        } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("Bad file descriptor"),
-                      std::string(ex.what()));
+        } catch (const SocketFDError& ex) {
+            std::string err_msg("unexpected state (closed) for fd: ");
+            EXPECT_EQ(err_msg, std::string(ex.what()).substr(0, err_msg.length()));
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }
@@ -822,9 +822,9 @@ public:
         // We call receive6() which should detect and remove the invalid socket.
         try {
             pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
-        } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("Bad file descriptor"),
-                      std::string(ex.what()));
+        } catch (const SocketFDError& ex) {
+            std::string err_msg("unexpected state (closed) for fd: ");
+            EXPECT_EQ(err_msg, std::string(ex.what()).substr(0, err_msg.length()));
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }

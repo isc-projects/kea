@@ -1133,10 +1133,10 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
-                } else if (!s.unusable_) {
-                    // Add this socket to listening set
-                    fd_event_handler_->add(s.socket_);
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
+                // Add this socket to listening set
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
@@ -1177,7 +1177,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, strerror(errno));
+            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
+                      << strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1195,34 +1196,28 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
-        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->hasError(s.socket_)) {
-                    fd_error = true;
+                if (fd_event_handler_->readReady(s.socket_)) {
+                    found = true;
+
+                    // something received over external socket
+                    if (s.callback_) {
+                        // Note the external socket to call its callback without
+                        // the lock taken so it can be deleted.
+                        ex_sock = s;
+                        break;
+                    }
+                } else if (fd_event_handler_->hasError(s.socket_)) {
                     errno = 0;
                     if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                         s.unusable_ = true;
+                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                     }
-                    break;
-                }
-                if (!fd_event_handler_->readReady(s.socket_)) {
-                    continue;
-                }
-                found = true;
-
-                // something received over external socket
-                if (s.callback_) {
-                    // Note the external socket to call its callback without
-                    // the lock taken so it can be deleted.
-                    ex_sock = s;
-                    break;
+                    isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
                 }
             }
-        }
-        if (fd_error) {
-            isc_throw(SocketFDError, strerror(errno));
         }
 
         if (ex_sock.callback_) {
@@ -1282,10 +1277,10 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
-                } else if (!s.unusable_) {
-                    // Add this socket to listening set
-                    fd_event_handler_->add(s.socket_);
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
+                // Add this socket to listening set
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
@@ -1309,7 +1304,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, strerror(errno));
+            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
+                      << strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1318,34 +1314,28 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
-    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->hasError(s.socket_)) {
-                fd_error = true;
+            if (fd_event_handler_->readReady(s.socket_)) {
+                found = true;
+
+                // something received over external socket
+                if (s.callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock = s;
+                    break;
+                }
+            } else if (fd_event_handler_->hasError(s.socket_)) {
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
-                break;
-            }
-            if (!fd_event_handler_->readReady(s.socket_)) {
-                continue;
-            }
-            found = true;
-
-            // something received over external socket
-            if (s.callback_) {
-                // Note the external socket to call its callback without
-                // the lock taken so it can be deleted.
-                ex_sock = s;
-                break;
+                isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
             }
         }
-    }
-    if (fd_error) {
-        isc_throw(SocketFDError, strerror(errno));
     }
 
     if (ex_sock.callback_) {
@@ -1433,10 +1423,10 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
-                } else if (!s.unusable_) {
-                    // Add this socket to listening set
-                    fd_event_handler_->add(s.socket_);
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
+                // Add this socket to listening set
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
@@ -1460,7 +1450,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, strerror(errno));
+            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
+                      << strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1469,34 +1460,28 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // Let's find out which socket has the data
     SocketCallbackInfo ex_sock;
     bool found = false;
-    bool fd_error = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->hasError(s.socket_)) {
-                fd_error = true;
+            if (fd_event_handler_->readReady(s.socket_)) {
+                found = true;
+
+                // something received over external socket
+                if (s.callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock = s;
+                    break;
+                }
+            } else if (fd_event_handler_->hasError(s.socket_)) {
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
-                break;
-            }
-            if (!fd_event_handler_->readReady(s.socket_)) {
-                continue;
-            }
-            found = true;
-
-            // something received over external socket
-            if (s.callback_) {
-                // Note the external socket to call its callback without
-                // the lock taken so it can be deleted.
-                ex_sock = s;
-                break;
+                isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
             }
         }
-    }
-    if (fd_error) {
-        isc_throw(SocketFDError, strerror(errno));
     }
 
     if (ex_sock.callback_) {
@@ -1554,10 +1539,10 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                 errno = 0;
                 if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                     s.unusable_ = true;
-                } else if (!s.unusable_) {
-                    // Add this socket to listening set
-                    fd_event_handler_->add(s.socket_);
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
+                // Add this socket to listening set
+                fd_event_handler_->add(s.socket_);
             }
         }
     }
@@ -1598,7 +1583,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, strerror(errno));
+            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
+                      << strerror(errno));
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1616,34 +1602,28 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         // Let's find out which external socket has the data
         SocketCallbackInfo ex_sock;
         bool found = false;
-        bool fd_error = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->hasError(s.socket_)) {
-                    fd_error = true;
+                if (fd_event_handler_->readReady(s.socket_)) {
+                    found = true;
+
+                    // something received over external socket
+                    if (s.callback_) {
+                        // Note the external socket to call its callback without
+                        // the lock taken so it can be deleted.
+                        ex_sock = s;
+                        break;
+                    }
+                } else if (fd_event_handler_->hasError(s.socket_)) {
                     errno = 0;
                     if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
                         s.unusable_ = true;
+                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                     }
-                    break;
-                }
-                if (!fd_event_handler_->readReady(s.socket_)) {
-                    continue;
-                }
-                found = true;
-
-                // something received over external socket
-                if (s.callback_) {
-                    // Note the external socket to call its callback without
-                    // the lock taken so it can be deleted.
-                    ex_sock = s;
-                    break;
+                    isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
                 }
             }
-        }
-        if (fd_error) {
-            isc_throw(SocketFDError, strerror(errno));
         }
 
         if (ex_sock.callback_) {

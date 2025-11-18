@@ -177,6 +177,8 @@ TEST_F(FDEventHandlerTest, badFD) {
 
     if (handler_->type() == FDEventHandler::TYPE_SELECT) {
         EXPECT_EQ(-1, handler_->waitEvent(0, 1000));
+        // on error readReady is not actually returning the new state,
+        // but the read flag added before wait for the fd.
         EXPECT_TRUE(handler_->readReady(fd));
         EXPECT_FALSE(handler_->hasError(fd));
         EXPECT_EQ(EBADF, errno);
@@ -247,6 +249,8 @@ TEST_F(FDEventHandlerTest, badFD) {
 
             EXPECT_EQ(EBADF, errno);
 
+            // on error readReady is not actually returning the new state,
+            // but the read flag added before wait for the fd.
             EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
             EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
 #endif
@@ -305,6 +309,8 @@ TEST_F(FDEventHandlerTest, badFD) {
 
             EXPECT_EQ(EBADF, errno);
 
+            // on error readReady is not actually returning the new state,
+            // but the read flag added before wait for the fd.
             EXPECT_TRUE(handler_->readReady(pipe_fd_[1]));
             EXPECT_FALSE(handler_->hasError(pipe_fd_[1]));
 #endif
