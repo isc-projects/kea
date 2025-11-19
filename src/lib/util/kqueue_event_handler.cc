@@ -105,7 +105,7 @@ int KQueueEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
 bool KQueueEventHandler::readReady(int fd) {
     auto range = map_.equal_range(fd);
     for (auto it = range.first; it != range.second; ++it) {
-        if (it->second->filter == EVFILT_READ) {
+        if ((it->second->flags & EV_EOF) || (it->second->filter == EVFILT_READ)) {
             return (true);
         }
     }
@@ -118,7 +118,7 @@ bool KQueueEventHandler::hasError(int fd) {
     }
     auto range = map_.equal_range(fd);
     for (auto it = range.first; it != range.second; ++it) {
-        if ((it->second->flags & EV_EOF) || (it->second->filter == EV_ERROR)) {
+        if (it->second->filter == EV_ERROR) {
             return (true);
         }
     }

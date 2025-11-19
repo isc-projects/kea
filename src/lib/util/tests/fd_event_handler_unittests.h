@@ -213,11 +213,7 @@ TEST_F(FDEventHandlerTest, badFD) {
         EXPECT_EQ(0, errno);
 
         EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
-        if (handler_->type() == FDEventHandler::TYPE_KQUEUE) {
-            EXPECT_TRUE(handler_->hasError(pipe_fd_[0]));
-        } else {
-            EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
-        }
+        EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
 
         tr.join();
 
@@ -374,13 +370,6 @@ TEST_F(FDEventHandlerTest, badFD) {
 
             EXPECT_FALSE(handler_->readReady(pipe_fd_[1]));
             EXPECT_TRUE(handler_->hasError(pipe_fd_[1]));
-        } else if (handler_->type() == FDEventHandler::TYPE_KQUEUE) {
-            EXPECT_EQ(1, handler_->waitEvent(1, 0));
-
-            EXPECT_EQ(0, errno);
-
-            EXPECT_TRUE(handler_->readReady(pipe_fd_[1]));
-            EXPECT_TRUE(handler_->hasError(pipe_fd_[1]));
         } else {
             EXPECT_EQ(1, handler_->waitEvent(1, 0));
 
@@ -402,11 +391,7 @@ TEST_F(FDEventHandlerTest, hup) {
     close(pipe_fd_[1]);
     EXPECT_EQ(1, handler_->waitEvent(0, 1000));
     EXPECT_TRUE(handler_->readReady(pipe_fd_[0]));
-    if (handler_->type() == FDEventHandler::TYPE_KQUEUE) {
-        EXPECT_TRUE(handler_->hasError(pipe_fd_[0]));
-    } else {
-        EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
-    }
+    EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
 
     close(pipe_fd_[0]);
     pipe(pipe_fd_);
