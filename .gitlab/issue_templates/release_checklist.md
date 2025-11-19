@@ -29,7 +29,8 @@ about: Create a new issue using this checklist for each release.
 
 Some of these checks and updates can be made before the actual freeze.
 
-1. [ ] <mark>Security Release Only</mark>: Should be done before the first security fix is merged. Make sure mirroring is turned off for both Github and Gitlab [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it off, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+1. [ ] <mark>Security Release Only</mark>: Should have been done when the CVE was discovered, but better late then never. Enable the kea-cve/build-tarball job.
+1. [ ] <mark>Security Release Only</mark>: Should have been done when the CVE was discovered, but better late then never. Make sure mirroring is turned off for both Github and Gitlab [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it off, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/toggle-repo-mirroring.py) \
    Example command: `GITLAB_TOKEN='...' ./toggle-repo-mirroring.py --off isc-projects/kea`.
 1. [ ] <mark>Security Release Only</mark>: The release will be done from the isc-private/kea. Rebase the private branch you are releasing on the public branch. If there are changes after the rebase, push them. If there are conflicts, you may ask developers for help on resolving them.
 1. [ ] Check Jenkins results:
@@ -61,6 +62,7 @@ Some of these checks and updates can be made before the actual freeze.
    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. If a new Cloudsmith repository is used, then:
       1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
+1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) on the packages uploading to the testing repo.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
 
@@ -132,10 +134,10 @@ This is the last moment to freeze the code! :snowflake:
    1. Click `Build with Parameters`.
    1. In the field `Tarball`, select the picked tarball build.
    1. In the field `Pkg`, select the corresponding pkg job.
-   1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. In field `Release_Candidate` pick:
       1. `rc1` if this is the first selected build for release, it will push the selected tarballs to repo.isc.org, to a directory suffixed with indicated rc#
       1. next rc# if this is a respin after some fixes (note: it is not possible to pick the previous rc number - it will result in an error)
+   1. [ ] <mark>Security Release Only</mark>: Tick the `CVE` parameter.
    1. Submit the job that will automatically:
       1. Upload the tarballs.
       1. Create a GitLab issue for sanity checks. Put the announcement there.
@@ -151,26 +153,19 @@ This is the last moment to freeze the code! :snowflake:
 Now it's time to publish the code.
 
 1. [ ] Update Release Notes with ChangeLog entries.
-1. [ ] Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
-    1. Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
-       1. [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
-       1. [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
-1. Create a signed tag. Run QA script [sign-tag.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign-tag.py).
-    1. [ ] Once for `isc-projects/kea`.
-    1. [ ] Once for `isc-private/kea-premium`.
-    * Example command: `./sign-tag.py --project isc-projects/kea --tag Kea-2.3.4 --branch master --key 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
-    * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
+1. Mark Jenkins jobs with release artifacts to be kept forever and update description of build by adding there version of released Kea `Kea-A.B.C`).
+    * Go to the following Jenkins jobs, click release build and then, on the build page, click `Keep this build forever` button and edit the description:
+        1. [ ] [build-tarball](https://jenkins.aws.isc.org/job/kea-dev/job/build-tarball/).
+        1. [ ] [pkg job](https://jenkins.aws.isc.org/job/kea-dev/job/pkg/).
 1. [ ] Upload final tarballs to repo.isc.org.
     1. Go to [release-tarball-upload](https://jenkins.aws.isc.org/job/kea-dev/job/release-tarball-upload/) Jenkins job.
     1. Click `Build with Parameters`.
     1. In the field `Tarball`, select the picked tarball build.
     1. In the field `Pkg`, select the corresponding pkg job.
-    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
     1. In the field `Release_Candidate`, pick `final`. This job will also:
        - Open an issue on [the signing repository](https://gitlab.isc.org/isc-private/signing/-/issues) for signing final tarballs on repo.isc.org.
-       - Create Git tags `Kea-A.B.C` in Kea main and premium repositories.
        - Create Gitlab releases `Kea-A.B.C` in Kea main and premium repositories.
-1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
+    1. [ ] <mark>Security Release Only</mark>: Tick the `CVE` parameter.
 1. [ ] Sign the tarballs. Run QA script [sign_kea_and_upload_asc.sh](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/sign_kea_and_upload_asc.sh).
     * Example command: `./sign_kea_and_upload_asc.sh 2.3.4 wlodek 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
     * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
@@ -180,8 +175,9 @@ Now it's time to publish the code.
         1. Upload the public signature at `/data/shared/sweng/kea/releases/x.y.z/*-x.y.z.tar.gz.asc`.
 1. [ ] Confirm that the tarballs have the checksums mentioned on the signing ticket.
     * Example command: `ssh repo.isc.org 'sha256sum /data/shared/sweng/kea/releases/*2.3.4/*.tar.xz'`
-1. [ ] <mark>Security Release Only</mark>: Wait for clearance from Security Officer to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
+1. [ ] <mark>Security Release Only</mark>: Wait for clearance from Incident Manager to proceed with the public release (if applicable). If this is a security release, next steps will be impacted by CVE checklist.
 1. [ ] Login to repo.isc.org and upload the final tarball to public ftp using the make-available script.
+    * [ ] <mark>Security Release Only</mark>: Pass the `--private` flag instead of `--public` even for the core tarball.
     * [ ] For the subscriber tarball, run again with the `--private` flag instead of `--public`.
     * Example commands:
       * `make-available --public --symlink=cur/2.3 /data/shared/sweng/kea/releases/2.3.4`
@@ -196,7 +192,7 @@ Now it's time to publish the code.
     1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
        - This step also verifies sign files.
     1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
-1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/).
+1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) on the packages uploaded to the production repo.
 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
     * Make sure the right package job is selected under `Packages`.
     * Tick `Upload`.
@@ -206,14 +202,22 @@ Now it's time to publish the code.
     * <mark>Latest Stable Release Only</mark>: Tick `latestTag`.
     * Press `Build`.
 1. [ ] Build and upload Docker images to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/) with the same actions as above except change `TestProdRepos` to `production`.
-1. [ ] <mark>Security Release Only</mark>: Put procedure on hold, proceed with documentation and tags after public disclosure.
-1. [ ] <mark>Security Release Only</mark>: After public disclosure, sync release branches from Kea private repository into Kea public.
-1. [ ] Update docs on https://app.readthedocs.org/projects/kea/.
-    1. Click the triple dot button on the `latest` build -> click `Rebuild version`. This is really a workaround for RTD to pull the repo and discover the new tag.
-    1. Go to `Versions` -> `Add version` -> find the tag name in the dropdown menu -> check `Active` -> click `Update version`. Wait for the build to complete.
-    1. [ ] <mark>Latest Stable Release Only</mark>: change default version:
-        1. Go to `Settings` -> `Default version:` -> choose the new version as default.
-        1. Check that https://kea.readthedocs.io/ redirects to the new version.
+1. [ ] <mark>Security Release Only</mark>: Wait for public disclosure. Confirm with the Incident Manager that the disclosure is done.
+1. [ ] <mark>Security Release Only</mark>: Copy public packages from `-prv` Cloudsmith repo to public.
+    * You can use script [copy-missing-public-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/copy-missing-public-packages-between-cloudsmith-repos.py) \
+      Example command: `./copy-missing-public-packages-between-cloudsmith-repos.py -v 2.3.4`.
+    * Or you can use the Cloudsmith GUI. Consider using the filter from the script in the previous bullet point.
+1. [ ] <mark>Security Release Only</mark>: Sync release branches from private repository into public. Run QA script [sync-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/sync-braches.py) \
+   Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-private/kea --target-project isc-projects/kea --branch master`.
+1. Create a signed tag. Run QA script [sign-tag.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/sign-tag.py).
+    1. [ ] Once for `isc-projects/kea`.
+        * [ ] <mark>Security Release Only</mark>: `isc-private/kea` instead.
+    1. [ ] Once for `isc-private/kea-premium`.
+    * Example command: `./sign-tag.py --project isc-projects/kea --tag Kea-2.3.4 --branch master --key 0259A33B5F5A3A4466CF345C7A5E084CACA51884`
+    * To get the fingerprint, run `gpg --list-keys wlodek@isc.org`.
+1. [ ] <mark>Latest Stable Release Only</mark>: Recreate the `stable` tag. Go to [the stable tag](https://gitlab.isc.org/isc-projects/kea/-/tags/stable), click `Delete tag`, then `New tag`, `Tag name`: `stable`, `Create from`: `Kea-A.B.C`.
+1. [ ] Update docs on [https://app.readthedocs.org/projects/kea/].
+    1. Click `Add version` -> click `Resync versions` at the bottom -> click on the `Search versions` search bar -> find the tag name in the dropdown menu -> toggle `Active` -> click `Update version`. Wait for the build to complete.
     1. [ ] <mark>Latest Stable Release Only</mark>: Rebuild the `stable` version. Go to [the stable build](https://app.readthedocs.org/projects/kea/builds/?version__slug=stable), click `Rebuild version`.
 1. [ ] <mark>Stable or Dev Releases Only</mark>: Create an issue and a merge request to bump up Kea version in `meson.build` to the next development version which could be, based on just released version `A.B.C`:
     * `A.B.z-git` where `z == C + 1` most of the time, or
@@ -250,6 +254,10 @@ Now it's time to publish the code.
 
 ## QA
 
-1. [ ] <mark>Security Release Only</mark>: Mirroring can be turned back on for both Github and Gitlab. You an check it [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it on, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/build/update-code-for-release.py) \
+1. [ ] <mark>Security Release Only</mark>: Sync release branches from public repository into private. Run QA script [sync-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/sync-braches.py) \
+   Example command: `GITLAB_TOKEN='...' ./sync-repos.py --source-project isc-projects/kea --target-project isc-private/kea --branch master`.
+1. [ ] <mark>Security Release Only</mark>: Disable the kea-cve/build-tarball job.
+1. [ ] <mark>Security Release Only</mark>: Mirroring can be turned back on for both Github and Gitlab. You an check it [here](https://gitlab.isc.org/isc-projects/kea/-/settings/repository#js-push-remote-settings). To turn it on, run QA script [toggle-repo-mirroring.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/toggle-repo-mirroring.py) \
    Example command: `GITLAB_TOKEN='...' ./toggle-repo-mirroring.py --on isc-projects/kea`.
+1. [ ] Close the signing ticket.
 1. [ ] Close this ticket.
