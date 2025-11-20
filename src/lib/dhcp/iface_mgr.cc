@@ -1415,12 +1415,11 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
+            handleIfaceSocketError(s);
             if (fd_event_handler_->readReady(s.sockfd_) ||
                 fd_event_handler_->hasError(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
-            } else {
-                handleIfaceSocketError(s);
             }
         }
         if (candidate) {
@@ -1556,12 +1555,11 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
+            handleIfaceSocketError(s);
             if (fd_event_handler_->readReady(s.sockfd_) ||
                 fd_event_handler_->hasError(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
-            } else {
-                handleIfaceSocketError(s);
             }
         }
         if (candidate) {
@@ -1755,6 +1753,7 @@ IfaceMgr::receiveDHCP4Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
+                handleIfaceSocketError(s);
                 if (receiver_fd_event_handler_->readReady(s.sockfd_) ||
                     receiver_fd_event_handler_->hasError(s.sockfd_)) {
                     receiveDHCP4Packet(*iface, s);
@@ -1762,8 +1761,6 @@ IfaceMgr::receiveDHCP4Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
-                } else {
-                    handleIfaceSocketError(s);
                 }
             }
         }
@@ -1830,6 +1827,7 @@ IfaceMgr::receiveDHCP6Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
+                handleIfaceSocketError(s);
                 if (receiver_fd_event_handler_->readReady(s.sockfd_) ||
                     receiver_fd_event_handler_->hasError(s.sockfd_)) {
                     receiveDHCP6Packet(s);
@@ -1837,8 +1835,6 @@ IfaceMgr::receiveDHCP6Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
-                } else {
-                    handleIfaceSocketError(s);
                 }
             }
         }
