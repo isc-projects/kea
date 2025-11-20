@@ -8,13 +8,7 @@
 
 #include <exceptions/exceptions.h>
 
-#ifdef HAVE_EPOLL
-#include <util/epoll_event_handler.h>
-#endif
 #include <util/fd_event_handler_factory.h>
-#ifdef HAVE_KQUEUE
-#include <util/kqueue_event_handler.h>
-#endif
 #include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 
@@ -33,12 +27,6 @@ FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
         if (string(env_type) == string("select")) {
             type = FDEventHandler::TYPE_SELECT;
         }
-        if (string(env_type) == string("epoll")) {
-            type = FDEventHandler::TYPE_EPOLL;
-        }
-        if (string(env_type) == string("kqueue")) {
-            type = FDEventHandler::TYPE_KQUEUE;
-        }
         if (string(env_type) == string("poll")) {
             type = FDEventHandler::TYPE_POLL;
         }
@@ -46,18 +34,6 @@ FDEventHandlerPtr FDEventHandlerFactory::factoryFDEventHandler() {
     switch(type) {
     case FDEventHandler::TYPE_SELECT:
         return (FDEventHandlerPtr(new SelectEventHandler()));
-    case FDEventHandler::TYPE_EPOLL:
-#ifdef HAVE_EPOLL
-        return (FDEventHandlerPtr(new EPollEventHandler()));
-#else
-        isc_throw(BadValue, "fd event handler of type 'epoll' is not supported");
-#endif
-    case FDEventHandler::TYPE_KQUEUE:
-#ifdef HAVE_KQUEUE
-        return (FDEventHandlerPtr(new KQueueEventHandler()));
-#else
-        isc_throw(BadValue, "fd event handler of type 'kqueue' is not supported");
-#endif
     case FDEventHandler::TYPE_POLL:
         return (FDEventHandlerPtr(new PollEventHandler()));
     default:

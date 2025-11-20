@@ -20,9 +20,7 @@ public:
     enum HandlerType : uint16_t {
         TYPE_UNKNOWN = 0,
         TYPE_SELECT = 1,
-        TYPE_EPOLL = 2, // Linux OS (Linux like OS) only
-        TYPE_KQUEUE = 3, // BSD OS (BSD like OS) only
-        TYPE_POLL = 4,
+        TYPE_POLL = 2,
     };
 
     /// @brief Constructor.
@@ -61,7 +59,7 @@ public:
     /// @param fd The file descriptor.
     ///
     /// @return True if file descriptor has error.
-    virtual bool hasError(int fd);
+    virtual bool hasError(int fd) = 0;
 
     /// @brief Clear registered file descriptors.
     virtual void clear() = 0;

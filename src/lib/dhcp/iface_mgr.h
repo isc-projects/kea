@@ -31,8 +31,9 @@
 
 #include <functional>
 #include <list>
-#include <vector>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -1198,6 +1199,12 @@ public:
     /// @return True if the fd is in the list of registered sockets.
     bool isExternalSocket(int fd);
 
+    /// @brief Checks if socket's file description is registered.
+    ///
+    /// @return True if the fd is in the list of registered sockets and it
+    /// is unusable.
+    bool isExternalSocketUnusable(int fd);
+
     /// @brief Deletes external socket
     ///
     /// External sockets should be removed from IfaceMgr before being closed
@@ -1507,6 +1514,9 @@ protected:
     ///
     /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    /// Main thread ID.
+    std::thread::id id_;
 
     /// @brief List of available interfaces
     IfaceCollection ifaces_;

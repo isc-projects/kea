@@ -49,6 +49,9 @@ int PollEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /* =
 }
 
 bool PollEventHandler::readReady(int fd) {
+    if (fd < 0) {
+        isc_throw(BadValue, "invalid negative value for fd");
+    }
     if (map_.find(fd) == map_.end()) {
         return (false);
     }
@@ -57,10 +60,13 @@ bool PollEventHandler::readReady(int fd) {
 
 
 bool PollEventHandler::hasError(int fd) {
+    if (fd < 0) {
+        isc_throw(BadValue, "invalid negative value for fd");
+    }
     if (map_.find(fd) == map_.end()) {
         return (false);
     }
-    return (map_[fd]->revents & (POLLERR | POLLNVAL));
+    return (map_[fd]->revents & POLLERR);
 }
 
 void PollEventHandler::clear() {

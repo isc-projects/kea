@@ -119,7 +119,7 @@ TEST(WatchSocketTest, closedWhileReady) {
     EXPECT_EQ(1, selectCheck(select_fd));
     EXPECT_TRUE(watch->isReady());
 
-    // The epoll event handler must be created before closing the socket.
+    // The event handler must be created before closing the socket.
     // It creates an internal pipe which will match the closed fd and the
     // check for bad file descriptor will fail.
     FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
@@ -202,7 +202,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
-    // The epoll event handler must be created before closing the socket.
+    // The event handler must be created before closing the socket.
     // It creates an internal pipe which will match the closed fd and the
     // check for bad file descriptor will fail.
     FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();

@@ -179,6 +179,7 @@ IfaceMgr::IfaceMgr()
     : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
       test_mode_(false), allow_loopback_(false) {
+    id_ = std::this_thread::get_id();
 
     // Ensure that PQMs have been created to guarantee we have
     // default packet queues in place.
@@ -331,6 +332,10 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
+    if (std::this_thread::get_id() != id_) {
+        isc_throw(InvalidOperation, "Attempted to register external socket from different thread "
+                  << std::this_thread::get_id());
+    }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     for (SocketCallbackInfo& s : callbacks_) {
         // There's such a socket description there already.
@@ -357,6 +362,10 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
+    if (std::this_thread::get_id() != id_) {
+        isc_throw(InvalidOperation, "Attempted to unregister external socket from different thread "
+                  << std::this_thread::get_id());
+    }
     for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (s->socket_ == socketfd) {
@@ -378,8 +387,24 @@ IfaceMgr::isExternalSocket(int fd) {
     return (false);
 }
 
+bool
+IfaceMgr::isExternalSocketUnusable(int fd) {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    for (const SocketCallbackInfo& s : callbacks_) {
+        if (s.socket_ == fd) {
+            return (s.unusable_);
+        }
+    }
+
+    return (false);
+}
+
 void
 IfaceMgr::deleteAllExternalSockets() {
+    if (std::this_thread::get_id() != id_) {
+        isc_throw(InvalidOperation, "Attempted to unregister external sockets from different thread "
+                  << std::this_thread::get_id());
+    }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
 }
@@ -1215,7 +1240,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                         s.unusable_ = true;
                         isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                     }
-                    isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
+                    isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
+                              << strerror(errno));
                 }
             }
         }
@@ -1333,7 +1359,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                     s.unusable_ = true;
                     isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
-                isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
+                isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
+                          << strerror(errno));
             }
         }
     }
@@ -1353,12 +1380,27 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->hasError(s.sockfd_)) {
-                isc_throw(SocketFDError, strerror(errno));
-            }
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
+            } else if (fd_event_handler_->hasError(s.sockfd_)) {
+                errno = 0;
+                if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
+                }
+                isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+                          << strerror(errno));
+            } else {
+                int flag = 0;
+                socklen_t opt_size = sizeof(flag);
+                if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                               (char *)&flag, &opt_size) < 0) {
+                    isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
+                              << strerror(errno));
+                }
+                if (flag > 0) {
+                    isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+                }
             }
         }
         if (candidate) {
@@ -1479,7 +1521,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                     s.unusable_ = true;
                     isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                 }
-                isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
+                isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
+                          << strerror(errno));
             }
         }
     }
@@ -1498,12 +1541,27 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->hasError(s.sockfd_)) {
-                isc_throw(SocketFDError, strerror(errno));
-            }
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
+            } else if (fd_event_handler_->hasError(s.sockfd_)) {
+                errno = 0;
+                if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
+                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
+                }
+                isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+                          << strerror(errno));
+            } else {
+                int flag = 0;
+                socklen_t opt_size = sizeof(flag);
+                if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                               (char *)&flag, &opt_size) < 0) {
+                    isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
+                              << strerror(errno));
+                }
+                if (flag > 0) {
+                    isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+                }
             }
         }
         if (candidate) {
@@ -1621,7 +1679,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                         s.unusable_ = true;
                         isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
                     }
-                    isc_throw(SocketFDError, "unexpected socket error: " << strerror(errno));
+                    isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
+                              << strerror(errno));
                 }
             }
         }
@@ -1665,6 +1724,7 @@ IfaceMgr::receiveDHCP4Packets() {
     }
 
     for (;;) {
+        try {
         // Check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
             return;
@@ -1706,8 +1766,31 @@ IfaceMgr::receiveDHCP4Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
+                } else if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                    errno = 0;
+                    if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
+                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
+                    }
+                    isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+                              << strerror(errno));
+                } else {
+                    int flag = 0;
+                    socklen_t opt_size = sizeof(flag);
+                    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                                   (char *)&flag, &opt_size) < 0) {
+                        isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
+                                  << strerror(errno));
+                    }
+                    if (flag > 0) {
+                        isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+                    }
                 }
             }
+        }
+        } catch (const std::exception& ex) {
+            dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
+        } catch (...) {
+            dhcp_receiver_->setError("receive failed");
         }
     }
 }
@@ -1731,6 +1814,7 @@ IfaceMgr::receiveDHCP6Packets() {
     }
 
     for (;;) {
+        try {
         // Check the watch socket.
         if (dhcp_receiver_->shouldTerminate()) {
             return;
@@ -1772,8 +1856,31 @@ IfaceMgr::receiveDHCP6Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
+                } else if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                    errno = 0;
+                    if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
+                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
+                    }
+                    isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+                              << strerror(errno));
+                } else {
+                    int flag = 0;
+                    socklen_t opt_size = sizeof(flag);
+                    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                                   (char *)&flag, &opt_size) < 0) {
+                        isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
+                                  << strerror(errno));
+                    }
+                    if (flag > 0) {
+                        isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+                    }
                 }
             }
+        }
+        } catch (const std::exception& ex) {
+            dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
+        } catch (...) {
+            dhcp_receiver_->setError("receive failed");
         }
     }
 }

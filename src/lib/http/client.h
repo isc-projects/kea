@@ -76,7 +76,7 @@ class HttpClientImpl;
 /// each connection via connect, handshake and close callbacks.
 /// This is done to permit the sockets to be monitored for IO readiness
 /// by external code that's something other than boost::asio
-/// (e.g.select() or epoll()), and would thus otherwise starve the
+/// (e.g. select() or poll()), and would thus otherwise starve the
 /// client's IOService and cause a backlog of ready event handlers.
 ///
 /// All errors are reported to the caller via the callback function supplied
@@ -107,7 +107,7 @@ public:
     /// connecting to the server (if true) or not (false).
     /// It is passed the IO error code along with the native socket handle of
     /// the connection's TCP socket.  The passed socket descriptor may be used
-    /// to monitor the readiness of the events via select() or epoll().
+    /// to monitor the readiness of the events via select() or poll().
     ///
     /// @note Beware that the IO error code can be set to "in progress"
     /// so a not null error code does not always mean the connect failed.

@@ -60,6 +60,9 @@ int SelectEventHandler::waitEvent(uint32_t timeout_sec, uint32_t timeout_usec /*
 }
 
 bool SelectEventHandler::readReady(int fd) {
+    if (fd < 0) {
+        isc_throw(BadValue, "invalid negative value for fd");
+    }
     if (fd >= FD_SETSIZE) {
         isc_throw(BadValue, "invalid value for fd exceeds maximum allowed " << FD_SETSIZE);
     }
@@ -67,6 +70,9 @@ bool SelectEventHandler::readReady(int fd) {
 }
 
 bool SelectEventHandler::hasError(int fd) {
+    if (fd < 0) {
+        isc_throw(BadValue, "invalid negative value for fd");
+    }
     if (fd >= FD_SETSIZE) {
         isc_throw(BadValue, "invalid value for fd exceeds maximum allowed " << FD_SETSIZE);
     }

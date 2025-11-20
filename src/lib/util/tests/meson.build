@@ -2,14 +2,11 @@ if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
-epoll_event_handler_unittests_cc = []
-if HAVE_EPOLL
-    epoll_event_handler_unittests_cc = 'epoll_event_handler_unittests.cc'
-endif
+root_tests = '*EventHandlerTest.noLimit'
 
-kqueue_event_handler_unittests_cc = []
-if HAVE_KQUEUE
-    kqueue_event_handler_unittests_cc = 'kqueue_event_handler_unittests.cc'
+args_filter_out = []
+if PASSWORDLESS_SUDO_SET_UP
+    args_filter_out = [f'--gtest_filter=-@root_tests@']
 endif
 
 kea_util_tests = executable(
@@ -22,13 +19,11 @@ kea_util_tests = executable(
     'dhcp_space_unittest.cc',
     'doubles_unittest.cc',
     'encode_unittest.cc',
-    epoll_event_handler_unittests_cc,
     'fd_event_handler_factory_unittests.cc',
     'fd_tests.cc',
     'filesystem_unittests.cc',
     'hash_unittest.cc',
     'io_unittests.cc',
-    kqueue_event_handler_unittests_cc,
     'labeled_value_unittest.cc',
     'memory_segment_common_unittest.cc',
     'memory_segment_local_unittest.cc',
@@ -60,3 +55,13 @@ kea_util_tests = executable(
     link_with: [kea_util_unittests_lib] + LIBS_BUILT_SO_FAR,
 )
 test('kea-util-tests', kea_util_tests, protocol: 'gtest')
+
+if PASSWORDLESS_SUDO_SET_UP
+    test(
+        'sudo-kea-util-tests',
+        SUDO,
+        args: [kea_util_tests, f'--gtest_filter=@root_tests@'],
+        protocol: 'gtest',
+        suite: 'sudo-tests',
+    )
+endif
