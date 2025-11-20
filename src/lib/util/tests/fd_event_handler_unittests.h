@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <thread>
+#include <vector>
 
 #include <fcntl.h>
 #include <signal.h>
@@ -27,6 +28,7 @@
 
 using namespace isc;
 using namespace isc::util;
+using namespace std;
 
 const unsigned char MARKER = 0;
 
@@ -395,6 +397,36 @@ TEST_F(FDEventHandlerTest, hup) {
 
     close(pipe_fd_[0]);
     pipe(pipe_fd_);
+}
+
+TEST_F(FDEventHandlerTest, noLimit) {
+    if (handler_->type() != FDEventHandler::TYPE_SELECT) {
+        vector<int> fds;
+        const size_t limit = 2  * FD_SETSIZE;
+        int result;
+        for (size_t i = 0; i < limit; ++i) {
+            int pipe_fd[2];
+            result = pipe(pipe_fd);
+            if (result < 0) {
+                for (size_t j = 0; j < fds.size(); ++j) {
+                    close(fds[j]);
+                }
+                ASSERT_GT(result, 0);
+            }
+            fds.push_back(pipe_fd[0]);
+            EXPECT_EQ(sizeof(i), write(pipe_fd[1], &i, sizeof(i)));
+            fds.push_back(pipe_fd[1]);
+            EXPECT_NO_THROW(handler_->add(pipe_fd[0]));
+        }
+        EXPECT_EQ(limit, handler_->waitEvent(0, 1000));
+        for (size_t i = 0; i < fds.size(); i += 2) {
+            size_t data = 0;
+            EXPECT_EQ(sizeof(i), read(fds[i], &data, sizeof(data)));
+            EXPECT_EQ(data, i / 2);
+            close(fds[i]);
+            close(fds[i + 1]);
+        }
+    }
 }
 
 } // end of anonymous namespace
