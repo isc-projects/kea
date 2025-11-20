@@ -1,0 +1,5 @@
+[bug]		tmark
+	Corrected an issue in the ping-check hook library that
+	could result in the ICMP socket stuck in the read ready
+	state.
+	(Gitlab #4221)
