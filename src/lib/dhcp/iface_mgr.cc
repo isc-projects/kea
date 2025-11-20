@@ -332,10 +332,11 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
-    if (std::this_thread::get_id() != id_) {
-        isc_throw(InvalidOperation, "Attempted to register external socket from different thread "
-                  << std::this_thread::get_id());
-    }
+    // @todo: remove comment when exclusively allow external sockets actions on main thread.
+    //if (std::this_thread::get_id() != id_) {
+    //    isc_throw(InvalidOperation, "Attempted to register external socket from different thread "
+    //              << std::this_thread::get_id());
+    //}
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     for (SocketCallbackInfo& s : callbacks_) {
         // There's such a socket description there already.
@@ -362,10 +363,11 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
-    if (std::this_thread::get_id() != id_) {
-        isc_throw(InvalidOperation, "Attempted to unregister external socket from different thread "
-                  << std::this_thread::get_id());
-    }
+    // @todo: remove comment when exclusively allow external sockets actions on main thread.
+    //if (std::this_thread::get_id() != id_) {
+    //    isc_throw(InvalidOperation, "Attempted to unregister external socket from different thread "
+    //              << std::this_thread::get_id());
+    //}
     for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (s->socket_ == socketfd) {
@@ -401,10 +403,11 @@ IfaceMgr::isExternalSocketUnusable(int fd) {
 
 void
 IfaceMgr::deleteAllExternalSockets() {
-    if (std::this_thread::get_id() != id_) {
-        isc_throw(InvalidOperation, "Attempted to unregister external sockets from different thread "
-                  << std::this_thread::get_id());
-    }
+    // @todo: remove comment when exclusively allow external sockets actions on main thread.
+    //if (std::this_thread::get_id() != id_) {
+    //    isc_throw(InvalidOperation, "Attempted to unregister external sockets from different thread "
+    //              << std::this_thread::get_id());
+    //}
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
 }
@@ -917,37 +920,43 @@ IfaceMgr::clearBoundAddresses() {
 
 void
 IfaceMgr::handleExternalSocketError(SocketCallbackInfo& s) {
-    if (fd_event_handler_->hasError(s.socket_)) {
-        errno = 0;
-        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-            s.unusable_ = true;
-            isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
-        }
-        isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
-                  << strerror(errno));
+    errno = 0;
+    if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+        s.unusable_ = true;
+        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
     }
 }
 
 void
-IfaceMgr::handleIfaceSocketError(util::FDEventHandlerPtr fd_event_handler, const SocketInfo& s) {
-    if (fd_event_handler->hasError(s.sockfd_)) {
-        errno = 0;
-        if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
-            isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
-        }
-        isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+IfaceMgr::handleIfaceSocketError(const SocketInfo& s) {
+    int flag = 0;
+    socklen_t opt_size = sizeof(flag);
+    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                   (char *)&flag, &opt_size) < 0) {
+        isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
                   << strerror(errno));
-    } else {
-        int flag = 0;
-        socklen_t opt_size = sizeof(flag);
-        if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
-                       (char *)&flag, &opt_size) < 0) {
-            isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
-                      << strerror(errno));
+    }
+    if (flag > 0) {
+        isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+    }
+}
+
+void
+IfaceMgr::handleClosedExternalSockets() {
+    bool found = false;
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    for (SocketCallbackInfo& s : callbacks_) {
+        if (s.unusable_) {
+            continue;
         }
-        if (flag > 0) {
-            isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+        errno = 0;
+        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+            s.unusable_ = true;
+            found = true;
         }
+    }
+    if (found) {
+        isc_throw(SocketFDError, "unexpected state (closed) for external sockets");
     }
 }
 
@@ -1238,8 +1247,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
-                      << strerror(errno));
+            handleClosedExternalSockets();
+            return (Pkt4Ptr());
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1260,7 +1269,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->readReady(s.socket_)) {
+                if (fd_event_handler_->readReady(s.socket_) ||
+                    fd_event_handler_->hasError(s.socket_)) {
                     found = true;
 
                     // something received over external socket
@@ -1360,8 +1370,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
-                      << strerror(errno));
+            handleClosedExternalSockets();
+            return (Pkt4Ptr());
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1373,7 +1383,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->readReady(s.socket_)) {
+            if (fd_event_handler_->readReady(s.socket_) ||
+                fd_event_handler_->hasError(s.socket_)) {
                 found = true;
 
                 // something received over external socket
@@ -1404,11 +1415,12 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->readReady(s.sockfd_)) {
+            if (fd_event_handler_->readReady(s.sockfd_) ||
+                fd_event_handler_->hasError(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
             } else {
-                handleIfaceSocketError(fd_event_handler_, s);
+                handleIfaceSocketError(s);
             }
         }
         if (candidate) {
@@ -1500,8 +1512,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
-                      << strerror(errno));
+            handleClosedExternalSockets();
+            return (Pkt6Ptr());
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1513,7 +1525,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         for (SocketCallbackInfo& s : callbacks_) {
-            if (fd_event_handler_->readReady(s.socket_)) {
+            if (fd_event_handler_->readReady(s.socket_) ||
+                fd_event_handler_->hasError(s.socket_)) {
                 found = true;
 
                 // something received over external socket
@@ -1543,11 +1556,12 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->readReady(s.sockfd_)) {
+            if (fd_event_handler_->readReady(s.sockfd_) ||
+                fd_event_handler_->hasError(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
             } else {
-                handleIfaceSocketError(fd_event_handler_, s);
+                handleIfaceSocketError(s);
             }
         }
         if (candidate) {
@@ -1627,8 +1641,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            isc_throw(SocketFDError, "interrupted by one invalid sockets with error: "
-                      << strerror(errno));
+            handleClosedExternalSockets();
+            return (Pkt6Ptr());
         } else {
             isc_throw(SocketReadError, strerror(errno));
         }
@@ -1649,7 +1663,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
             for (SocketCallbackInfo& s : callbacks_) {
-                if (fd_event_handler_->readReady(s.socket_)) {
+                if (fd_event_handler_->readReady(s.socket_) ||
+                    fd_event_handler_->hasError(s.socket_)) {
                     found = true;
 
                     // something received over external socket
@@ -1740,14 +1755,15 @@ IfaceMgr::receiveDHCP4Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
-                if (receiver_fd_event_handler_->readReady(s.sockfd_)) {
+                if (receiver_fd_event_handler_->readReady(s.sockfd_) ||
+                    receiver_fd_event_handler_->hasError(s.sockfd_)) {
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
                 } else {
-                    handleIfaceSocketError(receiver_fd_event_handler_, s);
+                    handleIfaceSocketError(s);
                 }
             }
         }
@@ -1814,14 +1830,15 @@ IfaceMgr::receiveDHCP6Packets() {
         // Let's find out which interface/socket has data.
         for (const IfacePtr& iface : ifaces_) {
             for (const SocketInfo& s : iface->getSockets()) {
-                if (receiver_fd_event_handler_->readReady(s.sockfd_)) {
+                if (receiver_fd_event_handler_->readReady(s.sockfd_) ||
+                    receiver_fd_event_handler_->hasError(s.sockfd_)) {
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
                 } else {
-                    handleIfaceSocketError(receiver_fd_event_handler_, s);
+                    handleIfaceSocketError(s);
                 }
             }
         }

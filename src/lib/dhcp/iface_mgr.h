@@ -1632,10 +1632,11 @@ private:
 
     /// @brief Handle interface socket error.
     ///
-    /// @param fd_event_handler The fd event handler.
     /// @param s The interface socket info.
-    void handleIfaceSocketError(util::FDEventHandlerPtr fd_event_handler,
-                                const SocketInfo& s);
+    void handleIfaceSocketError(const SocketInfo& s);
+
+    /// @brief Handle closed external sockets.
+    void handleClosedExternalSockets();
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
