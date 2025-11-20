@@ -916,6 +916,42 @@ IfaceMgr::clearBoundAddresses() {
 }
 
 void
+IfaceMgr::handleExternalSocketError(SocketCallbackInfo& s) {
+    if (fd_event_handler_->hasError(s.socket_)) {
+        errno = 0;
+        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
+            s.unusable_ = true;
+            isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
+        }
+        isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
+                  << strerror(errno));
+    }
+}
+
+void
+IfaceMgr::handleIfaceSocketError(util::FDEventHandlerPtr fd_event_handler, const SocketInfo& s) {
+    if (fd_event_handler->hasError(s.sockfd_)) {
+        errno = 0;
+        if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
+            isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
+        }
+        isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
+                  << strerror(errno));
+    } else {
+        int flag = 0;
+        socklen_t opt_size = sizeof(flag);
+        if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                       (char *)&flag, &opt_size) < 0) {
+            isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
+                      << strerror(errno));
+        }
+        if (flag > 0) {
+            isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
+        }
+    }
+}
+
+void
 IfaceMgr::collectBoundAddresses() {
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& sock : iface->getSockets()) {
@@ -1234,14 +1270,8 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                         ex_sock = s;
                         break;
                     }
-                } else if (fd_event_handler_->hasError(s.socket_)) {
-                    errno = 0;
-                    if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-                        s.unusable_ = true;
-                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
-                    }
-                    isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
-                              << strerror(errno));
+                } else {
+                    handleExternalSocketError(s);
                 }
             }
         }
@@ -1353,14 +1383,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                     ex_sock = s;
                     break;
                 }
-            } else if (fd_event_handler_->hasError(s.socket_)) {
-                errno = 0;
-                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-                    s.unusable_ = true;
-                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
-                }
-                isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
-                          << strerror(errno));
+            } else {
+                handleExternalSocketError(s);
             }
         }
     }
@@ -1383,24 +1407,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
-            } else if (fd_event_handler_->hasError(s.sockfd_)) {
-                errno = 0;
-                if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
-                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
-                }
-                isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
-                          << strerror(errno));
             } else {
-                int flag = 0;
-                socklen_t opt_size = sizeof(flag);
-                if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
-                               (char *)&flag, &opt_size) < 0) {
-                    isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
-                              << strerror(errno));
-                }
-                if (flag > 0) {
-                    isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
-                }
+                handleIfaceSocketError(fd_event_handler_, s);
             }
         }
         if (candidate) {
@@ -1515,14 +1523,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                     ex_sock = s;
                     break;
                 }
-            } else if (fd_event_handler_->hasError(s.socket_)) {
-                errno = 0;
-                if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-                    s.unusable_ = true;
-                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
-                }
-                isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
-                          << strerror(errno));
+            } else {
+                handleExternalSocketError(s);
             }
         }
     }
@@ -1544,24 +1546,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
             if (fd_event_handler_->readReady(s.sockfd_)) {
                 candidate.reset(new SocketInfo(s));
                 break;
-            } else if (fd_event_handler_->hasError(s.sockfd_)) {
-                errno = 0;
-                if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
-                    isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
-                }
-                isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
-                          << strerror(errno));
             } else {
-                int flag = 0;
-                socklen_t opt_size = sizeof(flag);
-                if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
-                               (char *)&flag, &opt_size) < 0) {
-                    isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
-                              << strerror(errno));
-                }
-                if (flag > 0) {
-                    isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
-                }
+                handleIfaceSocketError(fd_event_handler_, s);
             }
         }
         if (candidate) {
@@ -1673,14 +1659,8 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                         ex_sock = s;
                         break;
                     }
-                } else if (fd_event_handler_->hasError(s.socket_)) {
-                    errno = 0;
-                    if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-                        s.unusable_ = true;
-                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
-                    }
-                    isc_throw(SocketFDError, "unexpected socket fd: " << s.socket_ << " error: "
-                              << strerror(errno));
+                } else {
+                    handleExternalSocketError(s);
                 }
             }
         }
@@ -1766,24 +1746,8 @@ IfaceMgr::receiveDHCP4Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
-                } else if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    errno = 0;
-                    if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
-                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
-                    }
-                    isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
-                              << strerror(errno));
                 } else {
-                    int flag = 0;
-                    socklen_t opt_size = sizeof(flag);
-                    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
-                                   (char *)&flag, &opt_size) < 0) {
-                        isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
-                                  << strerror(errno));
-                    }
-                    if (flag > 0) {
-                        isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
-                    }
+                    handleIfaceSocketError(receiver_fd_event_handler_, s);
                 }
             }
         }
@@ -1856,24 +1820,8 @@ IfaceMgr::receiveDHCP6Packets() {
                     if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
-                } else if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    errno = 0;
-                    if (fcntl(s.sockfd_, F_GETFD) < 0 && (errno == EBADF)) {
-                        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.sockfd_);
-                    }
-                    isc_throw(SocketFDError, "unexpected socket fd: " << s.sockfd_ << " error: "
-                              << strerror(errno));
                 } else {
-                    int flag = 0;
-                    socklen_t opt_size = sizeof(flag);
-                    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
-                                   (char *)&flag, &opt_size) < 0) {
-                        isc_throw(BadValue, "Can't get socket fd: " << s.sockfd_ << " flags - error: "
-                                  << strerror(errno));
-                    }
-                    if (flag > 0) {
-                        isc_throw(SocketFDError, "socket fd: " << s.sockfd_ << " error flags: " << flag);
-                    }
+                    handleIfaceSocketError(receiver_fd_event_handler_, s);
                 }
             }
         }

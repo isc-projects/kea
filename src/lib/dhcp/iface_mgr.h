@@ -1625,6 +1625,18 @@ private:
     /// @param socketfd socket descriptor
     void deleteExternalSocketInternal(int socketfd);
 
+    /// @brief Handle external socket error.
+    ///
+    /// @param s The external socket info.
+    void handleExternalSocketError(SocketCallbackInfo& s);
+
+    /// @brief Handle interface socket error.
+    ///
+    /// @param fd_event_handler The fd event handler.
+    /// @param s The interface socket info.
+    void handleIfaceSocketError(util::FDEventHandlerPtr fd_event_handler,
+                                const SocketInfo& s);
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
