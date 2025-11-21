@@ -1,4 +1,4 @@
-[bug]		fdupont
+[bug]		fdupont, tmark
 	Fixed a bug which made the lfc running check in
 	config set and reload command to use the wrong file.
 	(Gitlab #4198)
