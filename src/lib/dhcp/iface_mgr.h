@@ -1625,7 +1625,7 @@ private:
     /// @param socketfd socket descriptor
     void deleteExternalSocketInternal(int socketfd);
 
-    /// @brief Handle closed external socket..
+    /// @brief Handle closed external socket.
     ///
     /// @param s The external socket info.
     void handleClosedExternalSocket(SocketCallbackInfo& s);

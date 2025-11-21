@@ -538,6 +538,22 @@ public:
         // we should accept both values as source ports.
         EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
+        // Close the socket. Further we will test if errors are reported
+        // properly on attempt to use closed socket.
+        close(socket2);
+
+        // @todo Closing the socket does NOT cause a read error out of the
+        // receiveDHCP<X>Packets() select.  Apparently this is because the
+        // thread is already inside the select when the socket is closed,
+        // and (at least under Centos 7.5), this does not interrupt the
+        // select.  For now, we'll only test this for direct receive.
+        if (!queue_enabled) {
+            EXPECT_THROW(ifacemgr->receive6(10), SocketFDError);
+        }
+
+        // Verify write fails.
+        EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
+
         // Stop the thread.  This should be no harm/no foul if we're not
         // queueuing.  Either way, we should not have a thread afterwards.
         ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());

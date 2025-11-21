@@ -1565,6 +1565,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     if (!candidate) {
         isc_throw(SocketFDError, "received data over unknown socket");
     }
+
     // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter6_->receive(*candidate));
 }
@@ -1666,8 +1667,6 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                         ex_sock = s;
                         break;
                     }
-                } else {
-
                 }
             }
         }
@@ -1712,55 +1711,55 @@ IfaceMgr::receiveDHCP4Packets() {
 
     for (;;) {
         try {
-        // Check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        // zero out the errno to be safe.
-        errno = 0;
-
-        // Select with null timeouts to wait indefinitely an event
-        int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
-
-        // Re-check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        if (result == 0) {
-            // nothing received?
-            continue;
-        } else if (result < 0) {
-            // This thread should not get signals?
-            if (errno != EINTR) {
-                // Signal the error to receive4.
-                dhcp_receiver_->setError(strerror(errno));
-                // We need to sleep in case of the error condition to
-                // prevent the thread from tight looping when result
-                // gets negative.
-                sleep(1);
+            // Check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
             }
-            continue;
-        }
 
-        // Let's find out which interface/socket has data.
-        for (const IfacePtr& iface : ifaces_) {
-            for (const SocketInfo& s : iface->getSockets()) {
-                if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
-                    !receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    continue;
+            // zero out the errno to be safe.
+            errno = 0;
+
+            // Select with null timeouts to wait indefinitely an event
+            int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
+
+            // Re-check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
+            }
+
+            if (result == 0) {
+                // nothing received?
+                continue;
+            } else if (result < 0) {
+                // This thread should not get signals?
+                if (errno != EINTR) {
+                    // Signal the error to receive4.
+                    dhcp_receiver_->setError(strerror(errno));
+                    // We need to sleep in case of the error condition to
+                    // prevent the thread from tight looping when result
+                    // gets negative.
+                    sleep(1);
                 }
-                if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    handleIfaceSocketError(s);
-                }
-                receiveDHCP4Packet(*iface, s);
-                // Can take time so check one more time the watch socket.
-                if (dhcp_receiver_->shouldTerminate()) {
-                    return;
+                continue;
+            }
+
+            // Let's find out which interface/socket has data.
+            for (const IfacePtr& iface : ifaces_) {
+                for (const SocketInfo& s : iface->getSockets()) {
+                    if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
+                        !receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        continue;
+                    }
+                    if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        handleIfaceSocketError(s);
+                    }
+                    receiveDHCP4Packet(*iface, s);
+                    // Can take time so check one more time the watch socket.
+                    if (dhcp_receiver_->shouldTerminate()) {
+                        return;
+                    }
                 }
             }
-        }
         } catch (const std::exception& ex) {
             dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
         } catch (...) {
@@ -1789,55 +1788,55 @@ IfaceMgr::receiveDHCP6Packets() {
 
     for (;;) {
         try {
-        // Check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        // zero out the errno to be safe.
-        errno = 0;
-
-        // Select with null timeouts to wait indefinitely an event
-        int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
-
-        // Re-check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        if (result == 0) {
-            // nothing received?
-            continue;
-        } else if (result < 0) {
-            // This thread should not get signals?
-            if (errno != EINTR) {
-                // Signal the error to receive6.
-                dhcp_receiver_->setError(strerror(errno));
-                // We need to sleep in case of the error condition to
-                // prevent the thread from tight looping when result
-                // gets negative.
-                sleep(1);
+            // Check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
             }
-            continue;
-        }
 
-        // Let's find out which interface/socket has data.
-        for (const IfacePtr& iface : ifaces_) {
-            for (const SocketInfo& s : iface->getSockets()) {
-                if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
-                    !receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    continue;
+            // zero out the errno to be safe.
+            errno = 0;
+
+            // Select with null timeouts to wait indefinitely an event
+            int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
+
+            // Re-check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
+            }
+
+            if (result == 0) {
+                // nothing received?
+                continue;
+            } else if (result < 0) {
+                // This thread should not get signals?
+                if (errno != EINTR) {
+                    // Signal the error to receive6.
+                    dhcp_receiver_->setError(strerror(errno));
+                    // We need to sleep in case of the error condition to
+                    // prevent the thread from tight looping when result
+                    // gets negative.
+                    sleep(1);
                 }
-                if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                    handleIfaceSocketError(s);
-                }
-                receiveDHCP6Packet(s);
-                // Can take time so check one more time the watch socket.
-                if (dhcp_receiver_->shouldTerminate()) {
-                    return;
+                continue;
+            }
+
+            // Let's find out which interface/socket has data.
+            for (const IfacePtr& iface : ifaces_) {
+                for (const SocketInfo& s : iface->getSockets()) {
+                    if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
+                        !receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        continue;
+                    }
+                    if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        handleIfaceSocketError(s);
+                    }
+                    receiveDHCP6Packet(s);
+                    // Can take time so check one more time the watch socket.
+                    if (dhcp_receiver_->shouldTerminate()) {
+                        return;
+                    }
                 }
             }
-        }
         } catch (const std::exception& ex) {
             dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
         } catch (...) {
