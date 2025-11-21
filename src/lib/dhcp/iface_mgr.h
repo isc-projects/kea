@@ -1625,18 +1625,18 @@ private:
     /// @param socketfd socket descriptor
     void deleteExternalSocketInternal(int socketfd);
 
-    /// @brief Handle external socket error.
+    /// @brief Handle closed external socket..
     ///
     /// @param s The external socket info.
-    void handleExternalSocketError(SocketCallbackInfo& s);
+    void handleClosedExternalSocket(SocketCallbackInfo& s);
+
+    /// @brief Handle closed external sockets.
+    void handleClosedExternalSockets();
 
     /// @brief Handle interface socket error.
     ///
     /// @param s The interface socket info.
     void handleIfaceSocketError(const SocketInfo& s);
-
-    /// @brief Handle closed external sockets.
-    void handleClosedExternalSockets();
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
