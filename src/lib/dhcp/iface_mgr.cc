@@ -1428,7 +1428,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     if (!candidate || !recv_if) {
-        isc_throw(SocketReadError, "received data over unknown socket");
+        isc_throw(SocketFDError, "received data over unknown socket");
     }
 
     // Now we have a socket, let's get some data from it!
@@ -1563,7 +1563,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     if (!candidate) {
-        isc_throw(SocketReadError, "received data over unknown socket");
+        isc_throw(SocketFDError, "received data over unknown socket");
     }
     // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter6_->receive(*candidate));
