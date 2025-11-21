@@ -1415,11 +1415,15 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->readReady(s.sockfd_) ||
-                fd_event_handler_->hasError(s.sockfd_)) {
-                candidate.reset(new SocketInfo(s));
-                break;
+            if (!fd_event_handler_->readReady(s.sockfd_) &&
+                !fd_event_handler_->hasError(s.sockfd_)) {
+                continue;
             }
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                handleIfaceSocketError(s);
+            }
+            candidate.reset(new SocketInfo(s));
+            break;
         }
         if (candidate) {
             recv_if = iface;
@@ -1431,7 +1435,16 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         isc_throw(SocketFDError, "received data over unknown socket");
     }
 
-    // Now we have a socket, let's get some data from it!
+    // Check that we have something to read.
+    int len;
+    if (ioctl(candidate->sockfd_, FIONREAD, &len) < 0) {
+        isc_throw(SocketReadError, strerror(errno));
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return (Pkt4Ptr());
+    }
+
     // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter_->receive(*recv_if, *candidate));
 }
@@ -1551,11 +1564,15 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     // @todo: fix iface starvation
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (fd_event_handler_->readReady(s.sockfd_) ||
-                fd_event_handler_->hasError(s.sockfd_)) {
-                candidate.reset(new SocketInfo(s));
-                break;
+            if (!fd_event_handler_->readReady(s.sockfd_) &&
+                !fd_event_handler_->hasError(s.sockfd_)) {
+                continue;
             }
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                handleIfaceSocketError(s);
+            }
+            candidate.reset(new SocketInfo(s));
+            break;
         }
         if (candidate) {
             break;
@@ -1564,6 +1581,16 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
 
     if (!candidate) {
         isc_throw(SocketFDError, "received data over unknown socket");
+    }
+
+    // Check that we have something to read.
+    int len;
+    if (ioctl(candidate->sockfd_, FIONREAD, &len) < 0) {
+        isc_throw(SocketReadError, strerror(errno));
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return (Pkt6Ptr());
     }
 
     // Assuming that packet filter is not null, because its modifier checks it.
