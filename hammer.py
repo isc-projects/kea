@@ -470,7 +470,11 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None, system: str = None, revision: str = None):
+def install_meson(python_v: str = 'python3',
+                  mode: str = 'pyinstaller',
+                  only: str = None,
+                  system: str = None,
+                  revision: str = None):
     """ Install meson and ninja with pyinstaller or venv.
 
     Pyinstaller is needed as opposed to venv to overcome package building errors such as:
