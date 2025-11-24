@@ -1,8 +1,0 @@
-[func]		tmark
-	Added a global parameter, "allow-address-registration",
-	to kea-dhcp6. It enables or disables client address
-	registration (see RFC 9686). It also corrects an
-	issue in which the server was not correctly enforcing
-	a peer address match when ADDR-REG-INFORMs are
-	received via relay.
-	(Gitlab #4161)

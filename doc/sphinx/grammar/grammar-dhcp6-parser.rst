@@ -157,6 +157,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
                  | early_global_reservations_lookup
                  | ip_reservations_unique
                  | reservations_lookup_first
+                 | allow_address_registration
                  | compatibility
                  | parked_packet_limit
                  | allocator
@@ -255,6 +256,8 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
      ip_reservations_unique ::= "ip-reservations-unique" ":" BOOLEAN
 
      reservations_lookup_first ::= "reservations-lookup-first" ":" BOOLEAN
+
+     allow_address_registration ::= "allow-address-registration" ":" BOOLEAN
 
      interfaces_config ::= "interfaces-config" ":" "{" interfaces_config_params "}"
 

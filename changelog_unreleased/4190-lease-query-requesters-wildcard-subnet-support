@@ -1,5 +1,0 @@
-[func]		tmark
-	The lease query hooks configuration parameter, 'requesters',
-	now also accepts address ranges expressed in CIDR format. Prior
-	to this it was restricted to one or more IP addresses.
-	(Gitlab #4190)

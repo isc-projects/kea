@@ -1,3 +1,65 @@
+Kea 3.1.4 (development) released on November 28, 2025
+
+2418.	[bug]		fdupont, tmark
+	Fixed a bug which made the lfc running check in
+	config set and reload command to use the wrong file.
+	(Gitlab #4198)
+
+2417.	[bug]		tmark
+	Corrected an issue in the ping-check hook library that
+	could result in the ICMP socket stuck in the read ready
+	state.
+	(Gitlab #4221)
+
+2416.	[func]		tmark
+	Added a global parameter, "allow-address-registration",
+	to kea-dhcp6. It enables or disables client address
+	registration (see RFC 9686). It also corrects an
+	issue in which the server was not correctly enforcing
+	a peer address match when ADDR-REG-INFORMs are
+	received via relay.
+	(Gitlab #4161)
+
+2415.	[func]		tmark
+	The lease query hooks configuration parameter, 'requesters',
+	now also accepts address ranges expressed in CIDR format. Prior
+	to this it was restricted to one or more IP addresses.
+	(Gitlab #4190)
+
+2414.	[func]		fdupont
+	Added "pkt4-queue-full" and "pkt6-queue-full"
+	statistics which are increased when an incoming packet
+	was dropped because it was queued and the queue is full.
+
+	Added "pkt4-rfc-violation" and "pkt6-rfc-violation"
+	statistics which are increased when an incoming packet
+	has to be dropped according to protocol specifications.
+
+	Added "pkt4-admin-filtered" and "pkt6-admin-filtered"
+	statistics which are increased when an incoming packet
+	was dropped because the server was configured to do so,
+	e.g. by classifying the query into the DROP class.
+
+	Added "pkt4-not-for-us" and "pkt6-not-for-us"
+	statistics which are increased when an incoming packet
+	was dropped because it has to be handled by another server.
+
+	Added "pkt4-processing-failed" and "pkt6-processing-failed"
+	statistics which are increased when an incoming packet
+	was dropped because an unexpected error occurred during
+	processing.
+
+	Added "pkt4-limit-exceeded" and "pkt6-limit-exceeded"
+	statistics which are increased when an incoming packet
+	was dropped by the limits hook library.
+	(Gitlab #3140, #4157, #4146, #4127, #4126, #4133, #4134)
+
+2413.	[sec]*		andrei
+	Restrict the path of the UNIX socket to which kea-netconf
+	connects the same way the path is restricted for other servers
+	on creation of UNIX sockets.
+	(Gitlab #3969)
+
 Kea 3.1.3 (development) released on October 29, 2025
 
 2412.	[build]		andrei

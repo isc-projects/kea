@@ -2699,7 +2699,7 @@ COMMAND_HTTP_SOCKET_SECURITY_WARNING
     command socket configuration is NOT SECURE: %1
 
 This warning message is issued when security enforcement is disabled
-and command socket configuration does not use HTTPS/TLS or  basic HTTP
+and command socket configuration does not use HTTPS/TLS or basic HTTP
 authentication. The server will still use the socket as configured but
 is warning that doing so may pose a security risk.
 
@@ -6267,6 +6267,17 @@ Logged at debug log level 40.
 This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
+DHCP6_ADDR6_REGISTER_DISABLED_DROP
+==================================
+
+.. code-block:: text
+
+    ADDR-REG-INFORM from %1 was dropped because address registration is disabled.
+
+Logged at debug log level 40.
+This debug message is printed when the server drops an ADDR-REG-INFORM packet
+because 'allow-address-registration' is false.
+
 DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE
 ===================================
 
@@ -6283,7 +6294,7 @@ DHCP6_ADDR_REG_INFORM_FAIL
 
 .. code-block:: text
 
-    error on ADDR-REG-INFORM from client %1: %2
+    error on ADDR-REG-INFORM from client %1, %2
 
 This information message is issued when the processing of an ADDR-REG-INFORM
 message failed. The address of the client, usually also the address to
