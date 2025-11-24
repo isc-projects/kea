@@ -470,7 +470,7 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None):
+def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None, system: str = None, revision: str = None):
     """ Install meson and ninja with pyinstaller or venv.
 
     Pyinstaller is needed as opposed to venv to overcome package building errors such as:
@@ -482,6 +482,10 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: st
     :type mode: str
     :param only: what to install: meson or ninja. None (default) means both.
     :type only: str
+    :param system: system name (e.g., 'ubuntu')
+    :type system: str
+    :param revision: system revision (e.g., '20.04')
+    :type revision: str
     """
     meson_version = '1.9.1'
 
@@ -491,6 +495,9 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: st
     execute('sudo rm -fr .meson-src')
     execute(f'sudo {python_v} -m venv /usr/local/share/.venv')
     execute('sudo /usr/local/share/.venv/bin/pip install --upgrade pip setuptools wheel')
+    # Install backports.tarfile for Ubuntu 20.04 (Python 3.8 compatibility)
+    if system == 'ubuntu' and revision == '20.04':
+        execute('sudo /usr/local/share/.venv/bin/pip install backports.tarfile')
     if only is None or only == 'ninja':
         execute('sudo /usr/local/share/.venv/bin/pip install ninja')
     if mode == 'pyinstaller':
@@ -1982,7 +1989,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 'python3-venv',
             ]
         )
-        deferred_functions.append(install_meson)
+        deferred_functions.append(lambda: install_meson(system=system, revision=revision))
 
         if 'coverage' in features:
             packages.extend(['gcovr', 'lcov'])
