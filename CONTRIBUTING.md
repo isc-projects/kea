@@ -10,7 +10,7 @@ Here's a quick list of how to contribute a patch:
    it describes what you want to fix and **why**
 3. **ask someone from the ISC team to give you permission to fork Kea** (ask @tomek, @vicky, @ondrej
    or basically anyone from the Kea dev team)
-4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new).
+4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/-/forks/new).
    If you can't, you didn't complete step 3.
 5. **Give ISC access to the forked project**. This is required to see pipeline status and to merge code.
    From the sidebar on the project page, go to `Manage` -> `Members` -> `Invite members`.
