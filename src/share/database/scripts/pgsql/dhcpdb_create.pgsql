@@ -6739,6 +6739,18 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 31.0.
 
+-- This line starts the schema upgrade to version 32.0.
+
+-- Create index for searching leases by state and subnet_id.
+CREATE INDEX lease4_by_state ON lease6 (state, subnet_id);
+CREATE INDEX lease6_by_state ON lease6 (state, subnet_id);
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '32', minor = '0';
+
+-- This line concludes the schema upgrade to version 32.0.
+
 -- Commit the script transaction.
 COMMIT;
 

@@ -61,6 +61,9 @@ struct RemoteIdIndexTag { };
 /// @brief Tag for index using relay-id.
 struct RelayIdIndexTag { };
 
+/// @brief Tag for index using state (and subnet-id).
+struct StateIndexTag { };
+
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -188,6 +191,27 @@ typedef boost::multi_index_container<
             // so we need a simple method for that.
             boost::multi_index::const_mem_fun<Lease, const std::vector<uint8_t>&,
                                               &Lease::getHWAddrVector>
+        >,
+
+        // Specification of the ninth index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<StateIndexTag>,
+            // This is a composite index that combines two attributes of the
+            // Lease6 object: state and pool id.
+            boost::multi_index::composite_key<
+                Lease6,
+                // The state is held in the state_ member of Lease6 class.
+                // Note that the state_ is defined in the base class (Lease)
+                // so we have to point to this class rather than derived
+                // class: Lease6.
+                Lease6,
+                boost::multi_index::member<Lease, uint32_t, &Lease::state>,
+                // The subnet id is held in the subnet_id_ member of Lease6
+                // class. Note that the subnet_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease6.
+                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
+            >
         >
     >
 > Lease6Storage; // Specify the type name of this container.
@@ -338,7 +362,28 @@ typedef boost::multi_index_container<
                 // than derived class: Lease4.
                 boost::multi_index::member<Lease, uint32_t, &Lease::pool_id_>
             >
-        >
+        >,
+
+        // Specification of the tenth index starts here.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<StateIndexTag>,
+            // This is a composite index that combines two attributes of the
+            // Lease4 object: state and pool id.
+            boost::multi_index::composite_key<
+                Lease4,
+                // The state is held in the state_ member of Lease4 class.
+                // Note that the state_ is defined in the base class (Lease)
+                // so we have to point to this class rather than derived
+                // class: Lease4.
+                Lease4,
+                boost::multi_index::member<Lease, uint32_t, &Lease::state>,
+                // The subnet id is held in the subnet_id_ member of Lease4
+                // class. Note that the subnet_id_ is defined in the base
+                // class (Lease) so we have to point to this class rather
+                // than derived class: Lease4.
+                boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
+            >
+        >       
     >
 > Lease4Storage; // Specify the type name for this container.
 
@@ -372,6 +417,9 @@ typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
 
 /// @brief DHCPv6 lease storage index by hostname.
 typedef Lease6Storage::index<HostnameIndexTag>::type Lease6StorageHostnameIndex;
+
+/// @brief DHCPv6 lease storage index by state (and subnet if).
+typedef Lease6Storage::index<StateIndexTag>::type Lease6StorageStateIndex;
 
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;
@@ -407,6 +455,9 @@ typedef std::pair<Lease4StorageRemoteIdIndex::const_iterator,
 typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
 
 //@}
+
+/// @brief DHCPv6 lease storage index by state (and subnet if).
+typedef Lease6Storage::index<StateIndexTag>::type Lease6StorageStateIndex;
 
 /// @name Multi index containers holding DHCPv6 lease extended informations
 /// for Bulk Lease Query.
