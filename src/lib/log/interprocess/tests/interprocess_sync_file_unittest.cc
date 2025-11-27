@@ -12,6 +12,7 @@
 #include <util/unittests/interprocess_util.h>
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 using namespace std;
 using namespace isc::log::interprocess;
