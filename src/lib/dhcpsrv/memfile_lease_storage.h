@@ -204,8 +204,7 @@ typedef boost::multi_index_container<
                 // Note that the state_ is defined in the base class (Lease)
                 // so we have to point to this class rather than derived
                 // class: Lease6.
-                Lease6,
-                boost::multi_index::member<Lease, uint32_t, &Lease::state>,
+                boost::multi_index::member<Lease, uint32_t, &Lease::state_>,
                 // The subnet id is held in the subnet_id_ member of Lease6
                 // class. Note that the subnet_id_ is defined in the base
                 // class (Lease) so we have to point to this class rather
@@ -375,8 +374,7 @@ typedef boost::multi_index_container<
                 // Note that the state_ is defined in the base class (Lease)
                 // so we have to point to this class rather than derived
                 // class: Lease4.
-                Lease4,
-                boost::multi_index::member<Lease, uint32_t, &Lease::state>,
+                boost::multi_index::member<Lease, uint32_t, &Lease::state_>,
                 // The subnet id is held in the subnet_id_ member of Lease4
                 // class. Note that the subnet_id_ is defined in the base
                 // class (Lease) so we have to point to this class rather
