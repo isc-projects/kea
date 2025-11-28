@@ -50,7 +50,8 @@ public:
                    const BlqPushToSendCb& push_to_send,
                    const BlqQueryCompleteCb& query_complete)
         : query_(query), post_(post), push_to_send_(push_to_send),
-          query_complete_(query_complete), started_(false), done_(false) {
+          query_complete_(query_complete), query_type_(0),
+          started_(false), done_(false) {
         if (!query) {
             isc_throw(BadValue, "BulkLeaseQuery query is null");
         }
