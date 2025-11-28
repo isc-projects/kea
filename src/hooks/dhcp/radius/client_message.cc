@@ -63,12 +63,13 @@ msgCodeToText(const uint8_t code) {
 Message::Message(const uint8_t code, uint16_t length,
                  const vector<uint8_t>& auth, const string& secret,
                  const AttributesPtr& attributes)
-    : code_(code), length_(length), auth_(auth), secret_(secret),
-      attributes_(attributes), buffer_() {
+    : code_(code), identifier_(0), length_(length), auth_(auth),
+      secret_(secret), attributes_(attributes), buffer_() {
 }
 
 Message::Message(const Message& other)
     : code_(other.code_),
+      identifier_(other.identifier_),
       length_(other.length_),
       auth_(other.auth_),
       secret_(other.secret_),
@@ -86,8 +87,8 @@ Message::Message(const Message& other)
 Message::Message(const vector<uint8_t>& buffer,
                  const vector<uint8_t>& auth,
                  const string& secret)
-    : code_(0), length_(0), auth_(auth), secret_(secret), attributes_(),
-      buffer_(buffer) {
+    : code_(0), identifier_(0), length_(0), auth_(auth), secret_(secret),
+      attributes_(), buffer_(buffer) {
 }
 
 Message::~Message() {
