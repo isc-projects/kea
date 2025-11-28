@@ -889,7 +889,7 @@ private:
         : universe_(universe), start_column_(start_column), option_id_(0),
           code_(0), value_length_(0), formatted_value_length_(0),
           space_length_(0), persistent_(false), cancelled_(false),
-          user_context_length_(0),
+          user_context_length_(0), client_classes_length_(0),
           option_id_null_(MLM_FALSE), code_null_(MLM_FALSE),
           value_null_(MLM_FALSE), formatted_value_null_(MLM_FALSE),
           space_null_(MLM_FALSE), user_context_null_(MLM_FALSE),
