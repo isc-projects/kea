@@ -50,7 +50,7 @@ RadiusImpl::RadiusImpl()
       clientid_pop0_(false), clientid_printable_(false),
       deadtime_(0), extract_duid_(true),
       reselect_subnet_pool_(false), reselect_subnet_address_(false),
-      retries_(3), thread_pool_size_(0),
+      retries_(3), thread_pool_size_(0), timeout_(0),
       id_type4_(Host::IDENT_CLIENT_ID), id_type6_(Host::IDENT_DUID),
       io_context_(new IOService()), io_service_(io_context_) {
 }
