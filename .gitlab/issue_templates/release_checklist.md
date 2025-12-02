@@ -237,8 +237,8 @@ Now it's time to publish the code.
    * If the tokens were not migrated, contact QA team and coordinate fix.
 1. [ ] Upload Premium hooks tarball to SendOwl for legacy 2.4 or 2.6 branches.
 1. [ ] Send notifications to existing subscribers of the new version.
-1. [ ] Write release email to _kea-announce_. Highlight breaking changes, if any.
 1. [ ] Announce release to support subscribers using the read-only Kea Announce queue, if a major version or other significant change to stable version.
+1. [ ] Write release email to _kea-announce_. Highlight breaking changes, if any.
 1. [ ] Update "Release Schedule" document in RT with current versions and next planned release.
 1. [ ] Write email to _kea-users_ (if a major release). Highlight breaking changes, if any.
 1. [ ] Announce on social media.
