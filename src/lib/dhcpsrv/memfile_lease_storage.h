@@ -454,8 +454,8 @@ typedef Lease4Storage::index<RelayIdIndexTag>::type Lease4StorageRelayIdIndex;
 
 //@}
 
-/// @brief DHCPv6 lease storage index by state (and subnet if).
-typedef Lease6Storage::index<StateIndexTag>::type Lease6StorageStateIndex;
+/// @brief DHCPv4 lease storage index by state (and subnet if).
+typedef Lease4Storage::index<StateIndexTag>::type Lease4StorageStateIndex;
 
 /// @name Multi index containers holding DHCPv6 lease extended informations
 /// for Bulk Lease Query.

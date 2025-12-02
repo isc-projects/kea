@@ -81,6 +81,12 @@ ConcreteLeaseMgr::getLeases4(const IOAddress& /* lower_bound_address */,
     return (Lease4Collection());
 }
 
+Lease4Collection
+ConcreteLeaseMgr::getLeases4(uint32_t /* state */,
+                             SubnetID /* subnet_id */) const {
+    return (Lease4Collection());
+}
+
 Lease6Ptr
 ConcreteLeaseMgr::getLease6(Lease::Type /* not used yet */,
                             const IOAddress&) const {
@@ -134,6 +140,12 @@ Lease6Collection
 ConcreteLeaseMgr::getLeases6(SubnetID /* subnet_id */,
                              const IOAddress& /* lower_bound_address */,
                              const LeasePageSize& /* page_size */) const {
+    return (Lease6Collection());
+}
+
+Lease6Collection
+ConcreteLeaseMgr::getLeases6(uint32_t /* state */,
+                             SubnetID /* subnet_id */) const {
     return (Lease6Collection());
 }
 

@@ -1490,6 +1490,49 @@ Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     return (collection);
 }
 
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(uint32_t state, SubnetID subnet_id) const {
+    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4ByStateInternal(state, subnet_id, collection);
+    } else {
+        getLeases4ByStateInternal(state, subnet_id, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases4ByStateInternal(uint32_t state,
+                                            SubnetID subnet_id,
+                                            Lease4Collection& collection) const {
+    if (subnet_id == 0) {
+        return (getLeases4ByStateInternal(state, collection));
+    }
+    const Lease4StorageStateIndex& idx = storage4_.get<StateIndexTag>();
+    std::pair<Lease4StorageStateIndex::const_iterator,
+              Lease4StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state, subnet_id));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases4ByStateInternal(uint32_t state,
+                                            Lease4Collection& collection) const {
+    const Lease4StorageStateIndex& idx = storage4_.get<StateIndexTag>();
+    std::pair<Lease4StorageStateIndex::const_iterator,
+              Lease4StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
+    }
+}
+
 Lease6Ptr
 Memfile_LeaseMgr::getLease6Internal(Lease::Type type,
                                     const isc::asiolink::IOAddress& addr) const {
@@ -1850,6 +1893,49 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id,
         return (getLeases6Internal(subnet_id,
                                    lower_bound_address,
                                     page_size));
+    }
+}
+
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(uint32_t state, SubnetID subnet_id) const {
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6ByStateInternal(state, subnet_id, collection);
+    } else {
+        getLeases6ByStateInternal(state, subnet_id, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6ByStateInternal(uint32_t state,
+                                            SubnetID subnet_id,
+                                            Lease6Collection& collection) const {
+    if (subnet_id == 0) {
+        return (getLeases6ByStateInternal(state, collection));
+    }
+    const Lease6StorageStateIndex& idx = storage6_.get<StateIndexTag>();
+    std::pair<Lease6StorageStateIndex::const_iterator,
+              Lease6StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state, subnet_id));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases6ByStateInternal(uint32_t state,
+                                            Lease6Collection& collection) const {
+    const Lease6StorageStateIndex& idx = storage6_.get<StateIndexTag>();
+    std::pair<Lease6StorageStateIndex::const_iterator,
+              Lease6StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
     }
 }
 

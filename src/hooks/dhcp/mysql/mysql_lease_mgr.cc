@@ -170,6 +170,20 @@ tagged_statements = { {
                         "state, user_context, relay_id, remote_id, pool_id "
                             "FROM lease4 "
                             "WHERE subnet_id = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_STATE,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state, user_context, relay_id, remote_id, pool_id "
+                            "FROM lease4 "
+                            "WHERE state = ?"},
+    {MySqlLeaseMgr::GET_LEASE4_STATE_SUBID,
+                    "SELECT address, hwaddr, client_id, "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "state, user_context, relay_id, remote_id, pool_id "
+                            "FROM lease4 "
+                            "WHERE state = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HOSTNAME,
                     "SELECT address, hwaddr, client_id, "
                         "valid_lifetime, expire, subnet_id, "
@@ -380,6 +394,24 @@ tagged_statements = { {
                         "state, user_context, pool_id "
                             "FROM lease6 "
                             "WHERE duid = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_STATE,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context, pool_id "
+                            "FROM lease6 "
+                            "WHERE state = ?"},
+    {MySqlLeaseMgr::GET_LEASE6_STATE_SUBID,
+                    "SELECT address, duid, valid_lifetime, "
+                        "expire, subnet_id, pref_lifetime, "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname, "
+                        "hwaddr, hwtype, hwaddr_source, "
+                        "state, user_context, pool_id "
+                            "FROM lease6 "
+                        "WHERE state = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_HOSTNAME,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -2760,6 +2792,67 @@ MySqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+MySqlLeaseMgr::getLeases4(uint32_t state, SubnetID subnet_id) const {
+    if (subnet_id == 0) {
+        return (getLeases4ByState(state));
+    }
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_STATE_SUBID4)
+        .arg(state)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // State
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Subnet ID
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease4Collection result;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_STATE_SUBID, inbind, result);
+
+    return (result);
+}
+
+Lease4Collection
+MySqlLeaseMgr::getLeases4ByState(uint32_t state) const {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_STATE4)
+        .arg(state);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // State
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease4Collection result;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_STATE, inbind, result);
+
+    return (result);
+}
+
+Lease4Collection
 MySqlLeaseMgr::getLeases4(const std::string& hostname) const {
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_HOSTNAME4)
         .arg(hostname);
@@ -3157,6 +3250,67 @@ MySqlLeaseMgr::getLeases6(const DUID& duid) const {
     getLeaseCollection(ctx, GET_LEASE6_DUID, inbind, result);
 
     return result;
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6(uint32_t state, SubnetID subnet_id) const {
+    if (subnet_id == 0) {
+        return (getLeases6ByState(state));
+    }
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_STATE_SUBID6)
+        .arg(state)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[2];
+    memset(inbind, 0, sizeof(inbind));
+
+    // State
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Subnet ID
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&subnet_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease6Collection result;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_STATE_SUBID, inbind, result);
+
+    return (result);
+}
+
+Lease6Collection
+MySqlLeaseMgr::getLeases6ByState(uint32_t state) const {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_GET_STATE6)
+        .arg(state);
+
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+
+    // State
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&state);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease6Collection result;
+
+    // Get a context
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_STATE, inbind, result);
+
+    return (result);
 }
 
 Lease6Collection

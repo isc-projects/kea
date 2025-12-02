@@ -1484,6 +1484,32 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases4State() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Put even leases in declined state.
+        if ((i % 2) == 0) {
+            leases[i]->state_ = Lease::STATE_DECLINED;
+        }
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease4Collection got = lmptr_->getLeases4(Lease::STATE_DECLINED, 0);
+
+    // Easy check: got 4 leases in declined state.
+    EXPECT_EQ(4, got.size());
+    for (auto const& lease : got) {
+        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    // Try again with leases[2] subnet.
+    got = lmptr_->getLeases4(Lease::STATE_DECLINED, leases[2]->subnet_id_);
+    ASSERT_EQ(1, got.size());
+    EXPECT_TRUE(*leases[2] == *got[0]);
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // Get the leases to be used for the test and add to the database.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1654,6 +1680,32 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
     // Only IPv6 address can be used.
     EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.0"), LeasePageSize(3)),
                  InvalidAddressFamily);
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6State() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Put even leases in declined state.
+        if ((i % 2) == 0) {
+            leases[i]->state_ = Lease::STATE_DECLINED;
+        }
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease6Collection got = lmptr_->getLeases6(Lease::STATE_DECLINED, 0);
+
+    // Easy check: got 4 leases in declined state.
+    EXPECT_EQ(4, got.size());
+    for (auto const& lease : got) {
+        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    // Try again with leases[2] subnet.
+    got = lmptr_->getLeases6(Lease::STATE_DECLINED, leases[2]->subnet_id_);
+    ASSERT_EQ(1, got.size());
+    EXPECT_TRUE(*leases[2] == *got[0]);
 }
 
 void

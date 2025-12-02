@@ -1220,6 +1220,19 @@ TEST_F(MemfileLeaseMgrTest, getLeases4PagedMultiThread) {
     testGetLeases4Paged();
 }
 
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4State) {
+    startBackend(V4);
+    testGetLeases4State();
+}
+
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4StateMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases4State();
+}
+
 /// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
@@ -1246,6 +1259,19 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPagedMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6State) {
+    startBackend(V6);
+    testGetLeases6State();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6StateMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6State();
 }
 
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
