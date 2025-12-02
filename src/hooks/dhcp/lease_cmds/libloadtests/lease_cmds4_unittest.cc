@@ -297,6 +297,18 @@ public:
     /// leases).
     void testLease4GetByClientIdFind2();
 
+    /// @brief Check that lease4-get-by-state can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLease4GetByStateParams();
+
+    /// @brief Check that lease4-get-by-state works as expected (find no
+    /// lease).
+    void testLease4GetByStateFind0();
+
+    /// @brief Check that lease4-get-by-state works as expected (find two
+    /// leases).
+    void testLease4GetByStateFind2();
+
     /// @brief Check that lease4-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease4GetByHostnameParams();
@@ -461,7 +473,7 @@ public:
     /// @brief Check that lease4-write works as expected.
     void testLease4Write();
 
-    /// @brief Check that lease4-write works as expected when security 
+    /// @brief Check that lease4-write works as expected when security
     /// is disabled.
     void testLease4WriteSecurityWarn();
 };
@@ -1979,6 +1991,114 @@ void Lease4CmdsTest::testLease4GetByClientIdFind2() {
     ASSERT_TRUE(lease);
     checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
     lease = leases->get(1);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+void Lease4CmdsTest::testLease4GetByStateParams() {
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'state' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be a number or string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": true\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter must be a number or a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be not empty.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter is empty";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be recognized.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": \"foobar\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (foobar) is not recognized";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // subnet-id must be a number.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 1,\n"
+        "        \"subnet-id\": \"mynet\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFind0() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 3,\n"
+        "        \"subnet-id\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found with state released (3) in subnet 1.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFind2() {
+    // Initialize lease manager (false = v4, true = add leases, true = declined)
+    initLeaseMgr(false, true, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found with state declined (1).";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(4, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    lease = leases->get(2);
     ASSERT_TRUE(lease);
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
 }
@@ -4068,6 +4188,33 @@ TEST_F(Lease4CmdsTest, lease4GetByClientIdFind2) {
 TEST_F(Lease4CmdsTest, lease4GetByClientIdFind2MultiThreading) {
     MultiThreadingTest mt(true);
     testLease4GetByClientIdFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateParams) {
+    testLease4GetByStateParams();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateParams();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind0) {
+    testLease4GetByStateFind0();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind0MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFind0();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind2) {
+    testLease4GetByStateFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFind2();
 }
 
 TEST_F(Lease4CmdsTest, lease4GetByHostnameParams) {

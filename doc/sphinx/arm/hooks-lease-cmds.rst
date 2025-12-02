@@ -79,6 +79,10 @@ This library provides the following commands:
 
 -  :isccmd:`lease6-get-by-duid` - returns all IPv6 leases with the specified DUID.
 
+-  :isccmd:`lease4-get-by-state` - returns all IPv4 leases with the specified state.
+
+-  :isccmd:`lease6-get-by-state` - returns all IPv6 leases with the specified state.
+
 -  :isccmd:`lease4-get-by-hostname` - returns all IPv4 leases with the specified
    hostname.
 
@@ -763,6 +767,12 @@ leases were found.
 .. isccmd:: lease6-get-by-duid
 .. _command-lease6-get-by-duid:
 
+.. isccmd:: lease4-get-by-state
+.. _command-lease4-get-by-state:
+
+.. isccmd:: lease6-get-by-state
+.. _command-lease6-get-by-state:
+
 .. isccmd:: lease4-get-by-hostname
 .. _command-lease4-get-by-hostname:
 
@@ -803,6 +813,15 @@ An example of the :isccmd:`lease6-get-by-hostname` is:
 The ``by`` key is the only parameter. The returned response contains a detailed
 list of leases in the same format as :isccmd:`lease4-get-all` or :isccmd:`lease6-get-all`. This list can be
 empty and is usually not large.
+
+Since Kea version 3.1.5 the ``by-state`` commands were added with:
+
+-  the ``state`` parameter also accepts a string (vs. a number) for
+   usual state names (default (0), declined (1), expired-reclaimed (2),
+   released (3), and registered (4)).
+
+-  an optional subnet-id parameter limits to leases in the specified subnet.
+   When omitted or set to 0 all leases with the given state are returned.
 
 .. isccmd:: lease4-del
 .. _command-lease4-del:

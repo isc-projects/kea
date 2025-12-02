@@ -230,6 +230,18 @@ public:
     int
     leaseGetByDuidHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-get-by-state and lease6-get-by-state commands handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByStateHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    ///
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByStateHandler(hooks::CalloutHandle& handle);
+
     /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
     /// handler
     ///
@@ -1761,6 +1773,109 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
 }
 
 int
+LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
+    bool v4 = true;
+    try {
+        extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-by-state");
+
+        // arguments must always be present
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
+        }
+
+        // the state parameter is mandatory.
+        ConstElementPtr state = cmd_args_->get("state");
+        if (!state) {
+            isc_throw(BadValue, "'state' parameter not specified");
+        }
+
+        uint32_t state_ = 0;
+        // We accept string (nicknames) and integer values.
+        if (state->getType() == Element::string) {
+            std::string state_str = state->stringValue();
+            if (state_str.empty()) {
+                isc_throw(BadValue, "'state' parameter is empty");
+            } else if (state_str == "default") {
+                state_ = Lease::STATE_DEFAULT;;
+            } else if (state_str == "declined") {
+                state_ = Lease::STATE_DECLINED;
+            } else if (state_str == "expired-reclaimed") {
+                state_ = Lease::STATE_EXPIRED_RECLAIMED;
+            } else if (state_str == "released") {
+                state_ = Lease::STATE_RELEASED;
+            } else if (state_str == "registered") {
+                state_ = Lease::STATE_REGISTERED;
+            } else {
+                isc_throw(BadValue, "'state' parameter value (" << state_str
+                          << ") is not recognized");
+            }
+        } else if (state->getType() == Element::integer) {
+            state_ = state->intValue();
+        } else {
+            isc_throw(BadValue, "'state' parameter must be a number or a string");
+        }
+
+        SubnetID subnet_id_ = 0;
+        ConstElementPtr subnet = cmd_args_->get("subnet-id");
+        if (subnet) {
+            if (subnet->getType() != Element::integer) {
+                isc_throw(BadValue, "'subnet-id' parameter must be a number");
+            }
+            subnet_id_ = subnet->intValue();
+        }
+
+        ElementPtr leases_json = Element::createList();
+        if (v4) {
+            Lease4Collection leases =
+                LeaseMgrFactory::instance().getLeases4(state_, subnet_id_);
+
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        } else {
+            Lease6Collection leases =
+                LeaseMgrFactory::instance().getLeases6(state_, subnet_id_);
+
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        }
+
+        std::ostringstream s;
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found with state ";
+        if ((state_ >= Lease::STATE_DEFAULT) &&
+            (state_ <= Lease::STATE_REGISTERED)) {
+            s << Lease::basicStatesToText(state_) << " (" << state_ << ")";
+        } else {
+            s << state_;
+        }
+        if (subnet_id_ != 0) {
+            s << " in subnet " << subnet_id_;
+        }
+        s << ".";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
 LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
     bool v4 = true;
     try {
@@ -3041,6 +3156,11 @@ LeaseCmds::leaseGetByClientIdHandler(hooks::CalloutHandle& handle) {
 int
 LeaseCmds::leaseGetByDuidHandler(hooks::CalloutHandle& handle) {
     return (impl_->leaseGetByDuidHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByStateHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByStateHandler(handle));
 }
 
 int

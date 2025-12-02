@@ -180,6 +180,28 @@ int lease6_get_by_duid(CalloutHandle& handle) {
     return (lease_cmds.leaseGetByDuidHandler(handle));
 }
 
+/// @brief This is a command callout for 'lease4-get-by-state' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease4_get_by_state(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByStateHandler(handle));
+}
+
+/// @brief This is a command callout for 'lease6-get-by-state' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 if an error occurs, 3 if no leases are returned.
+int lease6_get_by_state(CalloutHandle& handle) {
+    LeaseCmds lease_cmds;
+    return (lease_cmds.leaseGetByStateHandler(handle));
+}
+
 /// @brief This is a command callout for 'lease4-get-by-hostname' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
@@ -348,6 +370,8 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease4-get-by-client-id",
                                   lease4_get_by_client_id);
     handle.registerCommandCallout("lease6-get-by-duid", lease6_get_by_duid);
+    handle.registerCommandCallout("lease4-get-by-state", lease4_get_by_state);
+    handle.registerCommandCallout("lease6-get-by-state", lease6_get_by_state);
     handle.registerCommandCallout("lease4-get-by-hostname",
                                   lease4_get_by_hostname);
     handle.registerCommandCallout("lease6-get-by-hostname",
