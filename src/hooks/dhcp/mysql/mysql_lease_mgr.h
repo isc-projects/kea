@@ -794,9 +794,9 @@ public:
         GET_LEASE4_PAGE,             // Get page of leases beginning with an address
         GET_LEASE4_UCTX_PAGE,        // Get page of leases with user context
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
-        GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
         GET_LEASE4_STATE,            // Get IPv4 leases by state
         GET_LEASE4_STATE_SUBID,      // Get IPv4 leases by state & subnet ID
+        GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
         GET_LEASE4_RELAYID,          // Get page of lease by relay ID.
         GET_LEASE4_RELAYID_QST,      // Get page of leases by relay ID and query start time.

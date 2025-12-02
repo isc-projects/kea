@@ -310,6 +310,13 @@ public:
     virtual Lease4Collection getLeases4(uint32_t state,
                                         SubnetID subnet_id) const override;
 
+    /// @brief Returns all IPv4 leases for the particular state.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    Lease4Collection getLeases4ByState(uint32_t state) const;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
@@ -454,6 +461,13 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found).
     virtual Lease6Collection getLeases6(uint32_t state,
                                         SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv6 leases for the particular state.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    Lease6Collection getLeases6ByState(uint32_t state) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -752,6 +766,8 @@ public:
         GET_LEASE4_PAGE,             // Get page of leases beginning with an address
         GET_LEASE4_UCTX_PAGE,        // Get page of leases with user context
         GET_LEASE4_SUBID,            // Get IPv4 leases by subnet ID
+        GET_LEASE4_STATE,            // Get IPv4 leases by state
+        GET_LEASE4_STATE_SUBID,      // Get IPv4 leases by state & subnet ID
         GET_LEASE4_HOSTNAME,         // Get IPv4 leases by hostname
         GET_LEASE4_EXPIRE,           // Get lease4 by expiration.
         GET_LEASE4_RELAYID,          // Get page of lease by relay ID.
@@ -772,6 +788,8 @@ public:
         GET_LEASE6_SUBID,            // Get IPv6 leases by subnet ID
         GET_LEASE6_SUBID_PAGE,       // Get page of IPv6 lease by subnet ID
         GET_LEASE6_DUID,             // Get IPv6 leases by DUID
+        GET_LEASE6_STATE,            // Get IPv6 leases by state
+        GET_LEASE6_STATE_SUBID,      // Get IPv6 leases by state & subnet ID
         GET_LEASE6_HOSTNAME,         // Get IPv6 leases by hostname
         GET_LEASE6_EXPIRE,           // Get lease6 by expiration.
         INSERT_LEASE4,               // Add entry to lease4 table

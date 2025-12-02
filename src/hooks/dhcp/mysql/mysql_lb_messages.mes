@@ -210,11 +210,13 @@ A debug message issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database with the specified state.
 
 % MYSQL_LB_GET_STATE_SUBID4 obtaining IPv4 leases with state %1 in subnet %2
+Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database with the specified state in
 the specified subnet.
 
 % MYSQL_LB_GET_STATE_SUBID6 obtaining IPv6 leases with state %1 in subnet %2
+Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database with the specified state in
 the specified subnet.
