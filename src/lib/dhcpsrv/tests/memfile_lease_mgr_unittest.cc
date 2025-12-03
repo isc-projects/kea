@@ -476,6 +476,74 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
+TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "false";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    auto recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "stop-retry-exit";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "serve-retry-exit";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "serve-retry-continue";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_CONTINUE);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["max-reconnect-tries"] = "5";
+    EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
+                     "'max-reconnect-tries' values greater than zero"
+                     " are not supported by memfile");
+
+    pmap["max-reconnect-tries"] = "0";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["reconnect-wait-time"] = "5";
+    EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
+                     "'reconnect-wait-time' values greater than zero"
+                     " are not supported by memfile");
+
+    pmap["reconnect-wait-time"] = "0";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+}
+
 /// @brief Verifies that the supported path is the enforced.
 TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
     ASSERT_TRUE(data_dir_env_var_.getValue().empty());

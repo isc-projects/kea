@@ -1659,6 +1659,8 @@ private:
 
     /// @brief Post a call to the appropriate main thread callback when memfile
     /// access is lost (e.g. disk full).
+    /// Note this should only be called within a thread-safe context
+    /// (i.e. inside *Internal functions).
     void handleDbLost();
 
 public:
@@ -1670,6 +1672,12 @@ public:
     /// @return The Memfile Lease Manager.
     static TrackingLeaseMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Returns the connection's ReconnectCtl object.
+    /// This is intended for testing purposes only.
+    util::ReconnectCtlPtr reconnectCtl() {
+        return (conn_.reconnectCtl());
+    }
 };
 
 /// @brief Initialization structure used to register and deregister Memfile Lease Mgr.
