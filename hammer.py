@@ -67,8 +67,9 @@ SYSTEMS = {
         '38': False,
         '39': False,
         '40': False,
-        '41': True,
-        '42': True,
+        '41': False,
+        '42': False,
+        '43': True,
     },
     'centos': {
         '7': False,
@@ -90,7 +91,7 @@ SYSTEMS = {
         '18.10': False,
         '19.04': False,
         '19.10': False,
-        '20.04': True,
+        '20.04': False,
         '20.10': False,
         '21.04': False,
         '22.04': True,
@@ -105,12 +106,11 @@ SYSTEMS = {
         '13': True,
     },
     'freebsd': {
-        '11.2': False,
-        '11.4': False,
-        '12.0': False,
-        '12.1': False,
-        '13.0': False,
-        '14.0': True,
+        '11': False,
+        '12': False,
+        '13': False,
+        '14': False,
+        '15': True,
     },
     'alpine': {
         '3.10': False,
@@ -122,10 +122,11 @@ SYSTEMS = {
         '3.16': False,
         '3.17': False,
         '3.18': False,
-        '3.19': True,
-        '3.20': True,
+        '3.19': False,
+        '3.20': False,
         '3.21': True,
         '3.22': True,
+        '3.23': True,
     },
     'arch': {},
 }
@@ -1798,6 +1799,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     packages = []
 
     # Common packages
+    packages.append('pkgconf')
     if 'ccache' in features:
         packages.append('ccache')
 
@@ -2061,7 +2063,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev', 'pkg-config'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -2088,11 +2090,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
+        packages.extend(['bash', 'boost-libs', 'botan3', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
         deferred_functions.append(lambda: install_meson(only='meson'))
-
-        if revision.startswith('14'):
-            packages.extend(['bash', 'pkgconf'])
 
         if 'docs' in features:
             # Get the python version from the remote repositories.
@@ -2158,7 +2157,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'alpine':
         if 0 != execute("grep -E '^ulimit -s unlimited$' ~/.profile", quiet=True, raise_error=False):
             execute("echo 'ulimit -s unlimited' >> ~/.profile")
-        packages.extend(['boost-libs', 'boost-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
+        packages.extend(['boost-libs', 'boost-dev', 'botan3-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
                          'log4cplus', 'log4cplus-dev', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
                          'tar'])
         deferred_functions.append(install_meson)
