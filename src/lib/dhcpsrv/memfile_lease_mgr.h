@@ -1657,6 +1657,10 @@ private:
     /// Must be called from a thread-safe context.
     virtual void writeLeases6Internal(const std::string& filename);
 
+    /// @brief Post a call to the appropriate main thread callback when memfile
+    /// access is lost (e.g. disk full).
+    void handleDbLost();
+
 public:
     /// @brief Factory class method.
     ///

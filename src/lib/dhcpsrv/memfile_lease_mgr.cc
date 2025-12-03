@@ -8,18 +8,21 @@
 
 #include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
 #include <util/filesystem.h>
+#include <util/reconnect_ctl.h>
 
 #include <boost/foreach.hpp>
 #include <cstdio>
@@ -1083,6 +1086,20 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         }
         lfcSetup(conversion_needed);
     }
+
+    // Create the reconnect ctl object.
+    conn_.makeReconnectCtl("memfile-lease-mgr", NetworkState::DB_CONNECTION + 3);
+
+    // Sanity check the values.
+    if (conn_.reconnectCtl()->maxRetries() > 0) {
+        isc_throw(BadValue, "'max-reconnect-tries'"
+                  << " values greater than zero are not supported by memfile");
+    }
+
+    if (conn_.reconnectCtl()->retryInterval() > 0) {
+        isc_throw(BadValue, "'reconnect-wait-time'"
+                  << " values greater than zero are not supported by memfile");
+    }
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -1118,6 +1135,16 @@ Memfile_LeaseMgr::getDBVersion() {
     }
 }
 
+void
+Memfile_LeaseMgr::handleDbLost() {
+    // Invoke application layer callback on the main IOService.
+    auto ios = conn_.getIOService();
+    if (ios) {
+        ios->post(std::bind(DatabaseConnection::invokeDbLostCallback,
+                            conn_.reconnectCtl()));
+    }
+}
+
 bool
 Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     if (getLease4Internal(lease->addr_)) {
@@ -1129,7 +1156,12 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persistLeases(V4)) {
-        lease_file4_->append(*lease);
+        try {
+            lease_file4_->append(*lease);
+        } catch (const CSVFileFatalError& ex) {
+            handleDbLost();
+            throw;
+        }
     }
 
     storage4_.insert(lease);
@@ -1173,7 +1205,12 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persistLeases(V6)) {
-        lease_file6_->append(*lease);
+        try {
+            lease_file6_->append(*lease);
+        } catch (const CSVFileFatalError& ex) {
+            handleDbLost();
+            throw;
+        }
     }
 
     lease->extended_info_action_ = Lease6::ACTION_IGNORE;
@@ -2038,7 +2075,12 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persist) {
-        lease_file4_->append(*lease);
+        try {
+            lease_file4_->append(*lease);
+        } catch (const CSVFileFatalError& ex) {
+            handleDbLost();
+            throw;
+        }
     }
 
     // Update lease current expiration time.
@@ -2102,7 +2144,12 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persist) {
-        lease_file6_->append(*lease);
+        try {
+            lease_file6_->append(*lease);
+        } catch (const CSVFileFatalError& ex) {
+            handleDbLost();
+            throw;
+        }
     }
 
     // Update lease current expiration time.
@@ -2169,7 +2216,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
             // Setting valid lifetime to 0 means that lease is being
             // removed.
             lease_copy.valid_lft_ = 0;
-            lease_file4_->append(lease_copy);
+            try {
+                lease_file4_->append(lease_copy);
+            } catch (const CSVFileFatalError& ex) {
+                handleDbLost();
+                throw;
+            }
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
@@ -2223,7 +2275,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
             // Setting lifetimes to 0 means that lease is being removed.
             lease_copy.valid_lft_ = 0;
             lease_copy.preferred_lft_ = 0;
-            lease_file6_->append(lease_copy);
+            try {
+                lease_file6_->append(lease_copy);
+            } catch (const CSVFileFatalError& ex) {
+                handleDbLost();
+                throw;
+            }
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
@@ -2352,7 +2409,12 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                 // Set the valid lifetime to 0 to indicate the removal
                 // of the lease.
                 lease_copy.valid_lft_ = 0;
-                lease_file->append(lease_copy);
+                try {
+                    lease_file->append(lease_copy);
+                } catch (const CSVFileFatalError& ex) {
+                    handleDbLost();
+                    throw;
+                }
             }
         }
 
@@ -3540,7 +3602,13 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
             if (upgradeLease4ExtendedInfo(lease, check)) {
                 ++modified;
                 if (update && persistLeases(V4)) {
-                    lease_file4_->append(*lease);
+                    try {
+                        lease_file4_->append(*lease);
+                    } catch (const CSVFileFatalError& ex) {
+                        handleDbLost();
+                        throw;
+                    }
+
                     ++updated;
                 }
             }
@@ -3681,7 +3749,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         if (overwrite) {
             lease_file4_->open(true);
         }
-    } catch (const std::exception&) {
+    } catch (const std::exception& ex) {
         if (overwrite) {
             lease_file4_->open(true);
         }
