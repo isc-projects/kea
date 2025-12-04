@@ -28,6 +28,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+
+#include <cstdlib>
 #include <sstream>
 
 using namespace std;

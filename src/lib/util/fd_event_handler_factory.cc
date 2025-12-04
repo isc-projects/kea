@@ -12,6 +12,7 @@
 #include <util/poll_event_handler.h>
 #include <util/select_event_handler.h>
 
+#include <cstdlib>
 #include <string>
 
 using namespace std;

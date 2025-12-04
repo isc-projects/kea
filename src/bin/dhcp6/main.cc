@@ -22,6 +22,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <cstdlib>
 #include <iostream>
 
 using namespace isc::data;

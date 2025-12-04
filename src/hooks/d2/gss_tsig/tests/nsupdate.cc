@@ -16,6 +16,7 @@
 #include <gss_tsig_context.h>
 #include <gss_tsig_key.h>
 
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <limits>

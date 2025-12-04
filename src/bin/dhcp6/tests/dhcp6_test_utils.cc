@@ -5,7 +5,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <gtest/gtest.h>
+
 #include <cc/command_interpreter.h>
 #include <config/unix_command_config.h>
 #include <dhcp/option6_status_code.h>
@@ -19,9 +21,11 @@
 #include <stats/stats_mgr.h>
 #include <util/filesystem.h>
 #include <util/pointer_util.h>
+
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sstream>
-#include <string.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;

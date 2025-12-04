@@ -6,17 +6,18 @@
 
 #include <config.h>
 
-#include <iostream>
-#include <algorithm>
-#include <string>
-
 #include <log/logger_level.h>
-#include <log/logger_name.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/logger_unittest_support.h>
 #include <log/logger_support.h>
+#include <log/logger_unittest_support.h>
 #include <log/output_option.h>
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <string>
 
 using namespace std;
 

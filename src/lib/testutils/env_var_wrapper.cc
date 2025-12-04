@@ -8,6 +8,8 @@
 
 #include <testutils/env_var_wrapper.h>
 
+#include <cstdlib>
+
 namespace isc {
 namespace test {
 

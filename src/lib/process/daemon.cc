@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <cstdlib>
+
 #include <cc/data.h>
 #include <process/daemon.h>
 #include <process/log_parser.h>

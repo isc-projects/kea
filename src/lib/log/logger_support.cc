@@ -6,10 +6,12 @@
 
 #include <config.h>
 
-#include <string>
-#include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
+#include <log/logger_support.h>
+
+#include <cstdlib>
+#include <string>
 
 using namespace std;
 

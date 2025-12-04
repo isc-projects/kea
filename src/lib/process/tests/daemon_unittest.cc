@@ -14,6 +14,8 @@
 #include <process/daemon.h>
 #include <process/log_parser.h>
 
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 
 using namespace isc;

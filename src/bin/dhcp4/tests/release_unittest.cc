@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
@@ -15,6 +16,8 @@
 #include <dhcp4/tests/dhcp4_client.h>
 #include <stats/stats_mgr.h>
 #include <boost/shared_ptr.hpp>
+
+#include <cstdlib>
 #include <sstream>
 
 using namespace isc;

@@ -5,17 +5,19 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <string>
-#include <mysql.h>
-#include <mysql/testutils/mysql_schema.h>
-#include <mysql/mysql_connection.h>
+
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <util/str.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdlib.h>
+#include <string>
+
+#include <mysql.h>
 
 using namespace std;
 

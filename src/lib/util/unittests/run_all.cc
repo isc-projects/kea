@@ -6,14 +6,14 @@
 
 #include <config.h>
 
-#include <stdlib.h>
-
-#include <iostream>
-#include <iomanip>
-
-#include <gtest/gtest.h>
 #include <exceptions/exceptions.h>
 #include <util/unittests/run_all.h>
+
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace util {

@@ -12,6 +12,9 @@
 #include <gss_tsig_api_utils.h>
 #include <testutils/gss_tsig_dns_server.h>
 #include <testutils/gtest_utils.h>
+
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 
 using namespace std;

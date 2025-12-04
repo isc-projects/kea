@@ -5,17 +5,18 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <string>
-#include <pgsql//pgsql_connection.h>
-#include <pgsql/testutils/pgsql_schema.h>
+
 #include <exceptions/exceptions.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
-#include <libpq-fe.h>
-
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdlib.h>
+#include <string>
+
+#include <libpq-fe.h>
 
 using namespace std;
 

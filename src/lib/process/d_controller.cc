@@ -5,28 +5,31 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
-#include <process/cfgrpt/config_report.h>
+#include <config/command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <exceptions/exceptions.h>
-#include <config/command_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
+#include <process/cfgrpt/config_report.h>
+#include <process/config_base.h>
+#include <process/d_controller.h>
+#include <process/d_log.h>
+#include <process/daemon.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
-#include <process/daemon.h>
-#include <process/d_log.h>
-#include <process/d_controller.h>
-#include <process/config_base.h>
-#include <kea_version.h>
+
+#include <cstdlib>
 #include <functional>
 #include <sstream>
 #include <string>
-#include <unistd.h>
+
 #include <signal.h>
+#include <unistd.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;

@@ -8,6 +8,8 @@
 
 #include <log/logger_support.h>
 
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 
 int

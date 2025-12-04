@@ -9,6 +9,8 @@
 #include <log/logger_support.h>
 #include <util/unittests/run_all.h>
 
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 
 int

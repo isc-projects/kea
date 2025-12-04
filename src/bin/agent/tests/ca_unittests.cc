@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <cstdlib>
+
 #include <log/logger_support.h>
 #include <gtest/gtest.h>
 
