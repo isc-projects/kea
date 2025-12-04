@@ -55,16 +55,9 @@ Some of these checks and updates can be made before the actual freeze.
    1. [ ] Create a draft of the release notes on the [Kea GitLab wiki](https://gitlab.isc.org/isc-projects/kea/-/wikis/home). It should be created under [the Release-Notes directory](https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes), like this one: https://gitlab.isc.org/isc-projects/kea/-/wikis/Release-Notes/release-notes-2.3.4.
    1. [ ] Notify @tomek that the draft is ready to be redacted. Wait for that to be done.
    1. [ ] Notify support that release notes are ready for review. To avoid conflicts in edits wait with next step after review is done. Due to the time difference, please do this at least 36 hours before the planned release.
-1. [ ] Check that packages can be uploaded to Cloudsmith.
-   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
-   1. Click `Build with Parameters`.
-   1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field. Leave the rest as they are `PrivPubRepos: "both"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
-   1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
-   1. If a new Cloudsmith repository is used, then:
-      1. [ ] Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
-1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) on the packages uploading to the testing repo.
 1. [ ] Check if ReadTheDocs can build Kea documentation. Alternatively, look for failures in emails if you know that the ReadTheDocs webhook is working.
    1. Trigger rebuilding docs on [readthedocs.org](https://readthedocs.org/projects/kea/builds) and wait for the build to complete.
+1. [ ] <mark>Stable Release Only</mark>: A new Cloudsmith repo should have been created. Make sure access tokens have been synchronized from previous Cloudsmith repositories and to the [check-pkgs.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/kea/pkgs-check/check-pkgs.py) QA tool.
 
 The following steps may involve changing files in the repository.
 
@@ -147,6 +140,12 @@ This is the last moment to freeze the code! :snowflake:
          - a link to the GitLab issue
          - tarballs locations with SHA256 checksums
          - apk, deb, rpm packages locations and versions
+1. [ ] Upload packages to the testing Cloudsmith repos.
+   1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
+   1. Click `Build with Parameters`.
+   1. Pick the latest pkg build in the `Packages` field, and the corresponding tarball build in the `Tarball` field. Leave the rest as they are `PrivPubRepos: "both"`, `TarballOrPkg: "packages"`, `TestProdRepos: "testing"` and click `Build`.
+   1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
+1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) on the packages uploaded to the testing repos.
 
 ## Releasing Tarballs and Packages
 
@@ -186,12 +185,20 @@ Now it's time to publish the code.
     * To overwrite existing content, use `--force` option.
     * If you made a mistake, contact ASAP someone from the ops team to remove incorrectly uploaded tarballs.
     * [ ] Save the link to the subscriber tarball and put it into the signing ticket as a comment.
-1. [ ] Upload final APK, DEB & RPM packages, tarballs and sign files to cloudsmith.io:
-    1. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
-    1. Click `Build with Parameters`.
-    1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
-       - This step also verifies sign files.
-    1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
+1. Upload final APK, DEB & RPM packages, tarballs and signature files to cloudsmith.io:
+   1. [ ] <mark>Security Release Only</mark>: Copy public packages from `-prv` Cloudsmith repo to public.
+      * You can use script [copy-missing-public-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/copy-missing-public-packages-between-cloudsmith-repos.py) \
+         Example command: `./copy-missing-public-packages-between-cloudsmith-repos.py -v 2.3.4`.
+      * Or you can use the Cloudsmith GUI. Consider using the filter from the script in the previous bullet point.
+    1. [ ] If not a security release, and you uploaded packages to testing repo previously, you can copy them over instantaneously. Run script [copy-packages-between-cloudsmith-repos.py](https://gitlab.isc.org/isc-private/qa-dhcp/-/blob/master/release/copy-packages-between-cloudsmith-repos.py) \
+        * Example commands:
+            * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-testing --to kea-dev`
+            * `./copy-packages-between-cloudsmith-repos.py -v 2.3.4 --from kea-dev-prv-testing --to kea-dev-prv`
+    1. [ ] Otherwise, start a new upload. Go to [release-upload-to-cloudsmith](https://jenkins.aws.isc.org/job/kea-dev/job/release-upload-to-cloudsmith/).
+        1. Click `Build with Parameters`.
+        1. Pick your selected pkg build in the `Packages` field, the corresponding tarball build in the `Tarball` field, `PrivPubRepos: "both"`, `TarballOrPkg: "both"`, `TestProdRepos: "production"` and click `Build`.
+            - This step also verifies sign files.
+        1. <mark>Security Release Only</mark>: Tick the `CVE` parameter.
 1. [ ] Run Jenkins job [releases-pkgs-check](https://jenkins.aws.isc.org/job/kea-dev/job/release-pkgs-check/) on the packages uploaded to the production repo.
 1. [ ] Check that Docker images can be uploaded to Cloudsmith. Run Jenkins job [build-upload-docker](https://jenkins.aws.isc.org/job/kea-dev/job/build-upload-docker/).
     * Make sure the right package job is selected under `Packages`.
