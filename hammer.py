@@ -639,6 +639,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         log.info('all packages already installed')
         return
 
+    # Second cmd attempt.
+    cmd2 = None
+
     if system in ['centos', 'fedora', 'rhel', 'rocky']:
         if system in ['centos', 'rhel'] and revision == '7':
             execute('sudo yum install -y dnf')
@@ -651,6 +654,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
         cmd = 'sudo pkg clean --all --yes; sudo pkg install --no-repo-update --yes'
+        cmd2 = 'sudo pkg clean --all --yes; sudo pkg install --yes'  # with repo update
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
@@ -660,24 +664,47 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
 
     if one_package_at_a_time:
         for p in pkgs:
-            execute(
+            exit_code, _ = execute(
                 f"{cmd} {p}",
+                timeout=timeout,
+                env=env,
+                check_times=check_times,
+                capture=True,
+                raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+                attempts=3,
+                sleep_time_after_attempt=10,
+            )
+            if exit_code != 0 and cmd2 is not None:
+                execute(
+                    f"{cmd2} {p}",
+                    timeout=timeout,
+                    env=env,
+                    check_times=check_times,
+                    attempts=3,
+                    sleep_time_after_attempt=10,
+                )
+
+    else:
+        pkgs = ' '.join(pkgs)
+        exit_code, _ = execute(
+            f"{cmd} {pkgs}",
+            timeout=timeout,
+            env=env,
+            check_times=check_times,
+            capture=True,
+            raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+            attempts=3,
+            sleep_time_after_attempt=10,
+        )
+        if exit_code != 0 and cmd2 is not None:
+            execute(
+                f"{cmd2} {pkgs}",
                 timeout=timeout,
                 env=env,
                 check_times=check_times,
                 attempts=3,
                 sleep_time_after_attempt=10,
             )
-    else:
-        pkgs = ' '.join(pkgs)
-        execute(
-            f"{cmd} {pkgs}",
-            timeout=timeout,
-            env=env,
-            check_times=check_times,
-            attempts=3,
-            sleep_time_after_attempt=10,
-        )
 
 
 def get_image_template(key, variant):
