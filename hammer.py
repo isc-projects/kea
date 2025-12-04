@@ -1796,7 +1796,10 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         packages.append('ccache')
 
     if 'docs' in features:
-        packages.extend(['bison', 'flex'])
+        packages.extend(['bison', 'doxygen', 'flex'])
+
+    if 'unittest' in features:
+        packages.append('valgrind')
 
     # prepare fedora
     if system == 'fedora':
@@ -1892,6 +1895,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # prepare rhel
     elif system == 'rhel':
         packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel'])
+        if int(revision) < 9:
+            packages.remove('doxygen')
 
         # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
         # hammer.py.
@@ -2060,7 +2065,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
-            packages.extend(['doxygen', 'graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
+            packages.extend(['graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
                              'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
