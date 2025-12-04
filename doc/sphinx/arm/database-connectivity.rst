@@ -64,7 +64,7 @@ to exit, it issues a fatal error before shutdown.
     to the lease file and ``on-fail`` is either ``stop-retry-exit`` (the
     default) or ``serve-retry-exit`` the server will exit immediately.  If
     ``on-fail`` is ``serve-retry-continue`` the server will remain up, though
-    the write errors will continue until the corrective is taken.  Values other
+    the write errors will continue until corrective action is taken.  Values other
     than zero for ``max-reconnect-tries`` and ``reconnect-wait-time`` are not
     supported by memfile.
 
