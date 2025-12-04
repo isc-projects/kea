@@ -1837,6 +1837,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
         execute('sudo dnf clean packages', env=env, check_times=check_times)
@@ -1888,6 +1891,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'unittest' in features:
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
+
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
 
         install_pkgs(packages, env=env, check_times=check_times)
 
@@ -1941,6 +1947,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
     # prepare rocky
@@ -1973,6 +1982,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'unittest' in features:
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
+
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
 
         execute('sudo dnf config-manager --set-enabled crb')
         execute('sudo dnf config-manager --set-enabled devel')
@@ -2849,7 +2861,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
 ALL_FEATURES = ['all', 'ccache', 'coverage', 'distcheck', 'docs', 'forge', 'gssapi',
                 'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
-                'pgsql', 'shell', 'tls', 'unittest']
+                'pgsql', 'sanitizers', 'shell', 'tls', 'unittest']
 
 
 def parse_args():
