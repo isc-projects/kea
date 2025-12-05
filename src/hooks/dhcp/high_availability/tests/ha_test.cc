@@ -15,6 +15,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -54,6 +55,8 @@ namespace test {
 HATest::HATest()
     : io_service_(new IOService()),
       network_state_(new NetworkState()) {
+    // Just make sure that the interface manager is created in the main thread.
+    IfaceMgr::instance();
 }
 
 HATest::~HATest() {
@@ -115,13 +118,25 @@ HATest::runIOServiceInThread() {
 
     io_service_->post(std::bind(&HATest::signalServiceRunning, this, std::ref(running),
                                 std::ref(mutex), std::ref(condvar)));
+
+    // IfaceMgr::instance().setCheckThreadId(false);
+
+    auto f = [](IOServicePtr io_service) {
+        try {
+            io_service->run();
+        } catch (std::exception& ex) {
+            ADD_FAILURE() << "error while running IOService::run: " << ex.what();
+        } catch (...) {
+            ADD_FAILURE() << "error while running IOService::run";
+        }
+        // IfaceMgr::instance().setCheckThreadId(true);
+    };
+
     boost::shared_ptr<std::thread>
-        th(new std::thread(std::bind(&IOService::run, io_service_.get())));
+        th(new std::thread(std::bind(f, io_service_)));
 
     std::unique_lock<std::mutex> lock(mutex);
-    while (!running) {
-        condvar.wait(lock);
-    }
+    condvar.wait(lock, [&]() { return (running); });
 
     return (th);
 }
@@ -146,7 +161,6 @@ HATest::signalServiceRunning(bool& running, std::mutex& mutex,
     running = true;
     condvar.notify_one();
 }
-
 
 void
 HATest::checkThatTimeIsParsable(ElementPtr const& node, bool const null_expected) {
@@ -325,7 +339,6 @@ HATest::createValidHubJsonConfiguration() const {
     return (Element::fromJSON(config_text.str()));
 }
 
-
 HAConfigPtr
 HATest::createValidConfiguration(const HAConfig::HAMode& ha_mode) const {
     auto config_storage = HAConfigParser::parse(createValidJsonConfiguration(ha_mode));
@@ -376,7 +389,6 @@ HATest::randomKey(const size_t key_size) const {
     util::fillRandom(key.begin(), key.end());
     return (key);
 }
-
 
 Pkt4Ptr
 HATest::createMessage4(const uint8_t msg_type, const uint8_t hw_address_seed,
