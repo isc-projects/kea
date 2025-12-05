@@ -2139,7 +2139,8 @@ void Lease4CmdsTest::testLease4GetByStateFindN() {
         { "declined", "\"declined\"", 1, "declined" },
         { "2", "2", 2, "expired-reclaimed" },
         { "expired-reclaimed", "\"expired-reclaimed\"", 2, "expired-reclaimed" },
-        { "3", "3", 3, "released" }
+        { "3", "3", 3, "released" },
+        { "released", "\"released\"", 3, "released" }
     };
 
     // Query prefix.
@@ -2150,9 +2151,6 @@ void Lease4CmdsTest::testLease4GetByStateFindN() {
         "        \"state\": ";
     // Query end.
     string end_cmd = "    }\n}";
-    // Response prefix.
-    string prefix_exp_rsp = "1 IPv4 lease(s) found with state ";
-
     for (auto const& scenario : scenarios) {
         SCOPED_TRACE("scenario for state: " + scenario.name_);
         string cmd = prefix_cmd + scenario.state_str_ + end_cmd;

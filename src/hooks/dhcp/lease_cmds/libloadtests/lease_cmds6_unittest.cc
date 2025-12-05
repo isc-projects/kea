@@ -329,6 +329,10 @@ public:
     /// leases).
     void testLease6GetByStateFind2();
 
+    /// @brief Check that lease6-get-by-state works as expected (try all
+    /// combinaisons).
+    void testLease6GetByStateFindN();
+
     /// @brief Check that lease6-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease6GetByHostnameParams();
@@ -2360,6 +2364,82 @@ void Lease6CmdsTest::testLease6GetByStateFind2() {
     lease = leases->get(2);
     ASSERT_TRUE(lease);
     checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
+}
+
+void Lease6CmdsTest::testLease6GetByStateFindN() {
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Create and add one lease per state from 0 to 4.
+    Lease6Collection leases;
+    leases.push_back(createLease6("2001:db8:1::1", 66, 0x42, false, 0, 0x08));
+    leases.push_back(createLease6("2001:db8:1::2", 66, 0x56, false, 0, 0x09));
+    leases.push_back(createLease6("2001:db8:2::1", 99, 0x42, false, 0, 0x08));
+    leases.push_back(createLease6("2001:db8:2::2", 99, 0x56, false, 0, 0x09));
+    leases.push_back(createLease6("2001:db8:2::3", 99, 0x73, false, 0, 0x0a));
+    for (unsigned i = 0; i < 5; ++i) {
+        leases[i]->state_ = i;
+        lmptr_->addLease(leases[i]);
+    }
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        string name_;                // name
+        string state_str_;           // state in the command
+        unsigned state_;             // state value
+        string state_rsp_;           // state name in the response
+    };
+
+    // Test scenarios with all possible valid states.
+    std::vector<Scenario> scenarios = {
+        { "0", "0", 0, "default" },
+        { "default", "\"default\"", 0, "default" },
+        { "assigned", "\"assigned\"", 0, "default" },
+        { "1", "1", 1, "declined" },
+        { "declined", "\"declined\"", 1, "declined" },
+        { "2", "2", 2, "expired-reclaimed" },
+        { "expired-reclaimed", "\"expired-reclaimed\"", 2, "expired-reclaimed" },
+        { "3", "3", 3, "released" },
+        { "released", "\"released\"", 3, "released" },
+        { "4", "4", 4, "registered" },
+        { "registered", "\"registered\"", 4, "registered" }
+    };
+
+    // Query prefix.
+    string prefix_cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": ";
+    // Query end.
+    string end_cmd = "    }\n}";
+    // Response prefix.
+    string prefix_exp_rsp = "1 IPv6 lease(s) found with state ";
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE("scenario for state: " + scenario.name_);
+        string cmd = prefix_cmd + scenario.state_str_ + end_cmd;
+        stringstream exp_rsp;
+        exp_rsp << "1 IPv6 lease(s) found with state "
+                << scenario.state_rsp_ << " (" << scenario.state_ << ").";
+        ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS,
+                                          exp_rsp.str());
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+        ConstElementPtr map = rsp->get("arguments");
+        ASSERT_TRUE(map);
+        ASSERT_EQ(Element::map, map->getType());
+        ConstElementPtr leases_rsp = map->get("leases");
+        ASSERT_TRUE(leases_rsp);
+        ASSERT_EQ(Element::list, leases_rsp->getType());
+        ASSERT_EQ(1, leases_rsp->size());
+
+        // Let's check if the response makes any sense.
+        ConstElementPtr lease = leases_rsp->get(0);
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(lease->str(), leases[scenario.state_]->toElement()->str());
+    }
 }
 
 void Lease6CmdsTest::testLease6GetByHostnameParams() {
@@ -5312,6 +5392,15 @@ TEST_F(Lease6CmdsTest, lease6GetByStateFind2) {
 TEST_F(Lease6CmdsTest, lease6GetByStateFind2MultiThreading) {
     MultiThreadingTest mt(true);
     testLease6GetByStateFind2();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByStateFindN) {
+    testLease6GetByStateFindN();
+}
+
+TEST_F(Lease6CmdsTest, lease6GetByStateFindNMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease6GetByStateFindN();
 }
 
 TEST_F(Lease6CmdsTest, lease6GetByHostnameParams) {
