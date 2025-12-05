@@ -2,7 +2,7 @@
     "access": "read",
     "avail": "3.1.5",
     "brief": [
-        "This command retrieves all IPv4 leases with the specified state"
+        "This command retrieves all IPv4 leases with the specified state",
         " and optionally in a subnet."
     ],
     "cmd-syntax": [
