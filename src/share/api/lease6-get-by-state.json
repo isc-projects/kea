@@ -2,13 +2,15 @@
     "access": "read",
     "avail": "3.1.5",
     "brief": [
-        "This command retrieves all IPv6 leases with the specified state."
+        "This command retrieves all IPv6 leases with the specified state"
+        " and optionally in a subnet."
     ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"lease6-get-by-state\",",
         "    \"arguments\": {",
-        "        \"state\": \"registered\"",
+        "        \"state\": \"registered\",",
+        "        \"subnet-id\": 1",
         "    }",
         "}"
     ],

@@ -1796,7 +1796,7 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
             std::string state_str = state->stringValue();
             if (state_str.empty()) {
                 isc_throw(BadValue, "'state' parameter is empty");
-            } else if (state_str == "default") {
+            } else if ((state_str == "default") || (state_str == "assigned")) {
                 state_ = Lease::STATE_DEFAULT;;
             } else if (state_str == "declined") {
                 state_ = Lease::STATE_DECLINED;

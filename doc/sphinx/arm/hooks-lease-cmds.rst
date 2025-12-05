@@ -817,8 +817,8 @@ empty and is usually not large.
 Since Kea version 3.1.5 the ``by-state`` commands were added with:
 
 -  the ``state`` parameter also accepts a string (vs. a number) for
-   usual state names (default (0), declined (1), expired-reclaimed (2),
-   released (3), and registered (4)).
+   usual state names (default (or assigned) (0), declined (1),
+   expired-reclaimed (2), released (3), and registered (4)).
 
 -  an optional subnet-id parameter limits to leases in the specified subnet.
    When omitted or set to 0 all leases with the given state are returned.

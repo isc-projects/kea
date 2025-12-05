@@ -325,7 +325,7 @@ public:
     /// @brief lease4-get-by-state and lease6-get-by-state commands handler
     ///
     /// These commands attempt to retrieve all IPv4 or IPv6 leases with
-    /// a particular state in an option subnet.
+    /// a particular state in an optional subnet.
     ///
     /// Example command for v4:
     /// {
