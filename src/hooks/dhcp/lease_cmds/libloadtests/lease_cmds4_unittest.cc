@@ -309,6 +309,10 @@ public:
     /// leases).
     void testLease4GetByStateFind2();
 
+    /// @brief Check that lease4-get-by-state works as expected (try all
+    /// combinaisons).
+    void testLease4GetByStateFindN();
+
     /// @brief Check that lease4-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease4GetByHostnameParams();
@@ -2101,6 +2105,78 @@ void Lease4CmdsTest::testLease4GetByStateFind2() {
     lease = leases->get(2);
     ASSERT_TRUE(lease);
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFindN() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Create and add one lease per state from 0 to 3.
+    Lease4Collection leases;
+    leases.push_back(createLease4("192.0.2.1", 44, 0x08, 0x42));
+    leases.push_back(createLease4("192.0.2.2", 44, 0x09, 0x56));
+    leases.push_back(createLease4("192.0.3.1", 88, 0x08, 0x42));
+    leases.push_back(createLease4("192.0.3.2", 88, 0x09, 0x56));
+    for (unsigned i = 0; i < 4; ++i) {
+        leases[i]->state_ = i;
+        lmptr_->addLease(leases[i]);
+    }
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        string name_;                // name
+        string state_str_;           // state in the command
+        unsigned state_;             // state value
+        string state_rsp_;           // state name in the response
+    };
+
+    // Test scenarios with all possible valid states.
+    std::vector<Scenario> scenarios = {
+        { "0", "0", 0, "default" },
+        { "default", "\"default\"", 0, "default" },
+        { "assigned", "\"assigned\"", 0, "default" },
+        { "1", "1", 1, "declined" },
+        { "declined", "\"declined\"", 1, "declined" },
+        { "2", "2", 2, "expired-reclaimed" },
+        { "expired-reclaimed", "\"expired-reclaimed\"", 2, "expired-reclaimed" },
+        { "3", "3", 3, "released" }
+    };
+
+    // Query prefix.
+    string prefix_cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": ";
+    // Query end.
+    string end_cmd = "    }\n}";
+    // Response prefix.
+    string prefix_exp_rsp = "1 IPv4 lease(s) found with state ";
+
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE("scenario for state: " + scenario.name_);
+        string cmd = prefix_cmd + scenario.state_str_ + end_cmd;
+        stringstream exp_rsp;
+        exp_rsp << "1 IPv4 lease(s) found with state "
+                << scenario.state_rsp_ << " (" << scenario.state_ << ").";
+        ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS,
+                                          exp_rsp.str());
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+        ConstElementPtr map = rsp->get("arguments");
+        ASSERT_TRUE(map);
+        ASSERT_EQ(Element::map, map->getType());
+        ConstElementPtr leases_rsp = map->get("leases");
+        ASSERT_TRUE(leases_rsp);
+        ASSERT_EQ(Element::list, leases_rsp->getType());
+        ASSERT_EQ(1, leases_rsp->size());
+
+        // Let's check if the response makes any sense.
+        ConstElementPtr lease = leases_rsp->get(0);
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(lease->str(), leases[scenario.state_]->toElement()->str());
+    }
 }
 
 void Lease4CmdsTest::testLease4GetByHostnameParams() {
@@ -4215,6 +4291,15 @@ TEST_F(Lease4CmdsTest, lease4GetByStateFind2) {
 TEST_F(Lease4CmdsTest, lease4GetByStateFind2MultiThreading) {
     MultiThreadingTest mt(true);
     testLease4GetByStateFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFindN) {
+    testLease4GetByStateFindN();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFindNMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFindN();
 }
 
 TEST_F(Lease4CmdsTest, lease4GetByHostnameParams) {
