@@ -4971,6 +4971,10 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
     ASSERT_TRUE(response);
     string expected = "{ \"result\": 1, \"text\": \"failed to start kea-lfc\" }";
+    // It fails only when not run by root.
+    if (getuid() == 0 || geteuid() == 0) {
+        return;
+    }
     EXPECT_EQ(expected, response->str());
 
     // Verify that LFC reschedule was logged.

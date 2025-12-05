@@ -196,7 +196,10 @@ TEST_F(PIDFileTest, pidWriteFail) {
     chmod(absolutePath(TESTNAME).c_str(), S_IRUSR);
 
     // Now try a write to the file, expecting an exception
-    EXPECT_THROW(pid_file.write(10), PIDFileError);
+    // root has superpowers so it throws only when not root
+    if (getuid() != 0  && geteuid() != 0) {
+        EXPECT_THROW(pid_file.write(10), PIDFileError);
+    }
 
     // Don't forget to restore the write right for the next test
     chmod(absolutePath(TESTNAME).c_str(), S_IRUSR | S_IWUSR);
