@@ -13,6 +13,8 @@ endif
 kea_dhcp_lib = shared_library(
     'kea-dhcp',
     'classify.cc',
+    'dhcp_log.cc',
+    'dhcp_messages.cc',
     'duid.cc',
     'duid_factory.cc',
     'hwaddr.cc',
@@ -69,6 +71,8 @@ kea_dhcp_headers = [
     'classify.h',
     'dhcp4.h',
     'dhcp6.h',
+    'dhcp_log.h',
+    'dhcp_messages.h',
     'docsis3_option_defs.h',
     'duid.h',
     'duid_factory.h',
@@ -123,3 +127,17 @@ kea_dhcp_headers = [
     'std_option_defs.h',
 ]
 install_headers(kea_dhcp_headers, preserve_path: true, subdir: 'kea/dhcp')
+
+if KEA_MSG_COMPILER.found()
+    current_source_dir = meson.current_source_dir()
+    target_gen_messages = run_target(
+        'src-lib-dhcp-dhcp_messages',
+        command: [
+            CD_AND_RUN,
+            TOP_SOURCE_DIR,
+            KEA_MSG_COMPILER,
+            'src/lib/dhcp/dhcp_messages.mes',
+        ],
+    )
+    TARGETS_GEN_MESSAGES += [target_gen_messages]
+endif
