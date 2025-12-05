@@ -37,6 +37,7 @@ mes_files += $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
 mes_files += $(top_srcdir)/src/lib/config/config_messages.mes
 mes_files += $(top_srcdir)/src/lib/d2srv/d2_messages.mes
 mes_files += $(top_srcdir)/src/lib/database/db_messages.mes
+mes_files += $(top_srcdir)/src/lib/dhcp/dhcp_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 mes_files += $(top_srcdir)/src/lib/dhcpsrv/fuzz_messages.mes

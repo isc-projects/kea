@@ -126,6 +126,10 @@ src/lib/d2srv/d2_messages.cc
 src/lib/d2srv/d2_messages.h
 src/lib/database/db_messages.cc
 src/lib/database/db_messages.h
+src/lib/dhcp/dhcp_messages.cc
+src/lib/dhcp/dhcp_messages.h
+src/lib/dhcp_ddns/dhcp_ddns_messages.cc
+src/lib/dhcp_ddns/dhcp_ddns_messages.h
 src/lib/dhcpsrv/alloc_engine_messages.cc
 src/lib/dhcpsrv/alloc_engine_messages.h
 src/lib/dhcpsrv/dhcpsrv_messages.cc
@@ -134,8 +138,6 @@ src/lib/dhcpsrv/fuzz_messages.cc
 src/lib/dhcpsrv/fuzz_messages.h
 src/lib/dhcpsrv/hosts_messages.cc
 src/lib/dhcpsrv/hosts_messages.h
-src/lib/dhcp_ddns/dhcp_ddns_messages.cc
-src/lib/dhcp_ddns/dhcp_ddns_messages.h
 src/lib/eval/eval_messages.cc
 src/lib/eval/eval_messages.h
 src/lib/eval/lexer.cc

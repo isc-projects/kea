@@ -41,6 +41,7 @@ src/lib/dhcpsrv/alloc_engine_messages.mes
 src/lib/dhcpsrv/dhcpsrv_messages.mes
 src/lib/dhcpsrv/fuzz_messages.mes
 src/lib/dhcpsrv/hosts_messages.mes
+src/lib/dhcp/dhcp_messages.mes
 src/lib/dhcp_ddns/dhcp_ddns_messages.mes
 src/lib/eval/eval_messages.mes
 src/lib/hooks/hooks_messages.mes
