@@ -153,9 +153,9 @@ struct LimitManager {
                                                          .getStagingCfg()
                                                          ->getCfgDbAccess()
                                                          ->getLeaseDbAccessString());
-            if (lease_db_access_string.find("retry-on-startup=true") &&
-                (lease_db_access_string.find("type=mysql") ||
-                 lease_db_access_string.find("type=postgresql"))) {
+            if ((lease_db_access_string.find("retry-on-startup=true") != std::string::npos) &&
+                ((lease_db_access_string.find("type=mysql") != std::string::npos) ||
+                 (lease_db_access_string.find("type=postgresql") != std::string::npos))) {
                 LOG_WARN(limits_logger, LIMITS_CONFIGURATION_LEASE_BACKEND_NOT_AVAILABLE);
             } else {
                 LOG_ERROR(limits_logger,
