@@ -1158,7 +1158,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     if (persistLeases(V4)) {
         try {
             lease_file4_->append(*lease);
-        } catch (const CSVFileFatalError& ex) {
+        } catch (const CSVFileFatalError&) {
             handleDbLost();
             throw;
         }

@@ -192,7 +192,6 @@ CSVFile::append(const CSVRow& row) const {
         std::stringstream ss;
         ss << "failed to write CSV row '"
             << text << "' to the file '" << filename_ << "'"
-            << " eof(): " << fs_->eof()
             << " fail(): " << fs_->fail()
             << " bad(): " << fs_->bad()
             << " errno: " << sav_err
@@ -202,6 +201,7 @@ CSVFile::append(const CSVRow& row) const {
             // No longer usable.
             isc_throw(CSVFileFatalError, ss.str());
         } else {
+            fs_->clear();
             isc_throw(CSVFileError, ss.str());
         }
     }
