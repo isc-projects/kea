@@ -1207,7 +1207,7 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     if (persistLeases(V6)) {
         try {
             lease_file6_->append(*lease);
-        } catch (const CSVFileFatalError& ex) {
+        } catch (const CSVFileFatalError&) {
             handleDbLost();
             throw;
         }
@@ -2077,7 +2077,7 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     if (persist) {
         try {
             lease_file4_->append(*lease);
-        } catch (const CSVFileFatalError& ex) {
+        } catch (const CSVFileFatalError&) {
             handleDbLost();
             throw;
         }
@@ -2146,7 +2146,7 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     if (persist) {
         try {
             lease_file6_->append(*lease);
-        } catch (const CSVFileFatalError& ex) {
+        } catch (const CSVFileFatalError&) {
             handleDbLost();
             throw;
         }
@@ -2218,7 +2218,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
             lease_copy.valid_lft_ = 0;
             try {
                 lease_file4_->append(lease_copy);
-            } catch (const CSVFileFatalError& ex) {
+            } catch (const CSVFileFatalError&) {
                 handleDbLost();
                 throw;
             }
@@ -2277,7 +2277,7 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
             lease_copy.preferred_lft_ = 0;
             try {
                 lease_file6_->append(lease_copy);
-            } catch (const CSVFileFatalError& ex) {
+            } catch (const CSVFileFatalError&) {
                 handleDbLost();
                 throw;
             }
@@ -2411,7 +2411,7 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                 lease_copy.valid_lft_ = 0;
                 try {
                     lease_file->append(lease_copy);
-                } catch (const CSVFileFatalError& ex) {
+                } catch (const CSVFileFatalError&) {
                     handleDbLost();
                     throw;
                 }
@@ -3604,7 +3604,7 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
                 if (update && persistLeases(V4)) {
                     try {
                         lease_file4_->append(*lease);
-                    } catch (const CSVFileFatalError& ex) {
+                    } catch (const CSVFileFatalError&) {
                         handleDbLost();
                         throw;
                     }
