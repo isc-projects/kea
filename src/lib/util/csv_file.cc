@@ -196,13 +196,14 @@ CSVFile::append(const CSVRow& row) const {
             << " bad(): " << fs_->bad()
             << " errno: " << sav_err
             << " reason: " << strerror(sav_err);
+        auto error_str = ss.str();
 
         if (fs_->bad()) {
             // No longer usable.
-            isc_throw(CSVFileFatalError, ss.str());
+            isc_throw(CSVFileFatalError, error_str);
         } else {
             fs_->clear();
-            isc_throw(CSVFileError, ss.str());
+            isc_throw(CSVFileError, error_str);
         }
     }
 }
