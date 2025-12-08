@@ -119,8 +119,6 @@ HATest::runIOServiceInThread() {
     io_service_->post(std::bind(&HATest::signalServiceRunning, this, std::ref(running),
                                 std::ref(mutex), std::ref(condvar)));
 
-    // IfaceMgr::instance().setCheckThreadId(false);
-
     auto f = [](IOServicePtr io_service) {
         try {
             io_service->run();
@@ -129,7 +127,6 @@ HATest::runIOServiceInThread() {
         } catch (...) {
             ADD_FAILURE() << "error while running IOService::run";
         }
-        // IfaceMgr::instance().setCheckThreadId(true);
     };
 
     boost::shared_ptr<std::thread>
