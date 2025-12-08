@@ -122,7 +122,7 @@ HATest::runIOServiceInThread() {
     auto f = [](IOServicePtr io_service) {
         try {
             io_service->run();
-        } catch (std::exception& ex) {
+        } catch (const std::exception& ex) {
             ADD_FAILURE() << "error while running IOService::run: " << ex.what();
         } catch (...) {
             ADD_FAILURE() << "error while running IOService::run";
