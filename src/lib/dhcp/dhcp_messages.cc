@@ -17,9 +17,9 @@ extern const isc::log::MessageID DHCP_DELETE_EXTERNAL_SOCKET = "DHCP_DELETE_EXTE
 namespace {
 
 const char* values[] = {
-    "DHCP_ADD_EXTERNAL_SOCKET", "Attempted to register external socket %1 from different thread %2",
-    "DHCP_DELETE_ALL_EXTERNAL_SOCKETS", "Attempted to unregister external sockets from different thread %1",
-    "DHCP_DELETE_EXTERNAL_SOCKET", "Attempted to unregister external socket %1 from different thread %2",
+    "DHCP_ADD_EXTERNAL_SOCKET", "Attempted to register external socket %1 from different thread %2 than main thread %3",
+    "DHCP_DELETE_ALL_EXTERNAL_SOCKETS", "Attempted to unregister external sockets from different thread %1 than main thread %2",
+    "DHCP_DELETE_EXTERNAL_SOCKET", "Attempted to unregister external socket %1 from different thread %2 than main thread %3",
     NULL
 };
 

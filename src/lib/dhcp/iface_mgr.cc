@@ -336,8 +336,9 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
     }
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET)
-                .arg(socketfd)
-                .arg(std::this_thread::get_id());
+            .arg(socketfd)
+            .arg(std::this_thread::get_id())
+            .arg(id_);
     }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     for (SocketCallbackInfo& s : callbacks_) {
@@ -367,8 +368,9 @@ void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET)
-                .arg(socketfd)
-                .arg(std::this_thread::get_id());
+            .arg(socketfd)
+            .arg(std::this_thread::get_id())
+            .arg(id_);
     }
     for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
@@ -407,7 +409,8 @@ void
 IfaceMgr::deleteAllExternalSockets() {
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS)
-                .arg(std::this_thread::get_id());
+            .arg(std::this_thread::get_id())
+            .arg(id_);
     }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
