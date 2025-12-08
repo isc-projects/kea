@@ -3732,28 +3732,47 @@ Memfile_LeaseMgr::writeLeases4(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
-    bool overwrite = (lease_file4_ && lease_file4_->getFilename() == filename);
+    // Create the temp file name and remove it (if it exists).
+    std::ostringstream tmp;
+    tmp << filename << ".tmp" << getpid();
+    auto tmpname = tmp.str();
+    ::remove(tmpname.c_str());
+
+    // Dump in memory leasses to temp file.
     try {
-        if (overwrite) {
-            lease_file4_->close();
-        }
-        std::ostringstream old;
-        old << filename << ".bak" << getpid();
-        ::rename(filename.c_str(), old.str().c_str());
-        CSVLeaseFile4 backup(filename);
-        backup.open();
+        CSVLeaseFile4 tmpfile(tmpname);
+        tmpfile.open();
         for (auto const& lease : storage4_) {
-            backup.append(*lease);
+            tmpfile.append(*lease);
         }
-        backup.close();
-        if (overwrite) {
-            lease_file4_->open(true);
-        }
+        tmpfile.close();
     } catch (const std::exception& ex) {
-        if (overwrite) {
-            lease_file4_->open(true);
-        }
+        // Failed writing the temp file, remove it.
+        ::remove(tmpname.c_str());
         throw;
+    }
+
+    // Create the backup file name.
+    std::ostringstream bak;
+    bak << filename << ".bak" << getpid();
+    auto bakname = bak.str();
+
+    if (lease_file4_ && lease_file4_->getFilename() == filename) {
+        // Overwriting the existing lease file.
+        // Close the existing lease file and move it to back up.
+        lease_file4_->close();
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename the temp file and open it as the lease file.
+        ::rename(tmpname.c_str(), filename.c_str());
+        lease_file4_->open(true);
+    } else {
+        // Dumping to a new file.
+        // Rename the previous dump file (if one) to back up.
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename tmp file to dump file.
+        ::rename(tmpname.c_str(), filename.c_str());
     }
 }
 
@@ -3769,28 +3788,47 @@ Memfile_LeaseMgr::writeLeases6(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
-    bool overwrite = (lease_file6_ && lease_file6_->getFilename() == filename);
+    // Create the temp file name and remove it (if it exists).
+    std::ostringstream tmp;
+    tmp << filename << ".tmp" << getpid();
+    auto tmpname = tmp.str();
+    ::remove(tmpname.c_str());
+
+    // Dump in memory leasses to temp file.
     try {
-        if (overwrite) {
-            lease_file6_->close();
-        }
-        std::ostringstream old;
-        old << filename << ".bak" << getpid();
-        ::rename(filename.c_str(), old.str().c_str());
-        CSVLeaseFile6 backup(filename);
-        backup.open();
+        CSVLeaseFile6 tmpfile(tmpname);
+        tmpfile.open();
         for (auto const& lease : storage6_) {
-            backup.append(*lease);
+            tmpfile.append(*lease);
         }
-        backup.close();
-        if (overwrite) {
-            lease_file6_->open(true);
-        }
-    } catch (const std::exception&) {
-        if (overwrite) {
-            lease_file6_->open(true);
-        }
+        tmpfile.close();
+    } catch (const std::exception& ex) {
+        // Failed writing the temp file, remove it.
+        ::remove(tmpname.c_str());
         throw;
+    }
+
+    // Create the backup file name.
+    std::ostringstream bak;
+    bak << filename << ".bak" << getpid();
+    auto bakname = bak.str();
+
+    if (lease_file6_ && lease_file6_->getFilename() == filename) {
+        // Overwriting the existing lease file.
+        // Close the existing lease file and move it to back up.
+        lease_file6_->close();
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename the temp file and open it as the lease file.
+        ::rename(tmpname.c_str(), filename.c_str());
+        lease_file6_->open(true);
+    } else {
+        // Dumping to a new file.
+        // Rename the previous dump file (if one) to back up.
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename tmp file to dump file.
+        ::rename(tmpname.c_str(), filename.c_str());
     }
 }
 

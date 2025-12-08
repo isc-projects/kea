@@ -3152,35 +3152,39 @@ public:
 /// @brief Check if writeLease fails on bad file name (v4).
 TEST_F(MemfileLeaseMgrTest, badWriteLease4) {
     startBackend(V4);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v4+MT).
 TEST_F(MemfileLeaseMgrTest, badWriteLease4MultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v6).
 TEST_F(MemfileLeaseMgrTest, badWriteLease6) {
     startBackend(V6);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v6+MT).
 TEST_F(MemfileLeaseMgrTest, badWriteLease6MultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check writeLease basic scenario (v4).
@@ -3433,7 +3437,7 @@ TEST_F(MemfileLeaseMgrTest, overWriteLease4) {
     EXPECT_GT(content.size(), content1.size());
 
     // Backup should have the previous database image.
-    ASSERT_TRUE(backup.exists());
+    ASSERT_TRUE(backup.exists()) << "looking for: " << b.str();
     EXPECT_EQ(content, backup.readFile());
 }
 
