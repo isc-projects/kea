@@ -3771,7 +3771,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
         // Rename the previous dump file (if one) to back up.
         ::rename(filename.c_str(), bakname.c_str());
 
-        // Rename tmp file to dump file.
+        // Rename temp file to dump file.
         ::rename(tmpname.c_str(), filename.c_str());
     }
 }
@@ -3827,7 +3827,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
         // Rename the previous dump file (if one) to back up.
         ::rename(filename.c_str(), bakname.c_str());
 
-        // Rename tmp file to dump file.
+        // Rename temp file to dump file.
         ::rename(tmpname.c_str(), filename.c_str());
     }
 }
