@@ -8,6 +8,9 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP_ADD_EXTERNAL_SOCKET;
+extern const isc::log::MessageID DHCP_DELETE_ALL_EXTERNAL_SOCKETS;
+extern const isc::log::MessageID DHCP_DELETE_EXTERNAL_SOCKET;
 
 } // namespace dhcp
 } // namespace isc

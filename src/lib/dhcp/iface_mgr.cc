@@ -10,6 +10,8 @@
 #include <asiolink/udp_endpoint.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/dhcp_log.h>
+#include <dhcp/dhcp_messages.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
@@ -332,11 +334,11 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
-    // @todo: remove comment when exclusively allow external sockets actions on main thread.
-    //if (std::this_thread::get_id() != id_) {
-    //    isc_throw(InvalidOperation, "Attempted to register external socket from different thread "
-    //              << std::this_thread::get_id());
-    //}
+    if (std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET)
+                .arg(socketfd)
+                .arg(std::this_thread::get_id());
+    }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     for (SocketCallbackInfo& s : callbacks_) {
         // There's such a socket description there already.
@@ -363,11 +365,11 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
-    // @todo: remove comment when exclusively allow external sockets actions on main thread.
-    //if (std::this_thread::get_id() != id_) {
-    //    isc_throw(InvalidOperation, "Attempted to unregister external socket from different thread "
-    //              << std::this_thread::get_id());
-    //}
+    if (std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET)
+                .arg(socketfd)
+                .arg(std::this_thread::get_id());
+    }
     for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (s->socket_ == socketfd) {
@@ -403,11 +405,10 @@ IfaceMgr::isExternalSocketUnusable(int fd) {
 
 void
 IfaceMgr::deleteAllExternalSockets() {
-    // @todo: remove comment when exclusively allow external sockets actions on main thread.
-    //if (std::this_thread::get_id() != id_) {
-    //    isc_throw(InvalidOperation, "Attempted to unregister external sockets from different thread "
-    //              << std::this_thread::get_id());
-    //}
+    if (std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS)
+                .arg(std::this_thread::get_id());
+    }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
 }

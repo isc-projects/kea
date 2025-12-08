@@ -7,6 +7,9 @@
 namespace isc {
 namespace dhcp {
 
+extern const isc::log::MessageID DHCP_ADD_EXTERNAL_SOCKET = "DHCP_ADD_EXTERNAL_SOCKET";
+extern const isc::log::MessageID DHCP_DELETE_ALL_EXTERNAL_SOCKETS = "DHCP_DELETE_ALL_EXTERNAL_SOCKETS";
+extern const isc::log::MessageID DHCP_DELETE_EXTERNAL_SOCKET = "DHCP_DELETE_EXTERNAL_SOCKET";
 
 } // namespace dhcp
 } // namespace isc
@@ -14,6 +17,9 @@ namespace dhcp {
 namespace {
 
 const char* values[] = {
+    "DHCP_ADD_EXTERNAL_SOCKET", "Attempted to register external socket %1 from different thread %2",
+    "DHCP_DELETE_ALL_EXTERNAL_SOCKETS", "Attempted to unregister external sockets from different thread %1",
+    "DHCP_DELETE_EXTERNAL_SOCKET", "Attempted to unregister external socket %1 from different thread %2",
     NULL
 };
 

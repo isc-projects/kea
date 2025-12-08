@@ -6,3 +6,20 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCP_ADD_EXTERNAL_SOCKET Attempted to register external socket %1 from different thread %2
+This error message indicates that a different thread than the main thread has
+registered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descritptor and the respective thread id are included in the message.
+
+% DHCP_DELETE_ALL_EXTERNAL_SOCKETS Attempted to unregister external sockets from different thread %1
+This error message indicates that a different thread than the main thread has
+deleted all external sockets. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The respective thread id is included in the message.
+
+% DHCP_DELETE_EXTERNAL_SOCKET Attempted to unregister external socket %1 from different thread %2
+This error message indicates that a different thread than the main thread has
+unregistered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descritptor and the respective thread id are included in the message.

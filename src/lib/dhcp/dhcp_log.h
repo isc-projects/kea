@@ -13,7 +13,7 @@
 namespace isc {
 namespace dhcp {
 
-/// \brief DHCP library Logger
+/// @brief DHCP library Logger
 ///
 /// Define the logger used to log messages.  We could define it in multiple
 /// modules, but defining in a single module and linking to it saves time and
