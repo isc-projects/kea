@@ -3746,7 +3746,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
             tmpfile.append(*lease);
         }
         tmpfile.close();
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         // Failed writing the temp file, remove it.
         ::remove(tmpname.c_str());
         throw;
@@ -3802,7 +3802,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
             tmpfile.append(*lease);
         }
         tmpfile.close();
-    } catch (const std::exception& ex) {
+    } catch (const std::exception&) {
         // Failed writing the temp file, remove it.
         ::remove(tmpname.c_str());
         throw;
