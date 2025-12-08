@@ -29,6 +29,7 @@
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <atomic>
 #include <functional>
 #include <list>
 #include <mutex>
@@ -769,6 +770,23 @@ public:
         return (test_mode_);
     }
 
+    /// @brief Get the flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    ///
+    /// @return true if the @c IfaceMgr checks thread ID, false otherwise.
+    bool getCheckThreadId() const {
+        return (check_thread_id_);
+    }
+
+    /// @brief Set the flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    ///
+    /// @param check A flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    void setCheckThreadId(const bool check) {
+        check_thread_id_ = check;
+    }
+
     /// @brief Allows or disallows the loopback interface
     ///
     /// By default the loopback interface is not considered when opening
@@ -1192,6 +1210,17 @@ public:
     ///
     /// @param socketfd socket descriptor
     /// @param callback callback function
+    ///
+    /// @note: all operations an external sockets should be performed
+    /// from the main thread as it does not make sense (and does not
+    /// work as expected) to use an external socket which is in fact
+    /// managed by an I/O service of a thread pool. For instance
+    /// a new external socket is scanned by select or poll only after
+    /// the next call to the receive method. Same argument applies
+    /// when an external socket is deleted and closed...
+    ///
+    /// @note: the callback is called when read available, hup and
+    /// error conditions: the callback is assumed to not block.
     void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Checks if socket's file description is registered.
@@ -1214,6 +1243,8 @@ public:
     void deleteExternalSocket(int socketfd);
 
     /// @brief Deletes all external sockets.
+    ///
+    /// @note: to be used only in unit tests.
     ///
     /// External sockets should be removed from IfaceMgr before being closed
     /// by the external API.
@@ -1662,6 +1693,9 @@ private:
 
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
+
+    /// Check thread ID when performing operations with external sockets.
+    std::atomic<bool> check_thread_id_;
 
     /// @brief Detect callback used to perform actions before system dependent
     /// function calls.

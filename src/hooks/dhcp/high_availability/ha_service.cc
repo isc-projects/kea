@@ -3344,7 +3344,8 @@ HAService::socketReadyHandler(int tcp_native_fd) {
 
 void
 HAService::clientCloseHandler(int tcp_native_fd) {
-    if (tcp_native_fd >= 0) {
+    if ((tcp_native_fd >= 0) &&
+        IfaceMgr::instance().isExternalSocket(tcp_native_fd)) {
         IfaceMgr::instance().deleteExternalSocket(tcp_native_fd);
     }
 }

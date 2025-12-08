@@ -180,7 +180,7 @@ bool Iface::delSocket(const uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
-      test_mode_(false), allow_loopback_(false) {
+      test_mode_(false), check_thread_id_(true), allow_loopback_(false) {
     id_ = std::this_thread::get_id();
 
     // Ensure that PQMs have been created to guarantee we have
@@ -334,7 +334,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
-    if (std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET)
                 .arg(socketfd)
                 .arg(std::this_thread::get_id());
@@ -365,7 +365,7 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
-    if (std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET)
                 .arg(socketfd)
                 .arg(std::this_thread::get_id());
@@ -405,7 +405,7 @@ IfaceMgr::isExternalSocketUnusable(int fd) {
 
 void
 IfaceMgr::deleteAllExternalSockets() {
-    if (std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS)
                 .arg(std::this_thread::get_id());
     }
