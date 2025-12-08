@@ -16,7 +16,7 @@
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
 #include <testutils/gtest_utils.h>
-
+#include <testutils/log_utils.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -25,6 +25,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -3182,7 +3183,6 @@ TEST_F(IfaceMgrTest, unusableExternalSockets4Direct) {
     unusableExternalSockets4Test();
 }
 
-
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
 // Tests uses receive4() with queuing.
@@ -3365,12 +3365,65 @@ TEST_F(IfaceMgrTest, unusableExternalSockets6Direct) {
     unusableExternalSockets6Test();
 }
 
-
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
 // Tests uses receive6() with queuing.
 TEST_F(IfaceMgrTest, unusableExternalSockets6Indirect) {
     unusableExternalSockets6Test(true);
+}
+
+/// @brief Test fixture for logs.
+class IfaceMgrLogTest : public LogContentTest {
+public:
+    /// @brief Create the interface manager.
+    IfaceMgrLogTest() {
+        ifacemgr_.reset(new NakedIfaceMgr());
+    }
+
+    /// @brief Destroy the interface manager.
+    ~IfaceMgrLogTest() {
+        ifacemgr_.reset();
+    }
+
+    /// @brief Perform external socket operations in another thread.
+    void test() {
+        thread th([this]() {
+            // Create pipe mainly to use a not fake fd.
+            int pipefd[2];
+            ASSERT_TRUE(pipe(pipefd) == 0);
+            EXPECT_NO_THROW(ifacemgr_->addExternalSocket(pipefd[0], 0));
+            EXPECT_TRUE(ifacemgr_->isExternalSocket(pipefd[0]));
+            EXPECT_NO_THROW(ifacemgr_->deleteExternalSocket(pipefd[0]));
+            EXPECT_NO_THROW(ifacemgr_->deleteAllExternalSockets());
+            close(pipefd[1]);
+            close(pipefd[0]);
+        });
+        th.join();
+    }
+
+    /// @brief The interface manager.
+    boost::shared_ptr<NakedIfaceMgr> ifacemgr_;
+};
+
+// Tests that external socket operations log errors when not in the main thread.
+TEST_F(IfaceMgrLogTest, externalSocketOtherThread) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_TRUE(ifacemgr_->getCheckThreadId());
+
+    test();
+    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS"));
+}
+
+// Tests that errors are logged only when enabled.
+TEST_F(IfaceMgrLogTest, externalSocketOtherThreadNoLog) {
+    ASSERT_TRUE(ifacemgr_);
+    ifacemgr_->setCheckThreadId(false);
+    ASSERT_FALSE(ifacemgr_->getCheckThreadId());
+
+    test();
+    EXPECT_EQ(0, countFile("DHCP"));
 }
 
 // Test checks if the unicast sockets can be opened.
