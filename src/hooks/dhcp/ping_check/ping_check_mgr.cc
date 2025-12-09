@@ -507,8 +507,7 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
                   PING_CHECK_DUPLICATE_CHECK)
                   .arg(lease->addr_)
                   .arg(query->getLabel());
-        // Duplicates are a trivial instance of queue full.
-        StatsMgr::instance().addValue("pkt4-queue-full",
+        StatsMgr::instance().addValue("pkt4-duplicate",
                                       static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop",
                                       static_cast<int64_t>(1));

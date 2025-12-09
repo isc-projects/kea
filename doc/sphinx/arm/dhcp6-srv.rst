@@ -6979,7 +6979,11 @@ The DHCPv6 server supports the following statistics:
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-queue-full                                   | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped when the queue they   |
-   |                                                   |                | were parked became full.           |
+   |                                                   |                | were to be parked was full.        |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-duplicate                                    | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped when they were        |
+   |                                                   |                | recognized to be duplicate.        |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-rfc-violation                                | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped following protocol    |
@@ -7741,7 +7745,9 @@ a second counter detailing the drop cause:
 
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
 
-- ``pkt6-queue-full`` - parked packet in a queue which became full
+- ``pkt6-queue-full`` - to be parked packet in a queue which was full
+
+- ``pkt6-duplicate`` - duplicate of a being processed packet
 
 - ``pkt6-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
 

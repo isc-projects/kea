@@ -268,6 +268,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616296"
                ]
            ],
+           "pkt4-duplicate": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-discover-received": [
                [
                    0,
@@ -625,6 +631,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177741"
+               ]
+           ],
+           "pkt6-duplicate": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-infrequest-received": [
@@ -1080,6 +1092,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616303"
                ]
            ],
+           "pkt4-duplicate": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-inform-received": [
                [
                    0,
@@ -1347,6 +1365,12 @@ or
                [
                    0,
                    "2023-06-13 21:28:57.177741"
+               ]
+           ],
+           "pkt6-duplicate": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-infrequest-received": [

@@ -1540,23 +1540,23 @@ public:
         // should return PARK.
         old_lease->cltt_ = now - config->getPingClttSecs() * 2;
         ASSERT_TRUE(old_lease->expired());
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, old_lease, 
-                            empty_host, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_,
+                            old_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
 
         // Lease with host with no address reserved should ping.
         ConstHostPtr host;
-        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address", 
+        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                              SubnetID(0), SubnetID(0), IOAddress("0.0.0.0")))));
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, 
-                                                      host, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_,
+                                                      empty_lease, host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_PARK);
 
         // Lease with host with address reserved should not ping.
-        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address", 
+        ASSERT_NO_THROW((host.reset(new Host("01:02:03:04:05:06", "hw-address",
                                             SubnetID(0), SubnetID(0), lqp1.lease_->addr_))));
-        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_, empty_lease, 
-                                                      host, config));
+        ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp1.lease_, lqp1.query_,
+                                                      empty_lease, host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_CONTINUE);
 
         // Expired prior lease belonging to the same client but with cltt less than ping-cltt-secs
@@ -1589,15 +1589,15 @@ public:
         // Initialize statistics.
         using namespace isc::stats;
         StatsMgr& stats_mgr = StatsMgr::instance();
-        stats_mgr.setValue("pkt4-queue-full", static_cast<int64_t>(0));
+        stats_mgr.setValue("pkt4-duplicate", static_cast<int64_t>(0));
         stats_mgr.setValue("pkt4-receive-drop", static_cast<int64_t>(0));
 
         // Trying to start a ping for an address already being checked should return DROP.
         ASSERT_NO_THROW_LOG(status = mgr_->shouldPing(lqp2.lease_, lqp2.query_, empty_lease, empty_host, config));
         EXPECT_EQ(status, CalloutHandle::NEXT_STEP_DROP);
 
-        // The pkt4-queue-full and pkt4-receive-drop stats was bumped by one.
-        ObservationPtr stat_qf = stats_mgr.getObservation("pkt4-queue-full");
+        // The pkt4-duplicate and pkt4-receive-drop stats was bumped by one.
+        ObservationPtr stat_qf = stats_mgr.getObservation("pkt4-duplicate");
         ObservationPtr stat_rd = stats_mgr.getObservation("pkt4-receive-drop");
         ASSERT_TRUE(stat_qf);
         ASSERT_TRUE(stat_rd);

@@ -946,6 +946,7 @@ BaseCtrlChannelDhcpv4Test::testControlChannelStats() {
         "pkt4-service-disabled",
         "pkt4-parse-failed",
         "pkt4-queue-full",
+        "pkt4-duplicate",
         "pkt4-rfc-violation",
         "pkt4-admin-filtered",
         "pkt4-not-for-us",

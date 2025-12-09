@@ -244,7 +244,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                     .arg(holder_id->query_->getHWAddrLabel())
                     .arg(holder_id->query_->toText())
                     .arg(holder_id->thread_);
-                stats::StatsMgr::instance().addValue("pkt4-queue-full",
+                stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                      static_cast<int64_t>(1));
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                      static_cast<int64_t>(1));
@@ -259,7 +259,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 .arg(holder_id->query_->getHWAddrLabel())
                 .arg(holder_id->query_->toText())
                 .arg(holder_id->thread_);
-            stats::StatsMgr::instance().addValue("pkt4-queue-full",
+            stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                  static_cast<int64_t>(1));
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                  static_cast<int64_t>(1));
@@ -277,7 +277,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                     .arg(holder_hw->query_->getHWAddrLabel())
                     .arg(holder_hw->query_->toText())
                     .arg(holder_hw->thread_);
-                stats::StatsMgr::instance().addValue("pkt4-queue-full",
+                stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                      static_cast<int64_t>(1));
                 stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                      static_cast<int64_t>(1));
@@ -292,7 +292,7 @@ ClientHandler::tryLock(Pkt4Ptr query, ContinuationPtr cont) {
                 .arg(holder_hw->query_->getHWAddrLabel())
                 .arg(holder_hw->query_->toText())
                 .arg(holder_hw->thread_);
-            stats::StatsMgr::instance().addValue("pkt4-queue-full",
+            stats::StatsMgr::instance().addValue("pkt4-duplicate",
                                                  static_cast<int64_t>(1));
             stats::StatsMgr::instance().addValue("pkt4-receive-drop",
                                                  static_cast<int64_t>(1));

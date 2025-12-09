@@ -26,10 +26,10 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Creates the pkt4-queue-full and pkt4-receive-drop statistics.
+    /// Creates the pkt4-duplicate and pkt4-receive-drop statistics.
     ClientHandleTest() : called1_(false), called2_(false), called3_(false) {
         MultiThreadingMgr::instance().apply(false, 0, 0);
-        StatsMgr::instance().setValue("pkt4-queue-full", static_cast<int64_t>(0));
+        StatsMgr::instance().setValue("pkt4-duplicate", static_cast<int64_t>(0));
         StatsMgr::instance().setValue("pkt4-receive-drop", static_cast<int64_t>(0));
     }
 
@@ -76,7 +76,7 @@ public:
     /// false otherwise.
     void checkStat(bool bumped) {
         ObservationPtr obs_qf =
-            StatsMgr::instance().getObservation("pkt4-queue-full");
+            StatsMgr::instance().getObservation("pkt4-duplicate");
         ObservationPtr obs_rd =
             StatsMgr::instance().getObservation("pkt4-receive-drop");
         ASSERT_TRUE(obs_qf);

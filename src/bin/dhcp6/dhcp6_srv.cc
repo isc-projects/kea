@@ -244,6 +244,7 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-service-disabled",
     "pkt6-parse-failed",
     "pkt6-queue-full",
+    "pkt6-duplicate",
     "pkt6-rfc-violation",
     "pkt6-admin-filtered",
     "pkt6-not-for-us",

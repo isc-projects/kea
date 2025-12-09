@@ -7405,7 +7405,11 @@ The DHCPv4 server supports the following statistics:
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-queue-full                                    | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped when the queue they   |
-   |                                                    |                | were parked became full.           |
+   |                                                    |                | were to be parked was full.        |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-duplicate                                     | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped when they were        |
+   |                                                    |                | recognized to be duplicate.        |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-rfc-violation                                 | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped following protocol    |
@@ -7836,7 +7840,9 @@ a second counter detailing the drop cause:
 
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
 
-- ``pkt4-queue-full`` - parked packet in a queue which became full
+- ``pkt4-queue-full`` - to be parked packet in a queue which was full
+
+- ``pkt4-duplicate`` - duplicate of a being processed packet
 
 - ``pkt4-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
 

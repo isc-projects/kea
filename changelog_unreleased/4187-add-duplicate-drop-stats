@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added 'pkt4-duplicate' and 'pkt6-duplicate' drop statistics
+	for dropped duplicates of a being processed incoming packet,
+	such drops were previouly counted as queue full.
+	(Gitlab #4187)

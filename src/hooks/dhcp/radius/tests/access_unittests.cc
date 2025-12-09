@@ -3401,7 +3401,7 @@ TEST_F(AccessTest, twoQueries4) {
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
 
     // Initialize stats.
-    StatsMgr::instance().setValue("pkt4-queue-full",
+    StatsMgr::instance().setValue("pkt4-duplicate",
                                   static_cast<int64_t>(0));
     StatsMgr::instance().setValue("pkt4-receive-drop",
                                   static_cast<int64_t>(0));
@@ -3427,7 +3427,7 @@ TEST_F(AccessTest, twoQueries4) {
 
     // Check stats.
     ObservationPtr qf_stat =
-        StatsMgr::instance().getObservation("pkt4-queue-full");
+        StatsMgr::instance().getObservation("pkt4-duplicate");
     ObservationPtr rd_stat =
         StatsMgr::instance().getObservation("pkt4-receive-drop");
     ASSERT_TRUE(qf_stat);
@@ -3441,7 +3441,7 @@ TEST_F(AccessTest, twoQueries6) {
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
 
     // Initialize stats.
-    StatsMgr::instance().setValue("pkt6-queue-full",
+    StatsMgr::instance().setValue("pkt6-duplicate",
                                   static_cast<int64_t>(0));
     StatsMgr::instance().setValue("pkt6-receive-drop",
                                   static_cast<int64_t>(0));
@@ -3467,7 +3467,7 @@ TEST_F(AccessTest, twoQueries6) {
 
     // Check stats.
     ObservationPtr qf_stat =
-        StatsMgr::instance().getObservation("pkt6-queue-full");
+        StatsMgr::instance().getObservation("pkt6-duplicate");
     ObservationPtr rd_stat =
         StatsMgr::instance().getObservation("pkt6-receive-drop");
     ASSERT_TRUE(qf_stat);

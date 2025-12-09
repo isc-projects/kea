@@ -183,7 +183,7 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_CONFLICT)
           .arg(query->getLabel())
           .arg(text);
-        StatsMgr::instance().addValue("pkt4-queue-full",
+        StatsMgr::instance().addValue("pkt4-duplicate",
                                       static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop",
                                       static_cast<int64_t>(1));
@@ -336,7 +336,7 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_CONFLICT)
           .arg(query->getLabel())
           .arg(text);
-        StatsMgr::instance().addValue("pkt6-queue-full",
+        StatsMgr::instance().addValue("pkt6-duplicate",
                                       static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
