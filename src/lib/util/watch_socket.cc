@@ -20,9 +20,9 @@
 namespace isc {
 namespace util {
 
+const int WatchSocket::SOCKET_NOT_VALID = -1;
 
-const int WatchSocket::SOCKET_NOT_VALID;
-const uint32_t WatchSocket::MARKER;
+const uint32_t WatchSocket::MARKER = 0xDEADBEEF;
 
 WatchSocket::WatchSocket()
     : source_(SOCKET_NOT_VALID), sink_(SOCKET_NOT_VALID) {
