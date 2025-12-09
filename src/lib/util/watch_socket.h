@@ -47,7 +47,7 @@ public:
 class WatchSocket : public boost::noncopyable {
 public:
     /// @brief Value used to signify an invalid descriptor.
-    static const int SOCKET_NOT_VALID /* = -1*/;
+    static const int SOCKET_NOT_VALID /* = -1 */;
 
     /// @brief Value written to the source when marking the socket as ready.
     /// The value itself is arbitrarily chosen as one that is unlikely to occur
