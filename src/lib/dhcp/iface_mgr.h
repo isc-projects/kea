@@ -1211,7 +1211,7 @@ public:
     /// @param socketfd socket descriptor
     /// @param callback callback function
     ///
-    /// @note: all operations an external sockets should be performed
+    /// @note: all operations on external sockets should be performed
     /// from the main thread as it does not make sense (and does not
     /// work as expected) to use an external socket which is in fact
     /// managed by an I/O service of a thread pool. For instance
