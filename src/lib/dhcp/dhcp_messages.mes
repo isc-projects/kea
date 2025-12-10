@@ -6,19 +6,27 @@
 
 $NAMESPACE isc::dhcp
 
-% DHCP_ADD_EXTERNAL_SOCKET Attempted to register external socket %1 from different thread %2 than main thread %3
+% DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS Adding an already existing external socket %1
+This warning message indicates that an external socket was added but it
+already exits i.e. adds and deletes are not correctly balanced.
+
+% DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD Attempted to register external socket %1 from different thread %2 than main thread %3
 This error message indicates that a different thread than the main thread has
 registered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
 The file descritptor and the respective thread ids are included in the message.
 
-% DHCP_DELETE_ALL_EXTERNAL_SOCKETS Attempted to unregister external sockets from different thread %1 than main thread %2
+% DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND Deleting a not found external socket %1
+This warning message indicates that an external socket was deleted but
+it can't be found i.e. adds and deletes are not correctly balanced.
+
+% DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD Attempted to unregister external sockets from different thread %1 than main thread %2
 This error message indicates that a different thread than the main thread has
 deleted all external sockets. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
 The respective thread ids are included in the message.
 
-% DHCP_DELETE_EXTERNAL_SOCKET Attempted to unregister external socket %1 from different thread %2 than main thread %3
+% DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD Attempted to unregister external socket %1 from different thread %2 than main thread %3
 This error message indicates that a different thread than the main thread has
 unregistered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.

@@ -3386,7 +3386,7 @@ public:
     }
 
     /// @brief Perform external socket operations in another thread.
-    void test() {
+    void testThread() {
         thread th([this]() {
             // Create pipe mainly to use a not fake fd.
             int pipefd[2];
@@ -3410,10 +3410,10 @@ TEST_F(IfaceMgrLogTest, externalSocketOtherThread) {
     ASSERT_TRUE(ifacemgr_);
     ASSERT_TRUE(ifacemgr_->getCheckThreadId());
 
-    test();
-    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET"));
-    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET"));
-    EXPECT_EQ(1, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS"));
+    testThread();
+    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD"));
 }
 
 // Tests that errors are logged only when enabled.
@@ -3422,8 +3422,29 @@ TEST_F(IfaceMgrLogTest, externalSocketOtherThreadNoLog) {
     ifacemgr_->setCheckThreadId(false);
     ASSERT_FALSE(ifacemgr_->getCheckThreadId());
 
-    test();
+    testThread();
     EXPECT_EQ(0, countFile("DHCP"));
+}
+
+// Tests that calling twice addExternalSocket on the same value warns.
+TEST_F(IfaceMgrLogTest, addExternalSocketAlreadyExists) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_EQ(0, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+}
+
+// Tests that calling twice deleteExternalSocket on the same value warns.
+TEST_F(IfaceMgrLogTest, deleteExternalSocketNotFound) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_TRUE(ifacemgr_->isExternalSocket(100));
+    ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
+    EXPECT_EQ(0, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
+    EXPECT_FALSE(ifacemgr_->isExternalSocket(100));
+    ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
 }
 
 // Test checks if the unicast sockets can be opened.
@@ -3676,6 +3697,31 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
     EXPECT_FALSE(ifacemgr->getPacketQueue6());
     ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+}
+
+// Tests that a replace in the SocketCallbackInfoContainer keeps the sequence.
+TEST(SocketCallbackInfoContainer, replace) {
+    IfaceMgr::SocketCallbackInfoContainer callbacks;
+    auto getSequence = [&]() {
+        std::stringstream seq;
+        for (auto const& s : callbacks) {
+            seq << s.socket_ << "\n";
+        }
+        return (seq.str());
+    };
+    for (int i = 0; i < 9; ++i) {
+        IfaceMgr::SocketCallbackInfo s;
+        s.socket_ = i;
+        callbacks.push_back(s);
+    }
+    EXPECT_EQ("0\n1\n2\n3\n4\n5\n6\n7\n8\n", getSequence());
+    auto& idx = callbacks.get<1>();
+    auto it = idx.find(5);
+    ASSERT_NE(it, idx.end());
+    IfaceMgr::SocketCallbackInfo x;
+    x.socket_ = 9;
+    EXPECT_TRUE(idx.replace(it, x));
+    EXPECT_EQ("0\n1\n2\n3\n4\n9\n6\n7\n8\n", getSequence());
 }
 
 }

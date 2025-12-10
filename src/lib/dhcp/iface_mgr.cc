@@ -335,7 +335,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
                   << socketfd);
     }
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
-        LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET)
+        LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD)
             .arg(socketfd)
             .arg(std::this_thread::get_id())
             .arg(id_);
@@ -350,6 +350,8 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
     if (it != idx.end()) {
         // There's such a socket description there already.
         // Replace it.
+        LOG_WARN(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS)
+            .arg(socketfd);
         idx.replace(it, x);
         return;
     }
@@ -367,17 +369,19 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
-        LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET)
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD)
             .arg(socketfd)
             .arg(std::this_thread::get_id())
             .arg(id_);
     }
     auto& idx = callbacks_.get<1>();
     auto it = idx.find(socketfd);
-    if (it != idx.end()) {
-        idx.erase(it);
+    if (it == idx.end()) {
+        LOG_WARN(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND)
+            .arg(socketfd);
         return;
     }
+    idx.erase(it);
 }
 
 bool
@@ -403,7 +407,7 @@ IfaceMgr::isExternalSocketUnusable(int fd) {
 void
 IfaceMgr::deleteAllExternalSockets() {
     if (check_thread_id_ && std::this_thread::get_id() != id_) {
-        LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS)
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD)
             .arg(std::this_thread::get_id())
             .arg(id_);
     }
