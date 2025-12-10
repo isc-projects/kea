@@ -1666,7 +1666,7 @@ private:
 
     /// @brief Handle interface socket error.
     ///
-    /// @param iface The interface,
+    /// @param iface The interface.
     /// @param s The interface socket info.
     void handleIfaceSocketError(const IfacePtr& iface, const SocketInfo& s);
 
