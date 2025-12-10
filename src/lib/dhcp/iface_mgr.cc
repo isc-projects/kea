@@ -340,21 +340,21 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
             .arg(std::this_thread::get_id())
             .arg(id_);
     }
-    std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (SocketCallbackInfo& s : callbacks_) {
-        // There's such a socket description there already.
-        // Update the callback and we're done
-        if (s.socket_ == socketfd) {
-            s.callback_ = callback;
-            s.unusable_ = false;
-            return;
-        }
-    }
-
-    // Add a new entry to the callbacks vector
+    // New entry.
     SocketCallbackInfo x;
     x.socket_ = socketfd;
     x.callback_ = callback;
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    auto& idx = callbacks_.get<1>();
+    auto it = idx.find(socketfd);
+    if (it != idx.end()) {
+        // There's such a socket description there already.
+        // Replace it.
+        idx.replace(it, x);
+        return;
+    }
+
+    // Add a new entry to the callbacks vector
     callbacks_.push_back(x);
 }
 
@@ -372,34 +372,29 @@ IfaceMgr::deleteExternalSocketInternal(int socketfd) {
             .arg(std::this_thread::get_id())
             .arg(id_);
     }
-    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
-         s != callbacks_.end(); ++s) {
-        if (s->socket_ == socketfd) {
-            callbacks_.erase(s);
-            return;
-        }
+    auto& idx = callbacks_.get<1>();
+    auto it = idx.find(socketfd);
+    if (it != idx.end()) {
+        idx.erase(it);
+        return;
     }
 }
 
 bool
 IfaceMgr::isExternalSocket(int fd) {
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (const SocketCallbackInfo& s : callbacks_) {
-        if (s.socket_ == fd) {
-            return (true);
-        }
-    }
-
-    return (false);
+    auto const& idx = callbacks_.get<1>();
+    auto const it = idx.find(fd);
+    return (it != idx.end());
 }
 
 bool
 IfaceMgr::isExternalSocketUnusable(int fd) {
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (const SocketCallbackInfo& s : callbacks_) {
-        if (s.socket_ == fd) {
-            return (s.unusable_);
-        }
+    auto const& idx = callbacks_.get<1>();
+    auto const it = idx.find(fd);
+    if (it != idx.end()) {
+        return (it->unusable_);
     }
 
     return (false);
@@ -923,30 +918,28 @@ IfaceMgr::clearBoundAddresses() {
 }
 
 void
-IfaceMgr::handleClosedExternalSocket(SocketCallbackInfo& s) {
+IfaceMgr::handleClosedExternalSocket(SocketCallbackInfo s) {
     errno = 0;
     if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
         s.unusable_ = true;
+        auto& idx = callbacks_.get<1>();
+        auto it = idx.find(s.socket_);
+        // Expect that the external socket is still there!
+        if (it != idx.end()) {
+            idx.replace(it, s);
+        }
         isc_throw(SocketFDError, "unexpected state (closed) for fd: " << s.socket_);
     }
 }
 
 void
 IfaceMgr::handleClosedExternalSockets() {
-    bool found = false;
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (SocketCallbackInfo& s : callbacks_) {
+    for (SocketCallbackInfo s : callbacks_) {
         if (s.unusable_) {
             continue;
         }
-        errno = 0;
-        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-            s.unusable_ = true;
-            found = true;
-        }
-    }
-    if (found) {
-        isc_throw(SocketFDError, "unexpected state (closed) for external sockets");
+        handleClosedExternalSocket(s);
     }
 }
 
@@ -1208,7 +1201,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }
@@ -1275,7 +1268,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }
@@ -1343,7 +1336,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }
@@ -1384,7 +1377,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (SocketCallbackInfo& s : callbacks_) {
+        for (SocketCallbackInfo s : callbacks_) {
             if (s.unusable_) {
                 continue;
             }
@@ -1493,7 +1486,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }
@@ -1534,7 +1527,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (SocketCallbackInfo& s : callbacks_) {
+        for (SocketCallbackInfo s : callbacks_) {
             if (s.unusable_) {
                 continue;
             }
@@ -1617,7 +1610,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }
@@ -1684,7 +1677,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (SocketCallbackInfo& s : callbacks_) {
+            for (SocketCallbackInfo s : callbacks_) {
                 if (s.unusable_) {
                     continue;
                 }

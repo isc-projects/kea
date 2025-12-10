@@ -22,6 +22,7 @@
 #include <util/watched_thread.h>
 
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index_container.hpp>
@@ -30,6 +31,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <list>
 #include <mutex>
@@ -713,7 +715,25 @@ public:
     };
 
     /// Defines storage container for callbacks for external sockets
-    typedef std::list<SocketCallbackInfo> SocketCallbackInfoContainer;
+    ///
+    /// This container extends a std::list with a second index which
+    /// provides direct access using the file descriptor.
+    typedef boost::multi_index_container<
+        // Container comprises elements of SocketCallbackInfo type.
+        SocketCallbackInfo,
+        // Here we start enumerating various indexes.
+        boost::multi_index::indexed_by<
+            // Sequenced index allows accessing elements in the same way
+            // as elements in std::list. Sequenced is the index #0.
+            boost::multi_index::sequenced<>,
+            // Use the file descriptor as the key for index #1.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::member<
+                    SocketCallbackInfo, int, &SocketCallbackInfo::socket_
+                >
+            >
+        >
+    > SocketCallbackInfoContainer;
 
     /// @brief Packet reception buffer size
     ///
@@ -1659,7 +1679,7 @@ private:
     /// @brief Handle closed external socket.
     ///
     /// @param s The external socket info.
-    void handleClosedExternalSocket(SocketCallbackInfo& s);
+    void handleClosedExternalSocket(SocketCallbackInfo s);
 
     /// @brief Handle closed external sockets.
     void handleClosedExternalSockets();
