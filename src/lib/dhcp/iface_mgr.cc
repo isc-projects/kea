@@ -951,7 +951,7 @@ IfaceMgr::handleClosedExternalSockets() {
 }
 
 void
-IfaceMgr::handleIfaceSocketError(const SocketInfo& s) {
+IfaceMgr::handleIfaceSocketError(const IfacePtr& iface, const SocketInfo& s) {
     int error = 0;
     socklen_t opt_size = sizeof(error);
     errno = 0;
@@ -965,8 +965,10 @@ IfaceMgr::handleIfaceSocketError(const SocketInfo& s) {
                   << s.sockfd_ << " - error: " << strerror(errno));
     }
     if (error > 0) {
-        isc_throw(SocketFDError, "socket error fd: " << s.sockfd_
-                  << " error: " << strerror(error));
+        LOG_ERROR(dhcp_logger, DHCP_IFACE_SOCKET_ERROR)
+            .arg(s.sockfd_)
+            .arg(iface->getFullName())
+            .arg(strerror(error));
     }
 }
 
@@ -1320,8 +1322,6 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                   " one million microseconds");
     }
 
-    boost::scoped_ptr<SocketInfo> candidate;
-
     fd_event_handler_->clear();
 
     /// @todo: marginal performance optimization. We could create the set once
@@ -1416,6 +1416,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
 
     // Let's find out which interface/socket has the data
     // @todo: fix iface starvation
+    boost::scoped_ptr<SocketInfo> candidate;
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
@@ -1424,7 +1425,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 continue;
             }
             if (fd_event_handler_->hasError(s.sockfd_)) {
-                handleIfaceSocketError(s);
+                handleIfaceSocketError(iface, s);
             }
             candidate.reset(new SocketInfo(s));
             break;
@@ -1436,7 +1437,8 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     if (!candidate || !recv_if) {
-        isc_throw(SocketFDError, "received data over unknown socket");
+        LOG_WARN(dhcp_logger, DHCP_RECEIVE4_UNKNOWN);
+        return (Pkt4Ptr());
     }
 
     // Check that we have something to read.
@@ -1469,8 +1471,6 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-
-    boost::scoped_ptr<SocketInfo> candidate;
 
     fd_event_handler_->clear();
 
@@ -1566,6 +1566,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
 
     // Let's find out which interface/socket has the data
     // @todo: fix iface starvation
+    boost::scoped_ptr<SocketInfo> candidate;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             if (!fd_event_handler_->readReady(s.sockfd_) &&
@@ -1573,7 +1574,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 continue;
             }
             if (fd_event_handler_->hasError(s.sockfd_)) {
-                handleIfaceSocketError(s);
+                handleIfaceSocketError(iface, s);
             }
             candidate.reset(new SocketInfo(s));
             break;
@@ -1584,7 +1585,8 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     if (!candidate) {
-        isc_throw(SocketFDError, "received data over unknown socket");
+        LOG_WARN(dhcp_logger, DHCP_RECEIVE6_UNKNOWN);
+        return (Pkt6Ptr());
     }
 
     // Check that we have something to read.
@@ -1782,7 +1784,7 @@ IfaceMgr::receiveDHCP4Packets() {
                         continue;
                     }
                     if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                        handleIfaceSocketError(s);
+                        handleIfaceSocketError(iface, s);
                     }
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
@@ -1859,7 +1861,7 @@ IfaceMgr::receiveDHCP6Packets() {
                         continue;
                     }
                     if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
-                        handleIfaceSocketError(s);
+                        handleIfaceSocketError(iface, s);
                     }
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.

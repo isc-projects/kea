@@ -23,3 +23,15 @@ This error message indicates that a different thread than the main thread has
 unregistered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
 The file descritptor and the respective thread ids are included in the message.
+
+% DHCP_IFACE_SOCKET_ERROR Got an error on the interface socket %1 of interface %2: %3
+This error message indicates that an error was raised on an interface socket.
+The file descriptor, interface name and error message are displayed.
+
+% DHCP_RECEIVE4_UNKNOWN Received data over unknown socket
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
+
+% DHCP_RECEIVE6_UNKNOWN Received data over unknown socket
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.

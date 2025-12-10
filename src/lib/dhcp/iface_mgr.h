@@ -1666,8 +1666,9 @@ private:
 
     /// @brief Handle interface socket error.
     ///
+    /// @param iface The interface,
     /// @param s The interface socket info.
-    void handleIfaceSocketError(const SocketInfo& s);
+    void handleIfaceSocketError(const IfacePtr& iface, const SocketInfo& s);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
