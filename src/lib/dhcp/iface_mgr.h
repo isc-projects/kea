@@ -1679,7 +1679,7 @@ private:
     /// @brief Handle closed external socket.
     ///
     /// @param s The external socket info.
-    void handleClosedExternalSocket(SocketCallbackInfo s);
+    void handleClosedExternalSocket(SocketCallbackInfo const& s);
 
     /// @brief Handle closed external sockets.
     void handleClosedExternalSockets();
