@@ -735,6 +735,9 @@ public:
         >
     > SocketCallbackInfoContainer;
 
+    /// @brief SocketCallbackInfo iterator type.
+    typedef SocketCallbackInfoContainer::iterator SocketCallbackInfoIterator;
+
     /// @brief Packet reception buffer size
     ///
     /// RFC 8415 states that server responses may be
@@ -1678,8 +1681,8 @@ private:
 
     /// @brief Handle closed external socket.
     ///
-    /// @param s The external socket info.
-    void handleClosedExternalSocket(SocketCallbackInfo const& s);
+    /// @param it The external socket info iterator.
+    void handleClosedExternalSocket(SocketCallbackInfoIterator it);
 
     /// @brief Handle closed external sockets.
     void handleClosedExternalSockets();

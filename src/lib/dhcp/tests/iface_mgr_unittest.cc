@@ -724,6 +724,7 @@ public:
                             callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
@@ -734,6 +735,7 @@ public:
                             callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt4Ptr pkt4;
@@ -752,11 +754,14 @@ public:
         try {
             pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
         } catch (const SocketFDError& ex) {
-            std::string err_msg("unexpected state (closed) for fd: ");
-            EXPECT_EQ(err_msg, std::string(ex.what()).substr(0, err_msg.length()));
+            std::ostringstream err_msg;
+            err_msg << "unexpected state (closed) for fd: " << pipefd[0];
+            EXPECT_EQ(err_msg.str(), ex.what());
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }
+        EXPECT_TRUE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
+        EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv4 pkt.
         EXPECT_FALSE(callback_ok);
@@ -812,6 +817,7 @@ public:
                             callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
@@ -822,6 +828,7 @@ public:
                             callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt6Ptr pkt6;
@@ -840,11 +847,14 @@ public:
         try {
             pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
         } catch (const SocketFDError& ex) {
-            std::string err_msg("unexpected state (closed) for fd: ");
-            EXPECT_EQ(err_msg, std::string(ex.what()).substr(0, err_msg.length()));
+            std::ostringstream err_msg;
+            err_msg << "unexpected state (closed) for fd: " << pipefd[0];
+            EXPECT_EQ(err_msg.str(), ex.what());
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }
+        EXPECT_TRUE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
+        EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv6 pkt.
         EXPECT_FALSE(callback_ok);
