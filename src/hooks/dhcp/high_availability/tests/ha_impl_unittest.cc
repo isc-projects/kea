@@ -655,9 +655,9 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server3"));
 
-    // Drop statistics should not increase when the server doesn't serve the
-    // particular scope.
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops a packet when no subnet has been selected.
@@ -702,6 +702,7 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
     EXPECT_TRUE(query4->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -1106,9 +1107,9 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
 
-    // Drop statistics should not increase when the server doesn't serve the
-    // particular scope.
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops a packet when no subnet has been selected.
@@ -1153,6 +1154,7 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
     EXPECT_TRUE(query6->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
