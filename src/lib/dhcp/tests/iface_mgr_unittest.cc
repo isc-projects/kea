@@ -15,6 +15,7 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
+#include <testutils/env_var_wrapper.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/log_utils.h>
 #include <boost/scoped_ptr.hpp>
@@ -35,6 +36,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 using boost::scoped_ptr;
 namespace ph = std::placeholders;
 
@@ -361,7 +363,8 @@ class IfaceMgrTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     IfaceMgrTest()
-        : errors_count_(0) {
+        : errors_count_(0), kea_event_handler_type_("KEA_EVENT_HANDLER_TYPE") {
+        kea_event_handler_type_.setValue();
     }
 
     ~IfaceMgrTest() {
@@ -880,6 +883,9 @@ public:
 
     /// Holds the invocation counter for ifaceMgrErrorHandler.
     int errors_count_;
+
+    /// @brief RAII wrapper for KEA_EVENT_HANDLER_TYPE env variable.
+    EnvVarWrapper kea_event_handler_type_;
 };
 
 // We need some known interface to work reliably. Loopback interface is named
@@ -1598,6 +1604,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
 // Verifies that basic DHCPv6 packet send and receive operates
 // in either direct or indirect mode.
+// No poll version as it depends on select() behavior,
 TEST_F(IfaceMgrTest, sendReceive6) {
     data::ElementPtr queue_control;
 
@@ -1617,6 +1624,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
 // Verifies that basic DHCPv4 packet send and receive operates
 // in either direct or indirect mode.
+// No poll version as it depends on select() behavior,
 TEST_F(IfaceMgrTest, sendReceive4) {
     data::ElementPtr queue_control;
 
@@ -3195,8 +3203,24 @@ TEST_F(IfaceMgrTest, unusableExternalSockets4Direct) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
+// Tests uses receive4() without queuing. Poll version.
+TEST_F(IfaceMgrTest, unusableExternalSockets4DirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets4Test();
+}
+
+// Tests that an existing external socket that becomes invalid
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive4() with queuing.
 TEST_F(IfaceMgrTest, unusableExternalSockets4Indirect) {
+    unusableExternalSockets4Test(true);
+}
+
+// Tests that an existing external socket that becomes invalid
+// is detected and ignored, without affecting other sockets.
+// Tests uses receive4() with queuing. Poll version.
+TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectPoll) {
+    kea_event_handler_type_.setValue("poll");
     unusableExternalSockets4Test(true);
 }
 
