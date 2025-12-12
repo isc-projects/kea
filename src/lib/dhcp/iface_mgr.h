@@ -31,7 +31,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <atomic>
-#include <chrono>
 #include <functional>
 #include <list>
 #include <mutex>
