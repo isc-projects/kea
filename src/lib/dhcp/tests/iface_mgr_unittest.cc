@@ -3720,16 +3720,14 @@ TEST(SocketCallbackInfoContainer, replace) {
         return (seq.str());
     };
     for (int i = 0; i < 9; ++i) {
-        IfaceMgr::SocketCallbackInfo s;
-        s.socket_ = i;
+        IfaceMgr::SocketCallbackInfo s(i);
         callbacks.push_back(s);
     }
     EXPECT_EQ("0\n1\n2\n3\n4\n5\n6\n7\n8\n", getSequence());
     auto& idx = callbacks.get<1>();
     auto it = idx.find(5);
     ASSERT_NE(it, idx.end());
-    IfaceMgr::SocketCallbackInfo x;
-    x.socket_ = 9;
+    IfaceMgr::SocketCallbackInfo x(9);
     EXPECT_TRUE(idx.replace(it, x));
     EXPECT_EQ("0\n1\n2\n3\n4\n9\n6\n7\n8\n", getSequence());
 }

@@ -341,8 +341,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
             .arg(id_);
     }
     // New entry.
-    SocketCallbackInfo x;
-    x.socket_ = socketfd;
+    SocketCallbackInfo x(socketfd);
     x.callback_ = callback;
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     auto& idx = callbacks_.get<1>();
@@ -1264,7 +1263,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         }
 
         // Let's find out which external socket has the data
-        SocketCallbackInfo ex_sock;
+        boost::scoped_ptr<SocketCallbackInfo> ex_sock;
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
@@ -1281,18 +1280,18 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                     if (it->callback_) {
                         // Note the external socket to call its callback without
                         // the lock taken so it can be deleted.
-                        ex_sock = *it;
+                        ex_sock.reset(new SocketCallbackInfo(*it));
                         break;
                     }
                 }
             }
         }
 
-        if (ex_sock.callback_) {
+        if (ex_sock && ex_sock->callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            ex_sock.callback_(ex_sock.socket_);
+            ex_sock->callback_(ex_sock->socket_);
         }
         if (found) {
             return (Pkt4Ptr());
@@ -1373,7 +1372,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     // Let's find out which socket has the data
-    SocketCallbackInfo ex_sock;
+    boost::scoped_ptr<SocketCallbackInfo> ex_sock;
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
@@ -1390,18 +1389,18 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
                 if (it->callback_) {
                     // Note the external socket to call its callback without
                     // the lock taken so it can be deleted.
-                    ex_sock = *it;
+                    ex_sock.reset(new SocketCallbackInfo(*it));
                     break;
                 }
             }
         }
     }
 
-    if (ex_sock.callback_) {
+    if (ex_sock && ex_sock->callback_) {
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        ex_sock.callback_(ex_sock.socket_);
+        ex_sock->callback_(ex_sock->socket_);
     }
     if (found) {
         return (Pkt4Ptr());
@@ -1523,7 +1522,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     // Let's find out which socket has the data
-    SocketCallbackInfo ex_sock;
+    boost::scoped_ptr<SocketCallbackInfo> ex_sock;
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
@@ -1540,18 +1539,18 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                 if (it->callback_) {
                     // Note the external socket to call its callback without
                     // the lock taken so it can be deleted.
-                    ex_sock = *it;
+                    ex_sock.reset(new SocketCallbackInfo(*it));
                     break;
                 }
             }
         }
     }
 
-    if (ex_sock.callback_) {
+    if (ex_sock && ex_sock->callback_) {
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        ex_sock.callback_(ex_sock.socket_);
+        ex_sock->callback_(ex_sock->socket_);
     }
     if (found) {
         return (Pkt6Ptr());
@@ -1673,7 +1672,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
 
         // Let's find out which external socket has the data
-        SocketCallbackInfo ex_sock;
+        boost::scoped_ptr<SocketCallbackInfo> ex_sock;
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
@@ -1690,18 +1689,18 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                     if (it->callback_) {
                         // Note the external socket to call its callback without
                         // the lock taken so it can be deleted.
-                        ex_sock = *it;
+                        ex_sock.reset(new SocketCallbackInfo(*it));
                         break;
                     }
                 }
             }
         }
 
-        if (ex_sock.callback_) {
+        if (ex_sock && ex_sock->callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            ex_sock.callback_(ex_sock.socket_);
+            ex_sock->callback_(ex_sock->socket_);
         }
         if (found) {
             return (Pkt6Ptr());

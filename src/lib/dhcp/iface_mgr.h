@@ -709,7 +709,10 @@ public:
         bool unusable_;
 
         /// @brief Constructor.
-        SocketCallbackInfo() : socket_(-1), unusable_(false) {
+        ///
+        /// @param socket The socket descriptor.
+        SocketCallbackInfo(int socket)
+            : socket_(socket), callback_(0), unusable_(false) {
         }
     };
 
@@ -1679,6 +1682,9 @@ private:
     void deleteExternalSocketInternal(int socketfd);
 
     /// @brief Handle closed external socket.
+    ///
+    /// @note: the caller must take the lock when it generates
+    /// the argument and calls this method.
     ///
     /// @param it The external socket info iterator.
     void handleClosedExternalSocket(SocketCallbackInfoIterator it);
