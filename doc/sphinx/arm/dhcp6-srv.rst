@@ -7117,6 +7117,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | i.e. options and parameters other  |
    |                                                   |                | than addresses or prefixes.        |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-lease-query-received                         | integer        | Number of LEASEQUERY packets       |
+   |                                                   |                | received by the leasequery hook    |
+   |                                                   |                | library. This statistic is         |
+   |                                                   |                | expected to grow.                  |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-dhcpv4-query-received                        | integer        | Number of DHCPv4-QUERY packets     |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow if there are      |
@@ -7200,6 +7205,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | INFORMATION-REQUEST is processed.  |
    |                                                   |                | There are certain cases where      |
    |                                                   |                | there is no response.              |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-lease-query-reply-sent                       | integer        | Number of LEASEQUERY-REPLY packets |
+   |                                                   |                | sent by the leasequery hook        |
+   |                                                   |                | library. This statistic is         |
+   |                                                   |                | expected to grow.                  |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-dhcpv4-response-sent                         | integer        | Number of DHCPv4-RESPONSE packets  |
    |                                                   |                | sent. This statistic is expected   |

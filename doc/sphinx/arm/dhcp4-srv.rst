@@ -7341,6 +7341,11 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | additional configuration           |
    |                                                    |                | parameters.                        |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-received                          | integer        | Number of DHCPLEASEQUERY packet    |
+   |                                                    |                | received by the leasequery hook    |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-unknown-received                              | integer        | Number of packets received of an   |
    |                                                    |                | unknown type. A non-zero value of  |
    |                                                    |                | this statistic indicates that the  |
@@ -7389,6 +7394,21 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | ``pkt4-ack-sent`` and              |
    |                                                    |                | ``pkt4-nak-sent`` should be close  |
    |                                                    |                | to ``pkt4-request-received``.      |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-unassigned-sent          | integer        | Number of DHCPLEASEUNASSIGNED      |
+   |                                                    |                | packets sent by the leasequery     |
+   |                                                    |                | hook library. This statistic is    |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-unknown-sent             | integer        | Number of DHCPLEASEUNKNOWN packets |
+   |                                                    |                | sent by the leasequery hook        |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-active-sent              | integer        | Number of DHCPLEASEACTIVE packets  |
+   |                                                    |                | sent by the leasequery hook        |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-service-disabled                              | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped when the DHCP service |

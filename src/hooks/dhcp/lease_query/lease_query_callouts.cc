@@ -254,8 +254,6 @@ int buffer6_receive(CalloutHandle& handle) {
 
 /// @brief This function is called when the library is loaded.
 ///
-/// Reset lease-query related stats.
-///
 /// @return always 0.
 int load(LibraryHandle& handle) {
     try {
@@ -269,14 +267,6 @@ int load(LibraryHandle& handle) {
                           << ", expected kea-dhcp4");
             }
 
-            StatsMgr::instance().setValue("pkt4-lease-query-received",
-                                          static_cast<int64_t>(0));
-            StatsMgr::instance().setValue("pkt4-lease-query-response-unknown-sent",
-                                          static_cast<int64_t>(0));
-            StatsMgr::instance().setValue("pkt4-lease-query-response-unassigned-sent",
-                                          static_cast<int64_t>(0));
-            StatsMgr::instance().setValue("pkt4-lease-query-response-active-sent",
-                                          static_cast<int64_t>(0));
             handle.registerCommandCallout("extended-info4-upgrade",
                                           extended_info4_upgrade);
         } else {
@@ -285,10 +275,6 @@ int load(LibraryHandle& handle) {
                           << ", expected kea-dhcp6");
             }
 
-            StatsMgr::instance().setValue("pkt6-lease-query-received",
-                                          static_cast<int64_t>(0));
-            StatsMgr::instance().setValue("pkt6-lease-query-reply-sent",
-                                          static_cast<int64_t>(0));
             handle.registerCommandCallout("extended-info6-upgrade",
                                           extended_info6_upgrade);
         }
@@ -310,8 +296,6 @@ int load(LibraryHandle& handle) {
 
 /// @brief This function is called when the library is unloaded.
 ///
-/// Remove lease-query stats.
-///
 /// @return always 0.
 int unload() {
     // Helps current running works to terminate.
@@ -324,17 +308,6 @@ int unload() {
 
     // Destroy the LeaseQueryImpl instance.
     LeaseQueryImplFactory::destroyImpl();
-
-    // Remove lease-query stats.
-    if (CfgMgr::instance().getFamily() == AF_INET) {
-        StatsMgr::instance().del("pkt4-lease-query-received");
-        StatsMgr::instance().del("pkt4-lease-query-response-unknown-sent");
-        StatsMgr::instance().del("pkt4-lease-query-response-unassigned-sent");
-        StatsMgr::instance().del("pkt4-lease-query-response-active-sent");
-    } else {
-        StatsMgr::instance().del("pkt6-lease-query-received");
-        StatsMgr::instance().del("pkt6-lease-query-reply-sent");
-    }
 
     LOG_INFO(lease_query_logger, LEASE_QUERY_UNLOAD_OK);
     return (0);
