@@ -15,7 +15,6 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/array.hpp>
-#include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
 #include <iomanip>
@@ -62,7 +61,7 @@ public:
         // Set the column names (for error messages)
         columns_[0] = "address";
         columns_[1] = "log";
-        BOOST_STATIC_ASSERT(1 < LOG_COLUMNS);
+        static_assert(1 < LOG_COLUMNS, "1 < LOG_COLUMNS");
     }
 
     /// @brief Destructor
@@ -183,7 +182,7 @@ public:
             setErrorIndicators(bind_, error_, LOG_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(1 < LOG_COLUMNS);
+            static_assert(1 < LOG_COLUMNS, "1 < LOG_COLUMNS");
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,

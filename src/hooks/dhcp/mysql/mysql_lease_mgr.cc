@@ -22,7 +22,6 @@
 
 #include <boost/array.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/static_assert.hpp>
 #include <mysqld_error.h>
 
 #include <ctime>
@@ -700,7 +699,7 @@ public:
         columns_[RELAY_ID_COL] = "relay_id";
         columns_[REMOTE_ID_COL] = "remote_id";
         columns_[POOL_ID_COL] = "pool_id";
-        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
+        static_assert(13 < LEASE_COLUMNS, "13 < LEASE_COLUMNS");
     }
 
     /// @brief Create MYSQL_BIND objects for Lease4 Pointer
@@ -923,7 +922,7 @@ public:
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
+            static_assert(13 < LEASE_COLUMNS, "13 < LEASE_COLUMNS");
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1066,7 +1065,7 @@ public:
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
+        static_assert(13 < LEASE_COLUMNS, "13 < LEASE_COLUMNS");
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -1292,7 +1291,7 @@ public:
         columns_[STATE_COL] = "state";
         columns_[USER_CONTEXT_COL] = "user_context";
         columns_[POOL_ID_COL] = "pool_id";
-        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+        static_assert(17 < LEASE_COLUMNS, "17 < LEASE_COLUMNS");
     }
 
     /// @brief Create MYSQL_BIND objects for Lease6 Pointer
@@ -1536,7 +1535,7 @@ public:
             setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
             // .. and check that we have the numbers correct at compile time.
-            BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+            static_assert(17 < LEASE_COLUMNS, "17 < LEASE_COLUMNS");
 
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
@@ -1702,7 +1701,7 @@ public:
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+        static_assert(17 < LEASE_COLUMNS, "17 < LEASE_COLUMNS");
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.

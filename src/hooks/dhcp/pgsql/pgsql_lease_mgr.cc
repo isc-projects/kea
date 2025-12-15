@@ -21,7 +21,6 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/make_shared.hpp>
-#include <boost/static_assert.hpp>
 
 #include <iomanip>
 #include <limits>
@@ -780,7 +779,7 @@ public:
         : lease_(), addr4_(0), client_id_length_(0),
           relay_id_length_(0), remote_id_length_(0) {
 
-        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
+        static_assert(13 < LEASE_COLUMNS, "13 < LEASE_COLUMNS");
 
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -1082,7 +1081,7 @@ public:
           preferred_lifetime_str_(""), hwtype_(0), hwtype_str_(""),
           hwaddr_source_(0), hwaddr_source_str_("") {
 
-        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+        static_assert(17 < LEASE_COLUMNS, "17 < LEASE_COLUMNS");
 
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 

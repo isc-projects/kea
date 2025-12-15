@@ -12,8 +12,6 @@
 #include <hooks/pointer_converter.h>
 #include <util/stopwatch.h>
 
-#include <boost/static_assert.hpp>
-
 #include <algorithm>
 #include <climits>
 #include <functional>

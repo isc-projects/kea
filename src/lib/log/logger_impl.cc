@@ -17,7 +17,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <log4cplus/configurator.h>

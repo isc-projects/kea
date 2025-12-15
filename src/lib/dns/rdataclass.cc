@@ -1398,8 +1398,9 @@ SOA::getSerial() const {
 uint32_t
 SOA::getMinimum() const {
     // Make sure the buffer access is safe.
-    BOOST_STATIC_ASSERT(sizeof(numdata_) ==
-                        sizeof(uint32_t) * 4 + sizeof(uint32_t));
+    static_assert(
+        sizeof(numdata_) == sizeof(uint32_t) * 4 + sizeof(uint32_t),
+        "sizeof(numdata_) == sizeof(uint32_t) * 4 + sizeof(uint32_t)");
 
     InputBuffer b(&numdata_[sizeof(uint32_t) * 4], sizeof(uint32_t));
     return (b.readUint32());
