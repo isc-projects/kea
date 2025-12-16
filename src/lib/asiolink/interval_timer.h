@@ -11,7 +11,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #endif
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
@@ -27,9 +27,9 @@ namespace asiolink {
 class IntervalTimerImpl;
 
 /// \brief The \c IntervalTimer class is a wrapper for the ASIO
-/// \c boost::asio::deadline_timer class.
+/// \c boost::asio::system_timer class.
 ///
-/// This class is implemented to use \c boost::asio::deadline_timer as interval
+/// This class is implemented to use \c boost::asio::system_timer as interval
 /// timer.
 ///
 /// \c setup() sets a timer to expire on (now + interval), a call back
@@ -96,7 +96,7 @@ public:
     /// This destructor never throws an exception.
     ///
     /// On the destruction of this class the timer will be canceled
-    /// inside \c boost::asio::deadline_timer.
+    /// inside \c boost::asio::system_timer.
     ~IntervalTimer();
     //@}
 
