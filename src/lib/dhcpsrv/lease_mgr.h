@@ -1132,6 +1132,27 @@ public:
     /// @param lease Deleted lease.
     static void updateStatsOnDelete(const Lease6Ptr& lease);
 
+    /// @brief Helper function that adds a value to an address stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-addresses", "assigned-nas"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStat(const std::string& stat, SubnetID& subnet_id,
+                         PoolPtr pool, int value);
+
+    /// @brief Helper function that adds a value to a prefix stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-pds"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStatPrefixPool(const std::string& stat, SubnetID&
+                                   subnet_id, PoolPtr pool, int value);
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

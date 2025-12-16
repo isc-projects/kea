@@ -576,7 +576,6 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
                   "retry might succeed");
     }
 
-    std::cout << "TKM, OK we're here" << std::endl;
     LeaseMgr::updateStatsOnUpdate(existing, lease);
     return (false);
 }

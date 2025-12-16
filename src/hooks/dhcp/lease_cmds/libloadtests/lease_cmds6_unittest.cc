@@ -2368,10 +2368,10 @@ void Lease6CmdsTest::testLease6GetByStateFind2() {
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
+    checkLease6(__LINE__, lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42");
     lease = leases->get(2);
     ASSERT_TRUE(lease);
-    checkLease6(lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
+    checkLease6(__LINE__, lease, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42");
 }
 
 void Lease6CmdsTest::testLease6GetByStateFindN() {
