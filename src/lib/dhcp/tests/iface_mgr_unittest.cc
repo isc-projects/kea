@@ -3489,10 +3489,20 @@ TEST_F(IfaceMgrTest, unusableExternalSockets6Direct) {
     unusableExternalSockets6Test();
 }
 
+TEST_F(IfaceMgrTest, unusableExternalSockets6DirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets6Test();
+}
+
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
 // Tests uses receive6() with queuing.
 TEST_F(IfaceMgrTest, unusableExternalSockets6Indirect) {
+    unusableExternalSockets6Test(true);
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets6IndirectPoll) {
+    kea_event_handler_type_.setValue("poll");
     unusableExternalSockets6Test(true);
 }
 
