@@ -210,6 +210,10 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
     handler = impl.auth_->buildAuth(*query, subnet_id, id, text);
     if (!handler) {
         // Error was logged.
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -363,6 +367,10 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
     handler = impl.auth_->buildAuth(*query, subnet_id, id, text);
     if (!handler) {
         // Error was logged.
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -493,6 +501,10 @@ int subnet4_select(CalloutHandle& handle) {
         handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
     } catch (...) {
         parking_lot->dereference(query);
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     }
 
@@ -538,6 +550,10 @@ int subnet6_select(CalloutHandle& handle) {
         handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
     } catch (...) {
         parking_lot->dereference(query);
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     }
 
