@@ -1425,7 +1425,7 @@ LeaseMgr::bumpStat(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, i
 }
 
 void 
-LeaseMgr::bumpStatPrefixPool(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
+LeaseMgr::bumpStatPrefix(const std::string& stat, SubnetID& subnet_id, PoolPtr pool, int value) {
     StatsMgr::instance().addValue(stat, static_cast<int64_t>(value));
     StatsMgr::instance().addValue(StatsMgr::generateName("subnet", subnet_id, stat),
                                   static_cast<int64_t>(value));
@@ -1668,7 +1668,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
             if (existing->type_ == Lease::TYPE_NA) {
                 bumpStat("assigned-nas", existing->subnet_id_, pool, 1);
             } else {
-                bumpStatPrefixPool("assigned-pds", existing->subnet_id_, pool, 1);
+                bumpStatPrefix("assigned-pds", existing->subnet_id_, pool, 1);
             }
             break;
 
@@ -1697,7 +1697,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
             if (existing->type_ == Lease::TYPE_NA) {
                 bumpStat("assigned-nas", existing->subnet_id_, pool, -1);
             } else {
-                bumpStatPrefixPool("assigned-pds", existing->subnet_id_, pool, -1);
+                bumpStatPrefix("assigned-pds", existing->subnet_id_, pool, -1);
             }
             break;
 
@@ -1760,8 +1760,8 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
             bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
             bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
         } else {
-            bumpStatPrefixPool("assigned-pds", existing->subnet_id_, existing_pool, -1);
-            bumpStatPrefixPool("assigned-pds", lease->subnet_id_, new_pool, 1);
+            bumpStatPrefix("assigned-pds", existing->subnet_id_, existing_pool, -1);
+            bumpStatPrefix("assigned-pds", lease->subnet_id_, new_pool, 1);
         }
         break;
 
@@ -1776,7 +1776,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
         if (lease->type_ == Lease::TYPE_NA) {
             bumpStat("assigned-nas", lease->subnet_id_, new_pool, 1);
         } else {
-            bumpStatPrefixPool("assigned-pds", lease->subnet_id_, new_pool, 1);
+            bumpStatPrefix("assigned-pds", lease->subnet_id_, new_pool, 1);
         }
         break;
 
@@ -1815,7 +1815,7 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
         if (lease->type_ == Lease::TYPE_NA) {
             bumpStat("assigned-nas", existing->subnet_id_, existing_pool, -1);
         } else {
-            bumpStatPrefixPool("assigned-pds", existing->subnet_id_, existing_pool, -1);
+            bumpStatPrefix("assigned-pds", existing->subnet_id_, existing_pool, -1);
         }
         break;
 

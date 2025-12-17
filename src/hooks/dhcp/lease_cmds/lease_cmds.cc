@@ -499,6 +499,10 @@ public:
 
 bool
 LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
+    if (lease->stateRegistered()) {
+        isc_throw(BadValue, "DHCPv4 leases do not support registered state");
+    }
+
     Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease->addr_);
     if (force_create && !existing) {
         // lease does not exist

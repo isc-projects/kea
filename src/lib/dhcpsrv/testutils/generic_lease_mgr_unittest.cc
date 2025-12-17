@@ -5110,16 +5110,19 @@ GenericLeaseMgrTest::testUpdateStatsOn4SameSubnet() {
     { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 1, 1 },
     { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 1, 0 },
     { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 2, 1 },
 
     // New state DECLINED
     { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 1, 2 },
     { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 1, 1 },
     { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 2, 2 },
 
     // New state EXPIRED_RECLAIMED
     { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1 },
     { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 0, 0 },
     { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1, 1 },
 
     // New state RELEASED
     { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1 },

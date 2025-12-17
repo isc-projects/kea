@@ -1151,8 +1151,8 @@ public:
     /// @param pool pointer to the pool (if one) within the subnet, if empty
     /// pool level is skipped.
     /// @param value signed value to add to the statistic
-    static void bumpStatPrefixPool(const std::string& stat, SubnetID&
-                                   subnet_id, PoolPtr pool, int value);
+    static void bumpStatPrefix(const std::string& stat, SubnetID&
+                               subnet_id, PoolPtr pool, int value);
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

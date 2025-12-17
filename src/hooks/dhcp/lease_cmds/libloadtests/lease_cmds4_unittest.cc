@@ -376,6 +376,9 @@ public:
     /// remote ids.
     void testLease4UpdateExtendedInfo();
 
+    /// @brief Check that lease4-update prohibits registered state.
+    void testLease4UpdateRegisteredInvalid();
+
     /// @brief Check that lease4-del can handle a situation when the query is
     /// broken (some required parameters are missing).
     void testLease4DelMissingParams();
@@ -2839,6 +2842,42 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
     EXPECT_EQ(*l, *leases[0]);
 }
 
+void Lease4CmdsTest::testLease4UpdateRegisteredInvalid() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
+    checkLease4Stats(44, 2, 0);
+    checkLease4Stats(88, 2, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\",\n"
+        "        \"state\": 4\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DHCPv4 leases do not support registered state";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Stats should not have changed.
+    checkLease4Stats(0, 4, 0);
+    checkLease4Stats(44, 2, 0);
+    checkLease4Stats(88, 2, 0);
+
+    // Check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // State should not have changed.
+    EXPECT_EQ(l->state_, Lease::STATE_DEFAULT);
+}
+
 void Lease4CmdsTest::testLease4DelMissingParams() {
     // No parameters whatsoever. You want just a lease, any lease?
     string cmd =
@@ -4014,6 +4053,15 @@ TEST_F(Lease4CmdsTest, lease4AddCommentMultiThreading) {
 
 TEST_F(Lease4CmdsTest, lease4AddExtendedInfo) {
     testLease4AddExtendedInfo();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateRegisteredInvalid) {
+    testLease4UpdateRegisteredInvalid();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateRegisteredInvalidMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateRegisteredInvalid();
 }
 
 TEST_F(Lease4CmdsTest, lease4AddExtendedInfoMultiThreading) {
