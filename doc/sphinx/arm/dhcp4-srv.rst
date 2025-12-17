@@ -7409,7 +7409,7 @@ The DHCPv4 server supports the following statistics:
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-duplicate                                     | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped when they were        |
-   |                                                    |                | recognized to be duplicate.        |
+   |                                                    |                | recognized as duplicate.           |
    +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-rfc-violation                                 | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped following protocol    |

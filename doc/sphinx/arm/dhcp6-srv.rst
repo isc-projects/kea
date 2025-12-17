@@ -6983,7 +6983,7 @@ The DHCPv6 server supports the following statistics:
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-duplicate                                    | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped when they were        |
-   |                                                   |                | recognized to be duplicate.        |
+   |                                                   |                | recognized as duplicate.           |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-rfc-violation                                | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped following protocol    |
