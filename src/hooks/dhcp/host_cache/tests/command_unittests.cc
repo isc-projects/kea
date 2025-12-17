@@ -763,6 +763,7 @@ CommandTest::testWriteCommand() {
     exp_error += CfgMgr::instance().getDataDir();
     exp_error += "'";
     checkCommand(write_handler, badpath_cmd, 1, 1, exp_error);
+    ::remove(full_file_txt.c_str());
 }
 
 // Verifies that cache-write really writes the expected file.
@@ -788,6 +789,7 @@ CommandTest::testWriteCommandSecurityWarning() {
         << " is NOT SECURE: invalid path specified: '/tmp', supported path is '"
         << CfgMgr::instance().getDataDir() << "'";
     EXPECT_EQ(1, countFile(oss.str()));
+    ::remove(badpath.c_str());
 }
 
 // Verifies that cache-load can load a dump file.
