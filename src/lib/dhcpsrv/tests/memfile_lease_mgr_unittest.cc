@@ -4946,6 +4946,10 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
 /// @brief Verifies that lfcStartHandler reschedules and but does not start
 /// LFC if the pid file is not writable.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
+    // Skip this test when run by root.
+    if (getuid() == 0 || geteuid() == 0) {
+        return;
+    }
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "6";
     pmap["persist"] = "true";
@@ -4971,10 +4975,6 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     EXPECT_NO_THROW(response = lease_mgr->lfcStartHandler());
     ASSERT_TRUE(response);
     string expected = "{ \"result\": 1, \"text\": \"failed to start kea-lfc\" }";
-    // It fails only when not run by root.
-    if (getuid() == 0 || geteuid() == 0) {
-        return;
-    }
     EXPECT_EQ(expected, response->str());
 
     // Verify that LFC reschedule was logged.
