@@ -1498,6 +1498,12 @@ constexpr uint16_t REGISTERED_REGISTERED = STATE_MASK(Lease::STATE_REGISTERED,
 void
 LeaseMgr::updateStatsOnUpdate(const Lease4Ptr& existing,
                               const Lease4Ptr& lease) {
+    if (existing->state_ == Lease::STATE_REGISTERED ||
+         lease->state_ == Lease::STATE_REGISTERED) {
+        // Registered is not valid for v4.
+        return;
+    }
+
     if (existing->subnet_id_ == lease->subnet_id_) {
         if (existing->state_ == lease->state_) {
             // Same subnet, same state, nothing to do.
@@ -1629,7 +1635,6 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
                               const Lease6Ptr& lease) {
     if (existing->type_ != lease->type_) {
         // Something is fishy, mismatched types.
-        /// @todo maybe we should throw?
         return;
     }
 
@@ -1639,7 +1644,6 @@ LeaseMgr::updateStatsOnUpdate(const Lease6Ptr& existing,
          existing->state_ == Lease::STATE_REGISTERED ||
          lease->state_ == Lease::STATE_REGISTERED)) {
         // Something is fishy. Invalid states for PDs.
-        /// @todo maybe we should throw?
         return;
     }
 
