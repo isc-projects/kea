@@ -1,0 +1,4 @@
+[bug]		fdupont
+	The "exchange-timeout" parameter of GSS-TSIG hook library
+	configuration is no longer ignored.
+	(Gitlab #4265)
