@@ -8,7 +8,7 @@
 
 set -eu
 
-meson_version=1.9.1
+meson_version=1.10.0
 
 # Check if ${1} <= ${2}.
 le() {
