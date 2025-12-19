@@ -1467,10 +1467,12 @@ constexpr uint16_t RECLAIMED_ASSIGNED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIME
                                                    Lease::STATE_DEFAULT);
 constexpr uint16_t RECLAIMED_DECLINED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
                                                    Lease::STATE_DECLINED);
+#if 0 // Currently unused.
 constexpr uint16_t RECLAIMED_RECLAIMED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
                                                     Lease::STATE_EXPIRED_RECLAIMED);
 constexpr uint16_t RECLAIMED_RELEASED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
                                                    Lease::STATE_RELEASED);
+#endif
 constexpr uint16_t RECLAIMED_REGISTERED = STATE_MASK(Lease::STATE_EXPIRED_RECLAIMED,
                                                      Lease::STATE_REGISTERED);
 // New state RELEASED
@@ -1478,10 +1480,12 @@ constexpr uint16_t RELEASED_ASSIGNED = STATE_MASK(Lease::STATE_RELEASED,
                                                   Lease::STATE_DEFAULT);
 constexpr uint16_t RELEASED_DECLINED = STATE_MASK(Lease::STATE_RELEASED,
                                                   Lease::STATE_DECLINED);
+#if 0 // Currently unused.
 constexpr uint16_t RELEASED_RECLAIMED = STATE_MASK(Lease::STATE_RELEASED,
                                                    Lease::STATE_EXPIRED_RECLAIMED);
 constexpr uint16_t RELEASED_RELEASED = STATE_MASK(Lease::STATE_RELEASED,
                                                   Lease::STATE_RELEASED);
+#endif
 constexpr uint16_t RELEASED_REGISTERED = STATE_MASK(Lease::STATE_RELEASED,
                                                     Lease::STATE_REGISTERED);
 // New state REGISTERED

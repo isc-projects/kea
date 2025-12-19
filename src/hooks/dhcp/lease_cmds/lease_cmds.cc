@@ -1345,8 +1345,7 @@ LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
         s << leases_json->size()
           << " IPv" << (v4 ? "4" : "6")
           << " lease(s) found with state ";
-        if ((state_ >= Lease::STATE_DEFAULT) &&
-            (state_ <= Lease::STATE_REGISTERED)) {
+        if (state_ <= Lease::STATE_REGISTERED) {
             s << Lease::basicStatesToText(state_) << " (" << state_ << ")";
         } else {
             s << state_;
