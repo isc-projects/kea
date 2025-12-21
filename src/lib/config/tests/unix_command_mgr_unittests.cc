@@ -15,6 +15,7 @@
 #include <util/filesystem.h>
 
 #include <string>
+#include <sys/stat.h>
 
 #include <gtest/gtest.h>
 
@@ -151,4 +152,31 @@ TEST_F(UnixCommandMgrTest, exclusiveOpen) {
 
     // Now let's close it.
     EXPECT_NO_THROW(UnixCommandMgr::instance().closeCommandSocket());
+}
+
+// Verifies that a socket has group write permission.
+TEST_F(UnixCommandMgrTest, groupWritable) {
+    setSocketTestPath();
+
+    // Pass in valid parameters.
+    ElementPtr socket_info = Element::createMap();
+    socket_info->set("socket-type", Element::create("unix"));
+    socket_info->set("socket-name", Element::create("test_socket"));
+
+    bool const too_long(SocketPath::isTooLong("test_socket"));
+    if (too_long) {
+        // "File name too long"
+        EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
+        EXPECT_EQ(UnixCommandMgr::instance().getControlSocketFD(), -1);
+        return;
+    }
+
+    EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
+
+    // Check permissions on the socket file.
+    std::string socket = UnixCommandConfig::getSocketPath() + "/test_socket";
+    EXPECT_TRUE(file::isSocket(socket));
+    mode_t perms = file::getPermissions(socket);
+    EXPECT_EQ(S_IWGRP, perms & S_IWGRP);
 }

@@ -105,6 +105,13 @@ setUmask() {
     }
 }
 
+RelaxUmask::RelaxUmask() : orig_umask_(umask(S_IRWXO)) {
+}
+
+RelaxUmask::~RelaxUmask() {
+    static_cast<void>(umask(orig_umask_));
+}
+
 bool amRunningAsRoot() {
     return (getuid() == 0 || geteuid() == 0);
 }

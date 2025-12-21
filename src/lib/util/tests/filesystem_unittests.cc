@@ -127,6 +127,21 @@ TEST_F(UMaskUtilTest, umask077) {
     EXPECT_EQ(S_IRWXG | S_IRWXO, umask(0));
 }
 
+/// @brief Check RelaxUmask.
+TEST_F(UMaskUtilTest, relaxUmask) {
+    static_cast<void>(umask(0));
+    {
+        RelaxUmask ru;
+        EXPECT_EQ(S_IRWXO, umask(0));
+    }
+    EXPECT_EQ(0, umask(S_IWGRP | S_IRWXO));
+    {
+        RelaxUmask ru;
+        EXPECT_EQ(S_IRWXO, umask(0));
+    }
+    EXPECT_EQ(S_IWGRP | S_IRWXO, umask(0));
+}
+
 /// @brief Check that the components are split correctly.
 TEST(PathTest, components) {
     // Complete name

@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <sys/stat.h>
 #include <string>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -62,9 +63,10 @@ getPermissions(const std::string path);
 /// @brief Check if there if file or directory has the given permissions.
 ///
 /// @param path The path being checked.
-/// @param permissions mask of expected permissions.
+/// @param permissions expected permissions.
 ///
-/// @return True if the path points to a file or a directory, false otherwise.
+/// @return True if the path points to a file or a directory with given
+/// permissions, false otherwise.
 bool
 hasPermissions(const std::string path, const mode_t& permissions);
 
@@ -98,6 +100,20 @@ isSocket(const std::string& path);
 /// @brief Set umask (at least 0027 i.e. no group write and no other access).
 void
 setUmask();
+
+/// @brief RAII device to relax umask (adding group write for sockets).
+class RelaxUmask : public boost::noncopyable {
+public:
+    /// @brief Constructor.
+    RelaxUmask();
+
+    /// @brief Destructor.
+    ~RelaxUmask();
+
+private:
+    /// @brief Saved umask.
+    mode_t orig_umask_;
+};
 
 /// @brief Indicates if current user is root
 ///
