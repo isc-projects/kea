@@ -148,8 +148,6 @@ flags:
    a default. The substitution happens for all packets that did not match a
    selector.
 
--  ``realm`` (default ``""``) - is the default realm.
-
 -  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
    according to the value of the Framed-IP-Address or, respectively,
    the Framed-IPv6-Address attribute from the RADIUS access response. With this

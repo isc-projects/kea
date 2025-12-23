@@ -95,8 +95,6 @@ The global configuration flags are:
      attempted first, and if successful, it prevents the function of
      reselect-subnet-address from coming into effect.
 
- - realm (default "") is the default realm.
-
  - retries (default 3) is the number of retries before trying the next
    server. Not supported for asynchronous communication.
 

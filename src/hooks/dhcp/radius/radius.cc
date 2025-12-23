@@ -443,8 +443,6 @@ ElementPtr RadiusImpl::toElement() const {
     result->set("identifier-type6",
                 Element::create(Host::getIdentifierName(id_type6_)));
 
-    // realm.
-
     // reselect-subnet-address.
     result->set("reselect-subnet-address",
                 Element::create(reselect_subnet_address_));

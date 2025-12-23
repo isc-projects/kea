@@ -38,7 +38,7 @@ RadiusConfigParser::RADIUS_KEYWORDS = {
     "bindaddr", "canonical-mac-address", "client-id-pop0",
     "client-id-printable", "deadtime", "dictionary",
     "extract-duid", "identifier-type4", "identifier-type6",
-    "nas-ports", "realm",
+    "nas-ports",
     "reselect-subnet-address", "reselect-subnet-pool",
     "retries", "session-history", "thread-pool-size", "timeout",
     "comment" // not saved for toElement
@@ -55,7 +55,6 @@ const SimpleDefaults RadiusConfigParser::RADIUS_DEFAULTS = {
     { "extract-duid",             Element::boolean, "true" },
     { "identifier-type4",         Element::string,  "client-id" },
     { "identifier-type6",         Element::string,  "duid" },
-    { "realm",                    Element::string,  "" },
     { "reselect-subnet-address",  Element::boolean, "false" },
     { "reselect-subnet-pool",     Element::boolean, "false" },
     { "retries",                  Element::integer, "3" },
@@ -162,8 +161,6 @@ RadiusConfigParser::parse(ElementPtr& config) {
         // identifier-type6.
         const ConstElementPtr& id_type6 = config->get("identifier-type6");
         riref.id_type6_ = Host::getIdentifierType(id_type6->stringValue());
-
-        // realm. Ignored.
 
         // reselect-subnet-address.
         const ConstElementPtr& resel_addr =
