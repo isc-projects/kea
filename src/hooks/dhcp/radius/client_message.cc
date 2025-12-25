@@ -10,8 +10,10 @@
 #include <client_message.h>
 #include <radius_log.h>
 #include <cryptolink/crypto_hash.h>
+#include <cryptolink/crypto_hmac.h>
 #include <cryptolink/crypto_rng.h>
 #include <boost/scoped_ptr.hpp>
+#include <cstring>
 #include <sstream>
 
 using namespace isc;
@@ -152,6 +154,7 @@ Message::encode() {
     memmove(&buffer_[4], &auth_[0], auth_.size());
 
     // Fill attributes.
+    size_t msg_auth_ptr = 0;
     if (attributes_) {
         for (auto attr : *attributes_) {
             if (!attr) {
@@ -160,6 +163,16 @@ Message::encode() {
             if ((code_ == PW_ACCESS_REQUEST) &&
                 (attr->getType() == PW_USER_PASSWORD)) {
                 attr = encodeUserPassword(attr);
+            }
+            if (attr->getType() == PW_MESSAGE_AUTHENTICATOR) {
+                if (msg_auth_ptr != 0) {
+                    isc_throw(BadValue, "2 Message-Authenticator attributes");
+                }
+                if ((attr->getValueType() != PW_TYPE_STRING) ||
+                    (attr->getValueLen() != AUTH_VECTOR_LEN)) {
+                    isc_throw(BadValue, "bad Message-Authenticator attribute");
+                }
+                msg_auth_ptr = buffer_.size();
             }
             vector<uint8_t> binary = attr->toBytes();
             if (binary.empty()) {
@@ -177,14 +190,17 @@ Message::encode() {
     buffer_[2] = static_cast<uint8_t>((length_ & 0xff00) >> 8);
     buffer_[3] = static_cast<uint8_t>(length_ & 0xff);
 
-    if (code_ != PW_ACCESS_REQUEST) {
+    // Computed before the Response Authenticator.
+    if (msg_auth_ptr != 0) {
+        signMessageAuthenticator(msg_auth_ptr);
+    }
+    if ((code_ != PW_ACCESS_REQUEST) && (code_ != PW_STATUS_SERVER)) {
         boost::scoped_ptr<Hash> md(CryptoLink::getCryptoLink().createHash(MD5));
         md->update(&buffer_[0], buffer_.size());
         md->update(&secret_[0], secret_.size());
         md->final(&auth_[0], AUTH_VECTOR_LEN);
         memmove(&buffer_[4], &auth_[0], auth_.size());
     }
-
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ENCODE_MESSAGE)
         .arg(msgCodeToText(code_))
         .arg(static_cast<unsigned>(code_))
@@ -209,7 +225,7 @@ Message::decode() {
     identifier_ = buffer_[1];
     length_ = static_cast<uint16_t>(buffer_[2]) << 8;
     length_ |= static_cast<uint16_t>(buffer_[3]);
-    if (code_ == PW_ACCESS_REQUEST) {
+    if ((code_ == PW_ACCESS_REQUEST) || (code_ == PW_STATUS_SERVER)) {
         auth_.resize(AUTH_VECTOR_LEN);
         memmove(&auth_[0], &buffer_[4], AUTH_VECTOR_LEN);
     } else if (auth_.size() != AUTH_VECTOR_LEN) {
@@ -220,8 +236,8 @@ Message::decode() {
                   << " length " << length_ << ", got " << buffer_.size());
     }
     if (length_ < AUTH_HDR_LEN) {
-      isc_throw(BadValue, "too short " << msgCodeToText(code_)
-                << " length " << length_ << " < " << AUTH_HDR_LEN);
+        isc_throw(BadValue, "too short " << msgCodeToText(code_)
+                  << " length " << length_ << " < " << AUTH_HDR_LEN);
     }
     if (length_ > PW_MAX_MSG_SIZE) {
         isc_throw(BadValue, "too large " << msgCodeToText(code_)
@@ -232,7 +248,7 @@ Message::decode() {
     }
 
     // Verify authentication.
-    if (code_ != PW_ACCESS_REQUEST) {
+    if ((code_ != PW_ACCESS_REQUEST) && (code_ != PW_STATUS_SERVER)) {
         vector<uint8_t> work = buffer_;
         memmove(&work[4], &auth_[0], auth_.size());
         boost::scoped_ptr<Hash> md(CryptoLink::getCryptoLink().createHash(MD5));
@@ -246,12 +262,15 @@ Message::decode() {
                       << " failed");
         }
     }
-    auth_.resize(AUTH_VECTOR_LEN);
-    memmove(&auth_[0], &buffer_[4], auth_.size());
+    if (code_ == PW_ACCOUNTING_REQUEST) {
+        auth_.resize(AUTH_VECTOR_LEN);
+        memmove(&auth_[0], &buffer_[4], auth_.size());
+    }
 
     // Get attributes.
     attributes_.reset(new Attributes());
     size_t ptr = AUTH_HDR_LEN;
+    size_t msg_auth_ptr = 0;
     for (;;) {
         if (ptr == length_) {
             break;
@@ -280,8 +299,17 @@ Message::decode() {
             (attr->getType() == PW_USER_PASSWORD)) {
             attr = decodeUserPassword(attr);
         }
+        if (attr->getType() == PW_MESSAGE_AUTHENTICATOR) {
+            if (msg_auth_ptr != 0) {
+                isc_throw(BadValue, "2 Message-Authenticator attributes");
+            }
+            msg_auth_ptr = ptr;
+        }
         attributes_->add(attr);
         ptr += len;
+    }
+    if (msg_auth_ptr != 0) {
+        verifyMessageAuthenticator(msg_auth_ptr);
     }
     if (attributes_->empty()) {
         attributes_.reset();
@@ -393,6 +421,53 @@ Message::decodeUserPassword(const ConstAttributePtr& attr) {
 
     // Return plain text attribute.
     return (Attribute::fromBinary(PW_USER_PASSWORD, password));
+}
+
+void
+Message::signMessageAuthenticator(size_t ptr) {
+    if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
+        (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
+        (auth_.size() != AUTH_VECTOR_LEN)) {
+        isc_throw(Unexpected, "Can't sign Message-Authenticator");
+    }
+
+    boost::scoped_ptr<HMAC> hmac(
+        CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));
+
+    // Compute Message-Authenticator content.
+    std::vector<uint8_t> to_sign = buffer_;
+    memmove(&to_sign[4], &auth_[0], auth_.size());
+    memset(&to_sign[ptr + 2], 0, AUTH_VECTOR_LEN);
+    hmac->update(&to_sign[0], to_sign.size());
+    vector<uint8_t> sign = hmac->sign(AUTH_VECTOR_LEN);
+    memmove(&buffer_[2 + ptr], &sign[0], sign.size());
+}
+
+void
+Message::verifyMessageAuthenticator(size_t ptr) {
+    if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
+        (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
+        (auth_.size() != AUTH_VECTOR_LEN)) {
+        isc_throw(BadValue, "can't verify Message-Authenticator");
+    }
+
+    vector<uint8_t> sign;
+    sign.resize(AUTH_VECTOR_LEN);
+    memmove(&sign[0], &buffer_[ptr + 2], sign.size());
+
+    boost::scoped_ptr<HMAC> hmac(
+        CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));
+
+    // Build to_verify buffer.
+    size_t length = buffer_.size();
+    std::vector<uint8_t> to_verify = buffer_;
+    memmove(&to_verify[4], &auth_[0], auth_.size());
+    memset(&to_verify[ptr + 2], 0, AUTH_VECTOR_LEN);
+
+    hmac->update(&to_verify[0], to_verify.size());
+    if (!hmac->verify(&sign[0], sign.size())) {
+        isc_throw(BadValue, "bad Message-Authenticator signature");
+    }
 }
 
 } // end of namespace isc::radius

@@ -225,6 +225,16 @@ protected:
     /// @return decoded User-Password attribute.
     ConstAttributePtr decodeUserPassword(const ConstAttributePtr& attr);
 
+    /// @brief Encode Message-Authenticator in an Status-Server.
+    ///
+    /// @param ptr the pointer to the attribute in the buffer.
+    void signMessageAuthenticator(size_t ptr);
+
+    /// @brief Decode Message-Authenticator in an Status-Server.
+    ///
+    /// @param ptr the pointer to the attribute in the buffer.
+    void verifyMessageAuthenticator(size_t ptr);
+
     /// @brief Code (useful values in MsgCode): header[0].
     uint8_t code_;
 

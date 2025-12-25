@@ -79,6 +79,7 @@ const AttrDefList RadiusConfigParser::USED_STANDARD_ATTR_DEFS = {
     { PW_ACCT_STATUS_TYPE,      "Acct-Status-Type",      PW_TYPE_INTEGER },
     { PW_ACCT_DELAY_TIME,       "Acct-Delay-Time",       PW_TYPE_INTEGER },
     { PW_ACCT_SESSION_ID,       "Acct-Session-Id",       PW_TYPE_STRING },
+    { PW_MESSAGE_AUTHENTICATOR, "Message-Authenticator", PW_TYPE_STRING },
     { PW_FRAMED_POOL,           "Framed-Pool",           PW_TYPE_STRING },
     { PW_NAS_IPV6_ADDRESS,      "NAS-IPv6-Address",      PW_TYPE_IPV6ADDR },
     { PW_DELEGATED_IPV6_PREFIX, "Delegated-IPv6-Prefix", PW_TYPE_IPV6PREFIX },

@@ -214,7 +214,7 @@ TEST_F(MessageTest, acceptRequest) {
     // Verify buffer.
     vector<uint8_t> expected = {
         0x01,           // Code (Access-Request).
-        0x67,           // Identifier (9x67)
+        0x67,           // Identifier (0x67)
         0x00, 0x26,     // Length (38).
         // Authenticator.
         0x35, 0x6a, 0x48, 0xfd, 0x66, 0x24, 0x6a, 0xe3,
@@ -314,13 +314,17 @@ TEST_F(MessageTest, accessAccept) {
     EXPECT_EQ(code, response->getCode());
     EXPECT_EQ(id, response->getIdentifier());
     EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
     vector<uint8_t> digest = {
         0x2e, 0x8b, 0xcc, 0xb3, 0x4c, 0x10, 0xea, 0xd7,
         0x57, 0xd5, 0x5a, 0x48, 0x00, 0xd0, 0x7e, 0x2a
     };
     ASSERT_EQ(AUTH_VECTOR_LEN, digest.size());
-    vector<uint8_t> got_auth = response->getAuth();
-    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    memmove(&got_auth[0], &buffer[4], got_auth.size());
     EXPECT_TRUE(memcmp(&digest[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
         << str::dumpAsHex(&digest[0], AUTH_VECTOR_LEN) << "\n"
         << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
@@ -469,13 +473,17 @@ TEST_F(MessageTest, accountingResponse) {
     EXPECT_EQ(code, response->getCode());
     EXPECT_EQ(id, response->getIdentifier());
     EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
     vector<uint8_t> digest = {
         0x88, 0xc4, 0x21, 0xc3, 0x25, 0xf3, 0xdc, 0x57,
         0x14, 0x01, 0x4c, 0xef, 0x78, 0x03, 0x64, 0xbe
     };
     ASSERT_EQ(AUTH_VECTOR_LEN, digest.size());
-    vector<uint8_t> got_auth = response->getAuth();
-    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    memmove(&got_auth[0], &buffer[4], got_auth.size());
     EXPECT_TRUE(memcmp(&digest[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
         << str::dumpAsHex(&digest[0], AUTH_VECTOR_LEN) << "\n"
         << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
@@ -696,6 +704,44 @@ TEST_F(MessageTest, badEncode) {
         EXPECT_THROW_MSG(message->encode(), Unexpected,
                          "Can't encode User-Password");
     }
+    {
+        SCOPED_TRACE("Two Message-Authenticators");
+        AttributesPtr attrs(new Attributes());
+        // Create a Message-Authenticator.
+        vector<uint8_t> zero(AUTH_VECTOR_LEN);
+        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+        MessagePtr message(new Message(PW_STATUS_SERVER, 0,
+                                       Message::ZERO_AUTH(), "foobar",
+                                       attrs));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->encode(), BadValue,
+                         "2 Message-Authenticator attributes");
+    }
+    {
+        SCOPED_TRACE("invalid Message-Authenticator");
+        AttributesPtr attrs(new Attributes());
+        // Create the Message-Authenticator attribute as an integer attribute.
+        attrs->add(Attribute::fromInt(PW_MESSAGE_AUTHENTICATOR, 666));
+        MessagePtr message(new Message(PW_STATUS_SERVER, 0,
+                                       Message::ZERO_AUTH(), "foobar",
+                                       attrs));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->encode(), BadValue,
+                         "bad Message-Authenticator attribute");
+    }
+    {
+        SCOPED_TRACE("short Message-Authenticator");
+        AttributesPtr attrs(new Attributes());
+        vector<uint8_t> zero(AUTH_VECTOR_LEN - 1);
+        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+        MessagePtr message(new Message(PW_STATUS_SERVER, 0,
+                                       Message::ZERO_AUTH(), "foobar",
+                                       attrs));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->encode(), BadValue,
+                         "bad Message-Authenticator attribute");
+    }
 }
 
 // Verifies decode error cases.
@@ -734,8 +780,9 @@ TEST_F(MessageTest, badDecode) {
         vector<uint8_t> auth(AUTH_VECTOR_LEN - 1, 66);
         MessagePtr message(new Message(buffer, auth, "foobar"));
         ASSERT_TRUE(message);
-        // Must not be an Access-Request!
+        // Must not be an Access-Request or Status-Server!
         ASSERT_NE(PW_ACCESS_REQUEST, message->getCode());
+        ASSERT_NE(PW_STATUS_SERVER, message->getCode());
         EXPECT_THROW_MSG(message->decode(), InvalidOperation,
                          "bad authenticator");
     }
@@ -865,7 +912,409 @@ TEST_F(MessageTest, badDecode) {
                          "can't decode User-Password");
         // Note that other decodeUserPassword failure cases are not
         // available nor possible in the real world.
-   }
+    }
+    {
+        SCOPED_TRACE("Two Message-Authenticators");
+        // Easier with Status-Server.
+        vector<uint8_t> buffer = { 0x0c, 0x67, 0x00, 0x38 };
+        vector<uint8_t> auth;
+        for (size_t i = 0; i < AUTH_VECTOR_LEN; i++) {
+            buffer.push_back(10 + i);
+            auth.push_back(10 + i);
+        }
+        buffer.push_back(PW_MESSAGE_AUTHENTICATOR);
+        buffer.push_back(2 + AUTH_VECTOR_LEN);
+        for (size_t i = 0; i < AUTH_VECTOR_LEN; i++) {
+            buffer.push_back(20 + i);
+        }
+        buffer.push_back(PW_MESSAGE_AUTHENTICATOR);
+        buffer.push_back(2 + AUTH_VECTOR_LEN);
+        for (size_t i = 0; i < AUTH_VECTOR_LEN; i++) {
+            buffer.push_back(20 + i);
+        }
+        ASSERT_EQ(AUTH_HDR_LEN + 2 * (2 + AUTH_VECTOR_LEN), buffer.size());
+        MessagePtr message(new Message(buffer, auth, "foo"));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->decode(), BadValue,
+                         "2 Message-Authenticator attributes");
+    }
+    {
+        SCOPED_TRACE("too short Message-Authenticator");
+        // Easier with Status-Server.
+        vector<uint8_t> buffer = { 0x0c, 0x67, 0x00, 0x25 };
+        vector<uint8_t> auth;
+        for (size_t i = 0; i < AUTH_VECTOR_LEN; i++) {
+            buffer.push_back(10 + i);
+            auth.push_back(10 + i);
+        }
+        buffer.push_back(PW_MESSAGE_AUTHENTICATOR);
+        buffer.push_back(1 + AUTH_VECTOR_LEN);
+        for (size_t i = 0; i < AUTH_VECTOR_LEN - 1; i++) {
+            buffer.push_back(20 + i);
+        }
+        ASSERT_EQ(AUTH_HDR_LEN + 1 + AUTH_VECTOR_LEN, buffer.size());
+        MessagePtr message(new Message(buffer, auth, "foo"));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->decode(), BadValue,
+                         "can't verify Message-Authenticator");
+    }
+    {
+        SCOPED_TRACE("too long Message-Authenticator");
+        // Easier with Status-Server.
+        vector<uint8_t> buffer = { 0x0c, 0x67, 0x00, 0x27 };
+        vector<uint8_t> auth;
+        for (size_t i = 0; i < AUTH_VECTOR_LEN; i++) {
+            buffer.push_back(10 + i);
+            auth.push_back(10 + i);
+        }
+        buffer.push_back(PW_MESSAGE_AUTHENTICATOR);
+        buffer.push_back(3 + AUTH_VECTOR_LEN);
+        for (size_t i = 0; i < AUTH_VECTOR_LEN + 1; i++) {
+            buffer.push_back(20 + i);
+        }
+        ASSERT_EQ(AUTH_HDR_LEN + 3 + AUTH_VECTOR_LEN, buffer.size());
+        MessagePtr message(new Message(buffer, auth, "foo"));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->decode(), BadValue,
+                         "can't verify Message-Authenticator");
+    }
+    {
+        SCOPED_TRACE("bad Message-Authenticator");
+        vector<uint8_t> buffer = {
+            0x0c,           // Code (Status-Server).
+            0xda,           // Identifier (0xda).
+            0x00, 0x26,     // Length (38).
+            // Authenticator.
+            0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+            0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23,
+            // Message-Authenticator.
+            0x50, 0x12,
+            0x5a, 0x66, 0x5e, 0x2e, 0x1e, 0x84, 0x11, 0xf3,
+            0xe2, 0x43, 0x82, 0x20, 0x97, 0xc8, 0x4f, 0xa3
+        };
+        ASSERT_EQ(AUTH_HDR_LEN + 2 + AUTH_VECTOR_LEN, buffer.size());
+        vector<uint8_t> auth = {
+            0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+            0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+        };
+        ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+        // Correct password is "xyzzy5461".
+        MessagePtr message(new Message(buffer, auth, "foobar"));
+        ASSERT_TRUE(message);
+        EXPECT_THROW_MSG(message->decode(), BadValue,
+                         "bad Message-Authenticator signature");
+    }
+}
+
+// Verify basic (no Message-Authentivator) Status-Server processing.
+TEST_F(MessageTest, basicStatusServer) {
+    MsgCode code = PW_STATUS_SERVER;
+    uint8_t id = 0xda;
+    vector<uint8_t> auth = {
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "xyzzy5461";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(20, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x0c,           // Code (Status-Server).
+        0xda,           // Identifier (0xda).
+        0x00, 0x14,     // Length (20).
+        // Authenticator.
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+    };
+    ASSERT_EQ(20, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 20) << "\n"
+        << str::dumpAsHex(&expected[0], 20);
+
+    // Create message (response).
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(buffer, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+
+    // Verify response.
+    EXPECT_EQ(code, response->getCode());
+    EXPECT_EQ(id, response->getIdentifier());
+    EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    AttributesPtr got_attrs = response->getAttributes();
+    EXPECT_FALSE(got_attrs);
+}
+
+// Verify Status-Server with Message-Authenticator processing.
+TEST_F(MessageTest, statusServer) {
+    MsgCode code = PW_STATUS_SERVER;
+    uint8_t id = 0xda;
+    vector<uint8_t> auth = {
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "xyzzy5461";
+    AttributesPtr attrs(new Attributes());
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(38, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x0c,           // Code (Status-Server).
+        0xda,           // Identifier (0xda).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0x5a, 0x66, 0x5e, 0x2e, 0x1e, 0x84, 0x11, 0xf3,
+        0xe2, 0x43, 0x82, 0x20, 0x97, 0xc8, 0x4f, 0xa3
+    };
+    ASSERT_EQ(38, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 38) << "\n"
+        << str::dumpAsHex(&expected[0], 38);
+
+    // Create message (response).
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(buffer, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+
+    // Verify response.
+    EXPECT_EQ(code, response->getCode());
+    EXPECT_EQ(id, response->getIdentifier());
+    EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    AttributesPtr got_attrs = response->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    AttributesPtr exp_attrs(new Attributes());
+    ASSERT_TRUE(exp_attrs);
+    vector<uint8_t> exp_ma = {
+        0x5a, 0x66, 0x5e, 0x2e, 0x1e, 0x84, 0x11, 0xf3,
+        0xe2, 0x43, 0x82, 0x20, 0x97, 0xc8, 0x4f, 0xa3
+    };
+    exp_attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, exp_ma));
+    EXPECT_TRUE(compare(*got_attrs, *exp_attrs))
+        << got_attrs->toText() << "\n" << exp_attrs->toText();
+}
+
+// Verify Access-Accept response to Status-Server.
+TEST_F(MessageTest, statusResponse) {
+    MsgCode code = PW_ACCESS_ACCEPT;
+    uint8_t id = 0xda;
+    vector<uint8_t> auth = {
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "xyzzy5461";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(20, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x02,           // Code (Access-Accept).
+        0xda,           // Identifier (0xda).
+        0x00, 0x14,     // Length (20).
+        // Authenticator.
+        0xef, 0x0d, 0x55, 0x2a, 0x4b, 0xf2, 0xd6, 0x93,
+        0xec, 0x2b, 0x6f, 0xe8, 0xb5, 0x41, 0x1d, 0x66
+    };
+    ASSERT_EQ(20, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 20) << "\n"
+        << str::dumpAsHex(&expected[0], 20);
+
+    // Create message (response).
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(buffer, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+
+    // Verify response.
+    EXPECT_EQ(code, response->getCode());
+    EXPECT_EQ(id, response->getIdentifier());
+    EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    vector<uint8_t> digest = {
+        0xef, 0x0d, 0x55, 0x2a, 0x4b, 0xf2, 0xd6, 0x93,
+        0xec, 0x2b, 0x6f, 0xe8, 0xb5, 0x41, 0x1d, 0x66
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, digest.size());
+    memmove(&got_auth[0], &buffer[4], got_auth.size());
+    EXPECT_TRUE(memcmp(&digest[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&digest[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    AttributesPtr got_attrs = response->getAttributes();
+    EXPECT_FALSE(got_attrs);
+}
+
+// Verify Access-Accept response to Status-Server with Message-Authenticator.
+TEST_F(MessageTest, statusResponseMessageAuthenticator) {
+    MsgCode code = PW_ACCESS_ACCEPT;
+    uint8_t id = 0xda;
+    vector<uint8_t> auth = {
+        0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
+        0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "xyzzy5461";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(38, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x02,           // Code (Access-Accept).
+        0xda,           // Identifier (0xda).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0x7e, 0x6d, 0x7a, 0x5f, 0x5d, 0xfa, 0x87, 0xb5,
+        0x19, 0xbe, 0xf2, 0x60, 0xa6, 0xf1, 0x50, 0x81,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0x57, 0x56, 0x6a, 0x4a, 0x4a, 0x4c, 0x69, 0x0f,
+        0x8e, 0x18, 0xb7, 0x3a, 0xe7, 0xa7, 0xf6, 0x5f
+    };
+    ASSERT_EQ(38, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 38) << "\n"
+        << str::dumpAsHex(&expected[0], 38);
+
+    // Create message (response).
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(buffer, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+
+    // Verify response.
+    EXPECT_EQ(code, response->getCode());
+    EXPECT_EQ(id, response->getIdentifier());
+    EXPECT_EQ(length, response->getLength());
+    vector<uint8_t> got_auth = response->getAuth();
+    ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
+    EXPECT_TRUE(memcmp(&auth[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&auth[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    vector<uint8_t> digest = {
+        0x7e, 0x6d, 0x7a, 0x5f, 0x5d, 0xfa, 0x87, 0xb5,
+        0x19, 0xbe, 0xf2, 0x60, 0xa6, 0xf1, 0x50, 0x81
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, digest.size());
+    memmove(&got_auth[0], &buffer[4], got_auth.size());
+    EXPECT_TRUE(memcmp(&digest[0], &got_auth[0], AUTH_VECTOR_LEN) == 0)
+        << str::dumpAsHex(&digest[0], AUTH_VECTOR_LEN) << "\n"
+        << str::dumpAsHex(&got_auth[0], AUTH_VECTOR_LEN);
+    AttributesPtr got_attrs = response->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    AttributesPtr exp_attrs(new Attributes());
+    ASSERT_TRUE(exp_attrs);
+    vector<uint8_t> exp_ma = {
+        0x57, 0x56, 0x6a, 0x4a, 0x4a, 0x4c, 0x69, 0x0f,
+        0x8e, 0x18, 0xb7, 0x3a, 0xe7, 0xa7, 0xf6, 0x5f
+    };
+    exp_attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, exp_ma));
+    EXPECT_TRUE(compare(*got_attrs, *exp_attrs))
+        << got_attrs->toText() << "\n" << exp_attrs->toText();
 }
 
 } // end of anonymous namespace
