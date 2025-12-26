@@ -1,6 +1,7 @@
 kea_tcp_lib = shared_library(
     'kea-tcp',
     'mt_tcp_listener_mgr.cc',
+    'tcp_client.cc',
     'tcp_connection.cc',
     'tcp_connection_pool.cc',
     'tcp_listener.cc',
@@ -20,6 +21,7 @@ LIBS_BUILT_SO_FAR = [kea_tcp_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
 kea_tcp_headers = [
     'mt_tcp_listener_mgr.h',
+    'tcp_client.h',
     'tcp_connection.h',
     'tcp_connection_acceptor.h',
     'tcp_connection_pool.h',

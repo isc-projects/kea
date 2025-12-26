@@ -1,1 +1,3 @@
-The tcp library is intended to provide support for TCP server/listeners.
+The tcp library is intended to provide support for TCP/TLS server/listeners.
+Extended to support TCP/TLS clients still for request/response exchanges
+so not out of order.

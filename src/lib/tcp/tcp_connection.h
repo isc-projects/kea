@@ -316,7 +316,7 @@ public:
     /// @return A reference to the endpoint if the socket is open, otherwise
     /// NO_ENDPOINT.
     const boost::asio::ip::tcp::endpoint getRemoteEndpoint() const {
-	return (remote_endpoint_);
+        return (remote_endpoint_);
     }
 
 protected:

@@ -23,11 +23,55 @@ Logged at debug log level 40.
 This debug messages is issued when the MtTcpListenerMgr, listening
 at the given address and port, has begun to shutdown.
 
-% TCP_CLIENT_REQUEST_RECEIVED received TCP request from %1
+% TCP_CLIENT_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
+This is an error message emitted when the close connection callback
+registered on the connection failed unexpectedly.  This is a programmatic
+error that should be submitted as a bug.
+
+% TCP_CLIENT_MT_STARTED TcpClient has been started in multi-threaded mode running %1 threads
 Logged at debug log level 40.
-This debug message is issued when the server finished receiving a TCP
-request from the remote endpoint. The address of the remote endpoint is
-specified as an argument.
+This debug message is issued when a multi-threaded TCP client instance has
+been created. The argument specifies the maximum number of threads.
+
+% TCP_CLIENT_PREMATURE_CONNECTION_TIMEOUT_OCCURRED premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
+This warning message is issued when unexpected timeout occurred during the
+transaction. This is proven to occur when the system clock is moved manually
+or as a result of synchronization with a time server. Any ongoing transactions
+will be interrupted. New transactions should be conducted normally.
+
+% TCP_CLIENT_QUEUE_SIZE_GROWING queue for address: %1, port %2, now has %3 entries and may be growing too quickly
+This warning message is issued when the queue of pending requests for the
+given address and port appears to be growing more quickly than the requests
+can be handled. It will be emitted periodically as long as the queue size
+continues to grow. This may occur with a surge of client traffic creating
+a momentary backlog which then subsides as the surge subsides. If it happens
+continually then it most likely indicates a deployment configuration that
+cannot sustain the client load.
+
+% TCP_CLIENT_REQUEST_SEND sending TCP request %1 to %2 port %3
+Logged at debug log level 50.
+This debug message is issued when the client is starting to send a TCP
+request to a server. The first argument dumps the request, next arguments
+specify address and port of the server.
+
+% TCP_CLIENT_SERVER_RESPONSE_RECEIVED received TCP response from %1 port %2
+Logged at debug log level 40.
+This debug message is issued when the client finished receiving a TCP
+response from the server. The address and port of the server are specified
+as arguments.
+
+% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED bad response received when communicating with %1 port %2: %3
+Logged at debug log level 40.
+This debug message is issued when a TCP client fails to receive a response
+from the server or when this response is malformed. The first arguments
+specify the server address and port. The last provides a detailed error
+message.
+
+% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about bad response received from %1 port %2:\n%3
+Logged at debug log level 45.
+This debug message is issued when a TCP client receives malformed response
+from the server. The first arguments specify the address and port of the
+server, The last argument provides a dump of the response.
 
 % TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
 Logged at debug log level 50.
@@ -86,6 +130,12 @@ This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
+
+% TCP_SERVER_CLIENT_REQUEST_RECEIVED received TCP request from %1
+Logged at debug log level 40.
+This debug message is issued when the server finished receiving a TCP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
 
 % TCP_SERVER_RESPONSE_SEND sending TCP response to %1
 Logged at debug log level 40.

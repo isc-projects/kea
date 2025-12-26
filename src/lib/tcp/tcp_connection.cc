@@ -410,8 +410,8 @@ TcpConnection::postData(TcpRequestPtr request, WireData& input_data) {
 
     try {
         LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
-                  TCP_CLIENT_REQUEST_RECEIVED)
-                .arg(getRemoteEndpointAddressAsText());
+                  TCP_SERVER_CLIENT_REQUEST_RECEIVED)
+            .arg(getRemoteEndpointAddressAsText());
 
         // Request complete, stop the timer.
         idle_timer_.cancel();
