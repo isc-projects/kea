@@ -27,6 +27,9 @@ const long IDLE_TIMEOUT = 10000;
 /// are tested (ms).
 const long SHORT_IDLE_TIMEOUT = 200;
 
+/// @brief Test timeout (ms).
+const long TEST_TIMEOUT = 10000;
+
 /// @brief Completion checker.
 ///
 /// Messages are by 2 byte length header and data of this length.
@@ -307,7 +310,7 @@ public:
     /// @param value Parameter value.
     template<typename ValueType>
     WireDataPtr createRequest(const std::string& parameter_name,
-                                const ValueType& value) {
+                              const ValueType& value) {
         std::ostringstream oss;
         oss << parameter_name << "=" << value;
         std::string data = oss.str();

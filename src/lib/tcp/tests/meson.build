@@ -4,6 +4,7 @@ endif
 
 kea_tcp_tests = executable(
     'kea-tcp-tests',
+    'mt_client_unittests.cc',
     'mt_tcp_listener_mgr_unittests.cc',
     'run_unittests.cc',
     'tcp_client_unittests.cc',
