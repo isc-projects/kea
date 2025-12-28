@@ -138,8 +138,8 @@ public:
     /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the callback function to be invoked
     /// when the client closes the socket to the server.
-    void doTransaction(const TcpMessagePtr& request,
-                       const TcpMessagePtr& response,
+    void doTransaction(const WireDataPtr& request,
+                       const WireDataPtr& response,
                        const bool persistent,
                        const long request_timeout,
                        const TcpClient::CompleteCheck& complete_check,
@@ -216,8 +216,8 @@ private:
     /// performs the TLS handshake with the server.
     /// @param close_callback Pointer to the callback function to be invoked
     /// when the client closes the socket to the server.
-    void doTransactionInternal(const TcpMessagePtr& request,
-                               const TcpMessagePtr& response,
+    void doTransactionInternal(const WireDataPtr& request,
+                               const WireDataPtr& response,
                                const bool persistent,
                                const long request_timeout,
                                const TcpClient::CompleteCheck& complete_check,
@@ -428,10 +428,10 @@ private:
     IntervalTimerPtr timer_;
 
     /// @brief Holds currently sent request.
-    TcpMessagePtr current_request_;
+    WireDataPtr current_request_;
 
     /// @brief Holds pointer to an object where response is to be stored.
-    TcpMessagePtr current_response_;
+    WireDataPtr current_response_;
 
     /// @brief Hould persistent flag.
     bool current_persistent_;
@@ -562,8 +562,8 @@ public:
     void queueRequest(const IOAddress& address,
                       const uint16_t port,
                       const TlsContextPtr& tls_context,
-                      const TcpMessagePtr& request,
-                      const TcpMessagePtr& response,
+                      const WireDataPtr& request,
+                      const WireDataPtr& response,
                       const bool persistent,
                       const long request_timeout,
                       const TcpClient::CompleteCheck& complete_check,
@@ -700,8 +700,8 @@ private:
     void queueRequestInternal(const IOAddress& address,
                               const uint16_t port,
                               const TlsContextPtr& tls_context,
-                              const TcpMessagePtr& request,
-                              const TcpMessagePtr& response,
+                              const WireDataPtr& request,
+                              const WireDataPtr& response,
                               const bool persistent,
                               const long request_timeout,
                               const TcpClient::CompleteCheck& complete_check,
@@ -814,8 +814,8 @@ private:
         /// performs the TLS handshake with the server.
         /// @param close_callback pointer to the user callback to be invoked
         /// when the client closes the connection to the server.
-        RequestDescriptor(const TcpMessagePtr& request,
-                          const TcpMessagePtr& response,
+        RequestDescriptor(const WireDataPtr& request,
+                          const WireDataPtr& response,
                           const bool persistent,
                           const long& request_timeout,
                           const TcpClient::CompleteCheck& complete_check,
@@ -835,10 +835,10 @@ private:
         }
 
         /// @brief Holds pointer to the request.
-        TcpMessagePtr request_;
+        WireDataPtr request_;
 
         /// @brief Holds pointer to the response.
-        TcpMessagePtr response_;
+        WireDataPtr response_;
 
         /// @brief Hold the persistent flag.
         bool persistent_;
@@ -1313,8 +1313,8 @@ Connection::isClosedByPeerInternal() {
 }
 
 void
-Connection::doTransaction(const TcpMessagePtr& request,
-                          const TcpMessagePtr& response,
+Connection::doTransaction(const WireDataPtr& request,
+                          const WireDataPtr& response,
                           const bool persistent,
                           const long request_timeout,
                           const TcpClient::CompleteCheck& complete_check,
@@ -1335,8 +1335,8 @@ Connection::doTransaction(const TcpMessagePtr& request,
 }
 
 void
-Connection::doTransactionInternal(const TcpMessagePtr& request,
-                                  const TcpMessagePtr& response,
+Connection::doTransactionInternal(const WireDataPtr& request,
+                                  const WireDataPtr& response,
                                   const bool persistent,
                                   const long request_timeout,
                                   const TcpClient::CompleteCheck& complete_check,
@@ -1485,7 +1485,7 @@ Connection::terminate(const boost::system::error_code& ec,
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
                               const std::string& error_msg) {
-    TcpMessagePtr response;
+    WireDataPtr response;
     if (isTransactionOngoing()) {
 
         timer_->cancel();
@@ -2076,8 +2076,8 @@ void
 TcpClient::asyncSendRequest(const IOAddress& address,
                             const uint16_t port,
                             const TlsContextPtr& tls_context,
-                            const TcpMessagePtr& request,
-                            const TcpMessagePtr& response,
+                            const WireDataPtr& request,
+                            const WireDataPtr& response,
                             const bool persistent,
                             const TcpClient::CompleteCheck& complete_check,
                             const TcpClient::RequestHandler& request_callback,

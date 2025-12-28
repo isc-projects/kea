@@ -11,6 +11,7 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <tcp/tcp_connection_acceptor.h>
+#include <tcp/wire_data.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/system/error_code.hpp>
@@ -26,16 +27,11 @@
 namespace isc {
 namespace tcp {
 
-/// @brief Defines a data structure for storing raw bytes of data on the wire.
-typedef std::vector<uint8_t> WireData;
-typedef boost::shared_ptr<WireData> WireDataPtr;
-
 /// @brief Base class for TCP messages.
 class TcpMessage {
 public:
-    /// @brief Destructor
-    virtual ~TcpMessage(){
-    };
+    /// @brief Destructor.
+    virtual ~TcpMessage() = default;
 
     /// @brief Returns pointer to the first byte of the wire data.
     /// @throw InvalidOperation if wire data is empty (i.e. getWireDataSize() == 0).

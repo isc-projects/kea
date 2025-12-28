@@ -29,6 +29,7 @@ kea_tcp_headers = [
     'tcp_log.h',
     'tcp_messages.h',
     'tcp_stream_msg.h',
+    'wire_data.h',
 ]
 install_headers(kea_tcp_headers, preserve_path: true, subdir: 'kea/tcp')
 

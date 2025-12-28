@@ -11,6 +11,7 @@
 #include <asiolink/io_service.h>
 #include <asiolink/tls_socket.h>
 #include <exceptions/exceptions.h>
+#include <tcp/wire_data.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
 #include <string>
@@ -26,12 +27,6 @@ public:
     TcpClientError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { }
 };
-
-/// @brief TCP Message type.
-typedef std::vector<uint8_t> TcpMessage;
-
-/// @brief Pointer to the @ref TcpMessage.
-typedef boost::shared_ptr<TcpMessage> TcpMessagePtr;
 
 class TcpClientImpl;
 
@@ -97,7 +92,7 @@ public:
 
     /// @brief Callback type used in call to @ref TcpClient::asyncSendRequest.
     typedef std::function<void(const boost::system::error_code&,
-                               const TcpMessagePtr&,
+                               const WireDataPtr&,
                                const std::string&)> RequestHandler;
 
     /// @brief Completion check type.
@@ -107,7 +102,7 @@ public:
     ///  - 0 means than it is not complete and more reading is needed,
     ///  - < 0 means the response is malformed.
     /// In the last case the second argument receives the error message.
-    typedef std::function<int(const TcpMessagePtr&,
+    typedef std::function<int(const WireDataPtr&,
                               std::string&)> CompleteCheck;
 
     /// @brief Optional handler invoked when client connects to the server.
@@ -249,8 +244,8 @@ public:
     void asyncSendRequest(const asiolink::IOAddress& address,
                           const uint16_t port,
                           const asiolink::TlsContextPtr& tls_context,
-                          const TcpMessagePtr& request,
-                          const TcpMessagePtr& response,
+                          const WireDataPtr& request,
+                          const WireDataPtr& response,
                           const bool persistent,
                           const CompleteCheck& complete_check,
                           const RequestHandler& request_callback,
