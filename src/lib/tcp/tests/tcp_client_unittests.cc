@@ -24,14 +24,9 @@
 #include <sstream>
 #include <string>
 
-using namespace isc::asiolink;
-using namespace isc::util;
-namespace ph = std::placeholders;
 #include <tcp/tests/common_client_test.h>
+#include <tcp/tests/common_client_unittests.h>
 
-using namespace boost::asio::ip;
-using namespace isc::data;
-using namespace isc::tcp;
 using namespace isc::tcp::test;
 
 namespace {
@@ -63,6 +58,39 @@ public:
     /// @brief Destructor.
     virtual ~TcpClientTest() = default;
 };
+
+/// @brief Test a single request.
+TEST_F(TcpClientTest, singleRequest) {
+    ASSERT_NO_FATAL_FAILURE(testSingleRequest());
+}
+
+/// @brief Test a single request.
+TEST_F(TcpClientTest, singleRequestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testSingleRequest());
+}
+
+/// @brief Test a large request.
+TEST_F(TcpClientTest, largeRequest) {
+    ASSERT_NO_FATAL_FAILURE(testLargeRequest());
+}
+
+/// @brief Test a large request.
+TEST_F(TcpClientTest, largeRequestMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testLargeRequest());
+}
+
+/// @brief Test a large response.
+TEST_F(TcpClientTest, largeResponse) {
+    ASSERT_NO_FATAL_FAILURE(testLargeResponse());
+}
+
+/// @brief Test a large response.
+TEST_F(TcpClientTest, largeResponseMultiThreading) {
+    MultiThreadingMgr::instance().setMode(true);
+    ASSERT_NO_FATAL_FAILURE(testLargeResponse());
+}
 
 // Test that two consecutive requests can be sent over the same (persistent)
 // connection.

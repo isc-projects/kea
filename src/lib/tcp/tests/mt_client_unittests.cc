@@ -23,14 +23,8 @@
 #include <sstream>
 #include <string>
 
-using namespace isc::asiolink;
-using namespace isc::util;
-namespace ph = std::placeholders;
 #include <tcp/tests/common_client_test.h>
 
-using namespace isc;
-using namespace isc::data;
-using namespace isc::tcp;
 using namespace isc::tcp::test;
 
 namespace {
