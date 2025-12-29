@@ -440,7 +440,7 @@ Message::signMessageAuthenticator(size_t ptr) {
     memset(&to_sign[ptr + 2], 0, AUTH_VECTOR_LEN);
     hmac->update(&to_sign[0], to_sign.size());
     vector<uint8_t> sign = hmac->sign(AUTH_VECTOR_LEN);
-    memmove(&buffer_[2 + ptr], &sign[0], sign.size());
+    memmove(&buffer_[ptr + 2], &sign[0], sign.size());
 }
 
 void
