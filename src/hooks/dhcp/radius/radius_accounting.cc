@@ -67,8 +67,8 @@ RadiusAcctHandler::RadiusAcctHandler(RadiusAcctEnv env,
                                      const CallbackAcct& callback)
     : env_(env), acct_() {
     acct_.reset(new RadiusAsyncAcct(env_.subnet_id_, env_.send_attrs_, callback));
-    RadiusImpl::instance().registerExchange(acct_->getExchange());
     MultiThreadingLock lock(mutex_);
+    RadiusImpl::instance().registerExchange(acct_->getExchange());
     ++counter_;
 }
 

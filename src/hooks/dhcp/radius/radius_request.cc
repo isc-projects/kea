@@ -131,14 +131,15 @@ RadiusAsyncAuth::start() {
 void
 RadiusAsyncAuth::invokeCallback(const CallbackAuth& callback,
                                 const ExchangePtr exchange) {
-    int result = ERROR_RC;
+    // Should no happen...
+    if (!exchange) {
+        return;
+    }
+    int result = exchange->getRC();
     AttributesPtr recv_attrs;
-    if (exchange) {
-        result = exchange->getRC();
-        MessagePtr response = exchange->getResponse();
-        if (response) {
-            recv_attrs = response->getAttributes();
-        }
+    MessagePtr response = exchange->getResponse();
+    if (response) {
+        recv_attrs = response->getAttributes();
     }
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
@@ -223,10 +224,11 @@ RadiusAsyncAcct::start() {
 void
 RadiusAsyncAcct::invokeCallback(const CallbackAcct& callback,
                                 const ExchangePtr exchange) {
-    int result = ERROR_RC;
-    if (exchange) {
-        result = exchange->getRC();
+    // Should not happen...
+    if (!exchange) {
+        return;
     }
+    int result = exchange->getRC();
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_ASYNC_SUCCEED);

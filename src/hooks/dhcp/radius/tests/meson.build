@@ -23,6 +23,7 @@ dhcp_radius_tests = executable(
     'message_unittests.cc',
     'run_unittests.cc',
     'server_unittests.cc',
+    'status_unittests.cc',
     'sync_request_unittests.cc',
     'utils_unittests.cc',
     cpp_args: [

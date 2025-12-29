@@ -105,6 +105,21 @@ This debug message is issued when an address was not found in create
 timestamp aka history container. This should lead to a accounting
 session without a start status message.
 
+% RADIUS_ACCOUNTING_STATUS send Status-Server with %1
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to accounting servers. The message attributes are logged.
+
+% RADIUS_ACCOUNTING_STATUS_FAILED Status-Server failed: return code %1 (%2)
+Logged at debug log level 40
+This debug message is issued when no valid response to Status-Server message
+was received from accounting servers.
+
+% RADIUS_ACCOUNTING_STATUS_SUCCEED received valid response to Status-Server
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from accounting servers.
+
 % RADIUS_ACCOUNTING_SYNC Synchronous send Accounting-Request for NAS port %1 with %2
 Logged at debug log level 40.
 This debug message is issued when starting to send an
@@ -140,6 +155,21 @@ Access-Reject message was received.
 Logged at debug log level 40.
 This debug message indicates that a valid Access-Reject
 message was received. Attributes from the message are logged.
+
+% RADIUS_AUTHENTICATION_STATUS send Status-Server with %1
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to access servers. The message attributes are logged.
+
+% RADIUS_AUTHENTICATION_STATUS_FAILED Status-Server failed: return code %1 (%2)
+Logged at debug log level 40
+This debug message is issued when no valid response to Status-Server message
+was received from access servers.
+
+% RADIUS_AUTHENTICATION_STATUS_SUCCEED received valid response to Status-Server
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from access servers.
 
 % RADIUS_AUTHENTICATION_SYNC send Access-Request for NAS port %1 with %2
 Logged at debug log level 40.
