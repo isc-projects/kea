@@ -253,6 +253,15 @@ VALUE           Acct-Terminate-Cause    Callback                16
 VALUE           Acct-Terminate-Cause    User-Error              17
 VALUE           Acct-Terminate-Cause    Host-Request            18
 
+#	Error Causes, available in RFC 3576, codes 400-499
+
+VALUE            Error-Cause            Unsupported-Attribute   401
+VALUE            Error-Cause            Missing-Attribute       402
+VALUE            Error-Cause        NAS-Identification-Mismatch 403
+VALUE            Error-Cause            Invalid-Request         404
+VALUE            Error-Cause            Unsupported-Service     405
+VALUE            Error-Cause            Unsupported-Extension   406
+
 #	Examples
 
 #$INCLUDE	foobar
