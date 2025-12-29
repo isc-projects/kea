@@ -328,6 +328,14 @@ public:
     /// @brief Pending RADIUS access requests - IPv6.
     RadiusAuthPendingRequests<dhcp::Pkt6Ptr> requests6_;
 
+    /// @brief Set idle timer.
+    ///
+    /// @note: The caller must hold the idle timer mutex.
+    void setIdleTimer();
+
+    /// @brief Idle timer callback.
+    static void IdleTimerCallback();
+
 };
 
 } // end of namespace isc::radius

@@ -13,6 +13,7 @@
 #include <dhcpsrv/subnet.h>
 #include <radius_accounting.h>
 #include <radius_log.h>
+#include <radius_status.h>
 #include <radius_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <stdio.h>
@@ -67,8 +68,8 @@ RadiusAcctHandler::RadiusAcctHandler(RadiusAcctEnv env,
                                      const CallbackAcct& callback)
     : env_(env), acct_() {
     acct_.reset(new RadiusAsyncAcct(env_.subnet_id_, env_.send_attrs_, callback));
-    MultiThreadingLock lock(mutex_);
     RadiusImpl::instance().registerExchange(acct_->getExchange());
+    MultiThreadingLock lock(mutex_);
     ++counter_;
 }
 
@@ -986,6 +987,31 @@ RadiusAccounting::storeToFile() {
             .arg(container_.size());
     }
     record_count_ = 0;
+}
+
+void
+RadiusAccounting::setIdleTimer() {
+    MultiThreadingLock lock(idle_timer_mutex_);
+    cancelIdleTimer();
+    if (idle_timer_interval_ <= 0) {
+        return;
+    }
+    // Cope to one day.
+    long secs = idle_timer_interval_;
+    if (secs > 24*60*60) {
+        secs = 24*60*60;
+    }
+    idle_timer_.reset(new IntervalTimer(RadiusImpl::instance().getIOContext()));
+    idle_timer_->setup(RadiusAccounting::IdleTimerCallback,
+                       secs * 1000, IntervalTimer::REPEATING);
+}
+
+void
+RadiusAccounting::IdleTimerCallback() {
+    AttributesPtr send_attrs;
+    RadiusAcctStatusPtr handler(new RadiusAcctStatus(send_attrs, 0));
+    RadiusImpl::instance().registerExchange(handler->getExchange());
+    handler->start();
 }
 
 } // end of namespace isc::radius

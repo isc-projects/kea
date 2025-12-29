@@ -286,6 +286,14 @@ public:
     /// in the increasing timestamp order.
     void storeToFile();
 
+    /// @brief Set idle timer.
+    ///
+    /// @note: The caller must hold the idle timer mutex.
+    void setIdleTimer();
+
+    /// @brief Idle timer callback.
+    static void IdleTimerCallback();
+
 protected:
 
     /// @brief Create timestamps file name.

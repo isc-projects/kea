@@ -312,7 +312,8 @@ RadiusConfigParser::parse(ElementPtr& config) {
 /// @brief Keywords for service configuration.
 const set<string>
 RadiusServiceParser::SERVICE_KEYWORDS = {
-    "servers", "attributes", "peer-updates", "max-pending-requests"
+    "servers", "attributes", "peer-updates", "max-pending-requests",
+    "idle-timer-interval"
 };
 
 void
@@ -389,6 +390,25 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                           << " instead");
             }
             service->max_pending_requests_ = max_pending_requests->intValue();
+        }
+
+        // idle-timer-interval.
+        const ConstElementPtr& idle_timer_interval =
+            srv_cfg->get("idle-timer-interval");
+        if (idle_timer_interval) {
+            if (idle_timer_interval->getType() != Element::integer) {
+                isc_throw(BadValue, "expected idle-timer-interval to be "
+                          << "integer, but got "
+                          << Element::typeToName(idle_timer_interval->getType())
+                          << " instead");
+            }
+            if (idle_timer_interval->intValue() < 0) {
+                isc_throw(BadValue, "expected idle-timer-interval to be "
+                          << "positive, but got "
+                          << idle_timer_interval->intValue()
+                          << " instead");
+            }
+            service->idle_timer_interval_ = idle_timer_interval->intValue();
         }
     } catch (const std::exception& ex) {
         isc_throw(ConfigError, ex.what() << " (parsing "

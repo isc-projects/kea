@@ -13,6 +13,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <radius_access.h>
 #include <radius_log.h>
+#include <radius_status.h>
 #include <radius_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <stdio.h>
@@ -1010,6 +1011,31 @@ RadiusAccess::terminate6(RadiusAuthEnv env, int result,
             .arg(msg.str());
         HooksManager::unpark("subnet6_select", query);
     }
+}
+
+void
+RadiusAccess::setIdleTimer() {
+    MultiThreadingLock lock(idle_timer_mutex_);
+    cancelIdleTimer();
+    if (idle_timer_interval_ <= 0) {
+        return;
+    }
+    // Cope to one day.
+    long secs = idle_timer_interval_;
+    if (secs > 24*60*60) {
+        secs = 24*60*60;
+    }
+    idle_timer_.reset(new IntervalTimer(RadiusImpl::instance().getIOContext()));
+    idle_timer_->setup(RadiusAccess::IdleTimerCallback,
+                       secs * 1000, IntervalTimer::REPEATING);
+}
+
+void
+RadiusAccess::IdleTimerCallback() {
+    AttributesPtr send_attrs;
+    RadiusAuthStatusPtr handler(new RadiusAuthStatus(send_attrs, 0));
+    RadiusImpl::instance().registerExchange(handler->getExchange());
+    handler->start();
 }
 
 } // end of namespace isc::radius
