@@ -140,7 +140,7 @@ public:
     /// the idle timer.
     ///
     /// @param response Response that was sent to the remote endpoint.
-    virtual bool responseSent(TcpResponsePtr response) {
+    virtual bool responseSent(TcpResponsePtr /*response*/) {
         return (true);
     }
 };

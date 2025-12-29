@@ -45,7 +45,7 @@ class TcpClientImpl;
 /// The TCP client supports multiple simultaneous and persistent connections
 /// with different destinations. If the connection should be persistent the
 /// client doesn't close the connection after sending a request and receiving
-/// response from he server. If the client is provided with the request to be
+/// response from the server. If the client is provided with the request to be
 /// sent to the particular destination, but there is an ongoing communication
 /// with this destination, e.g. as a result of sending previous request, the
 /// new request is queued in the FIFO queue. When the previous request
@@ -294,7 +294,7 @@ public:
     /// indicates a normal ready event.  If the connection is not in an
     /// ongoing transaction, then the connection is closed.
     ///
-    /// This is method is intended to be used to detect and clean up then
+    /// This is method is intended to be used to detect and clean up the
     /// sockets that are marked ready outside of transactions. The most common
     /// case is the other end of the socket being closed.
     ///
