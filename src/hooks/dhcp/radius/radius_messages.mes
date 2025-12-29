@@ -111,7 +111,7 @@ This debug message is issued when starting to send a Status-Server message
 to accounting servers. The message attributes are logged.
 
 % RADIUS_ACCOUNTING_STATUS_FAILED Status-Server failed: return code %1 (%2)
-Logged at debug log level 40
+Logged at debug log level 40.
 This debug message is issued when no valid response to Status-Server message
 was received from accounting servers.
 
@@ -162,7 +162,7 @@ This debug message is issued when starting to send a Status-Server message
 to access servers. The message attributes are logged.
 
 % RADIUS_AUTHENTICATION_STATUS_FAILED Status-Server failed: return code %1 (%2)
-Logged at debug log level 40
+Logged at debug log level 40.
 This debug message is issued when no valid response to Status-Server message
 was received from access servers.
 
