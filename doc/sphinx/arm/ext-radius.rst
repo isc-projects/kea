@@ -252,6 +252,11 @@ At the service level, three sections can be configured:
   number of pending RADIUS requests. It is supported only by the access service.
   The value ``0`` means no limit; ``64`` is a recommended setting.
 
+- The ``idle-timer-interval`` positive integer (default ``0``) specifies
+  the interval between the last valid response from servers and the
+  send of a ``Status-Server`` message. The value ``0`` means to disable
+  this mechanism added in Kea version 3.1.5.
+
 For example, to specify a single access server available on localhost
 that uses ``"1234"`` as a secret, and tell Kea to send three additional
 attributes (``User-Password``, ``Connect-Info``, and ``Configuration-Token``),

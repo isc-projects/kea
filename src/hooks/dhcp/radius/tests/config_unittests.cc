@@ -1356,6 +1356,7 @@ TEST_F(ConfigTest, peerUpdates) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.acct_);
     EXPECT_FALSE(impl_.acct_->peer_updates_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1365,6 +1366,7 @@ TEST_F(ConfigTest, peerUpdates) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.acct_);
     EXPECT_TRUE(impl_.acct_->peer_updates_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1421,11 +1423,13 @@ TEST_F(ConfigTest, maxPendingRequests) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(10, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::createMap();
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(0, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1471,11 +1475,13 @@ TEST_F(ConfigTest, idleTimerInterval) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(10, impl_.auth_->idle_timer_interval_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::createMap();
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 }

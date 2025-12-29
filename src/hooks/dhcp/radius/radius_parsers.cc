@@ -361,9 +361,10 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                                     "only supported for the accounting service");
             }
             if (peer_updates->getType() != Element::boolean) {
-                isc_throw(BadValue, "expected peer-updates to be boolean, but got "
-                                        << Element::typeToName(peer_updates->getType())
-                                        << " instead");
+                isc_throw(BadValue, "expected peer-updates to be boolean, "
+                          << "but got "
+                          << Element::typeToName(peer_updates->getType())
+                          << " instead");
             }
             service->peer_updates_ = peer_updates->boolValue();
         }

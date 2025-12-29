@@ -18,6 +18,8 @@
 #include <database/database_connection.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
+#include <radius_access.h>
+#include <radius_accounting.h>
 #include <radius_status.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
@@ -1257,6 +1259,110 @@ TEST_F(StatusTest, response2) {
 
     // Check result.
     EXPECT_EQ(OK_RC, result_);
+}
+
+/// Verify that access IdleTimerCallback works as expected.
+TEST_F(StatusTest, accessIdleTimerCallback) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Open server socket.
+    open(SERVER_AUTH_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Call the access IdleTimerCallback.
+    RadiusAccess::IdleTimerCallback();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Check received request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+    EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
+    uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
+    EXPECT_EQ(length, size);
+    EXPECT_GE(4096, length);
+
+    // Check attributes.
+    EXPECT_EQ(44, size);
+    uint8_t expected[] = {
+        0x04,                   // NAS-IP-Address
+        0x06,                   // length
+        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
+        0x50,                   // Message-Authenticator
+        0x12                    // length
+    };
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
+}
+
+/// Verify that accounting IdleTimerCallback works as expected.
+TEST_F(StatusTest, accountingIdleTimerCallback) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Open server socket.
+    open(SERVER_ACCT_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Call the accounting IdleTimerCallback.
+    RadiusAccounting::IdleTimerCallback();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Check received request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+    EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
+    uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
+    EXPECT_EQ(length, size);
+    EXPECT_GE(4096, length);
+
+    // Check attributes.
+    EXPECT_EQ(44, size);
+    uint8_t expected[] = {
+        0x04,                   // NAS-IP-Address
+        0x06,                   // length
+        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
+        0x50,                   // Message-Authenticator
+        0x12                    // length
+    };
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
 }
 
 } // end of anonymous namespace
