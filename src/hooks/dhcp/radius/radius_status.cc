@@ -65,6 +65,21 @@ RadiusAuthStatus::invokeCallback(const CallbackAcct& callback,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_STATUS_SUCCEED);
         RadiusImpl::instance().auth_->setIdleTimer();
+
+        MessagePtr response = exchange->getResponse();
+        AttributesPtr resp_attrs;
+        uint8_t code = 0;
+        if (response) {
+            resp_attrs = response->getAttributes();
+            code = response->getCode();
+        }
+        if (((code != 0) && (code != PW_ACCESS_ACCEPT)) ||
+            (resp_attrs && (resp_attrs->count(PW_ERROR_CAUSE) > 0))) {
+            LOG_ERROR(radius_logger, RADIUS_AUTHENTICATION_STATUS_ERROR)
+                .arg(msgCodeToText(code))
+                .arg(static_cast<unsigned>(code))
+                .arg(resp_attrs ? resp_attrs->toText() : "no attributes");
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_STATUS_FAILED)
@@ -126,6 +141,21 @@ RadiusAcctStatus::invokeCallback(const CallbackAcct& callback,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_STATUS_SUCCEED);
         RadiusImpl::instance().acct_->setIdleTimer();
+
+        MessagePtr response = exchange->getResponse();
+        AttributesPtr resp_attrs;
+        uint8_t code = 0;
+        if (response) {
+            resp_attrs = response->getAttributes();
+            code = response->getCode();
+        }
+        if (((code != 0) && (code != PW_ACCOUNTING_RESPONSE)) ||
+            (resp_attrs && (resp_attrs->count(PW_ERROR_CAUSE) > 0))) {
+            LOG_ERROR(radius_logger, RADIUS_ACCOUNTING_STATUS_ERROR)
+                .arg(msgCodeToText(code))
+                .arg(static_cast<unsigned>(code))
+                .arg(resp_attrs ? resp_attrs->toText() : "no attributes");
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_STATUS_FAILED)

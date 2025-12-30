@@ -751,6 +751,99 @@ TEST_F(StatusTest, response) {
     EXPECT_EQ(OK_RC, result_);
 }
 
+/// Verify what happens with error Accounting-Response response.
+/// Should log a RADIUS_ACCOUNTING_STATUS_ERROR with
+/// Accounting-Response (5) with Error-Cause=Unsupported-Extension
+TEST_F(StatusTest, errorResponse) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Build request parameters.
+    which_ = "accounting";
+
+    // Open server socket.
+    open(SERVER_ACCT_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Launch request handler i.e. the client code to test.
+    run();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Sanity checks on the request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+
+    // Build the response.
+    size = AUTH_HDR_LEN + 2 + 4;               // header + Error-Cause attribute.
+    send_buffer_.resize(size);
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
+    send_buffer_[1] = receive_buffer_[1];      // Copy id.
+    send_buffer_[2] = size >> 8;               // Length.
+    send_buffer_[3] = size & 0xff;
+    // Copy the authenticator.
+    memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
+    // Error-Cause attribute.
+    send_buffer_[AUTH_HDR_LEN] = 0x65;         // Error-Cause (101)
+    send_buffer_[AUTH_HDR_LEN + 1] = 0x06;     // Length.
+    send_buffer_[AUTH_HDR_LEN + 2] = 0x00;
+    send_buffer_[AUTH_HDR_LEN + 3] = 0x00;
+    send_buffer_[AUTH_HDR_LEN + 4] = 0x01;
+    send_buffer_[AUTH_HDR_LEN + 5] = 0x96;     // Unsupported Extension (406).
+
+    // Compute the authenticator.
+    vector<unsigned char> auth_input(size + 3);
+    memmove(&auth_input[0], &send_buffer_[0], size);
+    auth_input[size] = 'b';
+    auth_input[size + 1] = 'a';
+    auth_input[size + 2] = 'r';
+    OutputBuffer auth_output(AUTH_VECTOR_LEN);
+    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+           auth_output, AUTH_VECTOR_LEN);
+    memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
+
+    // Push a sender on the socket.
+    size_t sent_size = 0;
+    Callback send_callback(send_error_code_, sent_size, sent_);
+    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
+                                 client, send_callback);
+
+    // Second busy loop.
+    while ((!sent_ || !finished_) && !timeout_) {
+        poll();
+    }
+
+    EXPECT_TRUE(finished_);
+    EXPECT_TRUE(sent_);
+    EXPECT_FALSE(timeout_);
+    EXPECT_EQ(size, sent_size);
+
+    // Done.
+    stop();
+    service_->stopWork();
+
+    // Check result.
+    EXPECT_EQ(OK_RC, result_);
+}
+
 /// Verify what happens with bad Access-Accept response.
 TEST_F(StatusTest, badAccept) {
     // Use CONFIGS[0].

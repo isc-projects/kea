@@ -110,6 +110,11 @@ Logged at debug log level 40.
 This debug message is issued when starting to send a Status-Server message
 to accounting servers. The message attributes are logged.
 
+% RADIUS_ACCOUNTING_STATUS_ERROR received error response to Status-Server: %1 (%2) with %3
+This error message indicates that a valid response to Status-Server message
+was received from accounting servers but with an unexpected code or
+an Error-Cause attribute. The response details are logged.
+
 % RADIUS_ACCOUNTING_STATUS_FAILED Status-Server failed: return code %1 (%2)
 Logged at debug log level 40.
 This debug message is issued when no valid response to Status-Server message
@@ -160,6 +165,11 @@ message was received. Attributes from the message are logged.
 Logged at debug log level 40.
 This debug message is issued when starting to send a Status-Server message
 to access servers. The message attributes are logged.
+
+% RADIUS_AUTHENTICATION_STATUS_ERROR received error response to Status-Server: %1 (%2) with %3
+This error message indicates that a valid response to Status-Server message
+was received from access servers but with an unexpected code or an
+Error-Cause attribute. The response details are logged.
 
 % RADIUS_AUTHENTICATION_STATUS_FAILED Status-Server failed: return code %1 (%2)
 Logged at debug log level 40.
