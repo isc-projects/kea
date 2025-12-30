@@ -14,7 +14,7 @@ namespace test {
 
 /// @brief Completion checker.
 ///
-/// Messages are by 2 byte length header and data of this length.
+/// Messages are a 2 byte length header and data of this length.
 ///
 /// @param response Response to check.
 /// @param error_msg Reference to the error message.
