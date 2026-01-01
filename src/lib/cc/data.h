@@ -21,7 +21,8 @@
 
 #include <exceptions/exceptions.h>
 
-namespace isc { namespace data {
+namespace isc {
+namespace data {
 
 class Element;
 // todo: describe the rationale behind ElementPtr?
@@ -70,8 +71,12 @@ public:
 /// the type in question.
 ///
 class Element {
-
 public:
+    /// @brief Maximum nesting level of Element objects.
+    ///
+    /// Used in recursive methods to avoid infinite recursion.
+    static constexpr int MAX_NESTING_LEVEL = 100;
+
     /// @brief Represents the position of the data element within a
     /// configuration string.
     ///
@@ -189,12 +194,15 @@ public:
     /// which only returns the single value of a StringElement
     ///
     /// The resulting string will contain the Element in JSON format.
+    /// Based on @ref toJSON.
     ///
     /// @return std::string containing the string representation
     std::string str() const;
 
     /// Returns the wireformat for the Element and all its child
     /// elements.
+    ///
+    /// Based on @ref toJSON.
     ///
     /// @return std::string containing the element in wire format
     std::string toWire() const;
@@ -218,10 +226,12 @@ public:
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     virtual bool equals(const Element& other) const = 0;
+    virtual bool equals0(const Element& other, int level) const = 0;
 
     /// Converts the Element to JSON format and appends it to
     /// the given stringstream.
     virtual void toJSON(std::ostream& ss) const = 0;
+    virtual void toJSON0(std::ostream& ss, int level) const = 0;
 
     /// @name Type-specific getters
     ///
@@ -487,6 +497,8 @@ public:
     /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
                                int& line, int &pos);
+    static ElementPtr fromJSON0(std::istream& in, const std::string& file,
+                                int& line, int &pos, int level);
 
     /// Reads contents of specified file and interprets it as JSON.
     ///
@@ -560,6 +572,22 @@ public:
     /// @brief Remove all empty maps and lists from this Element and its
     /// descendants.
     void removeEmptyContainersRecursively() {
+        removeEmptyContainersRecursively0(MAX_NESTING_LEVEL);
+    }
+
+protected:
+    /// Converts the Element to JSON format and appends it to
+    /// the given stringstream.
+
+
+    /// @brief Remove all empty maps and lists from this Element and its
+    /// descendants.
+    /// @param level nesting level.
+    void removeEmptyContainersRecursively0(int level) {
+        if (level <= 0) {
+            // Cycles are by definition not empty so no need to throw.
+            return;
+        }
         if (type_ == list || type_ == map) {
             size_t s(size());
             for (size_t i = 0; i < s; ++i) {
@@ -588,7 +616,7 @@ public:
 
                 // Recurse if not empty.
                 if (!child->empty()){
-                    child->removeEmptyContainersRecursively();
+                    child->removeEmptyContainersRecursively0(level - 1);
                 }
 
                 // When returning from recursion, remove if empty.
@@ -623,7 +651,9 @@ public:
     using Element::setValue;
     bool setValue(long long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int) const;
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int) const;
 };
 
 /// @brief Wrapper over int128_t
@@ -657,11 +687,21 @@ public:
     /// stringstream.
     void toJSON(std::ostream& ss) const override;
 
+    /// @brief Converts the Element to JSON format and appends it to the given
+    /// stringstream.
+    void toJSON0(std::ostream& ss, int) const override;
+
     /// @brief Checks whether the other Element is equal.
     ///
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     bool equals(const Element& other) const override;
+
+    /// @brief Checks whether the other Element is equal.
+    ///
+    /// @return true if the other ElementPtr has the same value and the same
+    /// type (or a different and compatible type), false otherwise.
+    bool equals0(const Element& other, int) const override;
 
 private:
     /// @brief the underlying stored value
@@ -680,7 +720,9 @@ public:
     using Element::setValue;
     bool setValue(const double v) { d = v; return (true); }
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int) const;
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int) const;
 };
 
 class BoolElement : public Element {
@@ -695,7 +737,9 @@ public:
     using Element::setValue;
     bool setValue(const bool v) { b = v; return (true); }
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int) const;
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int) const;
 };
 
 class NullElement : public Element {
@@ -703,7 +747,9 @@ public:
     NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {}
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int) const;
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int) const;
 };
 
 class StringElement : public Element {
@@ -718,7 +764,9 @@ public:
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return (true); }
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int) const;
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int) const;
 };
 
 class ListElement : public Element {
@@ -749,9 +797,11 @@ public:
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); }
     void toJSON(std::ostream& ss) const;
+    void toJSON0(std::ostream& ss, int level) const;
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }
     bool equals(const Element& other) const;
+    bool equals0(const Element& other, int level) const;
 
     /// @brief Sorts the elements inside the list.
     ///
@@ -821,6 +871,7 @@ public:
         return (m.find(s) != m.end());
     }
     void toJSON(std::ostream& ss) const override;
+    void toJSON0(std::ostream& ss, int level) const override;
 
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
@@ -843,13 +894,14 @@ public:
     }
 
     bool equals(const Element& other) const override;
+    bool equals0(const Element& other, int level) const override;
 
     bool empty() const override { return (m.empty()); }
 };
 
-/// Checks whether the given ElementPtr is a NULL pointer
+/// Checks whether the given ElementPtr is a null pointer
 /// @param p The ElementPtr to check
-/// @return true if it is NULL, false if not.
+/// @return true if it is null, false if not.
 bool isNull(ConstElementPtr p);
 
 ///
@@ -944,6 +996,9 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
                   size_t idx = 0);
+void mergeDiffAdd0(ElementPtr& element, ElementPtr& other,
+                   HierarchyDescriptor& hierarchy, std::string key,
+                   size_t idx, int level);
 
 /// @brief Merges the diff data by removing the data present in 'other' from
 /// 'element' (recursively). Both elements must be the same Element type.
@@ -965,6 +1020,9 @@ void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
 void mergeDiffDel(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
                   size_t idx = 0);
+void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
+                   HierarchyDescriptor& hierarchy, std::string key,
+                   size_t idx, int level);
 
 /// @brief Extends data by adding the specified 'extension' elements from
 /// 'other' inside the 'container' element (recursively). Both elements must be
@@ -986,18 +1044,25 @@ void extend(const std::string& container, const std::string& extension,
             ElementPtr& element, ElementPtr& other,
             HierarchyDescriptor& hierarchy, std::string key, size_t idx = 0,
             bool alter = false);
+void extend0(const std::string& container, const std::string& extension,
+             ElementPtr& element, ElementPtr& other,
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx,
+             bool alter, int level);
 
 /// @brief Copy the data up to a nesting level.
 ///
 /// The copy is a deep copy so nothing is shared if it is not
 /// under the given nesting level.
 ///
+/// @note: copy is the ONLY method taking a level argument which make
+/// sense outside unit tests, and also which accepts the 0 value.
+///
 /// @param from the pointer to the element to copy
 /// @param level nesting level (default is 100, 0 means shallow copy,
 /// negative means outbound and perhaps looping forever).
 /// @return a pointer to a fresh copy
 /// @throw raises a BadValue is a null pointer occurs.
-ElementPtr copy(ConstElementPtr from, int level = 100);
+ElementPtr copy(ConstElementPtr from, int level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Compares the data with other using unordered lists
 ///
@@ -1005,6 +1070,12 @@ ElementPtr copy(ConstElementPtr from, int level = 100);
 /// unordered multi sets (multi means an item can occurs more
 /// than once as soon as it occurs the same number of times).
 bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
+
+/// @brief Check if the data includes a cycle.
+///
+/// @param element A @c ConstElementPtr to check.
+/// @return True if a cycle is detected, false otherwise.
+bool hasCycle(ConstElementPtr element);
 
 /// @brief Pretty prints the data into stream.
 ///

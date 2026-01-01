@@ -1654,6 +1654,106 @@ TEST(Element, mergeDiffAddBadParams) {
         right->add(right_right);
         ASSERT_THROW(mergeDiffAdd(left, right, hierarchy, "root"), TypeError);
     }
+    {
+        SCOPED_TRACE("nested map");
+        // From 'scalar and list and map in map'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy();
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(0));
+        // scalar element which is updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is added
+        right_right->set("new-elements", Element::create("new"));
+        ElementPtr left_other_left = Element::createMap();
+        ElementPtr right_other_right = Element::createMap();
+        left_other_left->set("id", Element::create(1));
+        left_other_left->set("elements", Element::create("other-left"));
+        // scalar element used as key
+        right_other_right->set("id", Element::create(2));
+        // scalar element which is added
+        right_other_right->set("elements", Element::create("other-right"));
+        left->set("elements", left_left);
+        left->set("left-other-elements", left_other_left);
+        // map element which is added
+        right->set("right-other-elements", right_other_right);
+        // map element which is updated
+        right->set("elements", right_right);
+        left_other_left = Element::createList();
+        right_other_right = Element::createList();
+        left_other_left->add(Element::create("left-other-left"));
+        left_other_left->add(Element::create("left-other-left-other"));
+        left_other_left->add(Element::create("other-other"));
+        // scalar element which is added
+        right_other_right->add(Element::create("right-other-right"));
+        // scalar element which is added
+        right_other_right->add(Element::create("right-other-right-other"));
+        // scalar element which already exists but is still added
+        right_other_right->add(Element::create("other-other"));
+        left->set("other", left_other_left);
+        // list element which is updated
+        right->set("other", right_other_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 1),
+                     isc::BadValue);
+    }
+    {
+        SCOPED_TRACE("nested list");
+        // From 'scalar and list and map in list'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy();
+        ElementPtr left = Element::createList();
+        ElementPtr right = Element::createList();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(0));
+        // scalar element which is updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is added
+        right_right->set("new-elements", Element::create("new"));
+        ElementPtr left_other_left = Element::createMap();
+        ElementPtr right_other_right = Element::createMap();
+        left_other_left->set("id", Element::create(1));
+        left_other_left->set("elements", Element::create("other-left"));
+        // scalar element used as key
+        right_other_right->set("id", Element::create(2));
+        // scalar element which is added
+        right_other_right->set("elements", Element::create("other-right"));
+        left->add(left_left);
+        left->add(left_other_left);
+        // map element which is added
+        right->add(right_other_right);
+        // map element which is updated
+        right->add(right_right);
+        left_other_left = Element::createList();
+        right_other_right = Element::createList();
+        left_other_left->add(Element::create("left-other-left"));
+        left_other_left->add(Element::create("left-other-left-other"));
+        left_other_left->add(Element::create("other-other"));
+        // scalar element which is added
+        right_other_right->add(Element::create("right-other-right"));
+        // scalar element which is added
+        right_other_right->add(Element::create("right-other-right-other"));
+        // scalar element which already exists but is still added
+        right_other_right->add(Element::create("other-other"));
+        left_left->set("other", left_other_left);
+        // list element which is updated
+        right_right->set("other", right_other_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 2),
+                     isc::BadValue);
+    }
 }
 
 /// @brief Test which checks that mergeDiffAdd works as expected.
@@ -1803,7 +1903,7 @@ TEST(Element, mergeDiffAdd) {
         // list element which is updated
         right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        mergeDiffAdd(left, right, hierarchy, "root");
+        ASSERT_NO_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 2));
         std::string expected_str("{ \"elements\": { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" }, "
                                    "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
                                    "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
@@ -1859,7 +1959,7 @@ TEST(Element, mergeDiffAdd) {
         // list element which is updated
         right_right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        mergeDiffAdd(left, right, hierarchy, "root");
+        ASSERT_NO_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 3));
         std::string expected_str("[ { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", "
                                      "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
                                      "\"other-elements\": \"other\" }, "
@@ -1907,6 +2007,134 @@ TEST(Element, mergeDiffDelBadParams) {
         left->add(left_left);
         right->add(right_right);
         ASSERT_THROW(mergeDiffDel(left, right, hierarchy, "root"), TypeError);
+    }
+    {
+        SCOPED_TRACE("nested map");
+        // From 'scalar and list and map in map'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy();
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(0));
+        // scalar element which is removed
+        right_right->set("elements", Element::create("right"));
+        // scalar element which does not exist and does nothing
+        right_right->set("new-elements", Element::create("new"));
+        ElementPtr left_other_left = Element::createMap();
+        ElementPtr right_other_right = Element::createMap();
+        left_other_left->set("id", Element::create(1));
+        left_other_left->set("elements", Element::create("other-left"));
+        // scalar element used as key
+        right_other_right->set("id", Element::create(2));
+        // scalar element which does not exist and does nothing
+        right_other_right->set("elements", Element::create("other-right"));
+        left->set("elements", left_left);
+        left->set("left-other-elements", left_other_left);
+        // map element which does not exist and does nothing
+        right->set("right-other-elements", right_other_right);
+        // map element which is updated
+        right->set("elements", right_right);
+        left_other_left = Element::createList();
+        right_other_right = Element::createList();
+        left_other_left->add(Element::create("left-other-left"));
+        left_other_left->add(Element::create("other"));
+        left_other_left->add(Element::create("left-other-left-other"));
+        left_other_left->add(Element::create("new"));
+        // scalar element which does not exist and does nothing
+        right_other_right->add(Element::create("right-other-right"));
+        // scalar element which is removed
+        right_other_right->add(Element::create("other"));
+        // scalar element which does not exist and does nothing
+        right_other_right->add(Element::create("right-other-right-other"));
+        // scalar element which is removed
+        right_other_right->add(Element::create("new"));
+        left->set("other", left_other_left);
+        // list element which is updated
+        right->set("other", right_other_right);
+        left_left = Element::createMap();
+        right_right = Element::createMap();
+        left_left->set("id", Element::create(3));
+        left_left->set("elements", Element::create("new-left"));
+        left_left->set("other-elements", Element::create("new-other"));
+        left->set("elements-other", left_left);
+        // scalar element used as key
+        right_right->set("id", Element::create(3));
+        // map element which is not removed because it is contained in a map and
+        // the key can not be removed
+        right->set("elements-other", right_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 1),
+                     isc::BadValue);
+    }
+    {
+        SCOPED_TRACE("nested list");
+        // From 'scalar and list and map in list'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy();
+        ElementPtr left = Element::createList();
+        ElementPtr right = Element::createList();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(0));
+        // scalar element which is removed
+        right_right->set("elements", Element::create("right"));
+        // scalar element which does not exist and does nothing
+        right_right->set("new-elements", Element::create("new"));
+        ElementPtr left_other_left = Element::createMap();
+        ElementPtr right_other_right = Element::createMap();
+        left_other_left->set("id", Element::create(1));
+        left_other_left->set("elements", Element::create("other-left"));
+        // scalar element used as key
+        right_other_right->set("id", Element::create(2));
+        // scalar element which does not exist and does nothing
+        right_other_right->set("elements", Element::create("other-right"));
+        left->add(left_left);
+        left->add(left_other_left);
+        // map element which does not exist and does nothing
+        right->add(right_other_right);
+        // map element which is updated
+        right->add(right_right);
+        left_other_left = Element::createList();
+        right_other_right = Element::createList();
+        left_other_left->add(Element::create("left-other-left"));
+        left_other_left->add(Element::create("other"));
+        left_other_left->add(Element::create("left-other-left-other"));
+        left_other_left->add(Element::create("new"));
+        // scalar element which does not exist and does nothing
+        right_other_right->add(Element::create("right-other-right"));
+        // scalar element which is removed
+        right_other_right->add(Element::create("other"));
+        // scalar element which does not exist and does nothing
+        right_other_right->add(Element::create("right-other-right-other"));
+        // scalar element which is removed
+        right_other_right->add(Element::create("new"));
+        left_left->set("other", left_other_left);
+        // list element which is updated
+        right_right->set("other", right_other_right);
+        left_left = Element::createMap();
+        right_right = Element::createMap();
+        left_left->set("id", Element::create(3));
+        left_left->set("elements", Element::create("new-left"));
+        left_left->set("other-elements", Element::create("new-other"));
+        left->add(left_left);
+        // scalar element used as key
+        right_right->set("id", Element::create(3));
+        // map element which is removed by key
+        // the key can not be removed
+        right->add(right_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 2),
+                     isc::BadValue);
     }
 }
 
@@ -2054,7 +2282,7 @@ TEST(Element, mergeDiffDel) {
         // the key can not be removed
         right->set("elements-other", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        mergeDiffDel(left, right, hierarchy, "root");
+        ASSERT_NO_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 2));
         std::string expected_str("{ \"elements\": { \"id\": 0, \"other-elements\": \"other\" }, "
                                    "\"elements-other\": { \"elements\": \"new-left\", \"id\": 3, \"other-elements\": \"new-other\" }, "
                                    "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
@@ -2124,7 +2352,7 @@ TEST(Element, mergeDiffDel) {
         // the key can not be removed
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        mergeDiffDel(left, right, hierarchy, "root");
+        ASSERT_NO_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 3));
         std::string expected_str("[ { \"id\": 0, \"other\": [ \"left-other-left\", \"left-other-left-other\" ], \"other-elements\": \"other\" }, "
                                    "{ \"elements\": \"other-left\", \"id\": 1 } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
@@ -2169,6 +2397,56 @@ TEST(Element, extendBadParam) {
         left->add(left_left);
         right->add(right_right);
         ASSERT_THROW(extend("elements", "", left, right, hierarchy, "root"), TypeError);
+    }
+    {
+        SCOPED_TRACE("nested map");
+        /// From 'scalar in map in map'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createMap();
+        ElementPtr right = Element::createMap();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(1));
+        // scalar element which is not updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right_right->set("new-elements", Element::create("new"));
+        left->set("elements", left_left);
+        // map element which is used for extension
+        right->set("elements", right_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
+                             "root", 0, false, 1), isc::BadValue);
+    }
+    {
+        SCOPED_TRACE("nested list");
+        // From 'scalar in map in list'.
+        isc::data::HierarchyDescriptor hierarchy;
+        hierarchy = createHierarchy(true);
+        ElementPtr left = Element::createList();
+        ElementPtr right = Element::createList();
+        ElementPtr left_left = Element::createMap();
+        ElementPtr right_right = Element::createMap();
+        left_left->set("id", Element::create(0));
+        left_left->set("elements", Element::create("left"));
+        left_left->set("other-elements", Element::create("other"));
+        // scalar element used as key
+        right_right->set("id", Element::create(1));
+        // scalar element which is not updated
+        right_right->set("elements", Element::create("right"));
+        // scalar element which is extended
+        right_right->set("new-elements", Element::create("new"));
+        left->add(left_left);
+        // map element which is used for extension
+        right->add(right_right);
+        ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
+                             "root", 0, false, 1), isc::BadValue);
     }
 }
 
@@ -2235,7 +2513,8 @@ TEST(Element, extend) {
         // map element which is used for extension
         right->set("elements", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        extend("root", "new-elements", left, right, hierarchy, "root");
+        ASSERT_NO_THROW(extend0("root", "new-elements", left, right, hierarchy,
+                                "root", 0, false, 2));
         std::string expected_str("{ \"elements\": { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } }");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
@@ -2263,13 +2542,339 @@ TEST(Element, extend) {
         // map element which is used for extension
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        extend("root", "new-elements", left, right, hierarchy, "root");
+        ASSERT_NO_THROW(extend0("root", "new-elements", left, right, hierarchy,
+                                "root", 0, false, 2));
         std::string expected_str("[ { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
             << "Actual: " << left->str()
             << "\nExpected: " << expected->str();
     }
+}
+
+/// @brief Create nested lists.
+///
+/// @param leaf The leaf.
+/// @param level The nested level.
+ElementPtr
+mkNestedList(ElementPtr leaf, size_t level) {
+    if (!leaf && !level) {
+        isc_throw(isc::BadValue, "need level > 0 for null leaf");
+    }
+    ElementPtr child = leaf;
+    ElementPtr list;
+    for (size_t i = 0; i < level; ++i) {
+        list = Element::createList();
+        if (child) {
+            list->add(child);
+        }
+        child = list;
+    }
+    return (child);
+}
+
+/// @brief Create nested maps.
+///
+/// @param leaf The leaf.
+/// @param level The nested level.
+ElementPtr
+mkNestedMap(ElementPtr leaf, size_t level) {
+    if (!leaf && !level) {
+        isc_throw(isc::BadValue, "need level > 0 for null leaf");
+    }
+    ElementPtr child = leaf;
+    ElementPtr map;
+    for (size_t i = 0; i < level; ++i) {
+        map = Element::createMap();
+        if (child) {
+            std::ostringstream key;
+            key << (level - (i + 1));
+            map->set(key.str(), child);
+        }
+        child = map;
+    }
+    return (child);
+}
+
+/// @brief Create list cycle.
+///
+/// @param length Cycle length (default 0).
+ElementPtr
+mkCycleList(size_t length = 0) {
+    ElementPtr head = Element::createList();
+    ElementPtr child = head;
+    for (size_t i = 0; i < length; ++i) {
+        ElementPtr list = Element::createList();
+        child->add(list);
+        child = list;
+    }
+    child->add(head);
+    return (head);
+}
+
+/// @brief Create map cycle.
+///
+/// @param length Cycle length (default 0).
+ElementPtr
+mkCycleMap(size_t length = 0) {
+    ElementPtr head = Element::createMap();
+    ElementPtr child = head;
+    for (size_t i = 0; i < length; ++i) {
+        ElementPtr map = Element::createMap();
+        std::ostringstream key;
+        key << i;
+        child->set(key.str(), map);
+        child = map;
+    }
+    child->set("rec", head);
+    return (head);
+}
+
+/// @brief Equals on nested list.
+TEST(Element, nestedListEquals) {
+    ElementPtr leaf = Element::create(1);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr list = mkNestedList(leaf, level);
+        try {
+            EXPECT_TRUE(list->equals(*list));
+        } catch (const isc::BadValue&) {
+            EXPECT_EQ(Element::MAX_NESTING_LEVEL + 1, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief Equals on nested map.
+TEST(Element, nestedMapEquals) {
+    ElementPtr leaf = Element::create(true);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr map = mkNestedMap(leaf, level);
+        try {
+            EXPECT_TRUE(map->equals(*map));
+            } catch (const isc::BadValue&) {
+            EXPECT_EQ(Element::MAX_NESTING_LEVEL + 1, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief Equals on cycle.
+TEST(Element, cycleEquals) {
+    ElementPtr cycle = mkCycleList();
+    EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle = mkCycleList(10);
+    EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle = mkCycleMap();
+    EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle = mkCycleMap(10);
+    EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+}
+
+/// @brief str/toJSON on nested list.
+TEST(Element, nestedListStr) {
+    ElementPtr leaf = Element::create(1);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr list = mkNestedList(leaf, level);
+        try {
+            std::string out = list->str();
+            EXPECT_EQ(4 * level + 1, out.size());
+            std::ostringstream expected;
+            for (size_t i = 0; i < level; i++) {
+                expected << "[ ";
+            }
+            expected << "1";
+            for (size_t i = 0; i < level; i++) {
+                expected << " ]";
+            }
+            EXPECT_EQ(expected.str(), out);
+        } catch (const isc::BadValue&) {
+            EXPECT_EQ(Element::MAX_NESTING_LEVEL + 1, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief str/toJSON on nested map.
+TEST(Element, nestedMapStr) {
+    ElementPtr leaf = Element::create(true);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr map = mkNestedMap(leaf, level);
+        try {
+            std::string out = map->str();
+            std::ostringstream expected;
+            for (size_t i = 0; i < level; i++) {
+                expected << "{ \"" << i << "\": ";
+            }
+            expected << "true";
+            for (size_t i = 0; i < level; i++) {
+                expected <<     " }";
+            }
+            EXPECT_EQ(expected.str(), out);
+        } catch (const isc::BadValue&) {
+            EXPECT_EQ(Element::MAX_NESTING_LEVEL + 1, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief str/toJSON on cycle.
+TEST(Element, cycleStr) {
+    ElementPtr cycle = mkCycleList();
+    EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle = mkCycleList(10);
+    EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle = mkCycleMap();
+    EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle = mkCycleMap(10);
+    EXPECT_THROW(cycle->str(), isc::BadValue);
+}
+
+/// @brief prettyPrint on nested object.
+TEST(Element, nestedPrettyPrint) {
+    ElementPtr leaf = Element::create(string("foo"));
+    size_t level = Element::MAX_NESTING_LEVEL - 1;
+    EXPECT_NO_THROW(prettyPrint(mkNestedList(leaf, level)));
+    EXPECT_NO_THROW(prettyPrint(mkNestedMap(leaf, level)));
+    ++level;
+    EXPECT_THROW(prettyPrint(mkNestedList(leaf, level)), isc::BadValue);
+    EXPECT_THROW(prettyPrint(mkNestedMap(leaf, level)), isc::BadValue);
+}
+
+/// @brief removeEmptyContainersRecursively on nested list.
+TEST(Element, nestedListRemoveEmptyContainersRecursively) {
+    for (size_t level = 1; level < 111; ++level) {
+        ElementPtr list = mkNestedList(ElementPtr(), level);
+        list->removeEmptyContainersRecursively();
+        ASSERT_TRUE(list);
+        if (level <= Element::MAX_NESTING_LEVEL + 1) {
+            EXPECT_TRUE(list->empty());
+        } else {
+            EXPECT_FALSE(list->empty());
+        }
+    }
+}
+
+/// @brief removeEmptyContainersRecursively on nested map.
+TEST(Element, nestedMapRemoveEmptyContainersRecursively) {
+    for (size_t level = 1; level < 111; ++level) {
+        ElementPtr map = mkNestedMap(ElementPtr(), level);
+        map->removeEmptyContainersRecursively();
+        ASSERT_TRUE(map);
+        if (level <= Element::MAX_NESTING_LEVEL + 1) {
+            EXPECT_TRUE(map->empty());
+        } else {
+            EXPECT_FALSE(map->empty());
+        }
+    }
+}
+
+/// @brief fromJSON on nested list.
+TEST(Element, nestedListFromJSON) {
+    ElementPtr leaf = Element::create(1);
+    size_t max_level = 50;
+    ASSERT_LE(max_level, Element::MAX_NESTING_LEVEL);
+    for (size_t level = 1; level < max_level + 10; ++level) {
+        std::ostringstream iss;
+        for (size_t i = 0; i < level; i++) {
+            iss << "[";
+        }
+        iss << 1;
+        for (size_t i = 0; i < level; i++) {
+            iss << "]";
+        }
+        std::stringstream ss;
+        ss << iss.str();
+        ElementPtr expected = mkNestedList(leaf, level);
+        try {
+            int l = 1;
+            int p = 1;
+            ElementPtr list = Element::fromJSON0(ss, "sss", l, p, max_level);
+            EXPECT_TRUE(isEquivalent(list, expected));
+        } catch (const JSONError&) {
+            EXPECT_EQ(max_level, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief fromJSON on nested map.
+TEST(Element, nestedMapFromJSON) {
+    ElementPtr leaf = Element::create(1);
+    size_t max_level = 50;
+    ASSERT_LE(max_level, Element::MAX_NESTING_LEVEL);
+    for (size_t level = 1; level < max_level + 10; ++level) {
+        std::ostringstream iss;
+        for (size_t i = 0; i < level; i++) {
+            iss << "{ \"" << i << "\":";
+        }
+        iss << 1;
+        for (size_t i = 0; i < level; i++) {
+            iss << "}";
+        }
+        std::stringstream ss;
+        ss << iss.str();
+        ElementPtr expected = mkNestedMap(leaf, level);
+        try {
+            int l = 1;
+            int p = 1;
+            ElementPtr map = Element::fromJSON0(ss, "sss", l, p, max_level);
+            EXPECT_TRUE(isEquivalent(map, expected));
+        } catch (const JSONError&) {
+            EXPECT_EQ(max_level, level);
+            break;
+        } catch (const std::exception& e) {
+            FAIL() << "Got exception " << e.what();
+        }
+    }
+}
+
+/// @brief hasCycle on nested list.
+TEST(Element, nestedListHasCycle) {
+    ElementPtr leaf = Element::create(1);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr list = mkNestedList(leaf, level);
+        bool ret = false;
+        ASSERT_NO_THROW(ret = hasCycle(list));
+        EXPECT_FALSE(ret);
+    }
+}
+
+/// @brief hasCycle on nested map.
+TEST(Element, nestedMapHasCycle) {
+    ElementPtr leaf = Element::create(1);
+    for (size_t level = 0; level < 111; ++level) {
+        ElementPtr map = mkNestedMap(leaf, level);
+        bool ret = false;
+        ASSERT_NO_THROW(ret = hasCycle(map));
+        EXPECT_FALSE(ret);
+    }
+}
+
+/// @brief hasCycle on cycle.
+TEST(Element, cycleasCycle) {
+    ElementPtr cycle = mkCycleList();
+    bool ret = false;
+    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    EXPECT_TRUE(ret);
+    cycle = mkCycleList(10);
+    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    EXPECT_TRUE(ret);
+    cycle = mkCycleMap();
+    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    EXPECT_TRUE(ret);
+    cycle = mkCycleMap(10);
+    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    EXPECT_TRUE(ret);
 }
 
 }  // namespace
