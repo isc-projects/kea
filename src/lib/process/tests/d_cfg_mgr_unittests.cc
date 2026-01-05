@@ -313,6 +313,14 @@ TEST_F(DStubCfgMgrTest, redactConfig) {
     expected = "{ \"foo\": { \"password\": \"*****\" }, ";
     expected += "\"next\": { \"secret\": \"bar\" } }";
     EXPECT_EQ(expected, ret->str());
+
+    // Verify that it throws on cycles.
+    ElementPtr cycle = Element::createList();
+    cycle->add(cycle);
+    EXPECT_THROW(redactConfig(cycle), BadValue);
+    cycle = Element::createMap();
+    cycle->set("loop", cycle);
+    EXPECT_THROW(redactConfig(cycle), BadValue);
 }
 
 // Test that user context is not touched when configuration is redacted.

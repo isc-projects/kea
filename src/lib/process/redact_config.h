@@ -26,13 +26,15 @@ namespace process {
 /// configuration and smaller subtrees in recursive calls.
 /// @param json_path JSON path to redact
 /// @param obscure new value of secrets / passwords
+/// @param max_nesting_depth maximum nesting depth
 ///
 /// @return a copy of the config where passwords and secrets were replaced by
 /// asterisks so it can be safely logged to an unprivileged place.
 isc::data::ConstElementPtr
 redactConfig(isc::data::ConstElementPtr const& element,
              std::list<std::string> const& json_path = {"*"},
-             std::string obscure = "*****");
+             std::string obscure = "*****",
+             unsigned max_nesting_depth = isc::data::Element::MAX_NESTING_LEVEL);
 
 } // namespace process
 } // namespace isc
