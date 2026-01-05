@@ -2809,7 +2809,7 @@ TEST(Element, nestedListFromJSON) {
 
 /// @brief fromJSON on nested map.
 TEST(Element, nestedMapFromJSON) {
-    ElementPtr leaf = Element::create(1);
+    ElementPtr leaf = Element::create(true);
     size_t max_level = 50;
     ASSERT_LE(max_level, Element::MAX_NESTING_LEVEL);
     for (size_t level = 1; level < max_level + 10; ++level) {
@@ -2817,7 +2817,7 @@ TEST(Element, nestedMapFromJSON) {
         for (size_t i = 0; i < level; i++) {
             iss << "{ \"" << i << "\":";
         }
-        iss << 1;
+        iss << "true";
         for (size_t i = 0; i < level; i++) {
             iss << "}";
         }
@@ -2851,7 +2851,7 @@ TEST(Element, nestedListHasCycle) {
 
 /// @brief hasCycle on nested map.
 TEST(Element, nestedMapHasCycle) {
-    ElementPtr leaf = Element::create(1);
+    ElementPtr leaf = Element::create(true);
     for (size_t level = 0; level < 111; ++level) {
         ElementPtr map = mkNestedMap(leaf, level);
         bool ret = false;
@@ -2875,6 +2875,148 @@ TEST(Element, cycleasCycle) {
     cycle = mkCycleMap(10);
     ASSERT_NO_THROW(ret = hasCycle(cycle));
     EXPECT_TRUE(ret);
+}
+
+/// @brief Create shared tree using lists.
+ElementPtr
+mkSharedLists(unsigned level) {
+    ElementPtr ret;
+    for (unsigned i = 0; i < level; ++i) {
+        ElementPtr list = Element::createList();
+        if (i != 0) {
+            list->add(ret);
+            list->add(ret);
+        }
+        ret = list;
+    }
+    return (ret);
+}
+
+/// @brief Create shared tree using maps.
+ElementPtr
+mkSharedMaps(unsigned level) {
+    ElementPtr ret;
+    for (unsigned i = 0; i < level; ++i) {
+        ElementPtr map = Element::createMap();
+        if (i != 0) {
+            map->set("left", ret);
+            map->set("right", ret);
+        }
+        ret = map;
+    }
+    return (ret);
+}
+
+/// @brief Count total number of elements
+size_t
+countTotal(ConstElementPtr x) {
+    if (!x) {
+        return (0);
+    }
+    size_t cnt = 1;
+    if (x->getType() == Element::list) {
+        for (auto const& i : x->listValue()) {
+            cnt += countTotal(i);
+        }
+    } else if (x->getType() == Element::map) {
+        for (auto const& i : x->mapValue()) {
+            cnt += countTotal(i.second);
+        }
+    }
+    return (cnt);
+}
+
+/// @brief Count number of distinct elements.
+void
+countShared0(ConstElementPtr x, std::set<ConstElementPtr>& seen) {
+    if (!x) {
+        return;
+    }
+    if (seen.count(x) > 0) {
+        return;
+    }
+    size_t cnt = 1;
+    seen.insert(x);
+    if (x->getType() == Element::list) {
+        for (auto const& i : x->listValue()) {
+            countShared0(i, seen);
+        }
+    } else if (x->getType() == Element::map) {
+        for (auto const& i : x->mapValue()) {
+            countShared0(i.second, seen);
+        }
+    }
+}
+
+size_t
+countShared(ConstElementPtr x) {
+    std::set<ConstElementPtr> seen;
+    countShared0(x, seen);
+    return (seen.size());
+}
+
+/// @brief Test shared tree using lists.
+TEST(Element, sharedTreeList) {
+    ConstElementPtr t10 = mkSharedLists(10);
+    for (unsigned i = 0; i < 20; ++i) {
+        ConstElementPtr t = copy(t10, i);
+        EXPECT_EQ(1023, countTotal(t));
+        if (i == 0) {
+            EXPECT_EQ(10U, countShared(t));
+        } else if (i >= 10) {
+            EXPECT_EQ(1023, countShared(t));
+        } else {
+            EXPECT_EQ((1U << (i + 1)) + (9U - (i + 1)), countShared(t));
+        }
+    }
+}
+
+/// @brief Test shared tree using maps.
+TEST(Element, sharedTreeMap) {
+    ConstElementPtr t10 = mkSharedMaps(10);
+    for (unsigned i = 0; i < 20; ++i) {
+        ConstElementPtr t = copy(t10, i);
+        EXPECT_EQ(1023, countTotal(t));
+        if (i == 0) {
+            EXPECT_EQ(10U, countShared(t));
+        } else if (i >= 10) {
+            EXPECT_EQ(1023, countShared(t));
+        } else {
+            EXPECT_EQ((1U << (i + 1)) + (9U - (i + 1)), countShared(t));
+        }
+    }
+}
+
+/// @brief getNestDeph on lists.
+TEST(Element, getNestDepthList) {
+    ASSERT_EQ(0U, getNestDepth(ConstElementPtr()));
+    ElementPtr leaf = Element::create(1);
+    for (size_t level = 0; level < 111; ++level) {
+         unsigned depth = getNestDepth(mkNestedList(leaf, level));
+         if (level >= Element::MAX_NESTING_LEVEL) {
+             EXPECT_EQ(depth, Element::MAX_NESTING_LEVEL);
+         } else {
+             EXPECT_EQ(depth, level + 1);
+         }
+    }
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleList()));
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleList(10)));
+}
+
+/// @brief getNestDeph on maps.
+TEST(Element, getNestDepthMap) {
+    ASSERT_EQ(0U, getNestDepth(ConstElementPtr()));
+    ElementPtr leaf = Element::create(true);
+    for (size_t level = 0; level < 111; ++level) {
+         unsigned depth = getNestDepth(mkNestedMap(leaf, level));
+         if (level >= Element::MAX_NESTING_LEVEL) {
+             EXPECT_EQ(depth, Element::MAX_NESTING_LEVEL);
+         } else {
+             EXPECT_EQ(depth, level + 1);
+         }
+    }
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleMap()));
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleMap(10)));
 }
 
 }  // namespace
