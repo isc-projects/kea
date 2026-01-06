@@ -77,7 +77,7 @@ ElementPtrType
         } else {
             ConstElementPtr child(element->get(next_key));
             if (child) {
-                result = isc::data::copy(element, 1);
+                result = isc::data::copy(element, 1U);
                 json_path.pop_front();
                 result->set(next_key,
                             redact(child, json_path, obscure, level - 1));

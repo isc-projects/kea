@@ -1077,7 +1077,7 @@ TEST(Element, copy) {
     ElementPtr elem;
     EXPECT_THROW(copy(elem, 0), isc::BadValue);
     EXPECT_THROW(copy(elem), isc::BadValue);
-    EXPECT_THROW(copy(elem, -1), isc::BadValue);
+    EXPECT_THROW(copy(elem, static_cast<unsigned>(-1)), isc::BadValue);
 
     // Basic types
     elem.reset(new IntElement(1));
