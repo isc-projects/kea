@@ -24,7 +24,7 @@ ElementPtrType
         isc_throw(BadValue, "redact() got a null pointer");
     }
     if (level == 0) {
-        isc_throw(BadValue, "redact() got too deep recursion");
+        isc_throw(BadValue, "redact() elements nested too deeply");
     }
 
     string const next_key(json_path.empty() ? string() : json_path.front());

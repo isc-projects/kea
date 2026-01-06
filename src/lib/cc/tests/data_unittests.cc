@@ -1701,6 +1701,7 @@ TEST(Element, mergeDiffAddBadParams) {
         // list element which is updated
         right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
         EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 1),
                      isc::BadValue);
     }
@@ -1751,6 +1752,7 @@ TEST(Element, mergeDiffAddBadParams) {
         // list element which is updated
         right_right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 3 levels of nesting so throw with 2 (and pass with 3 or more).
         EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 2),
                      isc::BadValue);
     }
@@ -2069,6 +2071,7 @@ TEST(Element, mergeDiffDelBadParams) {
         // the key can not be removed
         right->set("elements-other", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
         EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 1),
                      isc::BadValue);
     }
@@ -2133,6 +2136,7 @@ TEST(Element, mergeDiffDelBadParams) {
         // the key can not be removed
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 3 levels of nesting so throw with 2 (and pass with 3 or more).
         EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 2),
                      isc::BadValue);
     }
@@ -2420,6 +2424,7 @@ TEST(Element, extendBadParam) {
         // map element which is used for extension
         right->set("elements", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
         EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
                              "root", 0, false, 1), isc::BadValue);
     }
@@ -2445,6 +2450,7 @@ TEST(Element, extendBadParam) {
         // map element which is used for extension
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
+        // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
         EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
                              "root", 0, false, 1), isc::BadValue);
     }
@@ -2838,42 +2844,42 @@ TEST(Element, nestedMapFromJSON) {
     }
 }
 
-/// @brief hasCycle on nested list.
+/// @brief IsCircular on nested list.
 TEST(Element, nestedListHasCycle) {
     ElementPtr leaf = Element::create(1);
     for (size_t level = 0; level < 111; ++level) {
         ElementPtr list = mkNestedList(leaf, level);
         bool ret = false;
-        ASSERT_NO_THROW(ret = hasCycle(list));
+        ASSERT_NO_THROW(ret = IsCircular(list));
         EXPECT_FALSE(ret);
     }
 }
 
-/// @brief hasCycle on nested map.
+/// @brief IsCircular on nested map.
 TEST(Element, nestedMapHasCycle) {
     ElementPtr leaf = Element::create(true);
     for (size_t level = 0; level < 111; ++level) {
         ElementPtr map = mkNestedMap(leaf, level);
         bool ret = false;
-        ASSERT_NO_THROW(ret = hasCycle(map));
+        ASSERT_NO_THROW(ret = IsCircular(map));
         EXPECT_FALSE(ret);
     }
 }
 
-/// @brief hasCycle on cycle.
+/// @brief IsCircular on cycle.
 TEST(Element, cycleasCycle) {
     ElementPtr cycle = mkCycleList();
     bool ret = false;
-    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
     cycle = mkCycleList(10);
-    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
     cycle = mkCycleMap();
-    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
     cycle = mkCycleMap(10);
-    ASSERT_NO_THROW(ret = hasCycle(cycle));
+    ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
 }
 
@@ -2935,7 +2941,6 @@ countShared0(ConstElementPtr x, std::set<ConstElementPtr>& seen) {
     if (seen.count(x) > 0) {
         return;
     }
-    size_t cnt = 1;
     seen.insert(x);
     if (x->getType() == Element::list) {
         for (auto const& i : x->listValue()) {
@@ -2955,7 +2960,7 @@ countShared(ConstElementPtr x) {
     return (seen.size());
 }
 
-/// @brief Test shared tree using lists.
+/// @brief Test copy of shared tree using lists.
 TEST(Element, sharedTreeList) {
     ConstElementPtr t10 = mkSharedLists(10);
     for (unsigned i = 0; i < 20; ++i) {
@@ -2971,7 +2976,7 @@ TEST(Element, sharedTreeList) {
     }
 }
 
-/// @brief Test shared tree using maps.
+/// @brief Test copy of shared tree using maps.
 TEST(Element, sharedTreeMap) {
     ConstElementPtr t10 = mkSharedMaps(10);
     for (unsigned i = 0; i < 20; ++i) {

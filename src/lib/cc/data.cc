@@ -605,7 +605,7 @@ ElementPtr
 fromStringstreamList(std::istream& in, const std::string& file, int& line,
                      int& pos, unsigned level) {
     if (level == 0) {
-        isc_throw(JSONError, "fromJSON got too deep recursion");
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
     }
     int c = 0;
     ElementPtr list = Element::createList(Element::Position(file, line, pos));
@@ -630,7 +630,7 @@ ElementPtr
 fromStringstreamMap(std::istream& in, const std::string& file, int& line,
                     int& pos, unsigned level) {
     if (level == 0) {
-        isc_throw(JSONError, "fromJSON got too deep recursion");
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
     }
     ElementPtr map = Element::createMap(Element::Position(file, line, pos));
     skipChars(in, WHITESPACE, line, pos);
@@ -745,7 +745,7 @@ ElementPtr
 Element::fromJSON0(std::istream& in, const std::string& file, int& line,
                    int& pos, unsigned level) {
     if (level == 0) {
-        isc_throw(JSONError, "fromJSON got too deep recursion");
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
     }
     int c = 0;
     ElementPtr element;
@@ -1838,7 +1838,7 @@ typedef std::set<ConstElementPtr> Arc;
 
 // Helper function walking on the supposed tree.
 bool
-hasCycle0(ConstElementPtr element, Arc arc) {
+IsCircular0(ConstElementPtr element, Arc arc) {
     // Sanity check.
     if (!element) {
         return (false);
@@ -1860,7 +1860,7 @@ hasCycle0(ConstElementPtr element, Arc arc) {
     arc.insert(element);
     if (type == Element::list) {
         for (auto const& it : element->listValue()) {
-            if (hasCycle0(it, arc)) {
+            if (IsCircular0(it, arc)) {
                 return (true);
             }
         }
@@ -1868,7 +1868,7 @@ hasCycle0(ConstElementPtr element, Arc arc) {
     }
     // The argument is a map.
     for (auto const& it : element->mapValue()) {
-        if (hasCycle0(it.second, arc)) {
+        if (IsCircular0(it.second, arc)) {
             return (true);
         }
     }
@@ -1878,8 +1878,8 @@ hasCycle0(ConstElementPtr element, Arc arc) {
 } // end anonymous namespace
 
 bool
-hasCycle(ConstElementPtr element) {
-    return (hasCycle0(element, Arc()));
+IsCircular(ConstElementPtr element) {
+    return (IsCircular0(element, Arc()));
 }
 
 unsigned
