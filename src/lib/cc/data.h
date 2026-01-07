@@ -899,27 +899,34 @@ public:
 
     /// @brief Converts the Element to JSON format and appends it to the given
     /// stringstream.
+    ///
+    /// @param ss The output stream where to append the JSON format.
     void toJSON(std::ostream& ss) const override;
 
     /// @brief Converts the Element to JSON format and appends it to the given
     /// stringstream.
     ///
-    /// Variant with nesting depth: to be used only in tests.
-    void toJSON0(std::ostream& ss, unsigned) const override;
+    /// @note: Variant with nesting depth: to be used only in tests.
+    /// @param ss The output stream where to append the JSON format.
+    /// @param level The maximum level of recursion. Ignored.
+    void toJSON0(std::ostream& ss, unsigned lvel) const override;
 
     /// @brief Checks whether the other Element is equal.
     ///
+    /// @param other The otehr element to caompare with.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     bool equals(const Element& other) const override;
 
     /// @brief Checks whether the other Element is equal.
     ///
-    /// Variant with nesting depth: to be used only in tests.
+    /// @note: Variant with nesting depth: to be used only in tests.
     ///
+    /// @param other The otehr element to caompare with.
+    /// @param level The maximum level of recursion. Ignored.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
-    bool equals0(const Element& other, unsigned) const override;
+    bool equals0(const Element& other, unsigned level) const override;
 
 private:
     /// @brief the underlying stored value
@@ -1125,33 +1132,46 @@ bool isNull(ConstElementPtr p);
 ///
 /// @brief Remove all values from the first ElementPtr that are
 /// equal in the second. Both ElementPtrs MUST be MapElements
+///
 /// The use for this function is to end up with a MapElement that
 /// only contains new and changed values (for ModuleCCSession and
 /// configuration update handlers)
-/// Raises a TypeError if a or b are not MapElements
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @throw TypeError if a or b are not MapElements
 void removeIdentical(ElementPtr a, ConstElementPtr b);
 
 /// @brief Create a new ElementPtr from the first ElementPtr, removing all
 /// values that are equal in the second. Both ElementPtrs MUST be MapElements.
-/// The returned ElementPtr will be a MapElement that only contains new and
-/// changed values (for ModuleCCSession and configuration update handlers).
-/// Raises a TypeError if a or b are not MapElements
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @throw TypeError if a or b are not MapElements
+/// @return ElementPtr will be a MapElement that only contains new and changed
+/// values (for ModuleCCSession and configuration update handlers).
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
-/// @brief Merges the data from other into element. (on the first level). Both
-/// elements must be MapElements. Every string, value pair in other is copied
-/// into element (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is a NullElement, in which case the key is removed from
-/// element, rather than setting the value to the given NullElement.
+/// @brief Merges the data from other into element. (on the first level).
+
+/// Both elements must be MapElements. Every string, value pair in
+/// other is copied into element (the ElementPtr of value is copied,
+/// this is not a new object) Unless the value is a NullElement, in
+/// which case the key is removed from element, rather than setting
+/// the value to the given NullElement.
 /// This way, we can remove values from for instance maps with configuration
 /// data (which would then result in reverting back to the default).
-/// Raises a TypeError if either ElementPtr is not a MapElement
+///
+/// @param element Pointer to the Element holding data.
+/// @param other Pointer to the other / from Element.
+/// @throw TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
 /// @brief Function used to check if two MapElements refer to the same
-/// configuration data. It can check if the two MapElements have the same or
-/// have equivalent value for some members.
-/// e.g.
+/// configuration data.
+///
+/// It can check if the two MapElements have the same or have
+/// equivalent value for some members.  e.g.
 /// (
 ///  left->get("prefix")->stringValue() == right->get("prefix")->stringValue() &&
 ///  left->get("prefix-len")->intValue() == right->get("prefix-len")->intValue() &&
@@ -1195,7 +1215,7 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 
 /// @brief Merges the diff data by adding the missing elements from 'other'
 /// to 'element' (recursively). Both elements must be the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
+///
 /// @note
 /// for non map and list elements the values are updated with the new values
 /// for maps:
@@ -1211,17 +1231,31 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
                   size_t idx = 0);
-/// Variant with nesting depth: to be used only in tests.
+
+/// @brief Merges the diff data by adding the missing elements from 'other'
+/// to 'element' (recursively). Both elements must be the same Element type.
+///
+/// @note: Variant with nesting depth: to be used only in tests.
+///
+/// @param element The element to which new data is added.
+/// @param other The element containing the data which needs to be added.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffAdd0(ElementPtr& element, ElementPtr& other,
                    HierarchyDescriptor& hierarchy, std::string key,
                    size_t idx, unsigned level);
 
 /// @brief Merges the diff data by removing the data present in 'other' from
 /// 'element' (recursively). Both elements must be the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
+////
 /// for non map and list elements the values are set to NullElement
 /// for maps:
 ///     - non map and list elements are removed from the map
@@ -1236,10 +1270,23 @@ void mergeDiffAdd0(ElementPtr& element, ElementPtr& other,
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffDel(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
                   size_t idx = 0);
-/// Variant with nesting depth: to be used only in tests.
+/// @brief Merges the diff data by removing the data present in 'other' from
+/// 'element' (recursively). Both elements must be the same Element type.
+///
+/// @note: Variant with nesting depth: to be used only in tests.
+///
+/// @param element The element from which new data is removed.
+/// @param other The element containing the data which needs to be removed.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
                    HierarchyDescriptor& hierarchy, std::string key,
                    size_t idx, unsigned level);
@@ -1247,7 +1294,6 @@ void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
 /// @brief Extends data by adding the specified 'extension' elements from
 /// 'other' inside the 'container' element (recursively). Both elements must be
 /// the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
 ///
 /// @param container The container holding the data that must be extended.
 /// @param extension The name of the element that contains the data that must be
@@ -1260,11 +1306,31 @@ void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
 /// @param idx The level inside the hierarchy the current element is located.
 /// @param alter The flag which indicates if the current element should be
 /// updated.
+/// @throw TypeError if elements are not the same Element type.
 void extend(const std::string& container, const std::string& extension,
             ElementPtr& element, ElementPtr& other,
             HierarchyDescriptor& hierarchy, std::string key, size_t idx = 0,
             bool alter = false);
-/// Variant with nesting depth: to be used only in tests.
+
+/// @brief Extends data by adding the specified 'extension' elements from
+/// 'other' inside the 'container' element (recursively). Both elements must be
+/// the same Element type.
+///
+/// @note: Variant with nesting depth: to be used only in tests.
+///
+/// @param container The container holding the data that must be extended.
+/// @param extension The name of the element that contains the data that must be
+/// added (if not already present) in order to extend the initial data.
+/// @param element The element from which new data is added.
+/// @param other The element containing the data which needs to be added.
+/// @param hierarchy The hierarchy describing the elements relations and
+/// identification keys.
+/// @param key The container holding the current element.
+/// @param idx The level inside the hierarchy the current element is located.
+/// @param alter The flag which indicates if the current element should be
+/// updated.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void extend0(const std::string& container, const std::string& extension,
              ElementPtr& element, ElementPtr& other,
              HierarchyDescriptor& hierarchy, std::string key, size_t idx,
@@ -1278,20 +1344,24 @@ void extend0(const std::string& container, const std::string& extension,
 /// @note: copy is the ONLY method taking a level argument which make
 /// sense outside unit tests, and also which accepts the 0 value.
 ///
-/// @param from the pointer to the element to copy
+/// @param from the pointer to the element to copy.
 /// @param level nesting level (default is 100, 0 means shallow copy).
-/// @return a pointer to a fresh copy
+/// @return Pointer to a fresh copy
 /// @throw raises a BadValue is a null pointer occurs.
 ElementPtr copy(ConstElementPtr from, unsigned level = Element::MAX_NESTING_LEVEL);
 
-/// @brief Compares the data with other using unordered lists
+/// @brief Compares the data with other using unordered lists.
 ///
 /// This comparison function handles lists (JSON arrays) as
 /// unordered multi sets (multi means an item can occurs more
 /// than once as soon as it occurs the same number of times).
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @return Result of loose comparison.
 bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 
-/// @brief Check if the data includes a cycle.
+/// @brief Check if the data is circular.
 ///
 /// @param element The @c ConstElementPtr object to check.
 /// @return True if the argument is ciccular, false otherwise.
@@ -1313,23 +1383,23 @@ unsigned getNestDepth(ConstElementPtr element,
 /// indentation @c indent and add at each level @c step spaces.
 /// For maps if there is a comment property it is printed first.
 ///
-/// @param element A @c ConstElementPtr to pretty print
-/// @param out A @c std::ostream on which the print operation is performed
-/// @param indent An initial number of spaces to add each new line
-/// @param step A number of spaces to add to indentation at a new level
+/// @param element A @c ConstElementPtr to pretty print.
+/// @param out A @c std::ostream on which the print operation is performed.
+/// @param indent An initial number of spaces to add each new line.
+/// @param step A number of spaces to add to indentation at a new level.
 void prettyPrint(ConstElementPtr element, std::ostream& out,
                  unsigned indent = 0, unsigned step = 2);
 
-/// @brief Pretty prints the data into string
+/// @brief Pretty prints the data into string.
 ///
 /// This operator converts the @c ConstElementPtr into a string with
 /// an initial indentation @c indent and add at each level @c step spaces.
 /// For maps if there is a comment property it is printed first.
 ///
-/// @param element A @c ConstElementPtr to pretty print
-/// @param indent An initial number of spaces to add each new line
-/// @param step A number of spaces to add to indentation at a new level
-/// @return a string where element was pretty printed
+/// @param element A @c ConstElementPtr to pretty print.
+/// @param indent An initial number of spaces to add each new line.
+/// @param step A number of spaces to add to indentation at a new level.
+/// @return a string where element was pretty printed.
 std::string prettyPrint(ConstElementPtr element,
                         unsigned indent = 0, unsigned step = 2);
 
@@ -1361,8 +1431,31 @@ std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 /// parameter @c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element& e);
 
+/// @brief Test equality.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the two elements are equal, false otherwise.
 bool operator==(const Element& a, const Element& b);
+
+/// @brief Test inequality.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the two elements are not equal, false otherwise.
 bool operator!=(const Element& a, const Element& b);
+
+/// @brief Test less than.
+///
+/// @note: both arguments must have the same scalar type i.e. integer, double,
+/// boolean or string.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the value of the first element is less than the value
+/// of the second element.
+/// @throw BadValue when arguments have different type or the type is not
+/// a scalar type.
 bool operator<(const Element& a, const Element& b);
 
 }  // namespace data
