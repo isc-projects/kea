@@ -685,20 +685,6 @@ public:
                                int& line, int &pos,
                                unsigned level = MAX_NESTING_LEVEL);
 
-    /// @brief Creates an Element from the given input stream.
-    ///
-    /// @note: Variant with nesting depth: to be used only in tests.
-    /// @param in The string to parse the element from.
-    /// @param file The input file name.
-    /// @param line A reference to the int where the function keeps
-    /// track of the current line.
-    /// @param pos A reference to the int where the function keeps
-    /// track of the current position within the current line.
-
-    /// @return An ElementPtr that contains the element(s) specified
-    /// in the given input stream.
-    /// @throw JSONError
-
     /// Reads contents of specified file and interprets it as JSON.
     ///
     /// @param file_name name of the file to read
