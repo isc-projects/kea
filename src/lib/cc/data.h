@@ -78,7 +78,7 @@ public:
     /// containing lists or/and maps. This recursion is limited to using
     /// an allowed level of nesting argument which is decremented at
     /// each recursive call until it reaches 0. This was extended to
-    /// recurvive parsing of a JSON text as stack overflows were reported
+    /// recursive parsing of a JSON text as stack overflows were reported
     /// with excessive recursion on specially crafted input.
     /// This constant is the default allowed level of nesting, its value
     /// is arbitrary (but enough for all realistic cases) and used before
@@ -134,7 +134,7 @@ public:
     ///
     /// The object containing two zeros is a default for most of the
     /// methods creating @c Element objects. The returned value is static
-    /// so as it is not created everytime the function with the default
+    /// so as it is not created every time the function with the default
     /// position argument is called.
     static const Position& ZERO_POSITION() {
         static Position position("", 0, 0);
@@ -184,7 +184,7 @@ protected:
 
 
 public:
-    // Base class; make dustructor virtual.
+    // Base class; make destructor virtual.
     virtual ~Element() {}
 
     /// @return the type of this element.
@@ -202,7 +202,7 @@ public:
         return (position_);
     }
 
-    /// @breif Returns a string representing the Element and all its
+    /// @brief Returns a string representing the Element and all its
     /// child elements
     ///
     /// @note: that this is different from stringValue(),
@@ -246,7 +246,7 @@ public:
 
     /// @brief Test equality.
     ///
-    /// @param other The otehr element to caompare with.
+    /// @param other The other element to compare with.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     /// @throw BadValue when there are more than MAX_NESTING_LEVEL nesting
@@ -257,14 +257,14 @@ public:
     ///
     /// @note: Variant with nesting depth: to be used only in tests.
     ///
-    /// @param other The otehr element to caompare with.
+    /// @param other The other element to compare with.
     /// @param level The maximum level of recursion.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     /// @throw BadValue when nesting depth is more than level.
     virtual bool equals0(const Element& other, unsigned level) const = 0;
 
-    /// @breif Converts the Element to JSON format and appends it to
+    /// @brief Converts the Element to JSON format and appends it to
     /// the given output stream.
     ///
     /// @param ss The output stream where to append the JSON format.
@@ -272,7 +272,7 @@ public:
     /// levels, e.g. when arguments contain a cycle.
     virtual void toJSON(std::ostream& ss) const = 0;
 
-    /// @breif Converts the Element to JSON format and appends it to
+    /// @brief Converts the Element to JSON format and appends it to
     /// the given output stream.
     ///
     /// @note: Variant with nesting depth: to be used only in tests.
@@ -909,11 +909,11 @@ public:
     /// @note: Variant with nesting depth: to be used only in tests.
     /// @param ss The output stream where to append the JSON format.
     /// @param level The maximum level of recursion. Ignored.
-    void toJSON0(std::ostream& ss, unsigned lvel) const override;
+    void toJSON0(std::ostream& ss, unsigned level) const override;
 
     /// @brief Checks whether the other Element is equal.
     ///
-    /// @param other The otehr element to caompare with.
+    /// @param other The other element to compare with.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     bool equals(const Element& other) const override;
@@ -922,7 +922,7 @@ public:
     ///
     /// @note: Variant with nesting depth: to be used only in tests.
     ///
-    /// @param other The otehr element to caompare with.
+    /// @param other The other element to compare with.
     /// @param level The maximum level of recursion. Ignored.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
@@ -1364,15 +1364,15 @@ bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 /// @brief Check if the data is circular.
 ///
 /// @param element The @c ConstElementPtr object to check.
-/// @return True if the argument is ciccular, false otherwise.
+/// @return True if the argument is circular, false otherwise.
 bool IsCircular(ConstElementPtr element);
 
 /// @brief Compute the nesting depth.
 ///
 /// @param element The @c ConstElementPtr object.
 /// @param max_depth Maximal nesting depth.
-/// @return The nesting depth or max_depth if the objet has deeper nesting
-/// including a cycle.
+/// @return The nesting depth or max_depth if the object has deeper nesting
+/// including being circular.
 unsigned getNestDepth(ConstElementPtr element,
                       unsigned max_depth = Element::MAX_NESTING_LEVEL);
 
