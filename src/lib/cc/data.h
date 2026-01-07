@@ -404,7 +404,7 @@ public:
 
     /// @brief Set the boolean value.
     ///
-    /// @param v The new boolean value.
+    /// @param t The new boolean value.
     /// @return False.
     virtual bool setValue(const bool t);
 
@@ -428,7 +428,7 @@ public:
 
     /// @brief Set the integer value (long int overload).
     ///
-    /// @param v The new integer value.
+    /// @param i The new integer value.
     /// @return True (and set the value) when the Element type is integer,
     /// false otherwise.
     bool setValue(const long int i) {
@@ -437,7 +437,7 @@ public:
 
     /// @brief Set the integer value (int overload).
     ///
-    /// @param v The new integer value.
+    /// @param i The new integer value.
     /// @return True (and set the value) when the Element type is integer,
     /// false otherwise.
     bool setValue(const int i) {
@@ -593,6 +593,7 @@ public:
     /// @brief Create a BigIntElement.
     ///
     /// @param i The big integer.
+    /// @param pos The position.
     /// @return The BigIntElement with the argument at the position.
     static ElementPtr create(const isc::util::int128_t& i,
                              const Position& pos = ZERO_POSITION());
@@ -600,13 +601,15 @@ public:
     /// @brief Create a DoubleElement.
     ///
     /// @param d The double.
+    /// @param pos The position.
     /// @return The DoubleElement with the argument at the position.
     static ElementPtr create(const double d,
                              const Position& pos = ZERO_POSITION());
 
     /// @brief Create a BoolElement.
     ///
-    /// @param s The boolean.
+    /// @param b The boolean.
+    /// @param pos The position.
     /// @return The BoolElement with the argument at the position.
     static ElementPtr create(const bool b,
                              const Position& pos = ZERO_POSITION());
@@ -614,6 +617,7 @@ public:
     /// @brief Create a StringElement.
     ///
     /// @param s The string.
+    /// @param pos The position.
     /// @return The StringElement with the argument at the position.
     static ElementPtr create(const std::string& s,
                              const Position& pos = ZERO_POSITION());
@@ -624,6 +628,7 @@ public:
     /// @brief Create a StringElement (char* overload).
     ///
     /// @param s The string.
+    /// @param pos The position.
     /// @return The StringElement with the argument at the position.
     static ElementPtr create(const char *s,
                              const Position& pos = ZERO_POSITION());
@@ -797,51 +802,7 @@ protected:
     /// @brief Remove all empty maps and lists from this Element and its
     /// descendants.
     /// @param level nesting level.
-    void removeEmptyContainersRecursively0(unsigned level) {
-        if (level <= 0) {
-            // Cycles are by definition not empty so no need to throw.
-            return;
-        }
-        if (type_ == list || type_ == map) {
-            size_t s(size());
-            for (size_t i = 0; i < s; ++i) {
-                // Get child.
-                ElementPtr child;
-                if (type_ == list) {
-                    child = getNonConst(i);
-                } else if (type_ == map) {
-                    std::string const key(get(i)->stringValue());
-                    // The ElementPtr - ConstElementPtr disparity between
-                    // ListElement and MapElement is forcing a const cast here.
-                    // It's undefined behavior to modify it after const casting.
-                    // The options are limited. I've tried templating, moving
-                    // this function from a member function to free-standing and
-                    // taking the Element template as argument. I've tried
-                    // making it a virtual function with overridden
-                    // implementations in ListElement and MapElement. Nothing
-                    // works.
-                    child = boost::const_pointer_cast<Element>(get(key));
-                }
-
-                // Makes no sense to continue for non-container children.
-                if (child->getType() != list && child->getType() != map) {
-                    continue;
-                }
-
-                // Recurse if not empty.
-                if (!child->empty()){
-                    child->removeEmptyContainersRecursively0(level - 1);
-                }
-
-                // When returning from recursion, remove if empty.
-                if (child->empty()) {
-                    remove(i);
-                    --i;
-                    --s;
-                }
-            }
-        }
-    }
+    void removeEmptyContainersRecursively0(unsigned level);
 };
 
 /// Notes: IntElement type is changed to int64_t.
@@ -1447,15 +1408,15 @@ bool operator!=(const Element& a, const Element& b);
 
 /// @brief Test less than.
 ///
-/// @note: both arguments must have the same scalar type i.e. integer, double,
-/// boolean or string.
+/// @note: both arguments must have the same supported type i.e. integer,
+/// double, boolean or string.
 ///
 /// @param a First element.
 /// @param b Second Element.
 /// @return True when the value of the first element is less than the value
 /// of the second element.
 /// @throw BadValue when arguments have different type or the type is not
-/// a scalar type.
+/// supported.
 bool operator<(const Element& a, const Element& b);
 
 }  // namespace data

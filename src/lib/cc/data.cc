@@ -53,6 +53,53 @@ operator<<(std::ostream& out, const Element::Position& pos) {
     return (out);
 }
 
+void
+Element::removeEmptyContainersRecursively0(unsigned level) {
+    if (level <= 0) {
+        // Cycles are by definition not empty so no need to throw.
+        return;
+    }
+    if (type_ == list || type_ == map) {
+        size_t s(size());
+        for (size_t i = 0; i < s; ++i) {
+            // Get child.
+            ElementPtr child;
+            if (type_ == list) {
+                child = getNonConst(i);
+            } else if (type_ == map) {
+                std::string const key(get(i)->stringValue());
+                // The ElementPtr - ConstElementPtr disparity between
+                // ListElement and MapElement is forcing a const cast here.
+                // It's undefined behavior to modify it after const casting.
+                // The options are limited. I've tried templating, moving
+                // this function from a member function to free-standing and
+                // taking the Element template as argument. I've tried
+                // making it a virtual function with overridden
+                // implementations in ListElement and MapElement. Nothing
+                // works.
+                child = boost::const_pointer_cast<Element>(get(key));
+            }
+
+            // Makes no sense to continue for non-container children.
+            if (child->getType() != list && child->getType() != map) {
+                continue;
+            }
+
+            // Recurse if not empty.
+            if (!child->empty()){
+                child->removeEmptyContainersRecursively0(level - 1);
+            }
+
+            // When returning from recursion, remove if empty.
+            if (child->empty()) {
+                remove(i);
+                --i;
+                --s;
+            }
+        }
+    }
+}
+
 std::string
 Element::str() const {
     std::stringstream ss;
