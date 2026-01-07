@@ -1702,7 +1702,7 @@ TEST(Element, mergeDiffAddBadParams) {
         right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
-        EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 1),
+        EXPECT_THROW(mergeDiffAdd(left, right, hierarchy, "root", 0, 1),
                      isc::BadValue);
     }
     {
@@ -1753,7 +1753,7 @@ TEST(Element, mergeDiffAddBadParams) {
         right_right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 3 levels of nesting so throw with 2 (and pass with 3 or more).
-        EXPECT_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 2),
+        EXPECT_THROW(mergeDiffAdd(left, right, hierarchy, "root", 0, 2),
                      isc::BadValue);
     }
 }
@@ -1905,7 +1905,7 @@ TEST(Element, mergeDiffAdd) {
         // list element which is updated
         right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 2));
+        ASSERT_NO_THROW(mergeDiffAdd(left, right, hierarchy, "root", 0, 2));
         std::string expected_str("{ \"elements\": { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" }, "
                                    "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
                                    "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
@@ -1961,7 +1961,7 @@ TEST(Element, mergeDiffAdd) {
         // list element which is updated
         right_right->set("other", right_other_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(mergeDiffAdd0(left, right, hierarchy, "root", 0, 3));
+        ASSERT_NO_THROW(mergeDiffAdd(left, right, hierarchy, "root", 0, 3));
         std::string expected_str("[ { \"elements\": \"right\", \"id\": 0, \"new-elements\": \"new\", "
                                      "\"other\": [ \"left-other-left\", \"left-other-left-other\", \"other-other\", \"right-other-right\", \"right-other-right-other\", \"other-other\" ], "
                                      "\"other-elements\": \"other\" }, "
@@ -2072,7 +2072,7 @@ TEST(Element, mergeDiffDelBadParams) {
         right->set("elements-other", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
-        EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 1),
+        EXPECT_THROW(mergeDiffDel(left, right, hierarchy, "root", 0, 1),
                      isc::BadValue);
     }
     {
@@ -2137,7 +2137,7 @@ TEST(Element, mergeDiffDelBadParams) {
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 3 levels of nesting so throw with 2 (and pass with 3 or more).
-        EXPECT_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 2),
+        EXPECT_THROW(mergeDiffDel(left, right, hierarchy, "root", 0, 2),
                      isc::BadValue);
     }
 }
@@ -2286,7 +2286,7 @@ TEST(Element, mergeDiffDel) {
         // the key can not be removed
         right->set("elements-other", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 2));
+        ASSERT_NO_THROW(mergeDiffDel(left, right, hierarchy, "root", 0, 2));
         std::string expected_str("{ \"elements\": { \"id\": 0, \"other-elements\": \"other\" }, "
                                    "\"elements-other\": { \"elements\": \"new-left\", \"id\": 3, \"other-elements\": \"new-other\" }, "
                                    "\"left-other-elements\": { \"elements\": \"other-left\", \"id\": 1 }, "
@@ -2356,7 +2356,7 @@ TEST(Element, mergeDiffDel) {
         // the key can not be removed
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(mergeDiffDel0(left, right, hierarchy, "root", 0, 3));
+        ASSERT_NO_THROW(mergeDiffDel(left, right, hierarchy, "root", 0, 3));
         std::string expected_str("[ { \"id\": 0, \"other\": [ \"left-other-left\", \"left-other-left-other\" ], \"other-elements\": \"other\" }, "
                                    "{ \"elements\": \"other-left\", \"id\": 1 } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
@@ -2425,8 +2425,8 @@ TEST(Element, extendBadParam) {
         right->set("elements", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
-        EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
-                             "root", 0, false, 1), isc::BadValue);
+        EXPECT_THROW(extend("root", "new-elements", left, right, hierarchy,
+                            "root", 0, false, 1), isc::BadValue);
     }
     {
         SCOPED_TRACE("nested list");
@@ -2451,8 +2451,8 @@ TEST(Element, extendBadParam) {
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
         // Uses 2 levels of nesting so throw with 1 (and pass with 2 or more).
-        EXPECT_THROW(extend0("root", "new-elements", left, right, hierarchy,
-                             "root", 0, false, 1), isc::BadValue);
+        EXPECT_THROW(extend("root", "new-elements", left, right, hierarchy,
+                            "root", 0, false, 1), isc::BadValue);
     }
 }
 
@@ -2519,8 +2519,8 @@ TEST(Element, extend) {
         // map element which is used for extension
         right->set("elements", right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(extend0("root", "new-elements", left, right, hierarchy,
-                                "root", 0, false, 2));
+        ASSERT_NO_THROW(extend("root", "new-elements", left, right, hierarchy,
+                               "root", 0, false, 2));
         std::string expected_str("{ \"elements\": { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } }");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
@@ -2548,8 +2548,8 @@ TEST(Element, extend) {
         // map element which is used for extension
         right->add(right_right);
         ASSERT_FALSE(isc::data::isEquivalent(left, right));
-        ASSERT_NO_THROW(extend0("root", "new-elements", left, right, hierarchy,
-                                "root", 0, false, 2));
+        ASSERT_NO_THROW(extend("root", "new-elements", left, right, hierarchy,
+                               "root", 0, false, 2));
         std::string expected_str("[ { \"elements\": \"left\", \"id\": 0, \"new-elements\": \"new\", \"other-elements\": \"other\" } ]");
         ElementPtr expected = Element::fromJSON(expected_str);
         EXPECT_TRUE(isc::data::isEquivalent(left, expected))
@@ -2802,7 +2802,7 @@ TEST(Element, nestedListFromJSON) {
         try {
             int l = 1;
             int p = 1;
-            ElementPtr list = Element::fromJSON0(ss, "sss", l, p, max_level);
+            ElementPtr list = Element::fromJSON(ss, "sss", l, p, max_level);
             EXPECT_TRUE(isEquivalent(list, expected));
         } catch (const JSONError&) {
             EXPECT_EQ(max_level, level);
@@ -2833,7 +2833,7 @@ TEST(Element, nestedMapFromJSON) {
         try {
             int l = 1;
             int p = 1;
-            ElementPtr map = Element::fromJSON0(ss, "sss", l, p, max_level);
+            ElementPtr map = Element::fromJSON(ss, "sss", l, p, max_level);
             EXPECT_TRUE(isEquivalent(map, expected));
         } catch (const JSONError&) {
             EXPECT_EQ(max_level, level);

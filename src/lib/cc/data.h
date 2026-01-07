@@ -247,40 +247,21 @@ public:
     /// @brief Test equality.
     ///
     /// @param other The other element to compare with.
-    /// @return true if the other ElementPtr has the same value and the same
-    /// type (or a different and compatible type), false otherwise.
-    /// @throw BadValue when there are more than MAX_NESTING_LEVEL nesting
-    /// levels, e.g. when arguments contain a cycle.
-    virtual bool equals(const Element& other) const = 0;
-
-    /// @brief Test equality.
-    ///
-    /// @note: Variant with nesting depth: to be used only in tests.
-    ///
-    /// @param other The other element to compare with.
     /// @param level The maximum level of recursion.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
     /// @throw BadValue when nesting depth is more than level.
-    virtual bool equals0(const Element& other, unsigned level) const = 0;
+    virtual bool equals(const Element& other,
+                        unsigned level = MAX_NESTING_LEVEL) const = 0;
 
     /// @brief Converts the Element to JSON format and appends it to
     /// the given output stream.
     ///
     /// @param ss The output stream where to append the JSON format.
-    /// @throw BadValue when there are more than MAX_NESTING_LEVEL nesting
-    /// levels, e.g. when arguments contain a cycle.
-    virtual void toJSON(std::ostream& ss) const = 0;
-
-    /// @brief Converts the Element to JSON format and appends it to
-    /// the given output stream.
-    ///
-    /// @note: Variant with nesting depth: to be used only in tests.
-    ///
-    /// @param ss The output stream where to append the JSON format.
     /// @param level The maximum level of recursion.
     /// @throw BadValue when nesting depth is more than level.
-    virtual void toJSON0(std::ostream& ss, unsigned level) const = 0;
+    virtual void toJSON(std::ostream& ss,
+                        unsigned level = MAX_NESTING_LEVEL) const = 0;
 
     /// @name Type-specific getters
     ///
@@ -695,12 +676,14 @@ public:
     /// track of the current line.
     /// @param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
+    /// @param level The maximum level of recursion.
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
     /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
-                               int& line, int &pos);
+                               int& line, int &pos,
+                               unsigned level = MAX_NESTING_LEVEL);
 
     /// @brief Creates an Element from the given input stream.
     ///
@@ -711,12 +694,10 @@ public:
     /// track of the current line.
     /// @param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
-    /// @param level The maximum level of recursion.
+
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     /// @throw JSONError
-    static ElementPtr fromJSON0(std::istream& in, const std::string& file,
-                                int& line, int &pos, unsigned level);
 
     /// Reads contents of specified file and interprets it as JSON.
     ///
@@ -791,18 +772,9 @@ public:
 
     /// @brief Remove all empty maps and lists from this Element and its
     /// descendants.
-    void removeEmptyContainersRecursively() {
-        removeEmptyContainersRecursively0(MAX_NESTING_LEVEL);
-    }
-
-protected:
-    /// Converts the Element to JSON format and appends it to
-    /// the given stringstream.
-
-    /// @brief Remove all empty maps and lists from this Element and its
-    /// descendants.
+    ///
     /// @param level nesting level.
-    void removeEmptyContainersRecursively0(unsigned level);
+    void removeEmptyContainersRecursively(unsigned level = MAX_NESTING_LEVEL);
 };
 
 /// Notes: IntElement type is changed to int64_t.
@@ -825,10 +797,10 @@ public:
     bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
     bool setValue(long long int v) { i = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
-    void toJSON0(std::ostream& ss, unsigned) const;
-    bool equals0(const Element& other, unsigned) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 /// @brief Wrapper over int128_t
@@ -862,32 +834,18 @@ public:
     /// stringstream.
     ///
     /// @param ss The output stream where to append the JSON format.
-    void toJSON(std::ostream& ss) const override;
-
-    /// @brief Converts the Element to JSON format and appends it to the given
-    /// stringstream.
-    ///
-    /// @note: Variant with nesting depth: to be used only in tests.
-    /// @param ss The output stream where to append the JSON format.
     /// @param level The maximum level of recursion. Ignored.
-    void toJSON0(std::ostream& ss, unsigned level) const override;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     /// @brief Checks whether the other Element is equal.
-    ///
-    /// @param other The other element to compare with.
-    /// @return true if the other ElementPtr has the same value and the same
-    /// type (or a different and compatible type), false otherwise.
-    bool equals(const Element& other) const override;
-
-    /// @brief Checks whether the other Element is equal.
-    ///
-    /// @note: Variant with nesting depth: to be used only in tests.
     ///
     /// @param other The other element to compare with.
     /// @param level The maximum level of recursion. Ignored.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
-    bool equals0(const Element& other, unsigned level) const override;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
 private:
     /// @brief the underlying stored value
@@ -905,10 +863,10 @@ public:
     bool getValue(double& t) const { t = d; return (true); }
     using Element::setValue;
     bool setValue(const double v) { d = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
-    void toJSON0(std::ostream& ss, unsigned) const;
-    bool equals0(const Element& other, unsigned) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class BoolElement : public Element {
@@ -922,20 +880,20 @@ public:
     bool getValue(bool& t) const { t = b; return (true); }
     using Element::setValue;
     bool setValue(const bool v) { b = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
-    void toJSON0(std::ostream& ss, unsigned) const;
-    bool equals0(const Element& other, unsigned) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class NullElement : public Element {
 public:
     NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {}
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
-    void toJSON0(std::ostream& ss, unsigned) const;
-    bool equals0(const Element& other, unsigned) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class StringElement : public Element {
@@ -949,10 +907,10 @@ public:
     bool getValue(std::string& t) const { t = s; return (true); }
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
-    void toJSON0(std::ostream& ss, unsigned) const;
-    bool equals0(const Element& other, unsigned) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class ListElement : public Element {
@@ -982,12 +940,12 @@ public:
     void add(ElementPtr e) { l.push_back(e); }
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); }
-    void toJSON(std::ostream& ss) const;
-    void toJSON0(std::ostream& ss, unsigned level) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }
-    bool equals(const Element& other) const;
-    bool equals0(const Element& other, unsigned level) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 
     /// @brief Sorts the elements inside the list.
     ///
@@ -1056,8 +1014,8 @@ public:
     bool contains(const std::string& s) const override {
         return (m.find(s) != m.end());
     }
-    void toJSON(std::ostream& ss) const override;
-    void toJSON0(std::ostream& ss, unsigned level) const override;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
@@ -1079,8 +1037,8 @@ public:
         return (m.size());
     }
 
-    bool equals(const Element& other) const override;
-    bool equals0(const Element& other, unsigned level) const override;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     bool empty() const override { return (m.empty()); }
 };
@@ -1192,27 +1150,11 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
 /// @throw TypeError if elements are not the same Element type.
 void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
-                  size_t idx = 0);
-
-/// @brief Merges the diff data by adding the missing elements from 'other'
-/// to 'element' (recursively). Both elements must be the same Element type.
-///
-/// @note: Variant with nesting depth: to be used only in tests.
-///
-/// @param element The element to which new data is added.
-/// @param other The element containing the data which needs to be added.
-/// @param hierarchy The hierarchy describing the elements relations and
-/// identification keys.
-/// @param key The container holding the current element.
-/// @param idx The level inside the hierarchy the current element is located.
-/// @param level The maximum level of recursion.
-/// @throw TypeError if elements are not the same Element type.
-void mergeDiffAdd0(ElementPtr& element, ElementPtr& other,
-                   HierarchyDescriptor& hierarchy, std::string key,
-                   size_t idx, unsigned level);
+                  size_t idx = 0, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Merges the diff data by removing the data present in 'other' from
 /// 'element' (recursively). Both elements must be the same Element type.
@@ -1231,26 +1173,11 @@ void mergeDiffAdd0(ElementPtr& element, ElementPtr& other,
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
 /// @throw TypeError if elements are not the same Element type.
 void mergeDiffDel(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
-                  size_t idx = 0);
-/// @brief Merges the diff data by removing the data present in 'other' from
-/// 'element' (recursively). Both elements must be the same Element type.
-///
-/// @note: Variant with nesting depth: to be used only in tests.
-///
-/// @param element The element from which new data is removed.
-/// @param other The element containing the data which needs to be removed.
-/// @param hierarchy The hierarchy describing the elements relations and
-/// identification keys.
-/// @param key The container holding the current element.
-/// @param idx The level inside the hierarchy the current element is located.
-/// @param level The maximum level of recursion.
-/// @throw TypeError if elements are not the same Element type.
-void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
-                   HierarchyDescriptor& hierarchy, std::string key,
-                   size_t idx, unsigned level);
+                  size_t idx = 0, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Extends data by adding the specified 'extension' elements from
 /// 'other' inside the 'container' element (recursively). Both elements must be
@@ -1267,35 +1194,12 @@ void mergeDiffDel0(ElementPtr& element, ElementPtr& other,
 /// @param idx The level inside the hierarchy the current element is located.
 /// @param alter The flag which indicates if the current element should be
 /// updated.
+/// @param level The maximum level of recursion.
 /// @throw TypeError if elements are not the same Element type.
 void extend(const std::string& container, const std::string& extension,
             ElementPtr& element, ElementPtr& other,
             HierarchyDescriptor& hierarchy, std::string key, size_t idx = 0,
-            bool alter = false);
-
-/// @brief Extends data by adding the specified 'extension' elements from
-/// 'other' inside the 'container' element (recursively). Both elements must be
-/// the same Element type.
-///
-/// @note: Variant with nesting depth: to be used only in tests.
-///
-/// @param container The container holding the data that must be extended.
-/// @param extension The name of the element that contains the data that must be
-/// added (if not already present) in order to extend the initial data.
-/// @param element The element from which new data is added.
-/// @param other The element containing the data which needs to be added.
-/// @param hierarchy The hierarchy describing the elements relations and
-/// identification keys.
-/// @param key The container holding the current element.
-/// @param idx The level inside the hierarchy the current element is located.
-/// @param alter The flag which indicates if the current element should be
-/// updated.
-/// @param level The maximum level of recursion.
-/// @throw TypeError if elements are not the same Element type.
-void extend0(const std::string& container, const std::string& extension,
-             ElementPtr& element, ElementPtr& other,
-             HierarchyDescriptor& hierarchy, std::string key, size_t idx,
-             bool alter, unsigned level);
+            bool alter = false, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Copy the data up to a nesting level.
 ///
