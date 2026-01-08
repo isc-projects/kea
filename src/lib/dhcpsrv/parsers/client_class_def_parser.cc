@@ -103,6 +103,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     }
     std::string test;
     bool depend_on_known = false;
+#if 0
     EvalContext::CheckDefined check_defined = EvalContext::acceptAll;
     if (template_test_cfg) {
         test_cfg = template_test_cfg;
@@ -113,6 +114,17 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
             return (!check_dependencies || isClientClassDefined(class_dictionary, depend_on_known, cclass));
         };
     }
+#else
+    EvalContext::CheckDefined check_defined = [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
+            return (!check_dependencies || isClientClassDefined(class_dictionary, depend_on_known, cclass));
+    };
+
+    if (template_test_cfg) {
+        test_cfg = template_test_cfg;
+        parser_type = EvalContext::PARSER_STRING;
+        is_template = true;
+    }
+#endif
 
     if (test_cfg) {
         ExpressionParser parser;
