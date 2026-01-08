@@ -710,6 +710,7 @@ TEST_F(OptionDataTypesTest, writePrefix) {
     buf.clear();
 
     // Prefix having a maximum length of 128.
+    ASSERT_THROW(PrefixLen(129), isc::OutOfRange);
     ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(128),
                                                     IOAddress("2001:db8::FF"),
                                                     buf));

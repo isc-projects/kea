@@ -1473,6 +1473,18 @@ TEST_F(OptionDefinitionTest, prefixTokenized) {
     EXPECT_EQ("2001:db8:1::", prefix.second.toText());
 }
 
+// This test verifies that bad prefixes are rejected.
+TEST_F(OptionDefinitionTest, badPrefix) {
+    OptionDefinition opt_def("option-prefix", 1000, "my-space", "ipv6-prefix");
+
+    // Specify a bad prefix.
+    std::vector<std::string> values(1, "::/ce");
+
+    // This must throw.
+    EXPECT_THROW(opt_def.optionFactory(Option::V6, 1000, values),
+                 isc::OutOfRange);
+}
+
 // This test verifies that a definition of an option with an array
 // of IPv6 prefixes can be created and that the instance of this
 // option can be created by specifying multiple prefixes in the
