@@ -712,8 +712,8 @@ public:
     ///
     /// @param use_queue determines if packet queuing is used or not.
     void unusableExternalSockets4Test(bool use_queue = false) {
-        bool callback_ok_ = false;
-        bool callback2_ok_ = false;
+        callback_ok = false;
+        callback2_ok = false;
 
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
@@ -733,8 +733,8 @@ public:
         EXPECT_TRUE(pipe(pipefd) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [&callback_ok_, &pipefd](int fd) {
-                            callback_ok_ = (pipefd[0] == fd);
+                        [&pipefd](int fd) {
+                            callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
         ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
@@ -744,8 +744,8 @@ public:
         EXPECT_TRUE(pipe(secondpipe) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [&callback2_ok_, &secondpipe](int fd) {
-                            callback2_ok_ = (secondpipe[0] == fd);
+                        [&secondpipe](int fd) {
+                            callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
         ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
@@ -755,8 +755,8 @@ public:
         ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10)));
 
         // No callback invocations and no DHCPv4 pkt.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_FALSE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_FALSE(callback2_ok);
         EXPECT_FALSE(pkt4);
 
         // Now close the first pipe.  This should make it's external socket invalid.
@@ -777,8 +777,8 @@ public:
         EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv4 pkt.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_FALSE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_FALSE(callback2_ok);
         EXPECT_FALSE(pkt4);
 
         // Now check whether the second callback is still functional
@@ -788,8 +788,8 @@ public:
         ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_TRUE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_TRUE(callback2_ok);
         EXPECT_FALSE(pkt4);
 
         // Stop the thread.  This should be no harm/no foul if we're not
@@ -805,8 +805,8 @@ public:
     ///
     /// @param use_queue determines if packet queuing is used or not.
     void unusableExternalSockets6Test(bool use_queue = false) {
-        bool callback_ok_ = false;
-        bool callback2_ok_ = false;
+        callback_ok = false;
+        callback2_ok = false;
 
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
@@ -826,8 +826,8 @@ public:
         EXPECT_TRUE(pipe(pipefd) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [&callback_ok_, &pipefd](int fd) {
-                            callback_ok_ = (pipefd[0] == fd);
+                        [&pipefd](int fd) {
+                            callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
         ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
@@ -837,8 +837,8 @@ public:
         EXPECT_TRUE(pipe(secondpipe) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [&callback2_ok_, &secondpipe](int fd) {
-                            callback2_ok_ = (secondpipe[0] == fd);
+                        [&secondpipe](int fd) {
+                            callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
         ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
@@ -848,8 +848,8 @@ public:
         ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10)));
 
         // No callback invocations and no DHCPv6 pkt.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_FALSE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_FALSE(callback2_ok);
         EXPECT_FALSE(pkt6);
 
         // Now close the first pipe.  This should make it's external socket invalid.
@@ -870,8 +870,8 @@ public:
         EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv6 pkt.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_FALSE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_FALSE(callback2_ok);
         EXPECT_FALSE(pkt6);
 
         // Now check whether the second callback is still functional
@@ -881,8 +881,8 @@ public:
         ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10)));
 
         // Should have callback2 data only.
-        EXPECT_FALSE(callback_ok_);
-        EXPECT_TRUE(callback2_ok_);
+        EXPECT_FALSE(callback_ok);
+        EXPECT_TRUE(callback2_ok);
         EXPECT_FALSE(pkt6);
 
         // Stop the thread.  This should be no harm/no foul if we're not
@@ -1658,7 +1658,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
 // Verifies that basic DHCPv6 packet send and receive operates
 // in either direct or indirect mode.
-// No poll version as it depends on select() behavior,
+// No poll version as it depends on select() behavior.
 TEST_F(IfaceMgrTest, sendReceive6Select) {
     kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
@@ -1679,7 +1679,7 @@ TEST_F(IfaceMgrTest, sendReceive6Select) {
 
 // Verifies that basic DHCPv4 packet send and receive operates
 // in either direct or indirect mode.
-// No poll version as it depends on select() behavior,
+// No poll version as it depends on select() behavior.
 TEST_F(IfaceMgrTest, sendReceive4Select) {
     kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
@@ -3266,33 +3266,21 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4Poll) {
     testDeleteExternalSockets4();
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and ignored, without affecting other sockets.
-// Tests uses receive4() without queuing. Select version.
 TEST_F(IfaceMgrTest, unusableExternalSockets4DirectSelect) {
     kea_event_handler_type_.setValue("select");
     unusableExternalSockets4Test();
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and ignored, without affecting other sockets.
-// Tests uses receive4() without queuing. Poll version.
 TEST_F(IfaceMgrTest, unusableExternalSockets4DirectPoll) {
     kea_event_handler_type_.setValue("poll");
     unusableExternalSockets4Test();
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and ignored, without affecting other sockets.
-// Tests uses receive4() with queuing. Select version.
 TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectSelect) {
     kea_event_handler_type_.setValue("select");
     unusableExternalSockets4Test(true);
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and ignored, without affecting other sockets.
-// Tests uses receive4() with queuing. Poll version.
 TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectPoll) {
     kea_event_handler_type_.setValue("poll");
     unusableExternalSockets4Test(true);
