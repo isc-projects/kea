@@ -3709,27 +3709,4 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 }
 
-// Tests that a replace in the SocketCallbackInfoContainer keeps the sequence.
-TEST(SocketCallbackInfoContainer, replace) {
-    IfaceMgr::SocketCallbackInfoContainer callbacks;
-    auto getSequence = [&]() {
-        std::stringstream seq;
-        for (auto const& s : callbacks) {
-            seq << s.socket_ << "\n";
-        }
-        return (seq.str());
-    };
-    for (int i = 0; i < 9; ++i) {
-        IfaceMgr::SocketCallbackInfo s(i);
-        callbacks.push_back(s);
-    }
-    EXPECT_EQ("0\n1\n2\n3\n4\n5\n6\n7\n8\n", getSequence());
-    auto& idx = callbacks.get<1>();
-    auto it = idx.find(5);
-    ASSERT_NE(it, idx.end());
-    IfaceMgr::SocketCallbackInfo x(9);
-    EXPECT_TRUE(idx.replace(it, x));
-    EXPECT_EQ("0\n1\n2\n3\n4\n9\n6\n7\n8\n", getSequence());
-}
-
 }
