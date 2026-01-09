@@ -1,0 +1,4 @@
+[bug]		fdupont
+	Added check for prefix length in ipv6-prefix option
+	data type.
+	(Gitlab #4295)
