@@ -375,7 +375,6 @@ public:
     /// @brief Constructor.
     IfaceMgrTest()
         : errors_count_(0), kea_event_handler_type_("KEA_EVENT_HANDLER_TYPE") {
-        kea_event_handler_type_.setValue();
     }
 
     ~IfaceMgrTest() {
@@ -1310,7 +1309,8 @@ void IfaceMgrTest::testReceiveTimeout6() {
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
-TEST_F(IfaceMgrTest, receiveTimeout6) {
+TEST_F(IfaceMgrTest, receiveTimeout6Select) {
+    kea_event_handler_type_.setValue("select");
     testReceiveTimeout6();
 }
 
@@ -1377,7 +1377,8 @@ void IfaceMgrTest::testReceiveTimeout4() {
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
-TEST_F(IfaceMgrTest, receiveTimeout4) {
+TEST_F(IfaceMgrTest, receiveTimeout4Select) {
+    kea_event_handler_type_.setValue("select");
     testReceiveTimeout4();
 }
 
@@ -1658,7 +1659,8 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 // Verifies that basic DHCPv6 packet send and receive operates
 // in either direct or indirect mode.
 // No poll version as it depends on select() behavior,
-TEST_F(IfaceMgrTest, sendReceive6) {
+TEST_F(IfaceMgrTest, sendReceive6Select) {
+    kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
 
     // Given an empty pointer, queueing should be disabled.
@@ -1678,7 +1680,8 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 // Verifies that basic DHCPv4 packet send and receive operates
 // in either direct or indirect mode.
 // No poll version as it depends on select() behavior,
-TEST_F(IfaceMgrTest, sendReceive4) {
+TEST_F(IfaceMgrTest, sendReceive4Select) {
+    kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
 
     // Given an empty pointer, queueing should be disabled.
@@ -3106,7 +3109,8 @@ void IfaceMgrTest::testSingleExternalSocket4() {
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
-TEST_F(IfaceMgrTest, SingleExternalSocket4) {
+TEST_F(IfaceMgrTest, SingleExternalSocket4Select) {
+    kea_event_handler_type_.setValue("select");
     testSingleExternalSocket4();
 }
 
@@ -3187,7 +3191,8 @@ void IfaceMgrTest::testMultipleExternalSockets4() {
     close(secondpipe[0]);
 }
 
-TEST_F(IfaceMgrTest, MultipleExternalSockets4) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets4Select) {
+    kea_event_handler_type_.setValue("select");
     testMultipleExternalSockets4();
 }
 
@@ -3251,7 +3256,8 @@ void IfaceMgrTest::testDeleteExternalSockets4() {
     close(secondpipe[0]);
 }
 
-TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
+TEST_F(IfaceMgrTest, DeleteExternalSockets4Select) {
+    kea_event_handler_type_.setValue("select");
     testDeleteExternalSockets4();
 }
 
@@ -3262,8 +3268,9 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4Poll) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
-// Tests uses receive4() without queuing.
-TEST_F(IfaceMgrTest, unusableExternalSockets4Direct) {
+// Tests uses receive4() without queuing. Select version.
+TEST_F(IfaceMgrTest, unusableExternalSockets4DirectSelect) {
+    kea_event_handler_type_.setValue("select");
     unusableExternalSockets4Test();
 }
 
@@ -3277,8 +3284,9 @@ TEST_F(IfaceMgrTest, unusableExternalSockets4DirectPoll) {
 
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
-// Tests uses receive4() with queuing.
-TEST_F(IfaceMgrTest, unusableExternalSockets4Indirect) {
+// Tests uses receive4() with queuing. Select version.
+TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectSelect) {
+    kea_event_handler_type_.setValue("select");
     unusableExternalSockets4Test(true);
 }
 
@@ -3328,7 +3336,8 @@ void IfaceMgrTest::testSingleExternalSocket6() {
     close(pipefd[0]);
 }
 
-TEST_F(IfaceMgrTest, SingleExternalSocket6) {
+TEST_F(IfaceMgrTest, SingleExternalSocket6Select) {
+    kea_event_handler_type_.setValue("select");
     testSingleExternalSocket6();
 }
 
@@ -3409,7 +3418,8 @@ void IfaceMgrTest::testMultipleExternalSockets6() {
     close(secondpipe[0]);
 }
 
-TEST_F(IfaceMgrTest, MultipleExternalSockets6) {
+TEST_F(IfaceMgrTest, MultipleExternalSockets6Select) {
+    kea_event_handler_type_.setValue("select");
     testMultipleExternalSockets6();
 }
 
@@ -3473,7 +3483,8 @@ void IfaceMgrTest::testDeleteExternalSockets6() {
     close(secondpipe[0]);
 }
 
-TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
+TEST_F(IfaceMgrTest, DeleteExternalSockets6Select) {
+    kea_event_handler_type_.setValue("select");
     testDeleteExternalSockets6();
 }
 
@@ -3485,7 +3496,8 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6Poll) {
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
 // Tests uses receive6() without queuing.
-TEST_F(IfaceMgrTest, unusableExternalSockets6Direct) {
+TEST_F(IfaceMgrTest, unusableExternalSockets6DirectSelect) {
+    kea_event_handler_type_.setValue("select");
     unusableExternalSockets6Test();
 }
 
@@ -3497,7 +3509,8 @@ TEST_F(IfaceMgrTest, unusableExternalSockets6DirectPoll) {
 // Tests that an existing external socket that becomes invalid
 // is detected and ignored, without affecting other sockets.
 // Tests uses receive6() with queuing.
-TEST_F(IfaceMgrTest, unusableExternalSockets6Indirect) {
+TEST_F(IfaceMgrTest, unusableExternalSockets6IndirectSelect) {
+    kea_event_handler_type_.setValue("select");
     unusableExternalSockets6Test(true);
 }
 
