@@ -261,7 +261,9 @@ Exchange::buildRequest() {
     if ((sent_->getCode() == PW_STATUS_SERVER) &&
         (attrs->count(PW_MESSAGE_AUTHENTICATOR) == 0)) {
         const vector<uint8_t> zero(AUTH_VECTOR_LEN);
-        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+        // The FreeRADIUS server prefers to get it first.
+        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero),
+                   false);
     }
 
     // Encode the request.

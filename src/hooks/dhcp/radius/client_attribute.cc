@@ -752,11 +752,15 @@ AttrVsa::toElement() const {
 }
 
 void
-Attributes::add(const ConstAttributePtr& attr) {
+Attributes::add(const ConstAttributePtr& attr, bool back) {
     if (!attr) {
         return;
     }
-    static_cast<void>(container_.push_back(attr));
+    if (back) {
+        static_cast<void>(container_.push_back(attr));
+    } else {
+        static_cast<void>(container_.push_front(attr));
+    }
 }
 
 bool

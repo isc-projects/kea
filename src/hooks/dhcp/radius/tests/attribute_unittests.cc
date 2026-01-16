@@ -730,6 +730,34 @@ TEST_F(AttributeTest, attributesAddDel) {
     EXPECT_EQ(0, attrs.size());
 }
 
+// Verifies add front.
+TEST_F(AttributeTest, attributesAddFront) {
+    Attributes attrs;
+    EXPECT_TRUE(attrs.empty());
+    EXPECT_EQ(0, attrs.size());
+
+    // Add 2 User-Name and a Service-Type at the front.
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foo")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20), false));
+
+    // Get front.
+    ASSERT_EQ(3, attrs.size());
+    ConstAttributePtr attr = *(attrs.begin());
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_SERVICE_TYPE, attr->getType());
+
+    // Check that the default is to insert at the back.
+    attrs.clear();
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foo")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20)));
+    ASSERT_EQ(3, attrs.size());
+    attr = *(attrs.begin());
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_USER_NAME, attr->getType());
+}
+
 // Verifies append.
 TEST_F(AttributeTest, attributesAppend) {
     Attributes attrs;

@@ -1396,14 +1396,14 @@ TEST_F(StatusTest, accessIdleTimerCallback) {
 
     // Check attributes.
     EXPECT_EQ(44, size);
+    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
+    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
         0x04,                   // NAS-IP-Address
         0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
-        0x50,                   // Message-Authenticator
-        0x12                    // length
+        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
     };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
 
 /// Verify that accounting IdleTimerCallback works as expected.
@@ -1448,14 +1448,14 @@ TEST_F(StatusTest, accountingIdleTimerCallback) {
 
     // Check attributes.
     EXPECT_EQ(44, size);
+    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
+    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
         0x04,                   // NAS-IP-Address
         0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
-        0x50,                   // Message-Authenticator
-        0x12                    // length
+        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
     };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
 
 /// Verify that access idle timer works as expected.
@@ -1502,14 +1502,14 @@ TEST_F(StatusTest, accessIdleTimer) {
 
     // Check attributes.
     EXPECT_EQ(44, size);
+    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
+    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
         0x04,                   // NAS-IP-Address
         0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
-        0x50,                   // Message-Authenticator
-        0x12                    // length
+        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
     };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
 
 /// Verify that accounting idle timer works as expected.
@@ -1556,14 +1556,14 @@ TEST_F(StatusTest, accountingIdleTimer) {
 
     // Check attributes.
     EXPECT_EQ(44, size);
+    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
+    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
         0x04,                   // NAS-IP-Address
         0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01, // 127.0.0.1
-        0x50,                   // Message-Authenticator
-        0x12                    // length
+        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
     };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN], 8));
+    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
 
 } // end of anonymous namespace
