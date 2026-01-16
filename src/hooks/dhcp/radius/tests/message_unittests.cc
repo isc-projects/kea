@@ -956,7 +956,7 @@ TEST_F(MessageTest, badDecode) {
         MessagePtr message(new Message(buffer, auth, "foo"));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->decode(), BadValue,
-                         "can't verify Message-Authenticator");
+                         "Can't verify Message-Authenticator");
     }
     {
         SCOPED_TRACE("too long Message-Authenticator");
@@ -976,7 +976,7 @@ TEST_F(MessageTest, badDecode) {
         MessagePtr message(new Message(buffer, auth, "foo"));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->decode(), BadValue,
-                         "can't verify Message-Authenticator");
+                         "Can't verify Message-Authenticator");
     }
     {
         SCOPED_TRACE("bad Message-Authenticator");

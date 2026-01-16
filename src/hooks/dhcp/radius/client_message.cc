@@ -448,7 +448,7 @@ Message::verifyMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
         (auth_.size() != AUTH_VECTOR_LEN)) {
-        isc_throw(BadValue, "can't verify Message-Authenticator");
+        isc_throw(BadValue, "Can't verify Message-Authenticator");
     }
 
     vector<uint8_t> sign;
@@ -459,7 +459,6 @@ Message::verifyMessageAuthenticator(size_t ptr) {
         CryptoLink::getCryptoLink().createHMAC(&secret_[0], secret_.size(), MD5));
 
     // Build to_verify buffer.
-    size_t length = buffer_.size();
     std::vector<uint8_t> to_verify = buffer_;
     memmove(&to_verify[4], &auth_[0], auth_.size());
     memset(&to_verify[ptr + 2], 0, AUTH_VECTOR_LEN);

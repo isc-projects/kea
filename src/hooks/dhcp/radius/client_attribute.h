@@ -862,7 +862,7 @@ public:
     /// @brief Adds instance of the attribute to the collection.
     ///
     /// @param attr Pointer to the attribute being added (can be null).
-    /// @param back Insert bsk (vs front).
+    /// @param back Insert back (vs front).
     void add(const ConstAttributePtr& attr, bool back = true);
 
     /// @brief Deletes an attribute from the collection.

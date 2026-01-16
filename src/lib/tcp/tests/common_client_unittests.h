@@ -518,7 +518,7 @@ public:
                                                 request, response,
                                                 true, TestCompleteCheck,
             [this](const boost::system::error_code& ec,
-                   const WireDataPtr& response,
+                   const WireDataPtr& resp,
                    const std::string& parsing_error) {
                 io_service_->stop();
                 // There should be no IO error (answer from the server is received).
@@ -526,7 +526,7 @@ public:
                     ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
                 }
                 // The response object is null.
-                EXPECT_FALSE(response);
+                EXPECT_FALSE(resp);
                 // The message parsing error should be returned.
                 EXPECT_FALSE(parsing_error.empty());
             }));
@@ -560,7 +560,7 @@ public:
                                                 request1, response1,
                                                 true, TestCompleteCheck,
             [this, &cb_num](const boost::system::error_code& ec,
-                            const WireDataPtr& response,
+                            const WireDataPtr& resp,
                             const std::string&) {
                 if (++cb_num > 1) {
                     io_service_->stop();
@@ -570,7 +570,7 @@ public:
                 // error code.
                 EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
                 // There should be no response returned.
-                EXPECT_FALSE(response);
+                EXPECT_FALSE(resp);
             },
             TcpClient::RequestTimeout(100),
             TcpClient::ConnectHandler(),
@@ -624,7 +624,7 @@ public:
                                                 request, response,
                                                 true, TestCompleteCheck,
             [this, &cb_num](const boost::system::error_code& ec,
-                            const WireDataPtr& response,
+                            const WireDataPtr& resp,
                             const std::string&) {
                 if (++cb_num > 1) {
                     io_service_->stop();
@@ -634,7 +634,7 @@ public:
                 // error code.
                 EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
                 // There should be no response returned.
-                EXPECT_FALSE(response);
+                EXPECT_FALSE(resp);
 
             },
             TcpClient::RequestTimeout(100),
