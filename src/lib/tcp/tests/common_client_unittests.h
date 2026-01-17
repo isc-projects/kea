@@ -426,7 +426,8 @@ public:
                                                 client_context_,
                                                 request1, response1,
                                                 true, TestCompleteCheck,
-            [this](const boost::system::error_code& ec, const WireDataPtr&,
+            [this](const boost::system::error_code& ec,
+                   const WireDataPtr&,
                    const std::string&) {
                 io_service_->stop();
                 if (ec) {
@@ -452,7 +453,8 @@ public:
                                                 client_context_,
                                                 request2, response2,
                                                 true, TestCompleteCheck,
-            [this](const boost::system::error_code& ec, const WireDataPtr&,
+            [this](const boost::system::error_code& ec,
+                   const WireDataPtr&,
                    const std::string&) {
                 io_service_->stop();
                 if (ec) {
@@ -706,7 +708,7 @@ public:
                                                 request1, response1,
                                                 true, TestCompleteCheck,
             [](const boost::system::error_code& ec,
-               const WireDataPtr& response,
+               const WireDataPtr& resp,
                const std::string&) {
 
             // In this particular case we know exactly the type of the
@@ -714,7 +716,7 @@ public:
             // error code.
             EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
             // There should be no response returned.
-            EXPECT_FALSE(response);
+            EXPECT_FALSE(resp);
         },
         TcpClient::RequestTimeout(1)));
 
@@ -726,14 +728,14 @@ public:
                                                     request2, response2,
                                                     true, TestCompleteCheck,
                 [](const boost::system::error_code& ec,
-                   const WireDataPtr& response,
+                   const WireDataPtr& resp,
                    const std::string&) {
 
                 // This second request should be successful.
                 if (ec) {
                     ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
                 }
-                EXPECT_TRUE(response);
+                EXPECT_TRUE(resp);
             }));
         }
 
