@@ -318,9 +318,11 @@ TEST_F(DStubCfgMgrTest, redactConfig) {
     ElementPtr cycle = Element::createList();
     cycle->add(cycle);
     EXPECT_THROW(redactConfig(cycle), BadValue);
+    cycle->remove(0);
     cycle = Element::createMap();
     cycle->set("loop", cycle);
     EXPECT_THROW(redactConfig(cycle), BadValue);
+    cycle->set("loop", Element::createMap());
 }
 
 // Test that user context is not touched when configuration is redacted.

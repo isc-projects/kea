@@ -2672,12 +2672,16 @@ TEST(Element, nestedMapEquals) {
 TEST(Element, cycleEquals) {
     ElementPtr cycle = mkCycleList();
     EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle->remove(0);
     cycle = mkCycleList(10);
     EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle->remove(0);
     cycle = mkCycleMap();
     EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle->set("rec", Element::createMap());
     cycle = mkCycleMap(10);
     EXPECT_THROW(cycle->equals(*cycle), isc::BadValue);
+    cycle->set("0", Element::createMap());
 }
 
 /// @brief str/toJSON on nested list.
@@ -2735,12 +2739,16 @@ TEST(Element, nestedMapStr) {
 TEST(Element, cycleStr) {
     ElementPtr cycle = mkCycleList();
     EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle->remove(0);
     cycle = mkCycleList(10);
     EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle->remove(0);
     cycle = mkCycleMap();
     EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle->set("rec", Element::createMap());
     cycle = mkCycleMap(10);
     EXPECT_THROW(cycle->str(), isc::BadValue);
+    cycle->set("0", Element::createMap());
 }
 
 /// @brief prettyPrint on nested object.
@@ -2872,15 +2880,19 @@ TEST(Element, cycleasCycle) {
     bool ret = false;
     ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
+    cycle->remove(0);
     cycle = mkCycleList(10);
     ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
+    cycle->remove(0);
     cycle = mkCycleMap();
     ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
+    cycle->set("rec", Element::createMap());
     cycle = mkCycleMap(10);
     ASSERT_NO_THROW(ret = IsCircular(cycle));
     EXPECT_TRUE(ret);
+    cycle->set("0", Element::createMap());
 }
 
 /// @brief Create shared tree using lists.
@@ -3004,8 +3016,12 @@ TEST(Element, getNestDepthList) {
              EXPECT_EQ(depth, level + 1);
          }
     }
-    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleList()));
-    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleList(10)));
+    auto cycle = mkCycleList();
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(cycle));
+    cycle->remove(0);
+    cycle = mkCycleList(10);
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(cycle));
+    cycle->remove(0);
 }
 
 /// @brief getNestDeph on maps.
@@ -3020,8 +3036,12 @@ TEST(Element, getNestDepthMap) {
              EXPECT_EQ(depth, level + 1);
          }
     }
-    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleMap()));
-    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(mkCycleMap(10)));
+    auto cycle = mkCycleMap();
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(cycle));
+    cycle->set("rec", Element::createMap());
+    cycle = mkCycleMap(10);
+    EXPECT_EQ(Element::MAX_NESTING_LEVEL, getNestDepth(cycle));
+    cycle->set("0", Element::createMap());
 }
 
 }  // namespace
