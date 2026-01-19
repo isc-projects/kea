@@ -1083,6 +1083,8 @@ TEST_F(MessageTest, authStatusServer) {
     ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "xyzzy5461";
     AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
     vector<uint8_t> zero(AUTH_VECTOR_LEN);
     attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
 
@@ -1163,6 +1165,8 @@ TEST_F(MessageTest, acctStatusServer) {
     ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "xyzzy5461";
     AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
     vector<uint8_t> zero(AUTH_VECTOR_LEN);
     attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
 
@@ -1243,6 +1247,8 @@ TEST_F(MessageTest, verboseStatusServer) {
     ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "xyzzy5461";
     AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
     IOAddress addr("192.0.2.16");
     attrs->add(Attribute::fromIpAddr(PW_NAS_IP_ADDRESS, addr));
     vector<uint8_t> zero(AUTH_VECTOR_LEN);
@@ -1404,6 +1410,7 @@ TEST_F(MessageTest, authStatusResponse) {
     string secret = "xyzzy5461";
     AttributesPtr attrs(new Attributes());
     ASSERT_TRUE(attrs);
+
     vector<uint8_t> zero(AUTH_VECTOR_LEN);
     attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
 
@@ -1569,6 +1576,7 @@ TEST_F(MessageTest, verboseStatusResponse) {
     string secret = "xyzzy5461";
     AttributesPtr attrs(new Attributes());
     ASSERT_TRUE(attrs);
+
     string msg = "RADIUS Server up 2 days, 18:40";
     attrs->add(Attribute::fromString(PW_REPLY_MESSAGE, msg));
 

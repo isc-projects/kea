@@ -169,6 +169,7 @@ public:
     }
 
     /// @brief Poll the I/O service.
+    ///
     /// From boost asio documentation: check if a handler is ready
     /// and when there is one execute it.
     void poll();
@@ -198,6 +199,7 @@ public:
     void done(int result);
 
     /// @brief Run a request handler i.e. the client part.
+    ///
     /// The server side is simulated by the individual test code.
     void run();
 
@@ -250,7 +252,7 @@ public:
     /// @brief Handler for authentication.
     RadiusAuthStatusPtr handler_auth_;
 
-    /// @brief Handler for accounting..
+    /// @brief Handler for accounting.
     RadiusAcctStatusPtr handler_acct_;
 
     /// @brief Finished flag.
@@ -625,7 +627,7 @@ TEST_F(StatusTest, reject) {
     ASSERT_LE(20, size);
 
     // Build the response.
-    size = AUTH_HDR_LEN;                  // header
+    size = AUTH_HDR_LEN;                  // header.
     send_buffer_.resize(size);
     send_buffer_[0] = PW_ACCESS_REJECT;   // Access-Reject.
     send_buffer_[1] = receive_buffer_[1]; // Copy id.
@@ -711,7 +713,7 @@ TEST_F(StatusTest, response) {
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
     send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
     send_buffer_[1] = receive_buffer_[1];      // Copy id.
     send_buffer_[2] = size >> 8;               // Length
     send_buffer_[3] = size & 0xff;
@@ -797,7 +799,7 @@ TEST_F(StatusTest, errorResponse) {
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;               // header + Error-Cause attribute.
     send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
     send_buffer_[1] = receive_buffer_[1];      // Copy id.
     send_buffer_[2] = size >> 8;               // Length.
     send_buffer_[3] = size & 0xff;
@@ -973,7 +975,7 @@ TEST_F(StatusTest, badResponse) {
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
     send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
     // There are a lot of ways to get an error including this one.
     send_buffer_[1] = receive_buffer_[1] ^ 21;
     send_buffer_[2] = size >> 8;               // Length
@@ -1144,8 +1146,7 @@ TEST_F(StatusTest, shortAcct) {
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
     send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
-    // There are a lot of ways to get an error including this one.
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
     send_buffer_[1] = receive_buffer_[1];      // Copy id.
     send_buffer_[2] = size >> 8;               // Length
     send_buffer_[3] = size & 0xff;
@@ -1165,6 +1166,7 @@ TEST_F(StatusTest, shortAcct) {
 
     // Push a sender on the socket.
     size_t sent_size = 0;
+    // Change the size.
     Callback send_callback(send_error_code_, sent_size, sent_);
     // Truncate the buffer.
     server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], 10),
@@ -1314,7 +1316,7 @@ TEST_F(StatusTest, response2) {
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
     send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
     send_buffer_[1] = receive_buffer_[1];      // Copy id.
     send_buffer_[2] = size >> 8;               // Length
     send_buffer_[3] = size & 0xff;
