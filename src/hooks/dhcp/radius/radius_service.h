@@ -64,13 +64,15 @@ public:
     /// @brief Idle timer.
     asiolink::IntervalTimerPtr idle_timer_;
 
-    /// @brief Idle timer mutex.
-    std::mutex idle_timer_mutex_;
-
     /// @brief Cancel idle timer.
     ///
     /// @note: The caller must hold the idle timer mutex.
     void cancelIdleTimer();
+
+    /// @brief Idle timer mutex.
+    ///
+    /// @note: shared between all instances of RadiusService.
+    static std::mutex idle_timer_mutex_;
 };
 
 /// @brief Type of pointers to Radius service.
