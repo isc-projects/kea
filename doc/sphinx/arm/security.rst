@@ -696,22 +696,22 @@ Miscellaneous
 Creating core dump files
 ------------------------
 
-When enabled kernels create core dump files when a process crashes or
+When enabled, kernels create core dump files when a process crashes or
 gets a signal with this action. The way to enable core dump files
-is system dependent but with common controls as the `coredumpsize`
-or `core file size` limit which can be seen and changed using `ulimit`
-or `limit` commands or shell built-ins.
+is system dependent but with common controls as the ``coredumpsize``
+or ``core file size`` limit which can be seen and changed using ``ulimit``
+or ``limit`` commands or shell built-ins.
 
 The Knowledge Base document `What to do if your BIND, Kea DHCP, Stork,
-or ISC DHCP server has crashed <https://kb.isc.org/docs/aa-00340>` document
-even oriented to ISC support explains per systems details in its
-``Things to check if a core file does not get generated`` section.
+or ISC DHCP server has crashed <https://kb.isc.org/docs/aa-00340>`_
+document explains per systems details in its
+`Things to check if a core file does not get generated` section.
 
-Another way to create a core dump file is the `gcore` command which
+Another way to create a core dump file is the ``gcore`` command which
 creates such files / images from a running process. Please look at its
 manual page to understand how to use it. Two points are important:
 
-- does `gcore` suspend or provides an option to suspend to dumped process?
+- does ``gcore`` suspend or provide an option to suspend the dumped process?
 
 - the name of the produced core dump file (useful also for core dump file
   created by the kernel).
