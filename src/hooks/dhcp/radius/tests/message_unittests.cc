@@ -1006,7 +1006,7 @@ TEST_F(MessageTest, badDecode) {
     }
 }
 
-// Verify basic (no Message-Authentivator) Status-Server processing.
+// Verify basic (no Message-Authenticator) Status-Server processing.
 TEST_F(MessageTest, basicStatusServer) {
     MsgCode code = PW_STATUS_SERVER;
     uint8_t id = 0xda;
