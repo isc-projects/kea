@@ -4,12 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file This file contains tests which exercise the load and unload
-/// functions in the Radius hooks library. In order to test the load
-/// function, one must be able to pass it hook library parameters. The
-/// the only way to populate these parameters is by actually loading the
-/// library via HooksManager::loadLibraries().
-
 #include <config.h>
 #include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
