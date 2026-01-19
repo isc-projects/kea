@@ -193,6 +193,8 @@ public:
     void stop();
 
     /// @brief Done handler.
+    ///
+    /// @param result The result of the request.
     void done(int result);
 
     /// @brief Run a request handler i.e. the client part.
