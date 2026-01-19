@@ -702,7 +702,7 @@ TEST_F(MessageTest, badEncode) {
                                        attrs));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->encode(), Unexpected,
-                         "Can't encode User-Password");
+                         "can't encode User-Password");
     }
     {
         SCOPED_TRACE("Two Message-Authenticators");
@@ -956,7 +956,7 @@ TEST_F(MessageTest, badDecode) {
         MessagePtr message(new Message(buffer, auth, "foo"));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->decode(), BadValue,
-                         "Can't verify Message-Authenticator");
+                         "can't verify Message-Authenticator");
     }
     {
         SCOPED_TRACE("too long Message-Authenticator");
@@ -976,7 +976,7 @@ TEST_F(MessageTest, badDecode) {
         MessagePtr message(new Message(buffer, auth, "foo"));
         ASSERT_TRUE(message);
         EXPECT_THROW_MSG(message->decode(), BadValue,
-                         "Can't verify Message-Authenticator");
+                         "can't verify Message-Authenticator");
     }
     {
         SCOPED_TRACE("bad Message-Authenticator");

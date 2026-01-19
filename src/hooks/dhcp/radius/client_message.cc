@@ -328,7 +328,7 @@ Message::encodeUserPassword(const ConstAttributePtr& attr) {
     if (!attr || (attr->getValueType() != PW_TYPE_STRING) ||
         (attr->getValueLen() == 0) ||
         (auth_.size() != AUTH_VECTOR_LEN)) {
-        isc_throw(Unexpected, "Can't encode User-Password");
+        isc_throw(Unexpected, "can't encode User-Password");
     }
 
     // Get padded password.
@@ -428,7 +428,7 @@ Message::signMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
         (auth_.size() != AUTH_VECTOR_LEN)) {
-        isc_throw(Unexpected, "Can't sign Message-Authenticator");
+        isc_throw(Unexpected, "can't sign Message-Authenticator");
     }
 
     boost::scoped_ptr<HMAC> hmac(
@@ -448,7 +448,7 @@ Message::verifyMessageAuthenticator(size_t ptr) {
     if ((ptr < AUTH_HDR_LEN) || (ptr > buffer_.size() - 2 - AUTH_VECTOR_LEN) ||
         (buffer_[ptr + 1] != 2 + AUTH_VECTOR_LEN) ||
         (auth_.size() != AUTH_VECTOR_LEN)) {
-        isc_throw(BadValue, "Can't verify Message-Authenticator");
+        isc_throw(BadValue, "can't verify Message-Authenticator");
     }
 
     vector<uint8_t> sign;
