@@ -55,11 +55,7 @@ const SimpleDefaults RadiusConfigParser::RADIUS_DEFAULTS = {
     { "extract-duid",             Element::boolean, "true" },
     { "identifier-type4",         Element::string,  "client-id" },
     { "identifier-type6",         Element::string,  "duid" },
-<<<<<<< HEAD
-=======
     { "protocol",                 Element::string,  "UDP" },
-    { "realm",                    Element::string,  "" },
->>>>>>> 62a05145a9 ([#4274] Checkpoint: parse)
     { "reselect-subnet-address",  Element::boolean, "false" },
     { "reselect-subnet-pool",     Element::boolean, "false" },
     { "retries",                  Element::integer, "3" },
