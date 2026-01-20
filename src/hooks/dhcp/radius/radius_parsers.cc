@@ -8,7 +8,7 @@
 
 #include <radius_parsers.h>
 #include <radius_log.h>
-
+#include <asiolink/crypto_tls.h>
 #include <cc/data.h>
 #include <cc/default_credentials.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -34,11 +34,11 @@ namespace radius {
 /// @brief Keywords for Radius configuration.
 const set<string>
 RadiusConfigParser::RADIUS_KEYWORDS = {
-    "access", "accounting", // services
+  "access", "accounting", "common-tls", // services
     "bindaddr", "canonical-mac-address", "client-id-pop0",
     "client-id-printable", "deadtime", "dictionary",
     "extract-duid", "identifier-type4", "identifier-type6",
-    "nas-ports",
+    "nas-ports", "protocol",
     "reselect-subnet-address", "reselect-subnet-pool",
     "retries", "session-history", "thread-pool-size", "timeout",
     "comment" // not saved for toElement
@@ -55,6 +55,11 @@ const SimpleDefaults RadiusConfigParser::RADIUS_DEFAULTS = {
     { "extract-duid",             Element::boolean, "true" },
     { "identifier-type4",         Element::string,  "client-id" },
     { "identifier-type6",         Element::string,  "duid" },
+<<<<<<< HEAD
+=======
+    { "protocol",                 Element::string,  "UDP" },
+    { "realm",                    Element::string,  "" },
+>>>>>>> 62a05145a9 ([#4274] Checkpoint: parse)
     { "reselect-subnet-address",  Element::boolean, "false" },
     { "reselect-subnet-pool",     Element::boolean, "false" },
     { "retries",                  Element::integer, "3" },
@@ -122,6 +127,22 @@ RadiusConfigParser::parse(ElementPtr& config) {
 
         // Check it.
         AttrDefs::instance().checkStandardDefs(USED_STANDARD_ATTR_DEFS);
+
+        // Protocol.
+        const ConstElementPtr& protocol = config->get("protocol");
+        string proto = protocol->stringValue();
+        if (proto == "UDP") {
+            riref.proto_ = PW_PROTO_UDP;
+        } else if (proto == "TCP") {
+            riref.proto_ = PW_PROTO_TCP;
+        } else if (proto == "TLS") {
+            riref.proto_ = PW_PROTO_TLS;
+        } else {
+            isc_throw(BadValue, "unknown protocol " << proto);
+        }
+        if (riref.proto_ == PW_PROTO_TCP) {
+            isc_throw(NotImplemented, "protocol 'TCP' is not supported");
+        }
 
         // bindaddr.
         const ConstElementPtr& bindaddr = config->get("bindaddr");
@@ -201,6 +222,18 @@ RadiusConfigParser::parse(ElementPtr& config) {
                       << (numeric_limits<long>::max() / 1000) << "]");
         }
         riref.timeout_ = static_cast<unsigned>(timeout64);
+
+        // Common TLS service.
+        const ConstElementPtr& common = config->get("common-tls");
+        if (common) {
+            if (riref.proto_ != PW_PROTO_TLS) {
+                isc_throw(BadValue, "'common-tls' service can't be configured "
+                          << "when protocol is not 'TLS'");
+            }
+            RadiusServiceParser parser;
+            parser.parse(riref.common_, common);
+            parser.checkAttributes(riref.common_);
+        }
 
         // Access service.
         const ConstElementPtr& access = config->get("access");
@@ -310,13 +343,15 @@ RadiusConfigParser::parse(ElementPtr& config) {
 const set<string>
 RadiusServiceParser::SERVICE_KEYWORDS = {
     "servers", "attributes", "peer-updates", "max-pending-requests",
-    "idle-timer-interval"
+    "idle-timer-interval", "enabled"
 };
 
 void
 RadiusServiceParser::parse(const RadiusServicePtr& service,
                            const ConstElementPtr& srv_cfg) {
     try {
+        RadiusImpl& riref = RadiusImpl::instance();
+
         // map type.
         if (srv_cfg->getType() != Element::map) {
             isc_throw(BadValue, "expected service to be map, but got "
@@ -333,9 +368,37 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
             }
         }
 
+        // Enabled.
+        const ConstElementPtr& enabled = srv_cfg->get("enabled");
+        if (enabled) {
+            if (riref.proto_ != PW_PROTO_TLS) {
+                isc_throw(BadValue, "'enabled' makes sense only with TLS");
+            }
+            if (enabled->getType() != Element::boolean) {
+                isc_throw(BadValue, "expected enabled to be boolean, "
+                          << "but got "
+                          << Element::typeToName(enabled->getType())
+                          << " instead");
+            }
+            if ((service->name_ == "common-tls") && !enabled->boolValue()) {
+                isc_throw(BadValue, "bad 'enabled' value in 'common-tls'");
+            }
+            service->enabled_ = enabled->boolValue();
+        } else  {
+            if ((riref.proto_ == PW_PROTO_TLS) &&
+                (service->name_ != "common-tls")) {
+                service->enabled_ = true;
+            }
+        }
+
         // servers.
         const ConstElementPtr& servers = srv_cfg->get("servers");
         if (servers) {
+            if ((riref.proto_ == PW_PROTO_TLS) &&
+                (service->name_ != "common-tls")) {
+                isc_throw(BadValue, "can't have servers entry in '"
+                          << service->name_ << "' with TLS");
+            }
             RadiusServerListParser parser;
             parser.parse(service, servers);
             if (!service->servers_.empty()) {
@@ -346,6 +409,9 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         // attributes.
         const ConstElementPtr& attributes = srv_cfg->get("attributes");
         if (attributes) {
+            if (service->name_ == "common-tls") {
+                isc_throw(BadValue, "can't define attributes in 'common-tls'");
+            }
             RadiusAttributeListParser parser;
             parser.parse(service, attributes);
         }
@@ -353,9 +419,11 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         // peer-updates.
         const ConstElementPtr& peer_updates = srv_cfg->get("peer-updates");
         if (peer_updates) {
-            if (service->name_ == "access") {
-                isc_throw(BadValue, "peer-updates configured for the access service, but it is "
-                                    "only supported for the accounting service");
+            if (service->name_ != "accounting") {
+
+                isc_throw(BadValue, "peer-updates configured for the "
+                          << service->name_ << " service, but it is "
+                          << "only supported for the accounting service");
             }
             if (peer_updates->getType() != Element::boolean) {
                 isc_throw(BadValue, "expected peer-updates to be boolean, "
@@ -370,10 +438,10 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         const ConstElementPtr& max_pending_requests =
             srv_cfg->get("max-pending-requests");
         if (max_pending_requests) {
-            if (service->name_ == "accounting") {
+            if (service->name_ != "access") {
                 isc_throw(BadValue, "max-pending-requests configured for the "
-                          << "accounting service, but it is only supported "
-                          << "for the access service");
+                          << service->name_ << " service, but it is only "
+                          << "supported for the access service");
             }
             if (max_pending_requests->getType() != Element::integer) {
                 isc_throw(BadValue, "expected max-pending-requests to be "
@@ -394,6 +462,11 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         const ConstElementPtr& idle_timer_interval =
             srv_cfg->get("idle-timer-interval");
         if (idle_timer_interval) {
+            if ((riref.proto_ == PW_PROTO_TLS) &&
+                (service->name_ != "common-tls")) {
+                isc_throw(BadValue, "can't have idle-timer-interval entry in '"
+                          << service->name_ << "' with TLS");
+            }
             if (idle_timer_interval->getType() != Element::integer) {
                 isc_throw(BadValue, "expected idle-timer-interval to be "
                           << "integer, but got "
@@ -469,6 +542,8 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     uint16_t port;
     if (server->contains("port")) {
         port = getUint16(server, "port");
+    } else if (service->name_ == "common-tls") {
+        port = PW_TLS_PORT;
     } else if (service->name_ == "access") {
         port = PW_AUTH_PORT;
     } else {
@@ -496,13 +571,29 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     msg << " local_addr=" << local_addr;
 
     // secret.
-    const string& secret = getString(server, "secret");
-    try {
-        DefaultCredentials::check(secret);
-    } catch (const DefaultCredential& ex) {
-        isc_throw(ConfigError, "illegal use of a default secret");
+    string secret;
+    const ConstElementPtr& secret_elm = server->get("secret");
+    if (!server->contains("secret") && (service->name_ == "common-tls")) {
+        secret = "radsec";
+    } else {
+        secret = getString(server, "secret");
+        try {
+            DefaultCredentials::check(secret);
+        } catch (const DefaultCredential& ex) {
+            isc_throw(ConfigError, "illegal use of a default secret");
+        }
     }
     msg << " secret=*****";
+
+    // TLS parameters.
+    TlsContextPtr tls_context;
+    if (service->name_ == "common-tls") {
+        string trust_anchor = getString(server, "trust-anchor");
+        string cert_file = getString(server, "cert-file");
+        string key_file = getString(server, "key-file");
+        TlsContext::configure(tls_context, TlsRole::CLIENT,
+                              trust_anchor, cert_file, key_file);
+    }
 
     try {
         ServerPtr srv(new Server(peer_addr, port, local_addr, secret,

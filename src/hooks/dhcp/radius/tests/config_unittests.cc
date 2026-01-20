@@ -113,6 +113,7 @@ TEST_F(ConfigTest, defaults) {
         "\"extract-duid\": true, "
         "\"identifier-type4\": \"client-id\", "
         "\"identifier-type6\": \"duid\", "
+        "\"protocol\": \"UDP\", "
         "\"reselect-subnet-address\": false, "
         "\"reselect-subnet-pool\": false, "
         "\"retries\": 3, "
@@ -135,6 +136,7 @@ TEST_F(ConfigTest, global) {
     config->set("extract-duid", Element::create(false));
     config->set("identifier-type4", Element::create("hw-address"));
     config->set("identifier-type6", Element::create("flex-id"));
+    config->set("protocol", Element::create("TLS"));
     config->set("reselect-subnet-address", Element::create(true));
     config->set("reselect-subnet-pool", Element::create(true));
     config->set("retries", Element::create(5));
@@ -155,11 +157,16 @@ TEST_F(ConfigTest, global) {
         "\"canonical-mac-address\": true, "
         "\"client-id-pop0\": true, "
         "\"client-id-printable\": true, "
+        "\"common-tls\": {"
+        "   \"attributes\": [ ],"
+        "   \"idle-timer-interval\": 0"
+        "}, "
         "\"deadtime\": 10, "
         "\"dictionary\": \"/dev/null\", "
         "\"extract-duid\": false, "
         "\"identifier-type4\": \"hw-address\", "
         "\"identifier-type6\": \"flex-id\", "
+        "\"protocol\": \"TLS\", "
         "\"reselect-subnet-address\": true, "
         "\"reselect-subnet-pool\": true, "
         "\"retries\": 5, "
@@ -170,6 +177,7 @@ TEST_F(ConfigTest, global) {
     runToElementTest<RadiusImpl>(expected, impl_);
 
     // Check state.
+    EXPECT_EQ(PW_PROTO_TLS, impl_.proto_);
     EXPECT_EQ("127.0.0.1", impl_.bindaddr_);
     EXPECT_TRUE(impl_.canonical_mac_address_);
     EXPECT_TRUE(impl_.clientid_pop0_);

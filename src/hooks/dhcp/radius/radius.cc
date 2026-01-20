@@ -140,6 +140,10 @@ void RadiusImpl::init(ElementPtr&config) {
     parser.parse(config);
     checkEarlyGlobalResvLookup();
     checkSharedNetworks();
+    if ((proto_ == PW_PROTO_TLS) && !common_->enabled_) {
+        auth_->enabled_ = false;
+        acct_->enabled_ = false;
+    }
     if (auth_->enabled_) {
         if (!HostDataSourceFactory::registeredFactory("cache")) {
             LOG_ERROR(radius_logger, RADIUS_ACCESS_NO_HOST_CACHE);
@@ -420,6 +424,9 @@ ElementPtr RadiusImpl::toElement() const {
     // dictionary.
     result->set("dictionary", Element::create(dictionary_));
 
+    // protocol.
+    result->set("protocol", Element::create(protocolToText(proto_)));
+
     // bindaddr.
     result->set("bindaddr", Element::create(bindaddr_));
 
@@ -468,6 +475,9 @@ ElementPtr RadiusImpl::toElement() const {
     result->set("timeout", Element::create(timeout_));
 
     // services.
+    if (proto_ == PW_PROTO_TLS) {
+        result->set("common-tls", common_->toElement());
+    }
     result->set("access", auth_->toElement());
     result->set("accounting", acct_->toElement());
 

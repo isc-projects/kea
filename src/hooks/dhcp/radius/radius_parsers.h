@@ -10,6 +10,7 @@
 #include <radius.h>
 #include <radius_access.h>
 #include <radius_accounting.h>
+#include <radius_tls.h>
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <set>
