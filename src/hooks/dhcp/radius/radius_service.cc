@@ -17,6 +17,9 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
+std::mutex
+RadiusService::idle_timer_mutex_;
+
 RadiusService::RadiusService(const std::string& name)
     : name_(name), enabled_(false), peer_updates_(true),
       max_pending_requests_(0), idle_timer_interval_(), idle_timer_() {

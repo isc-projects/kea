@@ -72,7 +72,7 @@ public:
     /// @brief Idle timer mutex.
     ///
     /// @note: shared between all instances of RadiusService.
-    std::mutex idle_timer_mutex_;
+    static std::mutex idle_timer_mutex_;
 };
 
 /// @brief Type of pointers to Radius service.
