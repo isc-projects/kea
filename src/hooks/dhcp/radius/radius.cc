@@ -114,6 +114,10 @@ void RadiusImpl::cleanup() {
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
 
+    if (getIOContext()) {
+        getIOContext()->stopAndPoll();
+    }
+
     io_context_.reset(new IOService());
     exchange_list_.clear();
     if (getIOService()) {
