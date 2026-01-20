@@ -31,10 +31,23 @@ namespace isc {
 namespace radius {
 
 /// @brief Default RADIUS access/authentication port.
-static constexpr uint16_t PW_AUTH_UDP_PORT = 1812;
+static constexpr uint16_t PW_AUTH_PORT = 1812;
 
 /// @brief Default RADIUS accounting port.
-static constexpr uint16_t PW_ACCT_UDP_PORT = 1813;
+static constexpr uint16_t PW_ACCT_PORT = 1813;
+
+/// @brief Default RADIUS/TLS port.
+static constexpr uint16_t PW_TLS_PORT = 2083;
+
+/// @brief Transport protocols.
+enum RadiusProtocol {
+    PW_PROTO_UDP,
+    PW_PROTO_TCP,
+    PW_PROTO_TLS
+};
+
+/// @brief Transport protocol to text.
+std::string protocolToText(const int proto);
 
 /// @brief RADIUS server class.
 class Server : public data::CfgToElement {

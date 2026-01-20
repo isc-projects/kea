@@ -17,6 +17,7 @@
 #include <radius_accounting.h>
 #include <radius_log.h>
 #include <radius_parsers.h>
+#include <radius_tls.h>
 
 #include <exception>
 
@@ -45,7 +46,8 @@ RadiusImpl::instancePtr() {
 }
 
 RadiusImpl::RadiusImpl()
-    : auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
+    : proto_(PW_PROTO_UDP), common_(new RadiusTls()),
+      auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
       bindaddr_("*"), canonical_mac_address_(false),
       clientid_pop0_(false), clientid_printable_(false),
       deadtime_(0), extract_duid_(true),
@@ -97,6 +99,7 @@ void RadiusImpl::cleanup() {
         backend_.reset();
     }
 
+    common_.reset(new RadiusTls());
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
 
@@ -130,6 +133,7 @@ void RadiusImpl::reset() {
 }
 
 void RadiusImpl::init(ElementPtr&config) {
+    common_.reset(new RadiusTls());
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
     RadiusConfigParser parser;

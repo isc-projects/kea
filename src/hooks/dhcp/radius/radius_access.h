@@ -335,7 +335,6 @@ public:
 
     /// @brief Idle timer callback.
     static void IdleTimerCallback();
-
 };
 
 } // end of namespace isc::radius

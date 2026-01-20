@@ -470,9 +470,9 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     if (server->contains("port")) {
         port = getUint16(server, "port");
     } else if (service->name_ == "access") {
-        port = PW_AUTH_UDP_PORT;
+        port = PW_AUTH_PORT;
     } else {
-        port = PW_ACCT_UDP_PORT;
+        port = PW_ACCT_PORT;
     }
     msg << " port=" << port;
 

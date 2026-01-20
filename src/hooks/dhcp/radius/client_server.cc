@@ -52,6 +52,22 @@ struct AddrInfo {
 namespace isc {
 namespace radius {
 
+string
+protocolToText(const int proto) {
+    ostringstream result;
+    switch (proto) {
+    case PW_PROTO_UDP:
+        return ("UDP");
+    case PW_PROTO_TCP:
+        return ("TCP");
+    case PW_PROTO_TLS:
+        return ("TLS");
+    default:
+        result << "unknown transport protocol " << proto;
+        return (result.str());
+    }
+}
+
 IOAddress
 Server::getAddress(const string& name) {
     AddrInfo res(name);

@@ -29,6 +29,14 @@ using namespace std::chrono;
 
 namespace {
 
+/// Verify protocolToText.
+TEST(ServerClassTest, protocolToText) {
+    EXPECT_EQ("UDP", protocolToText(PW_PROTO_UDP));
+    EXPECT_EQ("TCP", protocolToText(PW_PROTO_TCP));
+    EXPECT_EQ("TLS", protocolToText(PW_PROTO_TLS));
+    EXPECT_EQ("unknown transport protocol 6", protocolToText(6));
+}
+
 /// Verify Server::getAddress.
 TEST(ServerClassTest, getAddress) {
     boost::scoped_ptr<IOAddress> addr;
