@@ -94,7 +94,8 @@ TEST_F(UnixCommandConfigTest, default) {
     runToElementTest(os.str(), *unix_config_);
 }
 
-// This test verifies that removing the group execute on the path still works.
+// This test verifies that removing the group execute on the parent directory
+// still works for the owner.
 TEST_F(UnixCommandConfigTest, group) {
     // Remove the group execute bit on the parent.
     setSocketTestPath();
@@ -206,7 +207,7 @@ TEST_F(UnixCommandConfigTest, securityEnforcmentFalsePermissions) {
     std::ostringstream oss;
     oss << "COMMAND_UNIX_SOCKET_PERMISSIONS_SECURITY_WARNING"
         << " unix socket permissions are NOT SECURE: socket path:/tmp"
-        << " does not exist or does not have permssions less than 0";
+        << " does not exist or has more relaxed permissions than 0";
 
     EXPECT_EQ(1, countFile(oss.str()));
 }

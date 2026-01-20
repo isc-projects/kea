@@ -132,7 +132,7 @@ UnixCommandConfig::validatePath(const std::string socket_path) {
     if ((parent_perms & ~socket_path_perms_) != 0) {
         std::ostringstream oss;
         oss << "socket path:" << parent_path
-            << " does not exist or does not have permssions less than "
+            << " does not exist or has more relaxed permissions than "
             << std::oct << socket_path_perms_;
 
         if (PathChecker::shouldEnforceSecurity()) {
