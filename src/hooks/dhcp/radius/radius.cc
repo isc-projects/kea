@@ -97,9 +97,6 @@ void RadiusImpl::cleanup() {
         backend_.reset();
     }
 
-    auth_.reset(new RadiusAccess());
-    acct_.reset(new RadiusAccounting());
-
     if (thread_pool_) {
         MultiThreadingMgr::instance().removeCriticalSectionCallbacks("RADIUS");
         thread_pool_->stop();
@@ -113,6 +110,10 @@ void RadiusImpl::cleanup() {
             exchange->shutdown();
         }
     }
+
+    auth_.reset(new RadiusAccess());
+    acct_.reset(new RadiusAccounting());
+
     io_context_.reset(new IOService());
     exchange_list_.clear();
     if (getIOService()) {
