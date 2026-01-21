@@ -27,7 +27,7 @@ project(
         'b_pch=false',
         'b_pie=true',
         'debug=true',
-	'optimization=2',
+        'optimization=2',
         'install_umask=0027',
         'warning_level=2',
     ],
