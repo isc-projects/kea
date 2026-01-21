@@ -97,11 +97,11 @@ TEST_F(ConfigTest, defaults) {
     EXPECT_NO_THROW(impl_.init(config));
     string expected = "{ "
         "\"access\": {"
-        "   \"attributes\": [ ],"
+        "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
         "\"accounting\": {"
-        "   \"attributes\": [ ],"
+        "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
         "\"bindaddr\": \"*\", "
@@ -146,11 +146,11 @@ TEST_F(ConfigTest, global) {
     EXPECT_NO_THROW(impl_.init(config));
     string expected = "{ "
         "\"access\": {"
-        "   \"attributes\": [ ],"
+        "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
         "\"accounting\": {"
-        "   \"attributes\": [ ],"
+        "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
         "\"bindaddr\": \"127.0.0.1\", "
@@ -158,7 +158,7 @@ TEST_F(ConfigTest, global) {
         "\"client-id-pop0\": true, "
         "\"client-id-printable\": true, "
         "\"common-tls\": {"
-        "   \"attributes\": [ ],"
+        "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
         "\"deadtime\": 10, "
@@ -637,11 +637,13 @@ TEST_F(ConfigTest, services) {
         "   \"type\": 1, "
         "   \"data\": \"foobar\" "
         "} ],"
+        "\"enabled\": false,"
         "\"idle-timer-interval\": 0"
         "}";
     runToElementTest<RadiusService>(expected, *impl_.auth_);
 
     // Needs a server to be enabled.
+    EXPECT_FALSE(impl_.common_->enabled_);
     EXPECT_FALSE(impl_.auth_->enabled_);
     EXPECT_FALSE(impl_.acct_->enabled_);
     config = Element::createMap();
@@ -678,7 +680,7 @@ TEST_F(ConfigTest, services) {
     EXPECT_NO_THROW(impl_.init(config));
 
     expected = "{ "
-        "\"attributes\": [ ], "
+        "\"enabled\": true,"
         "\"idle-timer-interval\": 0,"
         "\"servers\": [ {"
         "   \"deadtime\": 0, "
@@ -737,7 +739,7 @@ TEST_F(ConfigTest, services) {
     EXPECT_NO_THROW(impl_.init(config));
 
     expected = "{ "
-        "\"attributes\": [ ], "
+        "\"enabled\": true,"
         "\"idle-timer-interval\": 0,"
         "\"servers\": [ {"
         "   \"deadtime\": 0, "
@@ -766,6 +768,164 @@ TEST_F(ConfigTest, services) {
     ASSERT_TRUE(srv);
     EXPECT_EQ("127.0.0.1", srv->getPeerAddress().toText());
     EXPECT_EQ(16450, srv->getPeerPort());
+}
+
+// Verify syntax of common-tls service.
+TEST_F(ConfigTest, commonTls) {
+    // TCP is not implemented.
+    ElementPtr config = Element::createMap();
+    config->set("protocol", Element::create(string("TCP")));
+    string expected = "protocol 'TCP' is not supported";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    config->set("protocol", Element::create(string("UDP")));
+    EXPECT_NO_THROW(impl_.init(config));
+
+    // Services can be empty.
+    ElementPtr common = Element::createMap();
+    ElementPtr access = Element::createMap();
+    ElementPtr accounting = Element::createMap();
+    config->set("common-tls", common);
+    config->set("access", access);
+    config->set("accounting", accounting);
+    expected = "'common-tls' service can't be configured when protocol ";
+    expected += "is not 'TLS'";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    config->set("protocol", Element::create(string("TLS")));
+    EXPECT_NO_THROW(impl_.init(config));
+    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.auth_->enabled_);
+    EXPECT_FALSE(impl_.acct_->enabled_);
+
+    // Can't set enabled to false on common-Tls.
+    common->set("enabled", Element::create(false));
+    expected = "bad 'enabled' value in 'common-tls' (parsing common-tls)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    common->set("enabled", Element::create(true));
+    EXPECT_NO_THROW(impl_.init(config));
+    EXPECT_TRUE(impl_.common_->enabled_);
+    EXPECT_TRUE(impl_.auth_->enabled_);
+    EXPECT_TRUE(impl_.acct_->enabled_);
+
+    // Overwrite enabled.
+    accounting->set("enabled", Element::create(false));
+    EXPECT_NO_THROW(impl_.init(config));
+    EXPECT_TRUE(impl_.common_->enabled_);
+    EXPECT_TRUE(impl_.auth_->enabled_);
+    EXPECT_FALSE(impl_.acct_->enabled_);
+
+    // Servers is forbidden outside common-tls.
+    common = Element::createMap();
+    access = Element::createMap();
+    accounting = Element::createMap();
+    config->set("common-tls", common);
+    config->set("access", access);
+    config->set("accounting", accounting);
+    access->set("servers", Element::createList());
+    expected = "can't have servers entry in 'access' with TLS (parsing access)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    access = Element::createMap();
+    config->set("access", access);
+    accounting->set("servers", Element::createList());
+    expected = "can't have servers entry in 'accounting' with TLS ";
+    expected += "(parsing accounting)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+
+    // Idle timer interval is forbidden outside common-tls.
+    common = Element::createMap();
+    access = Element::createMap();
+    accounting = Element::createMap();
+    config->set("common-tls", common);
+    config->set("access", access);
+    config->set("accounting", accounting);
+    access->set("idle-timer-interval", Element::create(60));
+    expected = "can't have idle-timer-interval entry in 'access' with TLS ";
+    expected += "(parsing access)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    access = Element::createMap();
+    config->set("access", access);
+    accounting->set("idle-timer-interval", Element::create(60));
+    expected = "can't have idle-timer-interval entry in 'accounting' ";
+    expected += "with TLS (parsing accounting)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+
+    // Attribute is forbidden in common-tls.
+    common = Element::createMap();
+    access = Element::createMap();
+    accounting = Element::createMap();
+    config->set("common-tls", common);
+    config->set("access", access);
+    config->set("accounting", accounting);
+    common->set("attributes", Element::createList());
+    expected = "can't define attributes in 'common-tls' (parsing common-tls)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+
+    // Set idle timer interval in coomon-tls.
+    common = Element::createMap();
+    config->set("common-tls", common);
+    common->set("idle-timer-interval", Element::create(60));
+    EXPECT_NO_THROW(impl_.init(config));
+    EXPECT_EQ(60, impl_.common_->idle_timer_interval_);
+    EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
+    EXPECT_EQ(0, impl_.acct_->idle_timer_interval_);
+    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.auth_->enabled_);
+    EXPECT_FALSE(impl_.acct_->enabled_);
+
+    // Servers for coomon-tls require TLS.
+    ElementPtr servers = Element::createList();
+    ElementPtr server = Element::createMap();
+    server->set("name", Element::create("127.0.0.1"));
+    // Secret is not required with TLS as it defaults to "radsec".
+    servers->add(server);
+    common->set("servers", servers);
+    expected = "missing parameter 'trust-anchor' (:0:0) (parsing common-tls)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+    string trust_anchor = TEST_CA_DIR;
+    server->set("trust-anchor", Element::create(trust_anchor));
+    string cert_file = TEST_CA_DIR "/kea-client.crt";
+    server->set("cert-file", Element::create(cert_file));
+    string key_file = TEST_CA_DIR "/kea-client.key";
+    server->set("key-file", Element::create(key_file));
+    EXPECT_NO_THROW(impl_.init(config));
+    expected = "{ "
+        "\"access\": {"
+        "   \"enabled\": true,"
+        "   \"idle-timer-interval\": 0"
+        "}, "
+        "\"accounting\": {"
+        "   \"enabled\": true,"
+        "   \"idle-timer-interval\": 0"
+        "}, "
+        "\"bindaddr\": \"*\", "
+        "\"canonical-mac-address\": false, "
+        "\"client-id-pop0\": false, "
+        "\"client-id-printable\": false, "
+        "\"common-tls\": {"
+        "   \"enabled\": true,"
+        "   \"idle-timer-interval\": 60, "
+        "   \"servers\": [ {"
+        "     \"deadtime\": 0, "
+        "     \"local-address\": \"127.0.0.1\", "
+        "     \"peer-address\": \"127.0.0.1\", "
+        "     \"peer-port\": 2083, "
+        "     \"secret\": \"radsec\", "
+        "     \"timeout\": 10, "
+        "     \"tls-context\": true "
+        "} ] }, "
+        "\"deadtime\": 0, "
+        "\"dictionary\": \"" + string(DICTIONARY) + "\", "
+        "\"extract-duid\": true, "
+        "\"identifier-type4\": \"client-id\", "
+        "\"identifier-type6\": \"duid\", "
+        "\"protocol\": \"TLS\", "
+        "\"reselect-subnet-address\": false, "
+        "\"reselect-subnet-pool\": false, "
+        "\"retries\": 3, "
+        "\"session-history\": \"\", "
+        "\"thread-pool-size\": 0, "
+        "\"timeout\": 10"
+        " }";
+    runToElementTest<RadiusImpl>(expected, impl_);
 }
 
 // Verify parsing of attributes.

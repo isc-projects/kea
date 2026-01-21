@@ -140,10 +140,6 @@ void RadiusImpl::init(ElementPtr&config) {
     parser.parse(config);
     checkEarlyGlobalResvLookup();
     checkSharedNetworks();
-    if ((proto_ == PW_PROTO_TLS) && !common_->enabled_) {
-        auth_->enabled_ = false;
-        acct_->enabled_ = false;
-    }
     if (auth_->enabled_) {
         if (!HostDataSourceFactory::registeredFactory("cache")) {
             LOG_ERROR(radius_logger, RADIUS_ACCESS_NO_HOST_CACHE);
@@ -158,6 +154,10 @@ void RadiusImpl::init(ElementPtr&config) {
     }
     if (acct_->enabled_) {
         acct_->init(session_history_filename_);
+    }
+    if ((proto_ == PW_PROTO_TLS) && !common_->enabled_) {
+        auth_->enabled_ = false;
+        acct_->enabled_ = false;
     }
 }
 

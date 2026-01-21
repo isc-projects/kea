@@ -34,6 +34,9 @@ ElementPtr
 RadiusService::toElement() const {
     ElementPtr result = Element::createMap();
 
+    // enabled.
+    result->set("enabled", Element::create(enabled_));
+
     // servers.
     if (!servers_.empty()) {
         ElementPtr servers = Element::createList();
@@ -46,7 +49,9 @@ RadiusService::toElement() const {
     }
 
     // attributes.
-    result->set("attributes", attributes_.toElement());
+    if (!attributes_.empty()) {
+        result->set("attributes", attributes_.toElement());
+    }
 
     // idle-timer-interval.
     result->set("idle-timer-interval", Element::create(idle_timer_interval_));

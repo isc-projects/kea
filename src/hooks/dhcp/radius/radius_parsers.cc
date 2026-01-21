@@ -337,8 +337,8 @@ RadiusConfigParser::parse(ElementPtr& config) {
 /// @brief Keywords for service configuration.
 const set<string>
 RadiusServiceParser::SERVICE_KEYWORDS = {
-    "servers", "attributes", "peer-updates", "max-pending-requests",
-    "idle-timer-interval", "enabled"
+    "enabled", "servers", "attributes", "peer-updates", "max-pending-requests",
+    "idle-timer-interval"
 };
 
 void
