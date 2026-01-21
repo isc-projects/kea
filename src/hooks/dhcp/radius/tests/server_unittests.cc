@@ -75,6 +75,7 @@ class ServerTest : public radius::test::AttributeTest {
 
 // Verify constructor.
 TEST_F(ServerTest, basic) {
+    TlsContextPtr tls_context;
     ServerPtr server;
 
     // Address mismatch.
@@ -82,27 +83,30 @@ TEST_F(ServerTest, basic) {
     IOAddress addr6("2001:db8::1235");
     string expected = "address family mismatch: peer ";
     expected += addr4.toText() + ", local " + addr6.toText();
-    EXPECT_THROW_MSG(server.reset(new Server(addr4, 1234, addr6,
+    EXPECT_THROW_MSG(server.reset(new Server(addr4, 1234, addr6, tls_context,
                                              "foo", 10, 0)),
                      BadValue, expected);
     expected = "address family mismatch: peer ";
     expected += addr6.toText() + ", local " + addr4.toText();
-    EXPECT_THROW_MSG(server.reset(new Server(addr6, 1234, addr4,
+    EXPECT_THROW_MSG(server.reset(new Server(addr6, 1234, addr4, tls_context,
                                              "foo", 10, 0)),
                      BadValue, expected);
 
     // Empty secret.
-    EXPECT_THROW_MSG(server.reset(new Server(addr4, 1234, addr4, "", 10, 0)),
+    EXPECT_THROW_MSG(server.reset(new Server(addr4, 1234, addr4, tls_context,
+                                             "", 10, 0)),
                      BadValue, "empty secret");
 
     // IPv4.
-    ASSERT_NO_THROW(server.reset(new Server(addr4, 1234, addr4, "foo", 10, 0)));
+    ASSERT_NO_THROW(server.reset(new Server(addr4, 1234, addr4, tls_context,
+                                            "foo", 10, 0)));
     ASSERT_TRUE(server);
     EXPECT_EQ(addr4, server->getPeerAddress());
     EXPECT_EQ(1234, server->getPeerPort());
     EXPECT_NO_THROW(server->setPeerPort(2345));
     EXPECT_EQ(2345, server->getPeerPort());
     EXPECT_EQ(addr4, server->getLocalAddress());
+    EXPECT_FALSE(server->getTlsContext());
     expected = "address family mismatch: peer ";
     expected += addr4.toText() + ", local " + addr6.toText();
     EXPECT_THROW_MSG(server->setLocalAddress(addr6), BadValue, expected);
@@ -134,10 +138,12 @@ TEST_F(ServerTest, basic) {
     EXPECT_TRUE(server->getDeadtimeEnd() < later);
 
     // IPv6.
-    EXPECT_NO_THROW(server.reset(new Server(addr6, 1234, addr6, "foo", 10, 0)));
+    EXPECT_NO_THROW(server.reset(new Server(addr6, 1234, addr6, tls_context,
+                                            "foo", 10, 0)));
     ASSERT_TRUE(server);
     EXPECT_EQ(addr6, server->getPeerAddress());
     EXPECT_EQ(addr6, server->getLocalAddress());
+    EXPECT_FALSE(server->getTlsContext());
     expected = "address family mismatch: peer ";
     expected += addr6.toText() + ", local " + addr4.toText();
     EXPECT_THROW_MSG(server->setLocalAddress(addr4), BadValue, expected);
@@ -157,7 +163,7 @@ TEST_F(ServerTest, basic) {
 
     // deadtime-end.
     now = steady_clock::now();
-    EXPECT_NO_THROW(server.reset(new Server(addr6, 1234, addr6,
+    EXPECT_NO_THROW(server.reset(new Server(addr6, 1234, addr6, tls_context,
                                             "foo", 10, 60)));
     ASSERT_TRUE(server);
     ConstElementPtr map = server->toElement();

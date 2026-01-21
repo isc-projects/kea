@@ -10,6 +10,7 @@
 #include <client_attribute.h>
 #include <client_message.h>
 #include <asiolink/asio_wrapper.h>
+#include <asiolink/crypto_tls.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
@@ -70,15 +71,19 @@ public:
     /// @param peer_addr The peer/server address.
     /// @param peer_port The peer/server port.
     /// @param local_addr The local/client address.
+    /// @param tls_context The TLS client context.
     /// @param secret The shared secret (must not be empty).
     /// @param timeout The timeout in seconds.
     /// @param deadtime The hold-down delay (0 means disabled).
     Server(const asiolink::IOAddress& peer_addr, const uint16_t peer_port,
-           const asiolink::IOAddress& local_addr, const std::string& secret,
-           const unsigned timeout, const unsigned deadtime = 0)
+           const asiolink::IOAddress& local_addr,
+           const asiolink::TlsContextPtr& tls_context,
+           const std::string& secret, const unsigned timeout,
+           const unsigned deadtime = 0)
         : peer_addr_(peer_addr), peer_port_(peer_port),
-          local_addr_(local_addr), secret_(secret), timeout_(timeout),
-          deadtime_(deadtime), deadtime_end_(std::chrono::steady_clock::now()),
+          local_addr_(local_addr), tls_context_(tls_context), secret_(secret),
+          timeout_(timeout), deadtime_(deadtime),
+          deadtime_end_(std::chrono::steady_clock::now()),
           mutex_(new std::mutex) {
 
         // Extra checks.
@@ -116,6 +121,13 @@ public:
     /// @return the local address.
     asiolink::IOAddress getLocalAddress() const {
         return (local_addr_);
+    }
+
+    /// @brief Get TLS context.
+    ///
+    /// @return the TLS context.
+    asiolink::TlsContextPtr getTlsContext() const {
+        return (tls_context_);
     }
 
     /// @brief Get secret.
@@ -187,6 +199,9 @@ protected:
 
     /// @brief Local address.
     asiolink::IOAddress local_addr_;
+
+    /// @brief TLS context.
+    asiolink::TlsContextPtr tls_context_;
 
     /// @brief Secret.
     std::string secret_;

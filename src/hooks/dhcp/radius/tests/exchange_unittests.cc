@@ -55,7 +55,10 @@ TEST(TestExchange, async) {
     // No handler.
     ServerPtr server;
     IOAddress addr("127.0.0.1");
-    ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11646, addr, secret, 0)));
+    TlsContextPtr tls_context;
+    ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11646, addr, tls_context,
+                                                secret, 0)));
+    ASSERT_TRUE(server);
     servers.push_back(server);
     EXPECT_THROW_MSG(exchange.reset(new Exchange(io_service, msg, 0, servers, Exchange::Handler())),
                      BadValue, "null handler");
@@ -101,7 +104,9 @@ TEST(TestExchange, sync) {
     // No error.
     ServerPtr server;
     IOAddress addr("127.0.0.1");
-    ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11645, addr, secret, 0)));
+    TlsContextPtr tls_context;
+    ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11645, addr, tls_context,
+                                                secret, 0)));
     servers.push_back(server);
     ASSERT_NO_THROW_LOG(exchange.reset(new Exchange(msg, 0, servers)));
 
@@ -197,9 +202,10 @@ public:
     // Add server.
     void addServer() {
         ServerPtr server;
+        TlsContextPtr tls_context;
         ASSERT_NO_THROW_LOG(server.reset(new Server(addr_, port_, addr_,
-                                                    secret_, timeout_,
-                                                    deadtime_)));
+                                                    tls_context, secret_,
+                                                    timeout_, deadtime_)));
         ASSERT_TRUE(server);
         servers_.push_back(server);
         ASSERT_FALSE(servers_.empty());

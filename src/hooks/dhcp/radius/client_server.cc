@@ -218,6 +218,11 @@ Server::toElement() const {
     // Local address.
     result->set("local-address", Element::create(local_addr_.toText()));
 
+    // TLS context.
+    if (tls_context_) {
+        result->set("tls-context", Element::create(true));
+    }
+
     // Secret.
     result->set("secret", Element::create(secret_));
 

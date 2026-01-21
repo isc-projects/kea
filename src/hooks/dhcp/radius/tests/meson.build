@@ -30,6 +30,7 @@ dhcp_radius_tests = executable(
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
         f'-DDICTIONARY="@SYSCONFDIR_INSTALLED@/kea/radius/dictionary"',
         f'-DTEST_DICTIONARY="@TOP_SOURCE_DIR@/src/hooks/dhcp/radius/data/dictionary"',
+        f'-DTEST_CA_DIR="@TEST_CA_DIR@"',
     ],
     dependencies: [GTEST_DEP, CRYPTO_DEP],
     include_directories: [include_directories('.'), include_directories('..')] + INCLUDES,

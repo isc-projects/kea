@@ -8,7 +8,6 @@
 
 #include <radius_parsers.h>
 #include <radius_log.h>
-#include <asiolink/crypto_tls.h>
 #include <cc/data.h>
 #include <cc/default_credentials.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -592,8 +591,8 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     }
 
     try {
-        ServerPtr srv(new Server(peer_addr, port, local_addr, secret,
-                                 riref.timeout_, riref.deadtime_));
+      ServerPtr srv(new Server(peer_addr, port, local_addr, tls_context,
+                               secret, riref.timeout_, riref.deadtime_));
         service->servers_.push_back(srv);
     } catch (const Exception& ex) {
         isc_throw(ConfigError, "can't create " << service->name_
