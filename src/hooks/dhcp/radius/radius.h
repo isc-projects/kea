@@ -49,15 +49,21 @@ public:
     /// @brief Destructor.
     ~UdpClient();
 
+    /// @brief Starts running the client's thread pool, if multi-threaded.
+    void start();
+
+    /// @brief Halts client-side IO activity.
+    ///
+    /// Shutdown all exchanges, In multi-threaded mode discards the
+    /// thread-pool and the internal IOService.
+    void stop();
+
     /// @brief Check if the current thread can perform thread pool state
     /// transition.
     ///
     /// @throw MultiThreadingInvalidOperation if the state transition is done on
     /// any of the worker threads.
     void checkPermissions();
-
-    /// @brief Starts running the client's thread pool, if multi-threaded.
-    void start();
 
     /// @brief Pauses the client's thread pool.
     ///
@@ -69,18 +75,17 @@ public:
     /// @throw InvalidOperation if the thread pool does not exist.
     void resume();
 
-    /// @brief Halts client-side IO activity.
-    ///
-    /// Shutdown all exchanges, In multi-threaded mode discards the
-    /// thread-pool and the internal IOService.
-    void stop();
-
     /// @brief Fetches a pointer to the internal IOService used to
     /// drive the thread-pool in multi-threaded mode.
     ///
     /// @return pointer to the IOService instance, or an empty pointer
     /// in single-threaded mode.
     const asiolink::IOServicePtr getThreadIOService() const;
+
+    /// @brief the maximum size of the thread pool.
+    ///
+    /// @return the maximum size of the thread pool.
+    size_t getThreadPoolSize() const;
 
     /// @brief Register Exchange.
     ///
@@ -92,14 +97,18 @@ public:
     /// @param exchange The exchange to unregister.
     void unregisterExchange(ExchangePtr exchange);
 
-    /// @brief
+private:
+    /// @brief Pointer to IOService.
     isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief Thread pool.
-    asiolink::IoServiceThreadPoolPtr thread_pool_;
 
     /// @brief Thread pool size.
     unsigned thread_pool_size_;
+
+    /// @brief Pointer to private IOService used in multi-threaded mode.
+    isc::asiolink::IOServicePtr thread_io_service_;
+
+    /// @brief Thread pool.
+    asiolink::IoServiceThreadPoolPtr thread_pool_;
 
     /// @brief The list of Exchange objects.
     std::list<ExchangePtr> exchange_list_;
@@ -248,6 +257,9 @@ public:
     /// @brief Transport protocol.
     RadiusProtocol proto_;
 
+    /// @brief UDP client.
+    UdpClientPtr udp_client_;
+
     /// @brief Subnet ID to NAS port map.
     std::map<uint32_t, uint32_t> remap_;
 
@@ -308,9 +320,6 @@ public:
     /// @brief Identifier type for IPv6.
     dhcp::Host::IdentifierType id_type6_;
 
-    /// @brief Thread pool.
-    asiolink::IoServiceThreadPoolPtr thread_pool_;
-
     /// @brief Flag which indicates that the instance is shutting down.
     static std::atomic<bool> shutdown_;
 
@@ -326,24 +335,6 @@ protected:
     /// @brief Clean up members.
     void cleanup();
 
-    /// @brief Check if the current thread can transition the thread pool to the paused state.
-    ///
-    /// Used as a CS callback.
-    ///
-    /// @throw MultiThreadingInvalidOperation if the state transition is done on
-    /// any of the worker threads.
-    void checkPausePermissions();
-
-    /// @brief Pause the thread pool.
-    ///
-    /// Used as a CS callback.
-    void pauseThreadPool();
-
-    /// @brief Resume the thread pool.
-    ///
-    /// Used as a CS callback.
-    void resumeThreadPool();
-
 private:
 
     /// @brief The IOService object, used for all ASIO operations.
@@ -351,12 +342,6 @@ private:
 
     /// @brief The hook I/O service.
     isc::asiolink::IOServicePtr io_service_;
-
-    /// @brief The list of Exchange objects.
-    std::list<ExchangePtr> exchange_list_;
-
-    /// @brief Mutex to protect the internal state.
-    std::mutex mutex_;
 };
 
 /// @brief InHook class (RAII style).

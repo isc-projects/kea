@@ -433,7 +433,8 @@ struct MTAccessTest : AccessTest {
         // Pause the thread pool and resume only after work items have
         // been added to it to increase the chance of finding race conditions.
         EXPECT_EQ(4, impl_.thread_pool_size_);
-        EXPECT_EQ(4, impl_.thread_pool_->getPoolSize());
+        EXPECT_TRUE(impl_.udp_client_);
+        EXPECT_EQ(4, impl_.udp_client_->getThreadPoolSize());
         EXPECT_NO_THROW_LOG(thread_pool_.start(impl_.thread_pool_size_));
         EXPECT_NO_THROW_LOG(thread_pool_.pause());
 
@@ -477,6 +478,9 @@ struct MTAccessTest : AccessTest {
     ///
     /// Used to park packets and call callouts.
     ThreadPool<function<void()>> thread_pool_;
+
+    /// @brief UDP client thread pool.
+    IoServiceThreadPoolPtr udp_client_thread_pool_;
 };
 
 /// @brief Server method running in a thread.
@@ -3794,7 +3798,8 @@ TEST_F(MTAccessTest, noHost4) {
     EXPECT_NO_THROW_LOG(thread_pool_.stop());
 
     // Join RADIUS hook library threads.
-    EXPECT_NO_THROW_LOG(impl_.thread_pool_->stop());
+    ASSERT_TRUE(impl_.udp_client_);
+    EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
 
     // Half should be parked and then unparked. Half should be dropped.
     EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
@@ -3852,7 +3857,8 @@ TEST_F(MTAccessTest, noHost6) {
     EXPECT_NO_THROW_LOG(thread_pool_.stop());
 
     // Join RADIUS hook library threads.
-    EXPECT_NO_THROW_LOG(impl_.thread_pool_->stop());
+    ASSERT_TRUE(impl_.udp_client_);
+    EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
 
     // Half should be parked and then unparked. Half should be dropped.
     EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);

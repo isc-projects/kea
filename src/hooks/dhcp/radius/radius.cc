@@ -32,16 +32,18 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
-UdpClient::UdpClient(const IOServicePtr& io_service, size_t thread_pool_size) {
+UdpClient::UdpClient(const IOServicePtr& io_service, size_t thread_pool_size)
     : io_service_(io_service), thread_pool_size_(thread_pool_size) {
     // Do nothing in ST mode.
     if (thread_pool_size == 0) {
         return;
     }
+
+    // Create our own private IOService.
+    thread_io_service_.reset(new IOService());
     thread_pool_ =
-        boost::make_shared<IoServiceThreadPool>(IOServicePtr(),
-                                                thread_pool_size);
-    io_service_ = thread_pool_->getIOService();
+        boost::make_shared<IoServiceThreadPool>(thread_io_service_,
+                                                thread_pool_size_);
 
     // Add critical section callbacks.
     MultiThreadingMgr::instance().addCriticalSectionCallbacks("RADIUS",
@@ -54,24 +56,14 @@ UdpClient::~UdpClient() {
     stop();
 }
 
-void
-UdpClient::checkPermissions() {
-    // Since this function is used as CS callback all exceptions must be
-    // suppressed, unlikely though they may be.
-    try {
-        if (thread_pool_) {
-            thread_pool_->checkPausePermissions();
-        }
-    } catch (const isc::MultiThreadingInvalidOperation& ex) {
-        LOG_ERROR(radius_logger, RADIUS_PAUSE_ILLEGAL)
-            .arg(ex.what());
-        // The exception needs to be propagated to the caller of the
-        // MultiThreadingCriticalSection constructor.
-        throw;
-    } catch (const exception& ex) {
-        LOG_ERROR(radius_logger, RADIUS_PAUSE_PERMISSIONS_FAILED)
-            .arg(ex.what());
-    }
+size_t
+UdpClient::getThreadPoolSize() const {
+    return (thread_pool_size_);
+}
+
+const asiolink::IOServicePtr
+UdpClient::getThreadIOService() const {
+    return (thread_io_service_);
 }
 
 void
@@ -99,6 +91,27 @@ UdpClient::stop() {
             exchange->shutdown();
         }
         io_service_->stopAndPoll();
+    }
+    exchange_list_.clear();
+}
+
+void
+UdpClient::checkPermissions() {
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
+    try {
+        if (thread_pool_) {
+            thread_pool_->checkPausePermissions();
+        }
+    } catch (const isc::MultiThreadingInvalidOperation& ex) {
+        LOG_ERROR(radius_logger, RADIUS_PAUSE_ILLEGAL)
+            .arg(ex.what());
+        // The exception needs to be propagated to the caller of the
+        // MultiThreadingCriticalSection constructor.
+        throw;
+    } catch (const exception& ex) {
+        LOG_ERROR(radius_logger, RADIUS_PAUSE_PERMISSIONS_FAILED)
+            .arg(ex.what());
     }
 }
 
@@ -157,13 +170,13 @@ RadiusImpl::instancePtr() {
 }
 
 RadiusImpl::RadiusImpl()
-    : proto_(PW_PROTO_UDP), common_(new RadiusTls()),
+    : proto_(PW_PROTO_UDP), udp_client_(), common_(new RadiusTls()),
       auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
       bindaddr_("*"), canonical_mac_address_(false),
       clientid_pop0_(false), clientid_printable_(false),
       deadtime_(0), extract_duid_(true),
       reselect_subnet_pool_(false), reselect_subnet_address_(false),
-      retries_(3), thread_pool_size_(0), timeout_(0),
+      retries_(3), timeout_(0),
       id_type4_(Host::IDENT_CLIENT_ID), id_type6_(Host::IDENT_DUID),
       io_context_(new IOService()), io_service_(io_context_) {
 }
@@ -178,13 +191,15 @@ RadiusImpl::~RadiusImpl() {
 }
 
 void RadiusImpl::registerExchange(ExchangePtr exchange) {
-    MultiThreadingLock lock(mutex_);
-    exchange_list_.push_back(exchange);
+    if (udp_client_) {
+        udp_client_->registerExchange(exchange);
+    }
 }
 
 void RadiusImpl::unregisterExchange(ExchangePtr exchange) {
-    MultiThreadingLock lock(mutex_);
-    exchange_list_.remove(exchange);
+    if (udp_client_) {
+        udp_client_->unregisterExchange(exchange);
+    }
 }
 
 void RadiusImpl::cleanup() {
@@ -201,7 +216,6 @@ void RadiusImpl::cleanup() {
     canonical_mac_address_ = false;
     cache_.reset();
     bindaddr_ = "*";
-    thread_pool_size_ = 0;
     remap_.clear();
 
     if (backend_) {
@@ -214,23 +228,11 @@ void RadiusImpl::cleanup() {
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
 
-    if (thread_pool_) {
-        MultiThreadingMgr::instance().removeCriticalSectionCallbacks("RADIUS");
-        thread_pool_->stop();
-        for (auto const& exchange : exchange_list_) {
-            exchange->shutdown();
-        }
-        thread_pool_->getIOService()->stopAndPoll();
-        thread_pool_.reset();
-    } else {
-        for (auto const& exchange : exchange_list_) {
-            exchange->shutdown();
-        }
-        io_context_->stopAndPoll();
+    if (udp_client_) {
+        udp_client_.reset();
     }
 
     io_context_.reset(new IOService());
-    exchange_list_.clear();
     if (getIOService()) {
         getIOService()->stopAndPoll();
     }
@@ -301,24 +303,14 @@ RadiusImpl::startServices() {
         // Schedule a start of the services. This ensures we begin after
         // the dust has settled and Kea MT mode has been firmly established.
         io_service_->post([this, thread_pool_size]() {
-            // Initialize thread pool.
-            thread_pool_ =
-                boost::make_shared<IoServiceThreadPool>(IOServicePtr(),
-                                                        thread_pool_size);
-            io_context_ = thread_pool_->getIOService();
+            udp_client_.reset(new UdpClient(io_service_, thread_pool_size));
 
-            // Add critical section callbacks.
-            MultiThreadingMgr::instance().addCriticalSectionCallbacks("RADIUS",
-                    [this]() { checkPausePermissions(); },
-                    [this]() { pauseThreadPool(); },
-                    [this]() { resumeThreadPool(); });
+            io_context_ = udp_client_->getThreadIOService();
 
-            // Run the thread pool.
-            thread_pool_->run();
-
-            LOG_INFO(radius_logger, RADIUS_THREAD_POOL_STARTED)
-                .arg(thread_pool_size);
+            udp_client_->start();
         });
+    } else {
+        udp_client_.reset(new UdpClient(io_service_, 0));
     }
 }
 
@@ -371,55 +363,6 @@ RadiusImpl::setAccountingIdleTimer() {
         acct_->setIdleTimer();
     } else {
         common_->setIdleTimer();
-    }
-}
-
-void
-RadiusImpl::checkPausePermissions() {
-    // Since this function is used as CS callback all exceptions must be
-    // suppressed, unlikely though they may be.
-    try {
-        if (thread_pool_) {
-            thread_pool_->checkPausePermissions();
-        }
-    } catch (const isc::MultiThreadingInvalidOperation& ex) {
-        LOG_ERROR(radius_logger, RADIUS_PAUSE_ILLEGAL)
-            .arg(ex.what());
-        // The exception needs to be propagated to the caller of the
-        // MultiThreadingCriticalSection constructor.
-        throw;
-    } catch (const exception& ex) {
-        LOG_ERROR(radius_logger, RADIUS_PAUSE_PERMISSIONS_FAILED)
-            .arg(ex.what());
-    }
-}
-
-void
-RadiusImpl::pauseThreadPool() {
-    // Since this function is used as CS callback all exceptions must be
-    // suppressed, unlikely though they may be.
-    try {
-        // Pause the thread pool.
-        if (thread_pool_) {
-            thread_pool_->pause();
-        }
-    } catch (const exception& ex) {
-        LOG_ERROR(radius_logger, RADIUS_PAUSE_FAILED)
-            .arg(ex.what());
-    }
-}
-
-void
-RadiusImpl::resumeThreadPool() {
-    // Since this function is used as CS callback all exceptions must be
-    // suppressed, unlikely though they may be.
-    try {
-        if (thread_pool_) {
-            thread_pool_->run();
-        }
-    } catch (const exception& ex) {
-        LOG_ERROR(radius_logger, RADIUS_RESUME_FAILED)
-            .arg(ex.what());
     }
 }
 
