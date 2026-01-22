@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <database/db_log.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -18,6 +19,7 @@ using isc::db::DB_LOG_WARN;
 using isc::db::DB_LOG_INFO;
 using isc::db::DB_LOG_DEBUG;
 using isc::db::db_logger_mutex;
+using namespace isc::test;
 
 namespace {
 
@@ -25,24 +27,19 @@ namespace {
 /// Let's use DB_INVALID_ACCESS as an example for all.
 TEST(DatabaseLogTest, mutexIsolation) {
     DB_LOG_FATAL(DB_INVALID_ACCESS).arg("hello");
-    EXPECT_TRUE(db_logger_mutex.try_lock());
-    db_logger_mutex.unlock();
+    EXPECT_TRUE(checkTryLock(db_logger_mutex));
 
     DB_LOG_ERROR(DB_INVALID_ACCESS).arg("hello");
-    EXPECT_TRUE(db_logger_mutex.try_lock());
-    db_logger_mutex.unlock();
+    EXPECT_TRUE(checkTryLock(db_logger_mutex));
 
     DB_LOG_WARN(DB_INVALID_ACCESS).arg("hello");
-    EXPECT_TRUE(db_logger_mutex.try_lock());
-    db_logger_mutex.unlock();
+    EXPECT_TRUE(checkTryLock(db_logger_mutex));
 
     DB_LOG_INFO(DB_INVALID_ACCESS).arg("hello");
-    EXPECT_TRUE(db_logger_mutex.try_lock());
-    db_logger_mutex.unlock();
+    EXPECT_TRUE(checkTryLock(db_logger_mutex));
 
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, DB_INVALID_ACCESS).arg("hello");
-    EXPECT_TRUE(db_logger_mutex.try_lock());
-    db_logger_mutex.unlock();
+    EXPECT_TRUE(checkTryLock(db_logger_mutex));
 }
 
 }  // namespace

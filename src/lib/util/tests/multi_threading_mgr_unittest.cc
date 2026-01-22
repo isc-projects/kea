@@ -9,10 +9,12 @@
 #include <exceptions/exceptions.h>
 #include <util/multi_threading_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc::util;
+using namespace isc::test;
 using namespace isc;
 
 /// @brief Fixture used to reset multi-threading before and after each test.
@@ -220,33 +222,29 @@ TEST_F(MultiThreadingMgrTest, criticalSection) {
 TEST(MultiThreadingLockTest, scope) {
     // Check that the mutex is unlocked by default at first.
     std::mutex mutex;
-    ASSERT_TRUE(mutex.try_lock());
-    mutex.unlock();
+    ASSERT_TRUE(checkTryLock(mutex));
 
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(false));
 
     // Check that the lock does not locks the mutex if multi-threading is disabled.
     {
         MultiThreadingLock lock(mutex);
-        ASSERT_TRUE(mutex.try_lock());
-        mutex.unlock();
+        ASSERT_TRUE(checkTryLock(mutex));
     }
 
     // Check that the mutex is still unlocked when the lock goes out of scope.
-    ASSERT_TRUE(mutex.try_lock());
-    mutex.unlock();
+    ASSERT_TRUE(checkTryLock(mutex));
 
     EXPECT_NO_THROW(MultiThreadingMgr::instance().setMode(true));
 
     // Check that the lock actively locks the mutex if multi-threading is enabled.
     {
         MultiThreadingLock lock(mutex);
-        ASSERT_FALSE(mutex.try_lock());
+        ASSERT_FALSE(checkTryLock(mutex));
     }
 
     // Check that the mutex is unlocked when the lock goes out of scope.
-    ASSERT_TRUE(mutex.try_lock());
-    mutex.unlock();
+    ASSERT_TRUE(checkTryLock(mutex));
 }
 
 /// @brief Test fixture for exercised CriticalSection callbacks.
