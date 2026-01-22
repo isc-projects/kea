@@ -32,6 +32,85 @@
 namespace isc {
 namespace radius {
 
+/// @brief UDP client class.
+///
+/// Copied from TcpClient with UDP specific parts moved from RadiusImpl.
+class UdpClient {
+public:
+    /// @brief Constructor.
+    ///
+    /// @param io_service IO service to be used by the UDP client.
+    /// @param thread_pool_size maximum number of threads in the thread pool.
+    /// The value 0 means that MT is disabled.
+    /// deferred until a subsequent call to @ref start().
+    UdpClient(const asiolink::IOServicePtr& io_service,
+              size_t thread_pool_size = 0);
+
+    /// @brief Destructor.
+    ~UdpClient();
+
+    /// @brief Check if the current thread can perform thread pool state
+    /// transition.
+    ///
+    /// @throw MultiThreadingInvalidOperation if the state transition is done on
+    /// any of the worker threads.
+    void checkPermissions();
+
+    /// @brief Starts running the client's thread pool, if multi-threaded.
+    void start();
+
+    /// @brief Pauses the client's thread pool.
+    ///
+    /// @throw InvalidOperation if the thread pool does not exist.
+    void pause();
+
+    /// @brief Resumes running the client's thread pool.
+    ///
+    /// @throw InvalidOperation if the thread pool does not exist.
+    void resume();
+
+    /// @brief Halts client-side IO activity.
+    ///
+    /// Shutdown all exchanges, In multi-threaded mode discards the
+    /// thread-pool and the internal IOService.
+    void stop();
+
+    /// @brief Fetches a pointer to the internal IOService used to
+    /// drive the thread-pool in multi-threaded mode.
+    ///
+    /// @return pointer to the IOService instance, or an empty pointer
+    /// in single-threaded mode.
+    const asiolink::IOServicePtr getThreadIOService() const;
+
+    /// @brief Register Exchange.
+    ///
+    /// @param exchange The exchange to register.
+    void registerExchange(ExchangePtr exchange);
+
+    /// @brief Unregister Exchange.
+    ///
+    /// @param exchange The exchange to unregister.
+    void unregisterExchange(ExchangePtr exchange);
+
+    /// @brief
+    isc::asiolink::IOServicePtr io_service_;
+
+    /// @brief Thread pool.
+    asiolink::IoServiceThreadPoolPtr thread_pool_;
+
+    /// @brief Thread pool size.
+    unsigned thread_pool_size_;
+
+    /// @brief The list of Exchange objects.
+    std::list<ExchangePtr> exchange_list_;
+
+    /// @brief Mutex to protect the internal state.
+    std::mutex mutex_;
+};
+
+/// @brief Pointer to UDP client.
+typedef boost::shared_ptr<UdpClient> UdpClientPtr;
+
 /// @brief Default key of remap table in the subnet ID space.
 /// Moved from radius_request.h file for better visibility.
 static const uint32_t SUBNET_ID_DEFAULT = 0;

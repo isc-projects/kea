@@ -32,6 +32,117 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
+UdpClient::UdpClient(const IOServicePtr& io_service, size_t thread_pool_size) {
+    : io_service_(io_service), thread_pool_size_(thread_pool_size) {
+    // Do nothing in ST mode.
+    if (thread_pool_size == 0) {
+        return;
+    }
+    thread_pool_ =
+        boost::make_shared<IoServiceThreadPool>(IOServicePtr(),
+                                                thread_pool_size);
+    io_service_ = thread_pool_->getIOService();
+
+    // Add critical section callbacks.
+    MultiThreadingMgr::instance().addCriticalSectionCallbacks("RADIUS",
+        [this]() { checkPermissions(); },
+        [this]() { pause(); },
+        [this]() { resume(); });
+}
+
+UdpClient::~UdpClient() {
+    stop();
+}
+
+void
+UdpClient::checkPermissions() {
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
+    try {
+        if (thread_pool_) {
+            thread_pool_->checkPausePermissions();
+        }
+    } catch (const isc::MultiThreadingInvalidOperation& ex) {
+        LOG_ERROR(radius_logger, RADIUS_PAUSE_ILLEGAL)
+            .arg(ex.what());
+        // The exception needs to be propagated to the caller of the
+        // MultiThreadingCriticalSection constructor.
+        throw;
+    } catch (const exception& ex) {
+        LOG_ERROR(radius_logger, RADIUS_PAUSE_PERMISSIONS_FAILED)
+            .arg(ex.what());
+    }
+}
+
+void
+UdpClient::start() {
+    if (thread_pool_) {
+        thread_pool_->run();
+
+        LOG_INFO(radius_logger, RADIUS_THREAD_POOL_STARTED)
+            .arg(thread_pool_size_);
+    }
+}
+
+void
+UdpClient::stop() {
+    if (thread_pool_) {
+        MultiThreadingMgr::instance().removeCriticalSectionCallbacks("RADIUS");
+        thread_pool_->stop();
+        for (auto const& exchange : exchange_list_) {
+            exchange->shutdown();
+        }
+        thread_pool_->getIOService()->stopAndPoll();
+        thread_pool_.reset();
+    } else {
+        for (auto const& exchange : exchange_list_) {
+            exchange->shutdown();
+        }
+        io_service_->stopAndPoll();
+    }
+}
+
+void
+UdpClient::pause() {
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
+    try {
+        // Pause the thread pool.
+        if (thread_pool_) {
+            thread_pool_->pause();
+        }
+    } catch (const exception& ex) {
+        LOG_ERROR(radius_logger, RADIUS_PAUSE_FAILED)
+            .arg(ex.what());
+    }
+}
+
+void
+UdpClient::resume() {
+    // Since this function is used as CS callback all exceptions must be
+    // suppressed, unlikely though they may be.
+    try {
+        if (thread_pool_) {
+            thread_pool_->run();
+        }
+    } catch (const exception& ex) {
+        LOG_ERROR(radius_logger, RADIUS_RESUME_FAILED)
+            .arg(ex.what());
+    }
+}
+
+void
+UdpClient::registerExchange(ExchangePtr exchange) {
+    MultiThreadingLock lock(mutex_);
+    exchange_list_.push_back(exchange);
+}
+
+void
+UdpClient::unregisterExchange(ExchangePtr exchange) {
+    MultiThreadingLock lock(mutex_);
+    exchange_list_.remove(exchange);
+}
+
 std::atomic<bool> RadiusImpl::shutdown_(false);
 
 RadiusImpl&
