@@ -155,10 +155,6 @@ void RadiusImpl::init(ElementPtr&config) {
     if (acct_->enabled_) {
         acct_->init(session_history_filename_);
     }
-    if ((proto_ == PW_PROTO_TLS) && !common_->enabled_) {
-        auth_->enabled_ = false;
-        acct_->enabled_ = false;
-    }
 }
 
 void
@@ -212,6 +208,58 @@ RadiusImpl::startServices() {
             LOG_INFO(radius_logger, RADIUS_THREAD_POOL_STARTED)
                 .arg(thread_pool_size);
         });
+    }
+}
+
+bool
+RadiusImpl::serveAccess() const {
+    if (shutdown_) {
+        return (false);
+    }
+    if (!auth_ || !auth_->enabled_) {
+        return (false);
+    }
+    if (proto_ != PW_PROTO_TLS) {
+        return (true);
+    }
+    return (common_ && common_->enabled_);
+}
+
+bool
+RadiusImpl::serveAccounting() const {
+    if (shutdown_) {
+        return (false);
+    }
+    if (!acct_ || !acct_->enabled_) {
+        return (false);
+    }
+    if (proto_ != PW_PROTO_TLS) {
+        return (true);
+    }
+    return (common_ && common_->enabled_);
+}
+
+void
+RadiusImpl::setAccessIdleTimer() {
+    if (shutdown_) {
+        return;
+    }
+    if (proto_ != PW_PROTO_TLS) {
+        auth_->setIdleTimer();
+    } else {
+        common_->setIdleTimer();
+    }
+}
+
+void
+RadiusImpl::setAccountingIdleTimer() {
+    if (shutdown_) {
+        return;
+    }
+    if (proto_ != PW_PROTO_TLS) {
+        acct_->setIdleTimer();
+    } else {
+        common_->setIdleTimer();
     }
 }
 

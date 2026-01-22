@@ -64,7 +64,7 @@ RadiusAuthStatus::invokeCallback(const CallbackAcct& callback,
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_STATUS_SUCCEED);
-        RadiusImpl::instance().auth_->setIdleTimer();
+        RadiusImpl::instance().setAccessIdleTimer();
 
         MessagePtr response = exchange->getResponse();
         AttributesPtr resp_attrs;
@@ -140,7 +140,7 @@ RadiusAcctStatus::invokeCallback(const CallbackAcct& callback,
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_STATUS_SUCCEED);
-        RadiusImpl::instance().acct_->setIdleTimer();
+        RadiusImpl::instance().setAccountingIdleTimer();
 
         MessagePtr response = exchange->getResponse();
         AttributesPtr resp_attrs;

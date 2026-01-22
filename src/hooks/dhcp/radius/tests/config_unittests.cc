@@ -793,23 +793,20 @@ TEST_F(ConfigTest, commonTls) {
     config->set("protocol", Element::create(string("TLS")));
     EXPECT_NO_THROW(impl_.init(config));
     EXPECT_FALSE(impl_.common_->enabled_);
-    EXPECT_FALSE(impl_.auth_->enabled_);
-    EXPECT_FALSE(impl_.acct_->enabled_);
-
-    // Can't set enabled to false on common-Tls.
-    common->set("enabled", Element::create(false));
-    expected = "bad 'enabled' value in 'common-tls' (parsing common-tls)";
-    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
-    common->set("enabled", Element::create(true));
-    EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_TRUE(impl_.common_->enabled_);
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_TRUE(impl_.acct_->enabled_);
 
+    // Can't set enabledin common-Tls.
+    common->set("enabled", Element::create(true));
+    expected = "can't set enabled in 'common-tls' (parsing common-tls)";
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
+
     // Overwrite enabled.
+    common = Element::createMap();
+    config->set("common-tls", common);
     accounting->set("enabled", Element::create(false));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_TRUE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.common_->enabled_);
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_FALSE(impl_.acct_->enabled_);
 
@@ -859,7 +856,7 @@ TEST_F(ConfigTest, commonTls) {
     expected = "can't define attributes in 'common-tls' (parsing common-tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
-    // Set idle timer interval in coomon-tls.
+    // Set idle timer interval in common-tls.
     common = Element::createMap();
     config->set("common-tls", common);
     common->set("idle-timer-interval", Element::create(60));
@@ -867,9 +864,6 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_EQ(60, impl_.common_->idle_timer_interval_);
     EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
     EXPECT_EQ(0, impl_.acct_->idle_timer_interval_);
-    EXPECT_FALSE(impl_.common_->enabled_);
-    EXPECT_FALSE(impl_.auth_->enabled_);
-    EXPECT_FALSE(impl_.acct_->enabled_);
 
     // Servers for coomon-tls require TLS.
     ElementPtr servers = Element::createList();

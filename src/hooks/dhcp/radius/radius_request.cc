@@ -86,16 +86,12 @@ RadiusSyncAuth::start() {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_ACCEPTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().auth_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccessIdleTimer();
     } else if (result == REJECT_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_REJECTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().auth_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccessIdleTimer();
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_FAILED)
@@ -151,16 +147,12 @@ RadiusAsyncAuth::invokeCallback(const CallbackAuth& callback,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_ACCEPTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().auth_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccessIdleTimer();
     } else if (result == REJECT_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_REJECTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().auth_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccessIdleTimer();
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_FAILED)
@@ -195,9 +187,7 @@ RadiusSyncAcct::start() {
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_SYNC_SUCCEED);
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().acct_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccountingIdleTimer();
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_SYNC_FAILED)
@@ -247,9 +237,7 @@ RadiusAsyncAcct::invokeCallback(const CallbackAcct& callback,
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_ASYNC_SUCCEED);
-        if (!RadiusImpl::shutdown_) {
-            RadiusImpl::instance().acct_->setIdleTimer();
-        }
+        RadiusImpl::instance().setAccountingIdleTimer();
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_ASYNC_FAILED)

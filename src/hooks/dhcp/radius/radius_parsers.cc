@@ -375,8 +375,8 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                           << Element::typeToName(enabled->getType())
                           << " instead");
             }
-            if ((service->name_ == "common-tls") && !enabled->boolValue()) {
-                isc_throw(BadValue, "bad 'enabled' value in 'common-tls'");
+            if (service->name_ == "common-tls") {
+                isc_throw(BadValue, "can't set enabled in 'common-tls'");
             }
             service->enabled_ = enabled->boolValue();
         } else  {

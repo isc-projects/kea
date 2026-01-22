@@ -479,7 +479,7 @@ int subnet4_select(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.auth_ || !impl.checkHostBackends()) {
+    if (!impl.serveAccess() || !impl.checkHostBackends()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Pkt4Ptr query;
@@ -528,7 +528,7 @@ int subnet6_select(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.auth_ || !impl.checkHostBackends()) {
+    if (!impl.serveAccess() || !impl.checkHostBackends()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Pkt6Ptr query;
@@ -576,7 +576,7 @@ int lease4_select(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
 
@@ -617,7 +617,7 @@ int lease4_renew(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease4Ptr lease;
@@ -650,7 +650,7 @@ int lease4_release(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease4Ptr lease;
@@ -683,7 +683,7 @@ int lease4_decline(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease4Ptr lease;
@@ -713,7 +713,7 @@ int lease4_expire(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease4Ptr lease;
@@ -742,7 +742,7 @@ int lease6_select(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     bool fake_allocation;
@@ -776,7 +776,7 @@ int lease6_renew(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease6Ptr lease;
@@ -805,7 +805,7 @@ int lease6_rebind(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease6Ptr lease;
@@ -834,7 +834,7 @@ int lease6_release(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease6Ptr lease;
@@ -863,7 +863,7 @@ int lease6_decline(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease6Ptr lease;
@@ -892,7 +892,7 @@ int lease6_expire(CalloutHandle& handle) {
 
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     Lease6Ptr lease;
@@ -918,7 +918,7 @@ int lease6_expire(CalloutHandle& handle) {
 int command_processed(CalloutHandle& handle) {
     InHook in_hook;
     RadiusImpl& impl = RadiusImpl::instance();
-    if (!impl.acct_ || !impl.getIOContext()) {
+    if (!impl.serveAccounting() || !impl.getIOContext()) {
         return (CONTROL_RESULT_SUCCESS);
     }
     string name;

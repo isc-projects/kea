@@ -104,6 +104,22 @@ public:
     /// Start the thread pool for MT or create the IO context for ST.
     void startServices();
 
+    /// @brief Check if access is served.
+    ///
+    /// @return true is access is served, false otherwise.
+    bool serveAccess() const;
+
+    /// @brief Check if accounting is served.
+    ///
+    /// @return true is accounting is served, false otherwise.
+    bool serveAccounting() const;
+
+    /// @brief Set the access idle timer.
+    void setAccessIdleTimer();
+
+    /// @brief Set the accounting idle timer.
+    void setAccountingIdleTimer();
+
     /// @brief Get the hook I/O service.
     ///
     /// @return the hook I/O service.
