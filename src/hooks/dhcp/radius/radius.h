@@ -44,7 +44,7 @@ public:
     /// The value 0 means that MT is disabled.
     /// deferred until a subsequent call to @ref start().
     UdpClient(const asiolink::IOServicePtr& io_service,
-              size_t thread_pool_size = 0);
+              unsigned thread_pool_size = 0);
 
     /// @brief Destructor.
     ~UdpClient();
@@ -85,7 +85,7 @@ public:
     /// @brief the maximum size of the thread pool.
     ///
     /// @return the maximum size of the thread pool.
-    size_t getThreadPoolSize() const;
+    unsigned getThreadPoolSize() const;
 
     /// @brief Register Exchange.
     ///
@@ -201,6 +201,16 @@ public:
     ///
     /// @return true is accounting is served, false otherwise.
     bool serveAccounting() const;
+
+    /// @brief Get servers for access.
+    ///
+    /// @return Servers to use with access servers.
+    const Servers& getAccessServers() const;
+
+    /// @brief Get servers for accounting.
+    ///
+    /// @return Servers to use with accounting servers.
+    const Servers& getAccountingServers() const;
 
     /// @brief Set the access idle timer.
     void setAccessIdleTimer();

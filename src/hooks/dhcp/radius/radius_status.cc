@@ -10,6 +10,7 @@
 #include <radius_accounting.h>
 #include <radius_status.h>
 #include <radius_log.h>
+#include <radius_tls.h>
 #include <sstream>
 
 using namespace isc::asiolink;
@@ -171,6 +172,78 @@ RadiusAcctStatus::invokeCallback(const CallbackAcct& callback,
     }
     exchange->shutdown();
     RadiusImpl::instance().unregisterExchange(exchange);
+}
+
+RadiusTlsStatus::RadiusTlsStatus(const AttributesPtr& send_attrs,
+                                 const CallbackStatus& handler)
+  : RadiusStatus() {
+    AttributesPtr attrs;
+    if (send_attrs) {
+        attrs.reset(new Attributes(*send_attrs));
+    } else {
+        attrs.reset(new Attributes());
+    }
+    MessagePtr request(new Message(PW_STATUS_SERVER, 0, vector<uint8_t>(),
+                                   "to-be-set", attrs));
+    unsigned maxretries = RadiusImpl::instance().retries_;
+    Servers servers = RadiusImpl::instance().common_->servers_;
+    exchange_.reset(new Exchange(RadiusImpl::instance().getIOContext(),
+                                 request, maxretries, servers,
+                                 std::bind(&RadiusTlsStatus::invokeCallback,
+                                           handler, ph::_1)));
+}
+
+void
+RadiusTlsStatus::start() {
+    AttributesPtr send_attrs;
+    MessagePtr request = exchange_->getRequest();
+    if (request) {
+        send_attrs = request->getAttributes();
+    }
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TLS_STATUS)
+        .arg(send_attrs ? send_attrs->toText() : "no attributes");
+
+    RadiusStatus::start();
+}
+
+void
+RadiusTlsStatus::invokeCallback(const CallbackAcct& callback,
+                                const ExchangePtr exchange) {
+    // Should not happen...
+    if (!exchange) {
+        return;
+    }
+    int result = exchange->getRC();
+    if (result == OK_RC) {
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TLS_STATUS_SUCCEED);
+        RadiusImpl::instance().setAccessIdleTimer();
+
+        MessagePtr response = exchange->getResponse();
+        AttributesPtr resp_attrs;
+        uint8_t code = 0;
+        if (response) {
+            resp_attrs = response->getAttributes();
+            code = response->getCode();
+        }
+        if (((code != 0) && (code != PW_ACCESS_ACCEPT)) ||
+            (resp_attrs && (resp_attrs->count(PW_ERROR_CAUSE) > 0))) {
+            LOG_ERROR(radius_logger, RADIUS_TLS_STATUS_ERROR)
+                .arg(msgCodeToText(code))
+                .arg(static_cast<unsigned>(code))
+                .arg(resp_attrs ? resp_attrs->toText() : "no attributes");
+        }
+    } else {
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TLS_STATUS_FAILED)
+            .arg(result)
+            .arg(exchangeRCtoText(result));
+    }
+
+    if (callback) {
+        try {
+            callback(result);
+        } catch (...) {
+        }
+    }
 }
 
 } // end of namespace radius

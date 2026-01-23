@@ -32,7 +32,7 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
-UdpClient::UdpClient(const IOServicePtr& io_service, size_t thread_pool_size)
+UdpClient::UdpClient(const IOServicePtr& io_service, unsigned thread_pool_size)
     : io_service_(io_service), thread_pool_size_(thread_pool_size) {
     // Do nothing in ST mode.
     if (thread_pool_size == 0) {
@@ -56,7 +56,7 @@ UdpClient::~UdpClient() {
     stop();
 }
 
-size_t
+unsigned
 UdpClient::getThreadPoolSize() const {
     return (thread_pool_size_);
 }
@@ -276,6 +276,7 @@ RadiusImpl::startServices() {
     ConstElementPtr const& dhcp_config(
         CfgMgr::instance().getStagingCfg()->getDHCPMultiThreading());
     bool multi_threaded(false);
+    unsigned thread_pool_size(0);
     uint32_t dhcp_threads(0);
     uint32_t dummy_queue_size(0);
     CfgMultiThreading::extract(dhcp_config, multi_threaded, dhcp_threads,
@@ -284,22 +285,26 @@ RadiusImpl::startServices() {
     if (multi_threaded) {
         // When threads are configured as zero, use the same number as DHCP
         // threads. If that is also zero, auto-detect.
-        unsigned thread_pool_size(thread_pool_size_);
         if (thread_pool_size_ == 0) {
             if (dhcp_threads == 0) {
                 uint32_t const hardware_threads(
                     MultiThreadingMgr::detectThreadCount());
                 if (hardware_threads == 0) {
                     // Keep it single-threaded.
-                    return;
+                    multi_threaded = false;
+                    thread_pool_size = 0;
                 } else {
                     thread_pool_size = hardware_threads;
                 }
             } else {
                 thread_pool_size = dhcp_threads;
             }
+        } else {
+            thread_pool_size = thread_pool_size_;
         }
+    }
 
+    if (multi_threaded) {
         // Schedule a start of the services. This ensures we begin after
         // the dust has settled and Kea MT mode has been firmly established.
         io_service_->post([this, thread_pool_size]() {
@@ -340,6 +345,24 @@ RadiusImpl::serveAccounting() const {
         return (true);
     }
     return (common_ && common_->enabled_);
+}
+
+const Servers&
+RadiusImpl::getAccessServers() const {
+    if (proto_ != PW_PROTO_TLS) {
+        return (auth_->servers_);
+    } else {
+        return (common_->servers_);
+    }
+}
+
+const Servers&
+RadiusImpl::getAccountingServers() const {
+    if (proto_ != PW_PROTO_TLS) {
+        return (acct_->servers_);
+    } else {
+        return (common_->servers_);
+    }
 }
 
 void

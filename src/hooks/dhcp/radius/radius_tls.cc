@@ -41,8 +41,7 @@ RadiusTls::setIdleTimer() {
 void
 RadiusTls::IdleTimerCallback() {
     AttributesPtr send_attrs;
-    RadiusAuthStatusPtr handler(new RadiusAuthStatus(send_attrs, 0));
-    RadiusImpl::instance().registerExchange(handler->getExchange());
+    RadiusTlsStatusPtr handler(new RadiusTlsStatus(send_attrs, 0));
     handler->start();
 }
 

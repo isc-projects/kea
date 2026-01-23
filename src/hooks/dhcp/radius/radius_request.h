@@ -20,11 +20,13 @@ namespace isc {
 namespace radius {
 
 /// @brief Type of callback for authentication termination.
+///
 /// First argument is the result code, second is the attribute collection
 /// from server response.
 typedef std::function<void(int, AttributesPtr)> CallbackAuth;
 
 /// @brief Type of callback for accounting termination.
+///
 /// The argument is the result code.
 typedef std::function<void(int)> CallbackAcct;
 
@@ -39,6 +41,7 @@ typedef std::function<void(int)> CallbackAcct;
 uint32_t getNASPort(uint32_t subnet_id);
 
 /// @brief Base class for communication with servers.
+///
 /// It represents the common part of authentication/authorization and
 /// accounting communication.
 class RadiusRequest {
@@ -61,6 +64,7 @@ public:
     virtual ~RadiusRequest() = default;
 
     /// @brief Start communication.
+    ///
     /// In synchronous mode it returns when exchange(s) is(are) finished,
     /// in asynchronous mode it initiates the (first) exchange.
     virtual void start() {
@@ -68,6 +72,8 @@ public:
     }
 
     /// @brief Get the error code.
+    ///
+    /// @return The error code.
     int getRC() const {
         return (exchange_->getRC());
     }

@@ -98,6 +98,10 @@ extern const isc::log::MessageID RADIUS_SESSION_HISTORY_OPEN_FAILED;
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORED;
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORE_FAILED;
 extern const isc::log::MessageID RADIUS_THREAD_POOL_STARTED;
+extern const isc::log::MessageID RADIUS_TLS_STATUS;
+extern const isc::log::MessageID RADIUS_TLS_STATUS_ERROR;
+extern const isc::log::MessageID RADIUS_TLS_STATUS_FAILED;
+extern const isc::log::MessageID RADIUS_TLS_STATUS_SUCCEED;
 
 } // namespace radius
 } // namespace isc

@@ -54,9 +54,9 @@ RadiusRequest::RadiusRequest(const MsgCode code,
     unsigned maxretries = RadiusImpl::instance().retries_;
     Servers servers;
     if (code == PW_ACCESS_REQUEST) {
-        servers = RadiusImpl::instance().auth_->servers_;
+        servers = RadiusImpl::instance().getAccessServers();
     } else {
-        servers = RadiusImpl::instance().acct_->servers_;
+        servers = RadiusImpl::instance().getAccountingServers();
     }
     if (sync) {
         exchange_.reset(new Exchange(request, maxretries, servers));

@@ -20,6 +20,7 @@ namespace isc {
 namespace radius {
 
 /// @brief Type of callback for status termination.
+///
 /// The argument is the result code.
 typedef std::function<void(int)> CallbackStatus;
 
@@ -35,6 +36,7 @@ public:
     virtual ~RadiusStatus() = default;
 
     /// @brief Start communication.
+    ///
     /// Initiates the (first) exchange.
     virtual void start() {
         exchange_->start();
@@ -80,6 +82,7 @@ protected:
 };
 
 /// @brief class for communication with access servers.
+///
 /// Only the asynchronous variant is defined.
 class RadiusAuthStatus : public RadiusStatus {
 public:
@@ -109,6 +112,7 @@ public:
 typedef boost::shared_ptr<RadiusAuthStatus> RadiusAuthStatusPtr;
 
 /// @brief class for communication with accounting servers.
+///
 /// Only the asynchronous variant is defined.
 class RadiusAcctStatus : public RadiusStatus {
 public:
@@ -136,6 +140,36 @@ public:
 
 /// @brief Pointer to accounting status.
 typedef boost::shared_ptr<RadiusAcctStatus> RadiusAcctStatusPtr;
+
+/// @brief class for communication with common TLS servers.
+///
+/// Only the asynchronous variant is defined.
+class RadiusTlsStatus : public RadiusStatus {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param send_attrs Attributes to send.
+    /// @param handler Termination handler.
+    RadiusTlsStatus(const AttributesPtr& send_attrs,
+                    const CallbackStatus& handler);
+
+    /// @brief Destructor.
+    virtual ~RadiusTlsStatus() = default;
+
+    /// @brief Start communication.
+    virtual void start() override;
+
+    /// @brief Invoke access status callback
+    ///
+    /// @param callback Termination callback
+    /// @param exchange the exchange.
+    static void invokeCallback(const CallbackStatus& callback,
+                               const ExchangePtr exchange);
+};
+
+/// @brief Pointer to access status.
+typedef boost::shared_ptr<RadiusTlsStatus> RadiusTlsStatusPtr;
 
 } // end of namespace radius
 } // end of namespace isc

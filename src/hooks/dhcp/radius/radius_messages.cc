@@ -97,6 +97,10 @@ extern const isc::log::MessageID RADIUS_SESSION_HISTORY_OPEN_FAILED = "RADIUS_SE
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORED = "RADIUS_SESSION_HISTORY_STORED";
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORE_FAILED = "RADIUS_SESSION_HISTORY_STORE_FAILED";
 extern const isc::log::MessageID RADIUS_THREAD_POOL_STARTED = "RADIUS_THREAD_POOL_STARTED";
+extern const isc::log::MessageID RADIUS_TLS_STATUS = "RADIUS_TLS_STATUS";
+extern const isc::log::MessageID RADIUS_TLS_STATUS_ERROR = "RADIUS_TLS_STATUS_ERROR";
+extern const isc::log::MessageID RADIUS_TLS_STATUS_FAILED = "RADIUS_TLS_STATUS_FAILED";
+extern const isc::log::MessageID RADIUS_TLS_STATUS_SUCCEED = "RADIUS_TLS_STATUS_SUCCEED";
 
 } // namespace radius
 } // namespace isc
@@ -194,6 +198,10 @@ const char* values[] = {
     "RADIUS_SESSION_HISTORY_STORED", "Storing to the session history file succeeded: stored %1 records",
     "RADIUS_SESSION_HISTORY_STORE_FAILED", "Writing to the session history file %1 failed: %2 (stored %3 over %4 records)",
     "RADIUS_THREAD_POOL_STARTED", "RADIUS thread pool started with %1 threads.",
+    "RADIUS_TLS_STATUS", "send Status-Server with %1",
+    "RADIUS_TLS_STATUS_ERROR", "received error response to Status-Server: %1 (%2) with %3",
+    "RADIUS_TLS_STATUS_FAILED", "Status-Server failed: return code %1 (%2)",
+    "RADIUS_TLS_STATUS_SUCCEED", "received valid response to Status-Server",
     NULL
 };
 
