@@ -61,12 +61,8 @@ Exchange::Exchange(const asiolink::IOServicePtr io_service,
                    const Servers& servers,
                    Handler handler)
     : identifier_(""), io_service_(io_service), sync_(false),
-      started_(false), terminated_(false), rc_(ERROR_RC),
-      start_time_(std::chrono::steady_clock().now()),
-      socket_(), ep_(), timer_(), server_(), idx_(0),
-      request_(request), sent_(), received_(), buffer_(), size_(0),
-      retries_(0), maxretries_(maxretries), servers_(servers),
-      postponed_(), handler_(handler), mutex_(new std::mutex()) {
+      rc_(ERROR_RC), request_(request), sent_(), received_(),
+      maxretries_(maxretries), servers_(servers), handler_(handler) {
     if (!io_service) {
         isc_throw(BadValue, "null IO service");
     }
@@ -82,27 +78,12 @@ Exchange::Exchange(const asiolink::IOServicePtr io_service,
     createIdentifier();
 }
 
-ExchangePtr
-Exchange::create(const asiolink::IOServicePtr io_service,
-                 const MessagePtr& request,
-                 unsigned maxretries,
-                 const Servers& servers,
-                 Handler handler) {
-    return (ExchangePtr(new Exchange(io_service, request, maxretries, servers,
-                                     handler)));
-}
-
 Exchange::Exchange(const MessagePtr& request,
                    unsigned maxretries,
                    const Servers& servers)
     : identifier_(""), io_service_(new IOService()), sync_(true),
-      started_(false), terminated_(false), rc_(ERROR_RC),
-      start_time_(std::chrono::steady_clock().now()),
-      socket_(), ep_(), timer_(), server_(), idx_(0),
-      request_(request), sent_(), received_(), buffer_(), size_(0),
-      retries_(0), maxretries_(maxretries), servers_(servers), postponed_(),
-      handler_(), mutex_(new std::mutex()) {
-
+      rc_(ERROR_RC), request_(request), sent_(), received_(),
+      maxretries_(maxretries), servers_(servers), handler_() {
     if (!request) {
         isc_throw(BadValue, "null request");
     }
@@ -113,13 +94,47 @@ Exchange::Exchange(const MessagePtr& request,
 }
 
 ExchangePtr
-Exchange::create(const MessagePtr& request,
-                   unsigned maxretries,
-                 const Servers& servers) {
-    return (ExchangePtr(new Exchange(request, maxretries, servers)));
+Exchange::create(const asiolink::IOServicePtr io_service,
+                 const MessagePtr& request,
+                 unsigned maxretries,
+                 const Servers& servers,
+                 Handler handler) {
+    return (UdpExchangePtr(new UdpExchange(io_service, request, maxretries,
+                                           servers, handler)));
 }
 
-Exchange::~Exchange() {
+ExchangePtr
+Exchange::create(const MessagePtr& request,
+                 unsigned maxretries,
+                 const Servers& servers) {
+    return (UdpExchangePtr(new UdpExchange(request, maxretries, servers)));
+}
+
+UdpExchange::UdpExchange(const asiolink::IOServicePtr io_service,
+                         const MessagePtr& request,
+                         unsigned maxretries,
+                         const Servers& servers,
+                         Handler handler)
+    : Exchange(io_service, request, maxretries, servers, handler),
+      started_(false), terminated_(false),
+      start_time_(std::chrono::steady_clock().now()),
+      socket_(), ep_(), timer_(), server_(), idx_(0),
+      buffer_(), size_(0), retries_(0), postponed_(),
+      mutex_(new std::mutex()) {
+}
+
+UdpExchange::UdpExchange(const MessagePtr& request,
+                         unsigned maxretries,
+                         const Servers& servers)
+    : Exchange(request, maxretries, servers),
+      started_(false), terminated_(false),
+      start_time_(std::chrono::steady_clock().now()),
+      socket_(), ep_(), timer_(), server_(), idx_(0),
+      buffer_(), size_(0), retries_(0), postponed_(),
+      mutex_(new std::mutex()) {
+}
+
+UdpExchange::~UdpExchange() {
     MultiThreadingLock lock(*mutex_);
     shutdownInternal();
     timer_.reset();
@@ -165,7 +180,7 @@ Exchange::logReplyMessages() const {
 }
 
 void
-Exchange::start() {
+UdpExchange::start() {
     MultiThreadingLock lock(*mutex_);
 
     if (started_) {
@@ -192,14 +207,14 @@ Exchange::start() {
 }
 
 void
-Exchange::shutdown() {
+UdpExchange::shutdown() {
     // Avoid multiple terminations.
     MultiThreadingLock lock(*mutex_);
     shutdownInternal();
 }
 
 void
-Exchange::shutdownInternal() {
+UdpExchange::shutdownInternal() {
     if (terminated_) {
         return;
     } else {
@@ -222,8 +237,9 @@ Exchange::shutdownInternal() {
 }
 
 void
-Exchange::buildRequest() {
-    if (!server_) {
+Exchange::buildRequest(const ServerPtr& server,
+                       std::chrono::steady_clock::time_point start_time) {
+    if (!server) {
         isc_throw(Unexpected, "no server");
     }
 
@@ -242,7 +258,7 @@ Exchange::buildRequest() {
     }
 
     // Set the secret.
-    sent_->setSecret(server_->getSecret());
+    sent_->setSecret(server->getSecret());
 
     // Get attributes.
     AttributesPtr attrs = sent_->getAttributes();
@@ -254,14 +270,14 @@ Exchange::buildRequest() {
     // Add Acct-Delay-Time to Accounting-Request message.
     if ((sent_->getCode() == PW_ACCOUNTING_REQUEST) &&
         (attrs->count(PW_ACCT_DELAY_TIME) == 0)) {
-        auto delta = steady_clock().now() - start_time_;
+        auto delta = steady_clock().now() - start_time;
         seconds secs = duration_cast<seconds>(delta);
         attrs->add(Attribute::fromInt(PW_ACCT_DELAY_TIME,
                                       static_cast<uint32_t>(secs.count())));
     }
 
     // Add NAS-IP[v6]-Address with the local address.
-    IOAddress local_addr = server_->getLocalAddress();
+    IOAddress local_addr = server->getLocalAddress();
     short family = local_addr.getFamily();
     if (family == AF_INET) {
         if (attrs->count(PW_NAS_IP_ADDRESS) == 0) {
@@ -288,7 +304,12 @@ Exchange::buildRequest() {
 }
 
 void
-Exchange::open() {
+UdpExchange::buildRequest() {
+    Exchange::buildRequest(server_, start_time_);
+}
+
+void
+UdpExchange::open() {
     if (RadiusImpl::shutdown_) {
         shutdownInternal();
         return;
@@ -316,14 +337,14 @@ Exchange::open() {
                 (server_->getDeadtimeEnd() > start_time_)) {
                 postponed_.push_back(idx_);
                 ++idx_;
-                io_service_->post(std::bind(&Exchange::openNext,
+                io_service_->post(std::bind(&UdpExchange::openNext,
                                             shared_from_this()));
                 return;
             }
         } else {
             // Second pass: try postponed servers.
             if (postponed_.empty()) {
-                io_service_->post(std::bind(&Exchange::terminate,
+                io_service_->post(std::bind(&UdpExchange::terminate,
                                             shared_from_this()));
                 return;
             }
@@ -382,7 +403,7 @@ Exchange::open() {
                 .arg(ep_->getPort());
 
             socket_->asyncSend(&buffer_[0], buffer_.size(), ep_.get(),
-                               std::bind(&Exchange::sentHandler,
+                               std::bind(&UdpExchange::sentHandler,
                                          shared_from_this(),
                                          ph::_1,   // error_code.
                                          ph::_2)); // size.
@@ -397,7 +418,7 @@ Exchange::open() {
                 socket_->close();
                 socket_.reset();
             }
-            io_service_->post(std::bind(&Exchange::openNext,
+            io_service_->post(std::bind(&UdpExchange::openNext,
                                         shared_from_this()));
             return;
         }
@@ -419,7 +440,7 @@ Exchange::open() {
         if (idx_ == servers_.size()) {
             // Postponed servers are exhausted.
             if (postponed_.size() < 2) {
-                io_service_->post(std::bind(&Exchange::terminate,
+                io_service_->post(std::bind(&UdpExchange::terminate,
                                             shared_from_this()));
                 return;
             }
@@ -429,13 +450,13 @@ Exchange::open() {
             // Try next server.
             ++idx_;
             if ((idx_ == servers_.size()) && (postponed_.empty())) {
-                io_service_->post(std::bind(&Exchange::terminate,
+                io_service_->post(std::bind(&UdpExchange::terminate,
                                             shared_from_this()));
                 return;
             }
         }
         // Call again open to try the next server.
-        io_service_->post(std::bind(&Exchange::openNext,
+        io_service_->post(std::bind(&UdpExchange::openNext,
                                     shared_from_this()));
         return;
     }
@@ -476,12 +497,12 @@ Exchange::open() {
             .arg(retries_);
 
         socket_->asyncSend(&buffer_[0],
-                                buffer_.size(),
-                                ep_.get(),
-                                std::bind(&Exchange::sentHandler,
-                                          shared_from_this(),
-                                          ph::_1,   // error_code.
-                                          ph::_2)); // size.
+                           buffer_.size(),
+                           ep_.get(),
+                           std::bind(&UdpExchange::sentHandler,
+                                     shared_from_this(),
+                                     ph::_1,   // error_code.
+                                     ph::_2)); // size.
         return;
     } catch (const Exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_EXCHANGE_OPEN_FAILED)
@@ -493,16 +514,16 @@ Exchange::open() {
             socket_->close();
             socket_.reset();
         }
-        io_service_->post(std::bind(&Exchange::openNext,
+        io_service_->post(std::bind(&UdpExchange::openNext,
                                     shared_from_this()));
         return;
     }
 }
 
 void
-Exchange::sentHandler(ExchangePtr ex,
-                      const boost::system::error_code ec,
-                      const size_t size) {
+UdpExchange::sentHandler(UdpExchangePtr ex,
+                         const boost::system::error_code ec,
+                         const size_t size) {
     if (!ex) {
         isc_throw(Unexpected, "null exchange in sentHandler");
     }
@@ -528,7 +549,7 @@ Exchange::sentHandler(ExchangePtr ex,
             ex->socket_->close();
             ex->socket_.reset();
         }
-        ex->io_service_->post(std::bind(&Exchange::openNext, ex));
+        ex->io_service_->post(std::bind(&UdpExchange::openNext, ex));
         return;
     }
 
@@ -540,15 +561,16 @@ Exchange::sentHandler(ExchangePtr ex,
     ex->buffer_.resize(BUF_LEN);
     ex->size_ = ex->buffer_.size();
     ex->socket_->asyncReceive(&(ex->buffer_)[0], ex->size_, 0, ex->ep_.get(),
-                              std::bind(&Exchange::receivedHandler, ex,
+                              std::bind(&UdpExchange::receivedHandler,
+                                        ex,
                                         ph::_1,   // error_code.
                                         ph::_2)); // size.
 }
 
 void
-Exchange::receivedHandler(ExchangePtr ex,
-                          const boost::system::error_code ec,
-                          const size_t size) {
+UdpExchange::receivedHandler(UdpExchangePtr ex,
+                             const boost::system::error_code ec,
+                             const size_t size) {
     if (!ex) {
         isc_throw(Unexpected, "null exchange in receivedHandler");
     }
@@ -576,7 +598,7 @@ Exchange::receivedHandler(ExchangePtr ex,
         LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVE_FAILED)
             .arg(ex->identifier_)
             .arg(ec.message());
-        ex->io_service_->post(std::bind(&Exchange::openNext, ex));
+        ex->io_service_->post(std::bind(&UdpExchange::openNext, ex));
         return;
     }
 
@@ -675,15 +697,15 @@ Exchange::receivedHandler(ExchangePtr ex,
 
     // If bad then retry, if not including reject it is done.
     if ((ex->rc_ != OK_RC) && (ex->rc_ != REJECT_RC)) {
-        ex->io_service_->post(std::bind(&Exchange::openNext, ex));
+        ex->io_service_->post(std::bind(&UdpExchange::openNext, ex));
     } else {
         ex->logReplyMessages();
-        ex->io_service_->post(std::bind(&Exchange::terminate, ex));
+        ex->io_service_->post(std::bind(&UdpExchange::terminate, ex));
     }
 }
 
 void
-Exchange::terminate() {
+UdpExchange::terminate() {
     // Avoid multiple terminations.
     MultiThreadingLock lock(*mutex_);
 
@@ -733,15 +755,15 @@ Exchange::terminate() {
 }
 
 void
-Exchange::setTimer() {
+UdpExchange::setTimer() {
     cancelTimer();
     timer_.reset(new IntervalTimer(io_service_));
-    timer_->setup(std::bind(&Exchange::timeoutHandler, shared_from_this()),
+    timer_->setup(std::bind(&UdpExchange::timeoutHandler, shared_from_this()),
                   server_->getTimeout() * 1000, IntervalTimer::ONE_SHOT);
 }
 
 void
-Exchange::cancelTimer() {
+UdpExchange::cancelTimer() {
     if (timer_) {
         timer_->cancel();
         timer_.reset();
@@ -749,7 +771,7 @@ Exchange::cancelTimer() {
 }
 
 void
-Exchange::timeoutHandler(ExchangePtr ex) {
+UdpExchange::timeoutHandler(UdpExchangePtr ex) {
     MultiThreadingLock lock(*ex->mutex_);
     LOG_ERROR(radius_logger, RADIUS_EXCHANGE_TIMEOUT)
         .arg(ex->identifier_);

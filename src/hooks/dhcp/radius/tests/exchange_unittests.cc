@@ -127,7 +127,7 @@ TEST(TestExchange, sync) {
 }
 
 /// Test Exchange class.
-class TestExchange : public Exchange {
+class TestExchange : public UdpExchange {
 public:
     /// Constructor.
     ///
@@ -136,32 +136,32 @@ public:
                  unsigned maxretries,
                  const Servers& servers,
                  Exchange::Handler handler)
-        : Exchange(io_service, request, maxretries, servers, handler) {
+        : UdpExchange(io_service, request, maxretries, servers, handler) {
     }
 
     /// Visible members.
     using Exchange::identifier_;
     using Exchange::sync_;
-    using Exchange::started_;
-    using Exchange::terminated_;
     using Exchange::rc_;
-    using Exchange::start_time_;
-    using Exchange::socket_;
-    using Exchange::ep_;
-    using Exchange::timer_;
-    using Exchange::server_;
-    using Exchange::idx_;
-    using Exchange::sent_;
     using Exchange::received_;
-    using Exchange::buffer_;
-    using Exchange::size_;
-    using Exchange::retries_;
-    using Exchange::postponed_;
+    using UdpExchange::started_;
+    using UdpExchange::terminated_;
+    using UdpExchange::start_time_;
+    using UdpExchange::socket_;
+    using UdpExchange::ep_;
+    using UdpExchange::timer_;
+    using UdpExchange::server_;
+    using UdpExchange::idx_;
+    using UdpExchange::sent_;
+    using UdpExchange::buffer_;
+    using UdpExchange::size_;
+    using UdpExchange::retries_;
+    using UdpExchange::postponed_;
 
     /// Visible methods.
-    using Exchange::buildRequest;
-    using Exchange::open;
-    using Exchange::receivedHandler;
+    using UdpExchange::buildRequest;
+    using UdpExchange::open;
+    using UdpExchange::receivedHandler;
 };
 
 /// Type of shared pointers to test exchange objets.
@@ -798,7 +798,8 @@ TEST_F(ExchangeTest, openRetryError) {
 // Verify receivedHandler with null exchange.
 TEST_F(ExchangeTest, receivedHandlerNull) {
     auto no_error = boost::system::error_code();
-    EXPECT_THROW_MSG(TestExchange::receivedHandler(ExchangePtr(), no_error, 0), Unexpected,
+    EXPECT_THROW_MSG(TestExchange::receivedHandler(TestExchangePtr(), no_error, 0),
+                     Unexpected,
                      "null exchange in receivedHandler");
 }
 

@@ -54,8 +54,8 @@ class Exchange;
 /// @brief Type of shared pointers to RADIUS exchange object.
 typedef boost::shared_ptr<Exchange> ExchangePtr;
 
-/// @brief RADIUS Exchange.
-class Exchange : public boost::enable_shared_from_this<Exchange> {
+/// @brief RADIUS Base Exchange.
+class Exchange {
 public:
     /// @brief Receive buffer size.
     static constexpr size_t BUF_LEN = 8192;
@@ -97,7 +97,7 @@ public:
                               const Servers& servers);
 
     /// @brief Destructor.
-    virtual ~Exchange();
+    virtual ~Exchange() = default;
 
     /// @brief Get identifier.
     ///
@@ -131,10 +131,10 @@ public:
     void logReplyMessages() const;
 
     /// @brief Start.
-    virtual void start();
+    virtual void start() = 0;
 
     /// @brief Shutdown.
-    virtual void shutdown();
+    virtual void shutdown() = 0;
 
 protected:
     /// @brief Constructor.
@@ -172,14 +172,90 @@ protected:
     /// @brief Sync / async flag.
     bool sync_;
 
+    /// @brief Error/return code.
+    int rc_;
+
+    /// @brief Request message.
+    MessagePtr request_;
+
+    /// @brief Sent message.
+    MessagePtr sent_;
+
+    /// @brief Received message.
+    MessagePtr received_;
+
+    /// @brief Maximum number of retries for a server.
+    /// @note 0 is a valid value which means no retry.
+    unsigned maxretries_;
+
+    /// @brief Servers (a copy which is what we need).
+    Servers servers_;
+
+    /// @brief Termination handler.
+    Handler handler_;
+
+    /// @brief Create identifier.
+    void createIdentifier();
+
+    /// @brief Build request.
+    ///
+    /// @param server Server where to send the request.
+    /// @param start_time Start time of the exchange.
+    void buildRequest(const ServerPtr& server,
+                      std::chrono::steady_clock::time_point start_time);
+};
+
+/// @brief RADIUS/UDP exchange (forward declaration).
+class UdpExchange;
+
+/// @brief Type of shared pointers to RADIUS/UDP exchange object.
+typedef boost::shared_ptr<UdpExchange> UdpExchangePtr;
+
+/// @brief RADIUS/UDP Exchange.
+class UdpExchange : public Exchange,
+                    public boost::enable_shared_from_this<UdpExchange> {
+public:
+    /// @brief Constructor.
+    ///
+    /// Async version.
+    ///
+    /// @param io_service Reference to the IO service.
+    /// @param request request message to send.
+    /// @param maxretries maximum number of retries for a server.
+    /// @param servers Servers.
+    /// @param handler Termination handler.
+    UdpExchange(const asiolink::IOServicePtr io_service,
+                const MessagePtr& request,
+                unsigned maxretries,
+                const Servers& servers,
+                Handler handler);
+
+    /// @brief Constructor.
+    ///
+    /// Sync version.
+    ///
+    /// @param request request message to send.
+    /// @param maxretries maximum number of retries for a server.
+    /// @param servers Servers.
+    UdpExchange(const MessagePtr& request,
+                unsigned maxretries,
+                const Servers& servers);
+
+    /// @brief Destructor.
+    virtual ~UdpExchange();
+
+    /// @brief Start.
+    virtual void start();
+
+    /// @brief Shutdown.
+    virtual void shutdown();
+
+protected:
     /// @brief Started flag.
     bool started_;
 
     /// @brief Terminated flag.
     bool terminated_;
-
-    /// @brief Error/return code.
-    int rc_;
 
     /// @brief Start time.
     std::chrono::steady_clock::time_point start_time_;
@@ -202,15 +278,6 @@ protected:
     /// or when greater than the table size the first postponed server.
     size_t idx_;
 
-    /// @brief Request message.
-    MessagePtr request_;
-
-    /// @brief Sent message.
-    MessagePtr sent_;
-
-    /// @brief Received message.
-    MessagePtr received_;
-
     /// @brief Buffer.
     std::vector<uint8_t> buffer_;
 
@@ -220,24 +287,11 @@ protected:
     /// @brief Retry counter.
     unsigned retries_;
 
-    /// @brief Maximum number of retries for a server.
-    /// @note 0 is a valid value which means no retry.
-    unsigned maxretries_;
-
-    /// @brief Servers (a copy which is what we need).
-    Servers servers_;
-
     /// @brief List of postponed server indexes.
     std::list<size_t> postponed_;
 
-    /// @brief Termination handler.
-    Handler handler_;
-
     /// @brief State change mutex.
     boost::scoped_ptr<std::mutex> mutex_;
-
-    /// @brief Create identifier.
-    void createIdentifier();
 
     /// @brief Build request.
     void buildRequest();
@@ -251,7 +305,7 @@ protected:
     /// @brief Class open / open next.
     ///
     /// @param ex the exchange.
-    static void openNext(ExchangePtr ex) {
+    static void openNext(UdpExchangePtr ex) {
         ex->open();
     }
 
@@ -260,7 +314,7 @@ protected:
     /// @param ex the exchange.
     /// @param ec Boost ASIO error code.
     /// @param size number of sent octets.
-    static void sentHandler(ExchangePtr ex,
+    static void sentHandler(UdpExchangePtr ex,
                             const boost::system::error_code ec,
                             const size_t size);
 
@@ -269,7 +323,7 @@ protected:
     /// @param ex the exchange.
     /// @param ec Boost ASIO error code.
     /// @param size number of received octets.
-    static void receivedHandler(ExchangePtr ex,
+    static void receivedHandler(UdpExchangePtr ex,
                                 const boost::system::error_code ec,
                                 const size_t size);
 
@@ -282,7 +336,7 @@ protected:
     /// @brief Timeout handler.
     ///
     /// @param ex the exchange.
-    static void timeoutHandler(ExchangePtr ex);
+    static void timeoutHandler(UdpExchangePtr ex);
 
     /// @brief Terminate.
     void terminate();
