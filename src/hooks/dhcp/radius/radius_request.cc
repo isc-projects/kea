@@ -59,11 +59,11 @@ RadiusRequest::RadiusRequest(const MsgCode code,
         servers = RadiusImpl::instance().getAccountingServers();
     }
     if (sync) {
-        exchange_.reset(new Exchange(request, maxretries, servers));
+        exchange_ = Exchange::create(request, maxretries, servers);
     } else {
-        exchange_.reset(new Exchange(RadiusImpl::instance().getIOContext(),
+        exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                      request, maxretries, servers,
-                                     handler));
+                                     handler);
     }
 }
 

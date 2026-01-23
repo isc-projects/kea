@@ -82,6 +82,16 @@ Exchange::Exchange(const asiolink::IOServicePtr io_service,
     createIdentifier();
 }
 
+ExchangePtr
+Exchange::create(const asiolink::IOServicePtr io_service,
+                 const MessagePtr& request,
+                 unsigned maxretries,
+                 const Servers& servers,
+                 Handler handler) {
+    return (ExchangePtr(new Exchange(io_service, request, maxretries, servers,
+                                     handler)));
+}
+
 Exchange::Exchange(const MessagePtr& request,
                    unsigned maxretries,
                    const Servers& servers)
@@ -100,6 +110,13 @@ Exchange::Exchange(const MessagePtr& request,
         isc_throw(BadValue, "no server");
     }
     createIdentifier();
+}
+
+ExchangePtr
+Exchange::create(const MessagePtr& request,
+                   unsigned maxretries,
+                 const Servers& servers) {
+    return (ExchangePtr(new Exchange(request, maxretries, servers)));
 }
 
 Exchange::~Exchange() {

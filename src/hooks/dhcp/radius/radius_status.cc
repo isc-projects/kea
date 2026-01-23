@@ -35,10 +35,10 @@ RadiusAuthStatus::RadiusAuthStatus(const AttributesPtr& send_attrs,
                                    "to-be-set", attrs));
     unsigned maxretries = RadiusImpl::instance().retries_;
     Servers servers = RadiusImpl::instance().auth_->servers_;
-    exchange_.reset(new Exchange(RadiusImpl::instance().getIOContext(),
+    exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusAuthStatus::invokeCallback,
-                                           handler, ph::_1)));
+                                           handler, ph::_1));
 }
 
 void
@@ -111,10 +111,10 @@ RadiusAcctStatus::RadiusAcctStatus(const AttributesPtr& send_attrs,
                                    "to-be-set", attrs));
     unsigned maxretries = RadiusImpl::instance().retries_;
     Servers servers = RadiusImpl::instance().acct_->servers_;
-    exchange_.reset(new Exchange(RadiusImpl::instance().getIOContext(),
+    exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusAcctStatus::invokeCallback,
-                                           handler, ph::_1)));
+                                           handler, ph::_1));
 }
 
 void
@@ -187,10 +187,10 @@ RadiusTlsStatus::RadiusTlsStatus(const AttributesPtr& send_attrs,
                                    "to-be-set", attrs));
     unsigned maxretries = RadiusImpl::instance().retries_;
     Servers servers = RadiusImpl::instance().common_->servers_;
-    exchange_.reset(new Exchange(RadiusImpl::instance().getIOContext(),
+    exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusTlsStatus::invokeCallback,
-                                           handler, ph::_1)));
+                                           handler, ph::_1));
 }
 
 void

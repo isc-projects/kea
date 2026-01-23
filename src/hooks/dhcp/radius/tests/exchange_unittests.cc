@@ -35,12 +35,14 @@ TEST(TestExchange, async) {
     Servers servers;
 
     // No IO service.
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(io_service, msg, 0, servers, Exchange::Handler())),
+    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
+                                      Exchange::Handler()),
                      BadValue, "null IO service");
 
     // No message.
     io_service.reset(new IOService());
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(io_service, msg, 0, servers, Exchange::Handler())),
+    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
+                                      Exchange::Handler()),
                      BadValue, "null request");
 
     // No servers.
@@ -49,7 +51,8 @@ TEST(TestExchange, async) {
     AttributesPtr attrs;
     string secret = "foobar";
     ASSERT_NO_THROW_LOG(msg.reset(new Message(code, 0, auth, secret, attrs)));
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(io_service, msg, 0, servers, Exchange::Handler())),
+    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
+                                      Exchange::Handler()),
                      BadValue, "no server");
 
     // No handler.
@@ -60,13 +63,14 @@ TEST(TestExchange, async) {
                                                 secret, 0)));
     ASSERT_TRUE(server);
     servers.push_back(server);
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(io_service, msg, 0, servers, Exchange::Handler())),
+    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
+                                      Exchange::Handler()),
                      BadValue, "null handler");
 
     // No error.
     auto handler = [] (const ExchangePtr) { };
-    ASSERT_NO_THROW_LOG(exchange.reset(new Exchange(io_service, msg, 0,
-                                                    servers, handler)));
+    ASSERT_NO_THROW_LOG(exchange = Exchange::create(io_service, msg, 0,
+                                                    servers, handler));
 
     // Check exchange.
     ASSERT_TRUE(exchange);
@@ -89,7 +93,7 @@ TEST(TestExchange, sync) {
     Servers servers;
 
     // No message.
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(msg, 0, servers)), BadValue,
+    EXPECT_THROW_MSG(Exchange::create(msg, 0, servers), BadValue,
                      "null request");
 
     // No servers.
@@ -98,7 +102,7 @@ TEST(TestExchange, sync) {
     AttributesPtr attrs;
     string secret = "foobar";
     ASSERT_NO_THROW_LOG(msg.reset(new Message(code, 0, auth, secret, attrs)));
-    EXPECT_THROW_MSG(exchange.reset(new Exchange(msg, 0, servers)), BadValue,
+    EXPECT_THROW_MSG(Exchange::create(msg, 0, servers), BadValue,
                      "no server");
 
     // No error.
@@ -107,8 +111,9 @@ TEST(TestExchange, sync) {
     TlsContextPtr tls_context;
     ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11645, addr, tls_context,
                                                 secret, 0)));
+    ASSERT_TRUE(server);
     servers.push_back(server);
-    ASSERT_NO_THROW_LOG(exchange.reset(new Exchange(msg, 0, servers)));
+    ASSERT_NO_THROW_LOG(exchange = Exchange::create(msg, 0, servers));
 
     // Check exchange.
     ASSERT_TRUE(exchange);

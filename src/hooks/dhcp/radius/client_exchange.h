@@ -70,7 +70,7 @@ public:
     /// @brief Termination handler.
     typedef std::function<void(const ExchangePtr ex)> Handler;
 
-    /// @brief Constructor.
+    /// @brief Factory.
     ///
     /// Async version.
     ///
@@ -79,22 +79,22 @@ public:
     /// @param maxretries maximum number of retries for a server.
     /// @param servers Servers.
     /// @param handler Termination handler.
-    Exchange(const asiolink::IOServicePtr io_service,
-             const MessagePtr& request,
-             unsigned maxretries,
-             const Servers& servers,
-             Handler handler);
+    static ExchangePtr create(const asiolink::IOServicePtr io_service,
+                              const MessagePtr& request,
+                              unsigned maxretries,
+                              const Servers& servers,
+                              Handler handler);
 
-    /// @brief Constructor.
+    /// @brief Factory.
     ///
     /// Sync version.
     ///
     /// @param request request message to send.
     /// @param maxretries maximum number of retries for a server.
     /// @param servers Servers.
-    Exchange(const MessagePtr& request,
-             unsigned maxretries,
-             const Servers& servers);
+    static ExchangePtr create(const MessagePtr& request,
+                              unsigned maxretries,
+                              const Servers& servers);
 
     /// @brief Destructor.
     virtual ~Exchange();
@@ -137,6 +137,32 @@ public:
     virtual void shutdown();
 
 protected:
+    /// @brief Constructor.
+    ///
+    /// Async version.
+    ///
+    /// @param io_service Reference to the IO service.
+    /// @param request request message to send.
+    /// @param maxretries maximum number of retries for a server.
+    /// @param servers Servers.
+    /// @param handler Termination handler.
+    Exchange(const asiolink::IOServicePtr io_service,
+             const MessagePtr& request,
+             unsigned maxretries,
+             const Servers& servers,
+             Handler handler);
+
+    /// @brief Constructor.
+    ///
+    /// Sync version.
+    ///
+    /// @param request request message to send.
+    /// @param maxretries maximum number of retries for a server.
+    /// @param servers Servers.
+    Exchange(const MessagePtr& request,
+             unsigned maxretries,
+             const Servers& servers);
+
     /// @brief The identifier (random value in hexadecimal).
     std::string identifier_;
 
