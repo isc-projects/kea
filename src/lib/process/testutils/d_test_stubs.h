@@ -681,12 +681,10 @@ class ConfigParseTest : public ::testing::Test {
 public:
 
     /// @brief Constructor
-    ConfigParseTest(){
-    }
+    ConfigParseTest() = default;
 
     /// @brief Destructor
-    ~ConfigParseTest() {
-    }
+    virtual ~ConfigParseTest() = default;
 
     /// @brief Converts a given JSON string into an Element set and stores the
     /// result the member variable, config_set_.

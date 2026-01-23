@@ -27,6 +27,9 @@ protected:
     /// @brief Constructor.
     ThreadedTest();
 
+    /// @brief Destructor.
+    virtual ~ThreadedTest() = default;
+
     /// @brief Sets selected flag to true and signals condition
     /// variable.
     ///
