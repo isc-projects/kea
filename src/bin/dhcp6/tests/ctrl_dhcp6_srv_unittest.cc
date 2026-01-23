@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1092,6 +1092,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
 TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning2) {
     setLogTestPath("/dev");
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -2085,6 +2086,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
 // Check that the "config-reload" fails when LFC is running using a name.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning2) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
