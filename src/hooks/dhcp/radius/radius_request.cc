@@ -62,8 +62,8 @@ RadiusRequest::RadiusRequest(const MsgCode code,
         exchange_ = Exchange::create(request, maxretries, servers);
     } else {
         exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
-                                     request, maxretries, servers,
-                                     handler);
+                                     request, maxretries, servers, handler,
+                                     RadiusImpl::instance().proto_);
     }
 }
 
