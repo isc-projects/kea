@@ -4,9 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/// @file This file contains tests which exercise the attribute,
-/// attribute collection and config attribute collection classes.
-
 #include <config.h>
 
 #include <client_exchange.h>
@@ -81,6 +78,9 @@ TEST(TestExchange, async) {
     MessagePtr response = exchange->getResponse();
     EXPECT_FALSE(response);
 
+    // Verify it is an UDP Exchange.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<UdpExchange>(exchange));
+
     // As a best practice, call any remaining handlers.
     io_service->stopAndPoll();
 }
@@ -123,6 +123,9 @@ TEST(TestExchange, sync) {
     EXPECT_EQ(request, msg);
     MessagePtr response = exchange->getResponse();
     EXPECT_FALSE(response);
+
+    // Verify it is an UDP Exchange.
+    EXPECT_TRUE(boost::dynamic_pointer_cast<UdpExchange>(exchange));
 }
 
 /// Test Exchange class.
@@ -142,6 +145,7 @@ public:
     using Exchange::identifier_;
     using Exchange::sync_;
     using Exchange::rc_;
+    using Exchange::sent_;
     using Exchange::received_;
     using UdpExchange::started_;
     using UdpExchange::terminated_;
@@ -151,7 +155,6 @@ public:
     using UdpExchange::timer_;
     using UdpExchange::server_;
     using UdpExchange::idx_;
-    using UdpExchange::sent_;
     using UdpExchange::buffer_;
     using UdpExchange::size_;
     using UdpExchange::retries_;

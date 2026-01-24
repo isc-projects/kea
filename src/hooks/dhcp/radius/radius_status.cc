@@ -38,7 +38,8 @@ RadiusAuthStatus::RadiusAuthStatus(const AttributesPtr& send_attrs,
     exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusAuthStatus::invokeCallback,
-                                           handler, ph::_1));
+                                           handler, ph::_1),
+                                 RadiusImpl::instance().proto_);
 }
 
 void
@@ -114,7 +115,8 @@ RadiusAcctStatus::RadiusAcctStatus(const AttributesPtr& send_attrs,
     exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusAcctStatus::invokeCallback,
-                                           handler, ph::_1));
+                                           handler, ph::_1),
+                                 RadiusImpl::instance().proto_);
 }
 
 void
@@ -190,7 +192,8 @@ RadiusTlsStatus::RadiusTlsStatus(const AttributesPtr& send_attrs,
     exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusTlsStatus::invokeCallback,
-                                           handler, ph::_1));
+                                           handler, ph::_1),
+                                 PW_PROTO_TLS);
 }
 
 void
