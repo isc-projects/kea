@@ -25,6 +25,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::tcp;
 using namespace isc::util;
 using namespace std;
 using namespace std::chrono;
@@ -55,17 +56,13 @@ exchangeRCtoText(const int rc) {
     }
 }
 
-Exchange::Exchange(const asiolink::IOServicePtr io_service,
-                   const MessagePtr& request,
+Exchange::Exchange(const MessagePtr& request,
                    unsigned maxretries,
                    const Servers& servers,
                    Handler handler)
-    : identifier_(""), io_service_(io_service), sync_(false),
-      rc_(ERROR_RC), request_(request), sent_(), received_(),
+    : identifier_(""), sync_(false), rc_(ERROR_RC),
+      request_(request), sent_(), received_(),
       maxretries_(maxretries), servers_(servers), handler_(handler) {
-    if (!io_service) {
-        isc_throw(BadValue, "null IO service");
-    }
     if (!request) {
         isc_throw(BadValue, "null request");
     }
@@ -81,8 +78,8 @@ Exchange::Exchange(const asiolink::IOServicePtr io_service,
 Exchange::Exchange(const MessagePtr& request,
                    unsigned maxretries,
                    const Servers& servers)
-    : identifier_(""), io_service_(new IOService()), sync_(true),
-      rc_(ERROR_RC), request_(request), sent_(), received_(),
+    : identifier_(""), sync_(true), rc_(ERROR_RC),
+      request_(request), sent_(), received_(),
       maxretries_(maxretries), servers_(servers), handler_() {
     if (!request) {
         isc_throw(BadValue, "null request");
@@ -98,9 +95,15 @@ Exchange::create(const asiolink::IOServicePtr io_service,
                  const MessagePtr& request,
                  unsigned maxretries,
                  const Servers& servers,
-                 Handler handler) {
-    return (UdpExchangePtr(new UdpExchange(io_service, request, maxretries,
-                                           servers, handler)));
+                 Handler handler,
+                 RadiusProtocol protocol) {
+    if (protocol == PW_PROTO_UDP) {
+        return (UdpExchangePtr(new UdpExchange(io_service, request, maxretries,
+                                               servers, handler)));
+    } else {
+        return (TcpExchangePtr(new TcpExchange(request, maxretries,
+                                               servers, handler)));
+    }
 }
 
 ExchangePtr
@@ -115,18 +118,22 @@ UdpExchange::UdpExchange(const asiolink::IOServicePtr io_service,
                          unsigned maxretries,
                          const Servers& servers,
                          Handler handler)
-    : Exchange(io_service, request, maxretries, servers, handler),
-      started_(false), terminated_(false),
+    : Exchange(request, maxretries, servers, handler),
+      io_service_(io_service), started_(false), terminated_(false),
       start_time_(std::chrono::steady_clock().now()),
       socket_(), ep_(), timer_(), server_(), idx_(0),
       buffer_(), size_(0), retries_(0), postponed_(),
       mutex_(new std::mutex()) {
+    if (!io_service) {
+        isc_throw(BadValue, "null IO service");
+    }
 }
 
 UdpExchange::UdpExchange(const MessagePtr& request,
                          unsigned maxretries,
                          const Servers& servers)
     : Exchange(request, maxretries, servers),
+      io_service_(new IOService()),
       started_(false), terminated_(false),
       start_time_(std::chrono::steady_clock().now()),
       socket_(), ep_(), timer_(), server_(), idx_(0),
@@ -158,7 +165,6 @@ Exchange::createIdentifier() {
     rs << hex << setfill('0') << setw(8) << ri;
     identifier_ = rs.str();
 }
-
 void
 Exchange::logReplyMessages() const {
     if (!received_) {
@@ -305,6 +311,11 @@ Exchange::buildRequest(const ServerPtr& server,
 
 void
 UdpExchange::buildRequest() {
+    Exchange::buildRequest(server_, start_time_);
+}
+
+void
+TcpExchange::buildRequest() {
     Exchange::buildRequest(server_, start_time_);
 }
 
@@ -568,6 +579,87 @@ UdpExchange::sentHandler(UdpExchangePtr ex,
 }
 
 void
+Exchange::processResponse() {
+    // Decode message.
+    rc_ = OK_RC;
+    try {
+        // In order:
+        //  - decode message.
+        //  - verify that identifiers match.
+        //  - verify that message codes match.
+        received_->decode();
+        unsigned got = received_->getIdentifier();
+        unsigned expected = sent_->getIdentifier();
+        if (got != expected) {
+            LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_MISMATCH)
+                .arg(identifier_)
+                .arg(got)
+                .arg(expected);
+            rc_ = BADRESP_RC;
+        } else if (request_->getCode() == PW_ACCESS_REQUEST) {
+            if (received_->getCode() == PW_ACCESS_REJECT) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT)
+                    .arg(identifier_);
+                rc_ = REJECT_RC;
+            } else if (received_->getCode() != PW_ACCESS_ACCEPT) {
+                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
+                    .arg(identifier_)
+                    .arg(msgCodeToText(request_->getCode()))
+                    .arg(msgCodeToText(received_->getCode()));
+                rc_ = BADRESP_RC;
+            } else {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT)
+                    .arg(identifier_);
+            }
+        } else if (request_->getCode() == PW_ACCOUNTING_REQUEST) {
+            if (received_->getCode() != PW_ACCOUNTING_RESPONSE) {
+                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
+                    .arg(identifier_)
+                    .arg(msgCodeToText(request_->getCode()))
+                    .arg(msgCodeToText(received_->getCode()));
+                rc_ = BADRESP_RC;
+            } else {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
+                    .arg(identifier_);
+            }
+        } else if (request_->getCode() == PW_STATUS_SERVER) {
+            if (received_->getCode() == PW_ACCESS_ACCEPT) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT)
+                    .arg(identifier_);
+            } else if (received_->getCode() == PW_ACCESS_REJECT) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT)
+                    .arg(identifier_);
+            } else if (received_->getCode() == PW_ACCOUNTING_RESPONSE) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
+                    .arg(identifier_);
+            } else {
+                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
+                    .arg(identifier_)
+                    .arg(msgCodeToText(request_->getCode()))
+                    .arg(msgCodeToText(received_->getCode()));
+                rc_ = BADRESP_RC;
+            }
+        }
+    } catch (const Exception& exc) {
+        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE)
+            .arg(identifier_)
+            .arg(exc.what());
+        rc_ = BADRESP_RC;
+    }
+
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+              RADIUS_EXCHANGE_RECEIVED_RESPONSE)
+        .arg(identifier_)
+        .arg(exchangeRCtoText(rc_));
+}
+
+void
 UdpExchange::receivedHandler(UdpExchangePtr ex,
                              const boost::system::error_code ec,
                              const size_t size) {
@@ -617,83 +709,7 @@ UdpExchange::receivedHandler(UdpExchangePtr ex,
     ex->received_.reset(new Message(ex->buffer_, ex->sent_->getAuth(),
                                     ex->server_->getSecret()));
 
-    // Decode message.
-    ex->rc_ = OK_RC;
-    try {
-        // In order:
-        //  - decode message.
-        //  - verify that identifiers match.
-        //  - verify that message codes match.
-        ex->received_->decode();
-        unsigned got = ex->received_->getIdentifier();
-        unsigned expected = ex->sent_->getIdentifier();
-        if (got != expected) {
-            LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_MISMATCH)
-                .arg(ex->identifier_)
-                .arg(got)
-                .arg(expected);
-            ex->rc_ = BADRESP_RC;
-        } else if (ex->request_->getCode() == PW_ACCESS_REQUEST) {
-            if (ex->received_->getCode() == PW_ACCESS_REJECT) {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT)
-                    .arg(ex->identifier_);
-                ex->rc_ = REJECT_RC;
-            } else if (ex->received_->getCode() != PW_ACCESS_ACCEPT) {
-                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
-                    .arg(ex->identifier_)
-                    .arg(msgCodeToText(ex->request_->getCode()))
-                    .arg(msgCodeToText(ex->received_->getCode()));
-                ex->rc_ = BADRESP_RC;
-            } else {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT)
-                    .arg(ex->identifier_);
-            }
-        } else if (ex->request_->getCode() == PW_ACCOUNTING_REQUEST) {
-            if (ex->received_->getCode() != PW_ACCOUNTING_RESPONSE) {
-                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
-                    .arg(ex->identifier_)
-                    .arg(msgCodeToText(ex->request_->getCode()))
-                    .arg(msgCodeToText(ex->received_->getCode()));
-                ex->rc_ = BADRESP_RC;
-            } else {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
-                    .arg(ex->identifier_);
-            }
-        } else if (ex->request_->getCode() == PW_STATUS_SERVER) {
-            if (ex->received_->getCode() == PW_ACCESS_ACCEPT) {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT)
-                    .arg(ex->identifier_);
-            } else if (ex->received_->getCode() == PW_ACCESS_REJECT) {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT)
-                    .arg(ex->identifier_);
-            } else if (ex->received_->getCode() == PW_ACCOUNTING_RESPONSE) {
-                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                          RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
-                    .arg(ex->identifier_);
-            } else {
-                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
-                    .arg(ex->identifier_)
-                    .arg(msgCodeToText(ex->request_->getCode()))
-                    .arg(msgCodeToText(ex->received_->getCode()));
-                ex->rc_ = BADRESP_RC;
-            }
-        }
-    } catch (const Exception& exc) {
-        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE)
-            .arg(ex->identifier_)
-            .arg(exc.what());
-        ex->rc_ = BADRESP_RC;
-    }
-
-    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-              RADIUS_EXCHANGE_RECEIVED_RESPONSE)
-        .arg(ex->identifier_)
-        .arg(exchangeRCtoText(ex->rc_));
+    ex->processResponse();
 
     // If bad then retry, if not including reject it is done.
     if ((ex->rc_ != OK_RC) && (ex->rc_ != REJECT_RC)) {
@@ -779,6 +795,142 @@ UdpExchange::timeoutHandler(UdpExchangePtr ex) {
     ex->cancelTimer();
     if (ex->socket_) {
         ex->socket_->cancel();
+    }
+}
+
+TcpExchange::TcpExchange(const MessagePtr& request,
+                         unsigned maxretries,
+                         const Servers& servers,
+                         Handler handler)
+    : Exchange(request, maxretries, servers, handler),
+      start_time_(std::chrono::steady_clock().now()),
+      server_(), resp_() {
+    server_ = servers_[0];
+}
+
+void
+TcpExchange::start() {
+    if (RadiusImpl::shutdown_) {
+        shutdown();
+    }
+
+    if (!server_) {
+        isc_throw(Unexpected, "no server");
+    }
+
+    try {
+        // Reset error code.
+        rc_ = ERROR_RC;
+
+        // Build to be send request message.
+        buildRequest();
+
+        // Build write data request.
+        WireDataPtr request(new WireData(sent_->getBuffer()));
+
+        ///// Log.
+
+        RadiusImpl::instance().tcp_client_->asyncSendRequest(
+            server_->getPeerAddress(),
+            server_->getPeerPort(),
+            server_->getTlsContext(),
+            request,
+            resp_,
+            true,
+            TcpExchange::CompleteCheck,
+            std::bind(&TcpExchange::RequestHandler,
+                      shared_from_this(),
+                      ph::_1,   // error_code
+                      ph::_2,   // response
+                      ph::_3),  // error_msg
+            TcpClient::RequestTimeout(server_->getTimeout() * 1000));
+    } catch (const Exception& exc) {
+        ///// Log.
+        rc_ = ERROR_RC;
+        // Call handler.
+        if (handler_) {
+            auto handler = handler_;
+            // Avoid to keep a circular reference.
+            handler_ = Handler();
+            handler(shared_from_this());
+        }
+    }
+}
+
+void
+TcpExchange::shutdown() {
+    handler_ = Handler();
+}
+
+void
+TcpExchange::RequestHandler(TcpExchangePtr ex,
+                            const boost::system::error_code& ec,
+                            const WireDataPtr& response,
+                            const string& error_msg) {
+    if (!ex) {
+        isc_throw(Unexpected, "null exchange in receivedHandler");
+    }
+
+    if (RadiusImpl::shutdown_) {
+        return;
+    }
+
+    // Check error code.
+    if (ec) {
+        ///// log
+        if (ec == boost::asio::error::timed_out) {
+            ex->rc_ = TIMEOUT_RC;
+        } else {
+            ex->rc_ = ERROR_RC;
+        }
+        // Call handler.
+        if (ex->handler_) {
+            auto handler = ex->handler_;
+            // Avoid to keep a circular reference.
+            ex->handler_ = Handler();
+            handler(ex);
+        }
+        return;
+    }
+
+    //// log
+    const WireData& buffer = *response;
+    ex->received_.reset(new Message(buffer, ex->sent_->getAuth(),
+                                    ex->server_->getSecret()));
+
+    ex->processResponse();
+
+    if ((ex->rc_ == OK_RC) || (ex->rc_ == REJECT_RC)) {
+        ex->logReplyMessages();
+    }
+    // Call handler.
+    if (ex->handler_) {
+        auto handler = ex->handler_;
+        // Avoid to keep a circular reference.
+        ex->handler_ = Handler();
+        handler(ex);
+    }
+}
+
+int
+TcpExchange::CompleteCheck(const WireDataPtr& response, string& error_msg) {
+    if (!response) {
+        error_msg = "null response";
+        return (-1);
+    }
+    const WireData& buffer = *response;
+    if (buffer.size() < AUTH_HDR_LEN) {
+        return (0);
+    }
+    uint16_t length = static_cast<uint16_t>(buffer[2]) << 8;
+    length |= static_cast<uint16_t>(buffer[3]);
+    if (length > buffer.size()) {
+        return (0);
+    } else if (length == buffer.size()) {
+        return (1);
+    } else {
+        error_msg = "overflow";
+        return (-2);
     }
 }
 

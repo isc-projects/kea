@@ -34,13 +34,7 @@ TEST(TestExchange, async) {
     MessagePtr msg;
     Servers servers;
 
-    // No IO service.
-    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
-                                      Exchange::Handler()),
-                     BadValue, "null IO service");
-
     // No message.
-    io_service.reset(new IOService());
     EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers,
                                       Exchange::Handler()),
                      BadValue, "null request");
@@ -67,8 +61,13 @@ TEST(TestExchange, async) {
                                       Exchange::Handler()),
                      BadValue, "null handler");
 
-    // No error.
+    // No IO service.
     auto handler = [] (const ExchangePtr) { };
+    EXPECT_THROW_MSG(Exchange::create(io_service, msg, 0, servers, handler),
+                     BadValue, "null IO service");
+
+    // No error.
+    io_service.reset(new IOService());
     ASSERT_NO_THROW_LOG(exchange = Exchange::create(io_service, msg, 0,
                                                     servers, handler));
 

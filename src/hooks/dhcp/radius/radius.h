@@ -17,6 +17,7 @@
 #include <asiolink/io_service_thread_pool.h>
 #include <dhcpsrv/cache_host_data_source.h>
 #include <dhcpsrv/host.h>
+#include <tcp/tcp_client.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -269,6 +270,9 @@ public:
 
     /// @brief UDP client.
     UdpClientPtr udp_client_;
+
+    /// @brief TCP client.
+    isc::tcp::TcpClientPtr tcp_client_;
 
     /// @brief Subnet ID to NAS port map.
     std::map<uint32_t, uint32_t> remap_;

@@ -27,6 +27,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
+using namespace isc::tcp;
 using namespace isc::util;
 
 namespace isc {
@@ -170,7 +171,8 @@ RadiusImpl::instancePtr() {
 }
 
 RadiusImpl::RadiusImpl()
-    : proto_(PW_PROTO_UDP), udp_client_(), common_(new RadiusTls()),
+  : proto_(PW_PROTO_UDP), udp_client_(), tcp_client_(),
+      common_(new RadiusTls()),
       auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
       bindaddr_("*"), canonical_mac_address_(false),
       clientid_pop0_(false), clientid_printable_(false),
@@ -230,6 +232,9 @@ void RadiusImpl::cleanup() {
 
     if (udp_client_) {
         udp_client_.reset();
+    }
+    if (tcp_client_) {
+        tcp_client_.reset();
     }
 
     io_context_.reset(new IOService());
@@ -307,15 +312,33 @@ RadiusImpl::startServices() {
     if (multi_threaded) {
         // Schedule a start of the services. This ensures we begin after
         // the dust has settled and Kea MT mode has been firmly established.
-        io_service_->post([this, thread_pool_size]() {
-            udp_client_.reset(new UdpClient(io_service_, thread_pool_size));
+        if (proto_ == PW_PROTO_UDP) {
+            io_service_->post([this, thread_pool_size]() {
+                udp_client_.reset(new UdpClient(io_service_,
+                                                thread_pool_size));
 
-            io_context_ = udp_client_->getThreadIOService();
+                io_context_ = udp_client_->getThreadIOService();
 
-            udp_client_->start();
-        });
+                udp_client_->start();
+            });
+        } else {
+            io_service_->post([this, multi_threaded, thread_pool_size]() {
+                tcp_client_.reset(new TcpClient(io_service_,
+                                                multi_threaded,
+                                                thread_pool_size,
+                                                true));
+
+                io_context_ = tcp_client_->getThreadIOService();
+
+                tcp_client_->start();
+            });
+        }
     } else {
-        udp_client_.reset(new UdpClient(io_service_, 0));
+        if (proto_ == PW_PROTO_UDP) {
+            udp_client_.reset(new UdpClient(io_service_, 0));
+        } else {
+            tcp_client_.reset(new TcpClient(io_service_, false, 0));
+        }
     }
 }
 

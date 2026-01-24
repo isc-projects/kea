@@ -10,6 +10,7 @@
 #include <client_attribute.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <tcp/wire_data.h>
 #include <string>
 #include <vector>
 

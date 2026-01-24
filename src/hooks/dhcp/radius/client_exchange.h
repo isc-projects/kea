@@ -79,15 +79,17 @@ public:
     /// @param maxretries maximum number of retries for a server.
     /// @param servers Servers.
     /// @param handler Termination handler.
+    /// @param protocol Protocol (default to UDP).
     static ExchangePtr create(const asiolink::IOServicePtr io_service,
                               const MessagePtr& request,
                               unsigned maxretries,
                               const Servers& servers,
-                              Handler handler);
+                              Handler handler,
+                              RadiusProtocol protocol = PW_PROTO_UDP);
 
     /// @brief Factory.
     ///
-    /// Sync version.
+    /// Sync version (UDP only).
     ///
     /// @param request request message to send.
     /// @param maxretries maximum number of retries for a server.
@@ -136,18 +138,19 @@ public:
     /// @brief Shutdown.
     virtual void shutdown() = 0;
 
+    /// @brief Process response.
+    void processResponse();
+
 protected:
     /// @brief Constructor.
     ///
     /// Async version.
     ///
-    /// @param io_service Reference to the IO service.
     /// @param request request message to send.
     /// @param maxretries maximum number of retries for a server.
     /// @param servers Servers.
     /// @param handler Termination handler.
-    Exchange(const asiolink::IOServicePtr io_service,
-             const MessagePtr& request,
+    Exchange(const MessagePtr& request,
              unsigned maxretries,
              const Servers& servers,
              Handler handler);
@@ -165,9 +168,6 @@ protected:
 
     /// @brief The identifier (random value in hexadecimal).
     std::string identifier_;
-
-    /// @brief IO service (argument for async or internal for sync).
-    asiolink::IOServicePtr io_service_;
 
     /// @brief Sync / async flag.
     bool sync_;
@@ -251,6 +251,9 @@ public:
     virtual void shutdown();
 
 protected:
+    /// @brief IO service (argument for async or internal for sync).
+    asiolink::IOServicePtr io_service_;
+
     /// @brief Started flag.
     bool started_;
 
@@ -340,6 +343,73 @@ protected:
 
     /// @brief Terminate.
     void terminate();
+};
+
+/// @brief RADIUS/TCP exchange (forward declaration).
+class TcpExchange;
+
+/// @brief Type of shared pointers to RADIUS/TCP exchange object.
+typedef boost::shared_ptr<TcpExchange> TcpExchangePtr;
+
+/// @brief RADIUS/TCP (or RADIUS/TLS) Exchange.
+class TcpExchange : public Exchange,
+                    public boost::enable_shared_from_this<TcpExchange> {
+public:
+    /// @brief Constructor.
+    ///
+    /// Async version.
+    ///
+    /// @param request request message to send.
+    /// @param maxretries maximum number of retries for a server.
+    /// @param servers Servers.
+    /// @param handler Termination handler.
+    TcpExchange(const MessagePtr& request,
+                unsigned maxretries,
+                const Servers& servers,
+                Handler handler);
+
+    /// @note: no sync version.
+
+    /// @brief Destructor.
+    virtual ~TcpExchange() = default;
+
+    /// @brief Start.
+    virtual void start();
+
+    /// @brief Shutdown.
+    virtual void shutdown();
+
+protected:
+    /// @brief Start time.
+    std::chrono::steady_clock::time_point start_time_;
+
+    /// @brief Current server.
+    ServerPtr server_;
+
+    /// @brief Response wire data.
+    isc::tcp::WireDataPtr resp_;
+
+    /// @brief Build request.
+    void buildRequest();
+
+    /// @brief Request handler.
+    ///
+    /// @param ex Point to the Exchange.
+    /// @param ec Boost error code.
+    /// @param response Pointer to response wire data.
+    /// @param error_msg Error message.
+    static void RequestHandler(TcpExchangePtr ex,
+                               const boost::system::error_code& ec,
+                               const isc::tcp::WireDataPtr& response,
+                               const std::string& error_msg);
+
+    /// @brief Complete check.
+    ///
+    /// @param response Pointer to response wire data.
+    /// @param error_msg Reference to the error message.
+    /// @return status (>0 complete, 0 incomplete, <0 error).
+    static int CompleteCheck(const isc::tcp::WireDataPtr& response,
+                             std::string& error_msg);
 };
 
 } // end of namespace isc::radius
