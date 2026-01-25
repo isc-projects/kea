@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <radius.h>
+#include <asiolink/tcp_endpoint.h>
+#include <tcp/tcp_connection_acceptor.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <attribute_test.h>
@@ -22,6 +24,8 @@ using namespace isc::tcp;
 using namespace isc::test;
 using namespace std;
 using namespace std::chrono;
+namespace ph = std::placeholders;
+namespace ba = boost::asio::ip;
 
 namespace {
 
@@ -174,10 +178,9 @@ public:
     TcpExchangeTest()
         : radius::test::AttributeTest (), impl_(RadiusImpl::instance()),
           io_service_(new IOService()),
-          code_(0), secret_("foobar"), addr_("127.0.0.1"),
-          port_(11460), timeout_(10), deadtime_(0), maxretries_(3),
-          called_(false),
-          handler_([this] (const ExchangePtr) { called_ = true; }) {
+          code_(0), secret_("foobar"), addr_("127.0.0.1"), port_(11460),
+          timeout_(10), deadtime_(0), maxretries_(3), called_(false), ec_(),
+          handler_([this] (const ExchangePtr ex) { called_ = true; }) {
         impl_.reset();
         impl_.setIOService(io_service_);
         impl_.setIOContext(io_service_);
@@ -231,6 +234,12 @@ public:
         ASSERT_TRUE(exchange_);
     }
 
+    // Accept callback.
+    void acceptCallback(const boost::system::error_code& ec) {
+        ec_ = ec;
+        std::cerr << "accepted\n";
+    }
+
     /// @brief Radius implementation.
     RadiusImpl& impl_;
 
@@ -272,6 +281,9 @@ public:
 
     // Terminated flag: true if and only if the handler was called.
     bool called_;
+
+    // Boost error code.
+    boost::system::error_code ec_;
 
     // Handler.
     Exchange::Handler handler_;
@@ -348,6 +360,57 @@ TEST_F(TcpExchangeTest, start) {
     EXPECT_FALSE(called_);
 }
 
+// Verify start without a server.
+TEST_F(TcpExchangeTest, noServer) {
+    code_ = PW_ACCESS_REQUEST;
+    createRequest();
+    addServer();
+    createExchange();
+
+    ASSERT_NO_THROW_LOG(exchange_->start());
+
+    // Poll the I/O service.
+    for (unsigned i = 0; i < 10; ++i) {
+        ASSERT_NO_THROW_LOG(io_service_->poll());
+        if (called_) {
+            break;
+        }
+    }
+    EXPECT_TRUE(called_);
+    EXPECT_EQ(ERROR_RC, exchange_->rc_);
+}
+
+// Verify start with a not-responding server.
+TEST_F(TcpExchangeTest, timeout) {
+    code_ = PW_ACCESS_REQUEST;
+    createRequest();
+    timeout_ = 1;
+    addServer();
+    createExchange();
+
+    ba::tcp::endpoint server_ep(ba::tcp::v4(), port_);
+    ba::tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
+    acceptor.set_option(ba::tcp::acceptor::reuse_address(true));
+    ba::tcp::socket socket(io_service_->getInternalIOService());
+
+    exchange_->start();
+    acceptor.async_accept(socket,
+        std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
+
+    // Poll the I/O service.
+    for (unsigned i = 0; i < 10; ++i) {
+        if (called_ || ec_) {
+            break;
+        }
+        io_service_->runOne();
+    }
+    socket.close();
+    acceptor.close();
+    EXPECT_FALSE(ec_);
+    EXPECT_TRUE(called_);
+    EXPECT_EQ(TIMEOUT_RC, exchange_->rc_);
+}
+
 // Verify start with error in send.
 TEST_F(TcpExchangeTest, sendError) {
     // Make the request encode to fail with too large message.
@@ -375,7 +438,6 @@ TEST_F(TcpExchangeTest, sendError) {
     ASSERT_NO_THROW_LOG(exchange_->start());
 
     // Check new state.
-    EXPECT_TRUE(exchange_->server_);
     EXPECT_TRUE(exchange_->sent_);
     EXPECT_EQ(ERROR_RC, exchange_->rc_);
 }
@@ -401,8 +463,9 @@ TEST_F(TcpExchangeTest, requestHandlerError) {
     auto ec = boost::asio::error::timed_out;
     WireDataPtr response;
     EXPECT_NO_THROW_LOG(TestExchange::RequestHandler(exchange_, ec,
-                                                     response, ""));
+                                                     response, "timeout"));
     EXPECT_TRUE(called_);
+    EXPECT_EQ(TIMEOUT_RC, exchange_->rc_);
 }
 
 } // end of anonymous namespace

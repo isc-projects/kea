@@ -290,7 +290,7 @@ private:
     /// @param ec Error code received as a result of the IO operation.
     /// @param parsing_error Message parsing error.
     void terminateInternal(const boost::system::error_code& ec,
-                           const std::string& error_msg = "");
+                           std::string error_msg = "");
 
     /// @brief Run completion checker and check if more data is needed.
     ///
@@ -1484,7 +1484,7 @@ Connection::terminate(const boost::system::error_code& ec,
 
 void
 Connection::terminateInternal(const boost::system::error_code& ec,
-                              const std::string& error_msg) {
+                              std::string error_msg) {
     WireDataPtr response;
     if (isTransactionOngoing()) {
 
@@ -1504,16 +1504,17 @@ Connection::terminateInternal(const boost::system::error_code& ec,
                 .arg(address_.toText())
                 .arg(port_);
         } else {
-            std::string err = error_msg.empty() ? ec.message() : error_msg;
-
+            if (error_msg.empty()) {
+                error_msg = ec.message();
+            }
             LOG_DEBUG(tcp_logger, isc::log::DBGLVL_TRACE_BASIC,
                       TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED)
                 .arg(address_.toText())
                 .arg(port_)
-                .arg(err);
+                .arg(error_msg);
 
             // Only log the details if we have received anything.
-            if (!error_msg.empty() && !current_response_->empty()) {
+            if (!current_response_->empty()) {
                 size_t to_dump = current_response_->size();
                 bool truncated = false;
                 if (to_dump > 100) {
