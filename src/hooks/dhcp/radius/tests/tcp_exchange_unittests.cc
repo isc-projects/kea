@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <radius.h>
-#include <asiolink/tcp_endpoint.h>
-#include <tcp/tcp_connection_acceptor.h>
+#include <asiolink/tcp_acceptor.h>
+#include <asiolink/testutils/test_tls.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
 #include <attribute_test.h>
@@ -109,11 +109,7 @@ TEST(TestTcpExchange, tlsFactory) {
     ServerPtr server;
     IOAddress addr("127.0.0.1");
     TlsContextPtr tls_context;
-    ASSERT_NO_THROW_LOG(TlsContext::configure(tls_context,
-                                              TlsRole::CLIENT,
-                                              TEST_CA_DIR,
-                                              TEST_CA_DIR "/kea-client.crt",
-                                              TEST_CA_DIR "/kea-client.key"));
+    asiolink::test::configClient(tls_context);
     ASSERT_NO_THROW_LOG(server.reset(new Server(addr, 11646, addr, tls_context,
                                                 secret, 0)));
     ASSERT_TRUE(server);
@@ -179,7 +175,8 @@ public:
         : radius::test::AttributeTest (), impl_(RadiusImpl::instance()),
           io_service_(new IOService()),
           code_(0), secret_("foobar"), addr_("127.0.0.1"), port_(11460),
-          timeout_(10), deadtime_(0), maxretries_(3), called_(false), ec_(),
+          timeout_(10), deadtime_(0), maxretries_(3), called_(false),
+          accepted_(false), ec_(),
           handler_([this] (const ExchangePtr ex) { called_ = true; }) {
         impl_.reset();
         impl_.setIOService(io_service_);
@@ -236,8 +233,8 @@ public:
 
     // Accept callback.
     void acceptCallback(const boost::system::error_code& ec) {
+        accepted_ = true;
         ec_ = ec;
-        std::cerr << "accepted\n";
     }
 
     /// @brief Radius implementation.
@@ -281,6 +278,9 @@ public:
 
     // Terminated flag: true if and only if the handler was called.
     bool called_;
+
+    // Accepted flags: true if and only if the accept callback was called.
+    bool accepted_;
 
     // Boost error code.
     boost::system::error_code ec_;
@@ -394,6 +394,7 @@ TEST_F(TcpExchangeTest, timeout) {
     ba::tcp::socket socket(io_service_->getInternalIOService());
 
     exchange_->start();
+    // In fact it is not required to accept the connection but it is clearer.
     acceptor.async_accept(socket,
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
@@ -406,9 +407,44 @@ TEST_F(TcpExchangeTest, timeout) {
     }
     socket.close();
     acceptor.close();
+    EXPECT_TRUE(accepted_);
     EXPECT_FALSE(ec_);
     EXPECT_TRUE(called_);
     EXPECT_EQ(TIMEOUT_RC, exchange_->rc_);
+}
+
+// Verify start with a server closing new connections.
+TEST_F(TcpExchangeTest, drop) {
+    code_ = PW_ACCESS_REQUEST;
+    createRequest();
+    timeout_ = 1;
+    addServer();
+    createExchange();
+
+    ba::tcp::endpoint server_ep(ba::tcp::v4(), port_);
+    ba::tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
+    acceptor.set_option(ba::tcp::acceptor::reuse_address(true));
+    ba::tcp::socket socket(io_service_->getInternalIOService());
+
+    exchange_->start();
+    acceptor.async_accept(socket,
+        std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
+
+    // Poll the I/O service.
+    for (unsigned i = 0; i < 10; ++i) {
+        if (accepted_) {
+            socket.close();
+        }
+        if (called_ || ec_) {
+            break;
+        }
+        io_service_->runOne();
+    }
+    acceptor.close();
+    EXPECT_TRUE(accepted_);
+    EXPECT_FALSE(ec_);
+    EXPECT_TRUE(called_);
+    EXPECT_EQ(ERROR_RC, exchange_->rc_);
 }
 
 // Verify start with error in send.
