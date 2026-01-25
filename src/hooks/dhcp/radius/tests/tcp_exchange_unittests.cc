@@ -161,6 +161,7 @@ public:
 
     /// Visible methods.
     using TcpExchange::buildRequest;
+    using TcpExchange::RequestHandler;
 };
 
 /// Type of shared pointers to test exchange objets.
@@ -325,7 +326,6 @@ TEST_F(TcpExchangeTest, buildRequest6) {
         << "got: " << attrs->toText() << "\n";
 }
 
-#if 0
 // Verify exchange initial state and start.
 TEST_F(TcpExchangeTest, start) {
     code_ = PW_ACCESS_REQUEST;
@@ -336,208 +336,20 @@ TEST_F(TcpExchangeTest, start) {
     // Check initial state.
     ASSERT_FALSE(exchange_->identifier_.empty());
     ASSERT_FALSE(exchange_->sync_);
-    ASSERT_FALSE(exchange_->server_);
-    ASSERT_EQ(0, exchange_->idx_);
-    ASSERT_FALSE(exchange_->started_);
-    ASSERT_FALSE(exchange_->terminated_);
+    ASSERT_TRUE(exchange_->server_);
     ASSERT_EQ(ERROR_RC, exchange_->rc_);
-    ASSERT_FALSE(exchange_->socket_);
-    ASSERT_FALSE(exchange_->ep_);
-    ASSERT_FALSE(exchange_->timer_);
-    ASSERT_FALSE(exchange_->server_);
-    ASSERT_EQ(0, exchange_->idx_);
     ASSERT_FALSE(exchange_->sent_);
     ASSERT_FALSE(exchange_->received_);
-    ASSERT_TRUE(exchange_->buffer_.empty());
-    ASSERT_EQ(0, exchange_->size_);
-    ASSERT_EQ(0, exchange_->retries_);
-    ASSERT_TRUE(exchange_->postponed_.empty());
     ASSERT_FALSE(called_);
 
     ASSERT_NO_THROW_LOG(exchange_->start());
-    EXPECT_TRUE(exchange_->started_);
-    ASSERT_NO_THROW_LOG(exchange_->shutdown());
-}
-
-// Verify open in the initial case.
-TEST_F(TcpExchangeTest, openInit) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Check initial state.
-    EXPECT_FALSE(exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_TRUE(exchange_->server_);
-    EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
     EXPECT_TRUE(exchange_->sent_);
-    ASSERT_TRUE(exchange_->ep_);
-    EXPECT_TRUE(exchange_->timer_);
-    EXPECT_EQ(addr_.toText(), exchange_->ep_->getAddress().toText());
-    EXPECT_EQ(port_, exchange_->ep_->getPort());
-    EXPECT_TRUE(exchange_->socket_);
-    EXPECT_FALSE(exchange_->buffer_.empty());
-    EXPECT_EQ(code_, exchange_->buffer_[0]);
-    EXPECT_LT(AUTH_HDR_LEN, exchange_->size_);
-    EXPECT_EQ(exchange_->size_, exchange_->buffer_.size());
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
+    EXPECT_FALSE(exchange_->received_);
     EXPECT_FALSE(called_);
 }
 
-// Verify open with next server being null.
-TEST_F(TcpExchangeTest, openNullServer) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    ServerPtr null_server;
-    servers_.push_back(null_server);
-    createExchange();
-
-    // Call open.
-    EXPECT_THROW_MSG(exchange_->open(), Unexpected, "null server at 0");
-}
-
-// Verify open with next server in hold-down state.
-TEST_F(TcpExchangeTest, openPostpone) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    deadtime_ = 60;
-    addServer();
-    createExchange();
-
-    // Put the server in hold-down.
-    ServerPtr server = servers_[0];
-    ASSERT_TRUE(server);
-    server->setDeadtimeEnd(steady_clock().now() + seconds(deadtime_));
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(1, exchange_->idx_);
-    ASSERT_EQ(1, exchange_->postponed_.size());
-    EXPECT_EQ(0, exchange_->postponed_.front());
-}
-
-// Verify open in second pass with no postponed servers.
-TEST_F(TcpExchangeTest, openNoPostponed) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 1;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-    ASSERT_TRUE(exchange_->postponed_.empty());
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(1, exchange_->idx_);
-    EXPECT_FALSE(exchange_->terminated_);
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was called.
-    EXPECT_TRUE(exchange_->terminated_);
-    EXPECT_TRUE(called_);
-}
-
-// Verify open in second pass with bad postponed index.
-TEST_F(TcpExchangeTest, openBadPostponed) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 1;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-
-    // Add a bad index in the postponed list.
-    exchange_->postponed_.push_back(10);
-
-    // Call open.
-    EXPECT_THROW_MSG(exchange_->open(), Unexpected,
-                     "out of range server 10 >= 1");
-}
-
-// Verify open in second pass with null postponed server.
-TEST_F(TcpExchangeTest, openNullPostponed) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    ServerPtr null_server;
-    servers_.push_back(null_server);
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 1;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-
-    // Add the null server to the postponed list.
-    exchange_->postponed_.push_back(0);
-
-    // Call open.
-    EXPECT_THROW_MSG(exchange_->open(), Unexpected, "null server at 0");
-}
-
-// Verify open in second pass.
-TEST_F(TcpExchangeTest, openPostponed) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 1;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-
-    // Add the server to the postponed list.
-    exchange_->postponed_.push_back(0);
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_TRUE(exchange_->server_);
-    EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(1, exchange_->idx_);
-    EXPECT_TRUE(exchange_->sent_);
-    EXPECT_TRUE(exchange_->timer_);
-    ASSERT_TRUE(exchange_->ep_);
-    EXPECT_EQ(addr_.toText(), exchange_->ep_->getAddress().toText());
-    EXPECT_EQ(port_, exchange_->ep_->getPort());
-    EXPECT_TRUE(exchange_->socket_);
-    EXPECT_FALSE(exchange_->buffer_.empty());
-    EXPECT_EQ(code_, exchange_->buffer_[0]);
-    EXPECT_LT(AUTH_HDR_LEN, exchange_->size_);
-    EXPECT_EQ(exchange_->size_, exchange_->buffer_.size());
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
-    EXPECT_FALSE(called_);
-}
-
-// Verify open with error in send.
-TEST_F(TcpExchangeTest, openSendError) {
+// Verify start with error in send.
+TEST_F(TcpExchangeTest, sendError) {
     // Make the request encode to fail with too large message.
     send_attrs_.reset(new Attributes());
     string msg = "too too too too too too too too too too  too too ";
@@ -559,252 +371,27 @@ TEST_F(TcpExchangeTest, openSendError) {
     addServer();
     createExchange();
 
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
+    // Call start.
+    ASSERT_NO_THROW_LOG(exchange_->start());
 
     // Check new state.
     EXPECT_TRUE(exchange_->server_);
-    EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
     EXPECT_TRUE(exchange_->sent_);
-    EXPECT_FALSE(exchange_->ep_);
-    EXPECT_FALSE(exchange_->timer_);
-    EXPECT_FALSE(exchange_->socket_);
-    EXPECT_EQ(0, exchange_->retries_);
     EXPECT_EQ(ERROR_RC, exchange_->rc_);
 }
 
-// Verify open puts on timeout a server on hold-down.
-TEST_F(TcpExchangeTest, openHoldsDown) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    deadtime_ = 60;
-    addServer();
-    createExchange();
-
-    // Set the exchange on last retry.
-    ServerPtr server = servers_[0];
-    exchange_->server_ = server;
-    exchange_->retries_ = maxretries_;
-    server->setDeadtimeEnd(exchange_->start_time_ - seconds(10));
-
-    // Set the error code to timeout.
-    exchange_->rc_ = TIMEOUT_RC;
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check server.
-    auto dead_time_end = server->getDeadtimeEnd();
-    EXPECT_EQ(exchange_->start_time_ + seconds(deadtime_), dead_time_end);
-}
-
-// Verify open tries next server after last retry.
-TEST_F(TcpExchangeTest, openNextServer) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    // Add a second server.
-    addServer();
-    createExchange();
-
-    // Set the exchange on last retry.
-    exchange_->server_ = servers_[0];
-    exchange_->retries_ = maxretries_;
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check next state.
-    EXPECT_EQ(0, exchange_->retries_);
-    EXPECT_FALSE(exchange_->server_);
-    EXPECT_FALSE(exchange_->ep_);
-    EXPECT_EQ(1, exchange_->idx_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
-    EXPECT_FALSE(called_);
-}
-
-// Verify open terminates after the last retry of the last server.
-TEST_F(TcpExchangeTest, openLastServer) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    // Add a second server.
-    addServer();
-    createExchange();
-
-    // Set the exchange on last retry of last server.
-    exchange_->server_ = servers_[1];
-    exchange_->retries_ = maxretries_;
-    exchange_->idx_ = 1;
-    ASSERT_EQ(servers_.size(), exchange_->idx_ + 1);
-    ASSERT_TRUE(exchange_->postponed_.empty());
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(2, exchange_->idx_);
-    EXPECT_EQ(servers_.size(), exchange_->idx_);
-    EXPECT_FALSE(exchange_->terminated_);
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was called.
-    EXPECT_TRUE(exchange_->terminated_);
-    EXPECT_TRUE(called_);
-}
-
-// Verify open in second pass tries next postponed server after last retry.
-TEST_F(TcpExchangeTest, openNextPostponedServer) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    // Add a second server.
-    addServer();
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 2;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-
-    // Add servers to the postponed list.
-    exchange_->postponed_.push_back(0);
-    exchange_->postponed_.push_back(1);
-    ASSERT_EQ(2, exchange_->postponed_.size());
-
-    // Set the exchange on last retry.
-    exchange_->server_ = servers_[0];
-    exchange_->retries_ = maxretries_;
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check next state.
-    EXPECT_EQ(0, exchange_->retries_);
-    EXPECT_FALSE(exchange_->server_);
-    EXPECT_FALSE(exchange_->ep_);
-    EXPECT_EQ(2, exchange_->idx_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
-    EXPECT_FALSE(called_);
-}
-
-// Verify open in second pass terminates after the last retry of the last
-// postponed server.
-TEST_F(TcpExchangeTest, openLastPostponedServer) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    // Add a second server.
-    addServer();
-    createExchange();
-
-    // Put the exchange in the second pass,
-    exchange_->idx_ = 2;
-    ASSERT_EQ(servers_.size(), exchange_->idx_);
-    exchange_->postponed_.push_back(0);
-
-    // Set the exchange on last retry of last server.
-    exchange_->server_ = servers_[0];
-    exchange_->retries_ = maxretries_;
-    ASSERT_EQ(1, exchange_->postponed_.size());
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(2, exchange_->idx_);
-    EXPECT_EQ(servers_.size(), exchange_->idx_);
-    EXPECT_FALSE(exchange_->terminated_);
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was called.
-    EXPECT_TRUE(exchange_->terminated_);
-    EXPECT_TRUE(called_);
-}
-
-// Verify open retries.
-TEST_F(TcpExchangeTest, openRetry) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Set the exchange to the first server.
-    exchange_->server_ = servers_[0];
-
-    // Set the endpoint.
-    exchange_->ep_.reset(new UDPEndpoint(addr_, port_));
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(1, exchange_->retries_);
-    EXPECT_TRUE(exchange_->sent_);
-    EXPECT_TRUE(exchange_->timer_);
-    ASSERT_TRUE(exchange_->ep_);
-    EXPECT_EQ(addr_.toText(), exchange_->ep_->getAddress().toText());
-    EXPECT_EQ(port_, exchange_->ep_->getPort());
-    EXPECT_TRUE(exchange_->socket_);
-    EXPECT_FALSE(exchange_->buffer_.empty());
-    EXPECT_EQ(code_, exchange_->buffer_[0]);
-    EXPECT_LT(AUTH_HDR_LEN, exchange_->size_);
-    EXPECT_EQ(exchange_->size_, exchange_->buffer_.size());
-    EXPECT_FALSE(called_);
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
-    EXPECT_FALSE(called_);
-}
-
-// Verify open with error in retry.
-TEST_F(TcpExchangeTest, openRetryError) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    addServer();
-    createExchange();
-
-    // Set the exchange to the first server.
-    exchange_->server_ = servers_[0];
-    ASSERT_FALSE(exchange_->ep_);
-
-    // Call open.
-    ASSERT_NO_THROW_LOG(exchange_->open());
-
-    // Check new state.
-    EXPECT_EQ(1, exchange_->retries_);
-    EXPECT_FALSE(exchange_->sent_);
-    EXPECT_FALSE(exchange_->timer_);
-    EXPECT_FALSE(exchange_->socket_);
-    EXPECT_EQ(ERROR_RC, exchange_->rc_);
-}
-
-// Verify receivedHandler with null exchange.
-TEST_F(TcpExchangeTest, receivedHandlerNull) {
+// Verify RequestHandler with null exchange.
+TEST_F(TcpExchangeTest, requestHandlerNull) {
     auto no_error = boost::system::error_code();
-    EXPECT_THROW_MSG(TestExchange::receivedHandler(TestExchangePtr(), no_error, 0),
+    WireDataPtr response;
+    EXPECT_THROW_MSG(TestExchange::RequestHandler(TestExchangePtr(), no_error,
+                                                  response, ""),
                      Unexpected,
-                     "null exchange in receivedHandler");
+                     "null exchange in RequestHandler");
 }
 
-// Verify receivedHandler on error.
-TEST_F(TcpExchangeTest, receivedHandlerError) {
+// Verify RequestHandler on error.
+TEST_F(TcpExchangeTest, requestHandlerError) {
     code_ = PW_ACCESS_REQUEST;
     createRequest();
     addServer();
@@ -812,36 +399,10 @@ TEST_F(TcpExchangeTest, receivedHandlerError) {
 
     // Call the handler with an error.
     auto ec = boost::asio::error::timed_out;
-    EXPECT_NO_THROW_LOG(TestExchange::receivedHandler(exchange_, ec, 0));
-
-    // Poll the I/O service.
-    ASSERT_NO_THROW_LOG(io_service_->poll());
-
-    // Terminate was not called.
-    EXPECT_FALSE(called_);
+    WireDataPtr response;
+    EXPECT_NO_THROW_LOG(TestExchange::RequestHandler(exchange_, ec,
+                                                     response, ""));
+    EXPECT_TRUE(called_);
 }
-
-// Verify receivedHandler removes servers from hold-down.
-TEST_F(TcpExchangeTest, receivedHandlerNoHoldDown) {
-    code_ = PW_ACCESS_REQUEST;
-    createRequest();
-    deadtime_ = 60;
-    addServer();
-    createExchange();
-
-    // Put the server in hold-down.
-    ServerPtr server = servers_[0];
-    server->setDeadtimeEnd(steady_clock().now() + seconds(deadtime_));
-    exchange_->server_ = server;
-
-    // Call the handler.
-    auto no_error = boost::system::error_code();
-    exchange_->sent_ = request_;
-    EXPECT_NO_THROW_LOG(TestExchange::receivedHandler(exchange_, no_error, 0));
-
-    // Check the server.
-    EXPECT_EQ(exchange_->start_time_, server->getDeadtimeEnd());
-}
-#endif
 
 } // end of anonymous namespace

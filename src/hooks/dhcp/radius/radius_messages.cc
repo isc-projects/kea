@@ -54,9 +54,6 @@ extern const isc::log::MessageID RADIUS_CONFIGURATION_FAILED = "RADIUS_CONFIGURA
 extern const isc::log::MessageID RADIUS_DECODE_MESSAGE = "RADIUS_DECODE_MESSAGE";
 extern const isc::log::MessageID RADIUS_DEINIT_OK = "RADIUS_DEINIT_OK";
 extern const isc::log::MessageID RADIUS_ENCODE_MESSAGE = "RADIUS_ENCODE_MESSAGE";
-extern const isc::log::MessageID RADIUS_EXCHANGE_FAILED = "RADIUS_EXCHANGE_FAILED";
-extern const isc::log::MessageID RADIUS_EXCHANGE_OPEN_FAILED = "RADIUS_EXCHANGE_OPEN_FAILED";
-extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED = "RADIUS_EXCHANGE_RECEIVED";
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT = "RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT";
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT = "RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT";
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE = "RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE";
@@ -64,15 +61,6 @@ extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE = "RADIUS
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_MISMATCH = "RADIUS_EXCHANGE_RECEIVED_MISMATCH";
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_RESPONSE = "RADIUS_EXCHANGE_RECEIVED_RESPONSE";
 extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVED_UNEXPECTED = "RADIUS_EXCHANGE_RECEIVED_UNEXPECTED";
-extern const isc::log::MessageID RADIUS_EXCHANGE_RECEIVE_FAILED = "RADIUS_EXCHANGE_RECEIVE_FAILED";
-extern const isc::log::MessageID RADIUS_EXCHANGE_SEND_FAILED = "RADIUS_EXCHANGE_SEND_FAILED";
-extern const isc::log::MessageID RADIUS_EXCHANGE_SEND_NEW = "RADIUS_EXCHANGE_SEND_NEW";
-extern const isc::log::MessageID RADIUS_EXCHANGE_SEND_RETRY = "RADIUS_EXCHANGE_SEND_RETRY";
-extern const isc::log::MessageID RADIUS_EXCHANGE_SENT = "RADIUS_EXCHANGE_SENT";
-extern const isc::log::MessageID RADIUS_EXCHANGE_START = "RADIUS_EXCHANGE_START";
-extern const isc::log::MessageID RADIUS_EXCHANGE_SYNC_RETURN = "RADIUS_EXCHANGE_SYNC_RETURN";
-extern const isc::log::MessageID RADIUS_EXCHANGE_TERMINATE = "RADIUS_EXCHANGE_TERMINATE";
-extern const isc::log::MessageID RADIUS_EXCHANGE_TIMEOUT = "RADIUS_EXCHANGE_TIMEOUT";
 extern const isc::log::MessageID RADIUS_HOOK_FAILED = "RADIUS_HOOK_FAILED";
 extern const isc::log::MessageID RADIUS_INIT_OK = "RADIUS_INIT_OK";
 extern const isc::log::MessageID RADIUS_INTEGER_ATTRIBUTE_FROM_BYTES_FAILED = "RADIUS_INTEGER_ATTRIBUTE_FROM_BYTES_FAILED";
@@ -96,11 +84,30 @@ extern const isc::log::MessageID RADIUS_SESSION_HISTORY_OPENED = "RADIUS_SESSION
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_OPEN_FAILED = "RADIUS_SESSION_HISTORY_OPEN_FAILED";
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORED = "RADIUS_SESSION_HISTORY_STORED";
 extern const isc::log::MessageID RADIUS_SESSION_HISTORY_STORE_FAILED = "RADIUS_SESSION_HISTORY_STORE_FAILED";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_FAILURE = "RADIUS_TCP_EXCHANGE_FAILURE";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_RECEIVED = "RADIUS_TCP_EXCHANGE_RECEIVED";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_RECEIVE_FAILED = "RADIUS_TCP_EXCHANGE_RECEIVE_FAILED";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_SEND = "RADIUS_TCP_EXCHANGE_SEND";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_START = "RADIUS_TCP_EXCHANGE_START";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_START_ERROR = "RADIUS_TCP_EXCHANGE_START_ERROR";
+extern const isc::log::MessageID RADIUS_TCP_EXCHANGE_SUCCESS = "RADIUS_TCP_EXCHANGE_SUCCESS";
 extern const isc::log::MessageID RADIUS_THREAD_POOL_STARTED = "RADIUS_THREAD_POOL_STARTED";
 extern const isc::log::MessageID RADIUS_TLS_STATUS = "RADIUS_TLS_STATUS";
 extern const isc::log::MessageID RADIUS_TLS_STATUS_ERROR = "RADIUS_TLS_STATUS_ERROR";
 extern const isc::log::MessageID RADIUS_TLS_STATUS_FAILED = "RADIUS_TLS_STATUS_FAILED";
 extern const isc::log::MessageID RADIUS_TLS_STATUS_SUCCEED = "RADIUS_TLS_STATUS_SUCCEED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_FAILED = "RADIUS_UDP_EXCHANGE_FAILED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_OPEN_FAILED = "RADIUS_UDP_EXCHANGE_OPEN_FAILED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVED = "RADIUS_UDP_EXCHANGE_RECEIVED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_RECEIVE_FAILED = "RADIUS_UDP_EXCHANGE_RECEIVE_FAILED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_SEND_FAILED = "RADIUS_UDP_EXCHANGE_SEND_FAILED";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_SEND_NEW = "RADIUS_UDP_EXCHANGE_SEND_NEW";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_SEND_RETRY = "RADIUS_UDP_EXCHANGE_SEND_RETRY";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_SENT = "RADIUS_UDP_EXCHANGE_SENT";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_START = "RADIUS_UDP_EXCHANGE_START";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_SYNC_RETURN = "RADIUS_UDP_EXCHANGE_SYNC_RETURN";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_TERMINATE = "RADIUS_UDP_EXCHANGE_TERMINATE";
+extern const isc::log::MessageID RADIUS_UDP_EXCHANGE_TIMEOUT = "RADIUS_UDP_EXCHANGE_TIMEOUT";
 
 } // namespace radius
 } // namespace isc
@@ -155,9 +162,6 @@ const char* values[] = {
     "RADIUS_DECODE_MESSAGE", "Decoded message '%1' (%2) id %3 length %4 with %5 attributes.",
     "RADIUS_DEINIT_OK", "unloading Radius hooks library successful",
     "RADIUS_ENCODE_MESSAGE", "Encoded message '%1' (%2) id %3 length %4 with %5 attributes.",
-    "RADIUS_EXCHANGE_FAILED", "Exchange %1 failed: %2",
-    "RADIUS_EXCHANGE_OPEN_FAILED", "Open socket for exchange %1 failed: %2",
-    "RADIUS_EXCHANGE_RECEIVED", "Exchange %1 received %2 bytes.",
     "RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT", "Exchange %1 received an Access-Accept.",
     "RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT", "Exchange %1 received an Access-Reject.",
     "RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE", "Exchange %1 received an Accounting-Response.",
@@ -165,15 +169,6 @@ const char* values[] = {
     "RADIUS_EXCHANGE_RECEIVED_MISMATCH", "Exchange %1: received response with identifier %2 when %3 was expected.",
     "RADIUS_EXCHANGE_RECEIVED_RESPONSE", "Exchange %1 received response: %2",
     "RADIUS_EXCHANGE_RECEIVED_UNEXPECTED", "Exchange %1: sent %2, received unexpected %3",
-    "RADIUS_EXCHANGE_RECEIVE_FAILED", "Receive for exchange %1 failed: %2",
-    "RADIUS_EXCHANGE_SEND_FAILED", "Send for exchange %1 failed: %2",
-    "RADIUS_EXCHANGE_SEND_NEW", "Exchange %1 sends %2 bytes to new server[%3] %4 on port %5",
-    "RADIUS_EXCHANGE_SEND_RETRY", "Exchange %1 sends %2 bytes for the %3 try.",
-    "RADIUS_EXCHANGE_SENT", "Exchange %1 sent %2 bytes.",
-    "RADIUS_EXCHANGE_START", "Start exchange %1",
-    "RADIUS_EXCHANGE_SYNC_RETURN", "Synchronous exchange %1 returns with %2",
-    "RADIUS_EXCHANGE_TERMINATE", "Exchange %1 terminates with %2",
-    "RADIUS_EXCHANGE_TIMEOUT", "Exchange %1 timeout",
     "RADIUS_HOOK_FAILED", "processing for hook %1 failed: %2",
     "RADIUS_INIT_OK", "loading Radius hooks library successful",
     "RADIUS_INTEGER_ATTRIBUTE_FROM_BYTES_FAILED", "Creating an integer attribute %1 '%2' failed: %3",
@@ -197,11 +192,30 @@ const char* values[] = {
     "RADIUS_SESSION_HISTORY_OPEN_FAILED", "opening of the session history file %1 failed: %2",
     "RADIUS_SESSION_HISTORY_STORED", "Storing to the session history file succeeded: stored %1 records",
     "RADIUS_SESSION_HISTORY_STORE_FAILED", "Writing to the session history file %1 failed: %2 (stored %3 over %4 records)",
+    "RADIUS_TCP_EXCHANGE_FAILURE", "TCP exchange %1 failed: %2",
+    "RADIUS_TCP_EXCHANGE_RECEIVED", "TCP exchange %1 received %2 bytes.",
+    "RADIUS_TCP_EXCHANGE_RECEIVE_FAILED", "Receive for TCP exchange %1 failed: %2",
+    "RADIUS_TCP_EXCHANGE_SEND", "TCP exchange %1 sends %2 bytes to server %3 on port %4%5",
+    "RADIUS_TCP_EXCHANGE_START", "Start TCP exchange %1",
+    "RADIUS_TCP_EXCHANGE_START_ERROR", "TCP exchange %1 failed: %2",
+    "RADIUS_TCP_EXCHANGE_SUCCESS", "TCP exchange %1 succeeded: %2",
     "RADIUS_THREAD_POOL_STARTED", "RADIUS thread pool started with %1 threads.",
     "RADIUS_TLS_STATUS", "send Status-Server with %1",
     "RADIUS_TLS_STATUS_ERROR", "received error response to Status-Server: %1 (%2) with %3",
     "RADIUS_TLS_STATUS_FAILED", "Status-Server failed: return code %1 (%2)",
     "RADIUS_TLS_STATUS_SUCCEED", "received valid response to Status-Server",
+    "RADIUS_UDP_EXCHANGE_FAILED", "UDP exchange %1 failed: %2",
+    "RADIUS_UDP_EXCHANGE_OPEN_FAILED", "Open socket for UDP exchange %1 failed: %2",
+    "RADIUS_UDP_EXCHANGE_RECEIVED", "UDP exchange %1 received %2 bytes.",
+    "RADIUS_UDP_EXCHANGE_RECEIVE_FAILED", "Receive for UDP exchange %1 failed: %2",
+    "RADIUS_UDP_EXCHANGE_SEND_FAILED", "Send for UDP exchange %1 failed: %2",
+    "RADIUS_UDP_EXCHANGE_SEND_NEW", "UDP exchange %1 sends %2 bytes to new server[%3] %4 on port %5",
+    "RADIUS_UDP_EXCHANGE_SEND_RETRY", "UDP exchange %1 sends %2 bytes for the %3 try.",
+    "RADIUS_UDP_EXCHANGE_SENT", "UDP exchange %1 sent %2 bytes.",
+    "RADIUS_UDP_EXCHANGE_START", "Start UDP exchange %1",
+    "RADIUS_UDP_EXCHANGE_SYNC_RETURN", "Synchronous UDP exchange %1 returns with %2",
+    "RADIUS_UDP_EXCHANGE_TERMINATE", "UDP exchange %1 terminates with %2",
+    "RADIUS_UDP_EXCHANGE_TIMEOUT", "UDP exchange %1 timeout",
     NULL
 };
 

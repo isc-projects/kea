@@ -194,8 +194,8 @@ UdpExchange::start() {
     } else {
         started_ = true;
     }
-    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_START)
-      .arg(identifier_);
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_UDP_EXCHANGE_START)
+        .arg(identifier_);
 
     open();
 
@@ -206,7 +206,8 @@ UdpExchange::start() {
         // Done.
         io_service_.reset();
 
-        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_SYNC_RETURN)
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                  RADIUS_UDP_EXCHANGE_SYNC_RETURN)
             .arg(identifier_)
             .arg(rc_);
     }
@@ -406,7 +407,7 @@ UdpExchange::open() {
             size_ = buffer_.size();
 
             LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
-                      RADIUS_EXCHANGE_SEND_NEW)
+                      RADIUS_UDP_EXCHANGE_SEND_NEW)
                 .arg(identifier_)
                 .arg(buffer_.size())
                 .arg(idx_)
@@ -420,7 +421,7 @@ UdpExchange::open() {
                                          ph::_2)); // size.
             return;
         } catch (const Exception& exc) {
-            LOG_ERROR(radius_logger, RADIUS_EXCHANGE_OPEN_FAILED)
+            LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_OPEN_FAILED)
                 .arg(identifier_)
                 .arg(exc.what());
             cancelTimer();
@@ -502,7 +503,8 @@ UdpExchange::open() {
         buffer_ = sent_->getBuffer();
         size_ = buffer_.size();
 
-        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_SEND_RETRY)
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                  RADIUS_UDP_EXCHANGE_SEND_RETRY)
             .arg(identifier_)
             .arg(buffer_.size())
             .arg(retries_);
@@ -516,7 +518,7 @@ UdpExchange::open() {
                                      ph::_2)); // size.
         return;
     } catch (const Exception& exc) {
-        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_OPEN_FAILED)
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_OPEN_FAILED)
             .arg(identifier_)
             .arg(exc.what());
         cancelTimer();
@@ -552,7 +554,7 @@ UdpExchange::sentHandler(UdpExchangePtr ex,
 
     // Check error code.
     if (ec) {
-        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_SEND_FAILED)
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_SEND_FAILED)
             .arg(ex->identifier_)
             .arg(ec.message());
         ex->cancelTimer();
@@ -565,7 +567,7 @@ UdpExchange::sentHandler(UdpExchangePtr ex,
     }
 
     // No error: receive response.
-    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_SENT)
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_UDP_EXCHANGE_SENT)
         .arg(ex->identifier_)
         .arg(size);
     ex->buffer_.clear();
@@ -687,7 +689,7 @@ UdpExchange::receivedHandler(UdpExchangePtr ex,
 
     // Check error code.
     if (ec) {
-        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVE_FAILED)
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_RECEIVE_FAILED)
             .arg(ex->identifier_)
             .arg(ec.message());
         ex->io_service_->post(std::bind(&UdpExchange::openNext, ex));
@@ -702,7 +704,7 @@ UdpExchange::receivedHandler(UdpExchangePtr ex,
     }
 
     // Create message.
-    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_RECEIVED)
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_UDP_EXCHANGE_RECEIVED)
         .arg(ex->identifier_)
         .arg(size);
     ex->buffer_.resize(size);
@@ -739,11 +741,12 @@ UdpExchange::terminate() {
     }
 
     if ((rc_ != OK_RC) && (rc_ != REJECT_RC)) {
-        LOG_ERROR(radius_logger, RADIUS_EXCHANGE_FAILED)
+        LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_FAILED)
             .arg(identifier_)
             .arg(exchangeRCtoText(rc_));
     } else {
-        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_EXCHANGE_TERMINATE)
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                  RADIUS_UDP_EXCHANGE_TERMINATE)
             .arg(identifier_)
             .arg(exchangeRCtoText(rc_));
     }
@@ -789,7 +792,7 @@ UdpExchange::cancelTimer() {
 void
 UdpExchange::timeoutHandler(UdpExchangePtr ex) {
     MultiThreadingLock lock(*ex->mutex_);
-    LOG_ERROR(radius_logger, RADIUS_EXCHANGE_TIMEOUT)
+    LOG_ERROR(radius_logger, RADIUS_UDP_EXCHANGE_TIMEOUT)
         .arg(ex->identifier_);
     ex->rc_ = TIMEOUT_RC;
     ex->cancelTimer();
@@ -804,7 +807,7 @@ TcpExchange::TcpExchange(const MessagePtr& request,
                          Handler handler)
     : Exchange(request, maxretries, servers, handler),
       start_time_(std::chrono::steady_clock().now()),
-      server_(), resp_() {
+      server_(), response_() {
     server_ = servers_[0];
 }
 
@@ -818,6 +821,9 @@ TcpExchange::start() {
         isc_throw(Unexpected, "no server");
     }
 
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TCP_EXCHANGE_START)
+        .arg(identifier_);
+
     try {
         // Reset error code.
         rc_ = ERROR_RC;
@@ -828,14 +834,22 @@ TcpExchange::start() {
         // Build write data request.
         WireDataPtr request(new WireData(sent_->getBuffer()));
 
-        ///// Log.
+        // Build write data response.
+        response_.reset(new WireData());
+
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TCP_EXCHANGE_SEND)
+            .arg(identifier_)
+            .arg(request->size())
+            .arg(server_->getPeerAddress().toText())
+            .arg(server_->getPeerPort())
+            .arg(server_->getTlsContext() ? " using TLS" : "");
 
         RadiusImpl::instance().tcp_client_->asyncSendRequest(
             server_->getPeerAddress(),
             server_->getPeerPort(),
             server_->getTlsContext(),
             request,
-            resp_,
+            response_,
             true,
             TcpExchange::CompleteCheck,
             std::bind(&TcpExchange::RequestHandler,
@@ -845,7 +859,9 @@ TcpExchange::start() {
                       ph::_3),  // error_msg
             TcpClient::RequestTimeout(server_->getTimeout() * 1000));
     } catch (const Exception& exc) {
-        ///// Log.
+        LOG_ERROR(radius_logger, RADIUS_TCP_EXCHANGE_START_ERROR)
+            .arg(identifier_)
+            .arg(exc.what());
         rc_ = ERROR_RC;
         // Call handler.
         if (handler_) {
@@ -868,32 +884,45 @@ TcpExchange::RequestHandler(TcpExchangePtr ex,
                             const WireDataPtr& response,
                             const string& error_msg) {
     if (!ex) {
-        isc_throw(Unexpected, "null exchange in receivedHandler");
+        isc_throw(Unexpected, "null exchange in RequestHandler");
     }
 
     if (RadiusImpl::shutdown_) {
         return;
     }
 
-    // Check error code.
-    if (ec) {
-        ///// log
-        if (ec == boost::asio::error::timed_out) {
-            ex->rc_ = TIMEOUT_RC;
-        } else {
-            ex->rc_ = ERROR_RC;
-        }
-        // Call handler.
+    // Call handler.
+    auto call_handler = [](TcpExchangePtr ex) {
         if (ex->handler_) {
             auto handler = ex->handler_;
             // Avoid to keep a circular reference.
             ex->handler_ = Handler();
             handler(ex);
         }
+    };
+
+    // Check error code.
+    if (ec) {
+        LOG_ERROR(radius_logger, RADIUS_TCP_EXCHANGE_RECEIVE_FAILED)
+            .arg(ex->identifier_)
+            .arg(error_msg);
+        if (ec == boost::asio::error::timed_out) {
+            ex->rc_ = TIMEOUT_RC;
+        } else {
+            ex->rc_ = ERROR_RC;
+        }
+        call_handler(ex);
         return;
     }
 
-    //// log
+    if (!response) {
+        isc_throw(Unexpected, "null response in RequestHandler");
+    }
+
+    LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TCP_EXCHANGE_RECEIVED)
+        .arg(ex->identifier_)
+        .arg(response->size());
+
     const WireData& buffer = *response;
     ex->received_.reset(new Message(buffer, ex->sent_->getAuth(),
                                     ex->server_->getSecret()));
@@ -902,14 +931,15 @@ TcpExchange::RequestHandler(TcpExchangePtr ex,
 
     if ((ex->rc_ == OK_RC) || (ex->rc_ == REJECT_RC)) {
         ex->logReplyMessages();
+        LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TCP_EXCHANGE_SUCCESS)
+            .arg(ex->identifier_)
+            .arg(exchangeRCtoText(ex->rc_));
+    } else {
+        LOG_ERROR(radius_logger, RADIUS_TCP_EXCHANGE_FAILURE)
+            .arg(ex->identifier_)
+            .arg(exchangeRCtoText(ex->rc_));
     }
-    // Call handler.
-    if (ex->handler_) {
-        auto handler = ex->handler_;
-        // Avoid to keep a circular reference.
-        ex->handler_ = Handler();
-        handler(ex);
-    }
+    call_handler(ex);
 }
 
 int

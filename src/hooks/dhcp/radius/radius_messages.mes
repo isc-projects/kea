@@ -238,19 +238,6 @@ This debug message is issued when a message is encoded. The message type name
 and value, the identifier, the length and the number of attributes are
 displayed.
 
-% RADIUS_EXCHANGE_FAILED Exchange %1 failed: %2
-This error message is issued when an exchange terminates with an error.
-The exchange identifier and the error message are displayed.
-
-% RADIUS_EXCHANGE_OPEN_FAILED Open socket for exchange %1 failed: %2
-This error message is issued when an exchange failed to open a new socket.
-The exchange identifier and the error message are displayed.
-
-% RADIUS_EXCHANGE_RECEIVED Exchange %1 received %2 bytes.
-Logged at debug log level 40.
-This debug message is issued when an exchange received a response.
-The exchange identifier and the response size are displayed.
-
 % RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT Exchange %1 received an Access-Accept.
 Logged at debug log level 40.
 This debug message is issued when an exchange received an Access-Accept
@@ -284,50 +271,6 @@ The exchange identifier and the error code are displayed.
 This error message is issued when the sent request and the received response
 do not match. The exchange identifier and the two RADIUS message codes are
 displayed.
-
-% RADIUS_EXCHANGE_RECEIVE_FAILED Receive for exchange %1 failed: %2
-This error message is issued when an exchange failed to receive a message.
-The exchange identifier and the error message are displayed.
-
-% RADIUS_EXCHANGE_SEND_FAILED Send for exchange %1 failed: %2
-This error message is issued when an exchange failed to send a message.
-The exchange identifier and the error message are displayed.
-
-% RADIUS_EXCHANGE_SEND_NEW Exchange %1 sends %2 bytes to new server[%3] %4 on port %5
-Logged at debug log level 40.
-This debug message is issued when an exchange sends a message to a new server.
-The exchange identifier, message size, server index, address and port
-are displayed.
-
-% RADIUS_EXCHANGE_SEND_RETRY Exchange %1 sends %2 bytes for the %3 try.
-Logged at debug log level 40.
-This debug message is issued when an exchange sends a message to a new server.
-The exchange identifier, message size and retry counter are displayed.
-
-% RADIUS_EXCHANGE_SENT Exchange %1 sent %2 bytes.
-Logged at debug log level 40.
-This debug message is issued when an exchange sent a request and is ready
-to receive the response. The exchange identifier and request size are
-displayed.
-
-% RADIUS_EXCHANGE_START Start exchange %1
-Logged at debug log level 40.
-This debug message is issued when an exchange starts. The exchange identifier
-is displayed.
-
-% RADIUS_EXCHANGE_SYNC_RETURN Synchronous exchange %1 returns with %2
-Logged at debug log level 40.
-This debug message is issued when a synchronous exchange returns.
-The exchange identifier and the error/return code are displayed.
-
-% RADIUS_EXCHANGE_TERMINATE Exchange %1 terminates with %2
-Logged at debug log level 40.
-This debug message is issued when an exchange terminates with success.
-The exchange identifier and the return code are displayed.
-
-% RADIUS_EXCHANGE_TIMEOUT Exchange %1 timeout
-This error message is issued when an exchange failed on timeout.
-The exchange identifier is displayed.
 
 % RADIUS_HOOK_FAILED processing for hook %1 failed: %2
 This error message is issued when processing at a standard hook point failed.
@@ -437,6 +380,39 @@ failed. The name of the file, the reason of the failure, the number
 of stored records before the failure and the expected number of records
 are displayed.
 
+% RADIUS_TCP_EXCHANGE_FAILURE TCP exchange %1 failed: %2
+This error message is issued when a TCP exchange terminates with an error.
+The exchange identifier and the error return code are displayed.
+
+% RADIUS_TCP_EXCHANGE_RECEIVED TCP exchange %1 received %2 bytes.
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange received a response.
+The exchange identifier and the response size are displayed.
+
+% RADIUS_TCP_EXCHANGE_RECEIVE_FAILED Receive for TCP exchange %1 failed: %2
+This error message is issued when a TCP exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_TCP_EXCHANGE_SEND TCP exchange %1 sends %2 bytes to server %3 on port %4%5
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange sends a message to a
+server.  The exchange identifier, message size, server address and port,
+and usage of TLS are displayed.
+
+% RADIUS_TCP_EXCHANGE_START Start TCP exchange %1
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange starts. The exchange
+identifier is displayed.
+
+% RADIUS_TCP_EXCHANGE_START_ERROR TCP exchange %1 failed: %2
+This error message is issued when a TCP exchange failed to start.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_TCP_EXCHANGE_SUCCESS TCP exchange %1 succeeded: %2
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
 % RADIUS_THREAD_POOL_STARTED RADIUS thread pool started with %1 threads.
 This informational message is issued when the thread pool is started.
 The number of threads is displayed.
@@ -460,3 +436,61 @@ was received from common TLS servers.
 Logged at debug log level 40.
 This debug message indicates that a valid response to Status-Server message
 was received from common TLS servers.
+
+% RADIUS_UDP_EXCHANGE_FAILED UDP exchange %1 failed: %2
+This error message is issued when an UDP exchange terminates with an error.
+The exchange identifier and the error return code are displayed.
+
+% RADIUS_UDP_EXCHANGE_OPEN_FAILED Open socket for UDP exchange %1 failed: %2
+This error message is issued when an UDP exchange failed to open a new socket.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_UDP_EXCHANGE_RECEIVED UDP exchange %1 received %2 bytes.
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange received a response.
+The exchange identifier and the response size are displayed.
+
+% RADIUS_UDP_EXCHANGE_RECEIVE_FAILED Receive for UDP exchange %1 failed: %2
+This error message is issued when an UDP exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_UDP_EXCHANGE_SEND_FAILED Send for UDP exchange %1 failed: %2
+This error message is issued when an UDP exchange failed to send a message.
+The exchange identifier and the error message are displayed.
+
+% RADIUS_UDP_EXCHANGE_SEND_NEW UDP exchange %1 sends %2 bytes to new server[%3] %4 on port %5
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sends a message to a
+new server.  The exchange identifier, message size, server index,
+address and port are displayed.
+
+% RADIUS_UDP_EXCHANGE_SEND_RETRY UDP exchange %1 sends %2 bytes for the %3 try.
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sends a message to a
+new server.  The exchange identifier, message size and retry counter
+are displayed.
+
+% RADIUS_UDP_EXCHANGE_SENT UDP exchange %1 sent %2 bytes.
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sent a request and is ready
+to receive the response. The exchange identifier and request size are
+displayed.
+
+% RADIUS_UDP_EXCHANGE_START Start UDP exchange %1
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange starts. The exchange
+identifier is displayed.
+
+% RADIUS_UDP_EXCHANGE_SYNC_RETURN Synchronous UDP exchange %1 returns with %2
+Logged at debug log level 40.
+This debug message is issued when a synchronous UDP exchange returns.
+The exchange identifier and the error/return code are displayed.
+
+% RADIUS_UDP_EXCHANGE_TERMINATE UDP exchange %1 terminates with %2
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
+% RADIUS_UDP_EXCHANGE_TIMEOUT UDP exchange %1 timeout
+This error message is issued when an UDP exchange failed on timeout.
+The exchange identifier is displayed.

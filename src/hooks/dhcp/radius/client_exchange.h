@@ -387,7 +387,7 @@ protected:
     ServerPtr server_;
 
     /// @brief Response wire data.
-    isc::tcp::WireDataPtr resp_;
+    isc::tcp::WireDataPtr response_;
 
     /// @brief Build request.
     void buildRequest();

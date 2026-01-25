@@ -26,6 +26,7 @@ dhcp_radius_tests = executable(
     'status_unittests.cc',
     'sync_request_unittests.cc',
     'tcp_exchange_unittests.cc',
+    'tls_status_unittests.cc',
     'utils_unittests.cc',
     cpp_args: [
         f'-DTEST_DATA_BUILDDIR="@current_build_dir@"',
