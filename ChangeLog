@@ -1,5 +1,11 @@
 Kea 3.1.5 (development) released on January 28, 2026
 
+2433.	[sec]		fdupont
+	Added to the RADIUS hooks library and security
+	documentation a warning about the Blast-RADIUS
+	vulnerability which affects the RADIUS protocol.
+	(Gitlab #4254)
+
 2432.	[build]		razvan
         The library version numbers have been bumped up for the Kea 3.1.5
         development release.
