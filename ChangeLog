@@ -8,7 +8,7 @@ Kea 3.1.5 (development) released on January 28, 2026
 2431.	[build]		fdupont
 	Set debug to true and optimization to 2 by default
 	in meson project default so the same as the
-	'debugoptimized' builtype.
+	'debugoptimized' buildtype.
 	(Gitlab #4296)
 
 2430.	[func]		fdupont
