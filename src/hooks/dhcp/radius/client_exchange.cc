@@ -821,10 +821,15 @@ TcpExchange::start() {
         isc_throw(Unexpected, "no server");
     }
 
+    if (!RadiusImpl::instance().tcp_client_) {
+        isc_throw(Unexpected, "no TCP client");
+    }
+
     LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_TCP_EXCHANGE_START)
         .arg(identifier_);
 
     try {
+
         // Reset error code.
         rc_ = ERROR_RC;
 

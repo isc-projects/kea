@@ -114,14 +114,14 @@ public:
     TlsStatusTest() :
         radius::test::AttributeTest(),
         impl_(RadiusImpl::instance()), service_(new IOService()),
-        server_ep_(ba::tcp::v4(), SERVER_PORT), server_ctx_(),
-        acceptor_(service_->getInternalIOService(), server_ep_),
+        server_ep_(ba::make_address(SERVER_ADDRESS), SERVER_PORT),
+        server_ctx_(), acceptor_(service_->getInternalIOService(), server_ep_),
         server_(), accept_error_code_(), accepted_(false),
         handshake_error_code_(), handshake_(false),
         receive_buffer_(4096), receive_error_code_(), received_(false),
         send_buffer_(), send_error_code_(), sent_(false),
         timer_(service_), timeout_(false),
-	send_attributes_(), result_(OK_RC),
+        send_attributes_(), result_(OK_RC),
         handler_(), finished_(false) {
 
         acceptor_.set_option(ba::tcp::acceptor::reuse_address(true));

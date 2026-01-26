@@ -388,7 +388,7 @@ TEST_F(TcpExchangeTest, timeout) {
     addServer();
     createExchange();
 
-    ba::tcp::endpoint server_ep(ba::tcp::v4(), port_);
+    ba::tcp::endpoint server_ep(ba::make_address("127.0.0.1"), port_);
     ba::tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(ba::tcp::acceptor::reuse_address(true));
     ba::tcp::socket socket(io_service_->getInternalIOService());
@@ -421,7 +421,7 @@ TEST_F(TcpExchangeTest, drop) {
     addServer();
     createExchange();
 
-    ba::tcp::endpoint server_ep(ba::tcp::v4(), port_);
+    ba::tcp::endpoint server_ep(ba::make_address("127.0.0.1"), port_);
     ba::tcp::acceptor acceptor(io_service_->getInternalIOService(), server_ep);
     acceptor.set_option(ba::tcp::acceptor::reuse_address(true));
     ba::tcp::socket socket(io_service_->getInternalIOService());
