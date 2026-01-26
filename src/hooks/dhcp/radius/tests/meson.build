@@ -8,6 +8,7 @@ dhcp_radius_tests_libs = [
     kea_dhcpsrv_testutils_lib,
     kea_dhcp_testutils_lib,
     kea_testutils_lib,
+    kea_asiolink_testutils_lib,
 ]
 dhcp_radius_tests = executable(
     'dhcp-radius-tests',
