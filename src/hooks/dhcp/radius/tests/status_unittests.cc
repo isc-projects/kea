@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
