@@ -14,7 +14,7 @@ already exits i.e. adds and deletes are not correctly balanced.
 This error message indicates that a different thread than the main thread has
 registered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
-The file descritptor and the respective thread ids are included in the message.
+The file descriptor and the respective thread ids are included in the message.
 
 % DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD Attempted to unregister external sockets from different thread %1 than main thread %2
 This error message indicates that a different thread than the main thread has
