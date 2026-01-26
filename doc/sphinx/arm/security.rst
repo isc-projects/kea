@@ -563,6 +563,12 @@ and DDNS servers since Kea version 2.7.2.
 The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
 channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default.
 
+Blast RADIUS
+------------
+
+Blast-RADIUS is a vulnerability that affects the RADIUS protocol implemented
+by the RADIUS hook library. See :ref:`radius-security-warning` for details.
+
 .. _sec-kea-runtime-security-policy-checking:
 
 Kea Runtime Security Policy Checking

@@ -3,6 +3,33 @@
 RADIUS
 ======
 
+.. _radius-security-warning:
+
+Security Warning
+----------------
+
+RADIUS/UDP (and RADIUS/TCP) security is based on direct use of MD5
+with the shared secret and the access user password. These security
+mechanisms were known to be weak but things changed with the publication
+of the `Blast-RADIUS vulnerability <https://www.blastradius.fail>`__
+(`CVE-2024-3596 <https://www.cve.org/CVERecord?id=CVE-2024-3596>`__).
+
+To summary when the infrastructure between the RADIUS client
+(here the Kea DHCP server) and the RADIUS server is not protected
+a man-in-the-middle attacker can forge a valid accept message in
+response to a failed access / authentication request.
+
+Some RADIUS servers including the popular FreeRADIUS server already
+refuse by default to server requests which are considered as insecure
+because not protected using the Message-Authenticator attribute (based
+on HMAC-MD5 so not vulnerable and supported by Kea 3.1.5) so even when
+the infrastructure is protected RADIUS deployment is impacted by
+Blast-RADIUS.
+
+The planned (for Kea release 3.1.6) solution is to support
+RADIUS/TLS which provides  a built-in cryptographic protection
+of communications between RADIUS clients and servers.
+
 .. _radius-overview:
 
 RADIUS Overview
