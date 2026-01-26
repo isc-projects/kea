@@ -1,5 +1,0 @@
-[func]		fdupont
-	HA now increments drop statistics such as 'pkt4-not-for-us'
-	and 'pkt6-not-for-us' when inbound packets are deemed to be
-	out of scope.
-	(Gitlab #4184)

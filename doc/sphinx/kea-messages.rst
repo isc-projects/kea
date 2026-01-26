@@ -10616,6 +10616,28 @@ message) that is unknown to the software. This is a configuration error.
 DHCP
 ****
 
+DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS
+=======================================
+
+.. code-block:: text
+
+    Adding an already existing external socket %1
+
+This warning message indicates that an external socket was added but it
+already exits i.e. adds and deletes are not correctly balanced.
+
+DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD
+===================================
+
+.. code-block:: text
+
+    Attempted to register external socket %1 from different thread %2 than main thread %3
+
+This error message indicates that a different thread than the main thread has
+registered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descritptor and the respective thread ids are included in the message.
+
 DHCP_DDNS_ADD_FAILED
 ====================
 
@@ -11729,6 +11751,70 @@ DHCP_DDNS_UPDATE_RESPONSE_RECEIVED
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
+
+DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD
+===========================================
+
+.. code-block:: text
+
+    Attempted to unregister external sockets from different thread %1 than main thread %2
+
+This error message indicates that a different thread than the main thread has
+deleted all external sockets. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The respective thread ids are included in the message.
+
+DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD
+======================================
+
+.. code-block:: text
+
+    Attempted to unregister external socket %1 from different thread %2 than main thread %3
+
+This error message indicates that a different thread than the main thread has
+unregistered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descritptor and the respective thread ids are included in the message.
+
+DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND
+=====================================
+
+.. code-block:: text
+
+    Deleting a not found external socket %1
+
+This warning message indicates that an external socket was deleted but
+it can't be found i.e. adds and deletes are not correctly balanced.
+
+DHCP_IFACE_SOCKET_ERROR
+=======================
+
+.. code-block:: text
+
+    Got an error on the interface socket %1 of interface %2: %3
+
+This error message indicates that an error was raised on an interface socket.
+The file descriptor, interface name and error message are displayed.
+
+DHCP_RECEIVE4_UNKNOWN
+=====================
+
+.. code-block:: text
+
+    Received data over unknown socket
+
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
+
+DHCP_RECEIVE6_UNKNOWN
+=====================
+
+.. code-block:: text
+
+    Received data over unknown socket
+
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
 
 ****
 EVAL
@@ -20936,6 +21022,52 @@ Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
+MYSQL_LB_GET_STATE4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state.
+
+MYSQL_LB_GET_STATE6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state.
+
+MYSQL_LB_GET_STATE_SUBID4
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state in
+the specified subnet.
+
+MYSQL_LB_GET_STATE_SUBID6
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state in
+the specified subnet.
+
 MYSQL_LB_GET_SUBID4
 ===================
 
@@ -24073,6 +24205,52 @@ Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
+PGSQL_LB_GET_STATE4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database with the specified state.
+
+PGSQL_LB_GET_STATE6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database with the specified state.
+
+PGSQL_LB_GET_STATE_SUBID4
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database with the specified state in
+the specified subnet.
+
+PGSQL_LB_GET_STATE_SUBID6
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database with the specified state in
+the specified subnet.
+
 PGSQL_LB_GET_SUBID4
 ===================
 
@@ -24971,6 +25149,50 @@ This debug message is issued when an address was not found in create
 timestamp aka history container. This should lead to a accounting
 session without a start status message.
 
+RADIUS_ACCOUNTING_STATUS
+========================
+
+.. code-block:: text
+
+    send Status-Server with %1
+
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to accounting servers. The message attributes are logged.
+
+RADIUS_ACCOUNTING_STATUS_ERROR
+==============================
+
+.. code-block:: text
+
+    received error response to Status-Server: %1 (%2) with %3
+
+This error message indicates that a valid response to Status-Server message
+was received from accounting servers but with an unexpected code or
+an Error-Cause attribute. The response details are logged.
+
+RADIUS_ACCOUNTING_STATUS_FAILED
+===============================
+
+.. code-block:: text
+
+    Status-Server failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid response to Status-Server message
+was received from accounting servers.
+
+RADIUS_ACCOUNTING_STATUS_SUCCEED
+================================
+
+.. code-block:: text
+
+    received valid response to Status-Server
+
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from accounting servers.
+
 RADIUS_ACCOUNTING_SYNC
 ======================
 
@@ -25048,6 +25270,50 @@ RADIUS_AUTHENTICATION_ASYNC_REJECTED
 Logged at debug log level 40.
 This debug message indicates that a valid Access-Reject
 message was received. Attributes from the message are logged.
+
+RADIUS_AUTHENTICATION_STATUS
+============================
+
+.. code-block:: text
+
+    send Status-Server with %1
+
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to access servers. The message attributes are logged.
+
+RADIUS_AUTHENTICATION_STATUS_ERROR
+==================================
+
+.. code-block:: text
+
+    received error response to Status-Server: %1 (%2) with %3
+
+This error message indicates that a valid response to Status-Server message
+was received from access servers but with an unexpected code or an
+Error-Cause attribute. The response details are logged.
+
+RADIUS_AUTHENTICATION_STATUS_FAILED
+===================================
+
+.. code-block:: text
+
+    Status-Server failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid response to Status-Server message
+was received from access servers.
+
+RADIUS_AUTHENTICATION_STATUS_SUCCEED
+====================================
+
+.. code-block:: text
+
+    received valid response to Status-Server
+
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from access servers.
 
 RADIUS_AUTHENTICATION_SYNC
 ==========================
@@ -25680,6 +25946,28 @@ RBAC_HTTP_AUTH_ERROR
 This error messages indicates that an error has been raised in
 http_auth callout by the RBAC hooks library. The argument details the error.
 
+RBAC_HTTP_AUTH_FAILED
+=====================
+
+.. code-block:: text
+
+    RBAC processing in http_auth callout failed for unexpected condition: %1.
+
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_auth callout point. The reason of the failure is
+summarized and details are available in a debug log.
+
+RBAC_HTTP_AUTH_REJECT
+=====================
+
+.. code-block:: text
+
+    Role configuration '%1' for role '%2' has rejected command '%3'.
+
+This info message indicates that he command has been rejected in
+http_auth callout. The role configuration name, the role name and the
+command are displayed.
+
 RBAC_HTTP_AUTH_RESPONSE
 =======================
 
@@ -25689,6 +25977,17 @@ RBAC_HTTP_AUTH_RESPONSE
 
 This info message indicates that the RBAC hooks library has returned
 a response in http_auth callout. The response is summarized.
+
+RBAC_HTTP_RESPONSE_FAILED
+=========================
+
+.. code-block:: text
+
+    RBAC processing in http_response callout failed for unexpected condition: %1.
+
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_response callout point. The reason of the failure is
+summarized and details are available in a debug log.
 
 RBAC_LOAD_FAILED
 ================
@@ -25830,17 +26129,6 @@ RBAC_TRACE_HTTP_AUTH_NO_TLS_REJECT
 
 Logged at debug log level 40.
 The non TLS request has been rejected in http_auth callout.
-
-RBAC_TRACE_HTTP_AUTH_REJECT
-===========================
-
-.. code-block:: text
-
-    Role configuration '%1' for role '%2' has rejected command '%3'.
-
-Logged at debug log level 40.
-The command has been rejected in http_auth callout. The role
-configuration name, the role name and the command are displayed.
 
 RBAC_TRACE_HTTP_AUTH_RESPONSE
 =============================
@@ -26718,17 +27006,103 @@ prefix. The second parameter specifies a subnet identifier.
 TCP
 ***
 
-TCP_CLIENT_REQUEST_RECEIVED
-===========================
+TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED
+=======================================
 
 .. code-block:: text
 
-    received TCP request from %1
+    bad response received when communicating with %1 port %2: %3
 
 Logged at debug log level 40.
-This debug message is issued when the server finished receiving a TCP
-request from the remote endpoint. The address of the remote endpoint is
-specified as an argument.
+This debug message is issued when a TCP client fails to receive a response
+from the server or when this response is malformed. The first arguments
+specify the server address and port. The last provides a detailed error
+message.
+
+TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED_DETAILS
+===============================================
+
+.. code-block:: text
+
+    detailed information about bad response received from %1 port %2:\n%3
+
+Logged at debug log level 45.
+This debug message is issued when a TCP client receives malformed response
+from the server. The first arguments specify the address and port of the
+server, The last argument provides a dump of the response.
+
+TCP_CLIENT_CONNECTION_CLOSE_CALLBACK_FAILED
+===========================================
+
+.. code-block:: text
+
+    Connection close callback threw an exception
+
+This is an error message emitted when the close connection callback
+registered on the connection failed unexpectedly.  This is a programmatic
+error that should be submitted as a bug.
+
+TCP_CLIENT_MT_STARTED
+=====================
+
+.. code-block:: text
+
+    TcpClient has been started in multi-threaded mode running %1 threads
+
+Logged at debug log level 40.
+This debug message is issued when a multi-threaded TCP client instance has
+been created. The argument specifies the maximum number of threads.
+
+TCP_CLIENT_PREMATURE_CONNECTION_TIMEOUT_OCCURRED
+================================================
+
+.. code-block:: text
+
+    premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
+
+This warning message is issued when unexpected timeout occurred during the
+transaction. This is proven to occur when the system clock is moved manually
+or as a result of synchronization with a time server. Any ongoing transactions
+will be interrupted. New transactions should be conducted normally.
+
+TCP_CLIENT_QUEUE_SIZE_GROWING
+=============================
+
+.. code-block:: text
+
+    queue for address: %1, port %2, now has %3 entries and may be growing too quickly
+
+This warning message is issued when the queue of pending requests for the
+given address and port appears to be growing more quickly than the requests
+can be handled. It will be emitted periodically as long as the queue size
+continues to grow. This may occur with a surge of client traffic creating
+a momentary backlog which then subsides as the surge subsides. If it happens
+continually then it most likely indicates a deployment configuration that
+cannot sustain the client load.
+
+TCP_CLIENT_REQUEST_SEND
+=======================
+
+.. code-block:: text
+
+    sending TCP request %1 to %2 port %3
+
+Logged at debug log level 50.
+This debug message is issued when the client is starting to send a TCP
+request to a server. The first argument dumps the request, next arguments
+specify address and port of the server.
+
+TCP_CLIENT_SERVER_RESPONSE_RECEIVED
+===================================
+
+.. code-block:: text
+
+    received TCP response from %1 port %2
+
+Logged at debug log level 40.
+This debug message is issued when the client finished receiving a TCP
+response from the server. The address and port of the server are specified
+as arguments.
 
 TCP_CONNECTION_REJECTED_BY_FILTER
 =================================
@@ -26847,6 +27221,18 @@ This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
+
+TCP_SERVER_CLIENT_REQUEST_RECEIVED
+==================================
+
+.. code-block:: text
+
+    received TCP request from %1
+
+Logged at debug log level 40.
+This debug message is issued when the server finished receiving a TCP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
 
 TCP_SERVER_RESPONSE_SEND
 ========================

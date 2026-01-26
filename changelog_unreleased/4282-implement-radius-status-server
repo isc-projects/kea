@@ -1,6 +1,0 @@
-[func]		fdupont
-	Added to the RADIUS hooks library a new per service
-	"idle-timer-interval" parameter which makes a
-	"Status-Server" message to be periodically sent.
-	The value 0 (default) disables this.
-	(Gitlab #4283)

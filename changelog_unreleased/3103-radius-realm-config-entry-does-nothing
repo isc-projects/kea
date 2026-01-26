@@ -1,5 +1,0 @@
-[func]		fdupont
-	The RADIUS hook library no longer accepts the 'realm'`
-	config parameter which was never implemented i.e. it was
-	silently ignored.
-	(Gitlab #3103)

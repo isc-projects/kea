@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,10 +16,6 @@ registered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
 The file descritptor and the respective thread ids are included in the message.
 
-% DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND Deleting a not found external socket %1
-This warning message indicates that an external socket was deleted but
-it can't be found i.e. adds and deletes are not correctly balanced.
-
 % DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD Attempted to unregister external sockets from different thread %1 than main thread %2
 This error message indicates that a different thread than the main thread has
 deleted all external sockets. This is a programming error and should be fixed.
@@ -31,6 +27,10 @@ This error message indicates that a different thread than the main thread has
 unregistered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
 The file descritptor and the respective thread ids are included in the message.
+
+% DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND Deleting a not found external socket %1
+This warning message indicates that an external socket was deleted but
+it can't be found i.e. adds and deletes are not correctly balanced.
 
 % DHCP_IFACE_SOCKET_ERROR Got an error on the interface socket %1 of interface %2: %3
 This error message indicates that an error was raised on an interface socket.

@@ -1,4 +1,0 @@
-[bug]		tmark
-	API commands provided by the lease-cmds hook
-	library now update in-memory statistics.
-	(Gitlab #4176)

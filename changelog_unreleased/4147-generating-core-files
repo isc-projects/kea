@@ -1,4 +1,0 @@
-[doc]		fdupont
-	Added a section in the ARM explaining how to generate
-	core dump files.
-	(Gitlab #4147)

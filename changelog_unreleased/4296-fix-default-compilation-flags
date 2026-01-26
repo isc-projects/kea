@@ -1,5 +1,0 @@
-[build]		fdupont
-	Set debug to true and optimization to 2 by default
-	in meson project default so the same as the
-	'debugoptimized' builtype.
-	(Gitlab #4296)

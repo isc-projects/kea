@@ -1,3 +1,93 @@
+Kea 3.1.5 (development) released on January 28, 2026
+
+2432.	[build]		razvan
+        The library version numbers have been bumped up for the Kea 3.1.5
+        development release.
+        (Gitlab #4306)
+
+2431.	[build]		fdupont
+	Set debug to true and optimization to 2 by default
+	in meson project default so the same as the
+	'debugoptimized' builtype.
+	(Gitlab #4296)
+
+2430.	[func]		fdupont
+	The RADIUS hook library no longer accepts the 'realm'`
+	config parameter which was never implemented i.e. it was
+	silently ignored.
+	(Gitlab #3103)
+
+2429.	[func]		fdupont
+	Create UNIX sockets as group writable so a tool
+	is allowed to connect to them as soon as it is
+	run by a member of the group (vs. requiring to be
+	run by the owner).
+	Note to disallow this the group execute permission
+	can be removed from the socket parent directory.
+	(Gitlab #4260)
+
+2428.	[func]		fdupont
+	Added to the RADIUS hooks library a new per service
+	"idle-timer-interval" parameter which makes a
+	"Status-Server" message to be periodically sent.
+	The value 0 (default) disables this.
+	(Gitlab #4283)
+
+2427.	[doc]		fdupont
+	Added a section in the ARM explaining how to generate
+	core dump files.
+	(Gitlab #4147)
+
+2426.	[bug]		fdupont
+	The "exchange-timeout" parameter of GSS-TSIG hook library
+	configuration is no longer ignored.
+	(Gitlab #4265)
+
+2425.	[bug]		fdupont
+	Added check for prefix length in ipv6-prefix option
+	data type.
+	(Gitlab #4295)
+
+2424.	[bug]		tmark
+	API commands provided by the lease-cmds hook
+	library now update in-memory statistics.
+	(Gitlab #4176)
+
+2423.	[func]		fdupont
+	Documented received and sent statistics of the lease query
+	hook library. Also moved initialization to the server so
+	they are no longer deleted when the hook library is unloaded.
+	(Gitlab #4186)
+
+2422.	[func]		fdupont
+	Added 'pkt4-duplicate' and 'pkt6-duplicate' statistics to
+	count incoming packets that are dropped because they are
+	duplicates of packets currently being processed.
+	Previously such packets were counted as queue full.
+	(Gitlab #4187)
+
+2421.	[func]		fdupont
+	HA now increments drop statistics such as 'pkt4-not-for-us'
+	and 'pkt6-not-for-us' when inbound packets are deemed to be
+	out of scope.
+	(Gitlab #4184)
+
+2420.	[func]		tmark
+	Memfile lease back end now supports the ``on-fail``
+	parameter though without retry.  When set to either
+	 ``stop-retry-exit`` or ``serve-retry-exit`` the
+	server will exit on unrecoverable write errors. If
+	 set to ``serve-retry-continue`` the server will
+	continue to run but write errors will continue until
+	corrective action is taken. Applies to both
+	kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4220)
+
+2419.	[func]		fdupont
+	Added 'lease4-get-by-state' and 'lease6-get-by-state'
+	commands to retrieve leases by state and optionally subnet.
+	(Gitlab #4230)
+
 Kea 3.1.4 (development) released on November 26, 2025
 
 2418.	[bug]		fdupont, tmark

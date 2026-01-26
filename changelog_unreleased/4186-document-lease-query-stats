@@ -1,5 +1,0 @@
-[func]		fdupont
-	Documented received and sent statistics of the lease query
-	hook library. Also moved initialization to the server so
-	they are no longer deleted when the hook library is unloaded.
-	(Gitlab #4186)

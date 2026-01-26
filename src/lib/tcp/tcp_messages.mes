@@ -23,6 +23,19 @@ Logged at debug log level 40.
 This debug messages is issued when the MtTcpListenerMgr, listening
 at the given address and port, has begun to shutdown.
 
+% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED bad response received when communicating with %1 port %2: %3
+Logged at debug log level 40.
+This debug message is issued when a TCP client fails to receive a response
+from the server or when this response is malformed. The first arguments
+specify the server address and port. The last provides a detailed error
+message.
+
+% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about bad response received from %1 port %2:\n%3
+Logged at debug log level 45.
+This debug message is issued when a TCP client receives malformed response
+from the server. The first arguments specify the address and port of the
+server, The last argument provides a dump of the response.
+
 % TCP_CLIENT_CONNECTION_CLOSE_CALLBACK_FAILED Connection close callback threw an exception
 This is an error message emitted when the close connection callback
 registered on the connection failed unexpectedly.  This is a programmatic
@@ -59,19 +72,6 @@ Logged at debug log level 40.
 This debug message is issued when the client finished receiving a TCP
 response from the server. The address and port of the server are specified
 as arguments.
-
-% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED bad response received when communicating with %1 port %2: %3
-Logged at debug log level 40.
-This debug message is issued when a TCP client fails to receive a response
-from the server or when this response is malformed. The first arguments
-specify the server address and port. The last provides a detailed error
-message.
-
-% TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about bad response received from %1 port %2:\n%3
-Logged at debug log level 45.
-This debug message is issued when a TCP client receives malformed response
-from the server. The first arguments specify the address and port of the
-server, The last argument provides a dump of the response.
 
 % TCP_CONNECTION_REJECTED_BY_FILTER connection from %1 has been denied by the connection filter.
 Logged at debug log level 50.

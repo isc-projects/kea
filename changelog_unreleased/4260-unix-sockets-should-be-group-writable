@@ -1,8 +1,0 @@
-[func]		fdupont
-	Create UNIX sockets as group writable so a tool
-	is allowed to connect to them as soon as it is
-	run by a member of the group (vs. requiring to be
-	run by the owner).
-	Note to disallow this the group execute permission
-	can be removed from the socket parent directory.
-	(Gitlab #4260)

@@ -1,4 +1,0 @@
-[func]		fdupont
-	Added 'lease4-get-by-state' and 'lease6-get-by-state'
-	commands to retrieve leases by state and optionally subnet.
-	(Gitlab #4230)
