@@ -15,6 +15,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <radius.h>
 #include <radius_status.h>
+#include <radius_tls.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -829,7 +830,7 @@ TEST_F(TlsStatusTest, errorResponse) {
     // Check result.
     EXPECT_EQ(OK_RC, result_);
 }
-#if 0
+
 /// Verify what happens with bad Access-Accept response.
 TEST_F(TlsStatusTest, badAccept) {
     // Use CONFIGS[0].
@@ -837,22 +838,36 @@ TEST_F(TlsStatusTest, badAccept) {
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
 
-    // Open server socket.
-    open(SERVER_AUTH_PORT);
+    // Start timer for 1.5s timeout.
+    timer_start(1500);
 
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
+    // Accept server socket.
+    server_accept();
 
     // Launch request handler i.e. the client code to test.
     run();
 
-    // Start timer for 1.5s timeout.
-    timer_start(1500);
+    // Wait for the connection to be established.
+    while (!accepted_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(accept_error_code_);
+
+    // Perform handshake.
+    server_handshake();
+    while (!handshake_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(handshake_error_code_);
+
+    // Push a receiver on the socket.
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_->async_read_some(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -878,21 +893,25 @@ TEST_F(TlsStatusTest, badAccept) {
     memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
 
     // Compute the authenticator.
-    vector<unsigned char> auth_input(size + 3);
+    vector<unsigned char> auth_input(size + 6);
     memmove(&auth_input[0], &send_buffer_[0], size);
-    auth_input[size] = 'f';
-    auth_input[size + 1] = 'o';
-    auth_input[size + 2] = 'o';
+    auth_input[size] = 'r';
+    auth_input[size + 1] = 'a';
+    auth_input[size + 2] = 'd';
+    auth_input[size + 3] = 's';
+    auth_input[size + 4] = 'e';
+    auth_input[size + 5] = 'c';
     OutputBuffer auth_output(AUTH_VECTOR_LEN);
-    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+    digest(&auth_input[0], size + 6, isc::cryptolink::MD5,
            auth_output, AUTH_VECTOR_LEN);
     memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
 
     // Push a sender on the socket.
     size_t sent_size = 0;
     Callback send_callback(send_error_code_, sent_size, sent_);
-    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
-                                 client, send_callback);
+    boost::asio::async_write(*server_,
+                             boost::asio::buffer(&send_buffer_[0], size),
+                             send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -919,22 +938,36 @@ TEST_F(TlsStatusTest, badResponse) {
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
 
-    // Open server socket.
-    open(SERVER_ACCT_PORT);
+    // Start timer for 1.5s timeout.
+    timer_start(1500);
 
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
+    // Accept server socket.
+    server_accept();
 
     // Launch request handler i.e. the client code to test.
     run();
 
-    // Start timer for 1.5s timeout.
-    timer_start(1500);
+    // Wait for the connection to be established.
+    while (!accepted_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(accept_error_code_);
+
+    // Perform handshake.
+    server_handshake();
+    while (!handshake_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(handshake_error_code_);
+
+    // Push a receiver on the socket.
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_->async_read_some(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -960,21 +993,25 @@ TEST_F(TlsStatusTest, badResponse) {
     memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
 
     // Compute the authenticator.
-    vector<unsigned char> auth_input(size + 3);
+    vector<unsigned char> auth_input(size + 6);
     memmove(&auth_input[0], &send_buffer_[0], size);
-    auth_input[size] = 'b';
+    auth_input[size] = 'r';
     auth_input[size + 1] = 'a';
-    auth_input[size + 2] = 'r';
+    auth_input[size + 2] = 'd';
+    auth_input[size + 3] = 's';
+    auth_input[size + 4] = 'e';
+    auth_input[size + 5] = 'c';
     OutputBuffer auth_output(AUTH_VECTOR_LEN);
-    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+    digest(&auth_input[0], size + 6, isc::cryptolink::MD5,
            auth_output, AUTH_VECTOR_LEN);
     memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
 
     // Push a sender on the socket.
     size_t sent_size = 0;
     Callback send_callback(send_error_code_, sent_size, sent_);
-    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
-                                 client, send_callback);
+    boost::asio::async_write(*server_,
+                             boost::asio::buffer(&send_buffer_[0], size),
+                             send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -995,28 +1032,42 @@ TEST_F(TlsStatusTest, badResponse) {
 }
 
 /// Verify what happens with bad (too short) response.
-TEST_F(TlsStatusTest, shortAuth) {
+TEST_F(TlsStatusTest, tooShort) {
     // Use CONFIGS[0].
     ElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
 
-    // Open server socket.
-    open(SERVER_AUTH_PORT);
+    // Start timer for 1.5s timeout.
+    timer_start(1500);
 
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
+    // Accept server socket.
+    server_accept();
 
     // Launch request handler i.e. the client code to test.
     run();
 
-    // Start timer for 1.5s timeout.
-    timer_start(1500);
+    // Wait for the connection to be established.
+    while (!accepted_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(accept_error_code_);
+
+    // Perform handshake.
+    server_handshake();
+    while (!handshake_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(handshake_error_code_);
+
+    // Push a receiver on the socket.
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_->async_read_some(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -1041,96 +1092,16 @@ TEST_F(TlsStatusTest, shortAuth) {
     memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
 
     // Compute the authenticator.
-    vector<unsigned char> auth_input(size + 3);
+    vector<unsigned char> auth_input(size + 6);
     memmove(&auth_input[0], &send_buffer_[0], size);
-    auth_input[size] = 'f';
-    auth_input[size + 1] = 'o';
-    auth_input[size + 2] = 'o';
-    OutputBuffer auth_output(AUTH_VECTOR_LEN);
-    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
-           auth_output, AUTH_VECTOR_LEN);
-    memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
-
-    // Push a sender on the socket.
-    size_t sent_size = 0;
-    // Change the size.
-    Callback send_callback(send_error_code_, sent_size, sent_);
-    // Truncate the buffer.
-    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], 10),
-                                 client, send_callback);
-
-    // Second busy loop.
-    while ((!sent_ || !finished_) && !timeout_) {
-        poll();
-    }
-
-    EXPECT_TRUE(finished_);
-    EXPECT_TRUE(sent_);
-    EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
-
-    // Done.
-    timer_stop();
-    service_->stopWork();
-
-    // Check result.
-    EXPECT_EQ(BADRESP_RC, result_);
-}
-
-/// Verify what happens with bad (too short) response.
-TEST_F(TlsStatusTest, shortAcct) {
-    // Use CONFIGS[0].
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
-    ASSERT_NO_THROW(impl_.init(json));
-
-    // Open server socket.
-    open(SERVER_ACCT_PORT);
-
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
-
-    // Launch request handler i.e. the client code to test.
-    run();
-
-    // Start timer for 1.5s timeout.
-    timer_start(1500);
-
-    // Busy loop.
-    while (!received_ && !timeout_) {
-        poll();
-    }
-
-    ASSERT_TRUE(received_);
-    ASSERT_FALSE(timeout_);
-
-    // Sanity checks on the request.
-    receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
-
-    // Build the response.
-    size = AUTH_HDR_LEN;                       // header (no attributes).
-    send_buffer_.resize(size);
-    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
-    send_buffer_[1] = receive_buffer_[1];      // Copy id.
-    send_buffer_[2] = size >> 8;               // Length
-    send_buffer_[3] = size & 0xff;
-    // Copy the authenticator.
-    memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
-
-    // Compute the authenticator.
-    vector<unsigned char> auth_input(size + 3);
-    memmove(&auth_input[0], &send_buffer_[0], size);
-    auth_input[size] = 'b';
+    auth_input[size] = 'r';
     auth_input[size + 1] = 'a';
-    auth_input[size + 2] = 'r';
+    auth_input[size + 2] = 'd';
+    auth_input[size + 3] = 's';
+    auth_input[size + 4] = 'e';
+    auth_input[size + 5] = 'c';
     OutputBuffer auth_output(AUTH_VECTOR_LEN);
-    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+    digest(&auth_input[0], size + 6, isc::cryptolink::MD5,
            auth_output, AUTH_VECTOR_LEN);
     memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
 
@@ -1139,8 +1110,9 @@ TEST_F(TlsStatusTest, shortAcct) {
     // Change the size.
     Callback send_callback(send_error_code_, sent_size, sent_);
     // Truncate the buffer.
-    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], 10),
-                                 client, send_callback);
+    boost::asio::async_write(*server_,
+                             boost::asio::buffer(&send_buffer_[0], size - 2),
+                             send_callback);
 
     // Second busy loop.
     while ((!sent_ || !finished_) && !timeout_) {
@@ -1150,40 +1122,54 @@ TEST_F(TlsStatusTest, shortAcct) {
     EXPECT_TRUE(finished_);
     EXPECT_TRUE(sent_);
     EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
+    EXPECT_EQ(size - 2, sent_size);
 
     // Done.
     timer_stop();
     service_->stopWork();
 
     // Check result.
-    EXPECT_EQ(BADRESP_RC, result_);
+    EXPECT_EQ(TIMEOUT_RC, result_);
 }
 
-/// Verify that access IdleTimerCallback works as expected.
-TEST_F(TlsStatusTest, accessIdleTimerCallback) {
+/// Verify that IdleTimerCallback works as expected.
+TEST_F(TlsStatusTest, idleTimerCallback) {
     // Use CONFIGS[0].
     ElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
-
-    // Open server socket.
-    open(SERVER_AUTH_PORT);
-
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
-
-    // Call the access IdleTimerCallback.
-    RadiusAccess::IdleTimerCallback();
 
     // Start timer for 1.5s timeout.
     timer_start(1500);
 
+    // Accept server socket.
+    server_accept();
+
+    // Call the IdleTimerCallback.
+    RadiusTls::IdleTimerCallback();
+
+    // Wait for the connection to be established.
+    while (!accepted_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(accept_error_code_);
+
+    // Perform handshake.
+    server_handshake();
+    while (!handshake_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(handshake_error_code_);
+
+    // Push a receiver on the socket.
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_->async_read_some(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        receive_callback);
+
     // Busy loop.
     while (!received_ && !timeout_) {
         poll();
@@ -1212,137 +1198,45 @@ TEST_F(TlsStatusTest, accessIdleTimerCallback) {
     EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
 
-/// Verify that accounting IdleTimerCallback works as expected.
-TEST_F(TlsStatusTest, accountingIdleTimerCallback) {
+/// Verify that idle timer works as expected.
+TEST_F(TlsStatusTest, idleTimer) {
     // Use CONFIGS[0].
     ElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
-
-    // Open server socket.
-    open(SERVER_ACCT_PORT);
-
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
-
-    // Call the accounting IdleTimerCallback.
-    RadiusAccounting::IdleTimerCallback();
-
-    // Start timer for 1.5s timeout.
-    timer_start(1500);
-
-    // Busy loop.
-    while (!received_ && !timeout_) {
-        poll();
-    }
-
-    ASSERT_TRUE(received_);
-    ASSERT_FALSE(timeout_);
-
-    // Check received request.
-    receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
-    EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
-    uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
-    EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
-
-    // Check attributes.
-    EXPECT_EQ(44, size);
-    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
-    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
-    uint8_t expected[] = {
-        0x04,                   // NAS-IP-Address
-        0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
-    };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
-}
-
-/// Verify that access idle timer works as expected.
-TEST_F(TlsStatusTest, accessIdleTimer) {
-    // Use CONFIGS[0].
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
-    ASSERT_NO_THROW(impl_.init(json));
-    ASSERT_TRUE(impl_.auth_);
-    impl_.auth_->idle_timer_interval_ = 1;
-
-    // Open server socket.
-    open(SERVER_AUTH_PORT);
-
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
-    size_t size = 0;
-    Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
-        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
+    ASSERT_TRUE(impl_.common_);
+    impl_.common_->idle_timer_interval_ = 1;
 
     // Set the idle timer.
-    impl_.auth_->setIdleTimer();
+    impl_.common_->setIdleTimer();
 
     // Start timer for 2.5s timeout.
     timer_start(2500);
 
-    // Busy loop.
-    while (!received_ && !timeout_) {
+    // Accept server socket.
+    server_accept();
+
+    // Wait for the connection to be established.
+    while (!accepted_) {
+        ASSERT_FALSE(timeout_);
         poll();
     }
+    ASSERT_FALSE(accept_error_code_);
 
-    ASSERT_TRUE(received_);
-    ASSERT_FALSE(timeout_);
+    // Perform handshake.
+    server_handshake();
+    while (!handshake_) {
+        ASSERT_FALSE(timeout_);
+        poll();
+    }
+    ASSERT_FALSE(handshake_error_code_);
 
-    // Check received request.
-    receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
-    EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
-    uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
-    EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
-
-    // Check attributes.
-    EXPECT_EQ(44, size);
-    EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
-    EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
-    uint8_t expected[] = {
-        0x04,                   // NAS-IP-Address
-        0x06,                   // length
-        0x7f, 0x00, 0x00, 0x01  // 127.0.0.1
-    };
-    EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
-}
-
-/// Verify that accounting idle timer works as expected.
-TEST_F(TlsStatusTest, accountingIdleTimer) {
-    // Use CONFIGS[0].
-    ElementPtr json;
-    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
-    ASSERT_NO_THROW(impl_.init(json));
-    ASSERT_TRUE(impl_.acct_);
-    impl_.acct_->idle_timer_interval_ = 1;
-
-    // Open server socket.
-    open(SERVER_ACCT_PORT);
-
-    // Push a receiver on it.
-    boost::asio::ip::udp::endpoint client;
+    // Push a receiver on the socket.
     size_t size = 0;
     Callback receive_callback(receive_error_code_, size, received_);
-    server_socket_.async_receive_from(
+    server_->async_read_some(
         boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
-        client, receive_callback);
-
-    // Set the idle timer.
-    impl_.acct_->setIdleTimer();
-
-    // Start timer for 2.5s timeout.
-    timer_start(2500);
+        receive_callback);
 
     // Busy loop.
     while (!received_ && !timeout_) {
@@ -1371,5 +1265,5 @@ TEST_F(TlsStatusTest, accountingIdleTimer) {
     };
     EXPECT_EQ(0, memcmp(expected, &receive_buffer_[AUTH_HDR_LEN + 18], 6));
 }
-#endif
+
 } // end of anonymous namespace
