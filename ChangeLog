@@ -7,9 +7,9 @@ Kea 3.1.5 (development) released on January 28, 2026
 	(Gitlab #4254)
 
 2432.	[build]		razvan
-        The library version numbers have been bumped up for the Kea 3.1.5
-        development release.
-        (Gitlab #4306)
+	The library version numbers have been bumped up for the Kea 3.1.5
+	development release.
+	(Gitlab #4306)
 
 2431.	[build]		fdupont
 	Set debug to true and optimization to 2 by default
