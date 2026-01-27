@@ -301,7 +301,7 @@ the query.
 
 % DHCP4_DEFERRED_OPTION_UNPACK_FAIL %1: An error unpacking the deferred option %2: %3
 Logged at debug log level 50.
-A debug message issued when deferred unpacking of an option failed, making it
+This debug message is issued when deferred unpacking of an option failed, making it
 to be left unpacked in the packet. The first argument is the option code,
 the second the error.
 
@@ -651,7 +651,7 @@ requested by the client.
 
 % DHCP4_OPEN_SOCKET opening service sockets on port %1
 Logged at debug log level 0.
-A debug message issued during startup, this indicates that the DHCPv4
+This debug message is issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
 % DHCP4_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
@@ -801,7 +801,7 @@ requested-ip-address option (if present).
 
 % DHCP4_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
 Logged at debug log level 50.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 still attempt to service the packet.
 
@@ -1188,10 +1188,10 @@ and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
 
-% DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED All packets will be sent to source address of an incoming packet - use only for testing
-This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE
-environment variable is set. It's causing Kea to send packets to
-source address of incoming packet. Usable just in testing environment
+% DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED All packets will be sent to the source address of an incoming packet - use only for testing
+This message is printed, then the KEA_TEST_SEND_RESPONSES_TO_SOURCE
+environment variable is set. It's causes Kea to send packets to the
+source address of the incoming packet. It is only usable in a testing environment
 to simulate multiple subnet traffic from single source.
 
 % DHCP4_UNKNOWN_ADDRESS_REQUESTED %1: client requested an unknown address, client sent ciaddr %2, requested-ip-address %3

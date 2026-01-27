@@ -30,7 +30,7 @@ exit code.  This is most likely due to a network issue.
 
 % LEGAL_LOG_MYSQL_GET_VERSION obtaining schema version information
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the MySQL database.
 
 % LEGAL_LOG_MYSQL_INSERT_LOG Adding a log entry to the database: %1
@@ -52,7 +52,7 @@ The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % LEGAL_LOG_MYSQL_START_TRANSACTION starting new MySQL transaction
-A debug message issued when a new MySQL transaction is being started.
+This debug message is issued when a new MySQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -62,11 +62,11 @@ any of these INSERT statements fail.
 
 % LEGAL_LOG_MYSQL_TLS_CIPHER TLS cipher: %1
 Logged at debug log level 50.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 % MYSQL_FB_DB opening MySQL log database: %1
-This informational message is logged when a legal log hook library is
+This informational message is logged when the legal log hook library is
 about to open a MySQL log database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.

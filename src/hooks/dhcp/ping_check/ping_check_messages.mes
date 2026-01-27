@@ -219,7 +219,7 @@ reported as a defect.
 This error message is emitted when an unexpected error occurred while
 attempting to resume operation of the ping channel's thread pool. This
 error is highly unlikely and indicates a programmatic issue that should
-be reported as defect.
+be reported as a defect.
 
 % PING_CHECK_UNEXPECTED_READ_ERROR could not start next socket read %1
 This error message occurs when initiating an asynchronous read on the ICMP

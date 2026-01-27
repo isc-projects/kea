@@ -409,7 +409,7 @@ reverse update will not be performed.
 % DHCP_DDNS_RUN_EXIT application is exiting the event loop
 Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
-event loop
+event loop.
 
 % DHCP_DDNS_SECURITY_CHECKS_DISABLED Invoked with command line option -X, Security checks are disabled!!
 This warning is emitted when internal security checks normally

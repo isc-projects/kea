@@ -111,8 +111,8 @@ reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
 useful is to point out that the pool reserved to a given class has run
-out of addresses. When you see this message, you may consider checking your
-pool size and your classification definitions.
+out of addresses. If this message is displayed, consider checking the
+pool size and the classification definitions.
 
 ALLOC_ENGINE_V4_ALLOC_FAIL_NO_POOLS
 ===================================
@@ -587,8 +587,8 @@ reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
 useful is to point out that the pool reserved to a given class has run
-out of addresses. When you see this message, you may consider checking your
-pool size and your classification definitions.
+out of addresses. If this message is displayed, you may consider checking the
+pool size and the classification definitions.
 
 ALLOC_ENGINE_V6_ALLOC_FAIL_NO_POOLS
 ===================================
@@ -695,7 +695,7 @@ ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR
 
 Logged at debug log level 40.
 This message is logged when the allocation engine is in the process of
-allocating leases for the client, there are no static reservations,
+allocating leases for the client and there are no static reservations,
 but lease(s) exist for the client. The allocation engine will remove
 leases which are reserved for other clients, and return all
 remaining leases to the client.
@@ -1278,7 +1278,7 @@ BOOTP_PACKET_OPTIONS_SKIPPED
     an error unpacking an option, caused subsequent options to be skipped: %1
 
 Logged at debug log level 40.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
@@ -3062,8 +3062,8 @@ CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED
 
     failed to reuse HTTPS service bound to address: %1 port: %2
 
-This error message indicates that the server has failed reusing existing
-HTTPS service on the specified address and port. The server can not switch from
+This error message indicates that the server has failed to reuse existing
+HTTPS service on the specified address and port. The server cannot switch from
 HTTPS to HTTP sockets using the same address and port.
 
 CTRL_AGENT_HTTPS_SERVICE_STARTED
@@ -3095,8 +3095,8 @@ CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED
 
     failed to reuse HTTP service bound to address: %1 port: %2
 
-This error message indicates that the server has failed reusing existing
-HTTP service on the specified address and port. The server can not switch from
+This error message indicates that the server has failed to reuse existing
+HTTP service on the specified address and port. The server cannot switch from
 HTTP to HTTPS sockets using the same address and port.
 
 CTRL_AGENT_HTTP_SERVICE_STARTED
@@ -3233,7 +3233,7 @@ DATABASE_MYSQL_START_TRANSACTION
 
     starting new MySQL transaction
 
-A debug message issued when a new MySQL transaction is being started.
+This debug message is issued when a new MySQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -3328,7 +3328,7 @@ DATABASE_PGSQL_START_TRANSACTION
 
     starting a new PostgreSQL transaction
 
-A debug message issued when a new PostgreSQL transaction is being started.
+This debug message is issued when a new PostgreSQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -4432,7 +4432,7 @@ DHCP4_DEFERRED_OPTION_UNPACK_FAIL
     %1: An error unpacking the deferred option %2: %3
 
 Logged at debug log level 50.
-A debug message issued when deferred unpacking of an option failed, making it
+This debug message is issued when deferred unpacking of an option failed, making it
 to be left unpacked in the packet. The first argument is the option code,
 the second the error.
 
@@ -5182,7 +5182,7 @@ DHCP4_OPEN_SOCKET
     opening service sockets on port %1
 
 Logged at debug log level 0.
-A debug message issued during startup, this indicates that the DHCPv4
+This debug message is issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
 DHCP4_OPEN_SOCKETS_FAILED
@@ -5458,7 +5458,7 @@ DHCP4_PACKET_OPTIONS_SKIPPED
     %1: An error unpacking an option, caused subsequent options to be skipped: %2
 
 Logged at debug log level 50.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 still attempt to service the packet.
 
@@ -6173,11 +6173,11 @@ DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED
 
 .. code-block:: text
 
-    All packets will be sent to source address of an incoming packet - use only for testing
+    All packets will be sent to the source address of an incoming packet - use only for testing
 
-This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE
-environment variable is set. It's causing Kea to send packets to
-source address of incoming packet. Usable just in testing environment
+This message is printed, then the KEA_TEST_SEND_RESPONSES_TO_SOURCE
+environment variable is set. It's causes Kea to send packets to the
+source address of the incoming packet. It is only usable in a testing environment
 to simulate multiple subnet traffic from single source.
 
 DHCP4_UNKNOWN_ADDRESS_REQUESTED
@@ -7088,7 +7088,7 @@ Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 lease6_release hook point set the next step to SKIP. For this particular hook
 point, this setting by a callout instructs the server to not
-release a lease. If a client requested the release of multiples leases
+release a lease. If a client requested the release of multiple leases
 (by sending multiple IA options), the server will retain this particular
 lease and proceed with other releases as usual. The argument holds the
 client and transaction identification information.
@@ -7104,7 +7104,7 @@ Logged at debug log level 40.
 This debug message is printed when a callout installed on lease6_release
 hook point set the next step to SKIP value. For this particular hook point, that
 setting by a callout instructs the server to not release
-a lease. If client requested release of multiples leases (by sending
+a lease. If client requested release of multiple leases (by sending
 multiple IA options), the server will retain this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
@@ -7523,7 +7523,7 @@ DHCP6_OPEN_SOCKET
     opening service sockets on port %1
 
 Logged at debug log level 0.
-A debug message issued during startup, this indicates that the IPv6 DHCP
+This debug message is issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
 DHCP6_OPEN_SOCKETS_FAILED
@@ -7652,7 +7652,7 @@ DHCP6_PACKET_OPTIONS_SKIPPED
     %1: An error unpacking an option, caused subsequent options to be skipped: %2
 
 Logged at debug log level 50.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
 
@@ -8572,7 +8572,7 @@ DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE
     enabling listening on all interfaces
 
 Logged at debug log level 40.
-A debug message issued when the server is being configured to listen on all
+This debug message is issued when the server is being configured to listen on all
 interfaces.
 
 DHCPSRV_CFGMGR_CFG_DHCP_DDNS
@@ -8583,7 +8583,7 @@ DHCPSRV_CFGMGR_CFG_DHCP_DDNS
     Setting DHCP-DDNS configuration to: %1
 
 Logged at debug log level 40.
-A debug message issued when the server's DHCP-DDNS settings are changed.
+This debug message is issued when the server's DHCP-DDNS settings are changed.
 
 DHCPSRV_CFGMGR_CONFIG4_MERGED
 =============================
@@ -9067,7 +9067,7 @@ DHCPSRV_DDNS_TTL_TOO_LARGE
     %1 of lease life time %2 is %3, using maximum of %4 instead.
 
 Logged at debug log level 55.
-A debug message issued when the DDNS TTL value calculated using the
+This debug message is issued when the DDNS TTL value calculated using the
 ddns-ttl-percent if specified or (0.33 if not) is larger than the
 the specified value of ddns-ttl-max. Kea will ignore the value and
 use the specified maximum instead. The message details include
@@ -9082,7 +9082,7 @@ DHCPSRV_DDNS_TTL_TOO_SMALL
     %1 of lease life time %2 is %3, using minimum of %4 instead.
 
 Logged at debug log level 55.
-A debug message issued when the DDNS TTL value calculated using the
+This debug message is issued when the DDNS TTL value calculated using the
 ddns-ttl-percent if specified or (0.33 if not) is too small.  Kea will
 ignore the value and use the minimum (ddns-ttl-min if specified or 600
 seconds if not). The message details include the percentage, the lease
@@ -9140,7 +9140,7 @@ DHCPSRV_DHCP_DDNS_NCR_SENT
     NameChangeRequest sent to kea-dhcp-ddns: %1
 
 Logged at debug log level 50.
-A debug message issued when a NameChangeRequest has been successfully sent to
+This debug message is issued when a NameChangeRequest has been successfully sent to
 kea-dhcp-ddns.
 
 DHCPSRV_DHCP_DDNS_SENDER_STARTED
@@ -9490,7 +9490,7 @@ DHCPSRV_MEMFILE_ADD_ADDR4
     adding IPv4 lease with address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv4 lease
+This debug message is issued when the server is about to add an IPv4 lease
 with the specified address to the memory file backend database.
 
 DHCPSRV_MEMFILE_ADD_ADDR6
@@ -9501,7 +9501,7 @@ DHCPSRV_MEMFILE_ADD_ADDR6
     adding IPv6 lease with address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv6 lease
+This debug message is issued when the server is about to add an IPv6 lease
 with the specified address to the memory file backend database.
 
 DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6
@@ -9512,7 +9512,7 @@ DHCPSRV_MEMFILE_BEGIN_BUILD_EXTENDED_INFO_TABLES6
     building extended info tables with %1 sanity check level, tables %2
 
 Logged at debug log level 40.
-A debug message issued when the server is building extended info tables.
+This debug message is issued when the server is building extended info tables.
 The extended info sanity check level and the fact tables are enabled
 or disabled are displayed.
 
@@ -9524,7 +9524,7 @@ DHCPSRV_MEMFILE_BEGIN_EXTRACT_EXTENDED_INFO4
     extract extended info with %1 sanity check level%2
 
 Logged at debug log level 40.
-A debug message issued when the server is extracting extended info.
+This debug message is issued when the server is extracting extended info.
 The extended info sanity check level and update in file when requested
 are displayed.
 
@@ -9592,7 +9592,7 @@ DHCPSRV_MEMFILE_DELETE_ADDR4
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease
+This debug message is issued when the server is attempting to delete a lease
 for the specified address from the memory file database for the specified
 address.
 
@@ -9604,7 +9604,7 @@ DHCPSRV_MEMFILE_DELETE_ADDR6
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease
+This debug message is issued when the server is attempting to delete a lease
 for the specified address from the memory file database for the specified
 address.
 
@@ -9616,7 +9616,7 @@ DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED4
     deleting reclaimed IPv4 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv4
+This debug message is issued when the server is removing reclaimed DHCPv4
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -9629,7 +9629,7 @@ DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED6
     deleting reclaimed IPv6 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv6
+This debug message is issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -9642,7 +9642,7 @@ DHCPSRV_MEMFILE_DELETE_EXPIRED_RECLAIMED_START
     starting deletion of %1 expired-reclaimed leases
 
 Logged at debug log level 50.
-A debug message issued when the server has found expired-reclaimed
+This debug message is issued when the server has found expired-reclaimed
 leases to be removed. The number of leases to be removed is logged
 in the message.
 
@@ -9665,7 +9665,7 @@ DHCPSRV_MEMFILE_EXTRACT_EXTENDED_INFO4_ERROR
     extracting extended info got an exception on the lease for %1: %2
 
 Logged at debug log level 40.
-A debug message issued when the server is extracting extended info and
+This debug message is issued when the server is extracting extended info and
 receives an exception processing a lease.
 
 DHCPSRV_MEMFILE_FAILED_TO_OPEN
@@ -9690,7 +9690,7 @@ DHCPSRV_MEMFILE_GET4
     obtaining all IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases from the memory file database.
 
 DHCPSRV_MEMFILE_GET6
@@ -9701,7 +9701,7 @@ DHCPSRV_MEMFILE_GET6
     obtaining all IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases from the memory file database.
 
 DHCPSRV_MEMFILE_GET6_DUID
@@ -9712,7 +9712,7 @@ DHCPSRV_MEMFILE_GET6_DUID
     obtaining IPv6 leases for DUID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain IPv6
+This debug message is issued when the server is attempting to obtain IPv6
 leases from the memory file database for the DUID.
 
 DHCPSRV_MEMFILE_GET_ADDR4
@@ -9723,7 +9723,7 @@ DHCPSRV_MEMFILE_GET_ADDR4
     obtaining IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
 
 DHCPSRV_MEMFILE_GET_ADDR6
@@ -9734,7 +9734,7 @@ DHCPSRV_MEMFILE_GET_ADDR6
     obtaining IPv6 lease for address %1 and lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the memory file database for the specified address.
 
 DHCPSRV_MEMFILE_GET_CLIENTID
@@ -9745,7 +9745,7 @@ DHCPSRV_MEMFILE_GET_CLIENTID
     obtaining IPv4 leases for client ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of
+This debug message is issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 client identification.
 
@@ -9757,7 +9757,7 @@ DHCPSRV_MEMFILE_GET_EXPIRED4
     obtaining maximum %1 of expired IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -9769,7 +9769,7 @@ DHCPSRV_MEMFILE_GET_EXPIRED6
     obtaining maximum %1 of expired IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -9781,7 +9781,7 @@ DHCPSRV_MEMFILE_GET_HOSTNAME4
     obtaining IPv4 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of
+This debug message is issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 hostname.
 
@@ -9793,7 +9793,7 @@ DHCPSRV_MEMFILE_GET_HOSTNAME6
     obtaining IPv6 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of
+This debug message is issued when the server is attempting to obtain a set of
 IPv6 leases from the memory file database for a client with the specified
 hostname.
 
@@ -9805,7 +9805,7 @@ DHCPSRV_MEMFILE_GET_HWADDR4
     obtaining IPv4 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of
+This debug message is issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 hardware address.
 
@@ -9817,7 +9817,7 @@ DHCPSRV_MEMFILE_GET_HWADDR6
     obtaining IPv6 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of
+This debug message is issued when the server is attempting to obtain a set of
 IPv6 leases from the memory file database for a client with the specified
 hardware address.
 
@@ -9829,7 +9829,7 @@ DHCPSRV_MEMFILE_GET_IAID_DUID
     obtaining IPv6 leases for IAID %1 and DUID %2 and lease type %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
+This debug message is issued when the server is attempting to obtain a set of IPv6
 leases from the memory file database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
@@ -9841,7 +9841,7 @@ DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID
     obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3 and lease type %4
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the memory file database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
 
@@ -9853,7 +9853,7 @@ DHCPSRV_MEMFILE_GET_PAGE4
     obtaining at most %1 IPv4 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 DHCPSRV_MEMFILE_GET_PAGE6
@@ -9864,7 +9864,7 @@ DHCPSRV_MEMFILE_GET_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 DHCPSRV_MEMFILE_GET_RELAYID4
@@ -9875,7 +9875,7 @@ DHCPSRV_MEMFILE_GET_RELAYID4
     obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
@@ -9887,7 +9887,7 @@ DHCPSRV_MEMFILE_GET_RELAYID6
     obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a relay id.
 
 DHCPSRV_MEMFILE_GET_REMOTEID4
@@ -9898,7 +9898,7 @@ DHCPSRV_MEMFILE_GET_REMOTEID4
     obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and
 client transaction time between start and end dates.
 
@@ -9910,7 +9910,7 @@ DHCPSRV_MEMFILE_GET_REMOTEID6
     obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
 DHCPSRV_MEMFILE_GET_SUBID4
@@ -9921,7 +9921,7 @@ DHCPSRV_MEMFILE_GET_SUBID4
     obtaining IPv4 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the memory file database.
 
 DHCPSRV_MEMFILE_GET_SUBID6
@@ -9932,7 +9932,7 @@ DHCPSRV_MEMFILE_GET_SUBID6
     obtaining IPv6 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the memory file database.
 
 DHCPSRV_MEMFILE_GET_SUBID_CLIENTID
@@ -9943,7 +9943,7 @@ DHCPSRV_MEMFILE_GET_SUBID_CLIENTID
     obtaining IPv4 lease for subnet ID %1 and client ID %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the memory file database for a client with the specified
 subnet ID and client ID.
 
@@ -9955,7 +9955,7 @@ DHCPSRV_MEMFILE_GET_SUBID_HWADDR
     obtaining IPv4 lease for subnet ID %1 and hardware address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the memory file database for a client with the specified
 subnet ID and hardware address.
 
@@ -9967,7 +9967,7 @@ DHCPSRV_MEMFILE_GET_SUBID_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases from the memory file database beginning with the specified
 address for a given subnet identifier.
 
@@ -9990,7 +9990,7 @@ DHCPSRV_MEMFILE_LEASE_LOAD
     loading lease %1
 
 Logged at debug log level 55.
-A debug message issued when DHCP lease is being loaded from the file to memory.
+This debug message is issued when DHCP lease is being loaded from the file to memory.
 
 DHCPSRV_MEMFILE_LEASE_LOAD_ROW_ERROR
 ====================================
@@ -10201,7 +10201,7 @@ DHCPSRV_MEMFILE_UPDATE_ADDR4
     updating IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv4
+This debug message is issued when the server is attempting to update IPv4
 lease from the memory file database for the specified address.
 
 DHCPSRV_MEMFILE_UPDATE_ADDR6
@@ -10212,7 +10212,7 @@ DHCPSRV_MEMFILE_UPDATE_ADDR6
     updating IPv6 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv6
+This debug message is issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
 DHCPSRV_MEMFILE_WIPE_LEASES4
@@ -10389,7 +10389,7 @@ DHCPSRV_SUBNET4O6_SELECT_FAILED
     Failed to select any subnet for the DHCPv4o6 packet
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select any subnet for the
+This debug message is issued when the server was unable to select any subnet for the
 DHCPv4o6 packet.
 
 DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH
@@ -10400,7 +10400,7 @@ DHCPSRV_SUBNET4_SELECT_BY_ADDRESS_NO_MATCH
     No subnet matches address: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified address.
 
 DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH
@@ -10411,7 +10411,7 @@ DHCPSRV_SUBNET4_SELECT_BY_INTERFACE_NO_MATCH
     No subnet matches interface: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified interface name.
 
 DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH
@@ -10422,7 +10422,7 @@ DHCPSRV_SUBNET4_SELECT_BY_RELAY_ADDRESS_NO_MATCH
     No subnet matches relay address: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified relay address.
 
 DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS
@@ -10433,7 +10433,7 @@ DHCPSRV_SUBNET4_SELECT_NO_RAI_OPTIONS
     No RAI options found to use for subnet selection.
 
 Logged at debug log level 40.
-A debug message issued by the server when the client query does not include RAI
+This debug message is issued by the server when the client query does not include RAI
 options suitable for use with subnet selection.
 
 DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS
@@ -10444,7 +10444,7 @@ DHCPSRV_SUBNET4_SELECT_NO_RELAY_ADDRESS
     Relay address (giaddr) in client packet is empty.
 
 Logged at debug log level 40.
-A debug message issued when no relay address was specified to use for subnet
+This debug message is issued when no relay address was specified to use for subnet
 selection.
 
 DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS
@@ -10455,7 +10455,7 @@ DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS
     No subnet selected because no suitable address to use for subnet selection was found.
 
 Logged at debug log level 40.
-A debug message issued when the server could not find a suitable address to use for
+This debug message is issued when the server could not find a suitable address to use for
 subnet selection.
 
 DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH
@@ -10466,7 +10466,7 @@ DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH
     No subnet matches address: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified address.
 
 DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH
@@ -10477,7 +10477,7 @@ DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_ID_NO_MATCH
     No subnet matches interface id: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified interface id.
 
 DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH
@@ -10488,7 +10488,7 @@ DHCPSRV_SUBNET6_SELECT_BY_INTERFACE_NO_MATCH
     No subnet matches interface: %1
 
 Logged at debug log level 40.
-A debug message issued when the server was unable to select a subnet using
+This debug message is issued when the server was unable to select a subnet using
 the specified interface name.
 
 DHCPSRV_TEMPLATE_EVAL_ERROR
@@ -10533,7 +10533,7 @@ DHCPSRV_TIMERMGR_REGISTER_TIMER
     registering timer: %1, using interval: %2 ms
 
 Logged at debug log level 40.
-A debug message issued when the new interval timer is registered in
+This debug message is issued when the new interval timer is registered in
 the Timer Manager. This timer will have a callback function
 associated with it, and this function will be executed according
 to the interval specified. The unique name of the timer and the
@@ -10548,7 +10548,7 @@ DHCPSRV_TIMERMGR_RUN_TIMER_OPERATION
     running operation for timer: %1
 
 Logged at debug log level 50.
-A debug message issued when the Timer Manager is about to
+This debug message is issued when the Timer Manager is about to
 run a periodic operation associated with the given timer.
 An example of such operation is a periodic cleanup of
 expired leases. The name of the timer is included in the
@@ -10562,7 +10562,7 @@ DHCPSRV_TIMERMGR_START_TIMER
     starting timer: %1
 
 Logged at debug log level 40.
-A debug message issued when the registered interval timer is
+This debug message is issued when the registered interval timer is
 being started. If this operation is successful the timer will
 periodically execute the operation associated with it. The
 name of the started timer is included in the message.
@@ -10575,7 +10575,7 @@ DHCPSRV_TIMERMGR_STOP_TIMER
     stopping timer: %1
 
 Logged at debug log level 40.
-A debug message issued when the registered interval timer is
+This debug message is issued when the registered interval timer is
 being stopped. The timer remains registered and can be restarted
 if necessary. The name of the timer is included in the message.
 
@@ -10587,7 +10587,7 @@ DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS
     unregistering all timers
 
 Logged at debug log level 40.
-A debug message issued when all registered interval timers are
+This debug message is issued when all registered interval timers are
 being unregistered from the Timer Manager.
 
 DHCPSRV_TIMERMGR_UNREGISTER_TIMER
@@ -10598,7 +10598,7 @@ DHCPSRV_TIMERMGR_UNREGISTER_TIMER
     unregistering timer: %1
 
 Logged at debug log level 40.
-A debug message issued when one of the registered interval timers
+This debug message is issued when one of the registered interval timers
 is unregistered from the Timer Manager. The name of the timer is
 included in the message.
 
@@ -11609,7 +11609,7 @@ DHCP_DDNS_RUN_EXIT
 
 Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
-event loop
+event loop.
 
 DHCP_DDNS_SECURITY_CHECKS_DISABLED
 ==================================
@@ -11829,7 +11829,7 @@ EVAL_DEBUG_AND
 
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  They are then combined via logical and and
+the value stack.  They are then combined via logical "and" and
 the result is pushed onto the value stack.
 
 EVAL_DEBUG_BRANCH
@@ -12038,7 +12038,7 @@ EVAL_DEBUG_OR
 
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  They are then combined via logical or and
+the value stack.  They are then combined via logical "or" and
 the result is pushed onto the value stack. The string is displayed
 in text.
 
@@ -13030,7 +13030,7 @@ GSS_TSIG_VERIFIED
     GSS-TSIG verify succeeded.
 
 Logged at debug log level 40.
-A debug message issued when GSS-TSIG verification succeeded.
+This debug message is issued when GSS-TSIG verification succeeded.
 
 GSS_TSIG_VERIFY_FAILED
 ======================
@@ -13080,7 +13080,7 @@ HA_BUFFER4_RECEIVE_PACKET_OPTIONS_SKIPPED
     an error unpacking an option, caused subsequent options to be skipped: %1
 
 Logged at debug log level 40.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
@@ -13133,7 +13133,7 @@ HA_BUFFER6_RECEIVE_PACKET_OPTIONS_SKIPPED
     an error unpacking an option, caused subsequent options to be skipped: %1
 
 Logged at debug log level 40.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv6 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.
@@ -14640,7 +14640,7 @@ HOOKS_ALL_CALLOUTS_DEREGISTERED
     hook library at index %1 removed all callouts on hook %2
 
 Logged at debug log level 55.
-A debug message issued when all callouts on the specified hook registered
+This debug message is issued when all callouts on the specified hook registered
 by the library with the given index were removed.  This is similar to
 the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
 together), but is issued at a lower-level in the hook framework.
@@ -14704,7 +14704,7 @@ HOOKS_CALLOUT_DEREGISTERED
     hook library at index %1 deregistered a callout on hook %2
 
 Logged at debug log level 55.
-A debug message issued when all instances of a particular callouts on
+This debug message is issued when all instances of a particular callouts on
 the hook identified in the message that were registered by the library
 with the given index have been removed.
 
@@ -14836,7 +14836,7 @@ HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE
     hooks library %1 reports its multi-threading compatibility as %2
 
 Logged at debug log level 45.
-A debug message issued when the "multi_threading_compatible" function was
+This debug message is issued when the "multi_threading_compatible" function was
 called. The returned value (0 means not compatible, others compatible)
 is displayed.
 
@@ -16815,8 +16815,8 @@ HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED
 
     failed to reused HTTPS service bound to address: %1 port: %2
 
-This error message indicates that the server has failed reusing existing
-HTTPS service on the specified address and port. The server can not swith from
+This error message indicates that the server has failed to reuse existing
+HTTPS service on the specified address and port. The server cannot swith from
 HTTPS to HTTP sockets using the same address and port.
 
 HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED
@@ -16837,8 +16837,8 @@ HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED
 
     failed to reused HTTP service bound to address: %1 port: %2
 
-This error message indicates that the server has failed reusing existing
-HTTP service on the specified address and port. The server can not swith from
+This error message indicates that the server has failed to reuse existing
+HTTP service on the specified address and port. The server cannot swith from
 HTTP to HTTPS sockets using the same address and port.
 
 HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED
@@ -17727,7 +17727,7 @@ LEGAL_LOG_MYSQL_GET_VERSION
     obtaining schema version information
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the MySQL database.
 
 LEGAL_LOG_MYSQL_INSERT_LOG
@@ -17779,7 +17779,7 @@ LEGAL_LOG_MYSQL_START_TRANSACTION
 
     starting new MySQL transaction
 
-A debug message issued when a new MySQL transaction is being started.
+This debug message is issued when a new MySQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -17795,7 +17795,7 @@ LEGAL_LOG_MYSQL_TLS_CIPHER
     TLS cipher: %1
 
 Logged at debug log level 50.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 LEGAL_LOG_PATH_SECURITY_WARNING
@@ -17859,7 +17859,7 @@ LEGAL_LOG_PGSQL_DEALLOC_ERROR
 
     An error occurred deallocating SQL statements while closing the PostgreSQL log database: %1
 
-This is an error message issued when a legal log hook library experienced
+This is an error message issued when the legal log hook library experienced
 an error freeing database SQL resources as part of closing its connection to
 the PostgreSQL database.  The connection is closed as part of normal server
 shutdown.  This error is most likely a programmatic issue that is highly
@@ -17884,7 +17884,7 @@ LEGAL_LOG_PGSQL_GET_VERSION
     obtaining schema version information
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the PostgreSQL database.
 
 LEGAL_LOG_PGSQL_INSERT_LOG
@@ -17926,7 +17926,7 @@ LEGAL_LOG_PGSQL_START_TRANSACTION
 
     starting a new PostgreSQL transaction
 
-A debug message issued when a new PostgreSQL transaction is being started.
+This debug message is issued when a new PostgreSQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -20492,7 +20492,7 @@ MYSQL_CB_TLS_CIPHER
     TLS cipher: %1
 
 Logged at debug log level 40.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 MYSQL_CB_UNREGISTER_BACKEND_TYPE4
@@ -20532,7 +20532,7 @@ MYSQL_FB_DB
 
     opening MySQL log database: %1
 
-This informational message is logged when a legal log hook library is
+This informational message is logged when the legal log hook library is
 about to open a MySQL log database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
@@ -20557,7 +20557,7 @@ MYSQL_HB_DB_GET_VERSION
     obtaining schema version information for the MySQL hosts database
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the MySQL hosts database.
 
 MYSQL_HB_DB_READONLY
@@ -20620,7 +20620,7 @@ MYSQL_HB_TLS_CIPHER
     TLS cipher: %1
 
 Logged at debug log level 40.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 MYSQL_INIT_OK
@@ -20641,7 +20641,7 @@ MYSQL_LB_ADD_ADDR4
     adding IPv4 lease with address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv4 lease
+This debug message is issued when the server is about to add an IPv4 lease
 with the specified address to the MySQL backend database.
 
 MYSQL_LB_ADD_ADDR6
@@ -20652,7 +20652,7 @@ MYSQL_LB_ADD_ADDR6
     adding IPv6 lease with address %1, lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv6 lease
+This debug message is issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
 
 MYSQL_LB_COMMIT
@@ -20717,7 +20717,7 @@ MYSQL_LB_DELETED_EXPIRED_RECLAIMED
     deleted %1 reclaimed leases from the database
 
 Logged at debug log level 50.
-A debug message issued when the server has removed a number of reclaimed
+This debug message is issued when the server has removed a number of reclaimed
 leases from the database. The number of removed leases is included in the
 message.
 
@@ -20729,7 +20729,7 @@ MYSQL_LB_DELETED_SUBNET4_ID
     deleted %1 leases that match subnet ID %2.
 
 Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
+This debug message is issued when the server is removing leases which match
 respective subnet ID.
 
 MYSQL_LB_DELETED_SUBNET6_ID
@@ -20740,7 +20740,7 @@ MYSQL_LB_DELETED_SUBNET6_ID
     deleted %1 leases that match subnet ID %2.
 
 Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
+This debug message is issued when the server is removing leases which match
 respective subnet ID.
 
 MYSQL_LB_DELETE_ADDR4
@@ -20751,7 +20751,7 @@ MYSQL_LB_DELETE_ADDR4
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
+This debug message is issued when the server is attempting to delete a lease for
 the specified address from the MySQL database for the specified address.
 
 MYSQL_LB_DELETE_ADDR6
@@ -20762,7 +20762,7 @@ MYSQL_LB_DELETE_ADDR6
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
+This debug message is issued when the server is attempting to delete a lease for
 the specified address from the MySQL database for the specified address.
 
 MYSQL_LB_DELETE_EXPIRED_RECLAIMED4
@@ -20773,7 +20773,7 @@ MYSQL_LB_DELETE_EXPIRED_RECLAIMED4
     deleting reclaimed IPv4 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv4
+This debug message is issued when the server is removing reclaimed DHCPv4
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -20786,7 +20786,7 @@ MYSQL_LB_DELETE_EXPIRED_RECLAIMED6
     deleting reclaimed IPv6 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv6
+This debug message is issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -20799,7 +20799,7 @@ MYSQL_LB_GET4
     obtaining all IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases from the MySQL database.
 
 MYSQL_LB_GET6
@@ -20810,7 +20810,7 @@ MYSQL_LB_GET6
     obtaining all IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases from the MySQL database.
 
 MYSQL_LB_GET_ADDR4
@@ -20821,7 +20821,7 @@ MYSQL_LB_GET_ADDR4
     obtaining IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for the specified address.
 
 MYSQL_LB_GET_ADDR6
@@ -20832,7 +20832,7 @@ MYSQL_LB_GET_ADDR6
     obtaining IPv6 lease for address %1, lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for the specified address.
 
 MYSQL_LB_GET_CLIENTID
@@ -20843,7 +20843,7 @@ MYSQL_LB_GET_CLIENTID
     obtaining IPv4 leases for client ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 client identification.
 
@@ -20855,7 +20855,7 @@ MYSQL_LB_GET_DUID
     obtaining IPv6 lease for duid %1,
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for the specified duid.
 
 MYSQL_LB_GET_EXPIRED4
@@ -20866,7 +20866,7 @@ MYSQL_LB_GET_EXPIRED4
     obtaining maximum %1 of expired IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -20878,7 +20878,7 @@ MYSQL_LB_GET_EXPIRED6
     obtaining maximum %1 of expired IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -20890,7 +20890,7 @@ MYSQL_LB_GET_HOSTNAME4
     obtaining IPv4 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 hostname.
 
@@ -20902,7 +20902,7 @@ MYSQL_LB_GET_HOSTNAME6
     obtaining IPv6 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database for a client with the specified
 hostname.
 
@@ -20914,7 +20914,7 @@ MYSQL_LB_GET_HWADDR4
     obtaining IPv4 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 hardware address.
 
@@ -20926,7 +20926,7 @@ MYSQL_LB_GET_HWADDR6
     obtaining IPv6 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database for a client with the specified
 hardware address.
 
@@ -20938,7 +20938,7 @@ MYSQL_LB_GET_IAID_DUID
     obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
+This debug message is issued when the server is attempting to obtain a set of IPv6
 leases from the MySQL database for a client with the specified IAID (Identity
 Association ID) and DUID (DHCP Unique Identifier).
 
@@ -20950,7 +20950,7 @@ MYSQL_LB_GET_IAID_SUBID_DUID
     obtaining IPv6 leases for IAID %1, subnet ID %2, DUID %3, lease type %4
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID), subnet ID and DUID (DHCP Unique Identifier).
 
@@ -20962,7 +20962,7 @@ MYSQL_LB_GET_PAGE4
     obtaining at most %1 IPv4 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 MYSQL_LB_GET_PAGE6
@@ -20973,7 +20973,7 @@ MYSQL_LB_GET_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 MYSQL_LB_GET_RELAYID4
@@ -20984,7 +20984,7 @@ MYSQL_LB_GET_RELAYID4
     obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
@@ -20996,7 +20996,7 @@ MYSQL_LB_GET_RELAYID6
     obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a relay id.
 
 MYSQL_LB_GET_REMOTEID4
@@ -21007,7 +21007,7 @@ MYSQL_LB_GET_REMOTEID4
     obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and client
 transaction time between start and end dates.
 
@@ -21019,7 +21019,7 @@ MYSQL_LB_GET_REMOTEID6
     obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
 MYSQL_LB_GET_STATE4
@@ -21030,7 +21030,7 @@ MYSQL_LB_GET_STATE4
     obtaining IPv4 leases with state %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database with the specified state.
 
 MYSQL_LB_GET_STATE6
@@ -21041,7 +21041,7 @@ MYSQL_LB_GET_STATE6
     obtaining IPv6 leases with state %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database with the specified state.
 
 MYSQL_LB_GET_STATE_SUBID4
@@ -21052,7 +21052,7 @@ MYSQL_LB_GET_STATE_SUBID4
     obtaining IPv4 leases with state %1 in subnet %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database with the specified state in
 the specified subnet.
 
@@ -21064,7 +21064,7 @@ MYSQL_LB_GET_STATE_SUBID6
     obtaining IPv6 leases with state %1 in subnet %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the MySQL database with the specified state in
 the specified subnet.
 
@@ -21076,7 +21076,7 @@ MYSQL_LB_GET_SUBID4
     obtaining IPv4 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the MySQL database.
 
 MYSQL_LB_GET_SUBID6
@@ -21087,7 +21087,7 @@ MYSQL_LB_GET_SUBID6
     obtaining IPv6 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the MySQL database.
 
 MYSQL_LB_GET_SUBID_CLIENTID
@@ -21098,7 +21098,7 @@ MYSQL_LB_GET_SUBID_CLIENTID
     obtaining IPv4 lease for subnet ID %1 and client ID %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for a client with the specified subnet ID
 and client ID.
 
@@ -21110,7 +21110,7 @@ MYSQL_LB_GET_SUBID_HWADDR
     obtaining IPv4 lease for subnet ID %1 and hardware address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for a client with the specified subnet ID
 and hardware address.
 
@@ -21122,7 +21122,7 @@ MYSQL_LB_GET_SUBID_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases from the MySQL database beginning with the specified address
 for the specified subnet identifier.
 
@@ -21134,7 +21134,7 @@ MYSQL_LB_GET_VERSION
     obtaining schema version information
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the MySQL database.
 
 MYSQL_LB_NEGATIVE_LEASES_STAT
@@ -21178,7 +21178,7 @@ MYSQL_LB_TLS_CIPHER
     TLS cipher: %1
 
 Logged at debug log level 40.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 MYSQL_LB_UPDATE_ADDR4
@@ -21189,7 +21189,7 @@ MYSQL_LB_UPDATE_ADDR4
     updating IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv4
+This debug message is issued when the server is attempting to update IPv4
 lease from the MySQL database for the specified address.
 
 MYSQL_LB_UPDATE_ADDR6
@@ -21200,7 +21200,7 @@ MYSQL_LB_UPDATE_ADDR6
     updating IPv6 lease for address %1, lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv6
+This debug message is issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 
 MYSQL_LB_UPGRADE_EXTENDED_INFO4
@@ -21222,7 +21222,7 @@ MYSQL_LB_UPGRADE_EXTENDED_INFO4_ERROR
     upgrading extending info for IPv4 lease at %1 failed with %2
 
 Logged at debug log level 40.
-A debug message issued when the server failed to upgrade an extended info.
+This debug message is issued when the server failed to upgrade an extended info.
 The address of the lease and the error message are displayed.
 
 MYSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
@@ -21233,7 +21233,7 @@ MYSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
     upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
 
 Logged at debug log level 50.
-A debug message issued when the server upgrades IPv4 lease extended info.
+This debug message is issued when the server upgrades IPv4 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
 
@@ -21256,7 +21256,7 @@ MYSQL_LB_UPGRADE_EXTENDED_INFO6_ERROR
     upgrading extending info for IPv6 lease at %1 failed with %2
 
 Logged at debug log level 40.
-A debug message issued when the server failed to upgrade the extended info
+This debug message is issued when the server failed to upgrade the extended info
 for a lease. The address of the lease and the error message are displayed.
 
 MYSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
@@ -21267,7 +21267,7 @@ MYSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
     upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
 
 Logged at debug log level 50.
-A debug message issued when the server upgrades IPv6 lease extended info.
+This debug message is issued when the server upgrades IPv6 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
 
@@ -23748,7 +23748,7 @@ PGSQL_FB_DB
 
     opening PostgreSQL log database: %1
 
-This informational message is logged when a legal log hook library is
+This informational message is logged when the legal log hook library is
 about to open a PostgreSQL log database.  The parameters of the
 connection including database name and username needed to access it
 (but not the password if any) are logged.
@@ -23773,7 +23773,7 @@ PGSQL_HB_DB_GET_VERSION
     obtaining schema version information for the PostgreSQL hosts database
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the PostgreSQL hosts database.
 
 PGSQL_HB_DB_READONLY
@@ -23836,7 +23836,7 @@ PGSQL_LB_ADD_ADDR4
     adding IPv4 lease with address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv4 lease
+This debug message is issued when the server is about to add an IPv4 lease
 with the specified address to the PostgreSQL backend database.
 
 PGSQL_LB_ADD_ADDR6
@@ -23847,7 +23847,7 @@ PGSQL_LB_ADD_ADDR6
     adding IPv6 lease with address %1, lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is about to add an IPv6 lease
+This debug message is issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
 PGSQL_LB_COMMIT
@@ -23912,7 +23912,7 @@ PGSQL_LB_DELETED_SUBNET4_ID
     deleted %1 leases that match subnet ID %2.
 
 Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
+This debug message is issued when the server is removing leases which match
 respective subnet ID.
 
 PGSQL_LB_DELETED_SUBNET6_ID
@@ -23923,7 +23923,7 @@ PGSQL_LB_DELETED_SUBNET6_ID
     deleted %1 leases that match subnet ID %2.
 
 Logged at debug log level 50.
-A debug message issued when the server is removing leases which match
+This debug message is issued when the server is removing leases which match
 respective subnet ID.
 
 PGSQL_LB_DELETE_ADDR4
@@ -23934,7 +23934,7 @@ PGSQL_LB_DELETE_ADDR4
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
+This debug message is issued when the server is attempting to delete a lease for
 the specified address from the PostgreSQL database for the specified address.
 
 PGSQL_LB_DELETE_ADDR6
@@ -23945,7 +23945,7 @@ PGSQL_LB_DELETE_ADDR6
     deleting lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to delete a lease for
+This debug message is issued when the server is attempting to delete a lease for
 the specified address from the PostgreSQL database for the specified address.
 
 PGSQL_LB_DELETE_EXPIRED_RECLAIMED4
@@ -23956,7 +23956,7 @@ PGSQL_LB_DELETE_EXPIRED_RECLAIMED4
     deleting reclaimed IPv4 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv4
+This debug message is issued when the server is removing reclaimed DHCPv4
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -23969,7 +23969,7 @@ PGSQL_LB_DELETE_EXPIRED_RECLAIMED6
     deleting reclaimed IPv6 leases that expired more than %1 seconds ago
 
 Logged at debug log level 50.
-A debug message issued when the server is removing reclaimed DHCPv6
+This debug message is issued when the server is removing reclaimed DHCPv6
 leases which have expired longer than a specified period of time.
 The argument is the amount of time Kea waits after a reclaimed
 lease expires before considering its removal.
@@ -23982,7 +23982,7 @@ PGSQL_LB_GET4
     obtaining all IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases from the PostgreSQL database.
 
 PGSQL_LB_GET6
@@ -23993,7 +23993,7 @@ PGSQL_LB_GET6
     obtaining all IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases from the PostgreSQL database.
 
 PGSQL_LB_GET_ADDR4
@@ -24004,7 +24004,7 @@ PGSQL_LB_GET_ADDR4
     obtaining IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the PostgreSQL database for the specified address.
 
 PGSQL_LB_GET_ADDR6
@@ -24015,7 +24015,7 @@ PGSQL_LB_GET_ADDR6
     obtaining IPv6 lease for address %1 (lease type %2)
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for the specified address.
 
 PGSQL_LB_GET_CLIENTID
@@ -24026,7 +24026,7 @@ PGSQL_LB_GET_CLIENTID
     obtaining IPv4 leases for client ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
 client identification.
 
@@ -24038,7 +24038,7 @@ PGSQL_LB_GET_DUID
     obtaining IPv6 leases for DUID %1,
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
+This debug message is issued when the server is attempting to obtain a set of IPv6
 leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
 
 PGSQL_LB_GET_EXPIRED4
@@ -24049,7 +24049,7 @@ PGSQL_LB_GET_EXPIRED4
     obtaining maximum %1 of expired IPv4 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -24061,7 +24061,7 @@ PGSQL_LB_GET_EXPIRED6
     obtaining maximum %1 of expired IPv6 leases
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain expired
+This debug message is issued when the server is attempting to obtain expired
 IPv6 leases to reclaim them. The maximum number of leases to be retrieved
 is logged in the message.
 
@@ -24073,7 +24073,7 @@ PGSQL_LB_GET_HOSTNAME4
     obtaining IPv4 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
 hostname.
 
@@ -24085,7 +24085,7 @@ PGSQL_LB_GET_HOSTNAME6
     obtaining IPv6 leases for hostname %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the PostgreSQL database for a client with the specified
 hostname.
 
@@ -24097,7 +24097,7 @@ PGSQL_LB_GET_HWADDR4
     obtaining IPv4 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
 hardware address.
 
@@ -24109,7 +24109,7 @@ PGSQL_LB_GET_HWADDR6
     obtaining IPv6 leases for hardware address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the PostgreSQL database for a client with the specified
 hardware address.
 
@@ -24121,7 +24121,7 @@ PGSQL_LB_GET_IAID_DUID
     obtaining IPv4 leases for IAID %1 and DUID %2, lease type %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set of IPv6
+This debug message is issued when the server is attempting to obtain a set of IPv6
 leases from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
@@ -24133,7 +24133,7 @@ PGSQL_LB_GET_IAID_SUBID_DUID
     obtaining IPv4 leases for IAID %1, subnet ID %2, DUID %3, and lease type %4
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv6
+This debug message is issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID), subnet ID and DUID (DHCP Unique Identifier).
 
@@ -24145,7 +24145,7 @@ PGSQL_LB_GET_PAGE4
     obtaining at most %1 IPv4 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 PGSQL_LB_GET_PAGE6
@@ -24156,7 +24156,7 @@ PGSQL_LB_GET_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page
+This debug message is issued when the server is attempting to obtain a page
 of leases beginning with the specified address.
 
 PGSQL_LB_GET_RELAYID4
@@ -24167,7 +24167,7 @@ PGSQL_LB_GET_RELAYID4
     obtaining at most %1 IPv4 leases starting from address %2 with relay id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a relay id and client
 transaction time between start and end dates.
 
@@ -24179,7 +24179,7 @@ PGSQL_LB_GET_RELAYID6
     obtaining at most %1 IPv6 leases starting from address %2 with relay id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a relay id.
 
 PGSQL_LB_GET_REMOTEID4
@@ -24190,7 +24190,7 @@ PGSQL_LB_GET_REMOTEID4
     obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv4 leases beginning with the specified address with a remote id and client
 transaction time between start and end dates.
 
@@ -24202,7 +24202,7 @@ PGSQL_LB_GET_REMOTEID6
     obtaining at most %1 IPv6 leases starting from address %2 with remote id %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
 PGSQL_LB_GET_STATE4
@@ -24213,7 +24213,7 @@ PGSQL_LB_GET_STATE4
     obtaining IPv4 leases with state %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database with the specified state.
 
 PGSQL_LB_GET_STATE6
@@ -24224,7 +24224,7 @@ PGSQL_LB_GET_STATE6
     obtaining IPv6 leases with state %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the PostgreSQL database with the specified state.
 
 PGSQL_LB_GET_STATE_SUBID4
@@ -24235,7 +24235,7 @@ PGSQL_LB_GET_STATE_SUBID4
     obtaining IPv4 leases with state %1 in subnet %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database with the specified state in
 the specified subnet.
 
@@ -24247,7 +24247,7 @@ PGSQL_LB_GET_STATE_SUBID6
     obtaining IPv6 leases with state %1 in subnet %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a set
+This debug message is issued when the server is attempting to obtain a set
 of IPv6 leases from the PostgreSQL database with the specified state in
 the specified subnet.
 
@@ -24259,7 +24259,7 @@ PGSQL_LB_GET_SUBID4
     obtaining IPv4 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv4
+This debug message is issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the PostgreSQL database.
 
 PGSQL_LB_GET_SUBID6
@@ -24270,7 +24270,7 @@ PGSQL_LB_GET_SUBID6
     obtaining IPv6 leases for subnet ID %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain all IPv6
+This debug message is issued when the server is attempting to obtain all IPv6
 leases for a given subnet identifier from the PostgreSQL database.
 
 PGSQL_LB_GET_SUBID_CLIENTID
@@ -24281,7 +24281,7 @@ PGSQL_LB_GET_SUBID_CLIENTID
     obtaining IPv4 lease for subnet ID %1 and client ID %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the PostgreSQL database for a client with the specified subnet ID
 and client ID.
 
@@ -24293,7 +24293,7 @@ PGSQL_LB_GET_SUBID_HWADDR
     obtaining IPv4 lease for subnet ID %1 and hardware address %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain an IPv4
+This debug message is issued when the server is attempting to obtain an IPv4
 lease from the PostgreSQL database for a client with the specified subnet ID
 and hardware address.
 
@@ -24305,7 +24305,7 @@ PGSQL_LB_GET_SUBID_PAGE6
     obtaining at most %1 IPv6 leases starting from address %2 for subnet ID %3
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to obtain a page of
+This debug message is issued when the server is attempting to obtain a page of
 IPv6 leases from the PostgreSQL database beginning with the specified address
 for the specified subnet identifier.
 
@@ -24317,7 +24317,7 @@ PGSQL_LB_GET_VERSION
     obtaining schema version information
 
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the PostgreSQL database.
 
 PGSQL_LB_NEGATIVE_LEASES_STAT
@@ -24351,7 +24351,7 @@ PGSQL_LB_UPDATE_ADDR4
     updating IPv4 lease for address %1
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv4
+This debug message is issued when the server is attempting to update IPv4
 lease from the PostgreSQL database for the specified address.
 
 PGSQL_LB_UPDATE_ADDR6
@@ -24362,7 +24362,7 @@ PGSQL_LB_UPDATE_ADDR6
     updating IPv6 lease for address %1, lease type %2
 
 Logged at debug log level 50.
-A debug message issued when the server is attempting to update IPv6
+This debug message is issued when the server is attempting to update IPv6
 lease from the PostgreSQL database for the specified address.
 
 PGSQL_LB_UPGRADE_EXTENDED_INFO4
@@ -24384,7 +24384,7 @@ PGSQL_LB_UPGRADE_EXTENDED_INFO4_ERROR
     upgrading extending info for IPv4 lease at %1 failed with %2
 
 Logged at debug log level 40.
-A debug message issued when the server failed to upgrade an extended info.
+This debug message is issued when the server failed to upgrade an extended info.
 The address of the lease and the error message are displayed.
 
 PGSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
@@ -24395,7 +24395,7 @@ PGSQL_LB_UPGRADE_EXTENDED_INFO4_PAGE
     upgrading IPv4 lease extended info at page %1 starting at %2 (updated %3)
 
 Logged at debug log level 50.
-A debug message issued when the server upgrades IPv4 lease extended info.
+This debug message is issued when the server upgrades IPv4 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
 
@@ -24418,7 +24418,7 @@ PGSQL_LB_UPGRADE_EXTENDED_INFO6_ERROR
     upgrading extending info for IPv6 lease at %1 failed with %2
 
 Logged at debug log level 40.
-A debug message issued when the server failed to upgrade the extended info
+This debug message is issued when the server failed to upgrade the extended info
 for a lease. The address of the lease and the error message are displayed.
 
 PGSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
@@ -24429,7 +24429,7 @@ PGSQL_LB_UPGRADE_EXTENDED_INFO6_PAGE
     upgrading IPv6 lease extended info at page %1 starting at %2 (updated %3)
 
 Logged at debug log level 50.
-A debug message issued when the server upgrades IPv6 lease extended info.
+This debug message is issued when the server upgrades IPv6 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
 
@@ -24886,7 +24886,7 @@ PING_CHECK_RESUME_FAILED
 This error message is emitted when an unexpected error occurred while
 attempting to resume operation of the ping channel's thread pool. This
 error is highly unlikely and indicates a programmatic issue that should
-be reported as defect.
+be reported as a defect.
 
 PING_CHECK_UNEXPECTED_READ_ERROR
 ================================
@@ -25800,7 +25800,7 @@ RADIUS_RESUME_FAILED
 
 This error message is emitted when an unexpected error occurred while attempting
 to resume the thread pool. This error is highly unlikely and indicates a
-programmatic issue that should be reported as defect.
+programmatic issue that should be reported as a defect.
 
 RADIUS_SERVER_CONFIGURED
 ========================
@@ -27258,7 +27258,7 @@ TKEY_EXCHANGE_ANSWER_CLASS
     GSS-TKEY exchange received a response with answer class: %1.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified answer class.
 
 TKEY_EXCHANGE_FAILED_TO_VERIFY
@@ -27268,7 +27268,7 @@ TKEY_EXCHANGE_FAILED_TO_VERIFY
 
     GSS-TKEY exchange failed because the response failed to verify.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 failed to verify.
 
 TKEY_EXCHANGE_FAIL_EMPTY_IN_TOKEN
@@ -27278,7 +27278,7 @@ TKEY_EXCHANGE_FAIL_EMPTY_IN_TOKEN
 
     GSS-TKEY exchange failed because input token is empty.
 
-This error message indicated that GSS-TKEY exchange failed because input token
+This error message indicates that the GSS-TKEY exchange failed because input token
 is empty.
 
 TKEY_EXCHANGE_FAIL_EMPTY_OUT_TOKEN
@@ -27288,7 +27288,7 @@ TKEY_EXCHANGE_FAIL_EMPTY_OUT_TOKEN
 
     GSS-TKEY exchange failed because output token is empty.
 
-This error message indicated that GSS-TKEY exchange failed because output token
+This error message indicates that the GSS-TKEY exchange failed because output token
 is empty.
 
 TKEY_EXCHANGE_FAIL_EMPTY_RESPONSE
@@ -27298,7 +27298,7 @@ TKEY_EXCHANGE_FAIL_EMPTY_RESPONSE
 
     GSS-TKEY exchange failed because the response is empty.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is empty.
 
 TKEY_EXCHANGE_FAIL_IO_ERROR
@@ -27308,7 +27308,7 @@ TKEY_EXCHANGE_FAIL_IO_ERROR
 
     GSS-TKEY exchange failed because of the IO error: %1.
 
-This error message indicated that GSS-TKEY exchange failed because of an IO error.
+This error message indicates that the GSS-TKEY exchange failed because of an IO error.
 The argument details the IO error.
 
 TKEY_EXCHANGE_FAIL_IO_STOPPED
@@ -27318,7 +27318,7 @@ TKEY_EXCHANGE_FAIL_IO_STOPPED
 
     GSS-TKEY exchange failed because the IO service was stopped.
 
-This error message indicated that GSS-TKEY exchange failed because the IO
+This error message indicates that the GSS-TKEY exchange failed because the IO
 service was stopped.
 
 TKEY_EXCHANGE_FAIL_IO_TIMEOUT
@@ -27328,7 +27328,7 @@ TKEY_EXCHANGE_FAIL_IO_TIMEOUT
 
     GSS-TKEY exchange failed because of IO timeout.
 
-This error message indicated that GSS-TKEY exchange failed because of IO
+This error message indicates that the GSS-TKEY exchange failed because of IO
 timeout.
 
 TKEY_EXCHANGE_FAIL_NOT_SIGNED
@@ -27338,7 +27338,7 @@ TKEY_EXCHANGE_FAIL_NOT_SIGNED
 
     GSS-TKEY exchange failed because the response is not signed.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is not signed.
 
 TKEY_EXCHANGE_FAIL_NO_RDATA
@@ -27348,7 +27348,7 @@ TKEY_EXCHANGE_FAIL_NO_RDATA
 
     GSS-TKEY exchange failed because the response contains no rdata.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains no rdata.
 
 TKEY_EXCHANGE_FAIL_NO_RESPONSE_ANSWER
@@ -27358,7 +27358,7 @@ TKEY_EXCHANGE_FAIL_NO_RESPONSE_ANSWER
 
     GSS-TKEY exchange failed because the response contains no answer.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains no answer.
 
 TKEY_EXCHANGE_FAIL_NULL_RESPONSE
@@ -27368,7 +27368,7 @@ TKEY_EXCHANGE_FAIL_NULL_RESPONSE
 
     GSS-TKEY exchange failed because the response is null.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is null.
 
 TKEY_EXCHANGE_FAIL_RESPONSE_ERROR
@@ -27378,7 +27378,7 @@ TKEY_EXCHANGE_FAIL_RESPONSE_ERROR
 
     GSS-TKEY exchange failed because the response contains an error: %1.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains an error. The argument details the response error.
 
 TKEY_EXCHANGE_FAIL_TKEY_ERROR
@@ -27388,7 +27388,7 @@ TKEY_EXCHANGE_FAIL_TKEY_ERROR
 
     GSS-TKEY exchange failed because the response contains TKEY error: %1.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains TKEY error. The argument details the TKEY error.
 
 TKEY_EXCHANGE_FAIL_TO_INIT
@@ -27398,7 +27398,7 @@ TKEY_EXCHANGE_FAIL_TO_INIT
 
     GSS-TKEY exchange failed to initialize because of the error: %1.
 
-This error message indicated that GSS-TKEY exchange failed in the
+This error message indicates that the GSS-TKEY exchange failed in the
 initialization phase, for instance because the server principal does not
 exist. The argument details the error.
 
@@ -27409,7 +27409,7 @@ TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT
 
     GSS-TKEY exchange failed because the response contains invalid number of RRs: %1.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid number of RRs. The argument contains the wrong number of RRs.
 
 TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE
@@ -27419,7 +27419,7 @@ TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE
 
     GSS-TKEY exchange failed because the response contains wrong answer type: %1.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains wrong answer type. The argument contains the wrong answer type.
 
 TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE
@@ -27429,7 +27429,7 @@ TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE
 
     GSS-TKEY exchange failed because the response contains invalid opcode: %1.
 
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid opcode. The argument contains the wrong opcode.
 
 TKEY_EXCHANGE_NOT_A_RESPONSE
@@ -27440,7 +27440,7 @@ TKEY_EXCHANGE_NOT_A_RESPONSE
     GSS-TKEY exchange received a non response type.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a non response
+This debug message indicates that the GSS-TKEY exchange received a non response
 type.
 
 TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY
@@ -27451,7 +27451,7 @@ TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY
     GSS-TKEY exchange output token is not empty.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange output token is not empty.
+This debug message indicates that the GSS-TKEY exchange output token is not empty.
 
 TKEY_EXCHANGE_RDATA_COUNT
 =========================
@@ -27461,7 +27461,7 @@ TKEY_EXCHANGE_RDATA_COUNT
     GSS-TKEY exchange received a response with rdata count: %1.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified rdata count.
 
 TKEY_EXCHANGE_RECEIVE_MESSAGE
@@ -27472,7 +27472,7 @@ TKEY_EXCHANGE_RECEIVE_MESSAGE
     GSS-TKEY exchange receives a message of size: %1.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange receives a message of
+This debug message indicates that the GSS-TKEY exchange receives a message of
 specified size.
 
 TKEY_EXCHANGE_RESPONSE_TTL
@@ -27483,7 +27483,7 @@ TKEY_EXCHANGE_RESPONSE_TTL
     GSS-TKEY exchange received a response with TTL of: %1 seconds.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified TTL.
 
 TKEY_EXCHANGE_SEND_MESSAGE
@@ -27494,7 +27494,7 @@ TKEY_EXCHANGE_SEND_MESSAGE
     GSS-TKEY exchange sends a message of size: %1.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange sends a message of specified
+This debug message indicates that the GSS-TKEY exchange sends a message of specified
 size.
 
 TKEY_EXCHANGE_VALID
@@ -27505,7 +27505,7 @@ TKEY_EXCHANGE_VALID
     GSS-TKEY exchange retrieved a TKEY valid for: %1 seconds.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange retrieved a TKEY valid for
+This debug message indicates that the GSS-TKEY exchange retrieved a TKEY valid for
 the specified time period expressed in seconds.
 
 TKEY_EXCHANGE_VERIFIED
@@ -27516,7 +27516,7 @@ TKEY_EXCHANGE_VERIFIED
     GSS-TKEY exchange verified.
 
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange is verified.
+This debug message indicates that the GSS-TKEY exchange is verified.
 
 ***
 TLS

@@ -172,8 +172,8 @@ that should be reported. The command manager may or may not continue
 to operate correctly.
 
 % HTTP_COMMAND_MGR_HTTPS_SERVICE_REUSE_FAILED failed to reused HTTPS service bound to address: %1 port: %2
-This error message indicates that the server has failed reusing existing
-HTTPS service on the specified address and port. The server can not swith from
+This error message indicates that the server has failed to reuse existing
+HTTPS service on the specified address and port. The server cannot swith from
 HTTPS to HTTP sockets using the same address and port.
 
 % HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED reused HTTPS service bound to address: %1 port: %2 and updated TLS settings
@@ -182,8 +182,8 @@ HTTPS service on the specified address and port. Note that any change in
 the TLS setup has been applied.
 
 % HTTP_COMMAND_MGR_HTTP_SERVICE_REUSE_FAILED failed to reused HTTP service bound to address: %1 port: %2
-This error message indicates that the server has failed reusing existing
-HTTP service on the specified address and port. The server can not swith from
+This error message indicates that the server has failed to reuse existing
+HTTP service on the specified address and port. The server cannot swith from
 HTTP to HTTPS sockets using the same address and port.
 
 % HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED reused HTTP service bound to address: %1 port: %2

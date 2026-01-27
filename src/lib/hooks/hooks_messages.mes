@@ -8,7 +8,7 @@ $NAMESPACE isc::hooks
 
 % HOOKS_ALL_CALLOUTS_DEREGISTERED hook library at index %1 removed all callouts on hook %2
 Logged at debug log level 55.
-A debug message issued when all callouts on the specified hook registered
+This debug message is issued when all callouts on the specified hook registered
 by the library with the given index were removed.  This is similar to
 the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
 together), but is issued at a lower-level in the hook framework.
@@ -42,7 +42,7 @@ The message includes the callout execution time in milliseconds.
 
 % HOOKS_CALLOUT_DEREGISTERED hook library at index %1 deregistered a callout on hook %2
 Logged at debug log level 55.
-A debug message issued when all instances of a particular callouts on
+This debug message is issued when all instances of a particular callouts on
 the hook identified in the message that were registered by the library
 with the given index have been removed.
 
@@ -109,7 +109,7 @@ HOOKS_LIBRARY_LOADED informational message.
 
 % HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE hooks library %1 reports its multi-threading compatibility as %2
 Logged at debug log level 45.
-A debug message issued when the "multi_threading_compatible" function was
+This debug message is issued when the "multi_threading_compatible" function was
 called. The returned value (0 means not compatible, others compatible)
 is displayed.
 

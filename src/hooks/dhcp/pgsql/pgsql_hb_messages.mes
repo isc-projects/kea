@@ -14,7 +14,7 @@ connection including database name and username needed to access it
 
 % PGSQL_HB_DB_GET_VERSION obtaining schema version information for the PostgreSQL hosts database
 Logged at debug log level 50.
-A debug message issued when the server is about to obtain schema version
+This debug message is issued when the server is about to obtain schema version
 information from the PostgreSQL hosts database.
 
 % PGSQL_HB_DB_READONLY PostgreSQL host database opened for read access only

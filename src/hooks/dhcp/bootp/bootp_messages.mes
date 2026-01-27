@@ -15,7 +15,7 @@ This info message indicates that the Bootp hooks library has been loaded.
 
 % BOOTP_PACKET_OPTIONS_SKIPPED an error unpacking an option, caused subsequent options to be skipped: %1
 Logged at debug log level 40.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the DHCPv4 query. The server
 will still attempt to service the packet. The sole argument provides a
 reason for unpacking error.

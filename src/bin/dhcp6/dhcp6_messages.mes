@@ -468,7 +468,7 @@ Logged at debug log level 40.
 This debug message is printed when a callout installed on the
 lease6_release hook point set the next step to SKIP. For this particular hook
 point, this setting by a callout instructs the server to not
-release a lease. If a client requested the release of multiples leases
+release a lease. If a client requested the release of multiple leases
 (by sending multiple IA options), the server will retain this particular
 lease and proceed with other releases as usual. The argument holds the
 client and transaction identification information.
@@ -478,7 +478,7 @@ Logged at debug log level 40.
 This debug message is printed when a callout installed on lease6_release
 hook point set the next step to SKIP value. For this particular hook point, that
 setting by a callout instructs the server to not release
-a lease. If client requested release of multiples leases (by sending
+a lease. If client requested release of multiple leases (by sending
 multiple IA options), the server will retain this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
@@ -648,7 +648,7 @@ interfaces and is therefore shutting down.
 
 % DHCP6_OPEN_SOCKET opening service sockets on port %1
 Logged at debug log level 0.
-A debug message issued during startup, this indicates that the IPv6 DHCP
+This debug message is issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
 % DHCP6_OPEN_SOCKETS_FAILED maximum number of open service sockets attempts: %1, has been exhausted without success
@@ -711,7 +711,7 @@ second argument specifies packet type.
 
 % DHCP6_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
 Logged at debug log level 50.
-A debug message issued when an option failed to unpack correctly, making it
+This debug message is issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
 server will still attempt to service the packet.
 

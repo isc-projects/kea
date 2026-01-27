@@ -184,7 +184,7 @@ const char* values[] = {
     "RADIUS_PAUSE_ILLEGAL", "Pausing the RADIUS thread pool not allowed: %1",
     "RADIUS_PAUSE_PERMISSIONS_FAILED", "Checking for permissions to pause the RADIUS thread pool failed: %1",
     "RADIUS_REPLY_MESSAGE_ATTRIBUTE", "Message %1 on exchange %2 has a Reply-Message attribute with value '%3'.",
-    "RADIUS_RESUME_FAILED", "Resuming ithe RADIUS thread pool failed: %1",
+    "RADIUS_RESUME_FAILED", "Resuming the RADIUS thread pool failed: %1",
     "RADIUS_SERVER_CONFIGURED", "configured an %1 server: %2",
     "RADIUS_SESSION_HISTORY_APPEND_FAILED", "appending of a new record for %1 to the session history file failed: %2",
     "RADIUS_SESSION_HISTORY_LOADED", "loading of the session history file succeeded: read %1 records including %2 active records",

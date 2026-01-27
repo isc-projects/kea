@@ -396,7 +396,7 @@ value of the Reply-Message attribute.
 % RADIUS_RESUME_FAILED Resuming the RADIUS thread pool failed: %1
 This error message is emitted when an unexpected error occurred while attempting
 to resume the thread pool. This error is highly unlikely and indicates a
-programmatic issue that should be reported as defect.
+programmatic issue that should be reported as a defect.
 
 % RADIUS_SERVER_CONFIGURED configured an %1 server: %2
 This informational message is issued when a RADIUS server is

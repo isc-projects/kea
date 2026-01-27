@@ -758,7 +758,7 @@ Debug message issued when triggered an action to register backend
 
 % MYSQL_CB_TLS_CIPHER TLS cipher: %1
 Logged at debug log level 40.
-A debug message issued when a new MySQL connected is created with TLS.
+This debug message is issued when a new MySQL connected is created with TLS.
 The TLS cipher name is logged.
 
 % MYSQL_CB_UNREGISTER_BACKEND_TYPE4 unregister backend

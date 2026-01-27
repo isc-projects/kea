@@ -261,7 +261,7 @@ const char* values[] = {
     "DHCP6_HOOK_LEASES6_COMMITTED_PARK", "%1: packet is parked, because a callout set the next step to PARK",
     "DHCP6_HOOK_LEASES6_PARKING_LOT_FULL", "The parked-packet-limit %1, has been reached, dropping query: %2",
     "DHCP6_HOOK_PACKET_RCVD_SKIP", "%1: packet is dropped, because a callout set the next step to SKIP",
-    "DHCP6_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP",
+    "DHCP6_HOOK_PACKET_SEND_DROP", "%1: prepared DHCPv6 response was not sent because a callout set the next step to DROP",
     "DHCP6_HOOK_PACKET_SEND_SKIP", "%1: prepared DHCPv6 response is not built because a callout set the next step to SKIP",
     "DHCP6_HOOK_SUBNET6_SELECT_DROP", "%1: packet was dropped because a callout set the drop flag",
     "DHCP6_HOOK_SUBNET6_SELECT_PARK", "%1: packet was parked",

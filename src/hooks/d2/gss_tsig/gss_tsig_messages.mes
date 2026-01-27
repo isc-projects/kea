@@ -65,7 +65,7 @@ been unloaded successfully.
 
 % GSS_TSIG_VERIFIED GSS-TSIG verify succeeded.
 Logged at debug log level 40.
-A debug message issued when GSS-TSIG verification succeeded.
+This debug message is issued when GSS-TSIG verification succeeded.
 
 % GSS_TSIG_VERIFY_FAILED GSS-TSIG verify failed: %1.
 This info message indicates that GSS-TSIG verification failed.
@@ -111,112 +111,112 @@ interval when the next key processing will be attempted.
 
 % TKEY_EXCHANGE_ANSWER_CLASS GSS-TKEY exchange received a response with answer class: %1.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified answer class.
 
 % TKEY_EXCHANGE_FAILED_TO_VERIFY GSS-TKEY exchange failed because the response failed to verify.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 failed to verify.
 
 % TKEY_EXCHANGE_FAIL_EMPTY_IN_TOKEN GSS-TKEY exchange failed because input token is empty.
-This error message indicated that GSS-TKEY exchange failed because input token
+This error message indicates that the GSS-TKEY exchange failed because input token
 is empty.
 
 % TKEY_EXCHANGE_FAIL_EMPTY_OUT_TOKEN GSS-TKEY exchange failed because output token is empty.
-This error message indicated that GSS-TKEY exchange failed because output token
+This error message indicates that the GSS-TKEY exchange failed because output token
 is empty.
 
 % TKEY_EXCHANGE_FAIL_EMPTY_RESPONSE GSS-TKEY exchange failed because the response is empty.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is empty.
 
 % TKEY_EXCHANGE_FAIL_IO_ERROR GSS-TKEY exchange failed because of the IO error: %1.
-This error message indicated that GSS-TKEY exchange failed because of an IO error.
+This error message indicates that the GSS-TKEY exchange failed because of an IO error.
 The argument details the IO error.
 
 % TKEY_EXCHANGE_FAIL_IO_STOPPED GSS-TKEY exchange failed because the IO service was stopped.
-This error message indicated that GSS-TKEY exchange failed because the IO
+This error message indicates that the GSS-TKEY exchange failed because the IO
 service was stopped.
 
 % TKEY_EXCHANGE_FAIL_IO_TIMEOUT GSS-TKEY exchange failed because of IO timeout.
-This error message indicated that GSS-TKEY exchange failed because of IO
+This error message indicates that the GSS-TKEY exchange failed because of IO
 timeout.
 
 % TKEY_EXCHANGE_FAIL_NOT_SIGNED GSS-TKEY exchange failed because the response is not signed.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is not signed.
 
 % TKEY_EXCHANGE_FAIL_NO_RDATA GSS-TKEY exchange failed because the response contains no rdata.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains no rdata.
 
 % TKEY_EXCHANGE_FAIL_NO_RESPONSE_ANSWER GSS-TKEY exchange failed because the response contains no answer.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains no answer.
 
 % TKEY_EXCHANGE_FAIL_NULL_RESPONSE GSS-TKEY exchange failed because the response is null.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 is null.
 
 % TKEY_EXCHANGE_FAIL_RESPONSE_ERROR GSS-TKEY exchange failed because the response contains an error: %1.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains an error. The argument details the response error.
 
 % TKEY_EXCHANGE_FAIL_TKEY_ERROR GSS-TKEY exchange failed because the response contains TKEY error: %1.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains TKEY error. The argument details the TKEY error.
 
 % TKEY_EXCHANGE_FAIL_TO_INIT GSS-TKEY exchange failed to initialize because of the error: %1.
-This error message indicated that GSS-TKEY exchange failed in the
+This error message indicates that the GSS-TKEY exchange failed in the
 initialization phase, for instance because the server principal does not
 exist. The argument details the error.
 
 % TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_COUNT GSS-TKEY exchange failed because the response contains invalid number of RRs: %1.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid number of RRs. The argument contains the wrong number of RRs.
 
 % TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_ANSWER_TYPE GSS-TKEY exchange failed because the response contains wrong answer type: %1.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains wrong answer type. The argument contains the wrong answer type.
 
 % TKEY_EXCHANGE_FAIL_WRONG_RESPONSE_OPCODE GSS-TKEY exchange failed because the response contains invalid opcode: %1.
-This error message indicated that GSS-TKEY exchange failed because the response
+This error message indicates that the GSS-TKEY exchange failed because the response
 contains invalid opcode. The argument contains the wrong opcode.
 
 % TKEY_EXCHANGE_NOT_A_RESPONSE GSS-TKEY exchange received a non response type.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a non response
+This debug message indicates that the GSS-TKEY exchange received a non response
 type.
 
 % TKEY_EXCHANGE_OUT_TOKEN_NOT_EMPTY GSS-TKEY exchange output token is not empty.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange output token is not empty.
+This debug message indicates that the GSS-TKEY exchange output token is not empty.
 
 % TKEY_EXCHANGE_RDATA_COUNT GSS-TKEY exchange received a response with rdata count: %1.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified rdata count.
 
 % TKEY_EXCHANGE_RECEIVE_MESSAGE GSS-TKEY exchange receives a message of size: %1.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange receives a message of
+This debug message indicates that the GSS-TKEY exchange receives a message of
 specified size.
 
 % TKEY_EXCHANGE_RESPONSE_TTL GSS-TKEY exchange received a response with TTL of: %1 seconds.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange received a response with
+This debug message indicates that the GSS-TKEY exchange received a response with
 specified TTL.
 
 % TKEY_EXCHANGE_SEND_MESSAGE GSS-TKEY exchange sends a message of size: %1.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange sends a message of specified
+This debug message indicates that the GSS-TKEY exchange sends a message of specified
 size.
 
 % TKEY_EXCHANGE_VALID GSS-TKEY exchange retrieved a TKEY valid for: %1 seconds.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange retrieved a TKEY valid for
+This debug message indicates that the GSS-TKEY exchange retrieved a TKEY valid for
 the specified time period expressed in seconds.
 
 % TKEY_EXCHANGE_VERIFIED GSS-TKEY exchange verified.
 Logged at debug log level 40.
-This debug message indicates that GSS-TKEY exchange is verified.
+This debug message indicates that the GSS-TKEY exchange is verified.

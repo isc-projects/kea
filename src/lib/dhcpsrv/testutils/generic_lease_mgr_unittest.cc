@@ -5165,9 +5165,9 @@ GenericLeaseMgrTest::testUpdateStatsOn4SameSubnet() {
 }
 
 // This test is sort of BS. How does an updated lease move to
-// a new subnet without changing lease address, other than
-// if the lease is being manually fixed after config change
-// altered subnets and pool.
+// a new subnet without changing the lease address, other than
+// by the lease being manually fixed after a config change
+// altered subnets and pool?
 void
 GenericLeaseMgrTest::testUpdateStatsOn4DifferentSubnet() {
     // Create two subnets.

@@ -37,7 +37,7 @@ The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % DATABASE_MYSQL_START_TRANSACTION starting new MySQL transaction
-A debug message issued when a new MySQL transaction is being started.
+This debug message is issued when a new MySQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is
@@ -84,7 +84,7 @@ modifications that were made after the savepoint was created will be rolled back
 and not committed to the database.
 
 % DATABASE_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
-A debug message issued when a new PostgreSQL transaction is being started.
+This debug message is issued when a new PostgreSQL transaction is being started.
 This message is typically not issued when inserting data into a
 single table because the server doesn't explicitly start
 transactions in this case. This message is issued when data is

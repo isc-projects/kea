@@ -43,7 +43,7 @@ const char* values[] = {
     "CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED", "failed to reuse HTTPS service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTPS_SERVICE_STARTED", "HTTPS service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTPS_SERVICE_UPDATED", "reused HTTPS service bound to address: %1 port: %2 and updated TLS settings",
-    "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED", "failed to reused HTTP service bound to address: %1 port: %2",
+    "CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED", "failed to reuse HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTP_SERVICE_STARTED", "HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_HTTP_SERVICE_UPDATED", "reused HTTP service bound to address: %1 port: %2",
     "CTRL_AGENT_IS_DEPRECATED", "Kea Control Agent is deprecated. Its function has been moved to Kea servers.",
