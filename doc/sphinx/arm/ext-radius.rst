@@ -175,6 +175,9 @@ flags:
    a default. The substitution happens for all packets that did not match a
    selector.
 
+-  ``protocol`` (default ``UDP``) - since Kea 3.1.6 specifies the transport
+   protocol. Accepted values are ``UDP`` and ``TLS``.
+
 -  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
    according to the value of the Framed-IP-Address or, respectively,
    the Framed-IPv6-Address attribute from the RADIUS access response. With this
@@ -227,6 +230,18 @@ At the service level, three sections can be configured:
       for access and 1813 for accounting.
 
    -  ``secret`` - authenticates messages.
+
+   -  ``trust-anchor`` - Since Kea 3.1.6 specifies the name of a file or
+      directory where the certification authority certificate can be found.
+      Required with the TLS protocol, ignored otherwise.
+
+   -  ``cert-file`` - Since Kea 3.1.6 specifies the name of a file
+      containing the end-entity certificate to use. Required with the TLS
+      protocol, ignored otherwise.
+
+   -  ``key-file`` - Since Kea 3.1.6 specifies the  private key of the
+      end-entity certificate to use. Required with the TLS protocol,
+      ignored otherwise.
 
    When no server is specified, the service is disabled.
 
@@ -281,6 +296,10 @@ At the service level, three sections can be configured:
   the interval between the last valid response from servers and the
   send of a ``Status-Server`` message. The value ``0`` means to disable
   this mechanism added in Kea version 3.1.5.
+
+- Since Kea 3.1.6 with the TLS protocol, the ``enabled`` boolean flag
+  (default ``true``) allows to enable or disable the ``access`` and
+  ``accounting`` services.
 
 For example, to specify a single access server available on localhost
 that uses ``"1234"`` as a secret, and tell Kea to send three additional
@@ -437,6 +456,93 @@ is mandatory for the access service. The Kea configuration is rejected if
     selected subnet for choosing an HA relationship to process a packet.
     The subnet reselection may interfere with this choice. See the
     :ref:`ha-hub-and-spoke` for details.
+
+.. _radius-tls:
+   
+RADIUS/TLS Configuration
+------------------------
+
+Kea 3.1.6 introduces the support of RADIUS/TLS with some changes in
+the configuration, mainly because a shared connection is used with TLS
+(vs. different UDP ports).
+
+-  the new ``protocol`` parameter must be set to ``TLS``.
+
+-  a new service entry named ``common-tls`` must be used to define
+   ``servers`` and ``idle-timer-interval`` parameters.
+
+-  these parameters are not longer allowed in ``access` and ``accounting``
+   service entries.
+
+-  as there is no ``servers`` entry, the ``access`` and ``accounting``
+   services can be disabled by setting the ``enabled`` flag to ``false``.
+
+-  server entries are required to set TLS ``trust-anchor``, ``cert-file``
+   and ``key-file`` parameters.
+
+-  default (and unique) server port is ``2083``.
+
+-  the ``secret`` entry is no longer required and defaults to ``radsec``.
+
+For example, the single access server configuration becomes wuth RADIUS/TLS:
+
+.. parsed-literal::
+
+    {
+      "parameters": {
+
+        // Other RADIUS parameters here
+
+        // Access parameters.
+        "access": {
+
+          // This defines a list of additional attributes Kea will send to each
+          // access server in Access-Request.
+          "attributes": [
+            {
+              // This attribute is identified by name (must be present in the
+              // dictionary) and has static value (i.e. the same value will be
+              // sent to every server for every packet).
+              "name": "User-Password",
+              "data": "mysecretpassword"
+            }
+          ] // End of attributes
+        }, // End of access
+
+        // Accounting parameters.
+        "accounting": {
+
+          // Disabling this service.
+          "enabled": false
+        }, // End of accounting
+
+        // Common TLS parameters.
+        "common-tls": {
+
+          // This starts the list of servers.
+          "servers": [
+            {
+              "name": "127.0.0.1",
+              "port": 2083,
+              "secret": "radsec",
+              "trust-anchor": "/usr/lib/kea/CA.pem",
+              "cert-file": "/usr/lib/kea/server_cert.pem",
+              "key-file": "/usr/lib/kea/server_key.pem"
+            }
+          ]
+        }
+      }
+    }
+
+.. note::
+
+   Currently only the first configured server is used. The ``retries`` and
+   ``deadtime`` parameters are silently ignored. From some limits in
+   the TCP client implementation, the local address can't be set (i.e.
+   setting the ``bindaddr`` parameter is ignored), and requests are
+   not pipelined i.e. a response is awaited before another request can be
+   sent over the same connection. When multi-threading is enabled multiple
+   connections (up to the number of threads) can be opened in parallel.
 
 .. _radius-server-example:
 
