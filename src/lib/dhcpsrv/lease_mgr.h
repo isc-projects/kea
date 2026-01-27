@@ -1098,7 +1098,7 @@ public:
     virtual isc::data::ConstElementPtr lfcStartHandler();
 
 
-    /// @brief Update in-memoery stats when adding a v4 lease.
+    /// @brief Update in-memory stats when adding a v4 lease.
     ///
     /// @param lease Added lease.
     static void updateStatsOnAdd(const Lease4Ptr& lease);

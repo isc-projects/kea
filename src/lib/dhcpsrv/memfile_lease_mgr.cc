@@ -3741,7 +3741,7 @@ Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
     auto tmpname = tmp.str();
     ::remove(tmpname.c_str());
 
-    // Dump in memory leasses to temp file.
+    // Dump in memory leases to temp file.
     try {
         CSVLeaseFile4 tmpfile(tmpname);
         tmpfile.open();
@@ -3797,7 +3797,7 @@ Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
     auto tmpname = tmp.str();
     ::remove(tmpname.c_str());
 
-    // Dump in memory leasses to temp file.
+    // Dump in memory leases to temp file.
     try {
         CSVLeaseFile6 tmpfile(tmpname);
         tmpfile.open();

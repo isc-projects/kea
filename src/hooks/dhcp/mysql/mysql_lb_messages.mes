@@ -266,7 +266,7 @@ TLS is not used.
 
 % MYSQL_LB_ROLLBACK rolling back MySQL database
 Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
+The code has issued a rollback call. All outstanding transactions will
 be rolled back and not committed to the database.
 
 % MYSQL_LB_TLS_CIPHER TLS cipher: %1

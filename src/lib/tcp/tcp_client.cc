@@ -433,7 +433,7 @@ private:
     /// @brief Holds pointer to an object where response is to be stored.
     WireDataPtr current_response_;
 
-    /// @brief Hould persistent flag.
+    /// @brief Holds persistent flag.
     bool current_persistent_;
 
     /// @brief Response complete flag.
@@ -871,7 +871,7 @@ private:
             : address_(address), port_(port), tls_context_(tls_context) {
         }
 
-        // Mmebers.
+        // Members.
         IOAddress address_;
         uint16_t port_;
         TlsContextPtr tls_context_;

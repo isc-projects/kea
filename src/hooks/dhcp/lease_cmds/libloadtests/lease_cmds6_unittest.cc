@@ -338,7 +338,7 @@ public:
     void testLease6GetByStateFind2();
 
     /// @brief Check that lease6-get-by-state works as expected (try all
-    /// combinaisons).
+    /// combinations).
     void testLease6GetByStateFindN();
 
     /// @brief Check that lease6-get-by-hostname can handle a situation when

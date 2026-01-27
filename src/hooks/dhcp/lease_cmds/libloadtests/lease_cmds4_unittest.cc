@@ -310,7 +310,7 @@ public:
     void testLease4GetByStateFind2();
 
     /// @brief Check that lease4-get-by-state works as expected (try all
-    /// combinaisons).
+    /// combinations).
     void testLease4GetByStateFindN();
 
     /// @brief Check that lease4-get-by-hostname can handle a situation when

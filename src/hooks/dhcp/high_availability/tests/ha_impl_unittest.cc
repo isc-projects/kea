@@ -1381,7 +1381,7 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsNoServerName) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 
-    // Drop statistics should have beeb increased.
+    // Drop statistics should have been increased.
     EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
@@ -1441,7 +1441,7 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsInvalidServerName) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
 
-    // Drop statistics should have beeb increased.
+    // Drop statistics should have been increased.
     EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
@@ -1646,7 +1646,7 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsNoServerName) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 
-    // Drop statistics should have beeb increased.
+    // Drop statistics should have been increased.
     EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
@@ -1705,7 +1705,7 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsInvalidServerName) {
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
 
-    // Drop statistics should have beeb increased.
+    // Drop statistics should have been increased.
     EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
