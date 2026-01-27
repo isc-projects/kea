@@ -616,6 +616,16 @@ set it up to enable basic functionality in Kea.
    - ``/etc/radius-config/mods-config/files/accounting``
    - ``/etc/freeradius/3.0/mods-config/files/accounting``
 
+8. When RADIUS/TLS is used it is a good idea to bind the TLS credentials
+   with the client identity. This can be done using:
+
+   ::
+
+      check_cert_cn = %{User-Name}
+
+   which matches the Common Name of the TLS client (i.e. Kea) certificate
+   with the RADIUS User-Name.
+
 .. _radius-lease-allocation:
 
 RADIUS Workflows for Lease Allocation

@@ -1,0 +1,3 @@
+[func]		fdupont
+	Implemented RADIUS/TLS in the RADIUS hook library.
+	(Gitlab #4274)
