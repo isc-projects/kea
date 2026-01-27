@@ -110,7 +110,7 @@ and the client's packet belongs to one or more classes. There may be several
 reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
-useful is to point out that the pool reserved to a given class has ran
+useful is to point out that the pool reserved to a given class has run
 out of addresses. When you see this message, you may consider checking your
 pool size and your classification definitions.
 
@@ -586,7 +586,7 @@ and the client's packet belongs to one or more classes. There may be several
 reasons why a lease was not assigned. One of them may be a case when all
 pools require packet to belong to certain classes and the incoming packet
 didn't belong to any of them. Another case where this information may be
-useful is to point out that the pool reserved to a given class has ran
+useful is to point out that the pool reserved to a given class has run
 out of addresses. When you see this message, you may consider checking your
 pool size and your classification definitions.
 
@@ -694,7 +694,7 @@ ALLOC_ENGINE_V6_ALLOC_LEASES_NO_HR
     no reservations found but leases exist for client %1
 
 Logged at debug log level 40.
-This message is logged when the allocation engine is in the process if
+This message is logged when the allocation engine is in the process of
 allocating leases for the client, there are no static reservations,
 but lease(s) exist for the client. The allocation engine will remove
 leases which are reserved for other clients, and return all
@@ -3063,7 +3063,7 @@ CTRL_AGENT_HTTPS_SERVICE_REUSE_FAILED
     failed to reuse HTTPS service bound to address: %1 port: %2
 
 This error message indicates that the server has failed reusing existing
-HTTPS service on the specified address and port. The server can not swith from
+HTTPS service on the specified address and port. The server can not switch from
 HTTPS to HTTP sockets using the same address and port.
 
 CTRL_AGENT_HTTPS_SERVICE_STARTED
@@ -3093,10 +3093,10 @@ CTRL_AGENT_HTTP_SERVICE_REUSE_FAILED
 
 .. code-block:: text
 
-    failed to reused HTTP service bound to address: %1 port: %2
+    failed to reuse HTTP service bound to address: %1 port: %2
 
 This error message indicates that the server has failed reusing existing
-HTTP service on the specified address and port. The server can not swith from
+HTTP service on the specified address and port. The server can not switch from
 HTTP to HTTPS sockets using the same address and port.
 
 CTRL_AGENT_HTTP_SERVICE_STARTED
@@ -3128,7 +3128,7 @@ CTRL_AGENT_IS_DEPRECATED
     Kea Control Agent is deprecated. Its function has been moved to Kea servers.
 
 This warning message indicates that the Control Agent has been deprecated.
-All its function has been moved to Kea servers.
+All its functions have been moved to Kea servers.
 
 CTRL_AGENT_RUN_EXIT
 ===================
@@ -3223,7 +3223,7 @@ DATABASE_MYSQL_ROLLBACK
 
     rolling back MySQL database
 
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 DATABASE_MYSQL_START_TRANSACTION
@@ -3307,7 +3307,7 @@ DATABASE_PGSQL_ROLLBACK
 
     rolling back PostgreSQL database
 
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 DATABASE_PGSQL_ROLLBACK_SAVEPOINT
@@ -4863,7 +4863,7 @@ DHCP4_HOOK_PACKET_SEND_DROP
 
 .. code-block:: text
 
-    %1: prepared DHCPv4 response was not sent because a callout set the next ste to DROP
+    %1: prepared DHCPv4 response was not sent because a callout set the next step to DROP
 
 Logged at debug log level 15.
 This debug message is printed when a callout installed on the pkt4_send
@@ -4879,7 +4879,7 @@ DHCP4_HOOK_PACKET_SEND_SKIP
 
 .. code-block:: text
 
-    %1: prepared response is not sent, because a callout set the next stp to SKIP
+    %1: prepared response is not sent, because a callout set the next step to SKIP
 
 Logged at debug log level 40.
 This debug message is printed when a callout installed on the pkt4_send
@@ -5460,7 +5460,7 @@ DHCP4_PACKET_OPTIONS_SKIPPED
 Logged at debug log level 50.
 A debug message issued when an option failed to unpack correctly, making it
 impossible to unpack the remaining options in the packet.  The server will
-server will still attempt to service the packet.
+still attempt to service the packet.
 
 DHCP4_PACKET_PACK
 =================
@@ -6173,7 +6173,7 @@ DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED
 
 .. code-block:: text
 
-    All packets will be send to source address of an incoming packet - use only for testing
+    All packets will be sent to source address of an incoming packet - use only for testing
 
 This message is printed then KEA_TEST_SEND_RESPONSES_TO_SOURCE
 environment variable is set. It's causing Kea to send packets to
@@ -7032,7 +7032,7 @@ This debug message is printed when a callout installed on buffer6_send
 hook point set the next step to SKIP value. For this particular hook point, the
 SKIP setting a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
-or released leases), but the response will not be send to the client.
+or released leases), but the response will not be sent to the client.
 The argument includes the client and transaction identification
 information.
 
@@ -7105,7 +7105,7 @@ This debug message is printed when a callout installed on lease6_release
 hook point set the next step to SKIP value. For this particular hook point, that
 setting by a callout instructs the server to not release
 a lease. If client requested release of multiples leases (by sending
-multiple IA options), the server will retains this particular lease and
+multiple IA options), the server will retain this particular lease and
 will proceed with other renewals as usual. The argument holds the
 client and transaction identification information.
 
@@ -7163,7 +7163,7 @@ DHCP6_HOOK_PACKET_SEND_DROP
 
 .. code-block:: text
 
-    %1: prepared DHCPv6 response was not sent because a callout set the next ste to DROP
+    %1: prepared DHCPv6 response was not sent because a callout set the next step to DROP
 
 Logged at debug log level 15.
 This debug message is printed when a callout installed on the pkt6_send
@@ -10455,7 +10455,7 @@ DHCPSRV_SUBNET4_SELECT_NO_USABLE_ADDRESS
     No subnet selected because no suitable address to use for subnet selection was found.
 
 Logged at debug log level 40.
-A debug message issued when the server was find a suitable address to use for
+A debug message issued when the server could not find a suitable address to use for
 subnet selection.
 
 DHCPSRV_SUBNET6_SELECT_BY_ADDRESS_NO_MATCH
@@ -11257,7 +11257,7 @@ DHCP_DDNS_QUEUE_MGR_QUEUE_FULL
 
     application request queue has reached maximum number of entries %1
 
-This an error message indicating that DHCP-DDNS is receiving DNS update
+This is an error message indicating that DHCP-DDNS is receiving DNS update
 requests faster than they can be processed.  This may mean the maximum queue
 needs to be increased, the DHCP-DDNS clients are simply generating too many
 requests too quickly, or perhaps upstream DNS servers are experiencing
@@ -11598,7 +11598,7 @@ DHCP_DDNS_REV_REQUEST_IGNORED
 Logged at debug log level 55.
 This is a debug message issued when reverse DNS updates are disabled and
 DHCP_DDNS receives an update request containing a reverse DNS update.  The
-reverse update will not performed.
+reverse update will not be performed.
 
 DHCP_DDNS_RUN_EXIT
 ==================
@@ -11609,7 +11609,7 @@ DHCP_DDNS_RUN_EXIT
 
 Logged at debug log level 0.
 This is a debug message issued when the DHCP-DDNS server exits its
-event lo
+event loop
 
 DHCP_DDNS_SECURITY_CHECKS_DISABLED
 ==================================
@@ -11829,7 +11829,7 @@ EVAL_DEBUG_AND
 
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  Then are then combined via logical and and
+the value stack.  They are then combined via logical and and
 the result is pushed onto the value stack.
 
 EVAL_DEBUG_BRANCH
@@ -12038,7 +12038,7 @@ EVAL_DEBUG_OR
 
 Logged at debug log level 55.
 This debug message indicates that two values are popped from
-the value stack.  Then are then combined via logical or and
+the value stack.  They are then combined via logical or and
 the result is pushed onto the value stack. The string is displayed
 in text.
 
@@ -12995,7 +12995,7 @@ GSS_TSIG_NEW_KEY_SETUP_SUCCEED
 
 .. code-block:: text
 
-    new GSS-TSIG key '%1' setup succeed.
+    new GSS-TSIG key '%1' setup succeeded.
 
 Logged at debug log level 40.
 This debug message is issued when the setup of a new GSS-TSIG key
@@ -13027,7 +13027,7 @@ GSS_TSIG_VERIFIED
 
 .. code-block:: text
 
-    GSS-TSIG verify successed.
+    GSS-TSIG verify succeeded.
 
 Logged at debug log level 40.
 A debug message issued when GSS-TSIG verification succeeded.
@@ -13205,7 +13205,7 @@ such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument specifies the relationship name. The second argument contains client
 identification information. The third argument specifies the number of
-clients to which the server has failed to respond. The forth argument specifies
+clients to which the server has failed to respond. The fourth argument specifies
 the number of additional clients which, if not provisioned, will cause the
 server to transition to the partner-down state.
 
@@ -13237,7 +13237,7 @@ such clients and if the number of such clients exceeds the max-unacked-clients
 threshold, the server will transition to the partner-down state. The first
 argument specifies the relationship name. The second argument contains client
 identification information. The third argument specifies the number of clients
-to which the server has failed to respond. The forth argument specifies the
+to which the server has failed to respond. The fourth argument specifies the
 number of additional clients which, if not provisioned, will cause the server
 to transition to the partner-down state.
 
@@ -14361,7 +14361,7 @@ HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME
 
 This error message is issued when the received DHCPv4 query is dropped
 by this server because the specified ha-server-name value in the subnet's
-user-context has non-string type or is empty. It is a server's misconifguration.
+user-context has non-string type or is empty. It is a server's misconfiguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
 
@@ -14444,7 +14444,7 @@ HA_SUBNET6_SELECT_INVALID_HA_SERVER_NAME
 
 This error message is issued when the received DHCPv6 query is dropped
 by this server because the specified ha-server-name value in the subnet's
-user-context has non-string type or is empty. It is a server's misconifguration.
+user-context has non-string type or is empty. It is a server's misconfiguration.
 The first argument is the client identification information. The second argument
 is a subnet prefix.
 
@@ -14825,7 +14825,7 @@ HOOKS_LIBRARY_LOADING
 
 Logged at debug log level 40.
 This is a debug message output just before the specified library is loaded.
-If the action is successfully, it will be followed by the
+If the action is successful, it will be followed by the
 HOOKS_LIBRARY_LOADED informational message.
 
 HOOKS_LIBRARY_MULTI_THREADING_COMPATIBLE
@@ -17769,7 +17769,7 @@ LEGAL_LOG_MYSQL_ROLLBACK
 
     rolling back MySQL database
 
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 LEGAL_LOG_MYSQL_START_TRANSACTION
@@ -17860,7 +17860,7 @@ LEGAL_LOG_PGSQL_DEALLOC_ERROR
     An error occurred deallocating SQL statements while closing the PostgreSQL log database: %1
 
 This is an error message issued when a legal log hook library experienced
-and error freeing database SQL resources as part of closing its connection to
+an error freeing database SQL resources as part of closing its connection to
 the PostgreSQL database.  The connection is closed as part of normal server
 shutdown.  This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
@@ -17916,7 +17916,7 @@ LEGAL_LOG_PGSQL_ROLLBACK
 
     rolling back PostgreSQL database
 
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 LEGAL_LOG_PGSQL_START_TRANSACTION
@@ -18456,7 +18456,7 @@ LOG_NO_MESSAGE_ID
 
     line %1: message definition line found without a message ID
 
-Within a message file, message are defined by lines starting with a "%".
+Within a message file, messages are defined by lines starting with a "%".
 The rest of the line should comprise the message ID and text describing
 the message.  This error indicates the message compiler found a line in
 the message file comprising just the "%" and nothing else.
@@ -18468,7 +18468,7 @@ LOG_NO_MESSAGE_TEXT
 
     line %1: line found containing a message ID ('%2') and no text
 
-Within a message file, message are defined by lines starting with a "%".
+Within a message file, messages are defined by lines starting with a "%".
 The rest of the line should comprise the message ID and text describing
 the message.  This error indicates the message compiler found a line
 in the message file comprising just the "%" and message identification,
@@ -21167,7 +21167,7 @@ MYSQL_LB_ROLLBACK
     rolling back MySQL database
 
 Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
+The code has issued a rollback call. All outstanding transactions will
 be rolled back and not committed to the database.
 
 MYSQL_LB_TLS_CIPHER
@@ -24340,7 +24340,7 @@ PGSQL_LB_ROLLBACK
     rolling back PostgreSQL database
 
 Logged at debug log level 50.
-The code has issued a rollback call. All outstanding transaction will
+The code has issued a rollback call. All outstanding transactions will
 be rolled back and not committed to the database.
 
 PGSQL_LB_UPDATE_ADDR4
@@ -25796,7 +25796,7 @@ RADIUS_RESUME_FAILED
 
 .. code-block:: text
 
-    Resuming ithe RADIUS thread pool failed: %1
+    Resuming the RADIUS thread pool failed: %1
 
 This error message is emitted when an unexpected error occurred while attempting
 to resume the thread pool. This error is highly unlikely and indicates a
@@ -27379,7 +27379,7 @@ TKEY_EXCHANGE_FAIL_RESPONSE_ERROR
     GSS-TKEY exchange failed because the response contains an error: %1.
 
 This error message indicated that GSS-TKEY exchange failed because the response
-contains an error. The argument details the reponse error.
+contains an error. The argument details the response error.
 
 TKEY_EXCHANGE_FAIL_TKEY_ERROR
 =============================
