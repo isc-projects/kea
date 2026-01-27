@@ -10636,7 +10636,7 @@ DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD
 This error message indicates that a different thread than the main thread has
 registered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
-The file descritptor and the respective thread ids are included in the message.
+The file descriptor and the respective thread ids are included in the message.
 
 DHCP_DDNS_ADD_FAILED
 ====================
@@ -11774,7 +11774,7 @@ DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD
 This error message indicates that a different thread than the main thread has
 unregistered an external socket. This is a programming error and should be fixed.
 Only the main thread is allowed to perform operations on the external sockets.
-The file descritptor and the respective thread ids are included in the message.
+The file descriptor and the respective thread ids are included in the message.
 
 DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND
 =====================================
