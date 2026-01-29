@@ -182,7 +182,7 @@ public:
     ///
     /// @return true if the process ended, false otherwise
     bool waitForProcess(const Memfile_LeaseMgr& lease_mgr,
-                        const uint8_t timeout) {
+                        const uint8_t timeout = 5) {
         const uint32_t iterations_max = timeout * 1000;
         IntervalTimer fast_path_timer(io_service_);
         IntervalTimer timer(io_service_);
@@ -476,6 +476,74 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 }
 
+TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
+    DatabaseConnection::ParameterMap pmap;
+    pmap["universe"] = "6";
+    pmap["persist"] = "false";
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
+
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    auto recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "stop-retry-exit";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "serve-retry-exit";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_EXIT);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["on-fail"] = "serve-retry-continue";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_CONTINUE);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["max-reconnect-tries"] = "5";
+    EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
+                     "'max-reconnect-tries' values greater than zero"
+                     " are not supported by memfile");
+
+    pmap["max-reconnect-tries"] = "0";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+
+    pmap["reconnect-wait-time"] = "5";
+    EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
+                     "'reconnect-wait-time' values greater than zero"
+                     " are not supported by memfile");
+
+    pmap["reconnect-wait-time"] = "0";
+    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    recon = lease_mgr->reconnectCtl();
+    ASSERT_TRUE(recon);
+    EXPECT_EQ(recon->maxRetries(), 0);
+    EXPECT_EQ(recon->retryInterval(), 0);
+}
+
 /// @brief Verifies that the supported path is the enforced.
 TEST_F(MemfileLeaseMgrTest, defaultDataDir) {
     ASSERT_TRUE(data_dir_env_var_.getValue().empty());
@@ -652,7 +720,7 @@ TEST_F(MemfileLeaseMgrTest, lfcEnv) {
     ASSERT_NO_THROW(lease_mgr->lfcCallback());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -721,7 +789,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup4) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -803,7 +871,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCleanup6) {
     EXPECT_EQ(new_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -916,7 +984,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileFinish) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -982,7 +1050,7 @@ TEST_F(MemfileLeaseMgrTest, leaseFileCopy) {
     EXPECT_EQ(current_file_contents, current_file.readFile());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 5));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -1220,6 +1288,19 @@ TEST_F(MemfileLeaseMgrTest, getLeases4PagedMultiThread) {
     testGetLeases4Paged();
 }
 
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4State) {
+    startBackend(V4);
+    testGetLeases4State();
+}
+
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases4StateMultiThread) {
+    startBackend(V4);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases4State();
+}
+
 /// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MemfileLeaseMgrTest, getLeases6SubnetId) {
     startBackend(V6);
@@ -1246,6 +1327,19 @@ TEST_F(MemfileLeaseMgrTest, getLeases6SubnetIdPagedMultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
     testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6State) {
+    startBackend(V6);
+    testGetLeases6State();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MemfileLeaseMgrTest, getLeases6StateMultiThread) {
+    startBackend(V6);
+    MultiThreadingMgr::instance().setMode(true);
+    testGetLeases6State();
 }
 
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
@@ -2074,7 +2168,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade4) {
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
         << "Executing the LFC process failed: make sure that"
@@ -2159,7 +2253,7 @@ TEST_F(MemfileLeaseMgrTest, leaseUpgrade6) {
 
     // Wait for the LFC process to complete and
     // make sure it has returned an exit status of 0.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 2));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     ASSERT_EQ(0, lease_mgr->getLFCExitStatus())
         << "Executing the LFC process failed: make sure that"
@@ -3058,35 +3152,39 @@ public:
 /// @brief Check if writeLease fails on bad file name (v4).
 TEST_F(MemfileLeaseMgrTest, badWriteLease4) {
     startBackend(V4);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v4+MT).
 TEST_F(MemfileLeaseMgrTest, badWriteLease4MultiThread) {
     startBackend(V4);
     MultiThreadingMgr::instance().setMode(true);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases4("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v6).
 TEST_F(MemfileLeaseMgrTest, badWriteLease6) {
     startBackend(V6);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check if writeLease fails on bad file name (v6+MT).
 TEST_F(MemfileLeaseMgrTest, badWriteLease6MultiThread) {
     startBackend(V6);
     MultiThreadingMgr::instance().setMode(true);
-    string expected = "unable to open '/this/does/not/exist'";
+    std::ostringstream oss;
+    oss << "unable to open '/this/does/not/exist.tmp" << getpid() << "'";
     EXPECT_THROW_MSG(lmptr_->writeLeases6("/this/does/not/exist"),
-                     CSVFileError, expected);
+                     CSVFileError, oss.str());
 }
 
 /// @brief Check writeLease basic scenario (v4).
@@ -3339,7 +3437,7 @@ TEST_F(MemfileLeaseMgrTest, overWriteLease4) {
     EXPECT_GT(content.size(), content1.size());
 
     // Backup should have the previous database image.
-    ASSERT_TRUE(backup.exists());
+    ASSERT_TRUE(backup.exists()) << "looking for: " << b.str();
     EXPECT_EQ(content, backup.readFile());
 }
 
@@ -4566,6 +4664,36 @@ TEST_F(MemfileLeaseMgrTest, bigStats) {
     testBigStats();
 }
 
+TEST_F(MemfileLeaseMgrTest, updateStatsOn4SameSubnet) {
+    startBackend(V4);
+    testUpdateStatsOn4SameSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn4DifferentSubnet) {
+    startBackend(V4);
+    testUpdateStatsOn4DifferentSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6SameSubnet) {
+    startBackend(V6);
+    testUpdateStatsOn6SameSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6SameSubnetPD) {
+    startBackend(V6);
+    testUpdateStatsOn6SameSubnetPD();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6DifferentSubnet) {
+    startBackend(V6);
+    testUpdateStatsOn6DifferentSubnet();
+}
+
+TEST_F(MemfileLeaseMgrTest, updateStatsOn6DifferentSubnetPD) {
+    startBackend(V6);
+    testUpdateStatsOn6DifferentSubnetPD();
+}
+
 /// @brief Test fixture which allows log content to be tested.
 class MemfileLeaseMgrLogTest : public LogContentTest,
                                public BaseMemfileLeaseMgrTest {
@@ -4695,7 +4823,7 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
     EXPECT_EQ(expected, response->str());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -4736,7 +4864,7 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     EXPECT_EQ(expected, response->str());
 
     // Wait for the LFC process to complete.
-    ASSERT_TRUE(waitForProcess(*lease_mgr, 1));
+    ASSERT_TRUE(waitForProcess(*lease_mgr));
 
     // And make sure it has returned an exit status of 0.
     EXPECT_EQ(0, lease_mgr->getLFCExitStatus())
@@ -4848,6 +4976,10 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
 /// @brief Verifies that lfcStartHandler reschedules and but does not start
 /// LFC if the pid file is not writable.
 TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
+    // Skip this test when run by root.
+    if (getuid() == 0 || geteuid() == 0) {
+        return;
+    }
     DatabaseConnection::ParameterMap pmap;
     pmap["universe"] = "6";
     pmap["persist"] = "true";

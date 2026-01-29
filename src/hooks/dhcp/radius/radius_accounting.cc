@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/subnet.h>
 #include <radius_accounting.h>
 #include <radius_log.h>
+#include <radius_status.h>
 #include <radius_utils.h>
 #include <util/multi_threading_mgr.h>
 #include <stdio.h>
@@ -986,6 +987,31 @@ RadiusAccounting::storeToFile() {
             .arg(container_.size());
     }
     record_count_ = 0;
+}
+
+void
+RadiusAccounting::setIdleTimer() {
+    MultiThreadingLock lock(idle_timer_mutex_);
+    cancelIdleTimer();
+    if (idle_timer_interval_ <= 0) {
+        return;
+    }
+    // Cope to one day.
+    long secs = idle_timer_interval_;
+    if (secs > 24*60*60) {
+        secs = 24*60*60;
+    }
+    idle_timer_.reset(new IntervalTimer(RadiusImpl::instance().getIOContext()));
+    idle_timer_->setup(RadiusAccounting::IdleTimerCallback,
+                       secs * 1000, IntervalTimer::REPEATING);
+}
+
+void
+RadiusAccounting::IdleTimerCallback() {
+    AttributesPtr send_attrs;
+    RadiusAcctStatusPtr handler(new RadiusAcctStatus(send_attrs, 0));
+    RadiusImpl::instance().registerExchange(handler->getExchange());
+    handler->start();
 }
 
 } // end of namespace isc::radius

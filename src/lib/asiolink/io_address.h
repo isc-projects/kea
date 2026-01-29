@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,15 @@
 // See the description of the namespace below.
 #include <unistd.h>             // for some network system calls
 #include <stdint.h>             // for uint32_t
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
+#endif
 #include <boost/asio/ip/address.hpp>
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #include <functional>
 #include <string>

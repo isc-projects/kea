@@ -3,6 +3,33 @@
 RADIUS
 ======
 
+.. _radius-security-warning:
+
+Security Warning
+----------------
+
+RADIUS/UDP (and RADIUS/TCP) security is based on direct use of MD5
+with the shared secret and the access user password. These security
+mechanisms were known to be weak but things changed with the publication
+of the `Blast-RADIUS vulnerability <https://www.blastradius.fail>`__
+(`CVE-2024-3596 <https://www.cve.org/CVERecord?id=CVE-2024-3596>`__).
+
+To summarize, when the infrastructure between the RADIUS client
+(here the Kea DHCP server) and the RADIUS server is not protected,
+a man-in-the-middle attacker can forge a valid accept message in
+response to a failed access / authentication request.
+
+Some RADIUS servers including the popular FreeRADIUS server already
+refuse by default to serve requests which are considered insecure because they
+are not protected using the Message-Authenticator attribute (based
+on HMAC-MD5 so not vulnerable and supported by Kea 3.1.5) so even when
+the infrastructure is protected, the RADIUS deployment is impacted by
+Blast-RADIUS.
+
+The planned (for Kea release 3.1.6) solution is to support
+RADIUS/TLS which provides a built-in cryptographic protection
+of communication between RADIUS clients and servers.
+
 .. _radius-overview:
 
 RADIUS Overview
@@ -148,8 +175,6 @@ flags:
    a default. The substitution happens for all packets that did not match a
    selector.
 
--  ``realm`` (default ``""``) - is the default realm.
-
 -  ``reselect-subnet-address`` (default ``false``) - enables subnet reselection
    according to the value of the Framed-IP-Address or, respectively,
    the Framed-IPv6-Address attribute from the RADIUS access response. With this
@@ -251,6 +276,11 @@ At the service level, three sections can be configured:
 - The ``max-pending-requests`` positive integer (default ``0``) limits the
   number of pending RADIUS requests. It is supported only by the access service.
   The value ``0`` means no limit; ``64`` is a recommended setting.
+
+- The ``idle-timer-interval`` positive integer (default ``0``) specifies
+  the interval between the last valid response from servers and the
+  send of a ``Status-Server`` message. The value ``0`` means to disable
+  this mechanism added in Kea version 3.1.5.
 
 For example, to specify a single access server available on localhost
 that uses ``"1234"`` as a secret, and tell Kea to send three additional
@@ -529,7 +559,7 @@ RADIUS dictionary. There are differences:
 
     * - Support for Attribute Data Types
 
-      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, binary, byte, ether, short, signed, octets
+      - string, ipaddr, ipv4prefix, integer, integer64, date, ifid, ipv6addr, ipv6prefix, tlv, abinary, byte, ether, short, signed, octets
 
       - string (can simulate any other unsupported data type too), ipaddr, integer, date (interpreted as integer), ipv6addr, ipv6prefix
 

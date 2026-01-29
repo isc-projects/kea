@@ -161,8 +161,6 @@ public:
     }
 
 private:
-    /// @brief Variable used for its static property to call atexit() once.
-    static int atexit_;
 
     /// @brief Initialization context
     MYSQL* mysql_;
@@ -834,6 +832,19 @@ public:
     /// @brief Holds location to kea-admin. By default, it points to kea-admin
     /// from installation. In tests, it points to kea-admin from sources.
     static std::string KEA_ADMIN_;
+};
+
+/// @brief Structure used to initialize and clean up after MySQL library.
+struct MySqlLibraryInit {
+    /// @brief Constructor.
+    MySqlLibraryInit() {
+        mysql_library_init(0, 0, 0);
+    }
+
+    /// @brief Destructor.
+    ~MySqlLibraryInit() {
+        mysql_library_end();
+    }
 };
 
 } // end of isc::db namespace

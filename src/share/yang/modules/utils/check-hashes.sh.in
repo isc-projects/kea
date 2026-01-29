@@ -18,8 +18,7 @@
 set -eu
 
 # Change directory to the YANG modules' directory.
-script_path=$(cd "$(dirname "${0}")" && pwd)
-cd "${script_path}/@top_srcdir@/src/share/yang/modules"
+cd '@abs_top_srcdir@/src/share/yang/modules'
 
 amend=false
 if test "${1-}" = '-a' || test "${1-}" = '--amend'; then

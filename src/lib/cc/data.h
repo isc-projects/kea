@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,8 @@
 
 #include <exceptions/exceptions.h>
 
-namespace isc { namespace data {
+namespace isc {
+namespace data {
 
 class Element;
 // todo: describe the rationale behind ElementPtr?
@@ -70,8 +71,20 @@ public:
 /// the type in question.
 ///
 class Element {
-
 public:
+    /// @brief Maximum nesting level of Element objects.
+    ///
+    /// Many methods and functions perform a recursive walk on an element
+    /// containing lists or/and maps. This recursion is limited to using
+    /// an allowed level of nesting argument which is decremented at
+    /// each recursive call until it reaches 0. This was extended to
+    /// recursive parsing of a JSON text as stack overflows were reported
+    /// with excessive recursion on specially crafted input.
+    /// This constant is the default allowed level of nesting, its value
+    /// is arbitrary (but enough for all realistic cases) and used before
+    /// limiting recursion in *all* recursive methods/functions.
+    static constexpr unsigned MAX_NESTING_LEVEL = 100U;
+
     /// @brief Represents the position of the data element within a
     /// configuration string.
     ///
@@ -121,7 +134,7 @@ public:
     ///
     /// The object containing two zeros is a default for most of the
     /// methods creating @c Element objects. The returned value is static
-    /// so as it is not created everytime the function with the default
+    /// so as it is not created every time the function with the default
     /// position argument is called.
     static const Position& ZERO_POSITION() {
         static Position position("", 0, 0);
@@ -136,7 +149,7 @@ public:
     ///
     /// any is a special type used in list specifications, specifying that the
     /// elements can be of any type.
-    enum types : int {
+    enum types : uint16_t {
         integer = 0,
         real = 1,
         boolean = 2,
@@ -171,37 +184,53 @@ protected:
 
 
 public:
-    // base class; make dtor virtual
+    // Base class; make destructor virtual.
     virtual ~Element() {}
 
-    /// @return the type of this element
-    types getType() const { return (type_); }
+    /// @return the type of this element.
+    types getType() const {
+        return (type_);
+    }
 
     /// @brief Returns position where the data element's value starts in a
     /// configuration string.
     ///
     /// @warning The returned reference is valid as long as the object which
     /// created it lives.
-    const Position& getPosition() const { return (position_); }
+    /// @return The position.
+    const Position& getPosition() const {
+        return (position_);
+    }
 
-    /// Returns a string representing the Element and all its
-    /// child elements; note that this is different from stringValue(),
+    /// @brief Returns a string representing the Element and all its
+    /// child elements
+    ///
+    /// @note: that this is different from stringValue(),
     /// which only returns the single value of a StringElement
     ///
     /// The resulting string will contain the Element in JSON format.
+    /// Based on @ref toJSON.
     ///
-    /// @return std::string containing the string representation
+    /// @return std::string containing the string representation.
     std::string str() const;
 
-    /// Returns the wireformat for the Element and all its child
+    /// @brief Returns the wireformat for the Element and all its child
     /// elements.
+    ///
+    /// Based on @ref toJSON.
     ///
     /// @return std::string containing the element in wire format
     std::string toWire() const;
+
+    /// @brief Appends the wireformat for the Element to the stream.
+    ///
+    /// @param out The output stream where to append the wireformat.
     void toWire(std::ostream& out) const;
 
     /// @brief Add the position to a TypeError message
     /// should be used in place of isc_throw(TypeError, error)
+    ///
+    /// @param error The error message.
 #define throwTypeError(error)                   \
     {                                           \
         std::string msg_ = error;               \
@@ -213,15 +242,26 @@ public:
         isc_throw(TypeError, msg_);             \
     }
 
-    /// @name pure virtuals, every derived class must implement these
+    /// @name pure virtuals, every derived class must implement these.
 
+    /// @brief Test equality.
+    ///
+    /// @param other The other element to compare with.
+    /// @param level The maximum level of recursion.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
-    virtual bool equals(const Element& other) const = 0;
+    /// @throw BadValue when nesting depth is more than level.
+    virtual bool equals(const Element& other,
+                        unsigned level = MAX_NESTING_LEVEL) const = 0;
 
-    /// Converts the Element to JSON format and appends it to
-    /// the given stringstream.
-    virtual void toJSON(std::ostream& ss) const = 0;
+    /// @brief Converts the Element to JSON format and appends it to
+    /// the given output stream.
+    ///
+    /// @param ss The output stream where to append the JSON format.
+    /// @param level The maximum level of recursion.
+    /// @throw BadValue when nesting depth is more than level.
+    virtual void toJSON(std::ostream& ss,
+                        unsigned level = MAX_NESTING_LEVEL) const = 0;
 
     /// @name Type-specific getters
     ///
@@ -231,21 +271,38 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual int64_t intValue() const
-    { throwTypeError("intValue() called on non-integer Element"); }
+    /// @brief Return the integer value.
+    virtual int64_t intValue() const {
+        throwTypeError("intValue() called on non-integer Element");
+    }
+
+    /// @brief Return the big integer value.
     virtual isc::util::int128_t bigIntValue() const {
         throwTypeError("bigIntValue() called on non-big-integer Element");
     }
-    virtual double doubleValue() const
-    { throwTypeError("doubleValue() called on non-double Element"); }
-    virtual bool boolValue() const
-    { throwTypeError("boolValue() called on non-Bool Element"); }
-    virtual std::string stringValue() const
-    { throwTypeError("stringValue() called on non-string Element"); }
+
+    /// @brief Return the double value.
+    virtual double doubleValue() const {
+        throwTypeError("doubleValue() called on non-double Element");
+    }
+
+    /// @brief Return the boolean value.
+    virtual bool boolValue() const {
+        throwTypeError("boolValue() called on non-Bool Element");
+    }
+
+    /// @brief Return the string value.
+    virtual std::string stringValue() const {
+        throwTypeError("stringValue() called on non-string Element");
+    }
+
+    /// @brief Return the list value.
     virtual const std::vector<ElementPtr>& listValue() const {
         // replace with real exception or empty vector?
         throwTypeError("listValue() called on non-list Element");
     }
+
+    /// @brief Return the map value.
     virtual const std::map<std::string, ConstElementPtr>& mapValue() const {
         // replace with real exception or empty map?
         throwTypeError("mapValue() called on non-map Element");
@@ -261,11 +318,40 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
+    /// @brief Get the integer value.
+    ///
+    /// @param t The reference to the integer.
+    /// @return false.
     virtual bool getValue(int64_t& t) const;
+
+    /// @brief Get the double value.
+    ///
+    /// @param t The reference to the double.
+    /// @return false.
     virtual bool getValue(double& t) const;
+
+    /// @brief Get the boolean value.
+    ///
+    /// @param t The reference to the boolean.
+    /// @return false.
     virtual bool getValue(bool& t) const;
+
+    /// @brief Get the string value.
+    ///
+    /// @param t The reference to the string.
+    /// @return false.
     virtual bool getValue(std::string& t) const;
+
+    /// @brief Get the list value.
+    ///
+    /// @param t The reference to the list.
+    /// @return false.
     virtual bool getValue(std::vector<ElementPtr>& t) const;
+
+    /// @brief Get the map value.
+    ///
+    /// @param t The reference to the map.
+    /// @return false.
     virtual bool getValue(std::map<std::string, ConstElementPtr>& t) const;
     //@}
 
@@ -279,20 +365,70 @@ public:
     /// Notes: Read notes of IntElement definition about the use of
     ///        long long int, long int and int.
     //@{
+    /// @brief Set the integer value.
+    ///
+    /// @param v The new integer value.
+    /// @return False.
     virtual bool setValue(const long long int v);
+
+    /// @brief Set the big integer value.
+    ///
+    /// @param v The new big integer value.
+    /// @return False.
     virtual bool setValue(const isc::util::int128_t& v);
-    bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); }
-    bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); }
+
+    /// @brief Set the double value.
+    ///
+    /// @param v The new double value.
+    /// @return False.
     virtual bool setValue(const double v);
+
+    /// @brief Set the boolean value.
+    ///
+    /// @param t The new boolean value.
+    /// @return False.
     virtual bool setValue(const bool t);
+
+    /// @brief Set the string value.
+    ///
+    /// @param v The new string value.
+    /// @return False.
     virtual bool setValue(const std::string& v);
+
+    /// @brief Set the list value.
+    ///
+    /// @param v The new list value.
+    /// @return False.
     virtual bool setValue(const std::vector<ElementPtr>& v);
+
+    /// @brief Set the map value.
+    ///
+    /// @param v The new map value.
+    /// @return False.
     virtual bool setValue(const std::map<std::string, ConstElementPtr>& v);
+
+    /// @brief Set the integer value (long int overload).
+    ///
+    /// @param i The new integer value.
+    /// @return True (and set the value) when the Element type is integer,
+    /// false otherwise.
+    bool setValue(const long int i) {
+        return (setValue(static_cast<long long int>(i)));
+    }
+
+    /// @brief Set the integer value (int overload).
+    ///
+    /// @param i The new integer value.
+    /// @return True (and set the value) when the Element type is integer,
+    /// false otherwise.
+    bool setValue(const int i) {
+        return (setValue(static_cast<long long int>(i)));
+    }
     //@}
 
-    // Other functions for specific subtypes
+    // Other functions for specific subtypes.
 
-    /// @name ListElement functions
+    /// @name ListElement functions.
     ///
     /// @brief If the Element on which these functions are called are not
     /// an instance of ListElement, a TypeError exception is thrown.
@@ -300,33 +436,34 @@ public:
     /// Returns the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// @param i The position of the ElementPtr to return
+    /// @return specified element pointer.
     virtual ConstElementPtr get(const int i) const;
 
-    /// @brief returns element as non-const pointer
+    /// @brief returns element as non-const pointer.
     ///
-    /// @param i The position of the ElementPtr to retrieve
-    /// @return specified element pointer
+    /// @param i The position of the ElementPtr to retrieve.
+    /// @return specified element pointer.
     virtual ElementPtr getNonConst(const int i) const;
 
-    /// Sets the ElementPtr at the given index. If the index is out
+    /// @brief Sets the ElementPtr at the given index. If the index is out
     /// of bounds, this function throws an std::out_of_range exception.
     /// @param i The position of the ElementPtr to set
     /// @param element The ElementPtr to set at the position
     virtual void set(const size_t i, ElementPtr element);
 
-    /// Adds an ElementPtr to the list
+    /// @brief Adds an ElementPtr to the list
     /// @param element The ElementPtr to add
     virtual void add(ElementPtr element);
 
-    /// Removes the element at the given position. If the index is out
+    /// @brief Removes the element at the given position. If the index is out
     /// of nothing happens.
     /// @param i The index of the element to remove.
     virtual void remove(const int i);
 
-    /// Returns the number of elements in the list.
+    /// @brief Returns the number of elements in the list.
     virtual size_t size() const;
 
-    /// Return true if there are no elements in the list.
+    /// @brief Return true if there are no elements in the list.
     virtual bool empty() const;
     //@}
 
@@ -336,26 +473,26 @@ public:
     /// @brief If the Element on which these functions are called are not
     /// an instance of MapElement, a TypeError exception is thrown.
     //@{
-    /// Returns the ElementPtr at the given key
+    /// @brief Returns the ElementPtr at the given key
     /// @param name The key of the Element to return
     /// @return The ElementPtr at the given key, or null if not present
     virtual ConstElementPtr get(const std::string& name) const;
 
-    /// Sets the ElementPtr at the given key
+    /// @brief Sets the ElementPtr at the given key
     /// @param name The key of the Element to set
     /// @param element The ElementPtr to set at the given key.
     virtual void set(const std::string& name, ConstElementPtr element);
 
-    /// Remove the ElementPtr at the given key
+    /// @brief Remove the ElementPtr at the given key
     /// @param name The key of the Element to remove
     virtual void remove(const std::string& name);
 
-    /// Checks if there is data at the given key
+    /// @brief Checks if there is data at the given key
     /// @param name The key of the Element checked for existence
     /// @return true if there is data at the key, false if not.
     virtual bool contains(const std::string& name) const;
 
-    /// Recursively finds any data at the given identifier. The
+    /// @brief Recursively finds any data at the given identifier. The
     /// identifier is a /-separated list of names of nested maps, with
     /// the last name being the leaf that is returned.
     ///
@@ -370,7 +507,7 @@ public:
     /// Element::is_null(ElementPtr e).
     virtual ConstElementPtr find(const std::string& identifier) const;
 
-    /// See @c Element::find()
+    /// @brief See @c Element::find()
     /// @param identifier The identifier of the element to find
     /// @param t Reference to store the resulting ElementPtr, if found.
     /// @return true if the element was found, false if not.
@@ -396,25 +533,84 @@ public:
     /// Notes: Read notes of IntElement definition about the use of
     ///        long long int, long int and int.
     //@{
+    /// @brief Create a NullElement.
+    ///
+    /// @param pos The position.
+    /// @return The NullElement at the position.
     static ElementPtr create(const Position& pos = ZERO_POSITION());
+
+    /// @brief Create an IntElement.
+    ///
+    /// @param i The integer.
+    /// @param pos The position.
+    /// @return The IntElement with the argument at the position.
     static ElementPtr create(const long long int i,
                              const Position& pos = ZERO_POSITION());
-    static ElementPtr create(const isc::util::int128_t& i,
-                             const Position& pos = ZERO_POSITION());
+
+    /// @brief Create an IntElement (int overload).
+    ///
+    /// @param i The integer.
+    /// @param pos The position.
+    /// @return The IntElement with the argument at the position.
     static ElementPtr create(const int i,
                              const Position& pos = ZERO_POSITION());
+
+    /// @brief Create an IntElement (long int overload).
+    ///
+    /// @param i The integer.
+    /// @param pos The position.
+    /// @return The IntElement with the argument at the position.
     static ElementPtr create(const long int i,
                              const Position& pos = ZERO_POSITION());
+
+    /// @brief Create an IntElement (int32_t overload).
+    ///
+    /// @param i The integer.
+    /// @param pos The position.
+    /// @return The IntElement with the argument at the position.
     static ElementPtr create(const uint32_t i,
                              const Position& pos = ZERO_POSITION());
+
+    /// @brief Create a BigIntElement.
+    ///
+    /// @param i The big integer.
+    /// @param pos The position.
+    /// @return The BigIntElement with the argument at the position.
+    static ElementPtr create(const isc::util::int128_t& i,
+                             const Position& pos = ZERO_POSITION());
+
+    /// @brief Create a DoubleElement.
+    ///
+    /// @param d The double.
+    /// @param pos The position.
+    /// @return The DoubleElement with the argument at the position.
     static ElementPtr create(const double d,
                              const Position& pos = ZERO_POSITION());
+
+    /// @brief Create a BoolElement.
+    ///
+    /// @param b The boolean.
+    /// @param pos The position.
+    /// @return The BoolElement with the argument at the position.
     static ElementPtr create(const bool b,
                              const Position& pos = ZERO_POSITION());
+
+    /// @brief Create a StringElement.
+    ///
+    /// @param s The string.
+    /// @param pos The position.
+    /// @return The StringElement with the argument at the position.
     static ElementPtr create(const std::string& s,
                              const Position& pos = ZERO_POSITION());
+
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
+
+    /// @brief Create a StringElement (char* overload).
+    ///
+    /// @param s The string.
+    /// @param pos The position.
+    /// @return The StringElement with the argument at the position.
     static ElementPtr create(const char *s,
                              const Position& pos = ZERO_POSITION());
 
@@ -438,7 +634,7 @@ public:
     /// error, an exception of the type isc::data::JSONError is thrown.
 
     //@{
-    /// Creates an Element from the given JSON string
+    /// @brief Creates an Element from the given JSON string
     /// @param in The string to parse the element from
     /// @param preproc specified whether preprocessing (e.g. comment removal)
     ///                should be performed
@@ -446,7 +642,7 @@ public:
     /// in the given string.
     static ElementPtr fromJSON(const std::string& in, bool preproc = false);
 
-    /// Creates an Element from the given input stream containing JSON
+    /// @brief Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
     /// @param in The string to parse the element from
@@ -457,7 +653,7 @@ public:
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in, bool preproc = false);
 
-    /// Creates an Element from the given input stream containing JSON
+    /// @brief Creates an Element from the given input stream containing JSON
     /// formatted data.
     ///
     /// @param in The string to parse the element from
@@ -471,7 +667,7 @@ public:
     static ElementPtr fromJSON(std::istream& in, const std::string& file_name,
                                bool preproc = false);
 
-    /// Creates an Element from the given input stream, where we keep
+    /// @brief Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
     ///
     /// @param in The string to parse the element from.
@@ -480,13 +676,14 @@ public:
     /// track of the current line.
     /// @param pos A reference to the int where the function keeps
     /// track of the current position within the current line.
-    /// @throw JSONError
+    /// @param level The maximum level of recursion.
     /// @return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
     /// @throw JSONError
     static ElementPtr fromJSON(std::istream& in, const std::string& file,
-                               int& line, int &pos);
+                               int& line, int &pos,
+                               unsigned level = MAX_NESTING_LEVEL);
 
     /// Reads contents of specified file and interprets it as JSON.
     ///
@@ -499,23 +696,23 @@ public:
                                    bool preproc = false);
     //@}
 
-    /// @name Type name conversion functions
+    /// @name Type name conversion functions.
 
-    /// Returns the name of the given type as a string
+    /// @brief Returns the name of the given type as a string
     ///
-    /// @param type The type to return the name of
+    /// @param type The type to return the name of.
     /// @return The name of the type, or "unknown" if the type
     ///         is not known.
     static std::string typeToName(Element::types type);
 
-    /// Converts the string to the corresponding type
+    /// @brief Converts the string to the corresponding type
     /// Throws a TypeError if the name is unknown.
     ///
-    /// @param type_name The name to get the type of
+    /// @param type_name The name to get the type of.
     /// @return the corresponding type value
     static Element::types nameToType(const std::string& type_name);
 
-    /// @brief input text preprocessor
+    /// @brief input text preprocessor.
     ///
     /// This method performs preprocessing of the input stream (which is
     /// expected to contain a text version of to be parsed JSON). For now the
@@ -527,79 +724,43 @@ public:
     /// the input stream, filters the content and returns the result in a
     /// different stream.
     ///
-    /// @param in input stream to be preprocessed
-    /// @param out output stream (filtered content will be written here)
+    /// @param in input stream to be preprocessed.
+    /// @param out output stream (filtered content will be written here).
     static void preprocess(std::istream& in, std::stringstream& out);
 
     /// @name Wire format factory functions
 
-    /// These function pparse the wireformat at the given stringstream
+    /// These function parse the wireformat at the given stringstream
     /// (of the given length). If there is a parse error an exception
     /// of the type isc::cc::DecodeError is raised.
 
     //@{
-    /// Creates an Element from the wire format in the given
+    /// @brief Creates an Element from the wire format in the given
     /// stringstream of the given length.
-    /// Since the wire format is JSON, this is the same as
+    ///
+    /// @note: Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
     /// @param in The input stringstream.
-    /// @param length The length of the wireformat data in the stream
+    /// @param length The length of the wireformat data in the stream.
     /// @return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(std::stringstream& in, int length);
 
-    /// Creates an Element from the wire format in the given string
-    /// Since the wire format is JSON, this is the same as
+    /// @brief Creates an Element from the wire format in the given string.
+    ///
+    /// @note: Since the wire format is JSON, this is the same as
     /// fromJSON, and could be removed.
     ///
-    /// @param s The input string
+    /// @param s The input string.
     /// @return ElementPtr with the data that is parsed.
     static ElementPtr fromWire(const std::string& s);
     //@}
 
     /// @brief Remove all empty maps and lists from this Element and its
     /// descendants.
-    void removeEmptyContainersRecursively() {
-        if (type_ == list || type_ == map) {
-            size_t s(size());
-            for (size_t i = 0; i < s; ++i) {
-                // Get child.
-                ElementPtr child;
-                if (type_ == list) {
-                    child = getNonConst(i);
-                } else if (type_ == map) {
-                    std::string const key(get(i)->stringValue());
-                    // The ElementPtr - ConstElementPtr disparity between
-                    // ListElement and MapElement is forcing a const cast here.
-                    // It's undefined behavior to modify it after const casting.
-                    // The options are limited. I've tried templating, moving
-                    // this function from a member function to free-standing and
-                    // taking the Element template as argument. I've tried
-                    // making it a virtual function with overridden
-                    // implementations in ListElement and MapElement. Nothing
-                    // works.
-                    child = boost::const_pointer_cast<Element>(get(key));
-                }
-
-                // Makes no sense to continue for non-container children.
-                if (child->getType() != list && child->getType() != map) {
-                    continue;
-                }
-
-                // Recurse if not empty.
-                if (!child->empty()){
-                    child->removeEmptyContainersRecursively();
-                }
-
-                // When returning from recursion, remove if empty.
-                if (child->empty()) {
-                    remove(i);
-                    --i;
-                    --s;
-                }
-            }
-        }
-    }
+    ///
+    /// @param level nesting level.
+    void removeEmptyContainersRecursively(unsigned level = MAX_NESTING_LEVEL);
 };
 
 /// Notes: IntElement type is changed to int64_t.
@@ -622,8 +783,10 @@ public:
     bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
     bool setValue(long long int v) { i = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 /// @brief Wrapper over int128_t
@@ -655,13 +818,20 @@ public:
 
     /// @brief Converts the Element to JSON format and appends it to the given
     /// stringstream.
-    void toJSON(std::ostream& ss) const override;
+    ///
+    /// @param ss The output stream where to append the JSON format.
+    /// @param level The maximum level of recursion. Ignored.
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     /// @brief Checks whether the other Element is equal.
     ///
+    /// @param other The other element to compare with.
+    /// @param level The maximum level of recursion. Ignored.
     /// @return true if the other ElementPtr has the same value and the same
     /// type (or a different and compatible type), false otherwise.
-    bool equals(const Element& other) const override;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
 private:
     /// @brief the underlying stored value
@@ -679,8 +849,10 @@ public:
     bool getValue(double& t) const { t = d; return (true); }
     using Element::setValue;
     bool setValue(const double v) { d = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class BoolElement : public Element {
@@ -694,16 +866,20 @@ public:
     bool getValue(bool& t) const { t = b; return (true); }
     using Element::setValue;
     bool setValue(const bool v) { b = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class NullElement : public Element {
 public:
     NullElement(const Position& pos = ZERO_POSITION())
         : Element(null, pos) {}
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class StringElement : public Element {
@@ -717,8 +893,10 @@ public:
     bool getValue(std::string& t) const { t = s; return (true); }
     using Element::setValue;
     bool setValue(const std::string& v) { s = v; return (true); }
-    void toJSON(std::ostream& ss) const;
-    bool equals(const Element& other) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 };
 
 class ListElement : public Element {
@@ -748,10 +926,12 @@ public:
     void add(ElementPtr e) { l.push_back(e); }
     using Element::remove;
     void remove(int i) { l.erase(l.begin() + i); }
-    void toJSON(std::ostream& ss) const;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const;
     size_t size() const { return (l.size()); }
     bool empty() const { return (l.empty()); }
-    bool equals(const Element& other) const;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const;
 
     /// @brief Sorts the elements inside the list.
     ///
@@ -820,7 +1000,8 @@ public:
     bool contains(const std::string& s) const override {
         return (m.find(s) != m.end());
     }
-    void toJSON(std::ostream& ss) const override;
+    void toJSON(std::ostream& ss,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     // we should name the two finds better...
     // find the element at id; raises TypeError if one of the
@@ -842,46 +1023,60 @@ public:
         return (m.size());
     }
 
-    bool equals(const Element& other) const override;
+    bool equals(const Element& other,
+                unsigned level = MAX_NESTING_LEVEL) const override;
 
     bool empty() const override { return (m.empty()); }
 };
 
-/// Checks whether the given ElementPtr is a NULL pointer
+/// Checks whether the given ElementPtr is a null pointer
 /// @param p The ElementPtr to check
-/// @return true if it is NULL, false if not.
+/// @return true if it is null, false if not.
 bool isNull(ConstElementPtr p);
 
 ///
 /// @brief Remove all values from the first ElementPtr that are
 /// equal in the second. Both ElementPtrs MUST be MapElements
+///
 /// The use for this function is to end up with a MapElement that
 /// only contains new and changed values (for ModuleCCSession and
 /// configuration update handlers)
-/// Raises a TypeError if a or b are not MapElements
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @throw TypeError if a or b are not MapElements
 void removeIdentical(ElementPtr a, ConstElementPtr b);
 
 /// @brief Create a new ElementPtr from the first ElementPtr, removing all
 /// values that are equal in the second. Both ElementPtrs MUST be MapElements.
-/// The returned ElementPtr will be a MapElement that only contains new and
-/// changed values (for ModuleCCSession and configuration update handlers).
-/// Raises a TypeError if a or b are not MapElements
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @throw TypeError if a or b are not MapElements
+/// @return ElementPtr will be a MapElement that only contains new and changed
+/// values (for ModuleCCSession and configuration update handlers).
 ConstElementPtr removeIdentical(ConstElementPtr a, ConstElementPtr b);
 
-/// @brief Merges the data from other into element. (on the first level). Both
-/// elements must be MapElements. Every string, value pair in other is copied
-/// into element (the ElementPtr of value is copied, this is not a new object)
-/// Unless the value is a NullElement, in which case the key is removed from
-/// element, rather than setting the value to the given NullElement.
+/// @brief Merges the data from other into element. (on the first level).
+
+/// Both elements must be MapElements. Every string, value pair in
+/// other is copied into element (the ElementPtr of value is copied,
+/// this is not a new object) Unless the value is a NullElement, in
+/// which case the key is removed from element, rather than setting
+/// the value to the given NullElement.
 /// This way, we can remove values from for instance maps with configuration
 /// data (which would then result in reverting back to the default).
-/// Raises a TypeError if either ElementPtr is not a MapElement
+///
+/// @param element Pointer to the Element holding data.
+/// @param other Pointer to the other / from Element.
+/// @throw TypeError if either ElementPtr is not a MapElement
 void merge(ElementPtr element, ConstElementPtr other);
 
 /// @brief Function used to check if two MapElements refer to the same
-/// configuration data. It can check if the two MapElements have the same or
-/// have equivalent value for some members.
-/// e.g.
+/// configuration data.
+///
+/// It can check if the two MapElements have the same or have
+/// equivalent value for some members.  e.g.
 /// (
 ///  left->get("prefix")->stringValue() == right->get("prefix")->stringValue() &&
 ///  left->get("prefix-len")->intValue() == right->get("prefix-len")->intValue() &&
@@ -925,7 +1120,7 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 
 /// @brief Merges the diff data by adding the missing elements from 'other'
 /// to 'element' (recursively). Both elements must be the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
+///
 /// @note
 /// for non map and list elements the values are updated with the new values
 /// for maps:
@@ -941,13 +1136,15 @@ typedef std::vector<FunctionMap> HierarchyDescriptor;
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
-                  size_t idx = 0);
+                  size_t idx = 0, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Merges the diff data by removing the data present in 'other' from
 /// 'element' (recursively). Both elements must be the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
+////
 /// for non map and list elements the values are set to NullElement
 /// for maps:
 ///     - non map and list elements are removed from the map
@@ -962,14 +1159,15 @@ void mergeDiffAdd(ElementPtr& element, ElementPtr& other,
 /// identification keys.
 /// @param key The container holding the current element.
 /// @param idx The level inside the hierarchy the current element is located.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void mergeDiffDel(ElementPtr& element, ElementPtr& other,
                   HierarchyDescriptor& hierarchy, std::string key,
-                  size_t idx = 0);
+                  size_t idx = 0, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Extends data by adding the specified 'extension' elements from
 /// 'other' inside the 'container' element (recursively). Both elements must be
 /// the same Element type.
-/// Raises a TypeError if elements are not the same Element type.
 ///
 /// @param container The container holding the data that must be extended.
 /// @param extension The name of the element that contains the data that must be
@@ -982,29 +1180,52 @@ void mergeDiffDel(ElementPtr& element, ElementPtr& other,
 /// @param idx The level inside the hierarchy the current element is located.
 /// @param alter The flag which indicates if the current element should be
 /// updated.
+/// @param level The maximum level of recursion.
+/// @throw TypeError if elements are not the same Element type.
 void extend(const std::string& container, const std::string& extension,
             ElementPtr& element, ElementPtr& other,
             HierarchyDescriptor& hierarchy, std::string key, size_t idx = 0,
-            bool alter = false);
+            bool alter = false, unsigned level = Element::MAX_NESTING_LEVEL);
 
 /// @brief Copy the data up to a nesting level.
 ///
 /// The copy is a deep copy so nothing is shared if it is not
 /// under the given nesting level.
 ///
-/// @param from the pointer to the element to copy
-/// @param level nesting level (default is 100, 0 means shallow copy,
-/// negative means outbound and perhaps looping forever).
-/// @return a pointer to a fresh copy
+/// @note: copy is the ONLY method taking a level argument which make
+/// sense outside unit tests, and also which accepts the 0 value.
+///
+/// @param from the pointer to the element to copy.
+/// @param level nesting level (default is 100, 0 means shallow copy).
+/// @return Pointer to a fresh copy
 /// @throw raises a BadValue is a null pointer occurs.
-ElementPtr copy(ConstElementPtr from, int level = 100);
+ElementPtr copy(ConstElementPtr from, unsigned level = Element::MAX_NESTING_LEVEL);
 
-/// @brief Compares the data with other using unordered lists
+/// @brief Compares the data with other using unordered lists.
 ///
 /// This comparison function handles lists (JSON arrays) as
 /// unordered multi sets (multi means an item can occurs more
 /// than once as soon as it occurs the same number of times).
+///
+/// @param a Pointer to the first element.
+/// @param b Pointer to the second element.
+/// @return Result of loose comparison.
 bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
+
+/// @brief Check if the data is circular.
+///
+/// @param element The @c ConstElementPtr object to check.
+/// @return True if the argument is circular, false otherwise.
+bool IsCircular(ConstElementPtr element);
+
+/// @brief Compute the nesting depth.
+///
+/// @param element The @c ConstElementPtr object.
+/// @param max_depth Maximal nesting depth.
+/// @return The nesting depth or max_depth if the object has deeper nesting
+/// including being circular.
+unsigned getNestDepth(ConstElementPtr element,
+                      unsigned max_depth = Element::MAX_NESTING_LEVEL);
 
 /// @brief Pretty prints the data into stream.
 ///
@@ -1013,23 +1234,23 @@ bool isEquivalent(ConstElementPtr a, ConstElementPtr b);
 /// indentation @c indent and add at each level @c step spaces.
 /// For maps if there is a comment property it is printed first.
 ///
-/// @param element A @c ConstElementPtr to pretty print
-/// @param out A @c std::ostream on which the print operation is performed
-/// @param indent An initial number of spaces to add each new line
-/// @param step A number of spaces to add to indentation at a new level
+/// @param element A @c ConstElementPtr to pretty print.
+/// @param out A @c std::ostream on which the print operation is performed.
+/// @param indent An initial number of spaces to add each new line.
+/// @param step A number of spaces to add to indentation at a new level.
 void prettyPrint(ConstElementPtr element, std::ostream& out,
                  unsigned indent = 0, unsigned step = 2);
 
-/// @brief Pretty prints the data into string
+/// @brief Pretty prints the data into string.
 ///
 /// This operator converts the @c ConstElementPtr into a string with
 /// an initial indentation @c indent and add at each level @c step spaces.
 /// For maps if there is a comment property it is printed first.
 ///
-/// @param element A @c ConstElementPtr to pretty print
-/// @param indent An initial number of spaces to add each new line
-/// @param step A number of spaces to add to indentation at a new level
-/// @return a string where element was pretty printed
+/// @param element A @c ConstElementPtr to pretty print.
+/// @param indent An initial number of spaces to add each new line.
+/// @param step A number of spaces to add to indentation at a new level.
+/// @return a string where element was pretty printed.
 std::string prettyPrint(ConstElementPtr element,
                         unsigned indent = 0, unsigned step = 2);
 
@@ -1061,8 +1282,31 @@ std::ostream& operator<<(std::ostream& out, const Element::Position& pos);
 /// parameter @c out after the insertion operation.
 std::ostream& operator<<(std::ostream& out, const Element& e);
 
+/// @brief Test equality.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the two elements are equal, false otherwise.
 bool operator==(const Element& a, const Element& b);
+
+/// @brief Test inequality.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the two elements are not equal, false otherwise.
 bool operator!=(const Element& a, const Element& b);
+
+/// @brief Test less than.
+///
+/// @note: both arguments must have the same supported type i.e. integer,
+/// double, boolean or string.
+///
+/// @param a First element.
+/// @param b Second Element.
+/// @return True when the value of the first element is less than the value
+/// of the second element.
+/// @throw BadValue when arguments have different type or the type is not
+/// supported.
 bool operator<(const Element& a, const Element& b);
 
 }  // namespace data

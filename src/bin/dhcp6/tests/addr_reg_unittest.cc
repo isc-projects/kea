@@ -398,7 +398,7 @@ TEST_F(AddrRegTest, unexpectedIA_NA) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_NA option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -432,7 +432,7 @@ TEST_F(AddrRegTest, unexpectedIA_TA) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_TA option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -465,7 +465,7 @@ TEST_F(AddrRegTest, unexpectedIA_PD) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "unexpected IA_PD option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -497,7 +497,7 @@ TEST_F(AddrRegTest, noIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 0 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -531,7 +531,7 @@ TEST_F(AddrRegTest, twoIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Exactly 1 IAADDR option expected, but 2 received";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -569,7 +569,7 @@ TEST_F(AddrRegTest, badIAADDR) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "can't convert the IAADDR option";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -602,7 +602,7 @@ TEST_F(AddrRegTest, noAddrMatch) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::abcd: ";
+    expected += "error on ADDR-REG-INFORM from client fe80::abcd, ";
     expected += "Address mismatch: client at fe80::abcd ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
@@ -642,8 +642,8 @@ TEST_F(AddrRegTest, noAddrMatchRelay) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::ef01: ";
-    expected += "Address mismatch: client at fe80::ef01 ";
+    expected += "error on ADDR-REG-INFORM from client fe80::1, ";
+    expected += "Address mismatch: client at fe80::1 ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -665,7 +665,7 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     // Add a relay: it will be the outer one.
     Pkt6::RelayInfo relay;
     relay.linkaddr_ = IOAddress("fe80::ef01");
-    relay.peeraddr_ = IOAddress("fe80::1");
+    relay.peeraddr_ = IOAddress("fe80::2345");
     addr_reg_inf->relay_info_.push_back(relay);
 
     // Add a second relay: it will be the inner one.
@@ -688,8 +688,8 @@ TEST_F(AddrRegTest, noAddrMatch2Relays) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client fe80::2345: ";
-    expected += "Address mismatch: client at fe80::2345 ";
+    expected += "error on ADDR-REG-INFORM from client fe80::1, ";
+    expected += "Address mismatch: client at fe80::1 ";
     expected += "wants to register 2001:db8:1::1";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -722,7 +722,7 @@ TEST_F(AddrRegTest, noInSubnet) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8::1, ";
     expected += "Address 2001:db8::1 is not in subnet ";
     expected += "2001:db8:1::/64 (id 1)";
     EXPECT_EQ(1, countFile(expected));
@@ -756,7 +756,7 @@ TEST_F(AddrRegTest, reserved) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::10, ";
     expected += "Address 2001:db8:1::10 is reserved";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -797,7 +797,7 @@ AddrRegTest::testAddressInUse(const uint32_t state) {
     EXPECT_FALSE(srv_->processAddrRegInform(ctx));
 
     string expected = "DHCP6_ADDR_REG_INFORM_FAIL ";
-    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1: ";
+    expected += "error on ADDR-REG-INFORM from client 2001:db8:1::1, ";
     expected +=  "Address 2001:db8:1::1 already in use Type:";
     EXPECT_EQ(1, countFile(expected));
 }
@@ -916,8 +916,8 @@ TEST_F(AddrRegTest, relayed) {
 
     // Add a second relay: it will be the inner one.
     Pkt6::RelayInfo relay2;
-    relay2.linkaddr_ = addr;
-    relay2.peeraddr_ = IOAddress("fe80::1");
+    relay2.linkaddr_ = IOAddress("fe80::1");
+    relay2.peeraddr_ = addr;
     addr_reg_inf->relay_info_.push_back(relay2);
 
     // Pass it to the server.
@@ -1859,6 +1859,106 @@ TEST_F(AddrRegTest, clientRenew) {
     expected = "HOOKS_CALLOUTS_BEGIN ";
     expected += "begin all callouts for hook leases6_committed";
     EXPECT_EQ(1, countFile(expected));
+}
+
+// Test the global allow-address-registration = false;
+TEST_F(AddrRegTest, allowAddressRegistrationFalse) {
+    IfaceMgrTestConfig test_config(true);
+
+    /// @brief Basic configuration.
+    string config = "{\n"
+        "\"interfaces-config\": { \"interfaces\": [ \"*\" ] },\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000,\n"
+        "\"subnet6\": [ {\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"interface\": \"eth0\"\n"
+        "} ],\n"
+        "\"reservations\": [ {\n"
+        "    \"duid\": \"01:02:03:04:05:0A:0B:0C:0D:0E\",\n"
+        "    \"ip-addresses\": [ \"2001:db8:1::10\" ]\n"
+        "} ],\n"
+        "\"option-data\": [ {\n"
+        "    \"name\": \"dns-servers\",\n"
+        "    \"data\": \"2001:db8:1::45, 2001:db8:1::100\"\n"
+        "} ],\n"
+        "\"dhcp-ddns\": { \"enable-updates\": true },\n"
+        "\"ddns-qualifying-suffix\": \"example.com\",\n"
+        "\"ddns-update-on-renew\": false\n,"
+        "\"allow-address-registration\" : false\n"
+        "}\n";
+
+    ASSERT_NO_THROW(configure(config));
+
+    IOAddress addr("2001:db8:1::1");
+    addr_reg_inf_ = Pkt6Ptr(new Pkt6(DHCPV6_ADDR_REG_INFORM, 1234));
+    addr_reg_inf_->setRemoteAddr(addr);
+    addr_reg_inf_->setIface("eth0");
+    addr_reg_inf_->setIndex(ETH0_INDEX);
+    OptionPtr clientid = generateClientId();
+    addr_reg_inf_->addOption(clientid);
+    addr_reg_inf_->addOption(generateIAAddr(addr, 3000, 4000));
+
+    // Pass it to the server.
+    AllocEngine::ClientContext6 ctx;
+    bool drop = !srv_->earlyGHRLookup(addr_reg_inf_, ctx);
+    ASSERT_FALSE(drop);
+    ctx.subnet_ = srv_->selectSubnet(addr_reg_inf_, drop);
+    ASSERT_FALSE(drop);
+    srv_->initContext(ctx, drop);
+    ASSERT_FALSE(drop);
+    ASSERT_TRUE(ctx.subnet_);
+
+    // Verify no response.
+    ASSERT_FALSE(srv_->processAddrRegInform(ctx));
+
+    // Admin-filtered and drop stat should have been bumped by one and the log emitted.
+    ObservationPtr stat;
+    stat = StatsMgr::instance().getObservation("pkt6-admin-filtered");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+    stat = StatsMgr::instance().getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(stat);
+    EXPECT_EQ(1, stat->getInteger().first);
+
+    EXPECT_EQ(1, countFile("DHCP6_ADDR6_REGISTER_DISABLED_DROP ADDR-REG-INFORM"));
+}
+
+// Test the global allow-address-registration = true;
+TEST_F(AddrRegTest, allowAddressRegistrationTrue) {
+    IfaceMgrTestConfig test_config(true);
+
+    /// @brief Basic configuration.
+    string config = "{\n"
+        "\"interfaces-config\": { \"interfaces\": [ \"*\" ] },\n"
+        "\"valid-lifetime\": 4000,\n"
+        "\"preferred-lifetime\": 3000,\n"
+        "\"rebind-timer\": 2000,\n"
+        "\"renew-timer\": 1000,\n"
+        "\"subnet6\": [ {\n"
+        "    \"id\": 1,\n"
+        "    \"subnet\": \"2001:db8:1::/64\",\n"
+        "    \"interface\": \"eth0\"\n"
+        "} ],\n"
+        "\"reservations\": [ {\n"
+        "    \"duid\": \"01:02:03:04:05:0A:0B:0C:0D:0E\",\n"
+        "    \"ip-addresses\": [ \"2001:db8:1::10\" ]\n"
+        "} ],\n"
+        "\"option-data\": [ {\n"
+        "    \"name\": \"dns-servers\",\n"
+        "    \"data\": \"2001:db8:1::45, 2001:db8:1::100\"\n"
+        "} ],\n"
+        "\"dhcp-ddns\": { \"enable-updates\": true },\n"
+        "\"ddns-qualifying-suffix\": \"example.com\",\n"
+        "\"ddns-update-on-renew\": false\n,"
+        "\"allow-address-registration\" : true\n"
+        "}\n";
+
+    ASSERT_NO_THROW(configure(config));
+    testBasic();
 }
 
 } // end of anonymous namespace

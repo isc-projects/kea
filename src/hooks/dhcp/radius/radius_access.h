@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -327,6 +327,14 @@ public:
 
     /// @brief Pending RADIUS access requests - IPv6.
     RadiusAuthPendingRequests<dhcp::Pkt6Ptr> requests6_;
+
+    /// @brief Set idle timer.
+    ///
+    /// @note: The caller must hold the idle timer mutex.
+    void setIdleTimer();
+
+    /// @brief Idle timer callback.
+    static void IdleTimerCallback();
 
 };
 

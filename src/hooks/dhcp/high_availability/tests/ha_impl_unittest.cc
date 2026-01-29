@@ -339,7 +339,8 @@ TEST_F(HAImplTest, buffer4Receive) {
     // Domain name should not be skipped because the vendor option was truncated.
     EXPECT_TRUE(query4->getOption(DHO_DOMAIN_NAME));
 
-    // Drop statistics should not change.
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-parse-failed"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -399,6 +400,7 @@ TEST_F(HAImplTest, subnet4Select) {
     EXPECT_TRUE(query4->inClass("HA_server3"));
 
     // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-use"));
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
@@ -461,6 +463,7 @@ TEST_F(HAImplTest, subnet4SelectSharedNetwork) {
     EXPECT_TRUE(query4->inClass("HA_server3"));
 
     // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
@@ -504,6 +507,7 @@ TEST_F(HAImplTest, subnet4SelectSingleRelationship) {
     EXPECT_TRUE(query4->getClasses().empty());
 
     // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
@@ -551,6 +555,7 @@ TEST_F(HAImplTest, subnet4SelectDropNoServerName) {
     EXPECT_TRUE(query4->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -602,6 +607,8 @@ TEST_F(HAImplTest, subnet4SelectDropInvalidServerNameType) {
     EXPECT_TRUE(query4->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt4-processing-failed"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -655,9 +662,9 @@ TEST_F(HAImplTest, subnet4SelectDropNotInScope) {
     ASSERT_EQ(1, query4->getClasses().size());
     EXPECT_TRUE(query4->inClass("HA_server3"));
 
-    // Drop statistics should not increase when the server doesn't serve the
-    // particular scope.
-    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests that the subnet4_select drops a packet when no subnet has been selected.
@@ -702,6 +709,7 @@ TEST_F(HAImplTest, subnet4SelectNoSubnet) {
     EXPECT_TRUE(query4->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -795,6 +803,10 @@ TEST_F(HAImplTest, buffer6Receive) {
     EXPECT_EQ(DHCPV6_SOLICIT, static_cast<int>(query6->getType()));
     // Domain name should be skipped because the vendor option was truncated.
     EXPECT_FALSE(query6->getOption(D6O_NIS_DOMAIN_NAME));
+
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-parse-failed"));
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests subnet6_select callout implementation when the server name
@@ -851,6 +863,10 @@ TEST_F(HAImplTest, subnet6Select) {
     // to which the query belongs.
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-use"));
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests subnet6_select callout implementation when the server name
@@ -912,6 +928,7 @@ TEST_F(HAImplTest, subnet6SelectSharedNetwork) {
     EXPECT_TRUE(query6->inClass("HA_server3"));
 
     // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
@@ -955,6 +972,7 @@ TEST_F(HAImplTest, subnet6SelectSingleRelationship) {
     EXPECT_TRUE(query6->getClasses().empty());
 
     // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
@@ -1002,6 +1020,7 @@ TEST_F(HAImplTest, subnet6SelectDropNoServerName) {
     EXPECT_TRUE(query6->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
@@ -1053,6 +1072,8 @@ TEST_F(HAImplTest, subnet6SelectDropInvalidServerNameType) {
     EXPECT_TRUE(query6->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt6-processing-failed"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
@@ -1106,9 +1127,9 @@ TEST_F(HAImplTest, subnet6SelectDropNotInScope) {
     ASSERT_EQ(1, query6->getClasses().size());
     EXPECT_TRUE(query6->inClass("HA_server3"));
 
-    // Drop statistics should not increase when the server doesn't serve the
-    // particular scope.
-    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
+    // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests that the subnet6_select drops a packet when no subnet has been selected.
@@ -1153,6 +1174,7 @@ TEST_F(HAImplTest, subnet6SelectNoSubnet) {
     EXPECT_TRUE(query6->getClasses().empty());
 
     // Drop statistics should have been increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
@@ -1241,6 +1263,10 @@ TEST_F(HAImplTest, leases4Committed) {
     // be set to "park".
     EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests leases4_committed callout implementation for multiple relationships.
@@ -1297,6 +1323,10 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationships) {
     // there was no error during the callout.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests leases4_committed callout implementation for multiple relationships when
@@ -1350,6 +1380,10 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsNoServerName) {
     // The relationship was not found so the packet should be dropped.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+
+    // Drop statistics should have beeb increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests leases4_committed callout implementation for multiple relationships when
@@ -1406,6 +1440,10 @@ TEST_F(HAImplTest, leases4CommittedMultipleRelationshipsInvalidServerName) {
     // The relationship was not found so the packet should be dropped.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query4));
+
+    // Drop statistics should have beeb increased.
+    EXPECT_EQ(1, getStatistic("pkt4-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
 // Tests leases6_committed callout implementation.
@@ -1492,6 +1530,10 @@ TEST_F(HAImplTest, leases6Committed) {
     // be set to "park".
     EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests leases6_committed callout implementation for multiple relationships.
@@ -1547,6 +1589,10 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationships) {
     // there was no error during the callout.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_PARK, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+
+    // Drop statistics should not increase.
+    EXPECT_EQ(0, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests leases6_committed callout implementation for multiple relationships when
@@ -1599,6 +1645,10 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsNoServerName) {
     // The relationship was not found so the packet should be dropped.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+
+    // Drop statistics should have beeb increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests leases6_committed callout implementation for multiple relationships when
@@ -1654,6 +1704,10 @@ TEST_F(HAImplTest, leases6CommittedMultipleRelationshipsInvalidServerName) {
     // The relationship was not found so the packet should be dropped.
     EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, callout_handle->getStatus());
     EXPECT_TRUE(callout_handle->getParkingLotHandlePtr()->drop(query6));
+
+    // Drop statistics should have beeb increased.
+    EXPECT_EQ(1, getStatistic("pkt6-not-for-us"));
+    EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 
 // Tests lease4_expire callout implementation when the server is a hub

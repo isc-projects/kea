@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,6 +28,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <log/logger_support.h>
 #include <stats/stats_mgr.h>
+
+#include <cstdlib>
 #include <sstream>
 
 using namespace std;

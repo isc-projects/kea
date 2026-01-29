@@ -137,7 +137,14 @@ FreeLeaseQueueAllocator::pickPrefixInternal(const ClientClasses& client_classes,
 
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
-                                          const ClientClasses& client_classes) const {
+                                          const ClientClasses& client_classes) {
+    MultiThreadingLock lock(mutex_);
+    return (getOccupancyRateInternal(addr, client_classes));
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRateInternal(const IOAddress& addr,
+                                                  const ClientClasses& client_classes) {
     // Sanity.
     if (!addr.isV4()) {
         return (0.);
@@ -185,7 +192,15 @@ FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& addr,
 double
 FreeLeaseQueueAllocator::getOccupancyRate(const IOAddress& pref,
                                           const uint8_t plen,
-                                          const ClientClasses& client_classes) const {
+                                          const ClientClasses& client_classes) {
+    MultiThreadingLock lock(mutex_);
+    return (getOccupancyRateInternal(pref, plen, client_classes));
+}
+
+double
+FreeLeaseQueueAllocator::getOccupancyRateInternal(const IOAddress& pref,
+                                                  const uint8_t plen,
+                                                  const ClientClasses& client_classes) {
     // Sanity.
     if (!pref.isV6()) {
         return (0.);
@@ -286,7 +301,7 @@ FreeLeaseQueueAllocator::populateFreeAddressLeases(const LeaseCollectionType& le
     Stopwatch stopwatch;
 
     // Let's iterate over the lease queue and index them with the
-    // unordered_set. Also, elminate the expired leases and those
+    // unordered_set. Also, eliminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_addresses;
     for (auto const& lease : leases) {
@@ -333,7 +348,7 @@ FreeLeaseQueueAllocator::populateFreePrefixDelegationLeases(const Lease6Collecti
     Stopwatch stopwatch;
 
     // Let's iterate over the lease queue and index them with the
-    // unordered_set. Also, elminate the expired leases and those
+    // unordered_set. Also, eliminate the expired leases and those
     // in the expired-reclaimed state.
     unordered_set<IOAddress, IOAddress::Hash> leased_prefixes;
     for (auto const& lease : leases) {

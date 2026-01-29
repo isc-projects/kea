@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <iostream>
 #include <iomanip>
+#include <set>
 #include <string>
 #include <sstream>
 #include <fstream>
@@ -37,6 +38,8 @@ const char* const WHITESPACE = " \b\f\n\r\t";
 namespace isc {
 namespace data {
 
+constexpr unsigned Element::MAX_NESTING_LEVEL;
+
 std::string
 Element::Position::str() const {
     std::ostringstream ss;
@@ -48,6 +51,53 @@ std::ostream&
 operator<<(std::ostream& out, const Element::Position& pos) {
     out << pos.str();
     return (out);
+}
+
+void
+Element::removeEmptyContainersRecursively(unsigned level) {
+    if (level <= 0) {
+        // Cycles are by definition not empty so no need to throw.
+        return;
+    }
+    if (type_ == list || type_ == map) {
+        size_t s(size());
+        for (size_t i = 0; i < s; ++i) {
+            // Get child.
+            ElementPtr child;
+            if (type_ == list) {
+                child = getNonConst(i);
+            } else if (type_ == map) {
+                std::string const key(get(i)->stringValue());
+                // The ElementPtr - ConstElementPtr disparity between
+                // ListElement and MapElement is forcing a const cast here.
+                // It's undefined behavior to modify it after const casting.
+                // The options are limited. I've tried templating, moving
+                // this function from a member function to free-standing and
+                // taking the Element template as argument. I've tried
+                // making it a virtual function with overridden
+                // implementations in ListElement and MapElement. Nothing
+                // works.
+                child = boost::const_pointer_cast<Element>(get(key));
+            }
+
+            // Makes no sense to continue for non-container children.
+            if (child->getType() != list && child->getType() != map) {
+                continue;
+            }
+
+            // Recurse if not empty.
+            if (!child->empty()){
+                child->removeEmptyContainersRecursively(level - 1);
+            }
+
+            // When returning from recursion, remove if empty.
+            if (child->empty()) {
+                remove(i);
+                --i;
+                --s;
+            }
+        }
+    }
 }
 
 std::string
@@ -600,7 +650,10 @@ fromStringstreamString(std::istream& in, const std::string& file, int& line,
 
 ElementPtr
 fromStringstreamList(std::istream& in, const std::string& file, int& line,
-                     int& pos) {
+                     int& pos, unsigned level) {
+    if (level == 0) {
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
+    }
     int c = 0;
     ElementPtr list = Element::createList(Element::Position(file, line, pos));
     ElementPtr cur_list_element;
@@ -608,7 +661,8 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
     skipChars(in, WHITESPACE, line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
-            cur_list_element = Element::fromJSON(in, file, line, pos);
+            cur_list_element =
+                Element::fromJSON(in, file, line, pos, level - 1);
             list->add(cur_list_element);
             c = skipTo(in, file, line, pos, ",]", WHITESPACE);
         } else {
@@ -621,7 +675,10 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
 
 ElementPtr
 fromStringstreamMap(std::istream& in, const std::string& file, int& line,
-                    int& pos) {
+                    int& pos, unsigned level) {
+    if (level == 0) {
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
+    }
     ElementPtr map = Element::createMap(Element::Position(file, line, pos));
     skipChars(in, WHITESPACE, line, pos);
     int c = in.peek();
@@ -637,7 +694,8 @@ fromStringstreamMap(std::istream& in, const std::string& file, int& line,
             skipTo(in, file, line, pos, ":", WHITESPACE);
             // skip the :
 
-            ConstElementPtr value = Element::fromJSON(in, file, line, pos);
+            ConstElementPtr value =
+                Element::fromJSON(in, file, line, pos, level - 1);
             map->set(key, value);
 
             c = skipTo(in, file, line, pos, ",}", WHITESPACE);
@@ -726,7 +784,10 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc) 
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file, int& line,
-                  int& pos) {
+                  int& pos, unsigned level) {
+    if (level == 0) {
+        isc_throw(JSONError, "fromJSON elements nested too deeply");
+    }
     int c = 0;
     ElementPtr element;
     bool el_read = false;
@@ -773,11 +834,11 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
                 el_read = true;
                 break;
             case '[':
-                element = fromStringstreamList(in, file, line, pos);
+                element = fromStringstreamList(in, file, line, pos, level);
                 el_read = true;
                 break;
             case '{':
-                element = fromStringstreamMap(in, file, line, pos);
+                element = fromStringstreamMap(in, file, line, pos, level);
                 el_read = true;
                 break;
             case EOF:
@@ -831,17 +892,17 @@ Element::fromJSONFile(const std::string& file_name, bool preproc) {
 // to JSON format
 
 void
-IntElement::toJSON(std::ostream& ss) const {
+IntElement::toJSON(std::ostream& ss, unsigned) const {
     ss << intValue();
 }
 
 void
-BigIntElement::toJSON(std::ostream& ss) const {
+BigIntElement::toJSON(std::ostream& ss, unsigned) const {
     ss << bigIntValue();
 }
 
 void
-DoubleElement::toJSON(std::ostream& ss) const {
+DoubleElement::toJSON(std::ostream& ss, unsigned) const {
     // The default output for doubles nicely drops off trailing
     // zeros, however this produces strings without decimal points
     // for whole number values.  When reparsed this will create
@@ -857,7 +918,7 @@ DoubleElement::toJSON(std::ostream& ss) const {
 }
 
 void
-BoolElement::toJSON(std::ostream& ss) const {
+BoolElement::toJSON(std::ostream& ss, unsigned) const {
     if (boolValue()) {
         ss << "true";
     } else {
@@ -866,12 +927,12 @@ BoolElement::toJSON(std::ostream& ss) const {
 }
 
 void
-NullElement::toJSON(std::ostream& ss) const {
+NullElement::toJSON(std::ostream& ss, unsigned) const {
     ss << "null";
 }
 
 void
-StringElement::toJSON(std::ostream& ss) const {
+StringElement::toJSON(std::ostream& ss, unsigned) const {
     ss << "\"";
     const std::string& str = stringValue();
     for (size_t i = 0; i < str.size(); ++i) {
@@ -919,7 +980,11 @@ StringElement::toJSON(std::ostream& ss) const {
 }
 
 void
-ListElement::toJSON(std::ostream& ss) const {
+ListElement::toJSON(std::ostream& ss, unsigned level) const {
+    if (level == 0) {
+        isc_throw(BadValue, "toJSON got infinite recursion: "
+                  "arguments include cycles");
+    }
     ss << "[ ";
 
     const std::vector<ElementPtr>& v = listValue();
@@ -930,13 +995,17 @@ ListElement::toJSON(std::ostream& ss) const {
         } else {
             first = false;
         }
-        it->toJSON(ss);
+        it->toJSON(ss, level - 1);
     }
     ss << " ]";
 }
 
 void
-MapElement::toJSON(std::ostream& ss) const {
+MapElement::toJSON(std::ostream& ss, unsigned level) const {
+    if (level == 0) {
+        isc_throw(BadValue, "toJSON got infinite recursion: "
+                  "arguments include cycles");
+    }
     ss << "{ ";
 
     bool first = true;
@@ -948,7 +1017,7 @@ MapElement::toJSON(std::ostream& ss) const {
         }
         ss << "\"" << it.first << "\": ";
         if (it.second) {
-            it.second->toJSON(ss);
+            it.second->toJSON(ss, level - 1);
         } else {
             ss << "None";
         }
@@ -1024,9 +1093,9 @@ MapElement::find(const std::string& id, ConstElementPtr& t) const {
 }
 
 bool
-IntElement::equals(const Element& other) const {
+IntElement::equals(const Element& other, unsigned) const {
     // Let's not be very picky with constraining the integer types to be the
-    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // same. Equality is sometimes checked from high-up in the Element hierarchy.
     // That is a context which, most of the time, does not have information on
     // the type of integers stored on Elements lower in the hierarchy. So it
     // would be difficult to differentiate between the integer types.
@@ -1035,9 +1104,9 @@ IntElement::equals(const Element& other) const {
 }
 
 bool
-BigIntElement::equals(const Element& other) const {
+BigIntElement::equals(const Element& other, unsigned) const {
     // Let's not be very picky with constraining the integer types to be the
-    // same. Equality is sometimes checked from high-up in the Element hierarcy.
+    // same. Equality is sometimes checked from high-up in the Element hierarchy.
     // That is a context which, most of the time, does not have information on
     // the type of integers stored on Elements lower in the hierarchy. So it
     // would be difficult to differentiate between the integer types.
@@ -1046,37 +1115,41 @@ BigIntElement::equals(const Element& other) const {
 }
 
 bool
-DoubleElement::equals(const Element& other) const {
+DoubleElement::equals(const Element& other, unsigned) const {
     return (other.getType() == Element::real) &&
            (fabs(d - other.doubleValue()) < 1e-14);
 }
 
 bool
-BoolElement::equals(const Element& other) const {
+BoolElement::equals(const Element& other, unsigned) const {
     return (other.getType() == Element::boolean) &&
            (b == other.boolValue());
 }
 
 bool
-NullElement::equals(const Element& other) const {
+NullElement::equals(const Element& other, unsigned) const {
     return (other.getType() == Element::null);
 }
 
 bool
-StringElement::equals(const Element& other) const {
+StringElement::equals(const Element& other, unsigned) const {
     return (other.getType() == Element::string) &&
            (s == other.stringValue());
 }
 
 bool
-ListElement::equals(const Element& other) const {
+ListElement::equals(const Element& other, unsigned level) const {
+    if (level == 0) {
+        isc_throw(BadValue, "equals got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (other.getType() == Element::list) {
         const size_t s = size();
         if (s != other.size()) {
             return (false);
         }
         for (size_t i = 0; i < s; ++i) {
-            if (!get(i)->equals(*other.get(i))) {
+            if (!get(i)->equals(*other.get(i), level - 1)) {
                 return (false);
             }
         }
@@ -1123,7 +1196,11 @@ ListElement::sort(std::string const& index /* = std::string() */) {
 }
 
 bool
-MapElement::equals(const Element& other) const {
+MapElement::equals(const Element& other, unsigned level) const {
+    if (level == 0) {
+        isc_throw(BadValue, "equals got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (other.getType() == Element::map) {
         if (size() != other.size()) {
             return (false);
@@ -1131,7 +1208,7 @@ MapElement::equals(const Element& other) const {
         for (auto const& kv : mapValue()) {
             auto key = kv.first;
             if (other.contains(key)) {
-                if (!get(key)->equals(*other.get(key))) {
+                if (!get(key)->equals(*other.get(key), level - 1)) {
                     return (false);
                 }
             } else {
@@ -1215,7 +1292,12 @@ merge(ElementPtr element, ConstElementPtr other) {
 
 void
 mergeDiffAdd(ElementPtr& element, ElementPtr& other,
-             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx,
+             unsigned level) {
+    if (level == 0) {
+        isc_throw(BadValue, "mergeDiffAdd got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (element->getType() != other->getType()) {
         isc_throw(TypeError, "mergeDiffAdd arguments not same type");
     }
@@ -1237,7 +1319,8 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                     // entity.
                     if (f->second.match_(mutable_left, mutable_right)) {
                         found = true;
-                        mergeDiffAdd(mutable_left, mutable_right, hierarchy, key, idx);
+                        mergeDiffAdd(mutable_left, mutable_right, hierarchy,
+                                     key, idx, level - 1);
                     }
                 }
                 if (!found) {
@@ -1263,7 +1346,8 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
                     (value->getType() == Element::map ||
                      value->getType() == Element::list)) {
                     ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
-                    mergeDiffAdd(mutable_element, value, hierarchy, current_key, idx + 1);
+                    mergeDiffAdd(mutable_element, value, hierarchy,
+                                 current_key, idx + 1, level - 1);
                 } else {
                     element->set(current_key, value);
                 }
@@ -1276,7 +1360,12 @@ mergeDiffAdd(ElementPtr& element, ElementPtr& other,
 
 void
 mergeDiffDel(ElementPtr& element, ElementPtr& other,
-             HierarchyDescriptor& hierarchy, std::string key, size_t idx) {
+             HierarchyDescriptor& hierarchy, std::string key, size_t idx,
+             unsigned level) {
+    if (level == 0) {
+        isc_throw(BadValue, "mergeDiffDel got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (element->getType() != other->getType()) {
         isc_throw(TypeError, "mergeDiffDel arguments not same type");
     }
@@ -1301,7 +1390,8 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                             element->remove(iter);
                             removed = true;
                         } else {
-                            mergeDiffDel(mutable_left, mutable_right, hierarchy, key, idx);
+                            mergeDiffDel(mutable_left, mutable_right,
+                                         hierarchy, key, idx, level - 1);
                             if (mutable_left->empty()) {
                                 element->remove(iter);
                                 removed = true;
@@ -1332,7 +1422,8 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
                     ElementPtr mutable_element = boost::const_pointer_cast<Element>(element->get(current_key));
                     if (mutable_element->getType() == Element::map ||
                         mutable_element->getType() == Element::list) {
-                        mergeDiffDel(mutable_element, value, hierarchy, current_key, idx + 1);
+                        mergeDiffDel(mutable_element, value, hierarchy,
+                                     current_key, idx + 1, level - 1);
                         if (mutable_element->empty()) {
                             element->remove(current_key);
                         }
@@ -1367,7 +1458,12 @@ mergeDiffDel(ElementPtr& element, ElementPtr& other,
 void
 extend(const std::string& container, const std::string& extension,
        ElementPtr& element, ElementPtr& other, HierarchyDescriptor& hierarchy,
-       std::string key, size_t idx, bool alter) {
+       std::string key, size_t idx, bool alter, unsigned level) {
+
+    if (level == 0) {
+        isc_throw(BadValue, "extend got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (element->getType() != other->getType()) {
         isc_throw(TypeError, "extend arguments not same type");
     }
@@ -1386,7 +1482,7 @@ extend(const std::string& container, const std::string& extension,
                     }
                     if (f->second.match_(mutable_left, mutable_right)) {
                         extend(container, extension, mutable_left, mutable_right,
-                               hierarchy, key, idx, alter);
+                               hierarchy, key, idx, alter, level - 1);
                     }
                 }
             }
@@ -1406,7 +1502,8 @@ extend(const std::string& container, const std::string& extension,
                     if (container == key) {
                         alter = true;
                     }
-                    extend(container, extension, mutable_element, value, hierarchy, current_key, idx + 1, alter);
+                    extend(container, extension, mutable_element, value,
+                           hierarchy, current_key, idx + 1, alter, level - 1);
                 } else if (alter && current_key == extension) {
                     element->set(current_key, value);
                 }
@@ -1417,7 +1514,7 @@ extend(const std::string& container, const std::string& extension,
 }
 
 ElementPtr
-copy(ConstElementPtr from, int level) {
+copy(ConstElementPtr from, unsigned level) {
     if (!from) {
         isc_throw(BadValue, "copy got a null pointer");
     }
@@ -1545,9 +1642,15 @@ isEquivalent(ConstElementPtr a, ConstElementPtr b) {
     return (isEquivalent0(a, b, 100));
 }
 
+namespace {
+
 void
-prettyPrint(ConstElementPtr element, std::ostream& out,
-            unsigned indent, unsigned step) {
+prettyPrint0(ConstElementPtr element, std::ostream& out,
+             unsigned indent, unsigned step, unsigned level) {
+    if (level == 0) {
+        isc_throw(BadValue, "prettyPrint got infinite recursion: "
+                  "arguments include cycles");
+    }
     if (!element) {
         isc_throw(BadValue, "prettyPrint got a null pointer");
     }
@@ -1587,7 +1690,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
                 out << std::string(indent + step, ' ');
             }
             // recursive call
-            prettyPrint(it, out, indent + step, step);
+            prettyPrint0(it, out, indent + step, step, level - 1);
         }
 
         // close the list
@@ -1622,7 +1725,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
             // add keyword:
             out << "\"" << it.first << "\": ";
             // recursive call
-            prettyPrint(it.second, out, indent + step, step);
+            prettyPrint0(it.second, out, indent + step, step, level - 1);
         }
 
         // close the map
@@ -1631,6 +1734,14 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // not a list or a map
         element->toJSON(out);
     }
+}
+
+} // end anonymous namespace
+
+void
+prettyPrint(ConstElementPtr element, std::ostream& out,
+            unsigned indent, unsigned step) {
+    prettyPrint0(element, out, indent, step, Element::MAX_NESTING_LEVEL);
 }
 
 std::string
@@ -1657,6 +1768,91 @@ void Element::preprocess(std::istream& in, std::stringstream& out) {
         out << line;
         out << "\n";
     }
+}
+
+namespace {
+
+// Type of arcs.
+typedef std::set<ConstElementPtr> Arc;
+
+// Helper function walking on the supposed tree.
+bool
+IsCircular0(ConstElementPtr element, Arc arc) {
+    // Sanity check.
+    if (!element) {
+        return (false);
+    }
+    auto type = element->getType();
+    // Container?
+    if ((type != Element::list) && (type != Element::map)) {
+        return (false);
+    }
+    // Empty? A cycle requires at least one element.
+    if (element->empty()) {
+        return (false);
+    }
+    // In the arc?
+    if (arc.count(element) > 0) {
+        return (true);
+    }
+    // This requires to work on a copy of the arc but it should be small.
+    arc.insert(element);
+    if (type == Element::list) {
+        for (auto const& it : element->listValue()) {
+            if (IsCircular0(it, arc)) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+    // The argument is a map.
+    for (auto const& it : element->mapValue()) {
+        if (IsCircular0(it.second, arc)) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+} // end anonymous namespace
+
+bool
+IsCircular(ConstElementPtr element) {
+    return (IsCircular0(element, Arc()));
+}
+
+unsigned
+getNestDepth(ConstElementPtr element, unsigned max_depth) {
+    if (max_depth == 0U) {
+        return (0U);
+    }
+    if (!element) {
+        return (0U);
+    }
+    unsigned ret = 1U;
+    if (element->getType() == Element::list) {
+        for (auto const& i : element->listValue()) {
+            unsigned sub = getNestDepth(i, max_depth - 1);
+            if (sub == max_depth - 1) {
+                return (max_depth);
+            }
+            if (sub + 1 > ret) {
+                ret = sub + 1;
+            }
+        }
+    } else if (element->getType() == Element::map) {
+        for (auto const& i : element->mapValue()) {
+            unsigned sub = getNestDepth(i.second, max_depth - 1);
+            if (sub == max_depth - 1) {
+                return (max_depth);
+            }
+            if (sub + 1 > ret) {
+                ret = sub + 1;
+            }
+        }
+
+    }
+    return (ret);
 }
 
 } // end of isc::data namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,14 @@
 #include <asiolink/udp_endpoint.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/dhcp_log.h>
+#include <dhcp/dhcp_messages.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
+#include <util/fd_event_handler_factory.h>
 #include <util/io/pktinfo_utilities.h>
 #include <util/multi_threading_mgr.h>
 
@@ -29,16 +32,8 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <string.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
-
-#ifndef FD_COPY
-#define FD_COPY(orig, copy) \
-    do { \
-        memmove(copy, orig, sizeof(fd_set)); \
-    } while (0)
-#endif
+#include <string.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -135,7 +130,7 @@ Iface::getPlainMac() const {
     for (unsigned i = 0; i < mac_len_; i++) {
         tmp.width(2);
         tmp << static_cast<int>(mac_[i]);
-        if (i < mac_len_-1) {
+        if (i < mac_len_ - 1) {
             tmp << ":";
         }
     }
@@ -185,7 +180,8 @@ bool Iface::delSocket(const uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
-      test_mode_(false), allow_loopback_(false) {
+      test_mode_(false), check_thread_id_(true), allow_loopback_(false) {
+    id_ = std::this_thread::get_id();
 
     // Ensure that PQMs have been created to guarantee we have
     // default packet queues in place.
@@ -208,6 +204,13 @@ IfaceMgr::IfaceMgr()
     } catch (const std::exception& ex) {
         isc_throw(IfaceDetectError, ex.what());
     }
+
+    initializeFDEventHandler();
+}
+
+void IfaceMgr::initializeFDEventHandler() {
+    fd_event_handler_ = FDEventHandlerFactory::factoryFDEventHandler();
+    receiver_fd_event_handler_ = FDEventHandlerFactory::factoryFDEventHandler();
 }
 
 void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
@@ -331,20 +334,28 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD)
+            .arg(socketfd)
+            .arg(std::this_thread::get_id())
+            .arg(id_);
+    }
+    // New entry.
+    SocketCallbackInfo x(socketfd);
+    x.callback_ = callback;
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (SocketCallbackInfo& s : callbacks_) {
+    auto& idx = callbacks_.get<1>();
+    auto it = idx.find(socketfd);
+    if (it != idx.end()) {
         // There's such a socket description there already.
-        // Update the callback and we're done
-        if (s.socket_ == socketfd) {
-            s.callback_ = callback;
-            return;
-        }
+        // Replace it.
+        LOG_WARN(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS)
+            .arg(socketfd);
+        idx.replace(it, x);
+        return;
     }
 
     // Add a new entry to the callbacks vector
-    SocketCallbackInfo x;
-    x.socket_ = socketfd;
-    x.callback_ = callback;
     callbacks_.push_back(x);
 }
 
@@ -356,47 +367,49 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
-    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
-         s != callbacks_.end(); ++s) {
-        if (s->socket_ == socketfd) {
-            callbacks_.erase(s);
-            return;
-        }
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD)
+            .arg(socketfd)
+            .arg(std::this_thread::get_id())
+            .arg(id_);
     }
+    auto& idx = callbacks_.get<1>();
+    auto it = idx.find(socketfd);
+    if (it == idx.end()) {
+        LOG_WARN(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND)
+            .arg(socketfd);
+        return;
+    }
+    idx.erase(it);
 }
 
 bool
 IfaceMgr::isExternalSocket(int fd) {
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    for (const SocketCallbackInfo& s : callbacks_) {
-        if (s.socket_ == fd) {
-            return (true);
-        }
+    auto const& idx = callbacks_.get<1>();
+    auto const it = idx.find(fd);
+    return (it != idx.end());
+}
+
+bool
+IfaceMgr::isExternalSocketUnusable(int fd) {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    auto const& idx = callbacks_.get<1>();
+    auto const it = idx.find(fd);
+    if (it != idx.end()) {
+        return (it->unusable_);
     }
 
     return (false);
 }
 
-int
-IfaceMgr::purgeBadSockets() {
-    std::lock_guard<std::mutex> lock(callbacks_mutex_);
-    std::vector<int> bad_fds;
-    for (const SocketCallbackInfo& s : callbacks_) {
-        errno = 0;
-        if (fcntl(s.socket_, F_GETFD) < 0 && (errno == EBADF)) {
-            bad_fds.push_back(s.socket_);
-        }
-    }
-
-    for (auto bad_fd : bad_fds) {
-        deleteExternalSocketInternal(bad_fd);
-    }
-
-    return (bad_fds.size());
-}
-
 void
 IfaceMgr::deleteAllExternalSockets() {
+    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+        LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD)
+            .arg(std::this_thread::get_id())
+            .arg(id_);
+    }
     std::lock_guard<std::mutex> lock(callbacks_mutex_);
     callbacks_.clear();
 }
@@ -439,7 +452,7 @@ IfaceMgr::setPacketFilter(const PktFilter6Ptr& packet_filter) {
                   << " filter when there are open IPv6 sockets - need"
                   << " to close them first");
     }
-
+    // Everything is fine, so replace packet filter.
     packet_filter6_ = packet_filter;
 }
 
@@ -519,30 +532,30 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         // allowed
         if (iface->flag_loopback_ && !allow_loopback_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "must not open socket on the loopback"
-                            " interface " << iface->getName());
+                           "must not open socket on the loopback"
+                           " interface " << iface->getName());
             continue;
         }
 
         if (!iface->flag_up_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is down");
+                           "the interface " << iface->getName()
+                           << " is down");
             continue;
         }
 
         if (!iface->flag_running_) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " is not running");
+                           "the interface " << iface->getName()
+                           << " is not running");
             continue;
         }
 
         IOAddress out_address("0.0.0.0");
         if (!iface->getAddress4(out_address)) {
             IFACEMGR_ERROR(SocketConfigError, error_handler, iface,
-                            "the interface " << iface->getName()
-                            << " has no usable IPv4 addresses configured");
+                           "the interface " << iface->getName()
+                           << " has no usable IPv4 addresses configured");
             continue;
         }
 
@@ -908,6 +921,50 @@ IfaceMgr::clearBoundAddresses() {
 }
 
 void
+IfaceMgr::handleClosedExternalSocket(SocketCallbackInfoIterator it) {
+    errno = 0;
+    if (fcntl(it->socket_, F_GETFD) < 0 && (errno == EBADF)) {
+        SocketCallbackInfo x(*it);
+        x.unusable_ = true;
+        callbacks_.replace(it, x);
+        isc_throw(SocketFDError, "unexpected state (closed) for fd: " << x.socket_);
+    }
+}
+
+void
+IfaceMgr::handleClosedExternalSockets() {
+    std::lock_guard<std::mutex> lock(callbacks_mutex_);
+    for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+        if (it->unusable_) {
+            continue;
+        }
+        handleClosedExternalSocket(it);
+    }
+}
+
+void
+IfaceMgr::handleIfaceSocketError(const IfacePtr& iface, const SocketInfo& s) {
+    int error = 0;
+    socklen_t opt_size = sizeof(error);
+    errno = 0;
+    if (getsockopt(s.sockfd_, SOL_SOCKET, SO_ERROR,
+                   reinterpret_cast<char*>(&error), &opt_size) < 0) {
+        if ((errno == ENOTSOCK) || (errno == ENOPROTOOPT)) {
+            // Simply not a socket or SO_ERROR is not supported.
+            return;
+        }
+        isc_throw(BadValue, "Can't get socket error fd: "
+                  << s.sockfd_ << " - error: " << strerror(errno));
+    }
+    if (error > 0) {
+        LOG_ERROR(dhcp_logger, DHCP_IFACE_SOCKET_ERROR)
+            .arg(s.sockfd_)
+            .arg(iface->getFullName())
+            .arg(strerror(error));
+    }
+}
+
+void
 IfaceMgr::collectBoundAddresses() {
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& sock : iface->getSockets()) {
@@ -1137,27 +1194,28 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
                   " one million microseconds");
     }
 
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     // if there are any callbacks for external sockets registered...
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
+                    continue;
+                }
+                handleClosedExternalSocket(it);
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(it->socket_);
             }
         }
     }
 
     // Add Receiver ready watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::READY));
 
     // Add Receiver error watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::ERROR));
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1165,19 +1223,15 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // poll (timeout = 0 secs).  We need to poll, even if
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
-    struct timeval select_timeout;
-    if (getPacketQueue4()->empty()) {
-        select_timeout.tv_sec = timeout_sec;
-        select_timeout.tv_usec = timeout_usec;
-    } else {
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
+    if (!getPacketQueue4()->empty()) {
+        timeout_sec = 0;
+        timeout_usec = 0;
     }
 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if ((result == 0) && getPacketQueue4()->empty()) {
         // nothing received and timeout has been reached
@@ -1193,13 +1247,10 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
-        } else {
-            isc_throw(SocketReadError, strerror(errno));
+            handleClosedExternalSockets();
+            isc_throw(SocketFDError, strerror(EBADF));
         }
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // We only check external sockets if select detected an event.
@@ -1212,31 +1263,35 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
         }
 
         // Let's find out which external socket has the data
-        SocketCallbackInfo ex_sock;
+        boost::scoped_ptr<SocketCallbackInfo> ex_sock;
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (const SocketCallbackInfo& s : callbacks_) {
-                if (!FD_ISSET(s.socket_, &sockets)) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
                     continue;
                 }
-                found = true;
+                handleClosedExternalSocket(it);
+                if (fd_event_handler_->readReady(it->socket_) ||
+                    fd_event_handler_->hasError(it->socket_)) {
+                    found = true;
 
-                // something received over external socket
-                if (s.callback_) {
-                    // Note the external socket to call its callback without
-                    // the lock taken so it can be deleted.
-                    ex_sock = s;
-                    break;
+                    // something received over external socket
+                    if (it->callback_) {
+                        // Note the external socket to call its callback without
+                        // the lock taken so it can be deleted.
+                        ex_sock.reset(new SocketCallbackInfo(*it));
+                        break;
+                    }
                 }
             }
         }
 
-        if (ex_sock.callback_) {
+        if (ex_sock && ex_sock->callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            ex_sock.callback_(ex_sock.socket_);
+            ex_sock->callback_(ex_sock->socket_);
         }
         if (found) {
             return (Pkt4Ptr());
@@ -1258,21 +1313,20 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         isc_throw(BadValue, "fractional timeout must be shorter than"
                   " one million microseconds");
     }
-    boost::scoped_ptr<SocketInfo> candidate;
-    fd_set sockets;
-    int maxfd = 0;
 
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
+    /// @note: this can be achieved with FDEventHandler (initialize only if
+    /// max_fd_ is 0) and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1281,26 +1335,25 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
+                    continue;
+                }
+                handleClosedExternalSocket(it);
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(it->socket_);
             }
         }
     }
 
-    struct timeval select_timeout;
-    select_timeout.tv_sec = timeout_sec;
-    select_timeout.tv_usec = timeout_usec;
-
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // null
-
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received or for some other
@@ -1312,54 +1365,62 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
-        } else {
-            isc_throw(SocketReadError, strerror(errno));
+            handleClosedExternalSockets();
+            isc_throw(SocketFDError, strerror(EBADF));
         }
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // Let's find out which socket has the data
-    SocketCallbackInfo ex_sock;
+    boost::scoped_ptr<SocketCallbackInfo> ex_sock;
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (const SocketCallbackInfo& s : callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
+        for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+            if (it->unusable_) {
                 continue;
             }
-            found = true;
+            handleClosedExternalSocket(it);
+            if (fd_event_handler_->readReady(it->socket_) ||
+                fd_event_handler_->hasError(it->socket_)) {
+                found = true;
 
-            // something received over external socket
-            if (s.callback_) {
-                // Note the external socket to call its callback without
-                // the lock taken so it can be deleted.
-                ex_sock = s;
-                break;
+                // something received over external socket
+                if (it->callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock.reset(new SocketCallbackInfo(*it));
+                    break;
+                }
             }
         }
     }
 
-    if (ex_sock.callback_) {
+    if (ex_sock && ex_sock->callback_) {
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        ex_sock.callback_(ex_sock.socket_);
+        ex_sock->callback_(ex_sock->socket_);
     }
     if (found) {
         return (Pkt4Ptr());
     }
 
     // Let's find out which interface/socket has the data
+    // @todo: fix iface starvation
+    boost::scoped_ptr<SocketInfo> candidate;
     IfacePtr recv_if;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (FD_ISSET(s.sockfd_, &sockets)) {
-                candidate.reset(new SocketInfo(s));
-                break;
+            if (!fd_event_handler_->readReady(s.sockfd_) &&
+                !fd_event_handler_->hasError(s.sockfd_)) {
+                continue;
             }
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                handleIfaceSocketError(iface, s);
+            }
+            candidate.reset(new SocketInfo(s));
+            break;
         }
         if (candidate) {
             recv_if = iface;
@@ -1368,10 +1429,20 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     }
 
     if (!candidate || !recv_if) {
-        isc_throw(SocketReadError, "received data over unknown socket");
+        LOG_WARN(dhcp_logger, DHCP_RECEIVE4_UNKNOWN);
+        return (Pkt4Ptr());
     }
 
-    // Now we have a socket, let's get some data from it!
+    // Check that we have something to read.
+    int len;
+    if (ioctl(candidate->sockfd_, FIONREAD, &len) < 0) {
+        isc_throw(SocketReadError, strerror(errno));
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return (Pkt4Ptr());
+    }
+
     // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter_->receive(*recv_if, *candidate));
 }
@@ -1385,18 +1456,6 @@ IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     return (receive6Direct(timeout_sec, timeout_usec));
 }
 
-void
-IfaceMgr::addFDtoSet(int fd, int& maxfd, fd_set* sockets) {
-    if (!sockets) {
-        isc_throw(BadValue, "addFDtoSet: sockets can't be null");
-    }
-
-    FD_SET(fd, sockets);
-    if (maxfd < fd) {
-        maxfd = fd;
-    }
-}
-
 Pkt6Ptr
 IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
     // Sanity check for microsecond timeout.
@@ -1405,21 +1464,19 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
                   " one million microseconds");
     }
 
-    boost::scoped_ptr<SocketInfo> candidate;
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
+    /// @note: this can be achieved with FDEventHandler (initialize only if
+    /// max_fd_ is 0) and do not clear the state.
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                fd_event_handler_->add(s.sockfd_);
             }
         }
     }
@@ -1428,26 +1485,25 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
+                    continue;
+                }
+                handleClosedExternalSocket(it);
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(it->socket_);
             }
         }
     }
 
-    struct timeval select_timeout;
-    select_timeout.tv_sec = timeout_sec;
-    select_timeout.tv_usec = timeout_usec;
-
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt6Ptr()); // null
-
     } else if (result < 0) {
         // In most cases we would like to know whether select() returned
         // an error because of a signal being received or for some other
@@ -1459,53 +1515,61 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
-        } else {
-            isc_throw(SocketReadError, strerror(errno));
+            handleClosedExternalSockets();
+            isc_throw(SocketFDError, strerror(EBADF));
         }
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // Let's find out which socket has the data
-    SocketCallbackInfo ex_sock;
+    boost::scoped_ptr<SocketCallbackInfo> ex_sock;
     bool found = false;
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
-        for (const SocketCallbackInfo& s : callbacks_) {
-            if (!FD_ISSET(s.socket_, &sockets)) {
+        for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+            if (it->unusable_) {
                 continue;
             }
-            found = true;
+            handleClosedExternalSocket(it);
+            if (fd_event_handler_->readReady(it->socket_) ||
+                fd_event_handler_->hasError(it->socket_)) {
+                found = true;
 
-            // something received over external socket
-            if (s.callback_) {
-                // Note the external socket to call its callback without
-                // the lock taken so it can be deleted.
-                ex_sock = s;
-                break;
+                // something received over external socket
+                if (it->callback_) {
+                    // Note the external socket to call its callback without
+                    // the lock taken so it can be deleted.
+                    ex_sock.reset(new SocketCallbackInfo(*it));
+                    break;
+                }
             }
         }
     }
 
-    if (ex_sock.callback_) {
+    if (ex_sock && ex_sock->callback_) {
         // Calling the external socket's callback provides its service
         // layer access without integrating any specific features
         // in IfaceMgr
-        ex_sock.callback_(ex_sock.socket_);
+        ex_sock->callback_(ex_sock->socket_);
     }
     if (found) {
         return (Pkt6Ptr());
     }
 
     // Let's find out which interface/socket has the data
+    // @todo: fix iface starvation
+    boost::scoped_ptr<SocketInfo> candidate;
     for (const IfacePtr& iface : ifaces_) {
         for (const SocketInfo& s : iface->getSockets()) {
-            if (FD_ISSET(s.sockfd_, &sockets)) {
-                candidate.reset(new SocketInfo(s));
-                break;
+            if (!fd_event_handler_->readReady(s.sockfd_) &&
+                !fd_event_handler_->hasError(s.sockfd_)) {
+                continue;
             }
+            if (fd_event_handler_->hasError(s.sockfd_)) {
+                handleIfaceSocketError(iface, s);
+            }
+            candidate.reset(new SocketInfo(s));
+            break;
         }
         if (candidate) {
             break;
@@ -1513,8 +1577,20 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     }
 
     if (!candidate) {
-        isc_throw(SocketReadError, "received data over unknown socket");
+        LOG_WARN(dhcp_logger, DHCP_RECEIVE6_UNKNOWN);
+        return (Pkt6Ptr());
     }
+
+    // Check that we have something to read.
+    int len;
+    if (ioctl(candidate->sockfd_, FIONREAD, &len) < 0) {
+        isc_throw(SocketReadError, strerror(errno));
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return (Pkt6Ptr());
+    }
+
     // Assuming that packet filter is not null, because its modifier checks it.
     return (packet_filter6_->receive(*candidate));
 }
@@ -1527,27 +1603,28 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
                   " one million microseconds");
     }
 
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    fd_event_handler_->clear();
 
     // if there are any callbacks for external sockets registered...
     {
         std::lock_guard<std::mutex> lock(callbacks_mutex_);
         if (!callbacks_.empty()) {
-            for (const SocketCallbackInfo& s : callbacks_) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
+                    continue;
+                }
+                handleClosedExternalSocket(it);
                 // Add this socket to listening set
-                addFDtoSet(s.socket_, maxfd, &sockets);
+                fd_event_handler_->add(it->socket_);
             }
         }
     }
 
     // Add Receiver ready watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::READY));
 
     // Add Receiver error watch socket
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+    fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::ERROR));
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1555,19 +1632,15 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // poll (timeout = 0 secs).  We need to poll, even if
     // DHCP packets are waiting so we don't starve external
     // sockets under heavy DHCP load.
-    struct timeval select_timeout;
-    if (getPacketQueue6()->empty()) {
-        select_timeout.tv_sec = timeout_sec;
-        select_timeout.tv_usec = timeout_usec;
-    } else {
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
+    if (!getPacketQueue6()->empty()) {
+        timeout_sec = 0;
+        timeout_usec = 0;
     }
 
     // zero out the errno to be safe
     errno = 0;
 
-    int result = select(maxfd + 1, &sockets, 0, 0, &select_timeout);
+    int result = fd_event_handler_->waitEvent(timeout_sec, timeout_usec);
 
     if ((result == 0) && getPacketQueue6()->empty()) {
         // nothing received and timeout has been reached
@@ -1583,13 +1656,10 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         if (errno == EINTR) {
             isc_throw(SignalInterruptOnSelect, strerror(errno));
         } else if (errno == EBADF) {
-            int cnt = purgeBadSockets();
-            isc_throw(SocketReadError,
-                      "SELECT interrupted by one invalid sockets, purged "
-                       << cnt << " socket descriptors");
-        } else {
-            isc_throw(SocketReadError, strerror(errno));
+            handleClosedExternalSockets();
+            isc_throw(SocketFDError, strerror(EBADF));
         }
+        isc_throw(SocketReadError, strerror(errno));
     }
 
     // We only check external sockets if select detected an event.
@@ -1602,31 +1672,35 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
 
         // Let's find out which external socket has the data
-        SocketCallbackInfo ex_sock;
+        boost::scoped_ptr<SocketCallbackInfo> ex_sock;
         bool found = false;
         {
             std::lock_guard<std::mutex> lock(callbacks_mutex_);
-            for (const SocketCallbackInfo& s : callbacks_) {
-                if (!FD_ISSET(s.socket_, &sockets)) {
+            for (auto it = callbacks_.begin(); it != callbacks_.end(); ++it) {
+                if (it->unusable_) {
                     continue;
                 }
-                found = true;
+                handleClosedExternalSocket(it);
+                if (fd_event_handler_->readReady(it->socket_) ||
+                    fd_event_handler_->hasError(it->socket_)) {
+                    found = true;
 
-                // something received over external socket
-                if (s.callback_) {
-                    // Note the external socket to call its callback without
-                    // the lock taken so it can be deleted.
-                    ex_sock = s;
-                    break;
+                    // something received over external socket
+                    if (it->callback_) {
+                        // Note the external socket to call its callback without
+                        // the lock taken so it can be deleted.
+                        ex_sock.reset(new SocketCallbackInfo(*it));
+                        break;
+                    }
                 }
             }
         }
 
-        if (ex_sock.callback_) {
+        if (ex_sock && ex_sock->callback_) {
             // Calling the external socket's callback provides its service
             // layer access without integrating any specific features
             // in IfaceMgr
-            ex_sock.callback_(ex_sock.socket_);
+            ex_sock->callback_(ex_sock->socket_);
         }
         if (found) {
             return (Pkt6Ptr());
@@ -1644,13 +1718,10 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
 void
 IfaceMgr::receiveDHCP4Packets() {
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    receiver_fd_event_handler_->clear();
 
     // Add terminate watch socket.
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+    receiver_fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE));
 
     // Add Interface sockets.
     for (const IfacePtr& iface : ifaces_) {
@@ -1658,52 +1729,55 @@ IfaceMgr::receiveDHCP4Packets() {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set.
-                addFDtoSet(s.sockfd_, maxfd, &sockets);
+                receiver_fd_event_handler_->add(s.sockfd_);
             }
         }
     }
 
     for (;;) {
-        // Check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        fd_set rd_set;
-        FD_COPY(&sockets, &rd_set);
-
-        // zero out the errno to be safe.
-        errno = 0;
-
-        // Select with null timeouts to wait indefinitely an event
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
-
-        // Re-check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        if (result == 0) {
-            // nothing received?
-            continue;
-
-        } else if (result < 0) {
-            // This thread should not get signals?
-            if (errno != EINTR) {
-                // Signal the error to receive4.
-                dhcp_receiver_->setError(strerror(errno));
-                // We need to sleep in case of the error condition to
-                // prevent the thread from tight looping when result
-                // gets negative.
-                sleep(1);
+        try {
+            // Check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
             }
-            continue;
-        }
 
-        // Let's find out which interface/socket has data.
-        for (const IfacePtr& iface : ifaces_) {
-            for (const SocketInfo& s : iface->getSockets()) {
-                if (FD_ISSET(s.sockfd_, &sockets)) {
+            // zero out the errno to be safe.
+            errno = 0;
+
+            // Select with null timeouts to wait indefinitely an event
+            int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
+
+            // Re-check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
+            }
+
+            if (result == 0) {
+                // nothing received?
+                continue;
+            } else if (result < 0) {
+                // This thread should not get signals?
+                if (errno != EINTR) {
+                    // Signal the error to receive4.
+                    dhcp_receiver_->setError(strerror(errno));
+                    // We need to sleep in case of the error condition to
+                    // prevent the thread from tight looping when result
+                    // gets negative.
+                    sleep(1);
+                }
+                continue;
+            }
+
+            // Let's find out which interface/socket has data.
+            for (const IfacePtr& iface : ifaces_) {
+                for (const SocketInfo& s : iface->getSockets()) {
+                    if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
+                        !receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        continue;
+                    }
+                    if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        handleIfaceSocketError(iface, s);
+                    }
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {
@@ -1711,20 +1785,20 @@ IfaceMgr::receiveDHCP4Packets() {
                     }
                 }
             }
+        } catch (const std::exception& ex) {
+            dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
+        } catch (...) {
+            dhcp_receiver_->setError("receive failed");
         }
     }
-
 }
 
 void
 IfaceMgr::receiveDHCP6Packets() {
-    fd_set sockets;
-    int maxfd = 0;
-
-    FD_ZERO(&sockets);
+    receiver_fd_event_handler_->clear();
 
     // Add terminate watch socket.
-    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+    receiver_fd_event_handler_->add(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE));
 
     // Add Interface sockets.
     for (const IfacePtr& iface : ifaces_) {
@@ -1732,51 +1806,55 @@ IfaceMgr::receiveDHCP6Packets() {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set.
-                addFDtoSet(s.sockfd_ , maxfd, &sockets);
+                receiver_fd_event_handler_->add(s.sockfd_);
             }
         }
     }
 
     for (;;) {
-        // Check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        fd_set rd_set;
-        FD_COPY(&sockets, &rd_set);
-
-        // zero out the errno to be safe.
-        errno = 0;
-
-        // Note we wait until something happen.
-        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
-
-        // Re-check the watch socket.
-        if (dhcp_receiver_->shouldTerminate()) {
-            return;
-        }
-
-        if (result == 0) {
-            // nothing received?
-            continue;
-        } else if (result < 0) {
-            // This thread should not get signals?
-            if (errno != EINTR) {
-                // Signal the error to receive6.
-                dhcp_receiver_->setError(strerror(errno));
-                // We need to sleep in case of the error condition to
-                // prevent the thread from tight looping when result
-                // gets negative.
-                sleep(1);
+        try {
+            // Check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
             }
-            continue;
-        }
 
-        // Let's find out which interface/socket has data.
-        for (const IfacePtr& iface : ifaces_) {
-            for (const SocketInfo& s : iface->getSockets()) {
-                if (FD_ISSET(s.sockfd_, &sockets)) {
+            // zero out the errno to be safe.
+            errno = 0;
+
+            // Select with null timeouts to wait indefinitely an event
+            int result = receiver_fd_event_handler_->waitEvent(0, 0, false);
+
+            // Re-check the watch socket.
+            if (dhcp_receiver_->shouldTerminate()) {
+                return;
+            }
+
+            if (result == 0) {
+                // nothing received?
+                continue;
+            } else if (result < 0) {
+                // This thread should not get signals?
+                if (errno != EINTR) {
+                    // Signal the error to receive6.
+                    dhcp_receiver_->setError(strerror(errno));
+                    // We need to sleep in case of the error condition to
+                    // prevent the thread from tight looping when result
+                    // gets negative.
+                    sleep(1);
+                }
+                continue;
+            }
+
+            // Let's find out which interface/socket has data.
+            for (const IfacePtr& iface : ifaces_) {
+                for (const SocketInfo& s : iface->getSockets()) {
+                    if (!receiver_fd_event_handler_->readReady(s.sockfd_) &&
+                        !receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        continue;
+                    }
+                    if (receiver_fd_event_handler_->hasError(s.sockfd_)) {
+                        handleIfaceSocketError(iface, s);
+                    }
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.
                     if (dhcp_receiver_->shouldTerminate()) {
@@ -1784,6 +1862,10 @@ IfaceMgr::receiveDHCP6Packets() {
                     }
                 }
             }
+        } catch (const std::exception& ex) {
+            dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
+        } catch (...) {
+            dhcp_receiver_->setError("receive failed");
         }
     }
 }
@@ -1889,10 +1971,10 @@ IfaceMgr::getSocket(const isc::dhcp::Pkt6Ptr& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt->getRemoteAddr().isV6LinkLocal() &&
-                s->addr_.isV6LinkLocal()) ||
-                 (!pkt->getRemoteAddr().isV6LinkLocal() &&
-                  !s->addr_.isV6LinkLocal()) ) {
+            if ((pkt->getRemoteAddr().isV6LinkLocal() &&
+                 s->addr_.isV6LinkLocal()) ||
+                (!pkt->getRemoteAddr().isV6LinkLocal() &&
+                 !s->addr_.isV6LinkLocal())) {
                 candidate = s;
             }
         }

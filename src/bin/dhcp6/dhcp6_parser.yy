@@ -280,6 +280,7 @@ using namespace std;
   EARLY_GLOBAL_RESERVATIONS_LOOKUP "early-global-reservations-lookup"
   IP_RESERVATIONS_UNIQUE "ip-reservations-unique"
   RESERVATIONS_LOOKUP_FIRST "reservations-lookup-first"
+  ALLOW_ADDRESS_REGISTRATION "allow-address-registration"
 
   LOGGERS "loggers"
   OUTPUT_OPTIONS "output-options"
@@ -593,6 +594,7 @@ global_param: data_directory
             | early_global_reservations_lookup
             | ip_reservations_unique
             | reservations_lookup_first
+            | allow_address_registration
             | compatibility
             | parked_packet_limit
             | allocator
@@ -914,6 +916,12 @@ reservations_lookup_first: RESERVATIONS_LOOKUP_FIRST COLON BOOLEAN {
     ctx.unique("reservations-lookup-first", ctx.loc2pos(@1));
     ElementPtr first(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("reservations-lookup-first", first);
+};
+
+allow_address_registration: ALLOW_ADDRESS_REGISTRATION COLON BOOLEAN {
+    ctx.unique("allow-address-registration", ctx.loc2pos(@1));
+    ElementPtr first(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("allow-address-registration", first);
 };
 
 interfaces_config: INTERFACES_CONFIG {

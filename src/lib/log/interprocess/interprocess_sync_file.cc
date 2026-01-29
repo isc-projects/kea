@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,18 +11,19 @@
 
 #include <log/interprocess/interprocess_sync_file.h>
 
-#include <string>
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace isc {
 namespace log {

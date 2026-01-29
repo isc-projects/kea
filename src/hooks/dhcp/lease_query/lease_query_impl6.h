@@ -49,9 +49,12 @@ public:
     /// - Sends the reply
     ///
     /// @param base_query DHCPv6 lease query to process.
+    /// @param invalid Reference to a flag set to true when the query
+    /// is invalid (used to detect unexpected exceptions).
     /// @throw BadValue if the query is invalid for a number reasons,
     /// including if it comes from an unauthorized requester.
-    virtual void processQuery(dhcp::PktPtr base_query) const;
+    virtual void processQuery(isc::dhcp::PktPtr base_query,
+                              bool& invalid) const;
 
     /// @brief Queries for an active lease matching an ip address.
     ///

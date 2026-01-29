@@ -43,7 +43,7 @@ using LeaseLimit = uint32_t;
 /// @brief a single rate-limiting entry configured as "rate-limit": "<n> packet[s] per <time-unit>"
 struct RateLimit {
     /// @brief Constructor.
-    RateLimit() : allowed_packets_(0) {
+    RateLimit() : allowed_packets_(0), time_unit_(0) {
     }
 
     /// @brief Constructs a pragmatic rate limit data structure from text of

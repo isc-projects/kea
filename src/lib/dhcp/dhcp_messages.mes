@@ -1,0 +1,45 @@
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::dhcp
+
+% DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS Adding an already existing external socket %1
+This warning message indicates that an external socket was added but it
+already exits i.e. adds and deletes are not correctly balanced.
+
+% DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD Attempted to register external socket %1 from different thread %2 than main thread %3
+This error message indicates that a different thread than the main thread has
+registered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descriptor and the respective thread ids are included in the message.
+
+% DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD Attempted to unregister external sockets from different thread %1 than main thread %2
+This error message indicates that a different thread than the main thread has
+deleted all external sockets. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The respective thread ids are included in the message.
+
+% DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD Attempted to unregister external socket %1 from different thread %2 than main thread %3
+This error message indicates that a different thread than the main thread has
+unregistered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descriptor and the respective thread ids are included in the message.
+
+% DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND Deleting a not found external socket %1
+This warning message indicates that an external socket was deleted but
+it can't be found i.e. adds and deletes are not correctly balanced.
+
+% DHCP_IFACE_SOCKET_ERROR Got an error on the interface socket %1 of interface %2: %3
+This error message indicates that an error was raised on an interface socket.
+The file descriptor, interface name and error message are displayed.
+
+% DHCP_RECEIVE4_UNKNOWN Received data over unknown socket
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
+
+% DHCP_RECEIVE6_UNKNOWN Received data over unknown socket
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.

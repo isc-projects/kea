@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <log/log_messages.h>
 #include <log/interprocess/interprocess_sync.h>
 #include <log/tests/log_test_messages.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <mutex>
 #include <iostream>
@@ -20,6 +21,7 @@
 
 using namespace std;
 using namespace isc::log;
+using namespace isc::test;
 
 /// \brief RAII safe mutex checker.
 class CheckMutex : boost::noncopyable {
@@ -35,17 +37,13 @@ public:
     ///
     /// \throw AlreadyLocked if the mutex is already locked.
     CheckMutex(mutex& mutex) : mutex_(mutex) {
-        if (!mutex.try_lock()) {
+        if (!checkTryLock(mutex_)) {
             isc_throw(AlreadyLocked, "The mutex is already locked");
         }
     }
 
     /// \brief Destructor.
-    ///
-    /// Unlocks the mutex.
-    ~CheckMutex() {
-        mutex_.unlock();
-    }
+    ~CheckMutex() = default;
 
 private:
     mutex& mutex_;

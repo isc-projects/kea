@@ -5,6 +5,8 @@ endif
 kea_admin_tests_conf_data = configuration_data()
 kea_admin_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
 kea_admin_tests_conf_data.set('abs_top_srcdir', TOP_SOURCE_DIR)
+kea_admin_tests_conf_data.set('version', PROJECT_VERSION)
+kea_admin_tests_conf_data.set('extended_version', EXTENDED_VERSION)
 admin_tests = configure_file(
     input: 'admin_tests.sh.in',
     output: 'admin_tests.sh',

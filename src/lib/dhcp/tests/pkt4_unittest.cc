@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,6 @@
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/static_assert.hpp>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -87,9 +86,10 @@ const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
 const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit posuere.";
 
-BOOST_STATIC_ASSERT(sizeof(dummyFile)  == Pkt4::MAX_FILE_LEN + 1);
-BOOST_STATIC_ASSERT(sizeof(dummySname) == Pkt4::MAX_SNAME_LEN + 1);
-
+static_assert(sizeof(dummyFile)  == Pkt4::MAX_FILE_LEN + 1,
+              "sizeof(dummyFile)  == Pkt4::MAX_FILE_LEN + 1");
+static_assert(sizeof(dummySname) == Pkt4::MAX_SNAME_LEN + 1,
+              "sizeof(dummySname) == Pkt4::MAX_SNAME_LEN + 1");
 
 class Pkt4Test : public ::testing::Test {
 public:

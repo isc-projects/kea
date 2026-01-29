@@ -1042,6 +1042,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
     Pool6Ptr pool;
 
     std::set<IOAddress> prefixes;
+    bool assigned = false;
     for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 64);
         EXPECT_FALSE(candidate.isV6Zero());
@@ -1049,11 +1050,15 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
         prefixes.insert(candidate);
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate));
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
+        if (candidate == IOAddress("3001::")) {
+            assigned = true;
+        }
     }
     // Make sure that unique prefixes have been returned.
     EXPECT_EQ(total, prefixes.size());
     double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_);
-    EXPECT_EQ(2560. / 68096., r);
+    // getOccupancyRate argument is always considered as not free.
+    EXPECT_EQ((assigned ? 2560. : 2561.) / 68096., r);
 }
 
 // Test that the allocator respects client class guards.

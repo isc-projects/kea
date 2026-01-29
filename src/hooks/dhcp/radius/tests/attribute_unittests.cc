@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -728,6 +728,34 @@ TEST_F(AttributeTest, attributesAddDel) {
     EXPECT_FALSE(attrs.del(PW_USER_NAME));
     EXPECT_TRUE(attrs.empty());
     EXPECT_EQ(0, attrs.size());
+}
+
+// Verifies add front.
+TEST_F(AttributeTest, attributesAddFront) {
+    Attributes attrs;
+    EXPECT_TRUE(attrs.empty());
+    EXPECT_EQ(0, attrs.size());
+
+    // Add 2 User-Name and a Service-Type at the front.
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foo")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20), false));
+
+    // Get front.
+    ASSERT_EQ(3, attrs.size());
+    ConstAttributePtr attr = *(attrs.begin());
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_SERVICE_TYPE, attr->getType());
+
+    // Check that the default is to insert at the back.
+    attrs.clear();
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foo")));
+    ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20)));
+    ASSERT_EQ(3, attrs.size());
+    attr = *(attrs.begin());
+    ASSERT_TRUE(attr);
+    EXPECT_EQ(PW_USER_NAME, attr->getType());
 }
 
 // Verifies append.

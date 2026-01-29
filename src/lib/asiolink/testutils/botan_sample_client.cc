@@ -17,7 +17,6 @@
 
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/botan_wrapper.h>
-#include <botan/asio_stream.h>
 #include <botan/certstor_flatfile.h>
 #include <botan/pkcs8.h>
 #include <botan/auto_rng.h>
@@ -178,12 +177,12 @@ private:
   {
     boost::asio::async_read(socket_,
         boost::asio::buffer(reply_, length),
-        [this](const boost::system::error_code& error, std::size_t length)
+        [this](const boost::system::error_code& error, std::size_t len)
         {
           if (!error)
           {
             std::cout << "Reply: ";
-            std::cout.write(reply_, length);
+            std::cout.write(reply_, len);
             std::cout << "\n";
           }
           else

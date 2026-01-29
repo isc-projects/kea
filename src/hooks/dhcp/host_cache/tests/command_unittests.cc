@@ -19,6 +19,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <list>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -48,12 +49,16 @@ public:
 
         hcptr_.reset(new HostCache());
         MultiThreadingMgr::instance().setMode(false);
+        remove_on_exit_.push_back("dump.json");
+        remove_on_exit_.push_back("source.json");
     }
 
     /// @brief Destructor
     virtual ~CommandTest() {
-        ::remove("dump.json");
-        ::remove("source.json");
+        // Remove test files.
+        for (auto const& file : remove_on_exit_) {
+            ::remove(file.c_str());
+        }
 
         // Revert to original data directory.
         CfgMgr::instance().getDataDir(true, original_datadir_);
@@ -310,6 +315,9 @@ public:
 
     /// @brief Stores the pre-test DHCP data directory.
     std::string original_datadir_;
+
+    /// @brief List of test files to remove in the destructor.
+    std::list<std::string> remove_on_exit_;
 };
 
 /// @brief Size handler function
@@ -707,6 +715,7 @@ CommandTest::testWriteCommand() {
     handlerType write_handler = std::bind(&writeHandler, hcptr_, ph::_1);
     string file_txt = "dump.json";
     string full_file_txt = CfgMgr::instance().getDataDir() + "/" + file_txt;
+    remove_on_exit_.push_back(full_file_txt);
     string write_cmd =
         "{ \"command\": \"cache-write\", \"arguments\": \"" + file_txt + "\" }";
 
@@ -772,6 +781,7 @@ CommandTest::testWriteCommandSecurityWarning() {
     handlerType write_handler = std::bind(&writeHandler, hcptr_, ph::_1);
     file::PathChecker::enableEnforcement(false);
     string badpath = "/tmp/kea-host-cache-test.txt";
+    remove_on_exit_.push_back(badpath);
     string write_cmd =
         "{ \"command\": \"cache-write\", \"arguments\": \"" + badpath + "\" }";
 

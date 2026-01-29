@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
 #
@@ -17,7 +17,7 @@
 project(
     'kea',
     'cpp',
-    version: '3.1.3-git',
+    version: '3.1.5-git',
     meson_version: '>=1.1.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],
@@ -26,6 +26,8 @@ project(
         'b_lundef=false',  # required for clang++ when used with sanitizers and for BSD ld when linking with extern char **environ.
         'b_pch=false',
         'b_pie=true',
+        'debug=true',
+        'optimization=2',
         'install_umask=0027',
         'warning_level=2',
     ],
@@ -618,10 +620,9 @@ elif fs.is_dir('.git')
 else
     SOURCE_OF_INSTALLATION = 'tarball'
 endif
-conf_data.set(
-    'EXTENDED_VERSION',
-    f'"@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)"',
-)
+EXTENDED_VERSION = f'@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)'
+conf_data.set('EXTENDED_VERSION', f'"@EXTENDED_VERSION@"')
+conf_data.set('SOURCE_OF_INSTALLATION', f'"@SOURCE_OF_INSTALLATION@"')
 
 if PROJECT_VERSION.split('.')[1].to_int() % 2 == 0
     package_version_type = 'stable'
@@ -681,7 +682,7 @@ warnings = [
     '-Wnon-virtual-dtor',
     '-Wwrite-strings',
     '-Wno-missing-field-initializers',
-    #   '-Wshadow',
+    '-Wshadow',
 ]
 no_warnings = ['-Wno-sign-compare']
 # Clang++ specific settings.
@@ -690,6 +691,9 @@ if cxx_id == 'clang' and cpp_args_opt.length() == 0
     add_project_arguments('-Qunused-arguments', language: 'cpp')
     compile_args += '-Qunused-arguments'
     no_warnings += ['-Wno-unused-variable', '-Wno-unused-parameter']
+endif
+if cpp.has_argument('-Wdeprecated-literal-operator')
+    conf_data.set('WDEPRECATED_LITERAL_OPERATOR_FLAG_SUPPORTED', 'yes')
 endif
 if werror_opt
     warnings += no_warnings
@@ -736,10 +740,7 @@ report_conf_data.set('TOP_BUILD_DIR', TOP_BUILD_DIR)
 report_conf_data.set('PACKAGE_NAME', 'kea')
 report_conf_data.set('PACKAGE_VERSION', PROJECT_VERSION)
 report_conf_data.set('PACKAGE_VERSION_TYPE', package_version_type)
-report_conf_data.set(
-    'EXTENDED_VERSION',
-    f'@PROJECT_VERSION@ (@SOURCE_OF_INSTALLATION@)',
-)
+report_conf_data.set('EXTENDED_VERSION', EXTENDED_VERSION)
 report_conf_data.set('OS_TYPE', OS_TYPE)
 report_conf_data.set('PREFIX', PREFIX)
 report_conf_data.set('HOOKS_DIR', DEFAULT_HOOKS_PATH)

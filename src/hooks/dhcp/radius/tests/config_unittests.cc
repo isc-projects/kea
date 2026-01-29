@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -97,10 +97,12 @@ TEST_F(ConfigTest, defaults) {
     EXPECT_NO_THROW(impl_.init(config));
     string expected = "{ "
         "\"access\": {"
-        "   \"attributes\": [ ]"
+        "   \"attributes\": [ ],"
+        "   \"idle-timer-interval\": 0"
         "}, "
         "\"accounting\": {"
-        "   \"attributes\": [ ]"
+        "   \"attributes\": [ ],"
+        "   \"idle-timer-interval\": 0"
         "}, "
         "\"bindaddr\": \"*\", "
         "\"canonical-mac-address\": false, "
@@ -142,10 +144,12 @@ TEST_F(ConfigTest, global) {
     EXPECT_NO_THROW(impl_.init(config));
     string expected = "{ "
         "\"access\": {"
-        "   \"attributes\": [ ]"
+        "   \"attributes\": [ ],"
+        "   \"idle-timer-interval\": 0"
         "}, "
         "\"accounting\": {"
-        "   \"attributes\": [ ]"
+        "   \"attributes\": [ ],"
+        "   \"idle-timer-interval\": 0"
         "}, "
         "\"bindaddr\": \"127.0.0.1\", "
         "\"canonical-mac-address\": true, "
@@ -624,7 +628,9 @@ TEST_F(ConfigTest, services) {
         "   \"name\": \"User-Name\", "
         "   \"type\": 1, "
         "   \"data\": \"foobar\" "
-        "} ] }";
+        "} ],"
+        "\"idle-timer-interval\": 0"
+        "}";
     runToElementTest<RadiusService>(expected, *impl_.auth_);
 
     // Needs a server to be enabled.
@@ -665,6 +671,7 @@ TEST_F(ConfigTest, services) {
 
     expected = "{ "
         "\"attributes\": [ ], "
+        "\"idle-timer-interval\": 0,"
         "\"servers\": [ {"
         "   \"deadtime\": 0, "
         "   \"local-address\": \"127.0.0.1\", "
@@ -723,6 +730,7 @@ TEST_F(ConfigTest, services) {
 
     expected = "{ "
         "\"attributes\": [ ], "
+        "\"idle-timer-interval\": 0,"
         "\"servers\": [ {"
         "   \"deadtime\": 0, "
         "   \"local-address\": \"127.0.0.1\", "
@@ -901,7 +909,7 @@ TEST_F(ConfigTest, attribute) {
     attr->set("data", Element::create("foobar"));
     attr->set("type", Element::create(26));
     expected = "can't create Vendor-Specific attribute from [foobar]: ";
-    expected += "Can't decode vsa from text";
+    expected += "can't decode vsa from text";
     EXPECT_THROW_MSG(parser.parse(srv, attr), ConfigError, expected);
 
     // One of expr, data, raw
@@ -1348,6 +1356,7 @@ TEST_F(ConfigTest, peerUpdates) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.acct_);
     EXPECT_FALSE(impl_.acct_->peer_updates_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1357,6 +1366,7 @@ TEST_F(ConfigTest, peerUpdates) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.acct_);
     EXPECT_TRUE(impl_.acct_->peer_updates_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1413,11 +1423,13 @@ TEST_F(ConfigTest, maxPendingRequests) {
         }
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(10, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::createMap();
     EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
     EXPECT_EQ(0, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
@@ -1429,6 +1441,48 @@ TEST_F(ConfigTest, maxPendingRequests) {
     EXPECT_THROW_MSG(impl_.init(config), ConfigError,
                      "unknown service parameter: max-pending-request "
                      "(parsing access)");
+    EXPECT_NO_THROW_LOG(impl_.reset());
+}
+
+// Verify that idle-timer-interval can be configured and that proper errors
+// are reported in negative cases.
+TEST_F(ConfigTest, idleTimerInterval) {
+    ElementPtr config;
+
+    config = Element::fromJSON(R"({
+        "access": {
+            "idle-timer-interval": -1
+        }
+    })");
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError,
+                     "expected idle-timer-interval to be positive, but got "
+                     "-1 instead (parsing access)");
+    EXPECT_NO_THROW_LOG(impl_.reset());
+
+    config = Element::fromJSON(R"({
+        "accounting": {
+            "idle-timer-interval": false
+        }
+    })");
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError,
+                     "expected idle-timer-interval to be integer, but got "
+                     "boolean instead (parsing accounting)");
+    EXPECT_NO_THROW_LOG(impl_.reset());
+
+    config = Element::fromJSON(R"({
+        "access": {
+            "idle-timer-interval": 10
+        }
+    })");
+    EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
+    EXPECT_EQ(10, impl_.auth_->idle_timer_interval_);
+    EXPECT_NO_THROW_LOG(impl_.reset());
+
+    config = Element::createMap();
+    EXPECT_NO_THROW_LOG(impl_.init(config));
+    ASSERT_TRUE(impl_.auth_);
+    EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 }
 

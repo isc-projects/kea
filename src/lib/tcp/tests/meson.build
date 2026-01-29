@@ -4,9 +4,13 @@ endif
 
 kea_tcp_tests = executable(
     'kea-tcp-tests',
+    'common_client_test.cc',
+    'mt_client_unittests.cc',
     'mt_tcp_listener_mgr_unittests.cc',
     'run_unittests.cc',
+    'tcp_client_unittests.cc',
     'tcp_listener_unittests.cc',
+    'tls_client_unittests.cc',
     'tls_listener_unittests.cc',
     cpp_args: [f'-DTEST_CA_DIR="@TEST_CA_DIR@"'],
     dependencies: [GTEST_DEP, CRYPTO_DEP],

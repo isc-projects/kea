@@ -297,6 +297,22 @@ public:
     /// leases).
     void testLease4GetByClientIdFind2();
 
+    /// @brief Check that lease4-get-by-state can handle a situation when
+    /// the query is broken (required parameter is missing).
+    void testLease4GetByStateParams();
+
+    /// @brief Check that lease4-get-by-state works as expected (find no
+    /// lease).
+    void testLease4GetByStateFind0();
+
+    /// @brief Check that lease4-get-by-state works as expected (find two
+    /// leases).
+    void testLease4GetByStateFind2();
+
+    /// @brief Check that lease4-get-by-state works as expected (try all
+    /// combinaisons).
+    void testLease4GetByStateFindN();
+
     /// @brief Check that lease4-get-by-hostname can handle a situation when
     /// the query is broken (required parameter is missing).
     void testLease4GetByHostnameParams();
@@ -359,6 +375,9 @@ public:
     /// @brief Check that a lease4 can be updated. We're adding relay and
     /// remote ids.
     void testLease4UpdateExtendedInfo();
+
+    /// @brief Check that lease4-update prohibits registered state.
+    void testLease4UpdateRegisteredInvalid();
 
     /// @brief Check that lease4-del can handle a situation when the query is
     /// broken (some required parameters are missing).
@@ -461,7 +480,7 @@ public:
     /// @brief Check that lease4-write works as expected.
     void testLease4Write();
 
-    /// @brief Check that lease4-write works as expected when security 
+    /// @brief Check that lease4-write works as expected when security
     /// is disabled.
     void testLease4WriteSecurityWarn();
 };
@@ -1983,6 +2002,184 @@ void Lease4CmdsTest::testLease4GetByClientIdFind2() {
     checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
 }
 
+void Lease4CmdsTest::testLease4GetByStateParams() {
+    // No parameters whatsoever.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "    }\n"
+        "}";
+    string exp_rsp = "'state' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be a number or string.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": true\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter must be a number or a string";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be not empty.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": \"\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter is empty";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // state must be recognized.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": \"foobar\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'state' parameter value (foobar) is not recognized";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // subnet-id must be a number.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 1,\n"
+        "        \"subnet-id\": \"mynet\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnet-id' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFind0() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 3,\n"
+        "        \"subnet-id\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found with state released (3) in subnet 1.";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFind2() {
+    // Initialize lease manager (false = v4, true = add leases, true = declined)
+    initLeaseMgr(false, true, true);
+
+    // Get the lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found with state declined (1).";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr map = rsp->get("arguments");
+    ASSERT_TRUE(map);
+    ASSERT_EQ(Element::map, map->getType());
+    ConstElementPtr leases = map->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+    ASSERT_EQ(4, leases->size());
+
+    // Let's check if the response makes any sense.
+    ConstElementPtr lease = leases->get(0);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    lease = leases->get(2);
+    ASSERT_TRUE(lease);
+    checkLease4(lease, "192.0.3.1", 88, "08:08:08:08:08:08", false);
+}
+
+void Lease4CmdsTest::testLease4GetByStateFindN() {
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Create and add one lease per state from 0 to 3.
+    Lease4Collection leases;
+    leases.push_back(createLease4("192.0.2.1", 44, 0x08, 0x42));
+    leases.push_back(createLease4("192.0.2.2", 44, 0x09, 0x56));
+    leases.push_back(createLease4("192.0.3.1", 88, 0x08, 0x42));
+    leases.push_back(createLease4("192.0.3.2", 88, 0x09, 0x56));
+    for (unsigned i = 0; i < 4; ++i) {
+        leases[i]->state_ = i;
+        lmptr_->addLease(leases[i]);
+    }
+
+    // Structure detailing a test scenario.
+    struct Scenario {
+        string name_;                // name
+        string state_str_;           // state in the command
+        unsigned state_;             // state value
+        string state_rsp_;           // state name in the response
+    };
+
+    // Test scenarios with all possible valid states.
+    std::vector<Scenario> scenarios = {
+        { "0", "0", 0, "default" },
+        { "default", "\"default\"", 0, "default" },
+        { "assigned", "\"assigned\"", 0, "default" },
+        { "1", "1", 1, "declined" },
+        { "declined", "\"declined\"", 1, "declined" },
+        { "2", "2", 2, "expired-reclaimed" },
+        { "expired-reclaimed", "\"expired-reclaimed\"", 2, "expired-reclaimed" },
+        { "3", "3", 3, "released" },
+        { "released", "\"released\"", 3, "released" }
+    };
+
+    // Query prefix.
+    string prefix_cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-by-state\",\n"
+        "    \"arguments\": {"
+        "        \"state\": ";
+    // Query end.
+    string end_cmd = "    }\n}";
+    for (auto const& scenario : scenarios) {
+        SCOPED_TRACE("scenario for state: " + scenario.name_);
+        string cmd = prefix_cmd + scenario.state_str_ + end_cmd;
+        stringstream exp_rsp;
+        exp_rsp << "1 IPv4 lease(s) found with state "
+                << scenario.state_rsp_ << " (" << scenario.state_ << ").";
+        ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS,
+                                          exp_rsp.str());
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+        ConstElementPtr map = rsp->get("arguments");
+        ASSERT_TRUE(map);
+        ASSERT_EQ(Element::map, map->getType());
+        ConstElementPtr leases_rsp = map->get("leases");
+        ASSERT_TRUE(leases_rsp);
+        ASSERT_EQ(Element::list, leases_rsp->getType());
+        ASSERT_EQ(1, leases_rsp->size());
+
+        // Let's check if the response makes any sense.
+        ConstElementPtr lease = leases_rsp->get(0);
+        ASSERT_TRUE(lease);
+        EXPECT_EQ(lease->str(), leases[scenario.state_]->toElement()->str());
+    }
+}
+
 void Lease4CmdsTest::testLease4GetByHostnameParams() {
     // No parameters whatsoever.
     string cmd =
@@ -2643,6 +2840,42 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
                                           LeasePageSize(10));
     ASSERT_EQ(1, leases.size());
     EXPECT_EQ(*l, *leases[0]);
+}
+
+void Lease4CmdsTest::testLease4UpdateRegisteredInvalid() {
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    checkLease4Stats(0, 4, 0);
+    checkLease4Stats(44, 2, 0);
+    checkLease4Stats(88, 2, 0);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\",\n"
+        "        \"state\": 4\n"
+        "    }\n"
+        "}";
+
+    string exp_rsp = "DHCPv4 leases do not support registered state";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Stats should not have changed.
+    checkLease4Stats(0, 4, 0);
+    checkLease4Stats(44, 2, 0);
+    checkLease4Stats(88, 2, 0);
+
+    // Check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // State should not have changed.
+    EXPECT_EQ(l->state_, Lease::STATE_DEFAULT);
 }
 
 void Lease4CmdsTest::testLease4DelMissingParams() {
@@ -3822,6 +4055,15 @@ TEST_F(Lease4CmdsTest, lease4AddExtendedInfo) {
     testLease4AddExtendedInfo();
 }
 
+TEST_F(Lease4CmdsTest, lease4UpdateRegisteredInvalid) {
+    testLease4UpdateRegisteredInvalid();
+}
+
+TEST_F(Lease4CmdsTest, lease4UpdateRegisteredInvalidMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4UpdateRegisteredInvalid();
+}
+
 TEST_F(Lease4CmdsTest, lease4AddExtendedInfoMultiThreading) {
     MultiThreadingTest mt(true);
     testLease4AddExtendedInfo();
@@ -4068,6 +4310,42 @@ TEST_F(Lease4CmdsTest, lease4GetByClientIdFind2) {
 TEST_F(Lease4CmdsTest, lease4GetByClientIdFind2MultiThreading) {
     MultiThreadingTest mt(true);
     testLease4GetByClientIdFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateParams) {
+    testLease4GetByStateParams();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateParamsMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateParams();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind0) {
+    testLease4GetByStateFind0();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind0MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFind0();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind2) {
+    testLease4GetByStateFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFind2MultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFind2();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFindN) {
+    testLease4GetByStateFindN();
+}
+
+TEST_F(Lease4CmdsTest, lease4GetByStateFindNMultiThreading) {
+    MultiThreadingTest mt(true);
+    testLease4GetByStateFindN();
 }
 
 TEST_F(Lease4CmdsTest, lease4GetByHostnameParams) {

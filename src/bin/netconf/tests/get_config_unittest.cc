@@ -8,11 +8,13 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/parser_context.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/user_context_utils.h>
+#include <testutils/test_to_element.h>
 
 #include <fstream>
 #include <iostream>
@@ -25,6 +27,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::process;
 using namespace isc::test;
+using namespace isc::util::file;
 
 namespace {
 
@@ -122,10 +125,12 @@ public:
         srv_.reset(new NakedNetconfCfgMgr());
         // Create fresh context.
         resetConfiguration();
+        setSocketTestPath();
     }
 
     ~NetconfGetCfgTest() {
         resetConfiguration();
+        resetSocketPath();
     }
 
     /// @brief Parse and Execute configuration
@@ -161,20 +166,20 @@ public:
         }
 
         // get Netconf element
-        ConstElementPtr ca = json->get("Netconf");
-        if (!ca) {
+        ConstElementPtr netconf = json->get("Netconf");
+        if (!netconf) {
             ADD_FAILURE() << "cannot get Netconf for " << operation
                           << " on\n" << prettyPrint(json) << "\n";
             return (false);
         }
 
         // update hooks-libraries
-        pathReplacer(ca);
+        pathReplacer(netconf);
 
         // try NETCONF configure
         ConstElementPtr status;
         try {
-            status = srv_->parse(ca, true);
+            status = srv_->parse(netconf, true);
         } catch (exception const& ex) {
             ADD_FAILURE() << "configure for " << operation
                           << " failed with " << ex.what()
@@ -218,6 +223,21 @@ public:
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
     }
 
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
+    }
+
     unique_ptr<NakedNetconfCfgMgr> srv_;    ///< Netconf server under test
     int rcode_;                             ///< Return code from element parsing
     ConstElementPtr comment_;               ///< Reason for parse fail
@@ -258,14 +278,22 @@ TEST_F(NetconfGetCfgTest, simple) {
         ElementPtr jsonj;
         ASSERT_NO_THROW_LOG(jsonj = parseJSON(expected));
         // the generic JSON parser does not handle comments
-        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        ElementPtr const comments_moved(moveComments(jsonj));
+        {
+            SCOPED_TRACE("");
+            expectEqWithDiff(jsond, comments_moved);
+        }
         // replace the path by its actual value
-        ConstElementPtr ca;
-        ASSERT_NO_THROW_LOG(ca = jsonj->get("Netconf"));
-        ASSERT_TRUE(ca);
-        pathReplacer(ca);
+        ConstElementPtr netconf;
+        ASSERT_NO_THROW_LOG(netconf = jsonj->get("Netconf"));
+        ASSERT_TRUE(netconf);
+        pathReplacer(netconf);
         // check that unparsed and updated expected values match
-        EXPECT_TRUE(isEquivalent(unparsed, jsonj));
+        {
+            SCOPED_TRACE("");
+            expectEqWithDiff(unparsed, jsonj);
+        }
+
         // check on pretty prints too
         string current = prettyPrint(unparsed, 0, 4);
         string expected2 = prettyPrint(jsonj, 0, 4);
@@ -283,5 +311,8 @@ TEST_F(NetconfGetCfgTest, simple) {
     ElementPtr unparsed2;
     ASSERT_NO_THROW_LOG(unparsed2 = context2->toElement());
     ASSERT_TRUE(unparsed2);
-    EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
+    {
+        SCOPED_TRACE("");
+        expectEqWithDiff(unparsed, unparsed2);
+    }
 }

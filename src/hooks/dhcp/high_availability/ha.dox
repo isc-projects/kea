@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ implementation and, therefore, this documentation purposely avoids using
 the word "Failover" in the context of this library.
 
 The HA feature design can be found at
-<a href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/High-Availability-Design">Kea HA Design page</a>.
+<a href="https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/High-Availability-Design">Kea HA Design page</a>.
 
 @section haWhyHookLibrary Why Hook Library?
 

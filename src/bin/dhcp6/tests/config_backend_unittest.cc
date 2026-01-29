@@ -64,10 +64,10 @@ protected:
         db2_.reset(new TestConfigBackendDHCPv6(params));
 
         ConfigBackendDHCPv6Mgr::instance().registerBackendFactory("memfile",
-            [this](const DatabaseConnection::ParameterMap& params)
+            [this](const DatabaseConnection::ParameterMap& parameters)
                 -> ConfigBackendDHCPv6Ptr {
-                    auto host = params.find("host");
-                    if (host != params.end()) {
+                    auto host = parameters.find("host");
+                    if (host != parameters.end()) {
                         if (host->second == "db1") {
                             return (db1_);
                         } else if (host->second == "db2") {
@@ -76,7 +76,7 @@ protected:
                     }
 
                     // Apparently we're looking for a new one.
-                    return (TestConfigBackendDHCPv6Ptr(new TestConfigBackendDHCPv6(params)));
+                    return (TestConfigBackendDHCPv6Ptr(new TestConfigBackendDHCPv6(parameters)));
                 });
     }
 

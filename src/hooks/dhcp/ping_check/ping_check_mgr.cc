@@ -10,6 +10,7 @@
 #include <ping_check_log.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
 
@@ -18,6 +19,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 using namespace std::chrono;
@@ -203,6 +205,8 @@ PingCheckMgr::sendCompleted(const ICMPMsgPtr& echo, bool send_failed) {
     }
 
     try {
+        MultiThreadingLock lock(*mutex_);
+
         if (!echo) {
             isc_throw(BadValue, "PingCheckMgr::sendCompleted() - echo is empty");
         }
@@ -230,7 +234,7 @@ PingCheckMgr::sendCompleted(const ICMPMsgPtr& echo, bool send_failed) {
         }
 
         // Update the expiration timer if necessary.
-        setNextExpiration();
+        setNextExpirationInternal();
     } catch (const std::exception& ex) {
         LOG_ERROR(ping_check_logger, PING_CHECK_MGR_SEND_COMPLETED_ERROR)
             .arg(ex.what());
@@ -244,6 +248,8 @@ PingCheckMgr::replyReceived(const ICMPMsgPtr& reply) {
     }
 
     try {
+        MultiThreadingLock lock(*mutex_);
+
         if (!reply) {
             isc_throw(BadValue, "PingCheckMgr::replyReceived() - echo is empty");
         }
@@ -261,7 +267,7 @@ PingCheckMgr::replyReceived(const ICMPMsgPtr& reply) {
             return;
         }
 
-        setNextExpiration();
+        setNextExpirationInternal();
     } catch (const std::exception& ex) {
         LOG_ERROR(ping_check_logger, PING_CHECK_MGR_REPLY_RECEIVED_ERROR)
             .arg(ex.what());
@@ -501,6 +507,10 @@ PingCheckMgr::shouldPing(Lease4Ptr& lease, Pkt4Ptr& query,
                   PING_CHECK_DUPLICATE_CHECK)
                   .arg(lease->addr_)
                   .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-duplicate",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         return (CalloutHandle::CalloutNextStep::NEXT_STEP_DROP);
     }
 
@@ -710,6 +720,10 @@ PingCheckMgr::stop() {
 
     // Cancel the expiration timer.
     cancelExpirationTimer();
+
+    if (thread_pool_) {
+        thread_pool_->pause();
+    }
 
     if (channel_) {
         channel_->close();

@@ -2296,7 +2296,7 @@ TEST_F(SrvConfigTest, sanityChecksDdnsTtlParameters) {
     }
 
     {
-        SCOPED_TRACE("ddsn-ttl-percent and ddns-ttl-min < ddns-ttl-max");
+        SCOPED_TRACE("ddns-ttl-percent and ddns-ttl-min < ddns-ttl-max");
         SrvConfig conf(32);
         conf.addConfiguredGlobal("ddns-ttl-percent", Element::create(50.0));
         conf.addConfiguredGlobal("ddns-ttl-min", Element::create(25));

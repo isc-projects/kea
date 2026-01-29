@@ -87,6 +87,7 @@ foreach shtest : shtests
         workdir: current_build_dir,
         is_parallel: false,
         priority: -1,
+        suite: 'shell-tests',
     )
 endforeach
 

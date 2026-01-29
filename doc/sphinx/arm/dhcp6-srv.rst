@@ -3857,6 +3857,14 @@ qualifying suffix (if one is defined and needed).
    or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
    documentation for the configuration options.
 
+.. note::
+
+    Beginning with Kea 3.1.3, when sanitizing results in an empty string, the
+    FQDN option will be ignored as if the client had not sent it.  This can
+    happen if the value sent by the client contains only characters that are
+    deemed invalid by the expression in 'hostname-char-set' and
+    'hostname-char-replacement' is empty, "".
+
 .. _dhcp6-dhcp4o6-config:
 
 DHCPv4-over-DHCPv6: DHCPv6 Side
@@ -4766,7 +4774,7 @@ configure Kea to use reservations stored in MySQL or PostgreSQL.
 Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`hooks-host-cmds` provides detailed information.
 The `Kea wiki
-<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
+<https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
 operations.
 
@@ -5570,7 +5578,7 @@ useful as a way of making the clients known.
             { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E" },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet6": [
             {
@@ -5585,24 +5593,21 @@ useful as a way of making the clients known.
         ]
     }
 
-This concept can be extended further. A good real-life scenario might be a
-situation where some customers of an ISP have not paid their bills. A new class can be
-defined to use an alternative default DNS server that, instead of giving access
-to the Internet, redirects those customers to a captive portal urging them to bring
-their accounts up to date.
+This concept can be extended further by using reservations in conjunction with
+option class-tagging (see :ref:`option-class-tagging`).  A good real-life scenario
+might be a situation where some customers of an ISP have not paid their bills.
+These customers need to be assigned an alternate DNS server that, instead of giving
+access to the internet, redirects those  customers to a captive portal urging them
+to bring their accounts up to date.  Reservations can be used to assign a client
+to the "blocked" class that is subsequently used to determine the DNS server option
+value as shown below:
 
 ::
 
     "Dhcp6": {
         "client-classes": [
             {
-                "name": "blocked",
-                "option-data": [
-                    {
-                        "name": "dns-servers",
-                        "data": "2001:db8::2"
-                    }
-                ]
+                "name": "blocked"
             }
         ],
         "reservations": [
@@ -5612,7 +5617,7 @@ their accounts up to date.
               "client-classes": [ "blocked" ] },
             { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet6": [
             {
@@ -5625,6 +5630,13 @@ their accounts up to date.
                 ],
                 "option-data": [
                     {
+                        // DNS server for blocked customers.
+                        "client-classes": [ "blocked" ],
+                        "name": "dns-servers",
+                        "data": "2001:db8::2"
+                    },
+                    {
+                        // DNS server for customers in good standing.
                         "name": "dns-servers",
                         "data": "2001:db8::1"
                     }
@@ -6897,13 +6909,24 @@ as defined in `RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ i.e.
 when a valid ADDR-REG-INFORM (36) message is received a registered lease is
 added or updated and a ADDR-REG-REPLY (37) is sent back to the client.
 
+As of Kea 3.1.4, this feature can be enabled or disabled globally by
+setting the parameter, ``allow-address-registration`` to true or false
+respectively. It is enabled by default.
+
+`RFC 9686 <https://tools.ietf.org/html/rfc9686>`__ calls for servers
+that support address registration to return option 148 to clients that
+request it via the ORO option. As with any other standard option, this
+option must be specified in the server configuration in order to be
+sent to clients and that this behavior is independent of
+``allow-address-registration``.
+
 .. note::
 
    Even if they share a common lease database with leases in other states,
    registered leases are independent: when a lease in another state already
    exists for an address this address in considered as in use and can't be
    registered. Similarly a registered lease can't change to another
-   state, e.g. reclaimation of expired registered leases removes them.
+   state, e.g. reclamation of expired registered leases removes them.
 
 .. note::
 
@@ -6940,18 +6963,6 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | This statistic is expected to grow |
    |                                                   |                | rapidly.                           |
    +---------------------------------------------------+----------------+------------------------------------+
-   | pkt6-receive-drop                                 | integer        | Number of incoming packets that    |
-   |                                                   |                | were dropped. The exact reason for |
-   |                                                   |                | dropping packets is logged, but    |
-   |                                                   |                | the most common reasons may be     |
-   |                                                   |                | that an unacceptable or            |
-   |                                                   |                | not-supported packet type is       |
-   |                                                   |                | received, direct responses are     |
-   |                                                   |                | forbidden, the server ID sent by   |
-   |                                                   |                | the client does not match the      |
-   |                                                   |                | server's server ID, or the packet  |
-   |                                                   |                | is malformed.                      |
-   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-service-disabled                             | integer        | Number of incoming packets that    |
    |                                                   |                | were dropped when the DHCP service |
    |                                                   |                | was disabled.                      |
@@ -6965,6 +6976,49 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | network, faulty clients, faulty    |
    |                                                   |                | relay agents, or a bug in the      |
    |                                                   |                | server.                            |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-queue-full                                   | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped when the queue they   |
+   |                                                   |                | were to be parked was full.        |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-duplicate                                    | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped when they were        |
+   |                                                   |                | recognized as duplicate.           |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-rfc-violation                                | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped following protocol    |
+   |                                                   |                | specifications.                    |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-admin-filtered                               | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped because the server    |
+   |                                                   |                | was configured to do so, e.g. by   |
+   |                                                   |                | classifying the query into the     |
+   |                                                   |                | ``DROP`` class.                    |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-not-for-us                                   | integer        | Number of incoming packets that    |
+   |                                                   |                | was dropped because they had to be |
+   |                                                   |                | handled by another server.         |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-processing-failed                            | integer        | Number of incoming packets that    |
+   |                                                   |                | was dropped because an unexpected  |
+   |                                                   |                | error occurred during processing.  |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-limit-exceeded                               | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped by the ``limits``     |
+   |                                                   |                | hook library.                      |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-receive-drop                                 | integer        | Number of incoming packets that    |
+   |                                                   |                | were dropped. The exact reason for |
+   |                                                   |                | dropping packets is logged, but    |
+   |                                                   |                | the most common reasons may be     |
+   |                                                   |                | that an unacceptable or            |
+   |                                                   |                | not-supported packet type is       |
+   |                                                   |                | received, direct responses are     |
+   |                                                   |                | forbidden, the server ID sent by   |
+   |                                                   |                | the client does not match the      |
+   |                                                   |                | server's server ID, the packet     |
+   |                                                   |                | is malformed, or an unexpected     |
+   |                                                   |                | error occurred during processing.  |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-solicit-received                             | integer        | Number of SOLICIT packets          |
    |                                                   |                | received. This statistic is        |
@@ -7063,6 +7117,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | i.e. options and parameters other  |
    |                                                   |                | than addresses or prefixes.        |
    +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-lease-query-received                         | integer        | Number of LEASEQUERY packets       |
+   |                                                   |                | received by the leasequery hook    |
+   |                                                   |                | library. This statistic is         |
+   |                                                   |                | expected to grow.                  |
+   +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-dhcpv4-query-received                        | integer        | Number of DHCPv4-QUERY packets     |
    |                                                   |                | received. This statistic is        |
    |                                                   |                | expected to grow if there are      |
@@ -7146,6 +7205,11 @@ The DHCPv6 server supports the following statistics:
    |                                                   |                | INFORMATION-REQUEST is processed.  |
    |                                                   |                | There are certain cases where      |
    |                                                   |                | there is no response.              |
+   +---------------------------------------------------+----------------+------------------------------------+
+   | pkt6-lease-query-reply-sent                       | integer        | Number of LEASEQUERY-REPLY packets |
+   |                                                   |                | sent by the leasequery hook        |
+   |                                                   |                | library. This statistic is         |
+   |                                                   |                | expected to grow.                  |
    +---------------------------------------------------+----------------+------------------------------------+
    | pkt6-dhcpv4-response-sent                         | integer        | Number of DHCPv4-RESPONSE packets  |
    |                                                   |                | sent. This statistic is expected   |
@@ -7686,8 +7750,25 @@ The DHCPv6 server supports the following statistics:
 
 Dropped incoming packets can be counted in the ``pkt6-receive-drop`` and
 a second counter detailing the drop cause:
+
 - ``pkt6-service-disabled`` - DHCP service is disabled
+
 - ``pkt6-parse-failed`` - packet parsing raised a fatal error
+
+- ``pkt6-queue-full`` - to be parked packet in a queue which was full
+
+- ``pkt6-duplicate`` - duplicate of a being processed packet
+
+- ``pkt6-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
+
+- ``pkt6-admin-filtered`` - admin filtered out
+
+- ``pkt6-not-for-us`` - to be handled by another server
+
+- ``pkt6-processing-failed`` - got an unexpected error during processing
+
+- ``pkt6-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 .. note::
 

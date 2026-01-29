@@ -12,6 +12,7 @@
 #include <hooks/callout_manager.h>
 #include <hooks/library_manager_collection.h>
 #include <limits/limit_manager.h>
+#include <stats/stats_mgr.h>
 #include <testutils/multi_threading_utils.h>
 #include <testutils/gtest_utils.h>
 
@@ -25,6 +26,7 @@ namespace {
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::limits;
+using namespace isc::stats;
 using namespace isc::util;
 
 using isc::asiolink::IOAddress;
@@ -116,6 +118,16 @@ struct RateLimitFixture : ::testing::Test {
         handle.setArgument(isc::util::formatDhcpSpace<D>("query{}"), packet);
         handle.setArgument(isc::util::formatDhcpSpace<D>("subnet{}"), subnet);
 
+        // Initialize stats to 0.
+        StatsMgr& stats_mgr = StatsMgr::instance();
+        if (D == DhcpSpace::DHCPv4) {
+            stats_mgr.setValue("pkt4-limit-exceeded", static_cast<int64_t>(0));
+            stats_mgr.setValue("pkt4-receive-drop", static_cast<int64_t>(0));
+        } else {
+            stats_mgr.setValue("pkt6-limit-exceeded", static_cast<int64_t>(0));
+            stats_mgr.setValue("pkt6-receive-drop", static_cast<int64_t>(0));
+        }
+
         // Call the callouts of interest. The same handle is used for both which is not what
         // happens in real situations, but makes for a simplistic test.
         EXPECT_NO_THROW_LOG(LimitManager::instance().pkt_receive<D>(handle));
@@ -123,6 +135,29 @@ struct RateLimitFixture : ::testing::Test {
 
         // Expect the given status.
         EXPECT_EQ(handle.getStatus(), expected_status);
+
+        // Expect stats.
+        int64_t expected_stat = 0;
+        if (expected_status == CalloutHandle::NEXT_STEP_DROP) {
+            expected_stat = 1;
+        }
+        ObservationPtr limit_stat;
+        ObservationPtr drop_stat;
+        if (D == DhcpSpace::DHCPv4) {
+            limit_stat = stats_mgr.getObservation("pkt4-limit-exceeded");
+            ASSERT_TRUE(limit_stat);
+            EXPECT_EQ(expected_stat, limit_stat->getInteger().first);
+            drop_stat = stats_mgr.getObservation("pkt4-receive-drop");
+            ASSERT_TRUE(drop_stat);
+            EXPECT_EQ(expected_stat, drop_stat->getInteger().first);
+        } else {
+            limit_stat = stats_mgr.getObservation("pkt6-limit-exceeded");
+            ASSERT_TRUE(limit_stat);
+            EXPECT_EQ(expected_stat, limit_stat->getInteger().first);
+            drop_stat = stats_mgr.getObservation("pkt6-receive-drop");
+            ASSERT_TRUE(drop_stat);
+            EXPECT_EQ(expected_stat, drop_stat->getInteger().first);
+        }
     }
 
     /// @brief the body of most of the following tests

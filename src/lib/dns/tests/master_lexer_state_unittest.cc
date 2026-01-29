@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,8 +28,7 @@ protected:
                              s_string(State::getInstance(State::String)),
                              s_qstring(State::getInstance(State::QString)),
                              s_number(State::getInstance(State::Number)),
-                             options(MasterLexer::NONE),
-                             orig_options(options)
+                             orig_options(MasterLexer::NONE)
     {}
 
     // Specify INITIAL_WS as common initial options.
@@ -41,7 +40,7 @@ protected:
     const State& s_qstring;
     const State& s_number;
     std::stringstream ss;
-    MasterLexer::Options options, orig_options;
+    MasterLexer::Options orig_options;
 };
 
 // Common check for the end-of-file condition.

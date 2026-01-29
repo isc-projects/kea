@@ -80,14 +80,14 @@ Allocator::initAfterConfigure() {
 
 double
 Allocator::getOccupancyRate(const asiolink::IOAddress&,
-                            const ClientClasses&) const {
+                            const ClientClasses&) {
     return (0.);
 }
 
 double
 Allocator::getOccupancyRate(const asiolink::IOAddress&,
                             const uint8_t,
-                            const ClientClasses&) const {
+                            const ClientClasses&) {
     return (0.);
 }
 

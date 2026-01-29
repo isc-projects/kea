@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_error.h>
+#include <config/unix_command_config.h>
 #include <exceptions/exceptions.h>
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/netconf_log.h>
@@ -152,6 +153,10 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
         isc_throw(ConfigError, "invalid control socket url: "
                   << url.getErrorMessage() << " '" << url_str << "' ("
                   << getPosition("socket-url", ctrl_sock_config)  << ")");
+    }
+
+    if (type == CfgControlSocket::Type::UNIX) {
+        isc::config::UnixCommandConfig::validatePath(name);
     }
 
     // Create the control socket.

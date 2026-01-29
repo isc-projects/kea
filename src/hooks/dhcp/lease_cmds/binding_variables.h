@@ -298,7 +298,7 @@ public:
     /// results.  If the results of the evaluation are identical the the lease's
     /// existing binding-variables value, the lease is not altered. This allows
     /// a subsequent lease store update to only occur when needed.
-    /// @return True if the lease's user-context was udpated, false otherwise.
+    /// @return True if the lease's user-context was updated, false otherwise.
     bool evaluateVariables(dhcp::PktPtr query, dhcp::PktPtr response,
                            dhcp::LeasePtr lease);
 

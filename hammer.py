@@ -67,8 +67,9 @@ SYSTEMS = {
         '38': False,
         '39': False,
         '40': False,
-        '41': True,
-        '42': True,
+        '41': False,
+        '42': False,
+        '43': True,
     },
     'centos': {
         '7': False,
@@ -90,7 +91,7 @@ SYSTEMS = {
         '18.10': False,
         '19.04': False,
         '19.10': False,
-        '20.04': True,
+        '20.04': False,
         '20.10': False,
         '21.04': False,
         '22.04': True,
@@ -105,12 +106,11 @@ SYSTEMS = {
         '13': True,
     },
     'freebsd': {
-        '11.2': False,
-        '11.4': False,
-        '12.0': False,
-        '12.1': False,
-        '13.0': False,
-        '14.0': True,
+        '11': False,
+        '12': False,
+        '13': False,
+        '14': False,
+        '15': True,
     },
     'alpine': {
         '3.10': False,
@@ -122,10 +122,11 @@ SYSTEMS = {
         '3.16': False,
         '3.17': False,
         '3.18': False,
-        '3.19': True,
-        '3.20': True,
+        '3.19': False,
+        '3.20': False,
         '3.21': True,
         '3.22': True,
+        '3.23': True,
     },
     'arch': {},
 }
@@ -470,7 +471,11 @@ def replace_in_file(file_name, pattern, replacement):
         file.write(content)
 
 
-def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: str = None):
+def install_meson(python_v: str = 'python3',
+                  mode: str = 'pyinstaller',
+                  only: str = None,
+                  system: str = None,
+                  revision: str = None):
     """ Install meson and ninja with pyinstaller or venv.
 
     Pyinstaller is needed as opposed to venv to overcome package building errors such as:
@@ -482,8 +487,12 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: st
     :type mode: str
     :param only: what to install: meson or ninja. None (default) means both.
     :type only: str
+    :param system: system name (e.g., 'ubuntu')
+    :type system: str
+    :param revision: system revision (e.g., '20.04')
+    :type revision: str
     """
-    meson_version = '1.8.1'
+    meson_version = '1.10.0'
 
     exit_code = execute('meson --version', quiet=True, raise_error=False)
     if exit_code == 0:
@@ -491,6 +500,9 @@ def install_meson(python_v: str = 'python3', mode: str = 'pyinstaller', only: st
     execute('sudo rm -fr .meson-src')
     execute(f'sudo {python_v} -m venv /usr/local/share/.venv')
     execute('sudo /usr/local/share/.venv/bin/pip install --upgrade pip setuptools wheel')
+    # Install backports.tarfile for Ubuntu 20.04 (Python 3.8 compatibility)
+    if system == 'ubuntu' and revision == '20.04':
+        execute('sudo /usr/local/share/.venv/bin/pip install backports.tarfile')
     if only is None or only == 'ninja':
         execute('sudo /usr/local/share/.venv/bin/pip install ninja')
     if mode == 'pyinstaller':
@@ -627,6 +639,9 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         log.info('all packages already installed')
         return
 
+    # Second cmd attempt.
+    cmd2 = None
+
     if system in ['centos', 'fedora', 'rhel', 'rocky']:
         if system in ['centos', 'rhel'] and revision == '7':
             execute('sudo yum install -y dnf')
@@ -639,6 +654,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
         cmd = 'sudo pkg clean --all --yes; sudo pkg install --no-repo-update --yes'
+        cmd2 = 'sudo pkg clean --all --yes; sudo pkg install --yes'  # with repo update
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
@@ -648,24 +664,47 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
 
     if one_package_at_a_time:
         for p in pkgs:
-            execute(
+            exit_code, _ = execute(
                 f"{cmd} {p}",
+                timeout=timeout,
+                env=env,
+                check_times=check_times,
+                capture=True,
+                raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+                attempts=3,
+                sleep_time_after_attempt=10,
+            )
+            if exit_code != 0 and cmd2 is not None:
+                execute(
+                    f"{cmd2} {p}",
+                    timeout=timeout,
+                    env=env,
+                    check_times=check_times,
+                    attempts=3,
+                    sleep_time_after_attempt=10,
+                )
+
+    else:
+        pkgs = ' '.join(pkgs)
+        exit_code, _ = execute(
+            f"{cmd} {pkgs}",
+            timeout=timeout,
+            env=env,
+            check_times=check_times,
+            capture=True,
+            raise_error=(cmd2 is None),  # if there is no cmd2 to run afterwards, treat failure as error
+            attempts=3,
+            sleep_time_after_attempt=10,
+        )
+        if exit_code != 0 and cmd2 is not None:
+            execute(
+                f"{cmd2} {pkgs}",
                 timeout=timeout,
                 env=env,
                 check_times=check_times,
                 attempts=3,
                 sleep_time_after_attempt=10,
             )
-    else:
-        pkgs = ' '.join(pkgs)
-        execute(
-            f"{cmd} {pkgs}",
-            timeout=timeout,
-            env=env,
-            check_times=check_times,
-            attempts=3,
-            sleep_time_after_attempt=10,
-        )
 
 
 def get_image_template(key, variant):
@@ -1787,11 +1826,15 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     packages = []
 
     # Common packages
+    packages.append('pkgconf')
     if 'ccache' in features:
         packages.append('ccache')
 
     if 'docs' in features:
-        packages.extend(['bison', 'flex'])
+        packages.extend(['bison', 'doxygen', 'flex'])
+
+    if 'unittest' in features:
+        packages.append('valgrind')
 
     # prepare fedora
     if system == 'fedora':
@@ -1823,6 +1866,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
         if 'unittest' in features:
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
+
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
 
         install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
@@ -1876,11 +1922,16 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, env=env, check_times=check_times)
 
     # prepare rhel
     elif system == 'rhel':
         packages.extend(['boost-devel', 'gcc-c++', 'log4cplus-devel', 'openssl-devel'])
+        if int(revision) < 9:
+            packages.remove('doxygen')
 
         # RHEL tends to stay behind on Python versions. Install the latest Python alongside the one running this
         # hammer.py.
@@ -1928,6 +1979,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
     # prepare rocky
@@ -1961,6 +2015,9 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('wget')
             deferred_functions.append(_install_gtest_sources)
 
+        if 'sanitizers' in features:
+            packages.extend(['compiler-rt', 'llvm', 'libasan', 'libtsan', 'libubsan'])
+
         execute('sudo dnf config-manager --set-enabled crb')
         execute('sudo dnf config-manager --set-enabled devel')
         install_pkgs(packages, env=env, timeout=120, check_times=check_times)
@@ -1982,7 +2039,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 'python3-venv',
             ]
         )
-        deferred_functions.append(install_meson)
+        deferred_functions.append(lambda: install_meson(system=system, revision=revision))
 
         if 'coverage' in features:
             packages.extend(['gcovr', 'lcov'])
@@ -2043,14 +2100,14 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['gcovr', 'lcov'])
 
         if 'docs' in features:
-            packages.extend(['doxygen', 'graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
+            packages.extend(['graphviz', 'python3-sphinx', 'python3-sphinx-rtd-theme', 'tex-gyre',
                              'texlive', 'texlive-latex-extra'])
 
         if 'unittest' in features:
             packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev', 'pkg-config'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
@@ -2077,11 +2134,8 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
     # prepare freebsd
     elif system == 'freebsd':
-        packages.extend(['boost-libs', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
+        packages.extend(['bash', 'boost-libs', 'botan3', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
         deferred_functions.append(lambda: install_meson(only='meson'))
-
-        if revision.startswith('14'):
-            packages.extend(['bash', 'pkgconf'])
 
         if 'docs' in features:
             # Get the python version from the remote repositories.
@@ -2147,7 +2201,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     elif system == 'alpine':
         if 0 != execute("grep -E '^ulimit -s unlimited$' ~/.profile", quiet=True, raise_error=False):
             execute("echo 'ulimit -s unlimited' >> ~/.profile")
-        packages.extend(['boost-libs', 'boost-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
+        packages.extend(['boost-libs', 'boost-dev', 'botan3-dev', 'build-base', 'gcompat', 'gcc', 'g++', 'gzip',
                          'log4cplus', 'log4cplus-dev', 'musl-dev', 'openssl-dev', 'procps', 'python3-dev',
                          'tar'])
         deferred_functions.append(install_meson)
@@ -2247,7 +2301,7 @@ def _prepare_ccache_if_needed(system, ccache_dir, env):
     return env
 
 
-def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir):
+def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir, jobs):
     if tarball_paths is not None:
         # unpack tarball with sources
         execute('sudo rm -rf kea-src')
@@ -2290,7 +2344,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, c
     if 'distcheck' in features:
         cmd = 'meson dist -C build'
     else:
-        cmd = 'meson compile -C build'
+        cmd = f'meson compile -C build -j {jobs}'
     execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
@@ -2661,7 +2715,7 @@ def _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_p
 
 
 def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_run, ccache_dir, pkg_version,
-                pkg_isc_version, repository_url, pkgs_dir):
+                pkg_isc_version, repository_url, pkgs_dir, jobs):
     """Prepare local system for Kea development based on requested features.
 
     If tarball_paths is provided then instead of Kea sources from current directory
@@ -2679,7 +2733,9 @@ def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_ru
         _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
                           ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir)
     else:
-        _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir)
+        _build_binaries_and_run_ut(
+            system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir, jobs
+        )
 
     execute('sudo df -h', dry_run=dry_run)
 
@@ -2837,7 +2893,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 DEFAULT_FEATURES = ['docs', 'install', 'perfdhcp', 'unittest']
 ALL_FEATURES = ['all', 'ccache', 'coverage', 'distcheck', 'docs', 'forge', 'gssapi',
                 'install', 'mysql', 'native-pkg', 'netconf', 'perfdhcp',
-                'pgsql', 'shell', 'tls', 'unittest']
+                'pgsql', 'sanitizers', 'shell', 'tls', 'unittest']
 
 
 def parse_args():
@@ -2927,7 +2983,7 @@ def parse_args():
                                    help="List system supported by Hammer for doing Kea development.")
     parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
                                    parents=[parent_parser1, parent_parser2])
-    parser.add_argument('-j', '--jobs', default=0,
+    parser.add_argument('-j', '--jobs', default=os.cpu_count(), type=int,
                         help='Number of processes used in compilation. Override make -j default value. Obsolete.')
     parser.add_argument('--kea-packaging-path', metavar='KEA_PACKAGING_PATH',
                         help='Path to the kea-packaging directory when building packages.')
@@ -3250,7 +3306,7 @@ def build_cmd(args):
 
         tarball_paths = None if args.from_tarballs is None else list(map(pathlib.Path.resolve, args.from_tarballs))
         build_local(features, tarball_paths, args.kea_packaging_path, args.check_times, args.dry_run,
-                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir)
+                    args.ccache_dir, args.pkg_version, args.pkg_isc_version, args.repository_url, pkgs_dir, args.jobs)
         # NOTE: upload the locally build packages and leave; the rest of the code is vagrant specific
         if args.upload:
             upload_to_repo(args, pkgs_dir)
@@ -3300,7 +3356,7 @@ def build_cmd(args):
         ccache_dir = _prepare_ccache_dir(args.ccache_dir, args.system, args.revision)
         tarball_paths = list(map(pathlib.Path.resolve, args.from_tarballs))
         result = build_in_vagrant(provider, system, revision, features, args.leave_system, tarball_paths,
-                                  args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs),
+                                  args.dry_run, args.quiet, args.clean_start, args.check_times, args.jobs,
                                   ccache_dir, args.pkg_version, args.pkg_isc_version, args.upload, args.repository_url)
         results[(provider, system, revision)] = result
 
@@ -3357,6 +3413,7 @@ def main():
         prepare_system_cmd(args)
 
     elif args.command == "build":
+        os.environ['MESON_NUM_PROCESSES'] = str(args.jobs)
         build_cmd(args)
 
     elif args.command == "ssh":

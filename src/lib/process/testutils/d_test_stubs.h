@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -681,12 +681,10 @@ class ConfigParseTest : public ::testing::Test {
 public:
 
     /// @brief Constructor
-    ConfigParseTest(){
-    }
+    ConfigParseTest() = default;
 
     /// @brief Destructor
-    ~ConfigParseTest() {
-    }
+    virtual ~ConfigParseTest() = default;
 
     /// @brief Converts a given JSON string into an Element set and stores the
     /// result the member variable, config_set_.

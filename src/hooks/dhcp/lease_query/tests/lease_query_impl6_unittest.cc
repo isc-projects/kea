@@ -18,8 +18,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_impl6.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <lease_query_impl6.h>
 #include <test_lease_mgr.h>
 
 #include <gtest/gtest.h>
@@ -33,6 +34,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::lease_query;
+using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
 
@@ -583,44 +585,75 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
         {
             "requesters list is empty",
             Element::fromJSON("{ \"requesters\" : [] }"),
-            "'requesters' address list cannot be empty"
+            "'requesters' list cannot be empty"
         },
         {
             "requesters entry not an address",
             Element::fromJSON("{ \"requesters\" : [ \"foo\" ] }"),
-            "'requesters' entry 'foo' is invalid: Failed to convert"
-            " string to address 'foo': Invalid argument"
+            "'requesters' address entry 'foo' is invalid:"
+            " Failed to convert string"
+            " to address 'foo': Invalid argument"
         },
         {
             "requesters entry not a v6 address",
             Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\" ] }"),
-            "'requesters' entry '192.0.2.1' is invalid: not a IPv6 address"
+            "'requesters' address entry '192.0.2.1' is invalid:"
+            " not a IPv6 address"
         },
         {
             "requesters entry is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\", \"2001:db8:1::\" ] }"),
-            "'requesters' entry '2001:db8:1::' is invalid: address is already in the list"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\","
+                              " \"2001:db8:1::\" ] }"),
+            "'requesters' address entry '2001:db8:1::' is invalid:"
+            " address is already in the list"
+        },
+        {
+            "requesters CIDR entry address is invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::x/64\" ] }"),
+            "'requesters' CIDR entry '2001:db8:1::x/64' is invalid:"
+            " Failed to convert string to address '2001:db8:1::x':"
+            " Invalid argument"
+
+        },
+        {
+            "requesters CIDR entry length is invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/777\" ] }"),
+            "'requesters' CIDR entry '2001:db8:1::/777' is invalid:"
+            " prefix length 777 is out of range"
+        },
+        {
+            "requesters CIDR is a duplicate",
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::/64\","
+                              " \"2001:db8:1::/64\"] }"),
+            "'requesters' CIDR entry '2001:db8:1::/64' is invalid:"
+            " entry already exists"
         },
         {
             "prefix_lengths not a list",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": 77 }"),
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": 77 }"),
             "'prefix-lengths' is not a list"
         },
         {
             "prefix_lengths entry is not an int",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ \"boo\" ] }"),
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ \"boo\" ] }"),
             "'prefix-lengths' entry '\"boo\"' is invalid: must be an integer"
         },
         {
             "prefix_lengths entry is 0",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ 0 ] }"),
-            "'prefix-lengths' entry '0' is invalid: must be greater than 0 and less than or equal to 128"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ 0 ] }"),
+            "'prefix-lengths' entry '0' is invalid: must be greater"
+            " than 0 and less than or equal to 128"
 
         },
         {
             "prefix_lengths entry is 129",
-            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ], \"prefix-lengths\": [ 4, 129 ] }"),
-            "'prefix-lengths' entry '129' is invalid: must be greater than 0 and less than or equal to 128"
+            Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ],"
+                              " \"prefix-lengths\": [ 4, 129 ] }"),
+            "'prefix-lengths' entry '129' is invalid:"
+            " must be greater than 0 and less than or equal to 128"
 
         }
     };
@@ -637,7 +670,8 @@ TEST(LeaseQueryImpl6Test, invalidConfig6) {
 // can be validated.
 TEST(LeaseQueryImpl6Test, validConfig6) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"2001:db8:1::1\", \"2001:db8:1::3\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"2001:db8:1::1\","
+                             " \"2001:db8:1::3\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
 
@@ -671,7 +705,8 @@ class MemfileLeaseQueryImpl6ProcessTest : public
 // - No D6O_LQ_QUERY option
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"2001:db8:2::1\", \"2001:db8:3::1\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"2001:db8:2::1\","
+                             " \"2001:db8:3::1\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
     LeaseQueryImpl6Ptr impl;
@@ -679,44 +714,80 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidQuery) {
 
     // A v4 packet should get tossed.
     Pkt4Ptr pkt4(new Pkt4(DHCPLEASEQUERY, 0));
-    ASSERT_THROW_MSG(impl->processQuery(pkt4), BadValue,
+    bool invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(pkt4, invalid), BadValue,
                      "LeaseQueryImpl6 query is not DHCPv6 packet");
+    EXPECT_FALSE(invalid);
+
+    // Set the pkt6-rfc-violation stat to 0.
+    StatsMgr::instance().setValue("pkt6-rfc-violation", static_cast<int64_t>(0));
 
     // No client-id option should fail.
     Pkt6Ptr lq(new Pkt6(DHCPV6_LEASEQUERY_REPLY, 123));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY must supply a D6O_CLIENTID");
+    EXPECT_TRUE(invalid);
+
+    // Check the pkt6-rfc-violation stat which was bumped by one.
+    ObservationPtr stat_rv = StatsMgr::instance().getObservation("pkt6-rfc-violation");
+    ASSERT_TRUE(stat_rv);
+    EXPECT_EQ(1, stat_rv->getInteger().first);
+
+    // Set the pkt6-not-for-us stat to 0.
+    StatsMgr::instance().setValue("pkt6-not-for-us", static_cast<int64_t>(0));
 
     // Add a client-id option.
     lq->addOption(makeClientIdOption(std::vector<uint8_t>{ 01, 02, 03, 04, 05, 06}));
 
-    // Add an a non-matching server id.
+    // Add a non-matching server id.
     lq->addOption(makeServerIdOption(std::vector<uint8_t>{ 10, 11, 12, 13, 14, 15, 16 }));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting DHCPV6_LEASEQUERY from: ::,"
                      " unknown server-id: type=00002, len=00007: 0a:0b:0c:0d:0e:0f:10");
+    EXPECT_TRUE(invalid);
+
+    // Check the pkt6-not-for-us stat which was bumped by one.
+    ObservationPtr stat_nfu = StatsMgr::instance().getObservation("pkt6-not-for-us");
+    ASSERT_TRUE(stat_nfu);
+    EXPECT_EQ(1, stat_nfu->getInteger().first);
 
     // Add a matching server id.
     lq->delOption(D6O_SERVERID);
     lq->addOption(makeServerIdOption(server_id_->getDuid()));
 
     // Source address cannot be ::.
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY source address cannot be ::");
+    EXPECT_TRUE(invalid);
+
+    // Set the pkt6-admin-filtered stat to 0.
+    StatsMgr::instance().setValue("pkt6-admin-filtered", static_cast<int64_t>(0));
 
     // Set source address to an unknown requester address.
     lq->setRemoteAddr(IOAddress("de:ad:be:ef::"));
 
     // An unknown requester should fail.
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting DHCPV6_LEASEQUERY from unauthorized requester: de:ad:be:ef::");
+    EXPECT_TRUE(invalid);
+
+    // Check the pkt6-admin-filtered stat which was bumped by one.
+    ObservationPtr stat_af = StatsMgr::instance().getObservation("pkt6-admin-filtered");
+    ASSERT_TRUE(stat_af);
+    EXPECT_EQ(1, stat_af->getInteger().first);
 
     // Set source address to a known requester address.
     lq->setRemoteAddr(IOAddress("2001:db8:2::1"));
 
     // A query without a D6O_LQ_QUERY option should fail.
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "DHCPV6_LEASEQUERY must supply a D6O_LQ_QUERY option");
+    EXPECT_TRUE(invalid);
 }
 
 // Verifies the operation of LeaseQueryImpl6::initReply().
@@ -1397,7 +1468,9 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, processQueryInvalidWithStatus) {
         Pkt6Ptr lq = makeLeaseQuery(scenario.qry_type_, scenario.qry_iaaddr_,
                                     scenario.qry_cid_);
         // Process the query.
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+        bool invalid = false;
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+        EXPECT_FALSE(invalid);
 
         // We should have generated a LEASE_QUERY_REPLY with a
         // status option containing the expected status.
@@ -1496,7 +1569,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressNoActiveLe
         Pkt6Ptr lq = makeQueryByIpAddress(scenario.qry_iaaddr_);
 
         // Process the query.
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+        bool invalid = false;
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+        EXPECT_FALSE(invalid);
 
         // We should have generated a DHCPV6_LEASEQUERY_REPLY with a
         // status option containing the expected status.
@@ -1548,7 +1623,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressActiveLeas
     Pkt6Ptr lq = makeQueryByIpAddress(active_lease->addr_);
 
     // Process the query.
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+    bool invalid = false;
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+    EXPECT_FALSE(invalid);
 
     // We should have generated a DHCPV6_LEASEQUERY_REPLY with a
     // status option containing the successful status.
@@ -1631,7 +1708,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdNoActiveLea
     Pkt6Ptr lq = makeQueryByClientId(cid1_);
 
     // Process the query.
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+    bool invalid = false;
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+    EXPECT_FALSE(invalid);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -1677,7 +1756,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
     Pkt6Ptr lq = makeQueryByClientId(cid1_);
 
     // Process the query.
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+    bool invalid = false;
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+    EXPECT_FALSE(invalid);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -1750,7 +1831,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
     Pkt6Ptr lq = makeQueryByClientId(cid1_);
 
     // Process the query.
-    ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+    bool invalid = false;
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+    EXPECT_FALSE(invalid);
 
     // We should have generated a LEASE_QUERY_REPLY with a
     // status option containing the expected status.
@@ -2010,7 +2093,9 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpaddressPDLeases()
         }
 
         // Process the query.
-        ASSERT_NO_THROW_LOG(impl->processQuery(lq));
+        bool invalid = false;
+        ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+        EXPECT_FALSE(invalid);
 
         // We should have generated a LEASE_QUERY_REPLY with a
         // status option containing the expected status.
@@ -2050,7 +2135,7 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, queryByIpaddressPDLeases) {
 // permutations.
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, populatePrefixLengthList) {
 
-    // Struct descibing each test scenario.
+    // Struct describing each test scenario.
     struct Scenario {
         std::string desc_;            // text description
         std::string cfg_prefixes_;    // RHV for "prefix-length-list" if not empty

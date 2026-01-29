@@ -1,10 +1,11 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <cctype>
 #include <cstddef>
@@ -66,6 +67,11 @@ using namespace isc::util::file;
 void
 version() {
     cout << VERSION << "\n";
+}
+
+void
+extended_version() {
+    cout << VERSION << " (" << SOURCE_OF_INSTALLATION << ")\n";
 }
 
 /// \brief Print Usage
@@ -439,7 +445,7 @@ errorDuplicates(MessageReader& reader) {
 int
 main(int argc, char* argv[]) {
 
-    const char* soptions = "hvpd:";               // Short options
+    const char* soptions = "hvVpd:";  // Short options
 
     optind = 1;             // Ensure we start a new scan
     int  opt;               // Value of the option
@@ -458,6 +464,10 @@ main(int argc, char* argv[]) {
 
             case 'v':
                 version();
+                return (0);
+
+            case 'V':
+                extended_version();
                 return (0);
 
             default:

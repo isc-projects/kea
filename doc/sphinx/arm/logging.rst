@@ -188,7 +188,7 @@ libraries), or hook libraries (open source or subscriber).
    | ``kea-dhcp4.auth``,              |                                       | packets when using basic       |
    | ``kea-dhcp6.auth``               |                                       | authentication.                |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-dhcp4.bad-packets``,       | core                                  | Used by the DHCP  servers for  |
+   | ``kea-dhcp4.bad-packets``,       | core                                  | Used by the DHCP servers for   |
    | ``kea-dhcp6.bad-packets``        |                                       | logging inbound client packets |
    |                                  |                                       | that were dropped or to which  |
    |                                  |                                       | the server responded with a    |
@@ -229,7 +229,7 @@ libraries), or hook libraries (open source or subscriber).
    | ``kea-dhcp6.ddns-tuning-hooks``  | open-source hook library              | the operation of the DDNS      |
    |                                  |                                       | Tuning hook library.           |
    +----------------------------------+---------------------------------------+--------------------------------+
-   | ``kea-dhcp4.ddns``,              | core                                  | Used by the DHCP  server to log|
+   | ``kea-dhcp4.ddns``,              | core                                  | Used by the DHCP server to log |
    | ``kea-dhcp6.ddns``               |                                       | messages related to Client FQDN|
    |                                  |                                       | and Hostname option processing.|
    |                                  |                                       | It also includes log messages  |

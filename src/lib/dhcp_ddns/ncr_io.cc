@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -125,7 +125,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     if (amListening()) {
         try {
             receiveNext();
-        } catch (const isc::Exception& ex) {
+        } catch (const isc::Exception& isc_ex) {
             // It is possible though unlikely, for doReceive to fail without
             // scheduling the read. While, unlikely, it does mean the callback
             // will not get called with a failure. A throw here would surface
@@ -133,7 +133,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             // close the window by invoking the application handler with
             // a failed result, and let the application layer sort it out.
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_RECV_NEXT_ERROR)
-                      .arg(ex.what());
+                      .arg(isc_ex.what());
 
             // Call the registered application layer handler.
             // Surround the invocation with a try-catch. The invoked handler is
@@ -143,10 +143,10 @@ NameChangeListener::invokeRecvHandler(const Result result,
             try {
                 io_pending_ = false;
                 (*recv_handler_)(ERROR, empty);
-            } catch (const std::exception& ex) {
+            } catch (const std::exception& std_ex) {
                 LOG_ERROR(dhcp_ddns_logger,
                           DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
-                          .arg(ex.what());
+                          .arg(std_ex.what());
             }
         }
     }
@@ -337,7 +337,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
         if (amSending()) {
             sendNext();
         }
-    } catch (const isc::Exception& ex) {
+    } catch (const isc::Exception& isc_ex) {
         // It is possible though unlikely, for sendNext to fail without
         // scheduling the send. While, unlikely, it does mean the callback
         // will not get called with a failure. A throw here would surface
@@ -345,7 +345,7 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
         // close the window by invoking the application handler with
         // a failed result, and let the application layer sort it out.
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_SEND_NEXT_ERROR)
-                  .arg(ex.what());
+                  .arg(isc_ex.what());
 
         // Invoke the completion handler passing in failed result.
         // Surround the invocation with a try-catch. The invoked handler is
@@ -353,9 +353,9 @@ NameChangeSender::invokeSendHandlerInternal(const NameChangeSender::Result resul
         // report it.
         try {
             (*send_handler_)(ERROR, ncr_to_send_);
-        } catch (const std::exception& ex) {
+        } catch (const std::exception& std_ex) {
             LOG_ERROR(dhcp_ddns_logger,
-                      DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(ex.what());
+                      DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(std_ex.what());
         }
     }
 }

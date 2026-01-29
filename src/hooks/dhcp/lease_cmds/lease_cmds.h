@@ -322,10 +322,30 @@ public:
     int
     leaseGetByDuidHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-get-by-state and lease6-get-by-state commands handler
+    ///
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases with
+    /// a particular state in an optional subnet.
+    ///
+    /// Example command for v4:
+    /// {
+    ///     "command": "lease4-get-by-hostname",
+    ///     "arguments": {
+    ///         "state": "declined"
+    ///     }
+    /// }
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByStateHandler(hooks::CalloutHandle& handle);
+
     /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
     /// handler
     ///
-    /// These commands attempt to retrieve all IPv4 or Ipv6 leases with
+    /// These commands attempt to retrieve all IPv4 or IPv6 leases with
     /// a particular hostname.
     ///
     /// Example command for v4:

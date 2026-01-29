@@ -143,6 +143,13 @@ This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
 client and transaction identification information.
 
+% DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY %1: sanitizing client's FQDN option '%2' yielded an empty string
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(81) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
+
 % DHCP4_CLIENT_HOSTNAME_DATA %1: client sent Hostname option: %2
 Logged at debug log level 55.
 This debug message includes the detailed information extracted from the
@@ -163,6 +170,13 @@ Logged at debug log level 50.
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
+
+% DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY %1: sanitizing client's Hostname option '%2' yielded an empty string
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+hostname option(12) sent by the client is an empty string. When this occurs
+the server will ignore the hostname option. The arguments include the
+client and the hostname option it sent.
 
 % DHCP4_CLIENT_NAME_PROC_FAIL %1: failed to process the fqdn or hostname sent by a client: %2
 Logged at debug log level 55.
@@ -721,7 +735,7 @@ Logged at debug log level 15.
 This debug message is emitted when an incoming packet was classified
 into the special class 'DROP' and dropped. The packet details are displayed.
 
-% DHCP4_PACKET_DROP_0011 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+% DHCP4_PACKET_DROP_0011 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same client id option by dropping new packets until
@@ -729,7 +743,7 @@ processing is finished.
 Packet details and thread identifiers are included for both packets in
 this warning message.
 
-% DHCP4_PACKET_DROP_0012 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+% DHCP4_PACKET_DROP_0012 dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
 a client using the same hardware address by dropping new packets until

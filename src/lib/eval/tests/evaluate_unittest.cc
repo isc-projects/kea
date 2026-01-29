@@ -568,7 +568,7 @@ TEST_F(ExpressionsTest, label) {
     ASSERT_NO_THROW(result = evaluateString(e_, *pkt6_));
     EXPECT_EQ("foo", result);
 
-    // The branch is to the first occurence (of course the parser
+    // The branch is to the first occurrence (of course the parser
     // produces only one).
     e_.push_back(label);
     TokenPtr bar;
@@ -589,7 +589,7 @@ TEST_F(ExpressionsTest, popOrBranchTrue) {
     ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
     TokenPtr left;
     TokenPtr right;
-    bool result_(false);
+    bool result(false);
 
     // False or false == false.
     ASSERT_NO_THROW(left.reset(new TokenString("false")));
@@ -598,8 +598,8 @@ TEST_F(ExpressionsTest, popOrBranchTrue) {
     e_.push_back(branch);
     e_.push_back(right);
     e_.push_back(label);
-    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
-    EXPECT_FALSE(result_);
+    ASSERT_NO_THROW(result = evaluateBool(e_, *pkt4_));
+    EXPECT_FALSE(result);
     e_.clear();
 
     // False or true == true.
@@ -634,7 +634,7 @@ TEST_F(ExpressionsTest, popOrBranchFalse) {
     ASSERT_NO_THROW(label.reset(new TokenLabel(123)));
     TokenPtr left;
     TokenPtr right;
-    bool result_(false);
+    bool result(false);
 
     // True and true == true.
     ASSERT_NO_THROW(left.reset(new TokenString("true")));
@@ -643,8 +643,8 @@ TEST_F(ExpressionsTest, popOrBranchFalse) {
     e_.push_back(branch);
     e_.push_back(right);
     e_.push_back(label);
-    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
-    EXPECT_TRUE(result_);
+    ASSERT_NO_THROW(result = evaluateBool(e_, *pkt4_));
+    EXPECT_TRUE(result);
     e_.clear();
 
     // True and false == false.
@@ -654,8 +654,8 @@ TEST_F(ExpressionsTest, popOrBranchFalse) {
     e_.push_back(branch);
     e_.push_back(right);
     e_.push_back(label);
-    ASSERT_NO_THROW(result_ = evaluateBool(e_, *pkt4_));
-    EXPECT_FALSE(result_);
+    ASSERT_NO_THROW(result = evaluateBool(e_, *pkt4_));
+    EXPECT_FALSE(result);
     e_.clear();
 
     // False and any thing == false.
@@ -665,8 +665,8 @@ TEST_F(ExpressionsTest, popOrBranchFalse) {
     e_.push_back(branch);
     e_.push_back(right);
     e_.push_back(label);
-    EXPECT_NO_THROW(result_ = evaluateBool(e_, *pkt6_));
-    EXPECT_FALSE(result_);
+    EXPECT_NO_THROW(result = evaluateBool(e_, *pkt6_));
+    EXPECT_FALSE(result);
 }
 
 // Tests the pop and branch when false / lazy if.
@@ -689,7 +689,7 @@ TEST_F(ExpressionsTest, popAndBranchFalse) {
     ASSERT_NO_THROW(bar.reset(new TokenString("bar")));
     TokenPtr extra;
     ASSERT_NO_THROW(extra.reset(new TokenString("extra token")));
-    string result_("");
+    string result("");
 
     // if true then foo else bar == foo
     ASSERT_NO_THROW(test.reset(new TokenString("true")));
@@ -701,8 +701,8 @@ TEST_F(ExpressionsTest, popAndBranchFalse) {
     e_.push_back(bar);
     e_.push_back(extra);
     e_.push_back(label2);
-    ASSERT_NO_THROW(result_ = evaluateString(e_, *pkt4_));
-    EXPECT_EQ("foo", result_);
+    ASSERT_NO_THROW(result = evaluateString(e_, *pkt4_));
+    EXPECT_EQ("foo", result);
     e_.clear();
 
     // if false then foo else bar == bar
@@ -715,8 +715,8 @@ TEST_F(ExpressionsTest, popAndBranchFalse) {
     e_.push_back(label1);
     e_.push_back(bar);
     e_.push_back(label2);
-    ASSERT_NO_THROW(result_ = evaluateString(e_, *pkt6_));
-    EXPECT_EQ("bar", result_);
+    ASSERT_NO_THROW(result = evaluateString(e_, *pkt6_));
+    EXPECT_EQ("bar", result);
 }
 
 }

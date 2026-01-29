@@ -55,6 +55,13 @@ Bison:                @BISON@
 
 HERE_DOCUMENT
 
+add_to_report <<HERE_DOCUMENT
+IO Event Handling:
+  select              yes
+  poll                yes
+
+HERE_DOCUMENT
+
 if test '@HAVE_MYSQL@' != 'no'; then
 add_to_report <<HERE_DOCUMENT
 MySQL:                @MYSQL_VERSION@

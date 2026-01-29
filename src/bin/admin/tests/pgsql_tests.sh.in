@@ -158,7 +158,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "31.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "32.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1153,6 +1153,31 @@ pgsql_upgrade_29_to_30_test() {
     assert_eq 3 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
 }
 
+pgsql_upgrade_30_to_31_test() {
+    # Check that the lease6_by_hwaddr index was added to the lease6 table.
+    qry="select count(*) from pg_indexes where indexname='lease6_by_hwaddr' and tablename='lease6';"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "select from pg_indexes failed. (expected status code %d, returned %d)"
+    assert_eq 1 "${OUTPUT}" "pg_indexes does not contain entry for lease6_by_hwaddr index in lease6 table. (record count %d, expected %d)"
+}
+
+pgsql_upgrade_31_to_32_test() {
+    # Check that the lease4_by_state index was added to the lease4 table.
+    qry="select count(*) from pg_indexes where indexname='lease4_by_state' and tablename='lease4';"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "select from pg_indexes failed. (expected status code %d, returned %d)"
+    assert_eq 1 "${OUTPUT}" "pg_indexes does not contain entry for lease4_by_state index in lease4 table. (record count %d, expected %d)"
+
+    # Check that the lease6_by_state index was added to the lease6 table.
+    qry="select count(*) from pg_indexes where indexname='lease6_by_state' and tablename='lease6';"
+    run_command \
+        pgsql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "select from pg_indexes failed. (expected status code %d, returned %d)"
+    assert_eq 1 "${OUTPUT}" "pg_indexes does not contain entry for lease6_by_state index in lease6 table. (record count %d, expected %d)"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -1171,7 +1196,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "31.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "32.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1254,6 +1279,11 @@ pgsql_upgrade_test() {
     # Check 29 to 30 upgrade
     pgsql_upgrade_29_to_30_test
 
+    # Check 30 to 31 upgrade
+    pgsql_upgrade_30_to_31_test
+
+    # Check 31 to 32 upgrade
+    pgsql_upgrade_31_to_32_test
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -2325,7 +2355,7 @@ pgsql_unused_subnet_id_test() {
     # We have a 4.0 schema with hosts and options. Let's upgrade it to 6.2.
     # For versions higher than 6.2 some new constraints fail to be added
     # with the not empty tables, for instance the 6.2 -> 7.0 upgrade script
-    # can raise a key constraing violation for fk_dhcp6_options_subnet.
+    # can raise a key constraining violation for fk_dhcp6_options_subnet.
     pgsql_upgrade_schema_to_version 6.2
 
     # Version should now be 6.2.

@@ -37,7 +37,9 @@
  - Next step status: the action taken by the server when a callout chooses to set
    status to specified value. Actions not listed explicitly are not supported.
    If a callout sets status to unsupported value, this specific value will be
-   ignored and treated as if the status was CONTINUE.
+   ignored and treated as if the status was CONTINUE. If the action is to
+   drop the incoming query, it is the responsibility of the hook to increase
+   statistics.
 
 @section dhcpv4HooksHookPoints Hooks in the DHCPv4 Server
 
@@ -361,7 +363,7 @@ called before "subnet4_select".
    "offer_address_in_use" to false if the address is available and the offer should
    be sent to the client. If the address should be declined, callouts should set
    the argument to true. This will cause the server to discard the DHCPOFFER, mark
-   the lease DECLINED in the lease store, update the relevant statitics, and then
+   the lease DECLINED in the lease store, update the relevant statistics, and then
    invoke callouts installed for lease4_server_decline.
 
 @subsection dhcpv4Lease4ServerDecline lease4_server_decline

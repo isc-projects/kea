@@ -545,6 +545,17 @@ TEST_F(MySqlLeaseMgrTest, getLeases4PagedMultiThreading) {
     testGetLeases4Paged();
 }
 
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4State) {
+    testGetLeases4State();
+}
+
+/// @brief This test checks that all IPv4 leases with a state are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4StateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases4State();
+}
+
 /// @brief This test checks that all IPv6 leases for a specified subnet id are returned.
 TEST_F(MySqlLeaseMgrTest, getLeases6SubnetId) {
     testGetLeases6SubnetId();
@@ -567,6 +578,17 @@ TEST_F(MySqlLeaseMgrTest, getLeases6SubnetIdPaged) {
 TEST_F(MySqlLeaseMgrTest, getLeases6SubnetIdPagedMultiThreading) {
     MultiThreadingTest mt(true);
     testGetLeases6SubnetIdPaged();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6State) {
+    testGetLeases6State();
+}
+
+/// @brief This test checks that all IPv6 leases with a state are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6StateMultiThreading) {
+    MultiThreadingTest mt(true);
+    testGetLeases6State();
 }
 
 /// @brief This test checks that all IPv6 leases with a specified hostname are returned.
@@ -1410,6 +1432,30 @@ TEST_F(MySqlLeaseMgrTest, recreateWithoutCallbacks) {
 
 TEST_F(MySqlLeaseMgrTest, bigStats) {
     testBigStats();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn4SameSubnet) { 
+    testUpdateStatsOn4SameSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn4DifferentSubnet) { 
+    testUpdateStatsOn4DifferentSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6SameSubnet) { 
+    testUpdateStatsOn6SameSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6SameSubnetPD) { 
+    testUpdateStatsOn6SameSubnetPD();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6DifferentSubnet) { 
+    testUpdateStatsOn6DifferentSubnet();
+}
+
+TEST_F(MySqlLeaseMgrTest, updateStatsOn6DifferentSubnetPD) { 
+    testUpdateStatsOn6DifferentSubnetPD();
 }
 
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL

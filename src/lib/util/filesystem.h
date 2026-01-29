@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <sys/stat.h>
 #include <string>
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
@@ -33,6 +34,9 @@ public:
 };
 
 /// @brief Get the content of a regular file.
+///
+/// @note Here the content is the first line not including the final
+/// line feed character if there is one.
 ///
 /// @param file_name The file name.
 ///
@@ -59,9 +63,10 @@ getPermissions(const std::string path);
 /// @brief Check if there if file or directory has the given permissions.
 ///
 /// @param path The path being checked.
-/// @param permissions mask of expected permissions.
+/// @param permissions expected permissions.
 ///
-/// @return True if the path points to a file or a directory, false otherwise.
+/// @return True if the path points to a file or a directory with given
+/// permissions, false otherwise.
 bool
 hasPermissions(const std::string path, const mode_t& permissions);
 
@@ -95,6 +100,20 @@ isSocket(const std::string& path);
 /// @brief Set umask (at least 0027 i.e. no group write and no other access).
 void
 setUmask();
+
+/// @brief RAII device to relax umask (adding group write for sockets).
+class RelaxUmask : public boost::noncopyable {
+public:
+    /// @brief Constructor.
+    RelaxUmask();
+
+    /// @brief Destructor.
+    ~RelaxUmask();
+
+private:
+    /// @brief Saved umask.
+    mode_t orig_umask_;
+};
 
 /// @brief Indicates if current user is root
 ///
@@ -297,7 +316,7 @@ public:
     /// @brief Indicates security checks should be enforced.
     static bool shouldEnforceSecurity();
 
-    /// @brief Enables or disables security enforcment checks.
+    /// @brief Enables or disables security enforcement checks.
     ///
     /// @param enable true to enable security checks, false to disable.
     static void enableEnforcement(bool enable);

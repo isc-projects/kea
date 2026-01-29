@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,13 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
+#include <util/ready_check.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 
@@ -86,14 +88,7 @@ TEST_F(PktFilterInet6Test, send) {
     testPktEvents(test_message_, start_time_, std::list<std::string>{PktEvent::RESPONSE_SENT});
 
     // Read the data from socket.
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(sock_info_.sockfd_, &readfds);
-
-    struct timeval timeout;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 0;
-    result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
+    result = selectCheck(sock_info_.sockfd_, 5);
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 

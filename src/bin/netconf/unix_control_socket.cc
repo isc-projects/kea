@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
 #include <config/timeouts.h>
+#include <config/unix_command_config.h>
 #include <netconf/unix_control_socket.h>
 
 using namespace std;
@@ -59,7 +60,10 @@ UnixControlSocket::sendCommand(ConstElementPtr command) {
     boost::system::error_code received_ec;
     ConstJSONFeedPtr received_feed;
 
-    conn.start(ClientConnection::SocketPath(getName()),
+    string name(getName());
+    name = isc::config::UnixCommandConfig::validatePath(name);
+
+    conn.start(ClientConnection::SocketPath(name),
                ClientConnection::ControlCommand(command->toWire()),
                [&io_service, &received_ec, &received_feed]
                (const boost::system::error_code& ec, ConstJSONFeedPtr feed) {

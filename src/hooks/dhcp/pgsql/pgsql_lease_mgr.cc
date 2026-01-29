@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,6 @@
 #include <util/multi_threading_mgr.h>
 
 #include <boost/make_shared.hpp>
-#include <boost/static_assert.hpp>
 
 #include <iomanip>
 #include <limits>
@@ -167,6 +166,26 @@ PgSqlTaggedStatement tagged_statements[] = {
       "state, user_context, relay_id, remote_id, pool_id "
       "FROM lease4 "
       "WHERE subnet_id = $1" },
+
+    // GET_LEASE4_STATE
+    { 1, { OID_INT8 },
+      "get_lease4_state",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+      "state, user_context, relay_id, remote_id, pool_id "
+      "FROM lease4 "
+      "WHERE state = $1" },
+
+    // GET_LEASE4_STATE_SUBID
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease4_state_subid",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+      "state, user_context, relay_id, remote_id, pool_id "
+      "FROM lease4 "
+      "WHERE state = $1 AND subnet_id = $2" },
 
     // GET_LEASE4_HOSTNAME
     { 1, { OID_VARCHAR },
@@ -418,6 +437,28 @@ PgSqlTaggedStatement tagged_statements[] = {
         "state, user_context, pool_id "
       "FROM lease6 "
       "WHERE duid = $1" },
+
+    // GET_LEASE6_STATE
+    { 1, { OID_INT8 },
+      "get_lease6_state",
+      "SELECT host(address), duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context, pool_id "
+      "FROM lease6 "
+      "WHERE state = $1" },
+
+    // GET_LEASE6_STATE_SUBID
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease6_state_subid",
+      "SELECT host(address), duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context, pool_id "
+      "FROM lease6 "
+      "WHERE state = $1 AND subnet_id = $2" },
 
     // GET_LEASE6_HOSTNAME
     { 1, { OID_VARCHAR },
@@ -738,7 +779,7 @@ public:
         : lease_(), addr4_(0), client_id_length_(0),
           relay_id_length_(0), remote_id_length_(0) {
 
-        BOOST_STATIC_ASSERT(13 < LEASE_COLUMNS);
+        static_assert(13 < LEASE_COLUMNS, "13 < LEASE_COLUMNS");
 
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -1040,7 +1081,7 @@ public:
           preferred_lifetime_str_(""), hwtype_(0), hwtype_str_(""),
           hwaddr_source_(0), hwaddr_source_str_("") {
 
-        BOOST_STATIC_ASSERT(17 < LEASE_COLUMNS);
+        static_assert(17 < LEASE_COLUMNS, "17 < LEASE_COLUMNS");
 
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
 
@@ -1821,7 +1862,7 @@ bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_ADD_ADDR6)
         .arg(lease->addr_.toText())
-        .arg(lease->type_);
+        .arg(Lease::typeToText(lease->type_));
 
     lease->extended_info_action_ = Lease6::ACTION_IGNORE;
 
@@ -2080,6 +2121,62 @@ PgSqlLeaseMgr::getLeases4(SubnetID subnet_id) const {
 }
 
 Lease4Collection
+PgSqlLeaseMgr::getLeases4(uint32_t state, SubnetID subnet_id) const {
+    if (subnet_id == 0) {
+        return (getLeases4ByState(state));
+    }
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_STATE_SUBID4)
+        .arg(state)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // State
+    std::string state_str = boost::lexical_cast<std::string>(state);
+    bind_array.add(state_str);
+
+    // Subnet ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
+
+    // ... and get the data
+    Lease4Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_STATE_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
+PgSqlLeaseMgr::getLeases4ByState(uint32_t state) const {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_STATE4)
+        .arg(state);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // State
+    std::string state_str = boost::lexical_cast<std::string>(state);
+    bind_array.add(state_str);
+
+    // ... and get the data
+    Lease4Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE4_STATE, bind_array, result);
+
+    return (result);
+}
+
+Lease4Collection
 PgSqlLeaseMgr::getLeases4(const std::string& hostname) const {
     LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_HOSTNAME4)
         .arg(hostname);
@@ -2162,7 +2259,7 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const IOAddress& addr) const {
     LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_ADDR6)
         .arg(addr.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -2220,7 +2317,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
     LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_IAID_DUID)
         .arg(iaid)
         .arg(duid.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -2255,7 +2352,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
         .arg(iaid)
         .arg(subnet_id)
         .arg(duid.toText())
-        .arg(lease_type);
+        .arg(Lease::typeToText(lease_type));
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
@@ -2373,6 +2470,62 @@ PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
 
     // query to fetch the data
     getLeaseCollection(ctx, GET_LEASE6_DUID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(uint32_t state, SubnetID subnet_id) const {
+    if (subnet_id == 0) {
+        return (getLeases6ByState(state));
+    }
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_STATE_SUBID6)
+        .arg(state)
+        .arg(subnet_id);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // State
+    std::string state_str = boost::lexical_cast<std::string>(state);
+    bind_array.add(state_str);
+
+    // Subnet ID
+    std::string subnet_id_str = boost::lexical_cast<std::string>(subnet_id);
+    bind_array.add(subnet_id_str);
+
+    // ... and get the data
+    Lease6Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_STATE_SUBID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6ByState(uint32_t state) const {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_GET_STATE6)
+        .arg(state);
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // State
+    std::string state_str = boost::lexical_cast<std::string>(state);
+    bind_array.add(state_str);
+
+    // ... and get the data
+    Lease6Collection result;
+
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    getLeaseCollection(ctx, GET_LEASE6_STATE, bind_array, result);
 
     return (result);
 }
@@ -2583,7 +2736,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 
     LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_UPDATE_ADDR6)
         .arg(lease->addr_.toText())
-        .arg(lease->type_);
+        .arg(Lease::typeToText(lease->type_));
 
     // Get the recorded action and reset it.
     Lease6::ExtendedInfoAction recorded_action = lease->extended_info_action_;

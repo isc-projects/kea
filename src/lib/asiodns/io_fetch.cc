@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#include <chrono>
 #include <functional>
 #include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
@@ -67,7 +68,7 @@ struct IOFetchData : boost::noncopyable {
     OutputBufferPtr               msgbuf;            // Wire buffer for question
     OutputBufferPtr               received;          // Received data put here
     IOFetch::Callback*            callback;          // Called on I/O Completion
-    boost::asio::deadline_timer   timer;             // Timer to measure timeouts
+    boost::asio::system_timer     timer;             // Timer to measure timeouts
     IOFetch::Protocol             protocol;          // Protocol being used
     size_t                        cumulative;        // Cumulative received amount
     size_t                        expected;          // Expected amount of data
@@ -227,7 +228,7 @@ IOFetch::operator()(boost::system::error_code ec, size_t length) {
         // If we timeout, we stop, which cancels outstanding I/O operations and
         // shuts down everything.
         if (data_->timeout != -1) {
-            data_->timer.expires_from_now(boost::posix_time::milliseconds(
+            data_->timer.expires_after(std::chrono::milliseconds(
                 data_->timeout));
             data_->timer.async_wait(std::bind(&IOFetch::stop, *this,
                 TIME_OUT));

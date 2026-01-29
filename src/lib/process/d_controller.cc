@@ -1,32 +1,35 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <asiolink/io_service_mgr.h>
 #include <cc/command_interpreter.h>
-#include <process/cfgrpt/config_report.h>
+#include <config/command_mgr.h>
 #include <cryptolink/crypto_hash.h>
 #include <exceptions/exceptions.h>
-#include <config/command_mgr.h>
 #include <hooks/hooks_manager.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
+#include <process/cfgrpt/config_report.h>
+#include <process/config_base.h>
+#include <process/d_controller.h>
+#include <process/d_log.h>
+#include <process/daemon.h>
 #include <util/encode/encode.h>
 #include <util/filesystem.h>
-#include <process/daemon.h>
-#include <process/d_log.h>
-#include <process/d_controller.h>
-#include <process/config_base.h>
-#include <kea_version.h>
+
+#include <cstdlib>
 #include <functional>
 #include <sstream>
 #include <string>
-#include <unistd.h>
+
 #include <signal.h>
+#include <unistd.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
@@ -885,7 +888,7 @@ DControllerBase::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << " (" << EXTENDED_VERSION << ")" << std::endl;
+        tmp << " (" << SOURCE_OF_INSTALLATION << ")" << std::endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << std::endl;
         tmp << "linked with:" << std::endl;
         tmp << "- " << isc::log::Logger::getVersion() << std::endl;

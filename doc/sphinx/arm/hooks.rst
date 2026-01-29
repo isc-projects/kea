@@ -694,7 +694,7 @@ loaded by the correct process per the table below.
 ISC hopes to see more hook libraries become available as time
 progresses, developed both internally and externally. Since this list
 may evolve dynamically, it is maintained on a wiki page, available
-at https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
+at https://gitlab.isc.org/isc-projects/kea/-/wikis/Hooks-Available.
 Developers or others who are aware of any hook libraries not listed there
 are asked to please send a note to the kea-users or kea-dev mailing lists for
 updating. (Information on all of ISC's public mailing lists can be found

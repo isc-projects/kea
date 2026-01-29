@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <testutils/env_var_wrapper.h>
+
+#include <cstdlib>
 
 namespace isc {
 namespace test {

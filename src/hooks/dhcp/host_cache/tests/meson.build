@@ -23,7 +23,7 @@ dhcp_host_cache_tests = executable(
 test(
     'dhcp-host-cache-tests',
     dhcp_host_cache_tests,
+    protocol: 'gtest',
     is_parallel: false,
     priority: -1,
-    protocol: 'gtest',
 )

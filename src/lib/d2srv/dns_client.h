@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,13 +55,30 @@ public:
     };
 
     /// @brief A status code of the DNSClient.
-    enum Status {
-        SUCCESS,           ///< Response received and is ok.
-        TIMEOUT,           ///< No response, timeout.
-        IO_STOPPED,        ///< IO was stopped.
-        INVALID_RESPONSE,  ///< Response received but invalid.
-        OTHER              ///< Other, unclassified error.
+    enum Status : uint16_t {
+        SUCCESS = 0,            ///< Response received and is ok.
+        TIMEOUT = 1,            ///< No response, timeout.
+        IO_STOPPED = 2,         ///< IO was stopped.
+        INVALID_RESPONSE = 3,   ///< Response received but invalid.
+        OTHER = 4,              ///< Other, unclassified error.
     };
+
+    /// @brief Convert enum to string.
+    ///
+    /// @param status input enum
+    ///
+    /// @return reference to static string
+    static std::string const& statusToText(Status const& status) {
+        static std::vector<std::string> const text_vector {
+            "SUCCESS",
+            "TIMEOUT",
+            "IO_STOPPED",
+            "INVALID_RESPONSE",
+            "OTHER",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (status < text_vector.size() ? text_vector[status] : unknown);
+    }
 
     /// @brief Callback for the @c DNSClient class.
     ///

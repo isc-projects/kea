@@ -106,6 +106,7 @@ public:
     ///
     /// @param xid Transaction id for which to search.
     void remove(const Xid& xid) {
+        std::lock_guard<std::mutex> lck(mutex_);
         auto& xid_index = queries_.template get<1>();
         auto query = xid_index.find(xid);
         if (query != xid_index.end()) {

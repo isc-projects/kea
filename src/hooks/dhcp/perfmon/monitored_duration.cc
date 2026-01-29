@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -355,7 +355,7 @@ MonitoredDuration::valueRowColumns() {
         "end-event",
         "subnet-id",
         "interval-start",
-        "occurences",
+        "occurrences",
         "min-duration-usecs",
         "max-duration-usecs",
         "total-duration-usecs"

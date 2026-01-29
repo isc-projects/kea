@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,6 @@
 #include <util/io/sockaddr_util.h>
 
 #include <boost/array.hpp>
-#include <boost/static_assert.hpp>
 
 #include <fcntl.h>
 #include <stdint.h>
@@ -45,7 +44,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util::io::internal;
 
-BOOST_STATIC_ASSERT(IFLA_MAX>=IFA_MAX);
+static_assert(IFLA_MAX>=IFA_MAX, "IFLA_MAX>=IFA_MAX");
 
 namespace {
 
@@ -180,7 +179,8 @@ void Netlink::rtnl_send_request(int family, int type) {
     struct sockaddr_nl nladdr;
 
     // do a sanity check. Verify that Req structure is aligned properly
-    BOOST_STATIC_ASSERT(sizeof(nlmsghdr) == offsetof(Req, generic));
+    static_assert(sizeof(nlmsghdr) == offsetof(Req, generic),
+                  "sizeof(nlmsghdr) == offsetof(Req, generic)");
 
     memset(&nladdr, 0, sizeof(nladdr));
     nladdr.nl_family = AF_NETLINK;

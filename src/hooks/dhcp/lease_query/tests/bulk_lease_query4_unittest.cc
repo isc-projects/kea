@@ -178,7 +178,7 @@ public:
     ///
     /// @param addr ip address of the lease
     /// @param subnet subnet to which the lease belongs
-    /// @param hwaddr hardware addresss
+    /// @param hwaddr hardware address
     /// @param client_id duid of the lease owner
     /// @param cltt CLTT of the lease
     /// @param json_context user context of the lease as JSON
@@ -757,7 +757,7 @@ class MemfileBulkLeaseQuery4ProcessTest : public
 TEST_F(MemfileBulkLeaseQuery4ProcessTest, validConfig4) {
     // Create an implementation with two requesters.
     const string json = "{\n"
-        " \"requesters\" : [ \"127.0.0.1\", \"192.0.2.2\" ],\n"
+        " \"requesters\" : [ \"127.0.0.1\", \"192.0.2.2\" , \"192.0.3.0/24\" ],\n"
         " \"advanced\": {\n"
         "  \"bulk-query-enabled\": true,\n"
         "  \"active-query-enabled\": false,\n"
@@ -783,6 +783,7 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, validConfig4) {
     EXPECT_FALSE(impl->isRequester(IOAddress("192.0.2.1")));
     EXPECT_TRUE(impl->isRequester(IOAddress("127.0.0.1")));
     EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.2")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.17")));
 
     // Make sure a test with a v6 address complains.
     ASSERT_THROW_MSG(impl->isRequester(IOAddress("2001:db8:1::1")), BadValue,

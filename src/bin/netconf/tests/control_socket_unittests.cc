@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
+#include <config/testutils/socket_path.h>
+#include <config/unix_command_config.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
 #include <http/response_creator.h>
@@ -19,7 +21,6 @@
 #include <netconf/netconf_config.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
-#include <testutils/sandbox.h>
 #include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 
@@ -33,10 +34,13 @@ using namespace std;
 using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
+using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
 using namespace isc::test;
+using namespace isc::util::file;
 
 using isc::yang::test::SysrepoSetup;
 
@@ -140,8 +144,6 @@ const long TEST_TIMEOUT = 1500;
 /// @brief Test fixture class for unix control sockets.
 class UnixControlSocketTest : public ThreadedTest {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Constructor.
     UnixControlSocketTest()
         : ThreadedTest(), io_service_(new IOService()) {
@@ -149,7 +151,8 @@ public:
 
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
+        setSocketTestPath();
     }
 
     void TearDown() override {
@@ -157,29 +160,24 @@ public:
             thread_->join();
             thread_.reset();
         }
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         io_service_->stopAndPoll();
+        resetSocketPath();
     }
 
-    /// @brief Returns socket file path.
+    /// @brief Sets the path in which the socket can be created.
     ///
-    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
-    /// socket file is created in the location pointed to by this variable.
-    /// Otherwise, it is created in the build directory.
-    string unixSocketFilePath() {
-        string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = string(env) + "/test-socket";
-        } else {
-            socket_path = sandbox.join("test-socket");
-        }
-        return (socket_path);
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
     }
 
-    /// @brief Removes unix socket descriptor.
-    void removeUnixSocketFile() {
-        static_cast<void>(remove(unixSocketFilePath().c_str()));
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Create configuration of the control socket.
@@ -188,7 +186,7 @@ public:
     CfgControlSocketPtr createCfgControlSocket() {
         CfgControlSocketPtr cfg;
         cfg.reset(new CfgControlSocket(CfgControlSocket::Type::UNIX,
-                                       unixSocketFilePath(),
+                                       SocketPath::unixSocketFilePath(),
                                        Url("http://127.0.0.1:8000/")));
         return (cfg);
     }
@@ -210,12 +208,10 @@ UnixControlSocketTest::reflectServer() {
     boost::asio::local::stream_protocol::acceptor
         acceptor(io_service_->getInternalIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
-    boost::asio::local::stream_protocol::endpoint
-        endpoint(unixSocketFilePath());
+    boost::asio::local::stream_protocol::endpoint endpoint(SocketPath::unixSocketFilePath());
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
-    boost::asio::local::stream_protocol::socket
-        socket(io_service_->getInternalIOService());
+    boost::asio::local::stream_protocol::socket socket(io_service_->getInternalIOService());
 
     // Ready.
     signalReady();
@@ -304,6 +300,8 @@ TEST_F(UnixControlSocketTest, createControlSocket) {
 
 // Verifies that unix control sockets handle configGet() as expected.
 TEST_F(UnixControlSocketTest, configGet) {
+    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -328,6 +326,8 @@ TEST_F(UnixControlSocketTest, configGet) {
 
 // Verifies that unix control sockets handle configTest() as expected.
 TEST_F(UnixControlSocketTest, configTest) {
+    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -355,6 +355,8 @@ TEST_F(UnixControlSocketTest, configTest) {
 
 // Verifies that unix control sockets handle configSet() as expected.
 TEST_F(UnixControlSocketTest, configSet) {
+    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));
@@ -382,6 +384,8 @@ TEST_F(UnixControlSocketTest, configSet) {
 
 // Verifies that unix control sockets handle timeouts.
 TEST_F(UnixControlSocketTest, timeout) {
+    bool const socket_name_too_long(SocketPath::isTooLong(SocketPath::unixSocketFilePath()));
+    SKIP_IF(socket_name_too_long);
     CfgControlSocketPtr cfg = createCfgControlSocket();
     ASSERT_TRUE(cfg);
     UnixControlSocketPtr ucs(new UnixControlSocket(cfg));

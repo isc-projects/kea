@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -423,7 +423,7 @@ public:
         ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this](const boost::system::error_code& ec,
-                   const HttpResponsePtr& response,
+                   const HttpResponsePtr& http_response,
                    const std::string& parsing_error) {
                 io_service_->stop();
                 // There should be no IO error (answer from the server is received).
@@ -431,7 +431,7 @@ public:
                     ADD_FAILURE() << "asyncSendRequest failed: " << ec.message();
                 }
                 // The response object is NULL because it couldn't be finalized.
-                EXPECT_FALSE(response);
+                EXPECT_FALSE(http_response);
                 // The message parsing error should be returned.
                 EXPECT_FALSE(parsing_error.empty());
             }));
@@ -524,7 +524,7 @@ public:
         ASSERT_NO_THROW(client.asyncSendRequest(url, client_context_,
                                                 request, response,
             [this, &cb_num](const boost::system::error_code& ec,
-                            const HttpResponsePtr& response,
+                            const HttpResponsePtr& http_response,
                             const std::string&) {
                 if (++cb_num > 1) {
                     io_service_->stop();
@@ -534,7 +534,7 @@ public:
                 // error code.
                 EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
                 // There should be no response returned.
-                EXPECT_FALSE(response);
+                EXPECT_FALSE(http_response);
 
             },
             HttpClient::RequestTimeout(100),

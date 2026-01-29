@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,6 +23,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <functional>
 #include <string>
@@ -66,7 +67,7 @@ public:
     IOFetch                          tcp_fetch_;                ///< For TCP query test
     IOFetch::Protocol                protocol_;                 ///< Protocol being tested
     size_t                           cumulative_;               ///< Cumulative data received by "server".
-    deadline_timer                   timer_;                    ///< Timer to measure timeouts
+    system_timer                     timer_;                    ///< Timer to measure timeouts
 
     // The next member is the buffer in which the "server" (implemented by the
     // response handler methods in this class) receives the question sent by the
@@ -431,7 +432,7 @@ public:
             // tcpSendData, which will then send the next chunk.  We pass the
             // socket over which data should be sent as an argument to that
             // function.
-            timer_.expires_from_now(boost::posix_time::milliseconds(SEND_INTERVAL));
+            timer_.expires_after(std::chrono::milliseconds(SEND_INTERVAL));
             timer_.async_wait(std::bind(&IOFetchTest::tcpSendData, this,
                                         socket));
         }

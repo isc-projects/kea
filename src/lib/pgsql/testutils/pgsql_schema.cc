@@ -1,21 +1,22 @@
-// Copyright (C) 2016-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <string>
-#include <pgsql//pgsql_connection.h>
-#include <pgsql/testutils/pgsql_schema.h>
+
 #include <exceptions/exceptions.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
-#include <libpq-fe.h>
-
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdlib.h>
+#include <string>
+
+#include <libpq-fe.h>
 
 using namespace std;
 

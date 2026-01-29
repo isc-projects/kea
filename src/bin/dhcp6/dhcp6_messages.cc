@@ -12,6 +12,7 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_ERROR = "DHCP6_ADDI
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_EVAL_RESULT = "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_NO_TEST = "DHCP6_ADDITIONAL_CLASS_NO_TEST";
 extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDITIONAL_CLASS_UNDEFINED";
+extern const isc::log::MessageID DHCP6_ADDR6_REGISTER_DISABLED_DROP = "DHCP6_ADDR6_REGISTER_DISABLED_DROP";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL = "DHCP6_ADDR_REG_INFORM_FAIL";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
@@ -27,6 +28,7 @@ extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED = "DHCP6_CLASSES_ASSIGNE
 extern const isc::log::MessageID DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION = "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION";
 extern const isc::log::MessageID DHCP6_CLASS_ASSIGNED = "DHCP6_CLASS_ASSIGNED";
 extern const isc::log::MessageID DHCP6_CLASS_UNCONFIGURED = "DHCP6_CLASS_UNCONFIGURED";
+extern const isc::log::MessageID DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY = "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY";
 extern const isc::log::MessageID DHCP6_CONFIG_COMPLETE = "DHCP6_CONFIG_COMPLETE";
 extern const isc::log::MessageID DHCP6_CONFIG_LOAD_FAIL = "DHCP6_CONFIG_LOAD_FAIL";
 extern const isc::log::MessageID DHCP6_CONFIG_PACKET_QUEUE = "DHCP6_CONFIG_PACKET_QUEUE";
@@ -189,8 +191,9 @@ const char* values[] = {
     "DHCP6_ADDITIONAL_CLASS_EVAL_RESULT", "%1: Expression '%2' evaluated to %3",
     "DHCP6_ADDITIONAL_CLASS_NO_TEST", "additional class %1 has no test expression, adding it to client's classes unconditionally",
     "DHCP6_ADDITIONAL_CLASS_UNDEFINED", "additional class %1 has no definition",
+    "DHCP6_ADDR6_REGISTER_DISABLED_DROP", "ADDR-REG-INFORM from %1 was dropped because address registration is disabled.",
     "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE", "received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'",
-    "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1: %2",
+    "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1, %2",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",
@@ -204,6 +207,7 @@ const char* values[] = {
     "DHCP6_CLASSES_ASSIGNED_AFTER_SUBNET_SELECTION", "%1: client packet has been assigned to the following classes: %2",
     "DHCP6_CLASS_ASSIGNED", "%1: client packet has been assigned to the following class: %2",
     "DHCP6_CLASS_UNCONFIGURED", "%1: client packet belongs to an unconfigured class: %2",
+    "DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY", "%1: sanitizing client's FQDN option '%2' yielded an empty string",
     "DHCP6_CONFIG_COMPLETE", "DHCPv6 server has completed configuration: %1",
     "DHCP6_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
     "DHCP6_CONFIG_PACKET_QUEUE", "DHCPv6 packet queue info after configuration: %1",
@@ -282,7 +286,7 @@ const char* values[] = {
     "DHCP6_PACKET_DROP_DROP_CLASS", "dropped as member of the special class 'DROP': %1 %2",
     "DHCP6_PACKET_DROP_DROP_CLASS2", "dropped as member of the special class 'DROP' after host reservation lookup: %1 %2",
     "DHCP6_PACKET_DROP_DROP_CLASS_EARLY", "dropped as member of the special class 'DROP' after early global host reservations lookup: %1 %2",
-    "DHCP6_PACKET_DROP_DUPLICATE", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by %6",
+    "DHCP6_PACKET_DROP_DUPLICATE", "dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6",
     "DHCP6_PACKET_DROP_PARSE_FAIL", "%1: failed to parse packet from %2 to %3, received over interface %4, reason: %5, %6",
     "DHCP6_PACKET_DROP_SERVERID_MISMATCH", "%1: dropping packet with server identifier: %2, server is using: %3",
     "DHCP6_PACKET_DROP_UNICAST", "%1: dropping unicast %2 packet as this packet should be sent to multicast",

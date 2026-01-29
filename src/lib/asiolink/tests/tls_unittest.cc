@@ -107,7 +107,7 @@ public:
 
     /// @brief Callback function (one argument).
     ///
-    /// @parame ec Boost completion code.
+    /// @param ec Boost completion code.
     void operator()(const boost::system::error_code& ec) {
         state_->called_ = true;
         state_->error_code_ = ec;
@@ -118,7 +118,7 @@ public:
 
     /// @brief Callback function (two arguments).
     ///
-    /// @parame ec Boost completion code.
+    /// @param ec Boost completion code.
     void operator()(const boost::system::error_code& ec, size_t) {
         state_->called_ = true;
         state_->error_code_ = ec;

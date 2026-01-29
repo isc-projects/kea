@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,6 +58,18 @@ TEST_F(FileUtilTest, getContent) {
     EXPECT_EQ("abdc", content);
 }
 
+/// @brief Check getContent with embedded spaces.
+TEST_F(FileUtilTest, getContentSpaces) {
+    string file_name(TEST_DATA_BUILDDIR "/fu.test");
+    ofstream fs(file_name.c_str(), ofstream::out | ofstream::trunc);
+    ASSERT_TRUE(fs.is_open());
+    fs << "ab\tc d\nxxx";
+    fs.close();
+    string content;
+    EXPECT_NO_THROW_LOG(content = getContent(file_name));
+    EXPECT_EQ("ab\tc d", content);
+}
+
 /// @brief Check isDir.
 TEST_F(FileUtilTest, isDir) {
     EXPECT_TRUE(isDir("/dev"));
@@ -113,6 +125,21 @@ TEST_F(UMaskUtilTest, umask077) {
     static_cast<void>(umask(S_IRWXG | S_IRWXO));
     ASSERT_NO_THROW(setUmask());
     EXPECT_EQ(S_IRWXG | S_IRWXO, umask(0));
+}
+
+/// @brief Check RelaxUmask.
+TEST_F(UMaskUtilTest, relaxUmask) {
+    static_cast<void>(umask(0));
+    {
+        RelaxUmask ru;
+        EXPECT_EQ(S_IRWXO, umask(0));
+    }
+    EXPECT_EQ(0, umask(S_IWGRP | S_IRWXO));
+    {
+        RelaxUmask ru;
+        EXPECT_EQ(S_IRWXO, umask(0));
+    }
+    EXPECT_EQ(S_IWGRP | S_IRWXO, umask(0));
 }
 
 /// @brief Check that the components are split correctly.

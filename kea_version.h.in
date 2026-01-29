@@ -1,3 +1,4 @@
 #mesondefine EXTENDED_VERSION
 #mesondefine PREMIUM_EXTENDED_VERSION
 #mesondefine PACKAGE_VERSION_TYPE
+#mesondefine SOURCE_OF_INSTALLATION

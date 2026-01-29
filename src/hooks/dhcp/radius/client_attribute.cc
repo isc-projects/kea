@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -661,7 +661,7 @@ AttrVsa::AttrVsa(const uint8_t type, const uint32_t vendor,
 
 AttributePtr
 AttrVsa::fromText(const uint8_t /* type */, const string& /* repr */) {
-    isc_throw(NotImplemented, "Can't decode vsa from text");
+    isc_throw(NotImplemented, "can't decode vsa from text");
 }
 
 AttributePtr
@@ -752,11 +752,15 @@ AttrVsa::toElement() const {
 }
 
 void
-Attributes::add(const ConstAttributePtr& attr) {
+Attributes::add(const ConstAttributePtr& attr, bool back) {
     if (!attr) {
         return;
     }
-    static_cast<void>(container_.push_back(attr));
+    if (back) {
+        static_cast<void>(container_.push_back(attr));
+    } else {
+        static_cast<void>(container_.push_front(attr));
+    }
 }
 
 bool

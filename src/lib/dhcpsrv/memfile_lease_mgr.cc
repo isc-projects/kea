@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,26 +8,32 @@
 
 #include <asiolink/addr_utilities.h>
 #include <cc/command_interpreter.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
+#include <util/filesystem.h>
 #include <util/multi_threading_mgr.h>
 #include <util/pid_file.h>
-#include <util/filesystem.h>
+#include <util/reconnect_ctl.h>
 
-#include <boost/foreach.hpp>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
-#include <errno.h>
 #include <iostream>
 #include <limits>
 #include <sstream>
+
+#include <boost/foreach.hpp>
+
+#include <errno.h>
 
 namespace {
 
@@ -1083,6 +1089,20 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const DatabaseConnection::ParameterMap& param
         }
         lfcSetup(conversion_needed);
     }
+
+    // Create the reconnect ctl object.
+    conn_.makeReconnectCtl("memfile-lease-mgr", NetworkState::DB_CONNECTION + 3);
+
+    // Sanity check the values.
+    if (conn_.reconnectCtl()->maxRetries() > 0) {
+        isc_throw(BadValue, "'max-reconnect-tries'"
+                  << " values greater than zero are not supported by memfile");
+    }
+
+    if (conn_.reconnectCtl()->retryInterval() > 0) {
+        isc_throw(BadValue, "'reconnect-wait-time'"
+                  << " values greater than zero are not supported by memfile");
+    }
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -1118,6 +1138,16 @@ Memfile_LeaseMgr::getDBVersion() {
     }
 }
 
+void
+Memfile_LeaseMgr::handleDbLost() {
+    // Invoke application layer callback on the main IOService.
+    auto ios = conn_.getIOService();
+    if (ios) {
+        ios->post(std::bind(DatabaseConnection::invokeDbLostCallback,
+                            conn_.reconnectCtl()));
+    }
+}
+
 bool
 Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     if (getLease4Internal(lease->addr_)) {
@@ -1129,7 +1159,12 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persistLeases(V4)) {
-        lease_file4_->append(*lease);
+        try {
+            lease_file4_->append(*lease);
+        } catch (const CSVFileFatalError&) {
+            handleDbLost();
+            throw;
+        }
     }
 
     storage4_.insert(lease);
@@ -1173,7 +1208,12 @@ Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persistLeases(V6)) {
-        lease_file6_->append(*lease);
+        try {
+            lease_file6_->append(*lease);
+        } catch (const CSVFileFatalError&) {
+            handleDbLost();
+            throw;
+        }
     }
 
     lease->extended_info_action_ = Lease6::ACTION_IGNORE;
@@ -1488,6 +1528,49 @@ Memfile_LeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
     }
 
     return (collection);
+}
+
+Lease4Collection
+Memfile_LeaseMgr::getLeases4(uint32_t state, SubnetID subnet_id) const {
+    Lease4Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases4ByStateInternal(state, subnet_id, collection);
+    } else {
+        getLeases4ByStateInternal(state, subnet_id, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases4ByStateInternal(uint32_t state,
+                                            SubnetID subnet_id,
+                                            Lease4Collection& collection) const {
+    if (subnet_id == 0) {
+        return (getLeases4ByStateInternal(state, collection));
+    }
+    const Lease4StorageStateIndex& idx = storage4_.get<StateIndexTag>();
+    std::pair<Lease4StorageStateIndex::const_iterator,
+              Lease4StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state, subnet_id));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases4ByStateInternal(uint32_t state,
+                                            Lease4Collection& collection) const {
+    const Lease4StorageStateIndex& idx = storage4_.get<StateIndexTag>();
+    std::pair<Lease4StorageStateIndex::const_iterator,
+              Lease4StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease4Ptr(new Lease4(*lease)));
+    }
 }
 
 Lease6Ptr
@@ -1853,6 +1936,49 @@ Memfile_LeaseMgr::getLeases6(SubnetID subnet_id,
     }
 }
 
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(uint32_t state, SubnetID subnet_id) const {
+    Lease6Collection collection;
+    if (MultiThreadingMgr::instance().getMode()) {
+        std::lock_guard<std::mutex> lock(*mutex_);
+        getLeases6ByStateInternal(state, subnet_id, collection);
+    } else {
+        getLeases6ByStateInternal(state, subnet_id, collection);
+    }
+
+    return (collection);
+}
+
+void
+Memfile_LeaseMgr::getLeases6ByStateInternal(uint32_t state,
+                                            SubnetID subnet_id,
+                                            Lease6Collection& collection) const {
+    if (subnet_id == 0) {
+        return (getLeases6ByStateInternal(state, collection));
+    }
+    const Lease6StorageStateIndex& idx = storage6_.get<StateIndexTag>();
+    std::pair<Lease6StorageStateIndex::const_iterator,
+              Lease6StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state, subnet_id));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
+    }
+}
+
+void
+Memfile_LeaseMgr::getLeases6ByStateInternal(uint32_t state,
+                                            Lease6Collection& collection) const {
+    const Lease6StorageStateIndex& idx = storage6_.get<StateIndexTag>();
+    std::pair<Lease6StorageStateIndex::const_iterator,
+              Lease6StorageStateIndex::const_iterator> l =
+        idx.equal_range(boost::make_tuple(state));
+
+    BOOST_FOREACH(auto const& lease, l) {
+        collection.push_back(Lease6Ptr(new Lease6(*lease)));
+    }
+}
+
 void
 Memfile_LeaseMgr::getExpiredLeases4Internal(Lease4Collection& expired_leases,
                                             const size_t max_leases) const {
@@ -1952,7 +2078,12 @@ Memfile_LeaseMgr::updateLease4Internal(const Lease4Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persist) {
-        lease_file4_->append(*lease);
+        try {
+            lease_file4_->append(*lease);
+        } catch (const CSVFileFatalError&) {
+            handleDbLost();
+            throw;
+        }
     }
 
     // Update lease current expiration time.
@@ -2016,7 +2147,12 @@ Memfile_LeaseMgr::updateLease6Internal(const Lease6Ptr& lease) {
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
     if (persist) {
-        lease_file6_->append(*lease);
+        try {
+            lease_file6_->append(*lease);
+        } catch (const CSVFileFatalError&) {
+            handleDbLost();
+            throw;
+        }
     }
 
     // Update lease current expiration time.
@@ -2083,7 +2219,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease4Ptr& lease) {
             // Setting valid lifetime to 0 means that lease is being
             // removed.
             lease_copy.valid_lft_ = 0;
-            lease_file4_->append(lease_copy);
+            try {
+                lease_file4_->append(lease_copy);
+            } catch (const CSVFileFatalError&) {
+                handleDbLost();
+                throw;
+            }
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
@@ -2137,7 +2278,12 @@ Memfile_LeaseMgr::deleteLeaseInternal(const Lease6Ptr& lease) {
             // Setting lifetimes to 0 means that lease is being removed.
             lease_copy.valid_lft_ = 0;
             lease_copy.preferred_lft_ = 0;
-            lease_file6_->append(lease_copy);
+            try {
+                lease_file6_->append(lease_copy);
+            } catch (const CSVFileFatalError&) {
+                handleDbLost();
+                throw;
+            }
         } else {
             // For test purpose only: check that the lease has not changed in
             // the database.
@@ -2266,7 +2412,12 @@ Memfile_LeaseMgr::deleteExpiredReclaimedLeases(const uint32_t secs,
                 // Set the valid lifetime to 0 to indicate the removal
                 // of the lease.
                 lease_copy.valid_lft_ = 0;
-                lease_file->append(lease_copy);
+                try {
+                    lease_file->append(lease_copy);
+                } catch (const CSVFileFatalError&) {
+                    handleDbLost();
+                    throw;
+                }
             }
         }
 
@@ -3454,7 +3605,13 @@ Memfile_LeaseMgr::extractExtendedInfo4(bool update, bool current) {
             if (upgradeLease4ExtendedInfo(lease, check)) {
                 ++modified;
                 if (update && persistLeases(V4)) {
-                    lease_file4_->append(*lease);
+                    try {
+                        lease_file4_->append(*lease);
+                    } catch (const CSVFileFatalError&) {
+                        handleDbLost();
+                        throw;
+                    }
+
                     ++updated;
                 }
             }
@@ -3578,28 +3735,47 @@ Memfile_LeaseMgr::writeLeases4(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases4Internal(const std::string& filename) {
-    bool overwrite = (lease_file4_ && lease_file4_->getFilename() == filename);
+    // Create the temp file name and remove it (if it exists).
+    std::ostringstream tmp;
+    tmp << filename << ".tmp" << getpid();
+    auto tmpname = tmp.str();
+    ::remove(tmpname.c_str());
+
+    // Dump in memory leasses to temp file.
     try {
-        if (overwrite) {
-            lease_file4_->close();
-        }
-        std::ostringstream old;
-        old << filename << ".bak" << getpid();
-        ::rename(filename.c_str(), old.str().c_str());
-        CSVLeaseFile4 backup(filename);
-        backup.open();
+        CSVLeaseFile4 tmpfile(tmpname);
+        tmpfile.open();
         for (auto const& lease : storage4_) {
-            backup.append(*lease);
+            tmpfile.append(*lease);
         }
-        backup.close();
-        if (overwrite) {
-            lease_file4_->open(true);
-        }
+        tmpfile.close();
     } catch (const std::exception&) {
-        if (overwrite) {
-            lease_file4_->open(true);
-        }
+        // Failed writing the temp file, remove it.
+        ::remove(tmpname.c_str());
         throw;
+    }
+
+    // Create the backup file name.
+    std::ostringstream bak;
+    bak << filename << ".bak" << getpid();
+    auto bakname = bak.str();
+
+    if (lease_file4_ && lease_file4_->getFilename() == filename) {
+        // Overwriting the existing lease file.
+        // Close the existing lease file and move it to back up.
+        lease_file4_->close();
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename the temp file and open it as the lease file.
+        ::rename(tmpname.c_str(), filename.c_str());
+        lease_file4_->open(true);
+    } else {
+        // Dumping to a new file.
+        // Rename the previous dump file (if one) to back up.
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename temp file to dump file.
+        ::rename(tmpname.c_str(), filename.c_str());
     }
 }
 
@@ -3615,28 +3791,47 @@ Memfile_LeaseMgr::writeLeases6(const std::string& filename) {
 
 void
 Memfile_LeaseMgr::writeLeases6Internal(const std::string& filename) {
-    bool overwrite = (lease_file6_ && lease_file6_->getFilename() == filename);
+    // Create the temp file name and remove it (if it exists).
+    std::ostringstream tmp;
+    tmp << filename << ".tmp" << getpid();
+    auto tmpname = tmp.str();
+    ::remove(tmpname.c_str());
+
+    // Dump in memory leasses to temp file.
     try {
-        if (overwrite) {
-            lease_file6_->close();
-        }
-        std::ostringstream old;
-        old << filename << ".bak" << getpid();
-        ::rename(filename.c_str(), old.str().c_str());
-        CSVLeaseFile6 backup(filename);
-        backup.open();
+        CSVLeaseFile6 tmpfile(tmpname);
+        tmpfile.open();
         for (auto const& lease : storage6_) {
-            backup.append(*lease);
+            tmpfile.append(*lease);
         }
-        backup.close();
-        if (overwrite) {
-            lease_file6_->open(true);
-        }
+        tmpfile.close();
     } catch (const std::exception&) {
-        if (overwrite) {
-            lease_file6_->open(true);
-        }
+        // Failed writing the temp file, remove it.
+        ::remove(tmpname.c_str());
         throw;
+    }
+
+    // Create the backup file name.
+    std::ostringstream bak;
+    bak << filename << ".bak" << getpid();
+    auto bakname = bak.str();
+
+    if (lease_file6_ && lease_file6_->getFilename() == filename) {
+        // Overwriting the existing lease file.
+        // Close the existing lease file and move it to back up.
+        lease_file6_->close();
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename the temp file and open it as the lease file.
+        ::rename(tmpname.c_str(), filename.c_str());
+        lease_file6_->open(true);
+    } else {
+        // Dumping to a new file.
+        // Rename the previous dump file (if one) to back up.
+        ::rename(filename.c_str(), bakname.c_str());
+
+        // Rename temp file to dump file.
+        ::rename(tmpname.c_str(), filename.c_str());
     }
 }
 

@@ -10,13 +10,14 @@
 #include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
+#include <config/unix_command_config.h>
+#include <config/testutils/socket_path.h>
 #include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/parser_context.h>
 #include <netconf/simple_parser.h>
 #include <netconf/unix_control_socket.h>
 #include <testutils/log_utils.h>
-#include <testutils/sandbox.h>
 #include <testutils/threaded_test.h>
 #include <yang/tests/sysrepo_setup.h>
 #include <yang/testutils/translator_test.h>
@@ -39,9 +40,11 @@ using namespace isc;
 using namespace isc::netconf;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::test;
+using namespace isc::util::file;
 using namespace isc::yang;
 using namespace isc::yang::test;
 using namespace libyang;
@@ -50,9 +53,6 @@ using namespace sysrepo;
 using isc::yang::test::SysrepoSetup;
 
 namespace {
-
-/// @brief Test unix socket file name.
-const string TEST_SOCKET = "test-socket";
 
 /// @brief Type definition for the pointer to Thread objects.
 using ThreadPtr = shared_ptr<thread>;
@@ -107,13 +107,12 @@ ElementPtr sortSubnets(ElementPtr const& map) {
 /// @brief Test fixture class for netconf agent.
 class NetconfAgentTest : public ThreadedTest {
 public:
-    isc::test::Sandbox sandbox;
-
     void SetUp() override {
         SysrepoSetup::cleanSharedMemory();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         io_service_.reset(new IOService());
         agent_.reset(new NakedNetconfAgent());
+        setSocketTestPath();
     }
 
     void TearDown() override {
@@ -128,30 +127,25 @@ public:
         agent_.reset();
         requests_.clear();
         responses_.clear();
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         SysrepoSetup::cleanSharedMemory();
         io_service_->stopAndPoll();
+        resetSocketPath();
     }
 
-    /// @brief Returns socket file path.
+    /// @brief Sets the path in which the socket can be created.
     ///
-    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
-    /// socket file is created in the location pointed to by this variable.
-    /// Otherwise, it is created in the build directory.
-    string unixSocketFilePath() {
-        string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = string(env) + "/" + TEST_SOCKET;
-        } else {
-            socket_path = sandbox.join(TEST_SOCKET);
-        }
-        return (socket_path);
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
     }
 
-    /// @brief Removes unix socket descriptor.
-    void removeUnixSocketFile() {
-        static_cast<void>(remove(unixSocketFilePath().c_str()));
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief Create configuration of the control socket.
@@ -160,7 +154,7 @@ public:
     CfgControlSocketPtr createCfgControlSocket() {
         CfgControlSocketPtr cfg;
         cfg.reset(new CfgControlSocket(CfgControlSocket::Type::UNIX,
-                                       unixSocketFilePath(),
+                                       SocketPath::unixSocketFilePath(),
                                        Url("http://127.0.0.1:8000/")));
         return (cfg);
     }
@@ -257,14 +251,12 @@ NetconfAgentTest::fakeServer() {
     boost::asio::local::stream_protocol::acceptor
         acceptor(io_service_->getInternalIOService());
     EXPECT_NO_THROW_LOG(acceptor.open());
-    boost::asio::local::stream_protocol::endpoint
-        endpoint(unixSocketFilePath());
+    boost::asio::local::stream_protocol::endpoint endpoint(SocketPath::unixSocketFilePath());
     boost::asio::socket_base::reuse_address option(true);
     acceptor.set_option(option);
     EXPECT_NO_THROW_LOG(acceptor.bind(endpoint));
     EXPECT_NO_THROW_LOG(acceptor.listen());
-    boost::asio::local::stream_protocol::socket
-        socket(io_service_->getInternalIOService());
+    boost::asio::local::stream_protocol::socket socket(io_service_->getInternalIOService());
 
     // Ready.
     signalReady();
@@ -342,8 +334,8 @@ NetconfAgentTest::fakeServer() {
         EXPECT_NO_THROW_LOG(socket.close());
     }
     EXPECT_NO_THROW_LOG(acceptor.close());
-    // Removed the socket file so it can be called again immediately.
-    removeUnixSocketFile();
+    // Remove the socket file so it can be called again immediately.
+    SocketPath::removeUnixSocketFile();
 
     /// Finished.
     EXPECT_FALSE(timeout);
@@ -571,6 +563,10 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
 
 // Verifies that the keaConfig method works as expected.
 TEST_F(NetconfAgentTest, keaConfig) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -585,7 +581,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -652,6 +648,10 @@ TEST_F(NetconfAgentTest, keaConfig) {
 // Verifies that the yangConfig method works as expected: apply YANG config
 // to the server.
 TEST_F(NetconfAgentTest, yangConfig) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // YANG configuration.
     const YRTree tree = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -682,7 +682,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -760,6 +760,10 @@ TEST_F(NetconfAgentTest, yangConfig) {
 
 // Verifies that the subscribeToDataChanges method works as expected.
 TEST_F(NetconfAgentTest, subscribeToDataChanges) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -774,7 +778,7 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -811,6 +815,10 @@ TEST_F(NetconfAgentTest, subscribeToDataChanges) {
 // Verifies that the update method works as expected: apply new YANG configuration
 // to the server. Note it is called by the subscription callback.
 TEST_F(NetconfAgentTest, update) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -843,7 +851,7 @@ TEST_F(NetconfAgentTest, update) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -938,6 +946,10 @@ TEST_F(NetconfAgentTest, update) {
 // with the server. Note it is called by the subscription callback and
 // update is called after.
 TEST_F(NetconfAgentTest, validate) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -968,7 +980,7 @@ TEST_F(NetconfAgentTest, validate) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -1100,6 +1112,10 @@ TEST_F(NetconfAgentTest, validate) {
 
 // Verifies what happens when the validate method returns an error.
 TEST_F(NetconfAgentTest, noValidate) {
+    string const socket_path(SocketPath::unixSocketFilePath());
+    bool const socket_name_too_long(SocketPath::isTooLong(socket_path));
+    SKIP_IF(socket_name_too_long);
+
     // Initial YANG configuration.
     const YRTree tree0 = YangRepr::buildTreeFromVector({
         { "/kea-dhcp4-server:config/subnet4[id='1']/id",
@@ -1126,7 +1142,7 @@ TEST_F(NetconfAgentTest, noValidate) {
         "    }\n"
         "  }\n"
         "}";
-    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    string config = config_prefix + socket_path + config_trailer;
     NetconfConfigPtr ctx(new NetconfConfig());
     ElementPtr json;
     ParserContext parser_context;
@@ -1165,6 +1181,42 @@ TEST_F(NetconfAgentTest, noValidate) {
     });
     EXPECT_THROW_MSG(repr.set(tree1, *agent_->running_sess_), sysrepo::Error,
                      "Session::applyChanges: Couldn't apply changes: SR_ERR_VALIDATION_FAILED\n Validation failed (SR_ERR_VALIDATION_FAILED)");
+}
+
+// Check that a bad socket path is refused.
+TEST_F(NetconfAgentTest, badSocketPath) {
+    string config(R"(
+{
+  "Netconf": {
+    "managed-servers": {
+      "dhcp6": {
+        "control-socket": {
+          "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+          "socket-type": "unix"
+        },
+        "model": "kea-dhcp6-server"
+      }
+    }
+  }
+}
+)");
+
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW_LOG(json = parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = copy(netconf_json, 0);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    EXPECT_THROW_MSG(parser.parse(ctx, json, false), SecurityError,
+                     string("invalid path specified: '/tmp', supported path is '") +
+                         UnixCommandConfig::getSocketPath() + "'");
 }
 
 }  // namespace

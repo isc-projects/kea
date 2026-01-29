@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,10 +16,10 @@
 #include <util/buffer.h>
 
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/system_timer.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/system/error_code.hpp>
 
 namespace isc {
@@ -56,12 +56,28 @@ public:
     /// @note that this applies to the status of I/Os in the fetch - a fetch that
     /// resulted in a packet being received from the server is a SUCCESS, even if
     /// the contents of the packet indicate that some error occurred.
-    enum Result {
+    enum Result : uint16_t {
         SUCCESS = 0,       // Success, fetch completed
         TIME_OUT = 1,      // Failure, fetch timed out
         STOPPED = 2,       // Control code, fetch has been stopped
-        NOTSET = 3         // For testing, indicates value not set
+        NOTSET = 3,        // For testing, indicates value not set
     };
+
+    /// @brief Convert enum to string.
+    ///
+    /// @param result input enum
+    ///
+    /// @return reference to static string
+    static std::string const& resultToText(Result const& result) {
+        static std::vector<std::string> const text_vector {
+            "SUCCESS",
+            "TIME_OUT",
+            "STOPPED",
+            "NOTSET",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (result < text_vector.size() ? text_vector[result] : unknown);
+    }
 
     /// @note The next enum is a "trick" to allow constants to be defined in a class
     /// declaration.

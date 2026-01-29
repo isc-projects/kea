@@ -677,7 +677,7 @@ const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
-/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design
+/// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/dhcpv4o6-design
 ///
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h

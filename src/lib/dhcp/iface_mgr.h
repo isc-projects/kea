@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,11 +16,13 @@
 #include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
+#include <util/fd_event_handler_factory.h>
 #include <util/optional.h>
 #include <util/watch_socket.h>
 #include <util/watched_thread.h>
 
 #include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index_container.hpp>
@@ -28,13 +30,14 @@
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <atomic>
 #include <functional>
 #include <list>
-#include <vector>
 #include <mutex>
+#include <thread>
+#include <vector>
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
@@ -96,6 +99,14 @@ public:
         isc::Exception(file, line, what) { }
 };
 
+/// @brief IfaceMgr exception thrown when there is an error detected for
+/// the respective socket file descriptor.
+class SocketFDError : public Exception {
+public:
+    SocketFDError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { }
+};
+
 /// @brief Represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
@@ -151,7 +162,7 @@ public:
     Iface(const std::string& name, unsigned int ifindex);
 
     /// @brief Destructor.
-    ~Iface() { }
+    ~Iface() = default;
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
@@ -196,13 +207,17 @@ public:
     /// @brief Returns MAC length.
     ///
     /// @return length of MAC address
-    size_t getMacLen() const { return mac_len_; }
+    size_t getMacLen() const {
+        return (mac_len_);
+    }
 
     /// @brief Returns pointer to MAC address.
     ///
     /// Note: Returned pointer is only valid as long as the interface object
     /// that returned it.
-    const uint8_t* getMac() const { return mac_; }
+    const uint8_t* getMac() const {
+        return (mac_);
+    }
 
     /// @brief Sets flag_*_ fields based on bitmask value returned by OS
     ///
@@ -216,22 +231,30 @@ public:
     /// @brief Returns interface index.
     ///
     /// @return interface index
-    unsigned int getIndex() const { return ifindex_; }
+    unsigned int getIndex() const {
+        return (ifindex_);
+    }
 
     /// @brief Returns interface name.
     ///
     /// @return interface name
-    std::string getName() const { return name_; }
+    std::string getName() const {
+        return (name_);
+    }
 
     /// @brief Sets up hardware type of the interface.
     ///
     /// @param type hardware type
-    void setHWType(uint16_t type ) { hardware_type_ = type; }
+    void setHWType(uint16_t type ) {
+        hardware_type_ = type;
+    }
 
     /// @brief Returns hardware type of the interface.
     ///
     /// @return hardware type
-    uint16_t getHWType() const { return hardware_type_; }
+    uint16_t getHWType() const {
+        return (hardware_type_);
+    }
 
     /// @brief Returns all addresses available on an interface.
     ///
@@ -251,7 +274,9 @@ public:
     /// mostly be useful for clients with wifi/vpn/virtual interfaces.
     ///
     /// @return collection of addresses
-    const AddressCollection& getAddresses() const { return addrs_; }
+    const AddressCollection& getAddresses() const {
+        return (addrs_);
+    }
 
     /// @brief Returns IPv4 address assigned to the interface.
     ///
@@ -344,7 +369,9 @@ public:
     /// the IfaceMgr object that returned it.
     ///
     /// @return collection of sockets added to interface
-    const SocketCollection& getSockets() const { return sockets_; }
+    const SocketCollection& getSockets() const {
+        return (sockets_);
+    }
 
     /// @brief Removes any unicast addresses
     ///
@@ -364,7 +391,7 @@ public:
     ///
     /// @return address collection (may be empty)
     const AddressCollection& getUnicasts() const {
-        return unicasts_;
+        return (unicasts_);
     }
 
     /// @brief Returns the pointer to the buffer used for data reading.
@@ -676,10 +703,42 @@ public:
 
         /// A callback that will be called when data arrives over socket_.
         SocketCallback callback_;
+
+        /// @brief Indicates if the socket can no longer be used for normal
+        /// operations.
+        bool unusable_;
+
+        /// @brief Constructor.
+        ///
+        /// @param socket The socket descriptor.
+        SocketCallbackInfo(int socket)
+            : socket_(socket), callback_(0), unusable_(false) {
+        }
     };
 
     /// Defines storage container for callbacks for external sockets
-    typedef std::list<SocketCallbackInfo> SocketCallbackInfoContainer;
+    ///
+    /// This container extends a std::list with a second index which
+    /// provides direct access using the file descriptor.
+    typedef boost::multi_index_container<
+        // Container comprises elements of SocketCallbackInfo type.
+        SocketCallbackInfo,
+        // Here we start enumerating various indexes.
+        boost::multi_index::indexed_by<
+            // Sequenced index allows accessing elements in the same way
+            // as elements in std::list. Sequenced is the index #0.
+            boost::multi_index::sequenced<>,
+            // Use the file descriptor as the key for index #1.
+            boost::multi_index::hashed_unique<
+                boost::multi_index::member<
+                    SocketCallbackInfo, int, &SocketCallbackInfo::socket_
+                >
+            >
+        >
+    > SocketCallbackInfoContainer;
+
+    /// @brief SocketCallbackInfo iterator type.
+    typedef SocketCallbackInfoContainer::iterator SocketCallbackInfoIterator;
 
     /// @brief Packet reception buffer size
     ///
@@ -713,6 +772,9 @@ public:
     /// Closes open sockets.
     virtual ~IfaceMgr();
 
+    /// @brief Initialize the FD event handler;
+    void initializeFDEventHandler();
+
     /// @brief Sets or clears the test mode for @c IfaceMgr.
     ///
     /// Various unit test may set this flag to true, to indicate that the
@@ -731,6 +793,23 @@ public:
     /// @return true if the @c IfaceMgr is in the test mode, false otherwise.
     bool isTestMode() const {
         return (test_mode_);
+    }
+
+    /// @brief Get the flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    ///
+    /// @return true if the @c IfaceMgr checks thread ID, false otherwise.
+    bool getCheckThreadId() const {
+        return (check_thread_id_);
+    }
+
+    /// @brief Set the flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    ///
+    /// @param check A flag which indicates if thread ID is checked when
+    /// performing operations with external sockets.
+    void setCheckThreadId(const bool check) {
+        check_thread_id_ = check;
     }
 
     /// @brief Allows or disallows the loopback interface
@@ -796,7 +875,9 @@ public:
     /// main() function completes, you should not worry much about this.
     ///
     /// @return container with all interfaces.
-    const IfaceCollection& getIfaces() { return (ifaces_); }
+    const IfaceCollection& getIfaces() {
+        return (ifaces_);
+    }
 
     /// @brief Removes detected interfaces.
     ///
@@ -1143,15 +1224,28 @@ public:
     /// @brief Returns number of detected interfaces.
     ///
     /// @return number of detected interfaces
-    uint16_t countIfaces() { return ifaces_.size(); }
+    uint16_t countIfaces() {
+        return (ifaces_.size());
+    }
 
-    /// @brief Adds external socket and a callback
+    /// @brief Adds external socket and a callback.
     ///
     /// Specifies external socket and a callback that will be called
     /// when data will be received over that socket.
     ///
     /// @param socketfd socket descriptor
     /// @param callback callback function
+    ///
+    /// @note: all operations on external sockets should be performed
+    /// from the main thread as it does not make sense (and does not
+    /// work as expected) to use an external socket which is in fact
+    /// managed by an I/O service of a thread pool. For instance
+    /// a new external socket is scanned by select or poll only after
+    /// the next call to the receive method. Same argument applies
+    /// when an external socket is deleted and closed...
+    ///
+    /// @note: the callback is called when read available, hup and
+    /// error conditions: the callback is assumed to not block.
     void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Checks if socket's file description is registered.
@@ -1159,23 +1253,26 @@ public:
     /// @return True if the fd is in the list of registered sockets.
     bool isExternalSocket(int fd);
 
+    /// @brief Checks if socket's file description is registered.
+    ///
+    /// @return True if the fd is in the list of registered sockets and it
+    /// is unusable.
+    bool isExternalSocketUnusable(int fd);
+
     /// @brief Deletes external socket
+    ///
+    /// External sockets should be removed from IfaceMgr before being closed
+    /// by the external API.
     ///
     /// @param socketfd socket descriptor
     void deleteExternalSocket(int socketfd);
 
-    /// @brief Scans registered socket set and removes any that are invalid.
-    ///
-    /// Walks the list of registered external sockets and tests each for
-    /// validity.  If any are found to be invalid they are removed. This is
-    /// primarily a self-defense mechanism against hook libs or other users
-    /// of external sockets that may leave a closed socket registered by
-    /// mistake.
-    ///
-    /// @return A count of the sockets purged.
-    int purgeBadSockets();
-
     /// @brief Deletes all external sockets.
+    ///
+    /// @note: to be used only in unit tests.
+    ///
+    /// External sockets should be removed from IfaceMgr before being closed
+    /// by the external API.
     void deleteAllExternalSockets();
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4
@@ -1343,15 +1440,6 @@ public:
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);
 
-    /// @brief Convenience method for adding an descriptor to a set
-    ///
-    /// @param fd descriptor to add
-    /// @param[out] maxfd maximum fd value in the set.  If the new fd is
-    /// larger than it's current value, it will be updated to new fd value
-    /// @param sockets pointer to the set of sockets
-    /// @throw BadValue if sockets is null
-    static void addFDtoSet(int fd, int& maxfd, fd_set* sockets);
-
     // don't use private, we need derived classes in tests
 protected:
 
@@ -1483,6 +1571,9 @@ protected:
     /// @return Pkt6 object representing received packet (or null)
     Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
+    /// Main thread ID.
+    std::thread::id id_;
+
     /// @brief List of available interfaces
     IfaceCollection ifaces_;
 
@@ -1590,6 +1681,23 @@ private:
     /// @param socketfd socket descriptor
     void deleteExternalSocketInternal(int socketfd);
 
+    /// @brief Handle closed external socket.
+    ///
+    /// @note: the caller must take the lock when it generates
+    /// the argument and calls this method.
+    ///
+    /// @param it The external socket info iterator.
+    void handleClosedExternalSocket(SocketCallbackInfoIterator it);
+
+    /// @brief Handle closed external sockets.
+    void handleClosedExternalSockets();
+
+    /// @brief Handle interface socket error.
+    ///
+    /// @param iface The interface.
+    /// @param s The interface socket info.
+    void handleIfaceSocketError(const IfacePtr& iface, const SocketInfo& s);
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
@@ -1615,6 +1723,9 @@ private:
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
 
+    /// Check thread ID when performing operations with external sockets.
+    std::atomic<bool> check_thread_id_;
+
     /// @brief Detect callback used to perform actions before system dependent
     /// function calls.
     ///
@@ -1633,6 +1744,12 @@ private:
 
     /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
+
+    /// @brief The FDEventHandler instance.
+    util::FDEventHandlerPtr fd_event_handler_;
+
+    /// @brief The receiver FDEventHandler instance.
+    util::FDEventHandlerPtr receiver_fd_event_handler_;
 };
 
 }  // namespace isc::dhcp

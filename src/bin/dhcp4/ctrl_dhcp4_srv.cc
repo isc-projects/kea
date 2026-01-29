@@ -376,18 +376,13 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
         return (result);
     }
 
-    ConstElementPtr lease_database = dhcp4->get("lease-database");
-    if (lease_database) {
-        db::DbAccessParser parser;
-        std::string access_string;
-        parser.parse(access_string, lease_database);
-        auto params = parser.getDbAccessParameters();
-        if (params["type"] == "memfile") {
-            string file_name = params["name"];
-            if (Memfile_LeaseMgr::isLFCProcessRunning(file_name, Memfile_LeaseMgr::V4)) {
-                return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
-                        "Can not update configuration while lease file cleanup process is running."));
-            }
+    if (LeaseMgrFactory::haveInstance() &&
+        (LeaseMgrFactory::instance().getType() == "memfile")) {
+        Memfile_LeaseMgr& mgr = dynamic_cast<Memfile_LeaseMgr&>(LeaseMgrFactory::instance());
+        auto file_name = mgr.getLeaseFilePath(Memfile_LeaseMgr::V4);
+        if (Memfile_LeaseMgr::isLFCProcessRunning(file_name, Memfile_LeaseMgr::V4)) {
+            return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+                    "Can not update configuration while lease file cleanup process is running."));
         }
     }
 

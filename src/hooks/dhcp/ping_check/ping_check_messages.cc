@@ -38,6 +38,7 @@ extern const isc::log::MessageID PING_CHECK_MGR_START_PING_CHECK = "PING_CHECK_M
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPED = "PING_CHECK_MGR_STOPPED";
 extern const isc::log::MessageID PING_CHECK_MGR_STOPPING = "PING_CHECK_MGR_STOPPING";
 extern const isc::log::MessageID PING_CHECK_MGR_SUBNET_CONFIG_FAILED = "PING_CHECK_MGR_SUBNET_CONFIG_FAILED";
+extern const isc::log::MessageID PING_CHECK_NO_LEASE_OR_LEASE_REUSED = "PING_CHECK_NO_LEASE_OR_LEASE_REUSED";
 extern const isc::log::MessageID PING_CHECK_PAUSE_FAILED = "PING_CHECK_PAUSE_FAILED";
 extern const isc::log::MessageID PING_CHECK_PAUSE_ILLEGAL = "PING_CHECK_PAUSE_ILLEGAL";
 extern const isc::log::MessageID PING_CHECK_PAUSE_PERMISSIONS_FAILED = "PING_CHECK_PAUSE_PERMISSIONS_FAILED";
@@ -83,6 +84,7 @@ const char* values[] = {
     "PING_CHECK_MGR_STOPPED", "channel operations have stopped",
     "PING_CHECK_MGR_STOPPING", "ping channel operations are stopping",
     "PING_CHECK_MGR_SUBNET_CONFIG_FAILED", "user-context for subnet id %1, contains invalid ping-check %2",
+    "PING_CHECK_NO_LEASE_OR_LEASE_REUSED", "Ping check skipped: no lease",
     "PING_CHECK_PAUSE_FAILED", "Pausing ping channel operations failed %1",
     "PING_CHECK_PAUSE_ILLEGAL", "Pausing ping channel operations not allowed %1",
     "PING_CHECK_PAUSE_PERMISSIONS_FAILED", "Permissions check for ping-channel pause failed %1",

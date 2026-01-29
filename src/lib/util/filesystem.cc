@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ getContent(string const& file_name) {
         isc_throw(BadValue, "Cannot open '" << file_name);
     }
     string content;
-    file >> content;
+    getline(file, content);
     return (content);
 }
 
@@ -103,6 +103,13 @@ setUmask() {
     if ((orig | mask) != mask) {
         static_cast<void>(umask(orig | mask));
     }
+}
+
+RelaxUmask::RelaxUmask() : orig_umask_(umask(S_IRWXO)) {
+}
+
+RelaxUmask::~RelaxUmask() {
+    static_cast<void>(umask(orig_umask_));
 }
 
 bool amRunningAsRoot() {
@@ -312,7 +319,6 @@ PathChecker::validatePath(const std::string input_path_str,
 std::string
 PathChecker::validateDirectory(const std::string input_path_str,
                                bool enforce_path /* = PathChecker::shouldEnforceSecurity() */) const {
-    std::string input_copy = trim(input_path_str);
     // We only allow absolute path equal to default. Catch an invalid path.
     if (!input_path_str.empty()) {
         std::string input_copy = input_path_str;

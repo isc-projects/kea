@@ -4180,6 +4180,14 @@ qualifying suffix (if one is defined and needed).
    or to fine-tune various DNS update aspects. Please refer to the :ref:`hooks-ddns-tuning`
    documentation for the configuration options.
 
+.. note::
+
+    Beginning with Kea 3.1.3, when sanitizing results in an empty string, the
+    option (hostname or FQDN) will be ignored as if the client had not sent it.
+    This can happen if the value sent by the client contains only characters
+    that are deemed invalid by the expression in 'hostname-char-set' and
+    'hostname-char-replacement' is empty, "".
+
 .. _dhcp4-next-server:
 
 Next Server (``siaddr``)
@@ -5503,7 +5511,7 @@ configure Kea to use reservations stored in MySQL or PostgreSQL.
 Kea provides a dedicated hook for managing reservations in a
 database; section :ref:`hooks-host-cmds` provides detailed information.
 The `Kea wiki
-<https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management>`__
+<https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/commands#23-host-reservations-hr-management>`__
 provides some examples of how to conduct common host reservation
 operations.
 
@@ -6321,7 +6329,7 @@ useful as a way of making the clients known.
             { "hw-address": "aa:bb:cc:dd:ee:fe" },
             { "hw-address": "11:22:33:44:55:66" }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet4": [
             {
@@ -6336,33 +6344,35 @@ useful as a way of making the clients known.
         ]
     }
 
-This concept can be extended further. A good real-life scenario might be a
-situation where some customers of an ISP have not paid their bills. A new class can be
-defined to use an alternative default router that, instead of relaying traffic,
-redirects those customers to a captive portal urging them to bring their accounts up to date.
+This concept can be extended further by using reservations in conjunction with
+option class-tagging (see :ref:`option-class-tagging`).  A good real-life scenario
+might be a situation where some customers of an ISP have not paid their bills.
+These customers need to be assigned an alternate router, that instead of relaying
+traffic, redirects those customers to a captive portal urging them to bring their
+accounts up to date.  Reservations can be used to assign a client to the "blocked"
+class that is subsequently used to determine the router option value as shown
+below:
 
 ::
 
     "Dhcp4": {
         "client-classes": [
             {
-                "name": "blocked",
-                "option-data": [
-                    {
-                        "name": "routers",
-                        "data": "192.0.2.251"
-                    }
-                ]
+                "name": "blocked"
             }
         ],
         "reservations": [
-            // Clients on this list will be added to the KNOWN class. Some
+            // Clients in this list will be added to the KNOWN class. Some
             // will also be added to the blocked class.
-            { "hw-address": "aa:bb:cc:dd:ee:fe",
-              "client-classes": [ "blocked" ] },
-            { "hw-address": "11:22:33:44:55:66" }
+            {
+              "hw-address": "aa:bb:cc:dd:ee:fe",
+              "client-classes": [ "blocked" ]
+            },
+            {
+                "hw-address": "11:22:33:44:55:66"
+            }
         ],
-        "reservations-in-subnet": true,
+        "reservations-global": true,
 
         "subnet4": [
             {
@@ -6375,6 +6385,13 @@ redirects those customers to a captive portal urging them to bring their account
                 ],
                 "option-data": [
                     {
+                        // Router for blocked customers.
+                        "client-classes": [ "blocked" ],
+                        "name": "routers",
+                        "data": "192.0.2.251"
+                    },
+                    {
+                        // Router for customers in good standing.
                         "name": "routers",
                         "data": "192.0.2.250"
                     }
@@ -7324,6 +7341,11 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | additional configuration           |
    |                                                    |                | parameters.                        |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-received                          | integer        | Number of DHCPLEASEQUERY packet    |
+   |                                                    |                | received by the leasequery hook    |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-unknown-received                              | integer        | Number of packets received of an   |
    |                                                    |                | unknown type. A non-zero value of  |
    |                                                    |                | this statistic indicates that the  |
@@ -7373,6 +7395,21 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | ``pkt4-nak-sent`` should be close  |
    |                                                    |                | to ``pkt4-request-received``.      |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-unassigned-sent          | integer        | Number of DHCPLEASEUNASSIGNED      |
+   |                                                    |                | packets sent by the leasequery     |
+   |                                                    |                | hook library. This statistic is    |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-unknown-sent             | integer        | Number of DHCPLEASEUNKNOWN packets |
+   |                                                    |                | sent by the leasequery hook        |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-lease-query-response-active-sent              | integer        | Number of DHCPLEASEACTIVE packets  |
+   |                                                    |                | sent by the leasequery hook        |
+   |                                                    |                | library. This statistic is         |
+   |                                                    |                | expected to grow.                  |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-service-disabled                              | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped when the DHCP service |
    |                                                    |                | was disabled.                      |
@@ -7386,15 +7423,47 @@ The DHCPv4 server supports the following statistics:
    |                                                    |                | network, faulty clients, or a bug  |
    |                                                    |                | in the server.                     |
    +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-queue-full                                    | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped when the queue they   |
+   |                                                    |                | were to be parked was full.        |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-duplicate                                     | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped when they were        |
+   |                                                    |                | recognized as duplicate.           |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-rfc-violation                                 | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped following protocol    |
+   |                                                    |                | specifications.                    |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-admin-filtered                                | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped because the server    |
+   |                                                    |                | was configured to do so, e.g. by   |
+   |                                                    |                | classifying the query into the     |
+   |                                                    |                | ``DROP`` class.                    |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-not-for-us                                    | integer        | Number of incoming packets that    |
+   |                                                    |                | was dropped because they had to be |
+   |                                                    |                | handled by another server.         |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-processing-failed                             | integer        | Number of incoming packets that    |
+   |                                                    |                | was dropped because an unexpected  |
+   |                                                    |                | error occurred during processing.  |
+   +----------------------------------------------------+----------------+------------------------------------+
+   | pkt4-limit-exceeded                                | integer        | Number of incoming packets that    |
+   |                                                    |                | were dropped by the ``limits``     |
+   |                                                    |                | hook library.                      |
+   +----------------------------------------------------+----------------+------------------------------------+
    | pkt4-receive-drop                                  | integer        | Number of incoming packets that    |
    |                                                    |                | were dropped. The exact reason for |
    |                                                    |                | dropping packets is logged, but    |
    |                                                    |                | the most common reasons may be     |
    |                                                    |                | that an unacceptable packet type   |
    |                                                    |                | was received, direct responses are |
-   |                                                    |                | forbidden, or the server ID sent   |
-   |                                                    |                | by the client does not match the   |
-   |                                                    |                | server's server ID.                |
+   |                                                    |                | forbidden, the server ID sent by   |
+   |                                                    |                | the client does not match the      |
+   |                                                    |                | server's server ID, or an          |
+   |                                                    |                | unexpected error occurred during   |
+   |                                                    |                | processing.                        |
    +----------------------------------------------------+----------------+------------------------------------+
    | subnet[id].total-addresses                         | integer        | Total number of addresses          |
    |                                                    |                | available for DHCPv4 management    |
@@ -7786,8 +7855,25 @@ The DHCPv4 server supports the following statistics:
 
 Dropped incoming packets can be counted in the ``pkt4-receive-drop`` and
 a second counter detailing the drop cause:
+
 - ``pkt4-service-disabled`` - DHCP service is disabled
+
 - ``pkt4-parse-failed`` - packet parsing raised a fatal error
+
+- ``pkt4-queue-full`` - to be parked packet in a queue which was full
+
+- ``pkt4-duplicate`` - duplicate of a being processed packet
+
+- ``pkt4-rfc-violation`` - RFC violation (i.e. protocol specs instruct to drop them)
+
+- ``pkt4-admin-filtered`` - admin filtered out
+
+- ``pkt4-not-for-us`` - to be handled by another server
+
+- ``pkt4-processing-failed`` - got an unexpected error during processing
+
+- ``pkt4-limit-exceeded`` - dropped by the limits (:ref:`hooks-limits`)
+  hook library
 
 .. note::
 

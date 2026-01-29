@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,17 +6,18 @@
 
 #include <config.h>
 
-#include <iostream>
-#include <algorithm>
-#include <string>
-
 #include <log/logger_level.h>
-#include <log/logger_name.h>
 #include <log/logger_manager.h>
+#include <log/logger_name.h>
 #include <log/logger_specification.h>
-#include <log/logger_unittest_support.h>
 #include <log/logger_support.h>
+#include <log/logger_unittest_support.h>
 #include <log/output_option.h>
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <string>
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -313,6 +313,16 @@ TEST_F(DStubCfgMgrTest, redactConfig) {
     expected = "{ \"foo\": { \"password\": \"*****\" }, ";
     expected += "\"next\": { \"secret\": \"bar\" } }";
     EXPECT_EQ(expected, ret->str());
+
+    // Verify that it throws on cycles.
+    ElementPtr cycle = Element::createList();
+    cycle->add(cycle);
+    EXPECT_THROW(redactConfig(cycle), BadValue);
+    cycle->remove(0);
+    cycle = Element::createMap();
+    cycle->set("loop", cycle);
+    EXPECT_THROW(redactConfig(cycle), BadValue);
+    cycle->set("loop", Element::createMap());
 }
 
 // Test that user context is not touched when configuration is redacted.

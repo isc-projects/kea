@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -224,6 +224,16 @@ protected:
     /// @param attr the User-Password attribute.
     /// @return decoded User-Password attribute.
     ConstAttributePtr decodeUserPassword(const ConstAttributePtr& attr);
+
+    /// @brief Encode Message-Authenticator in an Status-Server.
+    ///
+    /// @param ptr the pointer to the attribute in the buffer.
+    void signMessageAuthenticator(size_t ptr);
+
+    /// @brief Decode Message-Authenticator in an Status-Server.
+    ///
+    /// @param ptr the pointer to the attribute in the buffer.
+    void verifyMessageAuthenticator(size_t ptr);
 
     /// @brief Code (useful values in MsgCode): header[0].
     uint8_t code_;

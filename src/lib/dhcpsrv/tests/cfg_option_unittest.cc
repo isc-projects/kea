@@ -1519,11 +1519,10 @@ TEST_F(CfgOptionTest, optionsWithClientClasses) {
 
     // Verify that CfgOption::get() with client classes returns
     // each one correctly.
-    for (auto &reference_desc : reference_options) {
-        OptionDescriptor found_desc = cfg.get(DHCP6_OPTION_SPACE, 777,
-                                              reference_desc.client_classes_);
+    for (OptionDescriptor const& rd : reference_options) {
+        found_desc = cfg.get(DHCP6_OPTION_SPACE, 777, rd.client_classes_);
         ASSERT_TRUE(found_desc.option_);
-        ASSERT_EQ(found_desc, reference_desc);
+        ASSERT_EQ(found_desc, rd);
     }
 }
 

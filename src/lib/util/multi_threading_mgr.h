@@ -1,4 +1,4 @@
-// Copyright (C) 2019-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2019-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -385,6 +385,20 @@ public:
     /// Leaving the critical section. The dhcp thread pool instance will be
     /// started according to the new configuration.
     virtual ~MultiThreadingCriticalSection();
+};
+
+/// @brief RAII wrapper for MT test mode.
+///
+/// The constructor enables test mode, the destructor disables it.
+class MtTestMode : public boost::noncopyable {
+public:
+    MtTestMode() {
+        MultiThreadingMgr::instance().setTestMode(true);
+    }
+
+    ~MtTestMode() {
+        MultiThreadingMgr::instance().setTestMode(false);
+    }
 };
 
 }  // namespace util

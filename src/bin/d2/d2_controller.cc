@@ -145,6 +145,7 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
+    deregisterCommands();
 }
 
 } // end namespace isc::d2

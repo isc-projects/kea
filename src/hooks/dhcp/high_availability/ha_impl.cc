@@ -110,8 +110,6 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
         // Increase the statistics of parse failures and dropped packets.
         StatsMgr::instance().addValue("pkt4-parse-failed", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
-
-
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return;
     }
@@ -120,6 +118,8 @@ HAImpl::buffer4Receive(hooks::CalloutHandle& callout_handle) {
     if (!services_->get()->inScope(query4)) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_BUFFER4_RECEIVE_NOT_FOR_US)
             .arg(query4->getLabel());
+        StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
     } else {
@@ -155,8 +155,10 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
         // logs the subnet selection failure.
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET4_SELECT_NO_SUBNET_SELECTED)
             .arg(query4->getLabel());
-        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        // We even do not know what is the server handling it...
+        StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return;
     }
 
@@ -171,8 +173,10 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
             LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_NO_RELATIONSHIP_SELECTOR_FOR_SUBNET)
                 .arg(query4->getLabel())
                 .arg(subnet4->toText());
-            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            // We even do not know what is the server handling it...
+            StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
             StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
+            callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
             return;
         }
 
@@ -180,8 +184,9 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
         LOG_ERROR(ha_logger, HA_SUBNET4_SELECT_INVALID_HA_SERVER_NAME)
             .arg(query4->getLabel())
             .arg(subnet4->toText());
-        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt4-processing-failed", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return;
     }
 
@@ -192,6 +197,7 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
             .arg(query4->getLabel())
             .arg(server_name);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         return;
     }
@@ -203,6 +209,8 @@ HAImpl::subnet4Select(hooks::CalloutHandle& callout_handle) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET4_SELECT_NOT_FOR_US)
             .arg(query4->getLabel())
             .arg(server_name);
+        StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return;
     }
@@ -259,6 +267,8 @@ HAImpl::leases4Committed(CalloutHandle& callout_handle) {
             LOG_ERROR(ha_logger, HA_LEASES4_COMMITTED_NO_RELATIONSHIP)
                 .arg(query4->getLabel())
                 .arg(ex.what());
+            StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-receive-drop", static_cast<int64_t>(1));
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
             return;
         }
@@ -441,6 +451,8 @@ HAImpl::buffer6Receive(hooks::CalloutHandle& callout_handle) {
     if (!services_->get()->inScope(query6)) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_BUFFER6_RECEIVE_NOT_FOR_US)
             .arg(query6->getLabel());
+        StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
 
     } else {
@@ -477,6 +489,8 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET6_SELECT_NO_SUBNET_SELECTED)
             .arg(query6->getLabel());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        // We even do not know what is the server handling it...
+        StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
@@ -493,6 +507,8 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
                 .arg(query6->getLabel())
                 .arg(subnet6->toText());
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+            // We even do not know what is the server handling it...
+            StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
             StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
             return;
         }
@@ -502,6 +518,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
             .arg(query6->getLabel())
             .arg(subnet6->toText());
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt6-processing-failed", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
@@ -513,6 +530,7 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
             .arg(query6->getLabel())
             .arg(server_name);
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
+        StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         return;
     }
@@ -524,6 +542,8 @@ HAImpl::subnet6Select(hooks::CalloutHandle& callout_handle) {
         LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_SUBNET6_SELECT_NOT_FOR_US)
             .arg(query6->getLabel())
             .arg(server_name);
+        StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
         callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return;
     }
@@ -573,6 +593,8 @@ HAImpl::leases6Committed(CalloutHandle& callout_handle) {
             LOG_ERROR(ha_logger, HA_LEASES6_COMMITTED_NO_RELATIONSHIP)
                 .arg(query6->getLabel())
                 .arg(ex.what());
+            StatsMgr::instance().addValue("pkt6-not-for-us", static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
             callout_handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
             return;
         }
@@ -1057,7 +1079,6 @@ bool
 HAImpl::shouldReclaim(const HAServicePtr& service, const dhcp::Lease6Ptr& lease6) const {
     return (service->shouldReclaim(lease6));
 }
-
 
 } // end of namespace isc::ha
 } // end of namespace isc

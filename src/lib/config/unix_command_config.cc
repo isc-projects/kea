@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,10 +128,11 @@ UnixCommandConfig::validatePath(const std::string socket_path) {
     }
 
     auto parent_path = socket_path_checker_->getPath();
-    if (!hasPermissions(parent_path, socket_path_perms_)) {
+    auto parent_perms = getPermissions(parent_path);
+    if ((parent_perms & ~socket_path_perms_) != 0) {
         std::ostringstream oss;
         oss << "socket path:" << parent_path
-            << " does not exist or does not have permssions = "
+            << " does not exist or has more relaxed permissions than "
             << std::oct << socket_path_perms_;
 
         if (PathChecker::shouldEnforceSecurity()) {

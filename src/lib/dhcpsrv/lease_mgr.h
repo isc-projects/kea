@@ -396,6 +396,15 @@ public:
     getLeases4(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const = 0;
 
+    /// @brief Returns all IPv4 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(uint32_t state,
+                                        SubnetID subnet_id) const = 0;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
@@ -541,6 +550,15 @@ public:
     getLeases6(SubnetID subnet_id,
                const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const = 0;
+
+    /// @brief Returns all IPv6 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(uint32_t state,
+                                        SubnetID subnet_id) const = 0;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -1079,6 +1097,62 @@ public:
     /// @returns By default an error saying the backend is not the memfile one.
     virtual isc::data::ConstElementPtr lfcStartHandler();
 
+
+    /// @brief Update in-memoery stats when adding a v4 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when adding a V6 lease.
+    ///
+    /// @param lease Added lease.
+    static void updateStatsOnAdd(const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v4 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease4Ptr& existing,
+                                    const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when updating a v6 lease.
+    ///
+    /// @param existing Lease data before update.
+    /// @param lease Lease data after update.
+    static void updateStatsOnUpdate(const Lease6Ptr& existing,
+                                    const Lease6Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v4 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease4Ptr& lease);
+
+    /// @brief Update in-memory stats when deleting a v6 lease.
+    ///
+    /// @param lease Deleted lease.
+    static void updateStatsOnDelete(const Lease6Ptr& lease);
+
+    /// @brief Helper function that adds a value to an address stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-addresses", "assigned-nas"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStat(const std::string& stat, SubnetID& subnet_id,
+                         PoolPtr pool, int value);
+
+    /// @brief Helper function that adds a value to a prefix stat's global,
+    /// subnet, and pool level values.
+    ///
+    /// @param stat base name of the statistic e.g. "assigned-pds"
+    /// @param subnet_id id of desired subnet
+    /// @param pool pointer to the pool (if one) within the subnet, if empty
+    /// pool level is skipped.
+    /// @param value signed value to add to the statistic
+    static void bumpStatPrefix(const std::string& stat, SubnetID&
+                               subnet_id, PoolPtr pool, int value);
 protected:
 
     /// Extended information / Bulk Lease Query shared interface.

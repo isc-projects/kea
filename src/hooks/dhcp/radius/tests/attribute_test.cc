@@ -45,8 +45,8 @@ AttributeTest::compare(ConstAttributePtr first, ConstAttributePtr second) {
 
 bool
 AttributeTest::compare(const Attributes& first, const Attributes& second) {
-    auto f = [&](ConstAttributePtr first, ConstAttributePtr second) {
-        return (AttributeTest::compare(first, second));
+    auto f = [&](ConstAttributePtr first_attr, ConstAttributePtr second_attr) {
+        return (AttributeTest::compare(first_attr, second_attr));
     };
     return (std::equal(first.cbegin(), first.cend(), second.cbegin(), second.cend(), f));
 }

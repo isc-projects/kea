@@ -90,7 +90,7 @@ LeaseQueryImpl6::LeaseQueryImpl6(const ConstElementPtr config)
 }
 
 void
-LeaseQueryImpl6::processQuery(PktPtr base_query) const {
+LeaseQueryImpl6::processQuery(PktPtr base_query, bool& invalid) const {
     Pkt6Ptr query = boost::dynamic_pointer_cast<Pkt6>(base_query);
     if (!query) {
         // Shouldn't happen.
@@ -100,21 +100,36 @@ LeaseQueryImpl6::processQuery(PktPtr base_query) const {
     // Ensure there is a client id
     DuidPtr req_clientid = query->getClientId();
     if (!req_clientid) {
+        invalid = true;
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "DHCPV6_LEASEQUERY must supply a D6O_CLIENTID");
     }
 
     // If client sent a server-id, validate it.
-    testServerId(query);
+    try {
+        testServerId(query);
+    } catch (const BadValue&) {
+        invalid = true;
+        // Drop statistic updated by testServerId.
+        throw;
+    }
 
     // Validates query content using the source address.
     IOAddress requester_ip = query->getRemoteAddr();
     if (requester_ip.isV6Zero())  {
         /// Not sure this really possible.
+        invalid = true;
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "DHCPV6_LEASEQUERY source address cannot be ::");
     }
 
     if (!isRequester(requester_ip)) {
         // RFC 5007 says we may discard or return STATUS_NotAllowed
+        invalid = true;
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue,
                  "rejecting DHCPV6_LEASEQUERY from unauthorized requester: "
                   << requester_ip.toText());
@@ -124,6 +139,9 @@ LeaseQueryImpl6::processQuery(PktPtr base_query) const {
     OptionCustomPtr lq_option = boost::dynamic_pointer_cast<OptionCustom>
                                 (query->getOption(D6O_LQ_QUERY));
     if (!lq_option) {
+        invalid = true;
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "DHCPV6_LEASEQUERY must supply a D6O_LQ_QUERY option");
     }
 
@@ -135,6 +153,9 @@ LeaseQueryImpl6::processQuery(PktPtr base_query) const {
         query_link_addr = lq_option->readAddress(1);
     } catch (const std::exception& ex) {
         // unpack() should catch this?
+        invalid = true;
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(BadValue, "error reading query field(s):" << ex.what());
     }
 
@@ -1053,14 +1074,20 @@ LeaseQueryImpl6::testServerId(const Pkt6Ptr& query) {
         try {
             client_duid.reset(new DUID(client_server_id->getData()));
         } catch (const std::exception& ex) {
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(BadValue, "DHCPV6_LEASEQUERY D6O_SERVERID malformed: "
                       << ex.what());
         }
 
         DuidPtr server_id = CfgMgr::instance().getCurrentCfg()->getCfgDUID()->getCurrentDuid();
         if (!server_id) {
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(Unexpected, "Server has no current server id?");
         } else if (*client_duid != *server_id) {
+            StatsMgr::instance().addValue("pkt6-not-for-us",
+                                          static_cast<int64_t>(1));
             isc_throw(BadValue, "rejecting DHCPV6_LEASEQUERY from: "
                       << query->getRemoteAddr() << ", unknown server-id: "
                       << (client_server_id ? client_server_id->toText() : "malformed"));

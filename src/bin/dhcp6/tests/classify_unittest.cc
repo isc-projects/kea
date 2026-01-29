@@ -2602,12 +2602,15 @@ TEST_F(ClassifyTest, dropClass) {
     // Option, dropped.
     EXPECT_FALSE(client2.getContext().response_);
 
-    // There should also be pkt6-receive-drop stat bumped up.
+    // There should also be stats bumped up.
     stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr filt_stat = mgr.getObservation("pkt6-admin-filtered");
     stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
 
-    // This statistic must be present and must be set to 1.
+    // These statistics must be present and must be set to 1.
+    ASSERT_TRUE(filt_stat);
     ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, filt_stat->getInteger().first);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
@@ -2640,12 +2643,15 @@ TEST_F(ClassifyTest, dropClassUnknown) {
     // No reservation, dropped.
     EXPECT_FALSE(client2.getContext().response_);
 
-    // There should also be pkt6-receive-drop stat bumped up.
+    // There should also be stats bumped up.
     stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr filt_stat = mgr.getObservation("pkt6-admin-filtered");
     stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
 
-    // This statistic must be present and must be set to 1.
+    // These statistics must be present and must be set to 1.
+    ASSERT_TRUE(filt_stat);
     ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, filt_stat->getInteger().first);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
@@ -2678,12 +2684,15 @@ TEST_F(ClassifyTest, dropClassReservedClass) {
     // No reservation, dropped.
     EXPECT_FALSE(client2.getContext().response_);
 
-    // There should also be pkt6-receive-drop stat bumped up.
+    // There should also be stats bumped up.
     stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr filt_stat = mgr.getObservation("pkt6-admin-filtered");
     stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
 
-    // This statistic must be present and must be set to 1.
+    // These statistics must be present and must be set to 1.
+    ASSERT_TRUE(filt_stat);
     ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, filt_stat->getInteger().first);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 }
 
@@ -2751,12 +2760,15 @@ TEST_F(ClassifyTest, earlyDrop) {
     // Match the reservation so dropped.
     EXPECT_FALSE(client.getContext().response_);
 
-    // There should also be pkt6-receive-drop stat bumped up.
+    // There should also be stats bumped up.
     stats::StatsMgr& mgr = stats::StatsMgr::instance();
+    stats::ObservationPtr filt_stat = mgr.getObservation("pkt6-admin-filtered");
     stats::ObservationPtr drop_stat = mgr.getObservation("pkt6-receive-drop");
 
-    // This statistic must be present and must be set to 1.
+    // These statistics must be present and must be set to 1.
+    ASSERT_TRUE(filt_stat);
     ASSERT_TRUE(drop_stat);
+    EXPECT_EQ(1, filt_stat->getInteger().first);
     EXPECT_EQ(1, drop_stat->getInteger().first);
 
     // Retry with another DUID.
@@ -3355,7 +3367,7 @@ TEST_F(ClassifyTest, classTaggingAndNeverSend) {
 TEST_F(ClassifyTest, classTaggingList) {
     IfaceMgrTestConfig test_config(true);
     // Define a client-str option for classification, and server-str
-    // option to send in response.  Then define 3 possible values in 
+    // option to send in response.  Then define 3 possible values in
     // a subnet for sever-str based on class membership.
     string config = R"^(
     {
@@ -3415,8 +3427,8 @@ TEST_F(ClassifyTest, classTaggingList) {
     };
 
     std::list<Scenario> scenarios {
-        { __LINE__, "one",     "class-one",     "string.one" }, 
-        { __LINE__, "two",     "class-two",     "string.two" }, 
+        { __LINE__, "one",     "class-one",     "string.one" },
+        { __LINE__, "two",     "class-two",     "string.two" },
         { __LINE__, "neither", "class-neither", "string.other" }
     };
 

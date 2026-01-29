@@ -59,7 +59,7 @@
         "               \"end-event\",",
         "               \"subnet-id\",",
         "               \"interval-start\",",
-        "               \"occurences\",",
+        "               \"occurrences\",",
         "               \"min-duration-usecs\",",
         "               \"max-duration-usecs\",",
         "               \"total-duration-usecs\",",

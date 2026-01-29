@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <exceptions/exceptions.h>
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <mutex>
 
@@ -88,7 +89,7 @@ private:
     IOServicePtr io_service_;
 
     /// @brief The asio timer.
-    boost::asio::deadline_timer timer_;
+    boost::asio::system_timer timer_;
 
     /// @brief Controls how the timer behaves after expiration.
     IntervalTimer::Mode mode_;
@@ -141,7 +142,7 @@ void
 IntervalTimerImpl::update() {
     try {
         // Update expire time to (current time + interval_).
-        timer_.expires_from_now(boost::posix_time::millisec(long(interval_)));
+        timer_.expires_after(std::chrono::milliseconds(interval_));
         // Reset timer.
         // Pass a function bound with a shared_ptr to this.
         timer_.async_wait(std::bind(&IntervalTimerImpl::callback,

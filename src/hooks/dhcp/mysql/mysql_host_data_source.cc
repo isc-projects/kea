@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -31,7 +31,6 @@
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
-#include <boost/static_assert.hpp>
 
 #include <mysql.h>
 #include <mysqld_error.h>
@@ -170,7 +169,7 @@ public:
         columns_[DHCP4_BOOT_FILE_NAME_COL] = "dhcp4_boot_file_name";
         columns_[AUTH_KEY_COL] = "auth_key";
 
-        BOOST_STATIC_ASSERT(13 < HOST_COLUMNS);
+        static_assert(13 < HOST_COLUMNS, "13 < HOST_COLUMNS");
     }
 
     /// @brief Virtual destructor.
@@ -889,11 +888,13 @@ private:
         : universe_(universe), start_column_(start_column), option_id_(0),
           code_(0), value_length_(0), formatted_value_length_(0),
           space_length_(0), persistent_(false), cancelled_(false),
-          user_context_length_(0),
+          user_context_length_(0), client_classes_length_(0),
           option_id_null_(MLM_FALSE), code_null_(MLM_FALSE),
           value_null_(MLM_FALSE), formatted_value_null_(MLM_FALSE),
           space_null_(MLM_FALSE), user_context_null_(MLM_FALSE),
-          option_id_index_(start_column), code_index_(start_column_ + 1),
+          client_classes_null_(MLM_FALSE),
+          option_id_index_(start_column),
+          code_index_(start_column_ + 1),
           value_index_(start_column_ + 2),
           formatted_value_index_(start_column_ + 3),
           space_index_(start_column_ + 4),
@@ -1759,7 +1760,7 @@ public:
         columns_[5] = "excluded_prefix";
         columns_[6] = "excluded_prefix_len";
 
-        BOOST_STATIC_ASSERT(6 < RESRV_COLUMNS);
+        static_assert(6 < RESRV_COLUMNS, "6 < RESRV_COLUMNS");
     }
 
     /// @brief Create MYSQL_BIND objects for IPv6 Reservation.
@@ -1943,7 +1944,7 @@ public:
           subnet_id_(SUBNET_ID_UNUSED),
           host_id_(0), option_() {
 
-        BOOST_STATIC_ASSERT(11 <= OPTION_COLUMNS);
+        static_assert(11 <= OPTION_COLUMNS, "11 <= OPTION_COLUMNS");
     }
 
     /// @brief Creates binding array to insert option data into database.

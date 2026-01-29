@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,18 +6,22 @@
 
 #include <config.h>
 
-#include <gtest/gtest.h>
-
-#include <testutils/sandbox.h>
 #include <asiolink/io_service.h>
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
+#include <config/testutils/socket_path.h>
 #include <config/unix_command_mgr.h>
+#include <testutils/gtest_utils.h>
 #include <util/filesystem.h>
+
 #include <string>
+#include <sys/stat.h>
+
+#include <gtest/gtest.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -26,8 +30,6 @@ using namespace std;
 // Test class for Unix Command Manager
 class UnixCommandMgrTest : public ::testing::Test {
 public:
-    isc::test::Sandbox sandbox;
-
     /// Default constructor
     UnixCommandMgrTest() : io_service_(new IOService()) {
         resetSocketPath();
@@ -86,6 +88,15 @@ TEST_F(UnixCommandMgrTest, unixCreate) {
                  DhcpConfigError);
 
     socket_info->set("socket-name", Element::create("test_socket"));
+
+    bool const too_long(SocketPath::isTooLong("test_socket"));
+    if (too_long) {
+        // "File name too long"
+        EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
+        EXPECT_EQ(UnixCommandMgr::instance().getControlSocketFD(), -1);
+        return;
+    }
+
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
     EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
 
@@ -116,6 +127,14 @@ TEST_F(UnixCommandMgrTest, exclusiveOpen) {
     socket_info->set("socket-type", Element::create("unix"));
     socket_info->set("socket-name", Element::create("test_socket"));
 
+    bool const too_long(SocketPath::isTooLong("test_socket"));
+    if (too_long) {
+        // "File name too long"
+        EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
+        EXPECT_EQ(UnixCommandMgr::instance().getControlSocketFD(), -1);
+        return;
+    }
+
     EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
     EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
     int fd = UnixCommandMgr::instance().getControlSocketFD();
@@ -133,4 +152,31 @@ TEST_F(UnixCommandMgrTest, exclusiveOpen) {
 
     // Now let's close it.
     EXPECT_NO_THROW(UnixCommandMgr::instance().closeCommandSocket());
+}
+
+// Verifies that a socket has group write permission.
+TEST_F(UnixCommandMgrTest, groupWritable) {
+    setSocketTestPath();
+
+    // Pass in valid parameters.
+    ElementPtr socket_info = Element::createMap();
+    socket_info->set("socket-type", Element::create("unix"));
+    socket_info->set("socket-name", Element::create("test_socket"));
+
+    bool const too_long(SocketPath::isTooLong("test_socket"));
+    if (too_long) {
+        // "File name too long"
+        EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
+        EXPECT_EQ(UnixCommandMgr::instance().getControlSocketFD(), -1);
+        return;
+    }
+
+    EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
+
+    // Check permissions on the socket file.
+    std::string socket = UnixCommandConfig::getSocketPath() + "/test_socket";
+    EXPECT_TRUE(file::isSocket(socket));
+    mode_t perms = file::getPermissions(socket);
+    EXPECT_EQ(S_IWGRP, perms & S_IWGRP);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2021 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,9 +26,10 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Creates the pkt6-receive-drop statistic.
+    /// Creates the pkt6-duplicate and pkt6-receive-drop statistics.
     ClientHandleTest() : called1_(false), called2_(false), called3_(false) {
         MultiThreadingMgr::instance().apply(false, 0, 0);
+        StatsMgr::instance().setValue("pkt6-duplicate", static_cast<int64_t>(0));
         StatsMgr::instance().setValue("pkt6-receive-drop", static_cast<int64_t>(0));
     }
 
@@ -56,15 +57,21 @@ public:
 
     /// @brief Check statistics.
     ///
-    /// @param bumped True if pkt6-receive-drop should have been bumped by one,
+    /// @param bumped True if statistics should have been bumped by one,
     /// false otherwise.
     void checkStat(bool bumped) {
-        ObservationPtr obs = StatsMgr::instance().getObservation("pkt6-receive-drop");
-        ASSERT_TRUE(obs);
+        ObservationPtr obs_qf =
+            StatsMgr::instance().getObservation("pkt6-duplicate");
+        ObservationPtr obs_rd =
+            StatsMgr::instance().getObservation("pkt6-receive-drop");
+        ASSERT_TRUE(obs_qf);
+        ASSERT_TRUE(obs_rd);
         if (bumped) {
-            EXPECT_EQ(1, obs->getInteger().first);
+            EXPECT_EQ(1, obs_qf->getInteger().first);
+            EXPECT_EQ(1, obs_rd->getInteger().first);
         } else {
-            EXPECT_EQ(0, obs->getInteger().first);
+            EXPECT_EQ(0, obs_qf->getInteger().first);
+            EXPECT_EQ(0, obs_rd->getInteger().first);
         }
     }
 

@@ -6,9 +6,10 @@
 
 #include <config.h>
 
+#include <util/ready_check.h>
+
 #include <gtest/gtest.h>
 
-#include <sys/select.h>
 #include <cstddef>
 
 namespace isc {
@@ -17,24 +18,18 @@ namespace unittests {
 
 unsigned char
 parentReadState(int fd) {
-  unsigned char result = 0xff;
+    unsigned char result = 0xff;
 
-  fd_set rfds;
-  FD_ZERO(&rfds);
-  FD_SET(fd, &rfds);
+    const int nfds = util::selectCheck(fd, 5);
+    EXPECT_EQ(1, nfds);
 
-  struct timeval tv = {5, 0};
+    if (nfds == 1) {
+        // Read status
+        const ssize_t bytes_read = read(fd, &result, sizeof(result));
+        EXPECT_EQ(static_cast<ssize_t>(sizeof(result)), bytes_read);
+    }
 
-  const int nfds = select(fd + 1, &rfds, NULL, NULL, &tv);
-  EXPECT_EQ(1, nfds);
-
-  if (nfds == 1) {
-      // Read status
-      const ssize_t bytes_read = read(fd, &result, sizeof(result));
-      EXPECT_EQ(static_cast<ssize_t>(sizeof(result)), bytes_read);
-  }
-
-  return (result);
+    return (result);
 }
 
 }

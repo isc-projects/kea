@@ -1,3 +1,209 @@
+Kea 3.1.5 (development) released on January 28, 2026
+
+2433.	[sec]		fdupont
+	Added to the RADIUS hooks library and security
+	documentation a warning about the Blast-RADIUS
+	vulnerability which affects the RADIUS protocol.
+	(Gitlab #4254)
+
+2432.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 3.1.5
+	development release.
+	(Gitlab #4306)
+
+2431.	[build]		fdupont
+	Set debug to true and optimization to 2 by default
+	in meson project default so the same as the
+	'debugoptimized' buildtype.
+	(Gitlab #4296)
+
+2430.	[func]		fdupont
+	The RADIUS hook library no longer accepts the 'realm'`
+	config parameter which was never implemented i.e. it was
+	silently ignored.
+	(Gitlab #3103)
+
+2429.	[func]		fdupont
+	Create UNIX sockets as group writable so a tool
+	is allowed to connect to them as soon as it is
+	run by a member of the group (vs. requiring to be
+	run by the owner).
+	Note to disallow this the group execute permission
+	can be removed from the socket parent directory.
+	(Gitlab #4260)
+
+2428.	[func]		fdupont
+	Added to the RADIUS hooks library a new per service
+	"idle-timer-interval" parameter which makes a
+	"Status-Server" message to be periodically sent.
+	The value 0 (default) disables this.
+	(Gitlab #4283)
+
+2427.	[doc]		fdupont
+	Added a section in the ARM explaining how to generate
+	core dump files.
+	(Gitlab #4147)
+
+2426.	[bug]		fdupont
+	The "exchange-timeout" parameter of GSS-TSIG hook library
+	configuration is no longer ignored.
+	(Gitlab #4265)
+
+2425.	[bug]		fdupont
+	Added check for prefix length in ipv6-prefix option
+	data type.
+	(Gitlab #4295)
+
+2424.	[bug]		tmark
+	API commands provided by the lease-cmds hook
+	library now update in-memory statistics.
+	(Gitlab #4176)
+
+2423.	[func]		fdupont
+	Documented received and sent statistics of the lease query
+	hook library. Also moved initialization to the server so
+	they are no longer deleted when the hook library is unloaded.
+	(Gitlab #4186)
+
+2422.	[func]		fdupont
+	Added 'pkt4-duplicate' and 'pkt6-duplicate' statistics to
+	count incoming packets that are dropped because they are
+	duplicates of packets currently being processed.
+	Previously such packets were counted as queue full.
+	(Gitlab #4187)
+
+2421.	[func]		fdupont
+	HA now increments drop statistics such as 'pkt4-not-for-us'
+	and 'pkt6-not-for-us' when inbound packets are deemed to be
+	out of scope.
+	(Gitlab #4184)
+
+2420.	[func]		tmark
+	Memfile lease back end now supports the ``on-fail``
+	parameter though without retry.  When set to either
+	 ``stop-retry-exit`` or ``serve-retry-exit`` the
+	server will exit on unrecoverable write errors. If
+	 set to ``serve-retry-continue`` the server will
+	continue to run but write errors will continue until
+	corrective action is taken. Applies to both
+	kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4220)
+
+2419.	[func]		fdupont
+	Added 'lease4-get-by-state' and 'lease6-get-by-state'
+	commands to retrieve leases by state and optionally subnet.
+	(Gitlab #4230)
+
+Kea 3.1.4 (development) released on November 26, 2025
+
+2418.	[bug]		fdupont, tmark
+	Fixed a bug which made the lfc running check in
+	config set and reload command to use the wrong file.
+	(Gitlab #4198)
+
+2417.	[bug]		tmark
+	Corrected an issue in the ping-check hook library that
+	could result in the ICMP socket stuck in the read ready
+	state.
+	(Gitlab #4221)
+
+2416.	[func]		tmark
+	Added a global parameter, "allow-address-registration",
+	to kea-dhcp6. It enables or disables client address
+	registration (see RFC 9686). It also corrects an
+	issue in which the server was not correctly enforcing
+	a peer address match when ADDR-REG-INFORMs are
+	received via relay.
+	(Gitlab #4161)
+
+2415.	[func]		tmark
+	The lease query hooks configuration parameter, 'requesters',
+	now also accepts address ranges expressed in CIDR format. Prior
+	to this it was restricted to one or more IP addresses.
+	(Gitlab #4190)
+
+2414.	[func]		fdupont
+	Added "pkt4-queue-full" and "pkt6-queue-full"
+	statistics which are increased when an incoming packet
+	was dropped because it was queued and the queue is full.
+
+	Added "pkt4-rfc-violation" and "pkt6-rfc-violation"
+	statistics which are increased when an incoming packet
+	has to be dropped according to protocol specifications.
+
+	Added "pkt4-admin-filtered" and "pkt6-admin-filtered"
+	statistics which are increased when an incoming packet
+	was dropped because the server was configured to do so,
+	e.g. by classifying the query into the DROP class.
+
+	Added "pkt4-not-for-us" and "pkt6-not-for-us"
+	statistics which are increased when an incoming packet
+	was dropped because it has to be handled by another server.
+
+	Added "pkt4-processing-failed" and "pkt6-processing-failed"
+	statistics which are increased when an incoming packet
+	was dropped because an unexpected error occurred during
+	processing.
+
+	Added "pkt4-limit-exceeded" and "pkt6-limit-exceeded"
+	statistics which are increased when an incoming packet
+	was dropped by the limits hook library.
+	(Gitlab #3140, #4157, #4146, #4127, #4126, #4133, #4134)
+
+2413.	[sec]*		andrei
+	Restrict the path of the UNIX socket to which kea-netconf
+	connects the same way the path is restricted for other servers
+	on creation of UNIX sockets.
+	(Gitlab #3969)
+
+Kea 3.1.3 (development) released on October 29, 2025
+
+2412.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.1.3
+	development release.
+	(Gitlab #4175)
+
+2411.	[sec]		tmark
+	When a hostname or FQDN received from a client is
+	reduced to an empty string by hostname sanitizing,
+	kea-dhcp4 and kea-dhcp6 will now drop the option.
+	CVE:2025-11232
+	(Gitlab #4142)
+
+2410.	[build]		andrei
+	-Wshadow was added to the compiler flags and its warnings
+	addressed.
+	(Gitlab #3451)
+
+2409.	[build]		andrei
+	Kea now builds with Clang 21. Thanks to Khem Raj for reporting
+	the problem and suggesting a fix.
+	(Gitlab #4100)
+
+2408.	[bug]		andrei
+	Fixed a bug introduced in flex-id in 3.1.2 which caused the
+	expression to always be empty even when a value was configured
+	under "identifier-expression".
+	(Gitlab #4181)
+
+2407.	[bug]		tmark
+	Corrected an issue that was causing an
+	HA peer to not restart its dedicated listener
+	after handling a config-test command.
+	Applies to both kea-dhcp4 and kea-dhcp6.
+	(Gitlab #4145)
+
+2406.	[bug]		razvan
+	Removed logging an error in ping check hook library if
+	using lease cache threshold.
+	(Gitlab #4129)
+
+2405.	[bug]		razvan, liyunqing_kylin
+	Fixed a data race in ping-check hooks library. Thanks to
+	liyunqing_kylin for reporting and testing the fix for this
+	issue.
+	(Gitlab #4164)
+
 2404.	[bug]		razvan, liyunqing_kylin
 	Fixed deadlock in ping-check hooks library. Thanks to
 	liyunqing_kylin for reporting and providing a patch.
@@ -60,7 +266,7 @@ Kea 3.1.2 (development) released on September 24, 2025
 
 2394.	[func]		razvan
 	Added new 'statistic-global-get-all' command for kea-dhcp4
-	and kea-dhcp6 servers, which returns all statistica except
+	and kea-dhcp6 servers, which returns all statistics except
 	subnet counters.
 	(Gitlab #3213)
 
@@ -315,7 +521,7 @@ Kea 3.0.0 (stable) released on June 25, 2025
 
 2352.	[bug]		razvan
 	Fix error handling when detecting a global reservation for the
-	client and global reservatons are explicitly disabled in the
+	client and global reservations are explicitly disabled in the
 	configuration.
 	(Gitlab #3911)
 
@@ -894,7 +1100,7 @@ Kea 2.7.1 (development) released on July 31, 2024
 
 2263.	[func]		fdupont
 	RFC 8925 "IPv6-Only Preferred Option for DHCPv4" is now
-	fully implemented: 0.0.0.0 address can be offerred.
+	fully implemented: 0.0.0.0 address can be offered.
 	(Gitlab #3094)
 
 2262.	[bug]		marcin
@@ -1852,7 +2058,7 @@ Kea 2.3.6 (development) released on March 29, 2023
 	multi-threading settings if there is a configuration error
 	detected. Also hooks now set DROP flag on the
 	dhcp4_srv_configured and dhcp6_srv_configured callouts if the
-	configuration is invalid or an error occured. Proper shutdown
+	configuration is invalid or an error occurred. Proper shutdown
 	of the HTTP listener is performed now instead of generating a
 	server crash if the provided address is not valid.
 	(Gitlab #2799)

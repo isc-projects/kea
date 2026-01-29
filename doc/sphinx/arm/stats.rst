@@ -256,10 +256,22 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616290"
                ]
            ],
+           "pkt4-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-decline-received": [
                [
                    0,
                    "2023-06-13 20:42:46.616296"
+               ]
+           ],
+           "pkt4-duplicate": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
                ]
            ],
            "pkt4-discover-received": [
@@ -274,6 +286,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616308"
                ]
            ],
+           "pkt4-limit-exceeded": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616310"
+               ]
+           ],
            "pkt4-nak-received": [
                [
                    0,
@@ -284,6 +302,12 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616314"
+               ]
+           ],
+           "pkt4-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
                ]
            ],
            "pkt4-offer-received": [
@@ -302,6 +326,18 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616326"
+               ]
+           ],
+           "pkt4-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
+           "pkt4-queue-full": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
                ]
            ],
            "pkt4-receive-drop": [
@@ -326,6 +362,12 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616343"
+               ]
+           ],
+           "pkt4-rfc-violation": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
                ]
            ],
            "pkt4-sent": [
@@ -549,6 +591,12 @@ or
                    "2023-06-13 21:28:57.177731"
                ]
            ],
+           "pkt6-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-advertise-received": [
                [
                    0,
@@ -585,16 +633,46 @@ or
                    "2023-06-13 21:28:57.177741"
                ]
            ],
+           "pkt6-duplicate": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-infrequest-received": [
                [
                    0,
                    "2023-06-13 21:28:57.177742"
                ]
            ],
+           "pkt6-limit-exceeded": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-parse-failed": [
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-queue-full": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-rebind-received": [
@@ -640,6 +718,12 @@ or
                ]
            ],
            "pkt6-request-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-rfc-violation": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"
@@ -990,6 +1074,12 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616290"
                ]
            ],
+           "pkt4-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-decline-received": [
                [
                    0,
@@ -1002,10 +1092,22 @@ Here is an example response returning all collected statistics:
                    "2023-06-13 20:42:46.616303"
                ]
            ],
+           "pkt4-duplicate": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
+               ]
+           ],
            "pkt4-inform-received": [
                [
                    0,
                    "2023-06-13 20:42:46.616308"
+               ]
+           ],
+           "pkt4-limit-exceeded": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616310"
                ]
            ],
            "pkt4-nak-received": [
@@ -1018,6 +1120,12 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616314"
+               ]
+           ],
+           "pkt4-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
                ]
            ],
            "pkt4-offer-received": [
@@ -1036,6 +1144,18 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616326"
+               ]
+           ],
+           "pkt4-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
+               ]
+           ],
+           "pkt4-queue-full": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616352"
                ]
            ],
            "pkt4-receive-drop": [
@@ -1060,6 +1180,12 @@ Here is an example response returning all collected statistics:
                [
                    0,
                    "2023-06-13 20:42:46.616343"
+               ]
+           ],
+           "pkt4-rfc-violation": [
+               [
+                   0,
+                   "2023-06-13 20:42:46.616351"
                ]
            ],
            "pkt4-sent": [
@@ -1199,6 +1325,12 @@ or
                    "2023-06-13 21:28:57.177731"
                ]
            ],
+           "pkt6-admin-filtered": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-advertise-received": [
                [
                    0,
@@ -1235,16 +1367,46 @@ or
                    "2023-06-13 21:28:57.177741"
                ]
            ],
+           "pkt6-duplicate": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-infrequest-received": [
                [
                    0,
                    "2023-06-13 21:28:57.177742"
                ]
            ],
+           "pkt6-limit-exceeded": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-not-for-us": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
            "pkt6-parse-failed": [
                [
                    0,
                    "2023-06-13 21:28:57.177742"
+               ]
+           ],
+           "pkt6-processing-failed": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-queue-full": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
                ]
            ],
            "pkt6-rebind-received": [
@@ -1290,6 +1452,12 @@ or
                ]
            ],
            "pkt6-request-received": [
+               [
+                   0,
+                   "2023-06-13 21:28:57.177747"
+               ]
+           ],
+           "pkt6-rfc-violation": [
                [
                    0,
                    "2023-06-13 21:28:57.177747"

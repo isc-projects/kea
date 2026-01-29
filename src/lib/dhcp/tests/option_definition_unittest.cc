@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1471,6 +1471,18 @@ TEST_F(OptionDefinitionTest, prefixTokenized) {
     PrefixTuple prefix = option_cast_v6->readPrefix();
     EXPECT_EQ(64, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", prefix.second.toText());
+}
+
+// This test verifies that bad prefixes are rejected.
+TEST_F(OptionDefinitionTest, badPrefix) {
+    OptionDefinition opt_def("option-prefix", 1000, "my-space", "ipv6-prefix");
+
+    // Specify a bad prefix.
+    std::vector<std::string> values(1, "::/ce");
+
+    // This must throw.
+    EXPECT_THROW(opt_def.optionFactory(Option::V6, 1000, values),
+                 isc::OutOfRange);
 }
 
 // This test verifies that a definition of an option with an array

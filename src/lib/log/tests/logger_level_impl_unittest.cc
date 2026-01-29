@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <string>
 
 #include <gtest/gtest.h>
-#include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <log/logger_level_impl.h>
@@ -109,7 +108,7 @@ TEST_F(LoggerLevelImplTest, ConversionToBind) {
     // ... and some invalid valid values
     test_convert_to("DEBUG-1",  INFO, MIN_DEBUG_LEVEL,
             (log4cplus::DEBUG_LOG_LEVEL + 1));
-    BOOST_STATIC_ASSERT(MAX_DEBUG_LEVEL == 99);
+    static_assert(MAX_DEBUG_LEVEL == 99, "MAX_DEBUG_LEVEL == 99");
     test_convert_to("DEBUG+100",  DEFAULT, 0,
             (log4cplus::DEBUG_LOG_LEVEL - MAX_DEBUG_LEVEL - 1));
 }

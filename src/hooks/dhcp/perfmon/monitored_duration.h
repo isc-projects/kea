@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -443,7 +443,7 @@ public:
     /// @return Element::map containing the duration key values.
     virtual data::ElementPtr toElement() const;
 
-    /// @brief Fetches a an Element::list of value row column names
+    /// @brief Fetches an Element::list of value row column names
     ///
     /// The list element includes the name of each column in a value row, in
     /// the order the values are stored in a value row.

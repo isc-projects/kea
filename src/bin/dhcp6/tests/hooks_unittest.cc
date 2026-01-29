@@ -5766,6 +5766,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
     ASSERT_EQ(0, parking_lot->size());
 
     // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 
     // This callout uses provided IO service object to post a function
@@ -5790,6 +5791,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Verify we have one parked packet and no drops.
     ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(0, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(0, getStatistic("pkt6-receive-drop"));
 
     // Reset all indicators because we'll be now creating a second client.
@@ -5811,6 +5813,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Verify we have one parked packet and one drop.
     ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 
     // There should now be one action scheduled on our IO service
@@ -5827,6 +5830,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Verify we have no parked packets and one drop.
     ASSERT_EQ(0, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 
     // Should not anything to receive for client2.
@@ -5850,6 +5854,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Verify we again have one parked packet and one drop.
     ASSERT_EQ(1, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 
     // There should now be one action scheduled on our IO service
@@ -5866,6 +5871,7 @@ TEST_F(HooksDhcpv6SrvTest, leases6ParkedPacketLimit) {
 
     // Verify we no parked packets and one drop.
     ASSERT_EQ(0, parking_lot->size());
+    EXPECT_EQ(1, getStatistic("pkt6-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt6-receive-drop"));
 }
 

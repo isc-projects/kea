@@ -888,7 +888,7 @@ public:
                                      inheritance));
     }
 
-    /// @brief Sets a defalt allocator type.
+    /// @brief Sets a default allocator type.
     ///
     /// @param allocator_type a new default allocator type.
     void setDefaultAllocatorType(const std::string& allocator_type) {
@@ -1610,7 +1610,7 @@ public:
                                       inheritance));
     }
 
-    /// @brief Sets a defalt allocator type for prefix delegation.
+    /// @brief Sets a default allocator type for prefix delegation.
     ///
     /// @param allocator_type a new default allocator type.
     void setDefaultPdAllocatorType(const std::string& allocator_type) {

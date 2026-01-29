@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,6 @@
 #include <hooks/hooks_log.h>
 #include <hooks/pointer_converter.h>
 #include <util/stopwatch.h>
-
-#include <boost/static_assert.hpp>
 
 #include <algorithm>
 #include <climits>

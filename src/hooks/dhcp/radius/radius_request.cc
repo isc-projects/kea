@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -86,10 +86,16 @@ RadiusSyncAuth::start() {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_ACCEPTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().auth_->setIdleTimer();
+        }
     } else if (result == REJECT_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_REJECTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().auth_->setIdleTimer();
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_SYNC_FAILED)
@@ -131,23 +137,30 @@ RadiusAsyncAuth::start() {
 void
 RadiusAsyncAuth::invokeCallback(const CallbackAuth& callback,
                                 const ExchangePtr exchange) {
-    int result = ERROR_RC;
+    // Should no happen...
+    if (!exchange) {
+        return;
+    }
+    int result = exchange->getRC();
     AttributesPtr recv_attrs;
-    if (exchange) {
-        result = exchange->getRC();
-        MessagePtr response = exchange->getResponse();
-        if (response) {
-            recv_attrs = response->getAttributes();
-        }
+    MessagePtr response = exchange->getResponse();
+    if (response) {
+        recv_attrs = response->getAttributes();
     }
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_ACCEPTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().auth_->setIdleTimer();
+        }
     } else if (result == REJECT_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_REJECTED)
             .arg(recv_attrs ? recv_attrs->toText() : "no attributes");
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().auth_->setIdleTimer();
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_AUTHENTICATION_ASYNC_FAILED)
@@ -182,6 +195,9 @@ RadiusSyncAcct::start() {
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_SYNC_SUCCEED);
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().acct_->setIdleTimer();
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_SYNC_FAILED)
@@ -223,13 +239,17 @@ RadiusAsyncAcct::start() {
 void
 RadiusAsyncAcct::invokeCallback(const CallbackAcct& callback,
                                 const ExchangePtr exchange) {
-    int result = ERROR_RC;
-    if (exchange) {
-        result = exchange->getRC();
+    // Should not happen...
+    if (!exchange) {
+        return;
     }
+    int result = exchange->getRC();
     if (result == OK_RC) {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_ASYNC_SUCCEED);
+        if (!RadiusImpl::shutdown_) {
+            RadiusImpl::instance().acct_->setIdleTimer();
+        }
     } else {
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCOUNTING_ASYNC_FAILED)

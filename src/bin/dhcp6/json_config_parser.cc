@@ -799,6 +799,7 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
                  (config_pair.first == "early-global-reservations-lookup") ||
                  (config_pair.first == "ip-reservations-unique") ||
                  (config_pair.first == "reservations-lookup-first") ||
+                 (config_pair.first == "allow-address-registration") ||
                  (config_pair.first == "parked-packet-limit") ||
                  (config_pair.first == "allocator") ||
                  (config_pair.first == "ddns-ttl") ||
@@ -870,8 +871,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND, DHCP6_CONFIG_START)
         .arg(server.redactConfig(config_set)->str());
 
+    std::unique_ptr<MtTestMode> mt_test_mode;
     if (check_only) {
-        MultiThreadingMgr::instance().setTestMode(true);
+        mt_test_mode.reset(new MtTestMode());
     }
 
     auto answer = processDhcp6Config(config_set);

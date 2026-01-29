@@ -10,7 +10,7 @@ Here's a quick list of how to contribute a patch:
    it describes what you want to fix and **why**
 3. **ask someone from the ISC team to give you permission to fork Kea** (ask @tomek, @vicky, @ondrej
    or basically anyone from the Kea dev team)
-4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/forks/new).
+4. **fork Kea code**: go to Kea project page, click [Fork button](https://gitlab.isc.org/isc-projects/kea/-/forks/new).
    If you can't, you didn't complete step 3.
 5. **Give ISC access to the forked project**. This is required to see pipeline status and to merge code.
    From the sidebar on the project page, go to `Manage` -> `Members` -> `Invite members`.
@@ -114,7 +114,7 @@ notes](https://kb.isc.org/docs/installing-kea).
 ### Coding guidelines
 
 Does your patch conform to [Kea coding
-guidelines](https://gitlab.isc.org/isc-projects/kea/wikis/coding-guidelines)?  You can submit a
+guidelines](https://gitlab.isc.org/isc-projects/kea/-/wikis/Processes/Coding-Guidelines)?  You can submit a
 patch that does not adhere to them, but that will reduce its chances of being accepted.  If the
 deviations are minor, one of the Kea engineers who does the review will likely fix the issues.
 However, if there are lots of issues, the reviewer may simply reject the patch and ask you to fix it
@@ -211,7 +211,7 @@ meson configure
 
 The first step in writing the patch or new feature should be to get the source code from our Git
 repository.  The procedure is very easy and is [explained
-here](https://gitlab.isc.org/isc-projects/kea/wikis/processes/gitlab-howto).  While it is possible
+here](https://gitlab.isc.org/isc-projects/kea/-/wikis/processes/Gitlab-HowTo).  While it is possible
 to provide a patch against the latest stable release, it makes the review process much easier if it
 is for latest code from the Git master branch.
 

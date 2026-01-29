@@ -17,12 +17,12 @@ Regularly Tested Platforms
 Kea is officially supported on Alpine, Debian, Fedora, FreeBSD, RHEL, and Ubuntu
 systems. Kea-|release| builds have been tested on:
 
-* Alpine — 3.19, 3.20, 3.21, 3.22
+* Alpine — 3.21, 3.22, 3.23
 * Debian — 11, 12, 13
-* Fedora — 41, 42
-* FreeBSD — 14
+* Fedora — 43
+* FreeBSD — 15
 * RHEL — 8, 9, 10
-* Ubuntu — 20.04, 22.04, 24.04
+* Ubuntu — 22.04, 24.04
 
 There are currently no plans to port Kea to Windows systems.
 
@@ -34,7 +34,7 @@ ISC makes every effort to fix bugs on these platforms, but may be unable to
 do so quickly due to lack of hardware, less familiarity on the part of
 engineering staff, and other constraints.
 
-* macOS — 13, 14
+* macOS — 14, 15, 26
 
 Community-Maintained
 --------------------
@@ -50,12 +50,12 @@ adverse effect on officially supported platforms.
 
 These include platforms past their respective EOL dates, such as:
 
-* Alpine — 3.16 (EOL 23 May 2022) and older
+* Alpine — 3.20 (EOL 01 Apr 2026) and older
 * CentOS — 8 (EOL 31 December 2021) and older
-* Debian — 9 (EOL 30 June 2022) and older
-* Fedora — 38 (EOL 21 May 2024) and older
-* FreeBSD — 12 and older
-* macOS — 10.15 (EOL 12 September 2022) and older
+* Debian — 10 (EOL 30 June 2022) and older
+* Fedora — 42 (EOL 13 May 2026) and older
+* FreeBSD — 14 and older
+* macOS — 13 (EOL 15 September 2025) and older
 * Ubuntu — 21.04 (EOL 20 January 2022) and older
 
 Unsupported Platforms

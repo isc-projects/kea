@@ -1,23 +1,29 @@
-// Copyright (C) 2017-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <testutils/sandbox.h>
+
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
-#include <gtest/gtest.h>
+#include <config/testutils/socket_path.h>
+#include <testutils/gtest_utils.h>
+
 #include <cstdlib>
 #include <sstream>
 #include <string>
 
+#include <gtest/gtest.h>
+
 using namespace isc::asiolink;
+using namespace isc::asiolink::test;
 using namespace isc::config;
+using namespace isc::config::test;
 
 namespace {
 
@@ -27,55 +33,44 @@ const long TEST_TIMEOUT = 10000;
 /// Test fixture class for @ref ClientConnection.
 class ClientConnectionTest : public ::testing::Test {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Constructor.
     ///
     /// Removes unix socket descriptor before the test.
-    ClientConnectionTest() :
-        io_service_(new IOService()), handler_invoked_(false),
-        test_socket_(new test::TestServerUnixSocket(io_service_,
-                                                    unixSocketFilePath())) {
-        removeUnixSocketFile();
+    ClientConnectionTest()
+        : io_service_(new IOService()), handler_invoked_(false) {
+        SocketPath::removeUnixSocketFile();
+        setSocketTestPath();
+        socket_name_too_long_ = SocketPath::isTooLong(SocketPath::unixSocketFilePath());
+        if (!socket_name_too_long_) {
+            test_socket_.reset(
+                new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath()));
+        }
     }
 
     /// @brief Destructor.
     ///
     /// Removes unix socket descriptor after the test.
     virtual ~ClientConnectionTest() {
-        removeUnixSocketFile();
+        SocketPath::removeUnixSocketFile();
         conn_.reset();
         test_socket_.reset();
         io_service_->stopAndPoll();
+        resetSocketPath();
     }
 
-    /// @brief Returns socket file path.
+    /// @brief Sets the path in which the socket can be created.
     ///
-    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
-    /// socket file is created in the location pointed to by this variable.
-    /// Otherwise, it is created in the build directory.
-    ///
-    /// The KEA_SOCKET_TEST_DIR is typically used to overcome the problem of
-    /// a system limit on the unix socket file path (usually 102 or 103 characters).
-    /// When Kea build is located in the nested directories with absolute path
-    /// exceeding this limit, the test system should be configured to set
-    /// the KEA_SOCKET_TEST_DIR environmental variable to point to an alternative
-    /// location, e.g. /tmp, with an absolute path length being within the
-    /// allowed range.
-    std::string unixSocketFilePath() {
-        std::string socket_path;
-        const char* env = getenv("KEA_SOCKET_TEST_DIR");
-        if (env) {
-            socket_path = std::string(env) + "/test-socket";
-        } else {
-            socket_path = sandbox.join("test-socket");
-        }
-        return (socket_path);
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = std::string()) {
+        std::string const path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(isc::util::file::getPermissions(path));
     }
 
-    /// @brief Removes unix socket descriptor.
-    void removeUnixSocketFile() {
-        static_cast<void>(remove(unixSocketFilePath().c_str()));
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 
     /// @brief IO service used by the tests.
@@ -85,15 +80,20 @@ public:
     bool handler_invoked_;
 
     /// @brief Server side unix socket used in these tests.
-    test::TestServerUnixSocketPtr test_socket_;
+    TestServerUnixSocketPtr test_socket_;
 
     /// @brief Client connection.
     ClientConnectionPtr conn_;
+
+    /// @brief Whether socket name is too long which is determined at test startup.
+    bool socket_name_too_long_;
 };
 
 // Tests successful transaction: connect, send command and receive a
 // response.
 TEST_F(ClientConnectionTest, success) {
+    SKIP_IF(socket_name_too_long_);
+
     // Start timer protecting against test timeouts.
     test_socket_->startTimer(TEST_TIMEOUT);
 
@@ -106,7 +106,7 @@ TEST_F(ClientConnectionTest, success) {
 
     conn_.reset(new ClientConnection(io_service_));
 
-    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+    conn_->start(ClientConnection::SocketPath(SocketPath::unixSocketFilePath()),
                  ClientConnection::ControlCommand(command),
         [&](const boost::system::error_code& ec,
             const ConstJSONFeedPtr& feed) {
@@ -132,12 +132,13 @@ TEST_F(ClientConnectionTest, success) {
 // This test checks that a timeout is signalled when the communication
 // takes too long.
 TEST_F(ClientConnectionTest, timeout) {
+    SKIP_IF(socket_name_too_long_);
+
     // The server will return only partial JSON response (lacking closing
     // brace). The client will wait for closing brace and eventually the
     // connection should time out.
-    test_socket_.reset(new test::TestServerUnixSocket(io_service_,
-                                                      unixSocketFilePath(),
-                                                      "{ \"command\": \"foo\""));
+    test_socket_.reset(new TestServerUnixSocket(io_service_, SocketPath::unixSocketFilePath(),
+                                                "{ \"command\": \"foo\""));
     test_socket_->startTimer(TEST_TIMEOUT);
 
     // Start the server.
@@ -148,7 +149,7 @@ TEST_F(ClientConnectionTest, timeout) {
 
     conn_.reset(new ClientConnection(io_service_));
 
-    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+    conn_->start(ClientConnection::SocketPath(SocketPath::unixSocketFilePath()),
                  ClientConnection::ControlCommand(command),
     [&](const boost::system::error_code& ec,
         const ConstJSONFeedPtr& /*feed*/) {
@@ -172,13 +173,15 @@ TEST_F(ClientConnectionTest, timeout) {
 // This test checks that an error is returned when the client is unable
 // to connect to the server.
 TEST_F(ClientConnectionTest, connectionError) {
+    SKIP_IF(socket_name_too_long_);
+
     // Create the new connection but do not bind the server socket.
     // The connection should be refused and an error returned.
     conn_.reset(new ClientConnection(io_service_));
 
     std::string command = "{ \"command\": \"list-commands\" }";
 
-    conn_->start(ClientConnection::SocketPath(unixSocketFilePath()),
+    conn_->start(ClientConnection::SocketPath(SocketPath::unixSocketFilePath()),
                  ClientConnection::ControlCommand(command),
     [&](const boost::system::error_code& ec,
         const ConstJSONFeedPtr& /*feed*/) {

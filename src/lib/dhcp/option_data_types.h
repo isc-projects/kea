@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ public:
 /// must always be and OPT_RECORD_TYPE must be at second to last.
 /// This is because some functions perform sanity checks on data type
 /// values using '>' operators, assuming that all values beyond the
-enum OptionDataType : int {
+enum OptionDataType : uint16_t {
     OPT_EMPTY_TYPE          = 0,
     OPT_BINARY_TYPE         = 1,
     OPT_BOOLEAN_TYPE        = 2,
@@ -292,6 +292,11 @@ public:
     /// @throw isc::OutOfRange If specified prefix length is greater than 128.
     explicit PrefixLen(const uint8_t prefix_len)
         : prefix_len_(prefix_len) {
+        if (prefix_len > 128) {
+            isc_throw(isc::OutOfRange, "bad prefix_len "
+                      << static_cast<unsigned>(prefix_len)
+                      << ", allowed range is [0..128]");
+        }
     }
 
     /// @brief Returns prefix length as uint8_t value.

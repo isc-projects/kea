@@ -563,6 +563,12 @@ and DDNS servers since Kea version 2.7.2.
 The three primary Kea daemons (:iscman:`kea-dhcp4`, :iscman:`kea-dhcp6` and :iscman:`kea-dhcp-ddns`) all support a control
 channel, which is implemented as a UNIX socket. The control channel, which opens a UNIX socket, is disabled by default.
 
+Blast RADIUS
+------------
+
+Blast-RADIUS is a vulnerability that affects the RADIUS protocol implemented
+by the RADIUS hook library. See :ref:`radius-security-warning` for details.
+
 .. _sec-kea-runtime-security-policy-checking:
 
 Kea Runtime Security Policy Checking
@@ -689,3 +695,35 @@ from a project ("be hit by a bus") before the project stalls due to lack of know
 personnel. It is hard to estimate precisely, but the bus factor for Kea is somewhere around five. As of
 2021, there are six core developers and two quality assurance engineers, with many additional casual
 contributors (product manager, support team, IT, etc.). The team is geographically dispersed.
+
+Miscellaneous
+=============
+
+Creating core dump files
+------------------------
+
+When enabled, kernels create core dump files when a process crashes or
+gets a signal with this action. The way to enable core dump files
+is system dependent but with common controls as the ``coredumpsize``
+or ``core file size`` limit which can be seen and changed using ``ulimit``
+or ``limit`` commands or shell built-ins.
+
+The Knowledge Base document `What to do if your BIND, Kea DHCP, Stork,
+or ISC DHCP server has crashed <https://kb.isc.org/docs/aa-00340>`_
+document explains per systems details in its
+`Things to check if a core file does not get generated` section.
+
+Another way to create a core dump file is the ``gcore`` command which
+creates such files / images from a running process. Please look at its
+manual page to understand how to use it. Two points are important:
+
+- does ``gcore`` suspend or provide an option to suspend the dumped process?
+
+- the name of the produced core dump file (useful also for core dump file
+  created by the kernel).
+
+.. warning::
+
+   Beware that core dump files can be very large so can easily fill
+   the file system where they are stored... for instance do not forget
+   to not leave this feature enabled when not / no longer needed.

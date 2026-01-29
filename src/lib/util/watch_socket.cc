@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 
 #include <config.h>
 
-//#include <dhcp_ddns/dhcp_ddns_log.h>
 #include <util/watch_socket.h>
 
 #include <fcntl.h>
@@ -21,9 +20,9 @@
 namespace isc {
 namespace util {
 
+const int WatchSocket::SOCKET_NOT_VALID = -1;
 
-const int WatchSocket::SOCKET_NOT_VALID;
-const uint32_t WatchSocket::MARKER;
+const uint32_t WatchSocket::MARKER = 0xDEADBEEF;
 
 WatchSocket::WatchSocket()
     : source_(SOCKET_NOT_VALID), sink_(SOCKET_NOT_VALID) {

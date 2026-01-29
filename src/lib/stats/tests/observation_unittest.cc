@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -594,7 +594,7 @@ TEST_F(ObservationTest, timers) {
 }
 
 // Checks whether an integer statistic can generate proper JSON structures.
-// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+// See https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design
 /// for details.
 TEST_F(ObservationTest, integerToJSON) {
     // String which contains first added sample
@@ -611,7 +611,7 @@ TEST_F(ObservationTest, integerToJSON) {
 
 // Checks whether a floating point statistic can generate proper JSON
 // structures. See
-/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+/// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design
 /// for details.
 TEST_F(ObservationTest, floatToJSON) {
     // String which contains first added sample
@@ -630,7 +630,7 @@ TEST_F(ObservationTest, floatToJSON) {
 }
 
 // Checks whether a time duration statistic can generate proper JSON structures.
-// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design for
+// See https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design for
 // details.
 TEST_F(ObservationTest, durationToJSON) {
     // String which contains first added sample
@@ -647,7 +647,7 @@ TEST_F(ObservationTest, durationToJSON) {
 }
 
 // Checks whether a string statistic can generate proper JSON structures.
-// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+// See https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design
 // for details.
 TEST_F(ObservationTest, stringToJSON) {
     // String which contains first added sample
@@ -663,7 +663,7 @@ TEST_F(ObservationTest, stringToJSON) {
 }
 
 // Checks whether a big integer statistic can generate proper JSON structures.
-// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+// See https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design
 // for details.
 TEST_F(ObservationTest, bigIntegerToJSON) {
     // String which contains first added sample

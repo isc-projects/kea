@@ -385,19 +385,6 @@ errors like the following:
     cannot open shared object file: No such file or directory
 
 
-Cross-Building
---------------
-
-It is possible to cross-build Kea, i.e. to create binaries in a separate
-system (the ``build`` system) from the one where Kea runs
-(the ``host`` system).
-
-It is outside of the scope of common administrator operations and requires
-some developer skills, but the Developer Guide explains how to do that
-using an x86_64 Linux system to build Kea for a Raspberry Pi box running
-Raspbian: see this `Kea Cross-Compiling Example
-<https://reports.kea.isc.org/dev_guide/de/d9a/crossCompile.html>`__.
-
 .. _dhcp-install-configure:
 
 DHCP Database Installation and Configuration

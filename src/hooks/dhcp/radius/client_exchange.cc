@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -217,7 +217,8 @@ Exchange::buildRequest() {
     sent_->randomIdentifier();
 
     // Randomize or zero the authenticator.
-    if (sent_->getCode() == PW_ACCESS_REQUEST) {
+    if ((sent_->getCode() == PW_ACCESS_REQUEST) ||
+        (sent_->getCode() == PW_STATUS_SERVER))  {
         sent_->randomAuth();
     } else {
         sent_->zeroAuth();
@@ -254,6 +255,15 @@ Exchange::buildRequest() {
             attrs->add(Attribute::fromIpv6Addr(PW_NAS_IPV6_ADDRESS,
                                                local_addr));
         }
+    }
+
+    // Add Message-Authenticator to Status-Server message.
+    if ((sent_->getCode() == PW_STATUS_SERVER) &&
+        (attrs->count(PW_MESSAGE_AUTHENTICATOR) == 0)) {
+        const vector<uint8_t> zero(AUTH_VECTOR_LEN);
+        // The FreeRADIUS server prefers to get it first.
+        attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero),
+                   false);
     }
 
     // Encode the request.
@@ -613,6 +623,26 @@ Exchange::receivedHandler(ExchangePtr ex,
                           RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
                     .arg(ex->identifier_);
             }
+        } else if (ex->request_->getCode() == PW_STATUS_SERVER) {
+            if (ex->received_->getCode() == PW_ACCESS_ACCEPT) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT)
+                    .arg(ex->identifier_);
+            } else if (ex->received_->getCode() == PW_ACCESS_REJECT) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCESS_REJECT)
+                    .arg(ex->identifier_);
+            } else if (ex->received_->getCode() == PW_ACCOUNTING_RESPONSE) {
+                LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
+                          RADIUS_EXCHANGE_RECEIVED_ACCOUNTING_RESPONSE)
+                    .arg(ex->identifier_);
+            } else {
+                LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_UNEXPECTED)
+                    .arg(ex->identifier_)
+                    .arg(msgCodeToText(ex->request_->getCode()))
+                    .arg(msgCodeToText(ex->received_->getCode()));
+                ex->rc_ = BADRESP_RC;
+            }
         }
     } catch (const Exception& exc) {
         LOG_ERROR(radius_logger, RADIUS_EXCHANGE_RECEIVED_BAD_RESPONSE)
@@ -627,7 +657,7 @@ Exchange::receivedHandler(ExchangePtr ex,
         .arg(exchangeRCtoText(ex->rc_));
 
     // If bad then retry, if not including reject it is done.
-    if ((ex->rc_ != OK_RC) && ( ex->rc_ != REJECT_RC)) {
+    if ((ex->rc_ != OK_RC) && (ex->rc_ != REJECT_RC)) {
         ex->io_service_->post(std::bind(&Exchange::openNext, ex));
     } else {
         ex->logReplyMessages();

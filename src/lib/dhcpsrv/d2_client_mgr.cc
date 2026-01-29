@@ -186,10 +186,15 @@ std::string
 D2ClientMgr::qualifyName(const std::string& partial_name,
                          const DdnsParams& ddns_params,
                          const bool trailing_dot) const {
+    if (partial_name.empty()) {
+        isc_throw(BadValue, "D2ClientMgr::qualifyName"
+                            " - partial_name cannot be an empty string");
+    }
+
     std::ostringstream gen_name;
     gen_name << partial_name;
     std::string suffix = ddns_params.getQualifyingSuffix();
-    if (!suffix.empty() && partial_name.back() != '.') {
+    if (!suffix.empty() && (partial_name.back() != '.')) {
         bool suffix_present = true;
         std::string str = gen_name.str();
         auto suffix_rit = suffix.rbegin();
@@ -241,7 +246,7 @@ D2ClientMgr::qualifyName(const std::string& partial_name,
         // If the trailing dot should not be appended but it is present,
         // remove it.
         if ((len > 0) && (str[len - 1] == '.')) {
-            gen_name.str(str.substr(0,len-1));
+            gen_name.str(str.substr(0, len-1));
         }
 
     }

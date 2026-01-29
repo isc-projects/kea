@@ -100,6 +100,9 @@
 /* Version number of package */
 #mesondefine VERSION
 
+/* Whether the compiler supports flag -Wdeprecated-literal-operator */
+#mesondefine WDEPRECATED_LITERAL_OPERATOR_FLAG_SUPPORTED
+
 /* Compile with Botan crypto */
 #mesondefine WITH_BOTAN
 

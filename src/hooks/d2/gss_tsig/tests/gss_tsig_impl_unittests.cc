@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,9 @@
 #include <gss_tsig_api_utils.h>
 #include <testutils/gss_tsig_dns_server.h>
 #include <testutils/gtest_utils.h>
+
+#include <cstdlib>
+
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -220,9 +223,9 @@ TEST_F(GssTsigImplTest, envVars) {
     char* ktname = getenv("KRB5_CLIENT_KTNAME");
     ASSERT_TRUE(ktname);
     EXPECT_EQ("foo", string(ktname));
-    char* ccname = getenv("KRB5CCNAME");
-    ASSERT_TRUE(ccname);
-    EXPECT_EQ("bar", string(ccname));
+    char* krb5ccname = getenv("KRB5CCNAME");
+    ASSERT_TRUE(krb5ccname);
+    EXPECT_EQ("bar", string(krb5ccname));
 }
 
 /// @brief Tests status-get command processed handler.

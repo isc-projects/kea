@@ -157,7 +157,7 @@ mysql_db_version_test() {
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "32.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "33.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1058,7 +1058,7 @@ mysql_upgrade_29_to_30_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    # Update the user context explcitly to a valid JSON.
+    # Update the user context explicitly to a valid JSON.
     query="UPDATE lease4 SET user_context='{}'"
     run_command \
         mysql_execute "${query}"
@@ -1086,7 +1086,7 @@ mysql_upgrade_29_to_30_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    # Update the user context explcitly to NULL.
+    # Update the user context explicitly to NULL.
     query="UPDATE lease4 SET user_context=NULL"
     run_command \
         mysql_execute "${query}"
@@ -1114,7 +1114,7 @@ mysql_upgrade_29_to_30_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq 'NULL' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    # Update the user context explcitly to a valid JSON.
+    # Update the user context explicitly to a valid JSON.
     query="UPDATE lease6 SET user_context='{}'"
     run_command \
         mysql_execute "${query}"
@@ -1142,7 +1142,7 @@ mysql_upgrade_29_to_30_test() {
     assert_eq 0 "${EXIT_CODE}" "${query}: expected %d, returned %d"
     assert_str_eq '{}' "${OUTPUT}" "${query}: expected output %s, returned %s"
 
-    # Update the user context explcitly to NULL.
+    # Update the user context explicitly to NULL.
     query="UPDATE lease6 SET user_context=NULL"
     run_command \
         mysql_execute "${query}"
@@ -1179,6 +1179,22 @@ mysql_upgrade_30_to_31_test() {
     assert_eq 1 "${EXIT_CODE}" "${qry}: expected %d, returned %d"
 }
 
+mysql_upgrade_31_to_33_test() {
+    qry="show indexes from lease4 where key_name = 'lease4_by_state'"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease4 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease4_by_state)
+    assert_eq 2 "${count}" "lease4_by_state wrong or missing. (expected count %d, actual %d)"
+
+    qry="show indexes from lease6 where key_name = 'lease6_by_state'"
+    run_command \
+        mysql_execute "${qry}"
+    assert_eq 0 "${EXIT_CODE}" "show indexes from lease6 failed. (expected status code %d, returned %d)"
+    count=$(echo "${OUTPUT}" | grep -Fci lease6_by_state)
+    assert_eq 2 "${count}" "lease6_by_state wrong or missing. (expected count %d, actual %d)"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1200,7 +1216,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "32.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "33.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1891,6 +1907,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 30.0 to 31.0.
     mysql_upgrade_30_to_31_test
+
+    # Check upgrade from 31.0 to 33.0.
+    mysql_upgrade_31_to_33_test
 
     # Let's wipe the whole database
     mysql_wipe

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ namespace isc {
 namespace cryptolink {
 
 /// @brief Hash algorithm identifiers.
-enum HashAlgorithm {
+enum HashAlgorithm : uint16_t {
     UNKNOWN_HASH = 0,   // This value can be used in conversion
                         // functions, to be returned when the
                         // input is unknown (but a value MUST be
@@ -32,7 +32,7 @@ enum HashAlgorithm {
     SHA256 = 3,         // SHA-256
     SHA224 = 4,         // SHA-224
     SHA384 = 5,         // SHA-384
-    SHA512 = 6          // SHA-512
+    SHA512 = 6,         // SHA-512
 };
 
 /// @brief Forward declaration for createHash().

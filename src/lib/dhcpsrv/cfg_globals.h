@@ -36,7 +36,7 @@ public:
     /// @c SimpleParser6::GLOBAL6_PARAMETERS, first part with common
     /// parameters followed by DHCPv4 and DHCPv6 specific parameters.
     /// Keep the order, enum element names is uppercase with - replaced by _.
-    enum Index : int {
+    enum Index : uint16_t {
         // Common parameters.
         VALID_LIFETIME,
         MIN_VALID_LIFETIME,
@@ -103,6 +103,7 @@ public:
         MAX_PREFERRED_LIFETIME,
         PD_ALLOCATOR,
         SERVER_ID,
+        ALLOW_ADDRESS_REGISTRATION,
 
         // Size sentinel.
         SIZE

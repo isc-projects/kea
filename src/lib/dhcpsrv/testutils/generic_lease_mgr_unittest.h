@@ -261,6 +261,9 @@ public:
     /// @brief Test method which returns range of IPv4 leases with paging.
     void testGetLeases4Paged();
 
+    /// @brief Test method which returns all IPv4 leases with state.
+    void testGetLeases4State();
+
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
@@ -279,6 +282,9 @@ public:
 
     /// @brief Test method which returns range of IPv6 leases with paging.
     void testGetLeases6Paged();
+
+    /// @brief Test method which returns all IPv6 leases with state.
+    void testGetLeases6State();
 
     /// @brief Basic Lease4 Checks
     ///
@@ -670,6 +676,20 @@ public:
 
     /// @brief Checks that statistic with big integer values are handled correctly.
     void testBigStats();
+
+    /// @brief Checks that the static functions updateStatsOn{Add,Update,Delete)
+    /// work for v4. 
+    void testUpdateStatsOn4SameSubnet();
+
+    void testUpdateStatsOn4DifferentSubnet();
+
+    void testUpdateStatsOn6SameSubnet();
+
+    void testUpdateStatsOn6SameSubnetPD();
+
+    void testUpdateStatsOn6DifferentSubnet();
+
+    void testUpdateStatsOn6DifferentSubnetPD();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;

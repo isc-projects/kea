@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,6 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/protocol_util.h>
-#include <boost/static_assert.hpp>
 // in_systm.h is required on some some BSD systems
 // complaining that n_time is undefined but used
 // in ip.h.
@@ -41,7 +40,8 @@ decodeEthernetHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
     // The size of the single address is always lower then the size of
     // the header that holds this address. Otherwise, it is a programming
     // error that we want to detect in the compilation time.
-    BOOST_STATIC_ASSERT(ETHERNET_HEADER_LEN > HWAddr::ETHERNET_HWADDR_LEN);
+    static_assert(ETHERNET_HEADER_LEN > HWAddr::ETHERNET_HWADDR_LEN,
+                  "ETHERNET_HEADER_LEN > HWAddr::ETHERNET_HWADDR_LEN");
 
     // Remember initial position.
     size_t start_pos = buf.getPosition();
@@ -76,7 +76,8 @@ decodeIpUdpHeader(InputBuffer& buf, Pkt4Ptr& pkt) {
                   " packet headers");
     }
 
-    BOOST_STATIC_ASSERT(IP_SRC_ADDR_OFFSET < MIN_IP_HEADER_LEN);
+    static_assert(IP_SRC_ADDR_OFFSET < MIN_IP_HEADER_LEN,
+                  "IP_SRC_ADDR_OFFSET < MIN_IP_HEADER_LEN");
 
     // Remember initial position of the read pointer.
     size_t start_pos = buf.getPosition();

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -587,7 +587,7 @@ public:
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end);
 
-    /// @brief Factory to create option with tuple list with explict
+    /// @brief Factory to create option with tuple list with explicit
     /// tuple's length field type.
     ///
     /// @param u option universe (V4 or V6).

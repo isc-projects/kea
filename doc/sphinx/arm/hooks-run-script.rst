@@ -685,7 +685,7 @@ at 0.
 The OLD_LEASE6 does not always exist.
 
 The leases4_committed hook point needs for loops to handle the list of addresses.
-This can be achived in the following way:
+This can be achieved in the following way:
 
 ::
 
@@ -703,7 +703,7 @@ This can be achived in the following way:
    }
 
 The leases6_committed hook point needs for loops to handle the list of addresses.
-This can be achived in the following way:
+This can be achieved in the following way:
 
 ::
 

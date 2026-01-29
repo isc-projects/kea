@@ -33,7 +33,7 @@ kea_process_tests = executable(
 test(
     'kea-process-tests',
     kea_process_tests,
+    protocol: 'gtest',
     is_parallel: false,
     priority: -1,
-    protocol: 'gtest'
 )

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@ using namespace isc::perfmon;
 
 namespace {
 
-// These tests excerise DurationKeyParser which parses a map of
+// These tests excercise DurationKeyParser which parses a map of
 // parameters as shown below:
 //  "duration-key": {
 //      "query-type": "DHCPDISCOVER",

@@ -199,6 +199,28 @@ Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
+% MYSQL_LB_GET_STATE4 obtaining IPv4 leases with state %1
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state.
+
+% MYSQL_LB_GET_STATE6 obtaining IPv6 leases with state %1
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state.
+
+% MYSQL_LB_GET_STATE_SUBID4 obtaining IPv4 leases with state %1 in subnet %2
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state in
+the specified subnet.
+
+% MYSQL_LB_GET_STATE_SUBID6 obtaining IPv6 leases with state %1 in subnet %2
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state in
+the specified subnet.
+
 % MYSQL_LB_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain all IPv4

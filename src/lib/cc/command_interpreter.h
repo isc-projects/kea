@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 ///
 /// This file contains several functions and constants that are used for
 /// handling commands and responses sent over control channel. The design
-/// is described here: https://gitlab.isc.org/isc-projects/kea/wikis/Stats-design, but also
+/// is described here: https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/Stats-design, but also
 /// in @ref ctrlSocket section in the Developer's Guide.
 
 namespace isc {

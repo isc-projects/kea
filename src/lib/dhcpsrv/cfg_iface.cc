@@ -92,6 +92,8 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
+    // Initialize IfaceMgr FDEventHandler.
+    iface_mgr.initializeFDEventHandler();
     // Allow the loopback interface when required.
     iface_mgr.setAllowLoopBack(loopback_used_);
     // For the DHCPv4 server, if the user has selected that raw sockets

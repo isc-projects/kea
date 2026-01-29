@@ -13,7 +13,7 @@ the most recently reported mean.
 % PERFMON_ALARM_TRIGGERED Alarm for %1 has been triggered since %2, reported mean duration %3 exceeds high-water-ms: %4
 This warning message is emitted when the reported mean duration for
 an alarm exceeds its high-water-ms value.  As long as the reported
-averges remain above the low-water-ms value, the alarm will remain
+averages remain above the low-water-ms value, the alarm will remain
 triggered and this message will be repeated every alarm-report-secs.
 Arguments detail the alarm's key, the time the alarm was first
 triggered, the most recent reported mean, and the high-water-ms

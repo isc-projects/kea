@@ -1,4 +1,4 @@
-// Copyright (C) 2020 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,27 @@
 
 namespace isc {
 namespace test {
+
+/// @brief Check if mutex is locked.
+///
+/// @note This function uses a new thread to test if the mutex is locked
+/// because calling try_lock by the same thread which already acquired the
+/// lock is undefined behavior.
+///
+/// @param mutex The mutex to check.
+/// @return Return true if mutex is not locked, false if mutex is locked.
+bool inline checkTryLock(std::mutex& mutex) {
+    bool locked = true;
+    auto f = [&]() {
+        if (mutex.try_lock()) {
+            mutex.unlock();
+            locked = false;
+        }
+    };
+    std::thread th(f);
+    th.join();
+    return (!locked);
+}
 
 /// @brief A RAII class which disables the multi threading on exit of scope.
 ///

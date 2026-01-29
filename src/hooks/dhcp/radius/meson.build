@@ -23,6 +23,7 @@ dhcp_radius_lib = shared_library(
     'radius_parsers.cc',
     'radius_request.cc',
     'radius_service.cc',
+    'radius_status.cc',
     'radius_utils.cc',
     'version.cc',
     cpp_args: [f'-DDICTIONARY="@SYSCONFDIR_INSTALLED@/kea/radius/dictionary"'],

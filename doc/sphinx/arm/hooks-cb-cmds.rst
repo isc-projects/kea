@@ -1666,7 +1666,7 @@ The ``remote-option4-subnet-del``, ``remote-option6-subnet-del`` Commands
 
 These commands are used to delete a subnet-specific DHCP option
 from the database. The option is identified by an option code
-and option space, and, as of Kea 3.1.1, an optional ``client-casses``
+and option space, and, as of Kea 3.1.1, an optional ``client-classes``
 parameter (see :ref:`cb-cmds-option-class-tags-as-keys`).
 These parameters are passed within the ``options`` list.
 Another list, ``subnets``, contains a map with the

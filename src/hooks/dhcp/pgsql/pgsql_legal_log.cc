@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,8 +13,6 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <util/multi_threading_mgr.h>
-
-#include <boost/static_assert.hpp>
 
 #include <iomanip>
 #include <limits>
@@ -65,7 +63,7 @@ public:
     /// @brief Constructor
     PgSqlLegLExchange() : address_(""), log_("") {
 
-        BOOST_STATIC_ASSERT(0 < LOG_COLUMNS);
+        static_assert(0 < LOG_COLUMNS, "0 < LOG_COLUMNS");
 
         // Set the column names (for error messages)
         columns_.push_back("log");

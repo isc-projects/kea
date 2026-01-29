@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,17 +22,17 @@ namespace isc {
 namespace radius {
 
 /// @brief Type of accounting events.
-typedef enum {
-    EVENT_CREATE,  //< A new lease was created (leaseX_select hooks).
-    EVENT_RENEW,   //< A lease was renewed (leaseX_renew hooks).
-    EVENT_REBIND,  //< A lease was rebound (lease6_rebind hook).
-    EVENT_EXPIRE,  //< A lease was expired (leaseX_expire hooks).
-    EVENT_RELEASE, //< A lease was released (leaseX_release hooks).
-    EVENT_DECLINE, //< A lease was declined (leaseX_decline hooks).
-    EVENT_ADD,     //< A command added a lease (command_processed hook).
-    EVENT_UPDATE,  //< A command updated a lease (command_processed hook).
-    EVENT_DEL      //< A command deleted a lease (command_processed hook).
-} Event;
+enum Event : uint16_t {
+    EVENT_CREATE = 0,  //< A new lease was created (leaseX_select hooks).
+    EVENT_RENEW = 1,   //< A lease was renewed (leaseX_renew hooks).
+    EVENT_REBIND = 2,  //< A lease was rebound (lease6_rebind hook).
+    EVENT_EXPIRE = 3,  //< A lease was expired (leaseX_expire hooks).
+    EVENT_RELEASE = 4, //< A lease was released (leaseX_release hooks).
+    EVENT_DECLINE = 5, //< A lease was declined (leaseX_decline hooks).
+    EVENT_ADD = 6,     //< A command added a lease (command_processed hook).
+    EVENT_UPDATE = 7,  //< A command updated a lease (command_processed hook).
+    EVENT_DEL = 8,     //< A command deleted a lease (command_processed hook).
+};
 
 /// @brief Translate an event to text.
 ///
@@ -285,6 +285,14 @@ public:
     /// Content of the create timestamp container is written to a file
     /// in the increasing timestamp order.
     void storeToFile();
+
+    /// @brief Set idle timer.
+    ///
+    /// @note: The caller must hold the idle timer mutex.
+    void setIdleTimer();
+
+    /// @brief Idle timer callback.
+    static void IdleTimerCallback();
 
 protected:
 

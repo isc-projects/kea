@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,15 +6,16 @@
 
 #include <config.h>
 
-#include <fuzz.h>
-
 #include <log/logger_support.h>
 #include <process/daemon.h>
-#include <util/filesystem.h>
 #include <util/encode/encode.h>
+#include <util/filesystem.h>
 
 #include <cassert>
+#include <cstdlib>
 #include <string>
+
+#include <fuzz.h>
 
 using namespace isc::process;
 using namespace isc::util::encode;

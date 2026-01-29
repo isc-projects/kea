@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <process/daemon.h>
+#include <stats/stats_mgr.h>
 #include <radius_log.h>
 #include <radius_parsers.h>
 #include <radius_access.h>
@@ -40,6 +41,7 @@ using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::radius;
+using namespace isc::stats;
 using namespace isc::util;
 using namespace std;
 
@@ -181,6 +183,10 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_CONFLICT)
           .arg(query->getLabel())
           .arg(text);
+        StatsMgr::instance().addValue("pkt4-duplicate",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -192,6 +198,10 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
                   RADIUS_ACCESS_MAX_PENDING_REQUESTS)
             .arg(query->getLabel())
             .arg(text);
+        StatsMgr::instance().addValue("pkt4-queue-full",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -200,6 +210,10 @@ RadiusAuthHandlerPtr subnet4Select(CalloutHandle& handle,
     handler = impl.auth_->buildAuth(*query, subnet_id, id, text);
     if (!handler) {
         // Error was logged.
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -326,6 +340,10 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE, RADIUS_ACCESS_CONFLICT)
           .arg(query->getLabel())
           .arg(text);
+        StatsMgr::instance().addValue("pkt6-duplicate",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -337,6 +355,10 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
                   RADIUS_ACCESS_MAX_PENDING_REQUESTS)
             .arg(query->getLabel())
             .arg(text);
+        StatsMgr::instance().addValue("pkt6-queue-full",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -345,6 +367,10 @@ RadiusAuthHandlerPtr subnet6Select(CalloutHandle& handle,
     handler = impl.auth_->buildAuth(*query, subnet_id, id, text);
     if (!handler) {
         // Error was logged.
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
         return (handler);
     }
@@ -475,6 +501,10 @@ int subnet4_select(CalloutHandle& handle) {
         handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
     } catch (...) {
         parking_lot->dereference(query);
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     }
 
@@ -520,6 +550,10 @@ int subnet6_select(CalloutHandle& handle) {
         handle.setStatus(CalloutHandle::NEXT_STEP_PARK);
     } catch (...) {
         parking_lot->dereference(query);
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         handle.setStatus(CalloutHandle::NEXT_STEP_DROP);
     }
 

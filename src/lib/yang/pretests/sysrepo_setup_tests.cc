@@ -6,10 +6,8 @@
 
 #include <config.h>
 
+#include <yang/translator.h>
 #include <yang/yang_revisions.h>
-
-#include <sysrepo-cpp/Connection.hpp>
-#include <sysrepo-cpp/Session.hpp>
 
 #include <iostream>
 #include <unordered_map>

@@ -165,6 +165,19 @@ test(
     priority: -1,
     suite: 'shell-tests',
 )
+shell_process_tests = configure_file(
+    input: 'shell_process_tests.sh.in',
+    output: 'shell_process_tests.sh',
+    configuration: shell_tests_conf_data,
+)
+test(
+    'shell_process_tests.sh',
+    shell_process_tests,
+    workdir: current_build_dir,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)
 auth_bad_password_file = configure_file(
     input: 'auth_bad_password_file.in',
     output: 'auth_bad_password_file',

@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,7 +50,7 @@ RadiusImpl::RadiusImpl()
       clientid_pop0_(false), clientid_printable_(false),
       deadtime_(0), extract_duid_(true),
       reselect_subnet_pool_(false), reselect_subnet_address_(false),
-      retries_(3), thread_pool_size_(0),
+      retries_(3), thread_pool_size_(0), timeout_(0),
       id_type4_(Host::IDENT_CLIENT_ID), id_type6_(Host::IDENT_DUID),
       io_context_(new IOService()), io_service_(io_context_) {
 }
@@ -112,7 +112,9 @@ void RadiusImpl::cleanup() {
         for (auto const& exchange : exchange_list_) {
             exchange->shutdown();
         }
+        io_context_->stopAndPoll();
     }
+
     io_context_.reset(new IOService());
     exchange_list_.clear();
     if (getIOService()) {
@@ -440,8 +442,6 @@ ElementPtr RadiusImpl::toElement() const {
     // identifier-type6.
     result->set("identifier-type6",
                 Element::create(Host::getIdentifierName(id_type6_)));
-
-    // realm.
 
     // reselect-subnet-address.
     result->set("reselect-subnet-address",

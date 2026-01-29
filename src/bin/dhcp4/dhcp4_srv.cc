@@ -176,13 +176,24 @@ std::set<std::string> dhcp4_statistics = {
     "pkt4-release-received",
     "pkt4-decline-received",
     "pkt4-inform-received",
+    "pkt4-lease-query-received",
     "pkt4-unknown-received",
     "pkt4-sent",
     "pkt4-offer-sent",
     "pkt4-ack-sent",
     "pkt4-nak-sent",
+    "pkt4-lease-query-response-unassigned-sent",
+    "pkt4-lease-query-response-unknown-sent",
+    "pkt4-lease-query-response-active-sent",
     "pkt4-service-disabled",
     "pkt4-parse-failed",
+    "pkt4-queue-full",
+    "pkt4-duplicate",
+    "pkt4-rfc-violation",
+    "pkt4-admin-filtered",
+    "pkt4-not-for-us",
+    "pkt4-processing-failed",
+    "pkt4-limit-exceeded",
     "pkt4-receive-drop",
     "v4-allocation-fail",
     "v4-allocation-fail-shared-network",
@@ -315,8 +326,10 @@ Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0013)
             .arg(query_->getHWAddrLabel())
             .arg(query_->toText());
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         drop = true;
     }
 }
@@ -714,7 +727,7 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
 }
 
 void Dhcpv4Srv::setPacketStatisticsDefaults() {
-    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Iterate over set of observed statistics
     for (auto const& it : dhcp4_statistics) {
@@ -818,6 +831,10 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& query, bool& drop, bool allow_answer_park
                       DHCP4_HOOK_SUBNET4_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
+            StatsMgr::instance().addValue("pkt4-queue-full",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-receive-drop",
+                                          static_cast<int64_t>(1));
             return (ConstSubnet4Ptr());
         }
 
@@ -985,6 +1002,10 @@ Dhcpv4Srv::selectSubnet4o6(const Pkt4Ptr& query, bool& drop,
                       DHCP4_HOOK_SUBNET4_SELECT_4O6_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(query->getLabel());
+            StatsMgr::instance().addValue("pkt4-queue-full",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-receive-drop",
+                                          static_cast<int64_t>(1));
             return (ConstSubnet4Ptr());
         }
 
@@ -1151,8 +1172,10 @@ Dhcpv4Srv::earlyGHRLookup(const Pkt4Ptr& query,
                           DHCP4_PACKET_DROP_0014)
                     .arg(query->getHWAddrLabel())
                     .arg(query->toText());
-                isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                          static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt4-receive-drop",
+                                              static_cast<int64_t>(1));
                 return (false);
             }
 
@@ -1251,8 +1274,8 @@ Dhcpv4Srv::runOne() {
             // any failures in unpacking will cause the packet to be dropped.
             // We will increase type specific statistic further down the road.
             // See processStatsReceived().
-            isc::stats::StatsMgr::instance().addValue("pkt4-received",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-received",
+                                          static_cast<int64_t>(1));
         }
 
         // We used to log that the wait was interrupted, but this is no longer
@@ -1286,10 +1309,10 @@ Dhcpv4Srv::runOne() {
         LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0008)
             .arg(query->getLabel());
         // Increase the statistics of service disabled and dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-service-disabled",
-                                                  static_cast<int64_t>(1));
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-service-disabled",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         return;
     } else {
         if (MultiThreadingMgr::instance().getMode()) {
@@ -1300,9 +1323,13 @@ Dhcpv4Srv::runOne() {
                                                        this, query));
             if (!MultiThreadingMgr::instance().getThreadPool().add(call_back)) {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_PACKET_QUEUE_FULL);
+                StatsMgr::instance().addValue("pkt4-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt4-receive-drop",
+                                              static_cast<int64_t>(1));
             }
         } else {
-            processPacketAndSendResponse(query);
+            processPacketAndSendResponseNoThrow(query);
         }
     }
 }
@@ -1315,8 +1342,17 @@ Dhcpv4Srv::processPacketAndSendResponseNoThrow(Pkt4Ptr query) {
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1371,6 +1407,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
                 .arg(query->getRemoteAddr().toText())
                 .arg(query->getLocalAddr().toText())
                 .arg(query->getIface());
+
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it.
             return (Pkt4Ptr());;
         }
 
@@ -1388,6 +1427,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         }
 
         callout_handle->getArgument("query4", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt4Ptr());
+        }
     }
 
     // Unpack the packet information unless the buffer4_receive callouts
@@ -1417,10 +1460,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
                 .arg(query->getHWAddrLabel());
 
             // Increase the statistics of parse failures and dropped packets.
-            isc::stats::StatsMgr::instance().addValue("pkt4-parse-failed",
-                                                      static_cast<int64_t>(1));
-            isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                      static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-parse-failed",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt4-receive-drop",
+                                          static_cast<int64_t>(1));
             return (Pkt4Ptr());
         }
     }
@@ -1451,8 +1494,9 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
     // There is no need to log anything here. This function logs by itself.
     if (!accept(query)) {
         // Increase the statistic of dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        // Specific drop cause stat was increased by accept* methods.
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt4Ptr());
     }
 
@@ -1498,10 +1542,16 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
             LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                       DHCP4_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
+            // Not increasing the statistics of the dropped packets because it
+            // is the callouts' responsibility to increase it.
             return (Pkt4Ptr());
         }
 
         callout_handle->getArgument("query4", query);
+        if (!query) {
+            // Please use the status instead of resetting query!
+            return (Pkt4Ptr());
+        }
     }
 
     // Check the DROP special class.
@@ -1509,8 +1559,10 @@ Dhcpv4Srv::processPacket(Pkt4Ptr query, bool allow_answer_park) {
         LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0010)
             .arg(query->getHWAddrLabel())
             .arg(query->toText());
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-admin-filtered",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt4Ptr());
     }
 
@@ -1532,8 +1584,17 @@ Dhcpv4Srv::processDhcp4QueryAndSendResponse(Pkt4Ptr query,
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1561,17 +1622,25 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
         return (Pkt4Ptr());
     }
 
+    // The only expected exception is RFCViolation.
+    bool rfc_violation = false;
     try {
-        sanityCheck(query);
-        if ((query->getType() == DHCPDISCOVER) ||
-            (query->getType() == DHCPREQUEST) ||
-            (query->getType() == DHCPINFORM)) {
-            bool drop = false;
-            ctx->subnet_ = selectSubnet(query, drop, allow_answer_park);
-            // Stop here if selectSubnet decided to drop the packet
-            if (drop) {
-                return (Pkt4Ptr());
+        try {
+            sanityCheck(query);
+
+            if ((query->getType() == DHCPDISCOVER) ||
+                (query->getType() == DHCPREQUEST) ||
+                (query->getType() == DHCPINFORM)) {
+                bool drop = false;
+                ctx->subnet_ = selectSubnet(query, drop, allow_answer_park);
+                // Stop here if selectSubnet decided to drop the packet
+                if (drop) {
+                    return (Pkt4Ptr());
+                }
             }
+        } catch (const RFCViolation&) {
+            rfc_violation = true;
+            throw;
         }
     } catch (const std::exception& e) {
 
@@ -1587,8 +1656,14 @@ Dhcpv4Srv::processDhcp4Query(Pkt4Ptr query, bool allow_answer_park) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        // The RFCViolation thrower updated the drop cause statistic.
+        if (!rfc_violation) {
+            StatsMgr::instance().addValue("pkt4-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
+        return (Pkt4Ptr());
     }
 
     return (processLocalizedQuery4(ctx, allow_answer_park));
@@ -1611,8 +1686,17 @@ Dhcpv4Srv::processLocalizedQuery4AndSendResponse(Pkt4Ptr query,
         LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1642,36 +1726,43 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
     }
     Pkt4Ptr query = ctx->query_;
     Pkt4Ptr rsp;
+    // The only expected exception is RFCViolation.
+    bool rfc_violation = false;
     try {
-        switch (query->getType()) {
-        case DHCPDISCOVER:
-            rsp = processDiscover(query, ctx);
-            break;
+        try {
+            switch (query->getType()) {
+            case DHCPDISCOVER:
+                rsp = processDiscover(query, ctx);
+                break;
 
-        case DHCPREQUEST:
-            // Note that REQUEST is used for many things in DHCPv4: for
-            // requesting new leases, renewing existing ones and even
-            // for rebinding.
-            rsp = processRequest(query, ctx);
-            break;
+            case DHCPREQUEST:
+                // Note that REQUEST is used for many things in DHCPv4: for
+                // requesting new leases, renewing existing ones and even
+                // for rebinding.
+                rsp = processRequest(query, ctx);
+                break;
 
-        case DHCPRELEASE:
-            processRelease(query, ctx);
-            break;
+            case DHCPRELEASE:
+                processRelease(query, ctx);
+                break;
 
-        case DHCPDECLINE:
-            processDecline(query, ctx);
-            break;
+            case DHCPDECLINE:
+                processDecline(query, ctx);
+                break;
 
-        case DHCPINFORM:
-            rsp = processInform(query, ctx);
-            break;
+            case DHCPINFORM:
+                rsp = processInform(query, ctx);
+                break;
 
-        default:
-            // Only action is to output a message if debug is enabled,
-            // and that is covered by the debug statement before the
-            // "switch" statement.
-            ;
+            default:
+                // Only action is to output a message if debug is enabled,
+                // and that is covered by the debug statement before the
+                // "switch" statement.
+                ;
+            }
+        } catch (const RFCViolation&) {
+            rfc_violation = true;
+            throw;
         }
     } catch (const std::exception& e) {
 
@@ -1687,8 +1778,14 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
-        isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                  static_cast<int64_t>(1));
+        // The RFCViolation thrower updated the drop cause statistic.
+        if (!rfc_violation) {
+            StatsMgr::instance().addValue("pkt4-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
+        return (Pkt4Ptr());
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
@@ -1776,8 +1873,10 @@ Dhcpv4Srv::processLocalizedQuery4(AllocEngine::ClientContext4Ptr& ctx,
                     LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, parking_lot_full_msg)
                         .arg(limit)
                         .arg(query->getLabel());
-                    isc::stats::StatsMgr::instance().addValue("pkt4-receive-drop",
-                                                                static_cast<int64_t>(1));
+                    StatsMgr::instance().addValue("pkt4-queue-full",
+                                                  static_cast<int64_t>(1));
+                    StatsMgr::instance().addValue("pkt4-receive-drop",
+                                                  static_cast<int64_t>(1));
                     return (Pkt4Ptr());
                 }
 
@@ -1881,14 +1980,15 @@ Dhcpv4Srv::sendResponseNoThrow(hooks::CalloutHandlePtr& callout_handle,
                                Pkt4Ptr& query, Pkt4Ptr& rsp,
                                ConstSubnet4Ptr& subnet) {
     try {
-            processPacketPktSend(callout_handle, query, rsp, subnet);
-            processPacketBufferSend(callout_handle, rsp);
-        } catch (const std::exception& e) {
-            LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
-                .arg(query->getLabel())
-                .arg(e.what());
+        processPacketPktSend(callout_handle, query, rsp, subnet);
+        processPacketBufferSend(callout_handle, rsp);
+    } catch (const std::exception& e) {
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_STD_EXCEPTION)
+            .arg(query->getLabel())
+            .arg(e.what());
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -2717,8 +2817,15 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     } else {
         // Adjust the domain name based on domain name value and type sent by the
         // client and current configuration.
-        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp,
-                                                   *(ex.getContext()->getDdnsParams()));
+        try {
+            d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp,
+                                                       *(ex.getContext()->getDdnsParams()));
+        } catch (const FQDNScrubbedEmpty& scrubbed) {
+            LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(scrubbed.what());
+            return;
+        }
     }
 
     // Add FQDN option to the response message. Note that, there may be some
@@ -2860,7 +2967,15 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
             ex.getContext()->getDdnsParams()->getHostnameSanitizer();
 
         if (sanitizer) {
-            hostname = sanitizer->scrub(hostname);
+            auto tmp = sanitizer->scrub(hostname);
+            if (tmp.empty()) {
+                LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL, DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY)
+                    .arg(ex.getQuery()->getLabel())
+                    .arg(hostname);
+                return;
+            }
+
+            hostname = tmp;
         }
 
         // Convert hostname to lower case.
@@ -2894,7 +3009,7 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
                                     const Lease4Ptr& old_lease,
                                     const DdnsParams& ddns_params) {
     if (!lease) {
-        isc_throw(isc::Unexpected,
+        isc_throw(Unexpected,
                   "NULL lease specified when creating NameChangeRequest");
     }
 
@@ -3315,10 +3430,12 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
                 .arg(Lease::lifetimeToText(lease->valid_lft_));
 
             // Increment the reuse statistics.
-            StatsMgr::instance().addValue("v4-lease-reuses", int64_t(1));
-            StatsMgr::instance().addValue(StatsMgr::generateName("subnet", lease->subnet_id_,
+            StatsMgr::instance().addValue("v4-lease-reuses",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue(StatsMgr::generateName("subnet",
+                                                                 lease->subnet_id_,
                                                                  "v4-lease-reuses"),
-                                          int64_t(1));
+                                          static_cast<int64_t>(1));
         }
 
         // IP Address Lease time (type 51)
@@ -3341,10 +3458,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             try {
                 createNameChangeRequests(lease, ctx->old_lease_,
                                          *ex.getContext()->getDdnsParams());
-            } catch (const Exception& ex) {
+            } catch (const Exception& e) {
                 LOG_ERROR(ddns4_logger, DHCP4_NCR_CREATION_FAILED)
                     .arg(query->getLabel())
-                    .arg(ex.what());
+                    .arg(e.what());
             }
         }
 
@@ -3397,7 +3514,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
 void
 Dhcpv4Srv::postAllocateNameUpdate(const AllocEngine::ClientContext4Ptr& ctx, const Lease4Ptr& lease,
-                                 const Pkt4Ptr& query, const Pkt4Ptr& resp, bool client_name_changed) {
+                                  const Pkt4Ptr& query, const Pkt4Ptr& resp, bool client_name_changed) {
     // We may need to update FQDN or hostname if the server is to generate
     // new name from the allocated IP address or if the allocation engine
     // has switched to a different subnet within a shared network.  Get
@@ -4172,6 +4289,8 @@ Dhcpv4Srv::processDecline(Pkt4Ptr& decline, AllocEngine::ClientContext4Ptr& cont
         OptionCustom>(decline->getOption(DHO_DHCP_REQUESTED_ADDRESS));
     if (!opt_requested_address) {
 
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(RFCViolation, "Mandatory 'Requested IP address' option missing"
                   " in DHCPDECLINE sent from " << decline->getLabel());
     }
@@ -4458,7 +4577,8 @@ Dhcpv4Srv::serverDeclineNoThrow(hooks::CalloutHandlePtr& callout_handle, Pkt4Ptr
     try {
         serverDecline(callout_handle, query, lease, lease_exists);
     } catch (...) {
-        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION).arg(query->getLabel());
+        LOG_ERROR(packet4_logger, DHCP4_PACKET_PROCESS_EXCEPTION)
+            .arg(query->getLabel());
     }
 }
 
@@ -4643,21 +4763,26 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) {
     // The source address must not be zero for the DHCPINFORM message from
     // the directly connected client because the server will not know where
     // to respond if the ciaddr was not present.
+    bool result = true;
     try {
         if (pkt->getType() == DHCPINFORM) {
             if (pkt->getRemoteAddr().isV4Zero() &&
                 pkt->getCiaddr().isV4Zero()) {
-                return (false);
+                result = false;
             }
         }
     } catch (...) {
         // If we got here, it is probably because the message type hasn't
         // been set. But, this should not really happen assuming that
         // we validate the message type prior to calling this function.
-        return (false);
+        result = false;
     }
 
-    return (true);
+    if (!result) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
+    }
+    return (result);
 }
 
 bool
@@ -4672,6 +4797,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
         LOG_DEBUG(bad_packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_DROP_0004)
             .arg(query->getLabel())
             .arg(query->getIface());
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4713,6 +4840,8 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
             break;
     }
 
+    StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                  static_cast<int64_t>(1));
     return (false);
 }
 
@@ -4738,6 +4867,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // Unable to convert the option to the option type which encapsulates it.
     // We treat this as non-matching server id.
     if (!option_custom) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
     // The server identifier option should carry exactly one IPv4 address.
@@ -4746,6 +4877,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // this check is somewhat redundant. On the other hand, if someone
     // breaks option it may be better to check that here.
     if (option_custom->getDataFieldsNum() != 1) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4753,6 +4886,8 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // v6, it is wrong.
     IOAddress server_id = option_custom->readAddress();
     if (!server_id.isV4()) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         return (false);
     }
 
@@ -4845,7 +4980,13 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     OptionCustomPtr opt_server_id = boost::dynamic_pointer_cast<OptionCustom>
         (cfg_global_options->get(DHCP4_OPTION_SPACE, DHO_DHCP_SERVER_IDENTIFIER).option_);
 
-    return (opt_server_id && (opt_server_id->readAddress() == server_id));
+    if (opt_server_id && (opt_server_id->readAddress() == server_id)) {
+        return (true);
+    }
+
+    // No matching...
+    StatsMgr::instance().addValue("pkt4-not-for-us", static_cast<int64_t>(1));
+    return (false);
 }
 
 void
@@ -4884,6 +5025,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
     switch (serverid) {
     case FORBIDDEN:
         if (server_id) {
+            StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Server-id option was not expected, but"
                       << " received in message "
                       << query->getName());
@@ -4892,6 +5035,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
 
     case MANDATORY:
         if (!server_id) {
+            StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Server-id option was expected, but not"
                       " received in message "
                       << query->getName());
@@ -4914,6 +5059,8 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& query, RequirementLevel serverid) {
 
     // If there's no client-id (or a useless one is provided, i.e. 0 length)
     if (!client_id || client_id->len() == client_id->getHeaderLen()) {
+        StatsMgr::instance().addValue("pkt4-rfc-violation",
+                                      static_cast<int64_t>(1));
         isc_throw(RFCViolation, "Missing or useless client-id and no HW address"
                   " provided in message "
                   << query->getName());
@@ -5000,11 +5147,11 @@ void Dhcpv4Srv::evaluateAdditionalClasses(Dhcpv4Exchange& ex) {
                 // Matching: add the class
                 query->addClass(cclass);
             }
-        } catch (const Exception& ex) {
+        } catch (const Exception& e) {
             LOG_ERROR(dhcp4_logger, DHCP4_ADDITIONAL_CLASS_EVAL_ERROR)
                 .arg(query->getLabel())
                 .arg(cclass)
-                .arg(ex.what());
+                .arg(e.what());
         }
     }
 }
@@ -5106,11 +5253,11 @@ Dhcpv4Srv::stopD2() {
 }
 
 void
-Dhcpv4Srv::d2ClientErrorHandler(const
-                                dhcp_ddns::NameChangeSender::Result result,
+Dhcpv4Srv::d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(ddns4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
-              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    LOG_ERROR(ddns4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED)
+        .arg(NameChangeSender::resultToText(result))
+        .arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
     /// them off.
@@ -5123,7 +5270,7 @@ Dhcpv4Srv::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << " (" << EXTENDED_VERSION << ")" << endl;
+        tmp << " (" << SOURCE_OF_INSTALLATION << ")" << endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;
@@ -5200,14 +5347,12 @@ void Dhcpv4Srv::processStatsReceived(const Pkt4Ptr& query) {
         // name of pkt4-unknown-received.
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
 }
 
 void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
     // Increase generic counter for sent packets.
-    isc::stats::StatsMgr::instance().addValue("pkt4-sent",
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue("pkt4-sent", static_cast<int64_t>(1));
 
     // Increase packet type specific counter for packets sent.
     string stat_name;
@@ -5226,8 +5371,7 @@ void Dhcpv4Srv::processStatsSent(const Pkt4Ptr& response) {
         return;
     }
 
-    isc::stats::StatsMgr::instance().addValue(stat_name,
-                                              static_cast<int64_t>(1));
+    StatsMgr::instance().addValue(stat_name, static_cast<int64_t>(1));
 }
 
 int Dhcpv4Srv::getHookIndexBuffer4Receive() {

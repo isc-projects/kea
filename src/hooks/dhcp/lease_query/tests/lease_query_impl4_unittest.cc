@@ -15,8 +15,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <lease_query_impl4.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+#include <lease_query_impl4.h>
 
 #include <gtest/gtest.h>
 #include <sstream>
@@ -28,6 +29,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::lease_query;
+using namespace isc::stats;
 using namespace isc::util;
 
 namespace {
@@ -573,23 +575,45 @@ TEST(LeaseQueryImpl4Test, invalidConfig4) {
         {
             "requesters list is empty",
             Element::fromJSON("{ \"requesters\" : [] }"),
-            "'requesters' address list cannot be empty"
+            "'requesters' list cannot be empty"
         },
         {
             "requesters entry not an address",
             Element::fromJSON("{ \"requesters\" : [ \"foo\" ] }"),
-            "'requesters' entry 'foo' is invalid: Failed to convert"
+            "'requesters' address entry 'foo' is invalid: Failed to convert"
             " string to address 'foo': Invalid argument"
         },
         {
             "requesters entry not a v4 address",
             Element::fromJSON("{ \"requesters\" : [ \"2001:db8:1::\" ] }"),
-            "'requesters' entry '2001:db8:1::' is invalid: not a IPv4 address"
+            "'requesters' address entry '2001:db8:1::'"
+            " is invalid: not a IPv4 address"
         },
         {
             "requesters entry is a duplicate",
-            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\", \"192.0.2.1\" ] }"),
-            "'requesters' entry '192.0.2.1' is invalid: address is already in the list"
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1\","
+                              " \"192.0.2.1\" ] }"),
+            "'requesters' address entry '192.0.2.1' is invalid:"
+            " address is already in the list"
+        },
+        {
+            "requesters CIDR entry address is a invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.x/24\" ] }"),
+            "'requesters' CIDR entry '192.0.2.x/24' is invalid:"
+            " Failed to convert string to address '192.0.2.x': Invalid argument"
+        },
+        {
+            "requesters CIDR length is a invalid",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.1/777\" ] }"),
+            "'requesters' CIDR entry '192.0.2.1/777' is invalid:"
+            " prefix length 777 is out of range"
+        },
+        {
+            "requesters CIDR entry is a duplicate",
+            Element::fromJSON("{ \"requesters\" : [ \"192.0.2.0/24\","
+                              " \"192.0.2.0/24\" ] }"),
+            "'requesters' CIDR entry '192.0.2.0/24' is invalid:"
+            " entry already exists"
         }
     };
 
@@ -623,11 +647,53 @@ TEST(LeaseQueryImpl4Test, validConfig4) {
                      "not a IPv4 address");
 }
 
+// Verifies that valid v4 configuration using only CIDR entries
+// parses and that requesters can be validated.
+TEST(LeaseQueryImpl4Test, validConfig4CIDROnly) {
+    // Create an implementation with two requesters.
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\","
+                             " \"192.0.3.0/24\" ] }";
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+
+    LeaseQueryImpl4Ptr impl;
+    ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl4(config)));
+
+    // Verify known and unknown requesters check correctly.
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.0")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.10")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.255")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.80")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.255")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.4.255")));
+}
+
+// Verifies that valid v4 configuration both address and CIDR entries
+// parses and that requesters can be validated.
+TEST(LeaseQueryImpl4Test, validConfig4Mix) {
+    // Create an implementation with two requesters.
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.0/24\","
+                             " \"192.0.3.25\" ] }";
+    ConstElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
+
+    LeaseQueryImpl4Ptr impl;
+    ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl4(config)));
+
+    // Verify known and unknown requesters check correctly.
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.0")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.10")));
+    EXPECT_TRUE(impl->isRequester(IOAddress("192.0.3.25")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.3.255")));
+    EXPECT_FALSE(impl->isRequester(IOAddress("192.0.4.255")));
+}
+
 // Verifies the invalid combinations of query parameters (ciaddr, HWAddr,
 // and client id) are detected.
 TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
     // Create an implementation with two requesters.
-    const std::string json = "{ \"requesters\" : [ \"192.0.2.1\", \"192.0.2.3\" ] }";
+    const std::string json = "{ \"requesters\" : [ \"192.0.2.1\","
+                             " \"192.0.2.3\" ] }";
     ConstElementPtr config;
     ASSERT_NO_THROW_LOG(config = Element::fromJSON(json));
     LeaseQueryImpl4Ptr impl;
@@ -635,18 +701,42 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
 
     // A v6 packet should get tossed.
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_LEASEQUERY, 0));
-    ASSERT_THROW_MSG(impl->processQuery(pkt6), BadValue,
+    bool invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(pkt6, invalid), BadValue,
                      "LeaseQueryImpl4 query is not DHCPv4 packet");
+    EXPECT_FALSE(invalid);
+
+    // Set the pkt4-rfc-violation stat to 0.
+    StatsMgr::instance().setValue("pkt4-rfc-violation", static_cast<int64_t>(0));
 
     // An empty giaddr should fail.
     Pkt4Ptr lq(new Pkt4(DHCPLEASEQUERY, 123));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "giaddr cannot be 0.0.0.0");
+    EXPECT_TRUE(invalid);
+
+    // Check the pkt4-rfc-violation stat which was bumped by one.
+    ObservationPtr stat_rv =
+        StatsMgr::instance().getObservation("pkt4-rfc-violation");
+    ASSERT_TRUE(stat_rv);
+    EXPECT_EQ(1, stat_rv->getInteger().first);
+
+    // Set the pkt4-admin-filtered stat to 0.
+    StatsMgr::instance().setValue("pkt4-admin-filtered", static_cast<int64_t>(0));
 
     // An unknown giaddr should fail.
     lq->setGiaddr(IOAddress("192.0.2.2"));
-    ASSERT_THROW_MSG(impl->processQuery(lq), BadValue,
+    invalid = false;
+    ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
                      "rejecting query from unauthorized requester: 192.0.2.2");
+    EXPECT_TRUE(invalid);
+
+    // Check the pkt4-admin-filtered stat which was bumped by one.
+    ObservationPtr stat_af =
+        StatsMgr::instance().getObservation("pkt4-admin-filtered");
+    ASSERT_TRUE(stat_af);
+    EXPECT_EQ(1, stat_af->getInteger().first);
 
     // Now we'll iterate over all invalid combinations of ciaddr, HWAddr, client id.
     struct Scenario {
@@ -714,7 +804,10 @@ TEST(LeaseQueryImpl4Test, processQueryInvalidQuery) {
             lq->addOption(client_id);
         }
 
-        ASSERT_THROW_MSG(impl->processQuery(lq), BadValue, scenario.exp_message_);
+        invalid = false;
+        ASSERT_THROW_MSG(impl->processQuery(lq, invalid), BadValue,
+                         scenario.exp_message_);
+        EXPECT_TRUE(invalid);
     }
 }
 

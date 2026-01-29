@@ -51,6 +51,7 @@ src/share/api/lease4-get-all.json
 src/share/api/lease4-get-by-client-id.json
 src/share/api/lease4-get-by-hostname.json
 src/share/api/lease4-get-by-hw-address.json
+src/share/api/lease4-get-by-state.json
 src/share/api/lease4-get-page.json
 src/share/api/lease4-resend-ddns.json
 src/share/api/lease4-update.json
@@ -64,6 +65,7 @@ src/share/api/lease6-get-all.json
 src/share/api/lease6-get-by-duid.json
 src/share/api/lease6-get-by-hostname.json
 src/share/api/lease6-get-by-hw-address.json
+src/share/api/lease6-get-by-state.json
 src/share/api/lease6-get-page.json
 src/share/api/lease6-resend-ddns.json
 src/share/api/lease6-update.json

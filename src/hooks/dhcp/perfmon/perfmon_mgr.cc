@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -28,8 +28,8 @@ using namespace isc::stats;
 using namespace isc::util;
 using namespace boost::posix_time;
 
-PerfMonMgr::PerfMonMgr(uint16_t family_)
-    : PerfMonConfig(family_), mutex_(new std::mutex) {
+PerfMonMgr::PerfMonMgr(uint16_t family)
+    : PerfMonConfig(family), mutex_(new std::mutex) {
     init();
 }
 

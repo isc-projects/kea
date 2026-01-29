@@ -256,7 +256,7 @@ TKeyExchangeImpl::operator()(IOFetch::Result result) {
 
     default:
         LOG_ERROR(gss_tsig_logger, TKEY_EXCHANGE_FAIL_IO_ERROR)
-            .arg(result);
+            .arg(IOFetch::resultToText(result));
         incrStats("tkey-error");
         callCallback(TKeyExchange::OTHER);
         return;

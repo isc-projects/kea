@@ -1,4 +1,4 @@
-// Copyright (C) 2021-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2021-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,9 +18,13 @@ namespace {
 
 template <typename ElementPtrType>
 ElementPtrType
-redact(ElementPtrType const& element, list<string> json_path, string obscure) {
+    redact(ElementPtrType const& element, list<string> json_path,
+           string obscure, unsigned level) {
     if (!element) {
         isc_throw(BadValue, "redact() got a null pointer");
+    }
+    if (level == 0) {
+        isc_throw(BadValue, "redact() elements nested too deeply");
     }
 
     string const next_key(json_path.empty() ? string() : json_path.front());
@@ -36,9 +40,9 @@ redact(ElementPtrType const& element, list<string> json_path, string obscure) {
             // Then redact all children.
             result = Element::createList();
             for (ElementPtr const& child : element->listValue()) {
-                result->add(redact(child, json_path, obscure));
+                result->add(redact(child, json_path, obscure, level - 1));
             }
-            return result;
+            return (result);
         }
     } else if (element->getType() == Element::map) {
         // If we are looking for anything or if we have reached the end of a
@@ -64,23 +68,25 @@ redact(ElementPtrType const& element, list<string> json_path, string obscure) {
                         result->set(key, value);
                     } else {
                         // We are looking for anything '*' so redact further.
-                        result->set(key, redact(value, json_path, obscure));
+                        result->set(key, redact(value, json_path, obscure,
+                                                level - 1));
                     }
                 }
             }
-            return result;
+            return (result);
         } else {
             ConstElementPtr child(element->get(next_key));
             if (child) {
-                result = isc::data::copy(element, 1);
+                result = isc::data::copy(element, 1U);
                 json_path.pop_front();
-                result->set(next_key, redact(child, json_path, obscure));
-                return result;
+                result->set(next_key,
+                            redact(child, json_path, obscure, level - 1));
+                return (result);
             }
         }
     }
 
-    return element;
+    return (element);
 }
 
 }  // namespace
@@ -90,8 +96,8 @@ namespace process {
 
 ConstElementPtr
 redactConfig(ConstElementPtr const& element, list<string> const& json_path,
-             string obscure) {
-    return redact(element, json_path, obscure);
+             string obscure, unsigned max_nesting_depth) {
+    return (redact(element, json_path, obscure, max_nesting_depth));
 }
 
 }  // namespace process

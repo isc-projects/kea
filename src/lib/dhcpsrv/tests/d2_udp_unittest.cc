@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,11 +14,11 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/ready_check.h>
 
 #include <gtest/gtest.h>
 
 #include <functional>
-#include <sys/select.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -126,10 +126,6 @@ public:
     /// @param expect_ready Expected state of readiness (True if expecting
     /// a ready to ready result,  false if expecting otherwise).
     void selectCheck(bool expect_ready) {
-        fd_set read_fds;
-        int maxfd = 0;
-
-        FD_ZERO(&read_fds);
 
         // cppcheck-suppress redundantAssignment
         int select_fd = -1;
@@ -138,15 +134,7 @@ public:
             select_fd = handle_->getSelectFd()
         );
 
-        FD_SET(select_fd,  &read_fds);
-        maxfd = select_fd;
-
-        struct timeval select_timeout;
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
-
-        int result = (select(maxfd + 1, &read_fds, NULL, NULL,
-                      &select_timeout));
+        int result = util::selectCheck(select_fd);
 
         if (result < 0) {
             const char *errstr = strerror(errno);

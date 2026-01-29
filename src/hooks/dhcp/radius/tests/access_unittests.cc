@@ -35,6 +35,7 @@
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
 #include <hooks/hooks_manager.h>
+#include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/multi_threading_utils.h>
 
@@ -54,6 +55,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
 using namespace isc::radius;
+using namespace isc::stats;
 using namespace isc::test;
 using namespace isc::util;
 
@@ -517,9 +519,9 @@ AccessTest::server() {
                 IntervalTimer::ONE_SHOT);
 
     // Get the requests.
-    auto receive_handler = [this](boost::system::error_code ec, size_t size) {
+    auto receive_handler = [this](boost::system::error_code erc, size_t size) {
         lock_guard<mutex> lock(mutex_);
-        error_codes_.push_back(ec);
+        error_codes_.push_back(erc);
         sizes_.push_back(size);
     };
     vector<boost::asio::ip::udp::endpoint> clients(expected_received_);
@@ -3398,6 +3400,12 @@ TEST_F(AccessTest, twoQueries4) {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
 
+    // Initialize stats.
+    StatsMgr::instance().setValue("pkt4-duplicate",
+                                  static_cast<int64_t>(0));
+    StatsMgr::instance().setValue("pkt4-receive-drop",
+                                  static_cast<int64_t>(0));
+
     // Start not servicing server.
     thread_.reset(new thread(bind(&AccessTest::dummyServer, this)));
     system_clock::time_point start(system_clock::now());
@@ -3416,11 +3424,27 @@ TEST_F(AccessTest, twoQueries4) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_TRUE(finished_);
+
+    // Check stats.
+    ObservationPtr qf_stat =
+        StatsMgr::instance().getObservation("pkt4-duplicate");
+    ObservationPtr rd_stat =
+        StatsMgr::instance().getObservation("pkt4-receive-drop");
+    ASSERT_TRUE(qf_stat);
+    ASSERT_TRUE(rd_stat);
+    EXPECT_EQ(1, qf_stat->getInteger().first);
+    EXPECT_EQ(1, rd_stat->getInteger().first);
 }
 
 TEST_F(AccessTest, twoQueries6) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+
+    // Initialize stats.
+    StatsMgr::instance().setValue("pkt6-duplicate",
+                                  static_cast<int64_t>(0));
+    StatsMgr::instance().setValue("pkt6-receive-drop",
+                                  static_cast<int64_t>(0));
 
     // Start not servicing server.
     thread_.reset(new thread(bind(&AccessTest::dummyServer, this)));
@@ -3440,6 +3464,16 @@ TEST_F(AccessTest, twoQueries6) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_TRUE(finished_);
+
+    // Check stats.
+    ObservationPtr qf_stat =
+        StatsMgr::instance().getObservation("pkt6-duplicate");
+    ObservationPtr rd_stat =
+        StatsMgr::instance().getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(qf_stat);
+    ASSERT_TRUE(rd_stat);
+    EXPECT_EQ(1, qf_stat->getInteger().first);
+    EXPECT_EQ(1, rd_stat->getInteger().first);
 }
 
 TEST_F(AccessTest, maxPendingRequest4) {
@@ -3448,6 +3482,12 @@ TEST_F(AccessTest, maxPendingRequest4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->add(subnet);
+
+    // Initialize stats.
+    StatsMgr::instance().setValue("pkt4-queue-full",
+                                  static_cast<int64_t>(0));
+    StatsMgr::instance().setValue("pkt4-receive-drop",
+                                  static_cast<int64_t>(0));
 
     // Start not servicing server.
     thread_.reset(new thread(bind(&AccessTest::dummyServer, this)));
@@ -3467,6 +3507,16 @@ TEST_F(AccessTest, maxPendingRequest4) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_TRUE(finished_);
+
+    // Check stats.
+    ObservationPtr qf_stat =
+        StatsMgr::instance().getObservation("pkt4-queue-full");
+    ObservationPtr rd_stat =
+        StatsMgr::instance().getObservation("pkt4-receive-drop");
+    ASSERT_TRUE(qf_stat);
+    ASSERT_TRUE(rd_stat);
+    EXPECT_EQ(1, qf_stat->getInteger().first);
+    EXPECT_EQ(1, rd_stat->getInteger().first);
 }
 
 TEST_F(AccessTest, maxPendingRequest6) {
@@ -3475,6 +3525,12 @@ TEST_F(AccessTest, maxPendingRequest6) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 64, 1, 2, 3, 4, 1));
     CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->add(subnet);
+
+    // Initialize stats.
+    StatsMgr::instance().setValue("pkt6-queue-full",
+                                  static_cast<int64_t>(0));
+    StatsMgr::instance().setValue("pkt6-receive-drop",
+                                  static_cast<int64_t>(0));
 
     // Start not servicing server.
     thread_.reset(new thread(bind(&AccessTest::dummyServer, this)));
@@ -3494,6 +3550,16 @@ TEST_F(AccessTest, maxPendingRequest6) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_TRUE(finished_);
+
+    // Check stats.
+    ObservationPtr qf_stat =
+        StatsMgr::instance().getObservation("pkt6-queue-full");
+    ObservationPtr rd_stat =
+        StatsMgr::instance().getObservation("pkt6-receive-drop");
+    ASSERT_TRUE(qf_stat);
+    ASSERT_TRUE(rd_stat);
+    EXPECT_EQ(1, qf_stat->getInteger().first);
+    EXPECT_EQ(1, rd_stat->getInteger().first);
 }
 
 TEST_F(AccessTest, noHost4) {

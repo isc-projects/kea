@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -78,7 +78,7 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
                 // this is unexpected so we will treat it as a receive error.
                 // This is most likely an unforeseen programmatic issue.
                 LOG_ERROR(dhcp_to_d2_logger, DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP)
-                          .arg(mgr_state_);
+                          .arg(D2QueueMgr::stateToText(mgr_state_));
                 stopListening(STOPPED_RECV_ERROR);
             }
 

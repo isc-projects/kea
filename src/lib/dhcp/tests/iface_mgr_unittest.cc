@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,8 +15,9 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 #include <dhcp/tests/packet_queue_testutils.h>
+#include <testutils/env_var_wrapper.h>
 #include <testutils/gtest_utils.h>
-
+#include <testutils/log_utils.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -25,6 +26,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -34,6 +36,7 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 using boost::scoped_ptr;
 namespace ph = std::placeholders;
 
@@ -349,6 +352,17 @@ public:
     }
 };
 
+volatile bool callback_ok;
+volatile bool callback2_ok;
+
+void my_callback(int /* fd */) {
+    callback_ok = true;
+}
+
+void my_callback2(int /* fd */) {
+    callback2_ok = true;
+}
+
 /// @brief A test fixture class for IfaceMgr.
 ///
 /// @todo Sockets being opened by IfaceMgr tests should be managed by
@@ -360,7 +374,7 @@ class IfaceMgrTest : public ::testing::Test {
 public:
     /// @brief Constructor.
     IfaceMgrTest()
-        : errors_count_(0) {
+        : errors_count_(0), kea_event_handler_type_("KEA_EVENT_HANDLER_TYPE") {
     }
 
     ~IfaceMgrTest() {
@@ -538,6 +552,22 @@ public:
         // we should accept both values as source ports.
         EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
+        // Close the socket. Further we will test if errors are reported
+        // properly on attempt to use closed socket.
+        close(socket2);
+
+        // @todo Closing the socket does NOT cause a read error out of the
+        // receiveDHCP<X>Packets() select.  Apparently this is because the
+        // thread is already inside the select when the socket is closed,
+        // and (at least under Centos 7.5), this does not interrupt the
+        // select.  For now, we'll only test this for direct receive.
+        if (!queue_enabled) {
+            EXPECT_THROW(ifacemgr->receive6(10), SocketFDError);
+        }
+
+        // Verify write fails.
+        EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
+
         // Stop the thread.  This should be no harm/no foul if we're not
         // queueuing.  Either way, we should not have a thread afterwards.
         ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
@@ -663,7 +693,7 @@ public:
         // and (at least under Centos 7.5), this does not interrupt the
         // select.  For now, we'll only test this for direct receive.
         if (!queue_enabled) {
-            EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+            EXPECT_THROW(ifacemgr->receive4(10), SocketFDError);
         }
 
         // Verify write fails.
@@ -676,14 +706,14 @@ public:
     }
 
     /// @brief Verifies that IfaceMgr DHCPv4 receive calls detect and
-    /// purge external sockets that have gone bad without affecting
+    /// ignore external sockets that have gone bad without affecting
     /// affecting normal operations.  It can be run with or without
     /// packet queuing.
     ///
     /// @param use_queue determines if packet queuing is used or not.
-    void purgeExternalSockets4Test(bool use_queue = false) {
-        bool callback_ok = false;
-        bool callback2_ok = false;
+    void unusableExternalSockets4Test(bool use_queue = false) {
+        callback_ok = false;
+        callback2_ok = false;
 
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
@@ -703,20 +733,22 @@ public:
         EXPECT_TRUE(pipe(pipefd) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [&callback_ok, &pipefd](int fd) {
+                        [&pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [&callback2_ok, &secondpipe](int fd) {
+                        [&secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt4Ptr pkt4;
@@ -734,14 +766,15 @@ public:
         // We call receive4() which should detect and remove the invalid socket.
         try {
             pkt4 = ifacemgr->receive4(RECEIVE_WAIT_MS(10));
-            ADD_FAILURE() << "receive4 should have failed";
-        } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
-                                  " purged 1 socket descriptors"),
-                      std::string(ex.what()));
+        } catch (const SocketFDError& ex) {
+            std::ostringstream err_msg;
+            err_msg << "unexpected state (closed) for fd: " << pipefd[0];
+            EXPECT_EQ(err_msg.str(), ex.what());
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }
+        EXPECT_TRUE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
+        EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv4 pkt.
         EXPECT_FALSE(callback_ok);
@@ -766,14 +799,14 @@ public:
     }
 
     /// @brief Verifies that IfaceMgr DHCPv6 receive calls detect and
-    /// purge external sockets that have gone bad without affecting
+    /// ignore external sockets that have gone bad without affecting
     /// affecting normal operations.  It can be run with or without
     /// packet queuing.
     ///
     /// @param use_queue determines if packet queuing is used or not.
-    void purgeExternalSockets6Test(bool use_queue = false) {
-        bool callback_ok = false;
-        bool callback2_ok = false;
+    void unusableExternalSockets6Test(bool use_queue = false) {
+        callback_ok = false;
+        callback2_ok = false;
 
         scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
@@ -793,20 +826,22 @@ public:
         EXPECT_TRUE(pipe(pipefd) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(pipefd[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0],
-                        [&callback_ok, &pipefd](int fd) {
+                        [&pipefd](int fd) {
                             callback_ok = (pipefd[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(pipefd[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
 
         // Let's create a second pipe and register it as well
         int secondpipe[2];
         EXPECT_TRUE(pipe(secondpipe) == 0);
         ASSERT_FALSE(ifacemgr->isExternalSocket(secondpipe[0]));
         EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0],
-                        [&callback2_ok, &secondpipe](int fd) {
+                        [&secondpipe](int fd) {
                             callback2_ok = (secondpipe[0] == fd);
                         }));
         ASSERT_TRUE(ifacemgr->isExternalSocket(secondpipe[0]));
+        ASSERT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // Verify a call with no data and normal external sockets works ok.
         Pkt6Ptr pkt6;
@@ -824,14 +859,15 @@ public:
         // We call receive6() which should detect and remove the invalid socket.
         try {
             pkt6 = ifacemgr->receive6(RECEIVE_WAIT_MS(10));
-            ADD_FAILURE() << "receive6 should have failed";
-        } catch (const SocketReadError& ex) {
-            EXPECT_EQ(std::string("SELECT interrupted by one invalid sockets,"
-                                  " purged 1 socket descriptors"),
-                      std::string(ex.what()));
+        } catch (const SocketFDError& ex) {
+            std::ostringstream err_msg;
+            err_msg << "unexpected state (closed) for fd: " << pipefd[0];
+            EXPECT_EQ(err_msg.str(), ex.what());
         } catch (const std::exception& ex) {
             ADD_FAILURE() << "wrong exception thrown: " << ex.what();
         }
+        EXPECT_TRUE(ifacemgr->isExternalSocketUnusable(pipefd[0]));
+        EXPECT_FALSE(ifacemgr->isExternalSocketUnusable(secondpipe[0]));
 
         // No callback invocations and no DHCPv6 pkt.
         EXPECT_FALSE(callback_ok);
@@ -855,8 +891,35 @@ public:
         ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     }
 
-    /// Holds the invocation counter for ifaceMgrErrorHandler.
+    /// @brief test receive timeout (v6).
+    void testReceiveTimeout6();
+
+    /// @brief test receive timeout (v4).
+    void testReceiveTimeout4();
+
+    /// @brief Tests single external socket (v4).
+    void testSingleExternalSocket4();
+
+    /// @brief Tests multiple external sockets (v4);
+    void testMultipleExternalSockets4();
+
+    /// @brief Tests if existing external socket can be deleted (v4).
+    void testDeleteExternalSockets4();
+
+    /// @brief Tests single external socket (v6).
+    void testSingleExternalSocket6();
+
+    /// @brief Tests multiple external sockets (v6);
+    void testMultipleExternalSockets6();
+
+    /// @brief Tests if existing external socket can be deleted (v6).
+    void testDeleteExternalSockets6();
+
+    /// @brief Holds the invocation counter for ifaceMgrErrorHandler.
     int errors_count_;
+
+    /// @brief RAII wrapper for KEA_EVENT_HANDLER_TYPE env variable.
+    EnvVarWrapper kea_event_handler_type_;
 };
 
 // We need some known interface to work reliably. Loopback interface is named
@@ -1189,7 +1252,7 @@ TEST_F(IfaceMgrTest, packetQueue6) {
                      << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
 }
 
-TEST_F(IfaceMgrTest, receiveTimeout6) {
+void IfaceMgrTest::testReceiveTimeout6() {
     using namespace boost::posix_time;
     std::cout << "Testing DHCPv6 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
@@ -1246,7 +1309,17 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
-TEST_F(IfaceMgrTest, receiveTimeout4) {
+TEST_F(IfaceMgrTest, receiveTimeout6Select) {
+    kea_event_handler_type_.setValue("select");
+    testReceiveTimeout6();
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout6Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testReceiveTimeout6();
+}
+
+void IfaceMgrTest::testReceiveTimeout4() {
     using namespace boost::posix_time;
     std::cout << "Testing DHCPv4 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
@@ -1302,6 +1375,16 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
 
     // Stop receiver.
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout4Select) {
+    kea_event_handler_type_.setValue("select");
+    testReceiveTimeout4();
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout4Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testReceiveTimeout4();
 }
 
 TEST_F(IfaceMgrTest, multipleSockets) {
@@ -1575,7 +1658,9 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
 // Verifies that basic DHCPv6 packet send and receive operates
 // in either direct or indirect mode.
-TEST_F(IfaceMgrTest, sendReceive6) {
+// No poll version as it depends on select() behavior.
+TEST_F(IfaceMgrTest, sendReceive6Select) {
+    kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
 
     // Given an empty pointer, queueing should be disabled.
@@ -1594,7 +1679,9 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
 // Verifies that basic DHCPv4 packet send and receive operates
 // in either direct or indirect mode.
-TEST_F(IfaceMgrTest, sendReceive4) {
+// No poll version as it depends on select() behavior.
+TEST_F(IfaceMgrTest, sendReceive4Select) {
+    kea_event_handler_type_.setValue("select");
     data::ElementPtr queue_control;
 
     // Given an empty pointer, queueing should be disabled.
@@ -2980,21 +3067,9 @@ TEST_F(IfaceMgrTest, detectIfaces) {
     iflist = 0;
 }
 
-volatile bool callback_ok;
-volatile bool callback2_ok;
-
-void my_callback(int /* fd */) {
-    callback_ok = true;
-}
-
-void my_callback2(int /* fd */) {
-    callback2_ok = true;
-}
-
 // Tests if a single external socket and its callback can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, SingleExternalSocket4) {
-
+void IfaceMgrTest::testSingleExternalSocket4() {
     callback_ok = false;
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
@@ -3034,10 +3109,19 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
+TEST_F(IfaceMgrTest, SingleExternalSocket4Select) {
+    kea_event_handler_type_.setValue("select");
+    testSingleExternalSocket4();
+}
+
+TEST_F(IfaceMgrTest, SingleExternalSocket4Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testSingleExternalSocket4();
+}
+
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, MultipleExternalSockets4) {
-
+void IfaceMgrTest::testMultipleExternalSockets4() {
     callback_ok = false;
     callback2_ok = false;
 
@@ -3107,10 +3191,19 @@ TEST_F(IfaceMgrTest, MultipleExternalSockets4) {
     close(secondpipe[0]);
 }
 
+TEST_F(IfaceMgrTest, MultipleExternalSockets4Select) {
+    kea_event_handler_type_.setValue("select");
+    testMultipleExternalSockets4();
+}
+
+TEST_F(IfaceMgrTest, MultipleExternalSockets4Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testMultipleExternalSockets4();
+}
+
 // Tests if existing external socket can be deleted and that such deletion does
 // not affect any other existing sockets. Tests uses receive4()
-TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
-
+void IfaceMgrTest::testDeleteExternalSockets4() {
     callback_ok = false;
     callback2_ok = false;
 
@@ -3163,25 +3256,39 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
     close(secondpipe[0]);
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
-// Tests uses receive4() without queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets4Direct) {
-    purgeExternalSockets4Test();
+TEST_F(IfaceMgrTest, DeleteExternalSockets4Select) {
+    kea_event_handler_type_.setValue("select");
+    testDeleteExternalSockets4();
 }
 
+TEST_F(IfaceMgrTest, DeleteExternalSockets4Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testDeleteExternalSockets4();
+}
 
-// Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
-// Tests uses receive4() with queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets4Indirect) {
-    purgeExternalSockets4Test(true);
+TEST_F(IfaceMgrTest, unusableExternalSockets4DirectSelect) {
+    kea_event_handler_type_.setValue("select");
+    unusableExternalSockets4Test();
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets4DirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets4Test();
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectSelect) {
+    kea_event_handler_type_.setValue("select");
+    unusableExternalSockets4Test(true);
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets4IndirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets4Test(true);
 }
 
 // Tests if a single external socket and its callback can be passed and
 // it is supported properly by receive6() method.
-TEST_F(IfaceMgrTest, SingleExternalSocket6) {
-
+void IfaceMgrTest::testSingleExternalSocket6() {
     callback_ok = false;
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
@@ -3217,10 +3324,19 @@ TEST_F(IfaceMgrTest, SingleExternalSocket6) {
     close(pipefd[0]);
 }
 
+TEST_F(IfaceMgrTest, SingleExternalSocket6Select) {
+    kea_event_handler_type_.setValue("select");
+    testSingleExternalSocket6();
+}
+
+TEST_F(IfaceMgrTest, SingleExternalSocket6Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testSingleExternalSocket6();
+}
+
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive6() method.
-TEST_F(IfaceMgrTest, MultipleExternalSockets6) {
-
+void IfaceMgrTest::testMultipleExternalSockets6() {
     callback_ok = false;
     callback2_ok = false;
 
@@ -3290,10 +3406,19 @@ TEST_F(IfaceMgrTest, MultipleExternalSockets6) {
     close(secondpipe[0]);
 }
 
+TEST_F(IfaceMgrTest, MultipleExternalSockets6Select) {
+    kea_event_handler_type_.setValue("select");
+    testMultipleExternalSockets6();
+}
+
+TEST_F(IfaceMgrTest, MultipleExternalSockets6Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testMultipleExternalSockets6();
+}
+
 // Tests if existing external socket can be deleted and that such deletion does
 // not affect any other existing sockets. Tests uses receive6()
-TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
-
+void IfaceMgrTest::testDeleteExternalSockets6() {
     callback_ok = false;
     callback2_ok = false;
 
@@ -3346,19 +3471,115 @@ TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
     close(secondpipe[0]);
 }
 
-// Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
-// Tests uses receive6() without queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets6Direct) {
-    purgeExternalSockets6Test();
+TEST_F(IfaceMgrTest, DeleteExternalSockets6Select) {
+    kea_event_handler_type_.setValue("select");
+    testDeleteExternalSockets6();
 }
 
+TEST_F(IfaceMgrTest, DeleteExternalSockets6Poll) {
+    kea_event_handler_type_.setValue("poll");
+    testDeleteExternalSockets6();
+}
 
 // Tests that an existing external socket that becomes invalid
-// is detected and purged, without affecting other sockets.
+// is detected and ignored, without affecting other sockets.
+// Tests uses receive6() without queuing.
+TEST_F(IfaceMgrTest, unusableExternalSockets6DirectSelect) {
+    kea_event_handler_type_.setValue("select");
+    unusableExternalSockets6Test();
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets6DirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets6Test();
+}
+
+// Tests that an existing external socket that becomes invalid
+// is detected and ignored, without affecting other sockets.
 // Tests uses receive6() with queuing.
-TEST_F(IfaceMgrTest, purgeExternalSockets6Indirect) {
-    purgeExternalSockets6Test(true);
+TEST_F(IfaceMgrTest, unusableExternalSockets6IndirectSelect) {
+    kea_event_handler_type_.setValue("select");
+    unusableExternalSockets6Test(true);
+}
+
+TEST_F(IfaceMgrTest, unusableExternalSockets6IndirectPoll) {
+    kea_event_handler_type_.setValue("poll");
+    unusableExternalSockets6Test(true);
+}
+
+/// @brief Test fixture for logs.
+class IfaceMgrLogTest : public LogContentTest {
+public:
+    /// @brief Create the interface manager.
+    IfaceMgrLogTest() {
+        ifacemgr_.reset(new NakedIfaceMgr());
+    }
+
+    /// @brief Destroy the interface manager.
+    ~IfaceMgrLogTest() {
+        ifacemgr_.reset();
+    }
+
+    /// @brief Perform external socket operations in another thread.
+    void testThread() {
+        thread th([this]() {
+            // Create pipe mainly to use a not fake fd.
+            int pipefd[2];
+            ASSERT_TRUE(pipe(pipefd) == 0);
+            EXPECT_NO_THROW(ifacemgr_->addExternalSocket(pipefd[0], 0));
+            EXPECT_TRUE(ifacemgr_->isExternalSocket(pipefd[0]));
+            EXPECT_NO_THROW(ifacemgr_->deleteExternalSocket(pipefd[0]));
+            EXPECT_NO_THROW(ifacemgr_->deleteAllExternalSockets());
+            close(pipefd[1]);
+            close(pipefd[0]);
+        });
+        th.join();
+    }
+
+    /// @brief The interface manager.
+    boost::shared_ptr<NakedIfaceMgr> ifacemgr_;
+};
+
+// Tests that external socket operations log errors when not in the main thread.
+TEST_F(IfaceMgrLogTest, externalSocketOtherThread) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_TRUE(ifacemgr_->getCheckThreadId());
+
+    testThread();
+    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD"));
+}
+
+// Tests that errors are logged only when enabled.
+TEST_F(IfaceMgrLogTest, externalSocketOtherThreadNoLog) {
+    ASSERT_TRUE(ifacemgr_);
+    ifacemgr_->setCheckThreadId(false);
+    ASSERT_FALSE(ifacemgr_->getCheckThreadId());
+
+    testThread();
+    EXPECT_EQ(0, countFile("DHCP"));
+}
+
+// Tests that calling twice addExternalSocket on the same value warns.
+TEST_F(IfaceMgrLogTest, addExternalSocketAlreadyExists) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_EQ(0, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+}
+
+// Tests that calling twice deleteExternalSocket on the same value warns.
+TEST_F(IfaceMgrLogTest, deleteExternalSocketNotFound) {
+    ASSERT_TRUE(ifacemgr_);
+    ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
+    EXPECT_TRUE(ifacemgr_->isExternalSocket(100));
+    ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
+    EXPECT_EQ(0, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
+    EXPECT_FALSE(ifacemgr_->isExternalSocket(100));
+    ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
+    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
 }
 
 // Test checks if the unicast sockets can be opened.

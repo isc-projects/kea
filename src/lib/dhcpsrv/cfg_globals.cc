@@ -79,7 +79,8 @@ CfgGlobals::nameToIndex = {
     { "min-preferred-lifetime", MIN_PREFERRED_LIFETIME },
     { "max-preferred-lifetime", MAX_PREFERRED_LIFETIME },
     { "pd-allocator", PD_ALLOCATOR },
-    { "server-id", SERVER_ID }
+    { "server-id", SERVER_ID },
+    { "allow-address-registration", ALLOW_ADDRESS_REGISTRATION },
 };
 
 // Load time sanity check.

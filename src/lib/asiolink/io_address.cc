@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,6 @@
 #include <asiolink/io_error.h>
 #include <exceptions/exceptions.h>
 
-#include <boost/static_assert.hpp>
 // moved to container_hash on recent boost versions (backward compatible)
 #include <boost/functional/hash.hpp>
 
@@ -71,7 +70,8 @@ IOAddress::fromBytes(short family, const uint8_t* data) {
                   << "are supported");
     }
 
-    BOOST_STATIC_ASSERT(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN);
+    static_assert(INET6_ADDRSTRLEN >= INET_ADDRSTRLEN,
+                  "INET6_ADDRSTRLEN >= INET_ADDRSTRLEN");
     char addr_str[INET6_ADDRSTRLEN];
     inet_ntop(family, data, addr_str, INET6_ADDRSTRLEN);
     return IOAddress(string(addr_str));

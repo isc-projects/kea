@@ -38,7 +38,10 @@ public:
     /// - Sends the reply
     ///
     /// @param base_query DHCPv4 lease query to process.
-    virtual void processQuery(dhcp::PktPtr base_query) const;
+    /// @param invalid Reference to a flag set to true when the query
+    /// is invalid (used to detect unexpected exceptions).
+    virtual void processQuery(isc::dhcp::PktPtr base_query,
+                              bool& invalid) const;
 
     /// @brief Queries for an active lease matching an ip address
     ///

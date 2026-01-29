@@ -19,6 +19,7 @@
 #include <hooks/hooks.h>
 #include <limits/configuration.h>
 #include <limits/limits_logger.h>
+#include <stats/stats_mgr.h>
 #include <util/dhcp_space.h>
 #include <util/multi_threading_mgr.h>
 
@@ -152,9 +153,9 @@ struct LimitManager {
                                                          .getStagingCfg()
                                                          ->getCfgDbAccess()
                                                          ->getLeaseDbAccessString());
-            if (lease_db_access_string.find("retry-on-startup=true") &&
-                (lease_db_access_string.find("type=mysql") ||
-                 lease_db_access_string.find("type=postgresql"))) {
+            if ((lease_db_access_string.find("retry-on-startup=true") != std::string::npos) &&
+                ((lease_db_access_string.find("type=mysql") != std::string::npos) ||
+                 (lease_db_access_string.find("type=postgresql") != std::string::npos))) {
                 LOG_WARN(limits_logger, LIMITS_CONFIGURATION_LEASE_BACKEND_NOT_AVAILABLE);
             } else {
                 LOG_ERROR(limits_logger,
@@ -262,7 +263,20 @@ struct LimitManager {
             common_client_classes.push_back(c.class_);
         }
 
-        if (handle.getStatus() != isc::hooks::CalloutHandle::NEXT_STEP_DROP) {
+        if (handle.getStatus() == isc::hooks::CalloutHandle::NEXT_STEP_DROP) {
+            isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+            if (D == isc::util::DhcpSpace::DHCPv4) {
+                stats_mgr.addValue("pkt4-limit-exceeded",
+                                   static_cast<int64_t>(1));
+                stats_mgr.addValue("pkt4-receive-drop",
+                                   static_cast<int64_t>(1));
+            } else {
+                stats_mgr.addValue("pkt6-limit-exceeded",
+                                   static_cast<int64_t>(1));
+                stats_mgr.addValue("pkt6-receive-drop",
+                                   static_cast<int64_t>(1));
+            }
+        } else {
             // Honor the packet and keep track of it.
             for (auto const& c : common_client_classes) {
                 TimeSeries& time_series(clocked_in_times_by_class_.at(c));
@@ -364,6 +378,19 @@ struct LimitManager {
                       LIMITS_PACKET_WITH_SUBNET_ID_RATE_LIMIT_DROPPED)
                 .arg(subnet_id)
                 .arg(limit.text_);
+
+            isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+            if (D == isc::util::DhcpSpace::DHCPv4) {
+                stats_mgr.addValue("pkt4-limit-exceeded",
+                                   static_cast<int64_t>(1));
+                stats_mgr.addValue("pkt4-receive-drop",
+                                   static_cast<int64_t>(1));
+            } else {
+                stats_mgr.addValue("pkt6-limit-exceeded",
+                                   static_cast<int64_t>(1));
+                stats_mgr.addValue("pkt6-receive-drop",
+                                   static_cast<int64_t>(1));
+            }
 
             return (0);
         }

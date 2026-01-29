@@ -22,3 +22,19 @@ test(
     depends: [kea_lfc],
     protocol: 'gtest',
 )
+
+lfc_tests_conf_data = configuration_data()
+lfc_tests_conf_data.set('abs_top_builddir', TOP_BUILD_DIR)
+lfc_process_tests = configure_file(
+    input: 'lfc_process_tests.sh.in',
+    output: 'lfc_process_tests.sh',
+    configuration: lfc_tests_conf_data,
+)
+test(
+    'lfc_process_tests.sh',
+    lfc_process_tests,
+    workdir: current_build_dir,
+    is_parallel: false,
+    priority: -1,
+    suite: 'shell-tests',
+)

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,8 +6,8 @@
 
 #include <config.h>
 
-
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <iostream>
@@ -17,7 +17,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/static_assert.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <log4cplus/configurator.h>

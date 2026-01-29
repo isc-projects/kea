@@ -413,10 +413,10 @@ public:
                 }
             }
             stream_.async_handshake(roleToImpl(TlsRole::CLIENT),
-            [this, request](const boost::system::error_code& ec) {
-                if (ec) {
+            [this, request](const boost::system::error_code& erc) {
+                if (erc) {
                     ADD_FAILURE() << "error occurred during handshake: "
-                                  << ec.message();
+                                  << erc.message();
                     io_service_->stop();
                     return;
                 }

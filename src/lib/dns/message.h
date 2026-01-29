@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -199,7 +199,7 @@ public:
     /// introducing a separately defined class considering the balance
     /// between the complexity and advantage, but hopefully the cast notation
     /// is sufficiently ugly to prevent proliferation of the usage.
-    enum HeaderFlag : int {
+    enum HeaderFlag : uint16_t {
         HEADERFLAG_QR = 0x8000, // Query (if cleared) or response (if set)
         HEADERFLAG_AA = 0x0400, // Authoritative answer
         HEADERFLAG_TC = 0x0200, // Truncation
@@ -239,7 +239,7 @@ public:
     ///
     /// <b>Future Extension:</b> We'll probably also define constants for
     /// the section names used in dynamic updates in future versions.
-    enum Section : int {
+    enum Section : uint16_t {
         SECTION_QUESTION = 0,   // Question section
         SECTION_ANSWER = 1,     // Answer section
         SECTION_AUTHORITY = 2,  // Authority section

@@ -67,7 +67,7 @@ from the hosts database. The changes provided in the JSON configuration are
 volatile and can be made permanent by sending the :isccmd:`config-write` command.
 
 For a description of proposed future commands, see the `Control API
-Requirements <https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands>`__
+Requirements <https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/commands>`__
 document.
 
 All host commands use JSON syntax. They can be issued either using the

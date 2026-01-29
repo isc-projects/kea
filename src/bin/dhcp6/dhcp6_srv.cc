@@ -231,6 +231,7 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-decline-received",
     "pkt6-release-received",
     "pkt6-infrequest-received",
+    "pkt6-lease-query-received",
     "pkt6-dhcpv4-query-received",
     "pkt6-dhcpv4-response-received",
     "pkt6-addr-reg-inform-received",
@@ -239,10 +240,18 @@ std::set<std::string> dhcp6_statistics = {
     "pkt6-sent",
     "pkt6-advertise-sent",
     "pkt6-reply-sent",
+    "pkt6-lease-query-reply-sent",
     "pkt6-dhcpv4-response-sent",
     "pkt6-addr-reg-reply-sent",
     "pkt6-service-disabled",
     "pkt6-parse-failed",
+    "pkt6-queue-full",
+    "pkt6-duplicate",
+    "pkt6-rfc-violation",
+    "pkt6-admin-filtered",
+    "pkt6-not-for-us",
+    "pkt6-processing-failed",
+    "pkt6-limit-exceeded",
     "pkt6-receive-drop",
     "v6-allocation-fail",
     "v6-allocation-fail-shared-network",
@@ -306,7 +315,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
 }
 
 void Dhcpv6Srv::setPacketStatisticsDefaults() {
-    isc::stats::StatsMgr& stats_mgr = isc::stats::StatsMgr::instance();
+    StatsMgr& stats_mgr = StatsMgr::instance();
 
     // Iterate over set of observed statistics
     for (auto const& it : dhcp6_statistics) {
@@ -387,6 +396,8 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
                 .arg(pkt->getLabel())
                 .arg(duidToString(server_id))
                 .arg(duidToString(getServerID()));
+            StatsMgr::instance().addValue("pkt6-not-for-us",
+                                          static_cast<int64_t>(1));
             return (false);
         }
     }
@@ -405,6 +416,8 @@ Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
             LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
                 .arg(pkt->getLabel())
                 .arg(pkt->getName());
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             return (false);
         }
         break;
@@ -541,6 +554,8 @@ Dhcpv6Srv::earlyGHRLookup(const Pkt6Ptr& query,
                           DHCP6_PACKET_DROP_DROP_CLASS_EARLY)
                     .arg(query->makeLabel(query->getClientId(), nullptr))
                     .arg(query->toText());
+                StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                              static_cast<int64_t>(1));
                 StatsMgr::instance().addValue("pkt6-receive-drop",
                                               static_cast<int64_t>(1));
                 return (false);
@@ -640,6 +655,8 @@ Dhcpv6Srv::initContext(AllocEngine::ClientContext6& ctx, bool& drop) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS2)
             .arg(ctx.query_->makeLabel(ctx.query_->getClientId(), 0))
             .arg(ctx.query_->toText());
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         drop = true;
@@ -779,9 +796,13 @@ Dhcpv6Srv::runOne() {
                                                        this, query));
             if (!MultiThreadingMgr::instance().getThreadPool().add(call_back)) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_QUEUE_FULL);
+                StatsMgr::instance().addValue("pkt6-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
             }
         } else {
-            processPacketAndSendResponse(query);
+            processPacketAndSendResponseNoThrow(query);
         }
     }
 }
@@ -794,9 +815,17 @@ Dhcpv6Srv::processPacketAndSendResponseNoThrow(Pkt6Ptr query) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -862,10 +891,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
                 .arg(query->getIface());
 
             // Not increasing the statistics of the dropped packets because it
-            // is the callouts' responsibility to increase it. There are some
-            // cases when the callouts may elect to not increase the statistics.
-            // For example, packets dropped by the load-balancing algorithm must
-            // not increase the statistics.
+            // is the callouts' responsibility to increase it.
             return (Pkt6Ptr());
         }
 
@@ -923,7 +949,9 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!testServerID(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        // The drop cause statistic was increased by testServerID.
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
@@ -933,7 +961,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     if (!testUnicast(query)) {
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
@@ -980,10 +1009,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
             LOG_DEBUG(hooks_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP)
                 .arg(query->getLabel());
             // Not increasing the statistics of the dropped packets because it
-            // is the callouts' responsibility to increase it. There are some
-            // cases when the callouts may elect to not increase the statistics.
-            // For example, packets dropped by the load-balancing algorithm must
-            // not increase the statistics.
+            // is the callouts' responsibility to increase it.
             return (Pkt6Ptr());
         }
 
@@ -995,6 +1021,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     }
 
     // Reject the message if it doesn't pass the sanity check.
+    // Statistics were updated by sanityCheck.
     if (!sanityCheck(query)) {
         return (Pkt6Ptr());
     }
@@ -1004,6 +1031,8 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
         LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_DROP_CLASS)
             .arg(query->makeLabel(query->getClientId(), nullptr))
             .arg(query->toText());
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
         StatsMgr::instance().addValue("pkt6-receive-drop",
                                       static_cast<int64_t>(1));
         return (Pkt6Ptr());
@@ -1026,9 +1055,17 @@ Dhcpv6Srv::processDhcp6QueryAndSendResponse(Pkt6Ptr query) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1078,7 +1115,6 @@ Dhcpv6Srv::processDhcp6Query(Pkt6Ptr query) {
     return (processLocalizedQuery6(ctx));
 }
 
-
 void
 Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
                                                  AllocEngine::ClientContext6& ctx) {
@@ -1094,9 +1130,17 @@ Dhcpv6Srv::processLocalizedQuery6AndSendResponse(Pkt6Ptr query,
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_STD_EXCEPTION)
             .arg(query->getLabel())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     } catch (...) {
         LOG_ERROR(packet6_logger, DHCP6_PACKET_PROCESS_EXCEPTION)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
     }
 }
 
@@ -1128,48 +1172,54 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
     }
 
     Pkt6Ptr rsp;
+    // The only expected exception is RFCViolation.
+    bool rfc_violation = false;
     try {
-        switch (query->getType()) {
-        case DHCPV6_SOLICIT:
-            rsp = processSolicit(ctx);
-            break;
+        try {
+            switch (query->getType()) {
+            case DHCPV6_SOLICIT:
+                rsp = processSolicit(ctx);
+                break;
 
-        case DHCPV6_REQUEST:
-            rsp = processRequest(ctx);
-            break;
+            case DHCPV6_REQUEST:
+                rsp = processRequest(ctx);
+                break;
 
-        case DHCPV6_RENEW:
-            rsp = processRenew(ctx);
-            break;
+            case DHCPV6_RENEW:
+                rsp = processRenew(ctx);
+                break;
 
-        case DHCPV6_REBIND:
-            rsp = processRebind(ctx);
-            break;
+            case DHCPV6_REBIND:
+                rsp = processRebind(ctx);
+                break;
 
-        case DHCPV6_CONFIRM:
-            rsp = processConfirm(ctx);
-            break;
+            case DHCPV6_CONFIRM:
+                rsp = processConfirm(ctx);
+                break;
 
-        case DHCPV6_RELEASE:
-            rsp = processRelease(ctx);
-            break;
+            case DHCPV6_RELEASE:
+                rsp = processRelease(ctx);
+                break;
 
-        case DHCPV6_DECLINE:
-            rsp = processDecline(ctx);
-            break;
+            case DHCPV6_DECLINE:
+                rsp = processDecline(ctx);
+                break;
 
-        case DHCPV6_INFORMATION_REQUEST:
-            rsp = processInfRequest(ctx);
-            break;
+            case DHCPV6_INFORMATION_REQUEST:
+                rsp = processInfRequest(ctx);
+                break;
 
-        case DHCPV6_ADDR_REG_INFORM:
-            rsp = processAddrRegInform(ctx);
-            break;
+            case DHCPV6_ADDR_REG_INFORM:
+                rsp = processAddrRegInform(ctx);
+                break;
 
-        default:
-            return (rsp);
+            default:
+                return (rsp);
+            }
+        } catch (const RFCViolation&) {
+            rfc_violation = true;
+            throw;
         }
-
     } catch (const std::exception& e) {
 
         // Catch-all exception (at least for ones based on the isc Exception
@@ -1186,7 +1236,14 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
             .arg(e.what());
 
         // Increase the statistic of dropped packets.
-        StatsMgr::instance().addValue("pkt6-receive-drop", static_cast<int64_t>(1));
+        // The RFCViolation thrower updated the drop cause statistic.
+        if (!rfc_violation) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        return (Pkt6Ptr());
     }
 
     if (!rsp) {
@@ -1322,8 +1379,10 @@ Dhcpv6Srv::processLocalizedQuery6(AllocEngine::ClientContext6& ctx) {
                           DHCP6_HOOK_LEASES6_PARKING_LOT_FULL)
                           .arg(parked_packet_limit)
                           .arg(query->getLabel());
-                isc::stats::StatsMgr::instance().addValue("pkt6-receive-drop",
-                                                          static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-queue-full",
+                                              static_cast<int64_t>(1));
+                StatsMgr::instance().addValue("pkt6-receive-drop",
+                                              static_cast<int64_t>(1));
                 rsp.reset();
                 return (rsp);
             }
@@ -2025,6 +2084,8 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt) {
             .arg(pkt->getName())
             .arg(pkt->getRemoteAddr().toText())
             .arg(e.what());
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
     }
 
     // Increase the statistic of dropped packets.
@@ -2146,6 +2207,10 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question, bool& drop) {
                       DHCP4_HOOK_SUBNET6_SELECT_PARKING_LOT_FULL)
                 .arg(limit)
                 .arg(question->getLabel());
+            StatsMgr::instance().addValue("pkt6-queue-full",
+                                          static_cast<int64_t>(1));
+            StatsMgr::instance().addValue("pkt6-receive-drop",
+                                          static_cast<int64_t>(1));
             return (ConstSubnet6Ptr());
         }
 
@@ -2338,7 +2403,14 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     } else {
         // Adjust the domain name based on domain name value and type sent by
         // the client and current configuration.
-        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
+        try {
+            d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, *ddns_params);
+        } catch(const FQDNScrubbedEmpty& scrubbed) {
+            LOG_DEBUG(ddns6_logger, DBG_DHCP6_DETAIL, DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY)
+                .arg(question->getLabel())
+                .arg(scrubbed.what());
+            return;
+        }
     }
 
     // Once we have the FQDN setup to use it for the lease hostname.  This
@@ -2424,7 +2496,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // holds the Client Identifier. It is a programming error if supplied
     // message is NULL.
     if (!answer) {
-        isc_throw(isc::Unexpected, "an instance of the object"
+        isc_throw(Unexpected, "an instance of the object"
                   << " encapsulating server's message must not be"
                   << " NULL when creating DNS NameChangeRequest");
     }
@@ -2449,7 +2521,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // Unexpected if it is missing as it is a programming error.
     OptionPtr opt_duid = answer->getOption(D6O_CLIENTID);
     if (!opt_duid) {
-        isc_throw(isc::Unexpected,
+        isc_throw(Unexpected,
                   "client identifier is required when creating a new"
                   " DNS NameChangeRequest");
     }
@@ -4489,6 +4561,20 @@ Dhcpv6Srv::processDhcp4Query(const Pkt6Ptr& dhcp4_query) {
 
 Pkt6Ptr
 Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
+    // Get the allow-address-registration flag value.
+    // If it's false, punt.
+    auto allow_address_registration = CfgMgr::instance().getCurrentCfg()->
+         getConfiguredGlobal(CfgGlobals::ALLOW_ADDRESS_REGISTRATION);
+
+    if (allow_address_registration && !allow_address_registration->boolValue()) {
+        LOG_DEBUG(packet6_logger, DBG_DHCP6_BASIC, DHCP6_ADDR6_REGISTER_DISABLED_DROP)
+                .arg(ctx.query_->getLabel());
+        StatsMgr::instance().addValue("pkt6-admin-filtered",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
+        return(Pkt6Ptr());
+    }
 
     ConstSubnetPtr subnet = ctx.subnet_;
     // Silently ignore message which can't be localized
@@ -4504,7 +4590,7 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     // to the client.
     size_t relay_level = addr_reg_inf->relay_info_.size();
     if (relay_level > 0) {
-        addr = addr_reg_inf->getRelay6LinkAddress(relay_level - 1);
+        addr = addr_reg_inf->getRelay6PeerAddress(relay_level - 1);
     }
 
     Option6IAAddrPtr iaaddr;
@@ -4512,19 +4598,29 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
     const uint32_t no_iaid = 0; /* there's no IAID in the ADDR-REG-INFORM */
 
     // Check if the message is bad and shout be dropped.
+    bool invalid = false;
     try {
         // Check there is no IA_NA option.
         if (addr_reg_inf->getOption(D6O_IA_NA)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_NA option");
         }
 
         // Check there is no IA_TA option.
         if (addr_reg_inf->getOption(D6O_IA_TA)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_TA option");
         }
 
         // Check there is no IA_PD option.
         if (addr_reg_inf->getOption(D6O_IA_PD)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "unexpected IA_PD option");
         }
 
@@ -4532,22 +4628,33 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         // There must be one.
         OptionCollection addrs = addr_reg_inf->getOptions(D6O_IAADDR);
         if (addrs.size() != 1) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Exactly 1 IAADDR option expected, but "
                       << addrs.size() << " received");
         }
         iaaddr = boost::dynamic_pointer_cast<Option6IAAddr>(addrs.begin()->second);
         if (!iaaddr) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(Unexpected, "can't convert the IAADDR option");
         }
 
         // Client and IADDR addresses must match.
         if (addr != iaaddr->getAddress()) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address mismatch: client at " << addr
                       << " wants to register " << iaaddr->getAddress());
         }
 
         // Should be in the subnet.
         if (!subnet->inRange(addr)) {
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " is not in subnet "
                       << subnet->toText() << " (id " << subnet->getID() << ")");
         }
@@ -4558,6 +4665,9 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
 
         // Address registration can't be mixed with standard allocation.
         if (old_lease && (old_lease->state_ != Lease6::STATE_REGISTERED)) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " already in use "
                       << *old_lease);
         }
@@ -4565,6 +4675,9 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         // Address must not be reserved.
         auto hosts = HostMgr::instance().getAll6(addr);
         if (!hosts.empty()) {
+            invalid = true;
+            StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                          static_cast<int64_t>(1));
             isc_throw(RFCViolation, "Address " << addr << " is reserved");
         }
     } catch (const std::exception &ex) {
@@ -4572,6 +4685,12 @@ Dhcpv6Srv::processAddrRegInform(AllocEngine::ClientContext6& ctx) {
         LOG_INFO(packet6_logger, DHCP6_ADDR_REG_INFORM_FAIL)
             .arg(addr)
             .arg(ex.what());
+        if (!invalid) {
+            StatsMgr::instance().addValue("pkt6-processing-failed",
+                                          static_cast<int64_t>(1));
+        }
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         return (Pkt6Ptr());
     }
 
@@ -4833,7 +4952,7 @@ Dhcpv6Srv::conditionallySetReservedClientClasses(const Pkt6Ptr& pkt,
 
 void
 Dhcpv6Srv::evaluateAdditionalClasses(const Pkt6Ptr& pkt, AllocEngine::ClientContext6& ctx) {
-    // Get additional classes to evaluate added elsewhere, posssibly by hooks.
+    // Get additional classes to evaluate added elsewhere, possibly by hooks.
     ClientClasses classes = pkt->getAdditionalClasses();
     ConstSubnet6Ptr subnet = ctx.subnet_;
 
@@ -5060,11 +5179,11 @@ Dhcpv6Srv::stopD2() {
 }
 
 void
-Dhcpv6Srv::d2ClientErrorHandler(const
-                                dhcp_ddns::NameChangeSender::Result result,
+Dhcpv6Srv::d2ClientErrorHandler(const dhcp_ddns::NameChangeSender::Result result,
                                 dhcp_ddns::NameChangeRequestPtr& ncr) {
-    LOG_ERROR(ddns6_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
-              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    LOG_ERROR(ddns6_logger, DHCP6_DDNS_REQUEST_SEND_FAILED)
+        .arg(NameChangeSender::resultToText(result))
+        .arg((ncr ? ncr->toText() : " NULL "));
     // We cannot communicate with kea-dhcp-ddns, suspend further updates.
     /// @todo We may wish to revisit this, but for now we will simply turn
     /// them off.
@@ -5077,7 +5196,7 @@ Dhcpv6Srv::getVersion(bool extended) {
 
     tmp << VERSION;
     if (extended) {
-        tmp << " (" << EXTENDED_VERSION << ")" << endl;
+        tmp << " (" << SOURCE_OF_INSTALLATION << ")" << endl;
         tmp << "premium: " << PREMIUM_EXTENDED_VERSION << endl;
         tmp << "linked with:" << endl;
         tmp << "- " << Logger::getVersion() << endl;

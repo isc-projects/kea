@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,22 +6,19 @@
 
 #include <config.h>
 
+#include <cryptolink/crypto_hmac.h>
+#include <cryptolink/cryptolink.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
+#include <util/encode/encode.h>
+
 #include <string>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <gtest/gtest.h>
-
-#include <util/encode/encode.h>
-
-#include <cryptolink/cryptolink.h>
-#include <cryptolink/crypto_hmac.h>
-
-#include <util/buffer.h>
-#include <exceptions/exceptions.h>
-
-#include <boost/shared_ptr.hpp>
 
 using boost::lexical_cast;
 using namespace isc::util;
@@ -29,6 +26,25 @@ using namespace isc::util::encode;
 using namespace isc::cryptolink;
 
 namespace {
+    /// @brief Convert enum to string.
+    ///
+    /// @param algorithm input enum
+    ///
+    /// @return reference to static string
+    static std::string const& hashAlgorithmToText(HashAlgorithm const& algorithm) {
+        static std::vector<std::string> const text_vector {
+            "UNKNOWN_HASH",
+            "MD5",
+            "SHA1",
+            "SHA256",
+            "SHA224",
+            "SHA384",
+            "SHA512",
+        };
+        static std::string const unknown("UNKNOWN");
+        return (algorithm < text_vector.size() ? text_vector[algorithm] : unknown);
+    }
+
     /// @brief Fill a string with copies of an out of char range value
     /// @param data String to fill
     /// @param len Number of copies
@@ -479,8 +495,8 @@ doRFC4231Tests(HashAlgorithm hash_algorithm,
 
     for (std::vector<std::string>::size_type i = 0;
          i < data_list.size(); ++i) {
-        SCOPED_TRACE("RFC4231 HMAC test for algorithm ID: " +
-                     lexical_cast<std::string>(hash_algorithm) +
+        SCOPED_TRACE("RFC4231 HMAC test for algorithm " +
+                     hashAlgorithmToText(hash_algorithm) +
                      ", data ID: " + lexical_cast<std::string>(i));
         // Until #920 is resolved we have to skip truncation cases.
         if (data_list[i] == "Test With Truncation") {

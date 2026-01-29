@@ -228,42 +228,29 @@ CloseHATest::runPartners(bool const backup /* = true */) {
         }
 
         wthread_->markReady(WatchedThread::READY);
+        FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
 
         for (;;) {
-            int nfd;
-            fd_set fds;
-            FD_ZERO(&fds);
-            FD_SET(wthread_->getWatchFd(WatchedThread::TERMINATE), &fds);
-            nfd = wthread_->getWatchFd(WatchedThread::TERMINATE);
-            FD_SET(accept_partner1, &fds);
-            if (accept_partner1 > nfd) {
-                nfd = accept_partner1;
-            }
-            FD_SET(accept_partner2, &fds);
-            if (accept_partner2 > nfd) {
-                nfd = accept_partner2;
-            }
+            handler->clear();
+            handler->add(wthread_->getWatchFd(WatchedThread::TERMINATE));
+            handler->add(accept_partner1);
+            handler->add(accept_partner2);
             for (auto const& reader : readers) {
                 if (!reader.second) {
                     continue;
                 }
-                int fd = reader.first;
-                FD_SET(fd, &fds);
-                if (fd > nfd) {
-                    nfd = fd;
-                }
+                handler->add(reader.first);
             }
-            struct timeval tm;
-            tm.tv_sec = tm.tv_usec = 0;
-            int n = select(nfd + 1, &fds, 0, 0, &tm);
+
+            int n = handler->waitEvent(0, 0);
             if ((n < 0) && (errno == EINTR)) {
                 cerr << "interrupted" << endl;
                 continue;
             }
-            if (FD_ISSET(wthread_->getWatchFd(WatchedThread::TERMINATE), &fds)) {
+            if (handler->readReady(wthread_->getWatchFd(WatchedThread::TERMINATE))) {
                 break;
             }
-            if (FD_ISSET(accept_partner1, &fds)) {
+            if (handler->readReady(accept_partner1)) {
                 int fd = accept(accept_partner1, 0, 0);
                 if (fd < 0) {
                     cerr << "accept1 failed " << strerror(errno) << endl;
@@ -274,7 +261,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
                     readers[fd] = true;
                 }
             }
-            if (FD_ISSET(accept_partner2, &fds)) {
+            if (handler->readReady(accept_partner2)) {
                 int fd = accept(accept_partner2, 0, 0);
                 if (fd < 0) {
                     cerr << "accept2 failed " << strerror(errno) << endl;
@@ -290,7 +277,7 @@ CloseHATest::runPartners(bool const backup /* = true */) {
                     continue;
                 }
                 int fd = reader.first;
-                if (FD_ISSET(fd, &fds)) {
+                if (handler->readReady(fd)) {
                     char buf[128];
                     int cc = read(fd, buf, 128);
                     if (cc < 0) {

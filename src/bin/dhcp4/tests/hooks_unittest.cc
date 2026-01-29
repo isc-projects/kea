@@ -3586,6 +3586,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
                     "leases4_committed", leases4_committed_park_callout));
 
     // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
@@ -3626,6 +3627,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     ASSERT_EQ(1, parking_lot->size());
 
     // Statistic should show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 
     // Invoking poll should run the scheduled action only for
@@ -3670,6 +3672,7 @@ TEST_F(HooksDhcpv4SrvTest, leases4ParkedPacketLimit) {
     ASSERT_EQ(0, parking_lot->size());
 
     // Statistic should still show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 
@@ -3950,6 +3953,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
         "lease4_offer", lease4_offer_park_callout));
 
     // Statistic should not show any drops.
+    EXPECT_EQ(0, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(0, getStatistic("pkt4-receive-drop"));
 
     // Create a client and initiate a DORA cycle for it.
@@ -3990,6 +3994,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     ASSERT_EQ(1, parking_lot->size());
 
     // Statistic should show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 
     // Invoking poll should run the scheduled action only for
@@ -4034,6 +4039,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4OfferParkedPacketLimit) {
     ASSERT_EQ(0, parking_lot->size());
 
     // Statistic should still show one drop.
+    EXPECT_EQ(1, getStatistic("pkt4-queue-full"));
     EXPECT_EQ(1, getStatistic("pkt4-receive-drop"));
 }
 

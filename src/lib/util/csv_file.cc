@@ -187,10 +187,24 @@ CSVFile::append(const CSVRow& row) const {
 
     std::string text = row.render();
     *fs_ << text << std::endl;
+    auto sav_err = errno;
     if (!fs_->good()) {
-        fs_->clear();
-        isc_throw(CSVFileError, "failed to write CSV row '"
-                  << text << "' to the file '" << filename_ << "'");
+        std::stringstream ss;
+        ss << "failed to write CSV row '"
+            << text << "' to the file '" << filename_ << "'"
+            << " fail(): " << fs_->fail()
+            << " bad(): " << fs_->bad()
+            << " errno: " << sav_err
+            << " reason: " << strerror(sav_err);
+        auto error_str = ss.str();
+
+        if (fs_->bad()) {
+            // No longer usable.
+            isc_throw(CSVFileFatalError, error_str);
+        } else {
+            fs_->clear();
+            isc_throw(CSVFileError, error_str);
+        }
     }
 }
 

@@ -294,7 +294,7 @@ public:
         // statement. Please put comments only at the end of line so
         // line counting and indexing match.
         // The server tag must be the last field.
-        MySqlBindingCollection out_bindings = {
+        MySqlBindingCollection out__bindings = {
             MySqlBinding::createInteger<uint32_t>(), // subnet_id
             MySqlBinding::createString(SUBNET6_PREFIX_BUF_LENGTH), // subnet_prefix
             MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class
@@ -411,7 +411,7 @@ public:
         std::string last_tag;
 
         // Execute actual query.
-        conn_.selectQuery(index, in_bindings, out_bindings,
+        conn_.selectQuery(index, in_bindings, out__bindings,
                           [this, &subnets, &last_pool,  &last_pd_pool,
                            &last_pool_id, &last_pd_pool_id,
                            &last_pool_option_id, &last_pd_pool_option_id,
@@ -945,7 +945,7 @@ public:
                   const MySqlBindingCollection& in_bindings,
                   PoolCollection& pools,
                   std::vector<uint64_t>& pool_ids) {
-        MySqlBindingCollection out_bindings = {
+        MySqlBindingCollection out__bindings = {
             MySqlBinding::createInteger<uint64_t>(), // pool: id
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pool: start_address
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pool: end_address
@@ -974,7 +974,7 @@ public:
         uint64_t last_pool_option_id = 0;
         Pool6Ptr last_pool;
 
-        conn_.selectQuery(index, in_bindings, out_bindings,
+        conn_.selectQuery(index, in_bindings, out__bindings,
                           [this, &last_pool_id, &last_pool_option_id, &last_pool,
                            &pools, &pool_ids]
                           (MySqlBindingCollection& out_bindings) {
@@ -1040,7 +1040,7 @@ public:
                     const MySqlBindingCollection& in_bindings,
                     PoolCollection& pd_pools,
                     std::vector<uint64_t>& pd_pool_ids) {
-        MySqlBindingCollection out_bindings = {
+        MySqlBindingCollection out__bindings = {
             MySqlBinding::createInteger<uint64_t>(), // pd pool: id
             MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH), // pd pool: prefix
             MySqlBinding::createInteger<uint8_t>(), // pd pool: prefix_length
@@ -1073,7 +1073,7 @@ public:
         uint64_t last_pd_pool_option_id = 0;
         Pool6Ptr last_pd_pool;
 
-        conn_.selectQuery(index, in_bindings, out_bindings,
+        conn_.selectQuery(index, in_bindings, out__bindings,
                           [this, &last_pd_pool_id, &last_pd_pool_option_id,
                            &last_pd_pool, &pd_pools, &pd_pool_ids]
                           (MySqlBindingCollection& out_bindings) {
@@ -1601,7 +1601,7 @@ public:
         // statement. Please put comments only at the end of line so
         // line counting and indexing match.
         // The server tag must be the last field.
-        MySqlBindingCollection out_bindings = {
+        MySqlBindingCollection out__bindings = {
             MySqlBinding::createInteger<uint64_t>(), // id
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // name
             MySqlBinding::createString(CLIENT_CLASS_LIST_BUF_LENGTH), // client_classes
@@ -1662,7 +1662,7 @@ public:
         uint64_t last_option_id = 0;
         std::string last_tag;
 
-        conn_.selectQuery(index, in_bindings, out_bindings,
+        conn_.selectQuery(index, in_bindings, out__bindings,
                           [this, &shared_networks, &last_network_id, &last_option_id,
                            &last_tag]
                           (MySqlBindingCollection& out_bindings) {
@@ -2847,7 +2847,7 @@ public:
                            const ServerSelector& server_selector,
                            const MySqlBindingCollection& in_bindings,
                            ClientClassDictionary& client_classes) {
-        MySqlBindingCollection out_bindings = {
+        MySqlBindingCollection out__bindings = {
             MySqlBinding::createInteger<uint64_t>(), // id
             MySqlBinding::createString(CLIENT_CLASS_NAME_BUF_LENGTH), // name
             MySqlBinding::createString(CLIENT_CLASS_TEST_BUF_LENGTH), // test
@@ -2895,7 +2895,7 @@ public:
         std::string last_tag;
 
         conn_.selectQuery(index,
-                          in_bindings, out_bindings,
+                          in_bindings, out__bindings,
                           [this, &class_list, &last_option_id, &last_option_def_id, &last_tag]
                           (MySqlBindingCollection& out_bindings) {
             ClientClassDefPtr last_client_class;
@@ -3078,13 +3078,13 @@ public:
             // reporting the parsing error. The dependency check is performed later
             // at the database level.
             parser.parse(expression, Element::create(client_class->getTest()), AF_INET6,
-                         [&dependencies, &depend_on_known](const ClientClass& client_class) -> bool {
-                if (isClientClassBuiltIn(client_class)) {
-                    if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+                         [&dependencies, &depend_on_known](const ClientClass& cc) -> bool {
+                if (isClientClassBuiltIn(cc)) {
+                    if ((cc == "KNOWN") || (cc == "UNKNOWN")) {
                         depend_on_known = true;
                     }
                 } else {
-                    dependencies.push_back(client_class);
+                    dependencies.push_back(cc);
                 }
                 return (true);
             });

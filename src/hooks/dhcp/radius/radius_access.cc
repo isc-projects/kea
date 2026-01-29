@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2020-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,7 +13,9 @@
 #include <dhcpsrv/host_mgr.h>
 #include <radius_access.h>
 #include <radius_log.h>
+#include <radius_status.h>
 #include <radius_utils.h>
+#include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <stdio.h>
 #include <sstream>
@@ -24,6 +26,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::stats;
 using namespace isc::util;
 namespace ph = std::placeholders;
 
@@ -751,6 +754,10 @@ RadiusAccess::terminate4(RadiusAuthEnv env, int result,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCESS_DROP_PARKED_QUERY)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt4-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt4-receive-drop",
+                                      static_cast<int64_t>(1));
         HooksManager::drop("subnet4_select", query);
     } else {
         ostringstream msg;
@@ -996,6 +1003,10 @@ RadiusAccess::terminate6(RadiusAuthEnv env, int result,
         LOG_DEBUG(radius_logger, RADIUS_DBG_TRACE,
                   RADIUS_ACCESS_DROP_PARKED_QUERY)
             .arg(query->getLabel());
+        StatsMgr::instance().addValue("pkt6-processing-failed",
+                                      static_cast<int64_t>(1));
+        StatsMgr::instance().addValue("pkt6-receive-drop",
+                                      static_cast<int64_t>(1));
         HooksManager::drop("subnet6_select", query);
     } else {
         ostringstream msg;
@@ -1010,6 +1021,31 @@ RadiusAccess::terminate6(RadiusAuthEnv env, int result,
             .arg(msg.str());
         HooksManager::unpark("subnet6_select", query);
     }
+}
+
+void
+RadiusAccess::setIdleTimer() {
+    MultiThreadingLock lock(idle_timer_mutex_);
+    cancelIdleTimer();
+    if (idle_timer_interval_ <= 0) {
+        return;
+    }
+    // Cope to one day.
+    long secs = idle_timer_interval_;
+    if (secs > 24*60*60) {
+        secs = 24*60*60;
+    }
+    idle_timer_.reset(new IntervalTimer(RadiusImpl::instance().getIOContext()));
+    idle_timer_->setup(RadiusAccess::IdleTimerCallback,
+                       secs * 1000, IntervalTimer::REPEATING);
+}
+
+void
+RadiusAccess::IdleTimerCallback() {
+    AttributesPtr send_attrs;
+    RadiusAuthStatusPtr handler(new RadiusAuthStatus(send_attrs, 0));
+    RadiusImpl::instance().registerExchange(handler->getExchange());
+    handler->start();
 }
 
 } // end of namespace isc::radius

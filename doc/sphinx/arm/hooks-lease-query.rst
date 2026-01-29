@@ -153,8 +153,9 @@ addresses:
 
 .. note::
 
-    For security purposes, there is no way to specify wildcards. Each requester address
-    must be explicitly listed.
+    As of Kea 3.1.4, it is also possible to include ranges of requester addresses in CIDR
+    format such as "192.0.1.0/24". Please note that specifying ranges may be less secure
+    than only using explicit IP addresses.
 
 .. _lease-query-dhcpv6:
 
@@ -339,8 +340,9 @@ addresses:
 
 .. note::
 
-    For security purposes, there is no way to specify wildcards. Each requester address
-    must be explicitly listed.
+    As of Kea 3.1.4, it is also possible to include ranges of requester addresses in CIDR
+    format such as "2001:db8:1::/64". Please note that specifying ranges may be less secure
+    than only using explicit IP addresses.
 
 When a query by IP address does not match an existing address lease,
 a search for a matching delegated prefix is conducted. This is carried

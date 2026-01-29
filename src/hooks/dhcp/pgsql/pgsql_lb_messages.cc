@@ -42,6 +42,10 @@ extern const isc::log::MessageID PGSQL_LB_GET_RELAYID4 = "PGSQL_LB_GET_RELAYID4"
 extern const isc::log::MessageID PGSQL_LB_GET_RELAYID6 = "PGSQL_LB_GET_RELAYID6";
 extern const isc::log::MessageID PGSQL_LB_GET_REMOTEID4 = "PGSQL_LB_GET_REMOTEID4";
 extern const isc::log::MessageID PGSQL_LB_GET_REMOTEID6 = "PGSQL_LB_GET_REMOTEID6";
+extern const isc::log::MessageID PGSQL_LB_GET_STATE4 = "PGSQL_LB_GET_STATE4";
+extern const isc::log::MessageID PGSQL_LB_GET_STATE6 = "PGSQL_LB_GET_STATE6";
+extern const isc::log::MessageID PGSQL_LB_GET_STATE_SUBID4 = "PGSQL_LB_GET_STATE_SUBID4";
+extern const isc::log::MessageID PGSQL_LB_GET_STATE_SUBID6 = "PGSQL_LB_GET_STATE_SUBID6";
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID4 = "PGSQL_LB_GET_SUBID4";
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID6 = "PGSQL_LB_GET_SUBID6";
 extern const isc::log::MessageID PGSQL_LB_GET_SUBID_CLIENTID = "PGSQL_LB_GET_SUBID_CLIENTID";
@@ -100,6 +104,10 @@ const char* values[] = {
     "PGSQL_LB_GET_RELAYID6", "obtaining at most %1 IPv6 leases starting from address %2 with relay id %3",
     "PGSQL_LB_GET_REMOTEID4", "obtaining at most %1 IPv4 leases starting from address %2 with remote id %3 and cltt between %4 and %5",
     "PGSQL_LB_GET_REMOTEID6", "obtaining at most %1 IPv6 leases starting from address %2 with remote id %3",
+    "PGSQL_LB_GET_STATE4", "obtaining IPv4 leases with state %1",
+    "PGSQL_LB_GET_STATE6", "obtaining IPv6 leases with state %1",
+    "PGSQL_LB_GET_STATE_SUBID4", "obtaining IPv4 leases with state %1 in subnet %2",
+    "PGSQL_LB_GET_STATE_SUBID6", "obtaining IPv6 leases with state %1 in subnet %2",
     "PGSQL_LB_GET_SUBID4", "obtaining IPv4 leases for subnet ID %1",
     "PGSQL_LB_GET_SUBID6", "obtaining IPv6 leases for subnet ID %1",
     "PGSQL_LB_GET_SUBID_CLIENTID", "obtaining IPv4 lease for subnet ID %1 and client ID %2",

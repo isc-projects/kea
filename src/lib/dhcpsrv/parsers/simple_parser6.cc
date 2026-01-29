@@ -104,6 +104,7 @@ const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
     { "ddns-ttl-min",                     Element::integer },
     { "ddns-ttl-max",                     Element::integer },
     { "adaptive-lease-time-threshold",    Element::real },
+    { "allow-address-registration",       Element::boolean },
 };
 
 /// @brief This table defines default global values for DHCPv6
@@ -143,6 +144,7 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "pd-allocator",                     Element::string,  "iterative" },
     { "ddns-conflict-resolution-mode",    Element::string,  "check-with-dhcid" },
     { "cache-threshold",                  Element::real,    "0.25" },
+    { "allow-address-registration",       Element::boolean, "true"},
 };
 
 const SimpleKeywords SimpleParser6::GLOBAL6_LIST_PARAMETERS = {

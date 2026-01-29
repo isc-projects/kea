@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -38,7 +38,7 @@ RadiusConfigParser::RADIUS_KEYWORDS = {
     "bindaddr", "canonical-mac-address", "client-id-pop0",
     "client-id-printable", "deadtime", "dictionary",
     "extract-duid", "identifier-type4", "identifier-type6",
-    "nas-ports", "realm",
+    "nas-ports",
     "reselect-subnet-address", "reselect-subnet-pool",
     "retries", "session-history", "thread-pool-size", "timeout",
     "comment" // not saved for toElement
@@ -55,7 +55,6 @@ const SimpleDefaults RadiusConfigParser::RADIUS_DEFAULTS = {
     { "extract-duid",             Element::boolean, "true" },
     { "identifier-type4",         Element::string,  "client-id" },
     { "identifier-type6",         Element::string,  "duid" },
-    { "realm",                    Element::string,  "" },
     { "reselect-subnet-address",  Element::boolean, "false" },
     { "reselect-subnet-pool",     Element::boolean, "false" },
     { "retries",                  Element::integer, "3" },
@@ -79,6 +78,7 @@ const AttrDefList RadiusConfigParser::USED_STANDARD_ATTR_DEFS = {
     { PW_ACCT_STATUS_TYPE,      "Acct-Status-Type",      PW_TYPE_INTEGER },
     { PW_ACCT_DELAY_TIME,       "Acct-Delay-Time",       PW_TYPE_INTEGER },
     { PW_ACCT_SESSION_ID,       "Acct-Session-Id",       PW_TYPE_STRING },
+    { PW_MESSAGE_AUTHENTICATOR, "Message-Authenticator", PW_TYPE_STRING },
     { PW_FRAMED_POOL,           "Framed-Pool",           PW_TYPE_STRING },
     { PW_NAS_IPV6_ADDRESS,      "NAS-IPv6-Address",      PW_TYPE_IPV6ADDR },
     { PW_DELEGATED_IPV6_PREFIX, "Delegated-IPv6-Prefix", PW_TYPE_IPV6PREFIX },
@@ -161,8 +161,6 @@ RadiusConfigParser::parse(ElementPtr& config) {
         // identifier-type6.
         const ConstElementPtr& id_type6 = config->get("identifier-type6");
         riref.id_type6_ = Host::getIdentifierType(id_type6->stringValue());
-
-        // realm. Ignored.
 
         // reselect-subnet-address.
         const ConstElementPtr& resel_addr =
@@ -311,7 +309,8 @@ RadiusConfigParser::parse(ElementPtr& config) {
 /// @brief Keywords for service configuration.
 const set<string>
 RadiusServiceParser::SERVICE_KEYWORDS = {
-    "servers", "attributes", "peer-updates", "max-pending-requests"
+    "servers", "attributes", "peer-updates", "max-pending-requests",
+    "idle-timer-interval"
 };
 
 void
@@ -359,9 +358,10 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                                     "only supported for the accounting service");
             }
             if (peer_updates->getType() != Element::boolean) {
-                isc_throw(BadValue, "expected peer-updates to be boolean, but got "
-                                        << Element::typeToName(peer_updates->getType())
-                                        << " instead");
+                isc_throw(BadValue, "expected peer-updates to be boolean, "
+                          << "but got "
+                          << Element::typeToName(peer_updates->getType())
+                          << " instead");
             }
             service->peer_updates_ = peer_updates->boolValue();
         }
@@ -388,6 +388,25 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                           << " instead");
             }
             service->max_pending_requests_ = max_pending_requests->intValue();
+        }
+
+        // idle-timer-interval.
+        const ConstElementPtr& idle_timer_interval =
+            srv_cfg->get("idle-timer-interval");
+        if (idle_timer_interval) {
+            if (idle_timer_interval->getType() != Element::integer) {
+                isc_throw(BadValue, "expected idle-timer-interval to be "
+                          << "integer, but got "
+                          << Element::typeToName(idle_timer_interval->getType())
+                          << " instead");
+            }
+            if (idle_timer_interval->intValue() < 0) {
+                isc_throw(BadValue, "expected idle-timer-interval to be "
+                          << "positive, but got "
+                          << idle_timer_interval->intValue()
+                          << " instead");
+            }
+            service->idle_timer_interval_ = idle_timer_interval->intValue();
         }
     } catch (const std::exception& ex) {
         isc_throw(ConfigError, ex.what() << " (parsing "

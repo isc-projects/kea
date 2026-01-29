@@ -67,6 +67,7 @@ For details see documentation and code of the following handlers:
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHwAddressHandler(lease4-get-by-hw-address, lease6-get-by-hw-address)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByClientIdHandler(lease4-get-by-client-id)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByDuidHandler(lease6-get-by-duid)
+- @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByStateHandler(lease4-get-by-state, lease6-get-by-state)
 - @ref isc::lease_cmds::LeaseCmdsImpl::leaseGetByHostnameHandler(lease4-get-by-hostname, lease6-get-by-hostname)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease4DelHandler (lease4-del)
 - @ref isc::lease_cmds::LeaseCmdsImpl::lease6DelHandler (lease6-del)

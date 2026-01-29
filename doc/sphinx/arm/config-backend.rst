@@ -201,8 +201,8 @@ Use the CB commands API to populate the database with Kea configuration informat
 
 Related design documents are available in our GitLab:
 
--  `CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/configuration-in-db-design>`__
--  `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/wikis/designs/client-classes-in-cb>`__
+-  `CB Design <https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/configuration-in-db-design>`__
+-  `Client Classes in CB Design <https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/client-classes-in-cb>`__
 
 .. _cb-install:
 

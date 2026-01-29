@@ -1,21 +1,23 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <string>
-#include <mysql.h>
-#include <mysql/testutils/mysql_schema.h>
-#include <mysql/mysql_connection.h>
+
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <util/str.h>
 
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdlib.h>
+#include <string>
+
+#include <mysql.h>
 
 using namespace std;
 

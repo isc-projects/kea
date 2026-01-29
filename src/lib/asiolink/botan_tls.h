@@ -20,7 +20,6 @@
 #include <exceptions/exceptions.h>
 
 #include <asiolink/botan_wrapper.h>
-#include <botan/asio_stream.h>
 
 namespace isc {
 namespace asiolink {

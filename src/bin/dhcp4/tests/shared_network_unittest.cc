@@ -2947,12 +2947,12 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceReservation) {
 TEST_F(Dhcpv4SharedNetworkTest, authoritative) {
 
     // Each scenario will be defined using those parameters.
-    typedef struct scenario {
+    struct scenario {
         bool exp_success;
         AuthoritativeFlag global;
         AuthoritativeFlag subnet1;
         AuthoritativeFlag subnet2;
-    } scenario;
+    };
 
     // We have the following scenarios. The default is no.
     // The only allowed combinations are those that end up with

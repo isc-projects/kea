@@ -146,7 +146,10 @@ int lease4_offer(CalloutHandle& handle) {
         }
 
         if (!lease4) {
-            isc_throw(InvalidOperation, "leases4 is empty, no lease to check");
+            // lease has been reused or there is no address available to check.
+            LOG_DEBUG(ping_check_logger, isc::log::DBGLVL_TRACE_DETAIL,
+                      PING_CHECK_NO_LEASE_OR_LEASE_REUSED);
+            return (0);
         }
 
         // Fetch the parking lot.  If it's empty the server is not employing

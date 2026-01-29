@@ -230,6 +230,18 @@ public:
     int
     leaseGetByDuidHandler(hooks::CalloutHandle& handle);
 
+    /// @brief lease4-get-by-state and lease6-get-by-state commands handler
+    ///
+    /// Provides the implementation for @ref isc::lease_cmds::LeaseCmds::leaseGetByStateHandler
+    ///
+    /// @param handle Callout context - which is expected to contain the
+    /// get command JSON text in the "command" argument
+    ///
+    /// @return 0 if the handler has been invoked successfully, 1 if an
+    /// error occurs, 3 if no leases are returned.
+    int
+    leaseGetByStateHandler(hooks::CalloutHandle& handle);
+
     /// @brief lease4-get-by-hostname and lease6-get-by-hostname commands
     /// handler
     ///
@@ -404,41 +416,6 @@ public:
     /// @throw BadValue if the parameter is missing or invalid
     IOAddress getAddressParam(ConstElementPtr params, const std::string name,
                               short family = AF_INET) const;
-
-    /// @brief Update stats when adding lease.
-    ///
-    /// @param lease Added lease.
-    static void updateStatsOnAdd(const Lease4Ptr& lease);
-
-    /// @brief Update stats when adding lease.
-    ///
-    /// @param lease Added lease.
-    static void updateStatsOnAdd(const Lease6Ptr& lease);
-
-    /// @brief Update stats when updating lease.
-    ///
-    /// @param existing Lease data before update.
-    /// @param lease Lease data after update.
-    static void updateStatsOnUpdate(const Lease4Ptr& existing,
-                                    const Lease4Ptr& lease);
-
-    /// @brief Update stats when updating lease.
-    ///
-    /// @param existing Lease data before update.
-    /// @param lease Lease data after update.
-    static void updateStatsOnUpdate(const Lease6Ptr& existing,
-                                    const Lease6Ptr& lease);
-
-    /// @brief Update stats when deleting lease.
-    ///
-    /// @param lease Deleted lease.
-    static void updateStatsOnDelete(const Lease4Ptr& lease);
-
-    /// @brief Update stats when deleting lease.
-    ///
-    /// @param lease Deleted lease.
-    static void updateStatsOnDelete(const Lease6Ptr& lease);
-
     /// @brief Add or update lease.
     ///
     /// @param lease The lease to be added or updated (if exists).
@@ -520,480 +497,12 @@ public:
                                  BindingVariableMgrPtr mgr);
 };
 
-void
-LeaseCmdsImpl::updateStatsOnAdd(const Lease4Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
-        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_,
-                                   "assigned-addresses"),
-            static_cast<int64_t>(1));
-
-        PoolPtr pool;
-        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
-        if (subnet) {
-            pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "assigned-addresses")),
-                    static_cast<int64_t>(1));
-            }
-        }
-
-        if (lease->stateDeclined()) {
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(1));
-            }
-        }
-    }
-}
-
-void
-LeaseCmdsImpl::updateStatsOnAdd(const Lease6Ptr& lease) {
-    if (lease->stateRegistered()) {
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_, "registered-nas"),
-            static_cast<int64_t>(1));
-    } else if (!lease->stateExpiredReclaimed()) {
-        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
-                                      "assigned-nas" : "assigned-pds",
-                                      static_cast<int64_t>(1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_,
-                                   lease->type_ == Lease::TYPE_NA ?
-                                   "assigned-nas" : "assigned-pds"),
-            static_cast<int64_t>(1));
-
-        PoolPtr pool;
-        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-        if (subnet) {
-            pool = subnet->getPool(lease->type_, lease->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                  "pool" : "pd-pool", pool->getID(),
-                                                                  lease->type_ == Lease::TYPE_NA ?
-                                                                  "assigned-nas" : "assigned-pds")),
-                    static_cast<int64_t>(1));
-            }
-        }
-
-        if (lease->stateDeclined()) {
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(1));
-            }
-        }
-    }
-}
-
-void
-LeaseCmdsImpl::updateStatsOnUpdate(const Lease4Ptr& existing,
-                                   const Lease4Ptr& lease) {
-    if (!existing->stateExpiredReclaimed()) {
-        ConstSubnet4Ptr subnet;
-        PoolPtr pool;
-
-        // old lease is non expired-reclaimed
-        if (existing->subnet_id_ != lease->subnet_id_) {
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", existing->subnet_id_,
-                                       "assigned-addresses"),
-                static_cast<int64_t>(-1));
-
-            subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(existing->subnet_id_);
-            if (subnet) {
-                pool = subnet->getPool(Lease::TYPE_V4, existing->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(-1));
-                }
-            }
-        }
-
-        if (existing->stateDeclined()) {
-            // old lease is declined
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", existing->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(-1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-
-        pool.reset();
-
-        if (!lease->stateExpiredReclaimed()) {
-            // new lease is non expired-reclaimed
-            if (existing->subnet_id_ != lease->subnet_id_) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "assigned-addresses"),
-                    static_cast<int64_t>(1));
-
-                subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
-                if (subnet) {
-                    pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-                    if (pool) {
-                        StatsMgr::instance().addValue(
-                            StatsMgr::generateName("subnet", subnet->getID(),
-                                                   StatsMgr::generateName("pool", pool->getID(),
-                                                                          "assigned-addresses")),
-                            static_cast<int64_t>(1));
-                    }
-                }
-            }
-
-            if (lease->stateDeclined()) {
-                // new lease is declined
-                StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "declined-addresses"),
-                    static_cast<int64_t>(1));
-
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(1));
-                }
-            }
-        }
-    } else {
-        // old lease is expired-reclaimed
-        if (!lease->stateExpiredReclaimed()) {
-            // new lease is non expired-reclaimed
-            StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "assigned-addresses"),
-                static_cast<int64_t>(1));
-
-            PoolPtr pool;
-            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
-            if (subnet) {
-                pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "assigned-addresses")),
-                        static_cast<int64_t>(1));
-                }
-            }
-
-            if (lease->stateDeclined()) {
-                // new lease is declined
-                StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "declined-addresses"),
-                    static_cast<int64_t>(1));
-
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(1));
-                }
-            }
-        }
-    }
-}
-
-void
-LeaseCmdsImpl::updateStatsOnUpdate(const Lease6Ptr& existing,
-                                   const Lease6Ptr& lease) {
-    // Does not cover registered <-> not registered transition.
-    if (existing->stateRegistered()) {
-        if (existing->subnet_id_ != lease->subnet_id_) {
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", existing->subnet_id_,
-                                       "registered-nas"),
-                static_cast<int64_t>(-1));
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "registered-nas"),
-                static_cast<int64_t>(1));
-        }
-    } else if (!existing->stateExpiredReclaimed()) {
-        ConstSubnet6Ptr subnet;
-        PoolPtr pool;
-
-        // old lease is non expired-reclaimed
-        if (existing->subnet_id_ != lease->subnet_id_) {
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", existing->subnet_id_,
-                                       lease->type_ == Lease::TYPE_NA ?
-                                       "assigned-nas" : "assigned-pds"),
-                static_cast<int64_t>(-1));
-
-            subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(existing->subnet_id_);
-            if (subnet) {
-                pool = subnet->getPool(existing->type_, existing->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(existing->type_ == Lease::TYPE_NA ?
-                                                                      "pool" : "pd-pool", pool->getID(),
-                                                                      existing->type_ == Lease::TYPE_NA ?
-                                                                      "assigned-nas" : "assigned-pds")),
-                        static_cast<int64_t>(-1));
-                }
-            }
-        }
-
-        if (existing->stateDeclined()) {
-            // old lease is declined
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", existing->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(-1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-
-        pool.reset();
-
-        if (!lease->stateExpiredReclaimed()) {
-            // new lease is non expired-reclaimed
-            if (existing->subnet_id_ != lease->subnet_id_) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           lease->type_ == Lease::TYPE_NA ?
-                                           "assigned-nas" : "assigned-pds"),
-                    static_cast<int64_t>(1));
-
-                subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-                if (subnet) {
-                    pool = subnet->getPool(lease->type_, lease->addr_, false);
-                    if (pool) {
-                        StatsMgr::instance().addValue(
-                            StatsMgr::generateName("subnet", subnet->getID(),
-                                                   StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                          "pool" : "pd-pool", pool->getID(),
-                                                                          lease->type_ == Lease::TYPE_NA ?
-                                                                          "assigned-nas" : "assigned-pds")),
-                            static_cast<int64_t>(1));
-                    }
-                }
-            }
-
-            if (lease->stateDeclined()) {
-                // new lease is declined
-                StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "declined-addresses"),
-                    static_cast<int64_t>(1));
-
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(1));
-                }
-            }
-        }
-    } else {
-        // old lease is expired-reclaimed
-        if (!lease->stateExpiredReclaimed()) {
-            // new lease is non expired-reclaimed
-            StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
-                                          "assigned-nas" : "assigned-pds",
-                                          static_cast<int64_t>(1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       lease->type_ == Lease::TYPE_NA ?
-                                       "assigned-nas" : "assigned-pds"),
-                static_cast<int64_t>(1));
-
-            PoolPtr pool;
-            auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-            if (subnet) {
-                pool = subnet->getPool(lease->type_, lease->addr_, false);
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                      "pool" : "pd-pool", pool->getID(),
-                                                                      lease->type_ == Lease::TYPE_NA ?
-                                                                      "assigned-nas" : "assigned-pds")),
-                        static_cast<int64_t>(1));
-                }
-            }
-
-            if (lease->stateDeclined()) {
-                // new lease is declined
-                StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(1));
-
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", lease->subnet_id_,
-                                           "declined-addresses"),
-                    static_cast<int64_t>(1));
-
-                if (pool) {
-                    StatsMgr::instance().addValue(
-                        StatsMgr::generateName("subnet", subnet->getID(),
-                                               StatsMgr::generateName("pool", pool->getID(),
-                                                                      "declined-addresses")),
-                        static_cast<int64_t>(1));
-                }
-            }
-        }
-    }
-}
-
-void
-LeaseCmdsImpl::updateStatsOnDelete(const Lease4Ptr& lease) {
-    if (!lease->stateExpiredReclaimed()) {
-        StatsMgr::instance().addValue("assigned-addresses", static_cast<int64_t>(-1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_,
-                                   "assigned-addresses"),
-            static_cast<int64_t>(-1));
-
-        PoolPtr pool;
-        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getBySubnetId(lease->subnet_id_);
-        if (subnet) {
-            pool = subnet->getPool(Lease::TYPE_V4, lease->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "assigned-addresses")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-
-        if (lease->stateDeclined()) {
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(-1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-    }
-}
-
-void
-LeaseCmdsImpl::updateStatsOnDelete(const Lease6Ptr& lease) {
-    if (lease->stateRegistered()) {
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_,
-                                   "registered-nas"),
-            static_cast<int64_t>(-1));
-    } else if (!lease->stateExpiredReclaimed()) {
-        StatsMgr::instance().addValue(lease->type_ == Lease::TYPE_NA ?
-                                      "assigned-nas" : "assigned-pds",
-                                      static_cast<int64_t>(-1));
-
-        StatsMgr::instance().addValue(
-            StatsMgr::generateName("subnet", lease->subnet_id_,
-                                   lease->type_ == Lease::TYPE_NA ?
-                                   "assigned-nas" : "assigned-pds"),
-            static_cast<int64_t>(-1));
-
-        PoolPtr pool;
-        auto const& subnet = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getBySubnetId(lease->subnet_id_);
-        if (subnet) {
-            pool = subnet->getPool(lease->type_, lease->addr_, false);
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName(lease->type_ == Lease::TYPE_NA ?
-                                                                  "pool" : "pd-pool", pool->getID(),
-                                                                  lease->type_ == Lease::TYPE_NA ?
-                                                                  "assigned-nas" : "assigned-pds")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-
-        if (lease->stateDeclined()) {
-            StatsMgr::instance().addValue("declined-addresses", static_cast<int64_t>(-1));
-
-            StatsMgr::instance().addValue(
-                StatsMgr::generateName("subnet", lease->subnet_id_,
-                                       "declined-addresses"),
-                static_cast<int64_t>(-1));
-
-            if (pool) {
-                StatsMgr::instance().addValue(
-                    StatsMgr::generateName("subnet", subnet->getID(),
-                                           StatsMgr::generateName("pool", pool->getID(),
-                                                                  "declined-addresses")),
-                    static_cast<int64_t>(-1));
-            }
-        }
-    }
-}
-
 bool
 LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
+    if (lease->stateRegistered()) {
+        isc_throw(BadValue, "DHCPv4 leases do not support registered state");
+    }
+
     Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(lease->addr_);
     if (force_create && !existing) {
         // lease does not exist
@@ -1001,7 +510,7 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
             isc_throw(LeaseCmdsConflict,
                       "lost race between calls to get and add");
         }
-        LeaseCmdsImpl::updateStatsOnAdd(lease);
+        LeaseMgr::updateStatsOnAdd(lease);
         return (true);
     }
     if (existing) {
@@ -1019,7 +528,7 @@ LeaseCmdsImpl::addOrUpdate4(Lease4Ptr lease, bool force_create) {
                   "retry might succeed");
     }
 
-    LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
+    LeaseMgr::updateStatsOnUpdate(existing, lease);
     return (false);
 }
 
@@ -1033,7 +542,7 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
             isc_throw(LeaseCmdsConflict,
                       "lost race between calls to get and add");
         }
-        LeaseCmdsImpl::updateStatsOnAdd(lease);
+        LeaseMgr::updateStatsOnAdd(lease);
         return (true);
     }
     if (existing) {
@@ -1071,7 +580,7 @@ LeaseCmdsImpl::addOrUpdate6(Lease6Ptr lease, bool force_create) {
                   "retry might succeed");
     }
 
-    LeaseCmdsImpl::updateStatsOnUpdate(existing, lease);
+    LeaseMgr::updateStatsOnUpdate(existing, lease);
     return (false);
 }
 
@@ -1120,7 +629,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                     isc_throw(LeaseCmdsConflict, "IPv4 lease already exists.");
                 }
 
-                LeaseCmdsImpl::updateStatsOnAdd(lease4);
+                LeaseMgr::updateStatsOnAdd(lease4);
                 resp << "Lease for address " << lease4->addr_.toText()
                      << ", subnet-id " << lease4->subnet_id_ << " added.";
             }
@@ -1149,7 +658,7 @@ LeaseCmdsImpl::leaseAddHandler(CalloutHandle& handle) {
                     isc_throw(LeaseCmdsConflict, "IPv6 lease already exists.");
                 }
 
-                LeaseCmdsImpl::updateStatsOnAdd(lease6);
+                LeaseMgr::updateStatsOnAdd(lease6);
                 if (lease6->type_ == Lease::TYPE_NA) {
                     resp << "Lease for address " << lease6->addr_.toText()
                          << ", subnet-id " << lease6->subnet_id_ << " added.";
@@ -1761,6 +1270,108 @@ LeaseCmdsImpl::leaseGetByDuidHandler(CalloutHandle& handle) {
 }
 
 int
+LeaseCmdsImpl::leaseGetByStateHandler(CalloutHandle& handle) {
+    bool v4 = true;
+    try {
+        extractCommand(handle);
+        v4 = (cmd_name_ == "lease4-get-by-state");
+
+        // arguments must always be present
+        if (!cmd_args_ || (cmd_args_->getType() != Element::map)) {
+            isc_throw(BadValue, "Command arguments missing or a not a map.");
+        }
+
+        // the state parameter is mandatory.
+        ConstElementPtr state = cmd_args_->get("state");
+        if (!state) {
+            isc_throw(BadValue, "'state' parameter not specified");
+        }
+
+        uint32_t state_ = 0;
+        // We accept string (nicknames) and integer values.
+        if (state->getType() == Element::string) {
+            std::string state_str = state->stringValue();
+            if (state_str.empty()) {
+                isc_throw(BadValue, "'state' parameter is empty");
+            } else if ((state_str == "default") || (state_str == "assigned")) {
+                state_ = Lease::STATE_DEFAULT;;
+            } else if (state_str == "declined") {
+                state_ = Lease::STATE_DECLINED;
+            } else if (state_str == "expired-reclaimed") {
+                state_ = Lease::STATE_EXPIRED_RECLAIMED;
+            } else if (state_str == "released") {
+                state_ = Lease::STATE_RELEASED;
+            } else if (state_str == "registered") {
+                state_ = Lease::STATE_REGISTERED;
+            } else {
+                isc_throw(BadValue, "'state' parameter value (" << state_str
+                          << ") is not recognized");
+            }
+        } else if (state->getType() == Element::integer) {
+            state_ = state->intValue();
+        } else {
+            isc_throw(BadValue, "'state' parameter must be a number or a string");
+        }
+
+        SubnetID subnet_id_ = 0;
+        ConstElementPtr subnet = cmd_args_->get("subnet-id");
+        if (subnet) {
+            if (subnet->getType() != Element::integer) {
+                isc_throw(BadValue, "'subnet-id' parameter must be a number");
+            }
+            subnet_id_ = subnet->intValue();
+        }
+
+        ElementPtr leases_json = Element::createList();
+        if (v4) {
+            Lease4Collection leases =
+                LeaseMgrFactory::instance().getLeases4(state_, subnet_id_);
+
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        } else {
+            Lease6Collection leases =
+                LeaseMgrFactory::instance().getLeases6(state_, subnet_id_);
+
+            for (auto const& lease : leases) {
+                ElementPtr lease_json = lease->toElement();
+                leases_json->add(lease_json);
+            }
+        }
+
+        std::ostringstream s;
+        s << leases_json->size()
+          << " IPv" << (v4 ? "4" : "6")
+          << " lease(s) found with state ";
+        if (state_ <= Lease::STATE_REGISTERED) {
+            s << Lease::basicStatesToText(state_) << " (" << state_ << ")";
+        } else {
+            s << state_;
+        }
+        if (subnet_id_ != 0) {
+            s << " in subnet " << subnet_id_;
+        }
+        s << ".";
+        ElementPtr args = Element::createMap();
+        args->set("leases", leases_json);
+        ConstElementPtr response =
+            createAnswer(leases_json->size() > 0 ?
+                         CONTROL_RESULT_SUCCESS :
+                         CONTROL_RESULT_EMPTY,
+                         s.str(), args);
+        setResponse(handle, response);
+
+    } catch (const std::exception& ex) {
+        setErrorResponse(handle, ex.what());
+        return (CONTROL_RESULT_ERROR);
+    }
+
+    return (0);
+}
+
+int
 LeaseCmdsImpl::leaseGetByHostnameHandler(CalloutHandle& handle) {
     bool v4 = true;
     try {
@@ -1887,7 +1498,7 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
 
         if (LeaseMgrFactory::instance().deleteLease(lease4)) {
             setSuccessResponse(handle, "IPv4 lease deleted.");
-            LeaseCmdsImpl::updateStatsOnDelete(lease4);
+            LeaseMgr::updateStatsOnDelete(lease4);
         } else {
             setErrorResponse (handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
         }
@@ -1996,7 +1607,7 @@ LeaseCmdsImpl::lease6BulkApplyHandler(CalloutHandle& handle) {
                         // leases.
                         if (LeaseMgrFactory::instance().deleteLease(lease)) {
                             ++success_count;
-                            LeaseCmdsImpl::updateStatsOnDelete(lease);
+                            LeaseMgr::updateStatsOnDelete(lease);
 
                         } else {
                             // Lazy creation of the list of leases which failed to delete.
@@ -2167,7 +1778,7 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
 
         if (LeaseMgrFactory::instance().deleteLease(lease6)) {
             setSuccessResponse(handle, "IPv6 lease deleted.");
-            LeaseCmdsImpl::updateStatsOnDelete(lease6);
+            LeaseMgr::updateStatsOnDelete(lease6);
         } else {
             setErrorResponse (handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);
         }
@@ -3041,6 +2652,11 @@ LeaseCmds::leaseGetByClientIdHandler(hooks::CalloutHandle& handle) {
 int
 LeaseCmds::leaseGetByDuidHandler(hooks::CalloutHandle& handle) {
     return (impl_->leaseGetByDuidHandler(handle));
+}
+
+int
+LeaseCmds::leaseGetByStateHandler(hooks::CalloutHandle& handle) {
+    return (impl_->leaseGetByStateHandler(handle));
 }
 
 int

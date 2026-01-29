@@ -1,15 +1,16 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <config.h>
+
+#include <util/fd_event_handler_factory.h>
+#include <util/ready_check.h>
 #include <util/watch_socket.h>
 
-#include <gtest/gtest.h>
-
-#include <sys/select.h>
 #include <sys/ioctl.h>
+#include <gtest/gtest.h>
 
 #ifdef HAVE_SYS_FILIO_H
 // FIONREAD is here on Solaris
@@ -21,29 +22,6 @@ using namespace isc;
 using namespace isc::util;
 
 namespace {
-
-/// @brief Returns the result of select() given an fd to check for read status.
-///
-/// @param fd_to_check The file descriptor to test
-///
-/// @return Returns less than one on an error, 0 if the fd is not ready to
-/// read, > 0 if it is ready to read. 
-int selectCheck(int fd_to_check) {
-    fd_set read_fds;
-    int maxfd = 0;
-
-    FD_ZERO(&read_fds);
-
-    // Add this socket to listening set
-    FD_SET(fd_to_check,  &read_fds);
-    maxfd = fd_to_check;
-
-    struct timeval select_timeout;
-    select_timeout.tv_sec = 0;
-    select_timeout.tv_usec = 0;
-
-    return (select(maxfd + 1, &read_fds, NULL, NULL, &select_timeout));
-}
 
 /// @brief Tests the basic functionality of WatchSocket.
 TEST(WatchSocketTest, basics) {
@@ -141,6 +119,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     EXPECT_EQ(1, selectCheck(select_fd));
     EXPECT_TRUE(watch->isReady());
 
+    // The event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() != FDEventHandler::TYPE_POLL;
+
     // Interfere by closing the fd.
     ASSERT_EQ(0, close(select_fd));
 
@@ -154,7 +138,12 @@ TEST(WatchSocketTest, closedWhileReady) {
     ASSERT_NO_THROW(watch->clearReady());
 
     // Verify the select_fd fails as socket is invalid/closed.
-    EXPECT_EQ(-1, selectCheck(select_fd));
+    if (use_select) {
+        ASSERT_EQ(-1, selectCheck(select_fd));
+    } else {
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+    }
 
     // Verify that subsequent attempts to mark it will fail.
     ASSERT_THROW(watch->markReady(), WatchSocketError);
@@ -213,6 +202,12 @@ TEST(WatchSocketTest, badReadOnClear) {
     EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
+    // The event handler must be created before closing the socket.
+    // It creates an internal pipe which will match the closed fd and the
+    // check for bad file descriptor will fail.
+    FDEventHandlerPtr handler = FDEventHandlerFactory::factoryFDEventHandler();
+    bool use_select = FDEventHandlerFactory::factoryFDEventHandler()->type() != FDEventHandler::TYPE_POLL;
+
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
     ASSERT_EQ((read (select_fd, &buf, 1)), 1);
@@ -225,7 +220,12 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     // Verify the select_fd does not evaluate to ready.
     EXPECT_FALSE(watch->isReady());
-    EXPECT_NE(1, selectCheck(select_fd));
+    if (use_select) {
+        EXPECT_EQ(-1, selectCheck(select_fd));
+    } else {
+        handler->add(select_fd);
+        EXPECT_EQ(1, handler->waitEvent(0, 0));
+    }
 
     // Verify that getSelectFd() returns INVALID.
     ASSERT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());

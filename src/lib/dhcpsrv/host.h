@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -334,12 +334,12 @@ public:
     /// - DUID (DHCPv4 and DHCPv6) (identifier name: "duid"),
     /// - circuit identifier (DHCPv4) (identifier name: "circuit-id"),
     /// - client identifier (DHCPv4) (identifier name: "client-id")
-    enum IdentifierType {
-        IDENT_HWADDR,
-        IDENT_DUID,
-        IDENT_CIRCUIT_ID,
-        IDENT_CLIENT_ID,
-        IDENT_FLEX, ///< Flexible host identifier.
+    enum IdentifierType : uint16_t {
+        IDENT_HWADDR = 0,
+        IDENT_DUID = 1,
+        IDENT_CIRCUIT_ID = 2,
+        IDENT_CLIENT_ID = 3,
+        IDENT_FLEX = 4, ///< Flexible host identifier.
     };
 
     /// @brief Constant pointing to the last identifier of the

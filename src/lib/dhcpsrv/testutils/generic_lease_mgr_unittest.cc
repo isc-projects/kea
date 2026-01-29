@@ -1484,6 +1484,32 @@ GenericLeaseMgrTest::testGetLeases4Paged() {
 }
 
 void
+GenericLeaseMgrTest::testGetLeases4State() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease4Ptr> leases = createLeases4();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Put even leases in declined state.
+        if ((i % 2) == 0) {
+            leases[i]->state_ = Lease::STATE_DECLINED;
+        }
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease4Collection got = lmptr_->getLeases4(Lease::STATE_DECLINED, 0);
+
+    // Easy check: got 4 leases in declined state.
+    EXPECT_EQ(4, got.size());
+    for (auto const& lease : got) {
+        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    // Try again with leases[2] subnet.
+    got = lmptr_->getLeases4(Lease::STATE_DECLINED, leases[2]->subnet_id_);
+    ASSERT_EQ(1, got.size());
+    EXPECT_TRUE(*leases[2] == *got[0]);
+}
+
+void
 GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // Get the leases to be used for the test and add to the database.
     vector<Lease6Ptr> leases = createLeases6();
@@ -1654,6 +1680,32 @@ GenericLeaseMgrTest::testGetLeases6Paged() {
     // Only IPv6 address can be used.
     EXPECT_THROW(lmptr_->getLeases6(IOAddress("192.0.2.0"), LeasePageSize(3)),
                  InvalidAddressFamily);
+}
+
+void
+GenericLeaseMgrTest::testGetLeases6State() {
+    // Get the leases to be used for the test and add to the database.
+    vector<Lease6Ptr> leases = createLeases6();
+    for (size_t i = 0; i < leases.size(); ++i) {
+        // Put even leases in declined state.
+        if ((i % 2) == 0) {
+            leases[i]->state_ = Lease::STATE_DECLINED;
+        }
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    Lease6Collection got = lmptr_->getLeases6(Lease::STATE_DECLINED, 0);
+
+    // Easy check: got 4 leases in declined state.
+    EXPECT_EQ(4, got.size());
+    for (auto const& lease : got) {
+        EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    }
+
+    // Try again with leases[2] subnet.
+    got = lmptr_->getLeases6(Lease::STATE_DECLINED, leases[2]->subnet_id_);
+    ASSERT_EQ(1, got.size());
+    EXPECT_TRUE(*leases[2] == *got[0]);
 }
 
 void
@@ -5001,6 +5053,693 @@ GenericLeaseMgrTest::testBigStats() {
     int128_t const two_to_the_power_of_127(int128_t(1) << 127);
     checkStat(StatsMgr::generateName("subnet", 1, "total-nas"), two_to_the_power_of_127);
     checkStat(StatsMgr::generateName("subnet", 1, "total-pds"), two_to_the_power_of_127);
+}
+
+void setStat(const std::string& stat, SubnetID subnet_id, PoolPtr pool, int value) {
+    StatsMgr::instance().setValue(stat, static_cast<int64_t>(value));
+    StatsMgr::instance().setValue(StatsMgr::generateName("subnet", subnet_id, stat),
+                                  static_cast<int64_t>(value));
+    if (pool) {
+        auto pool_label = (pool->getType() == Lease::TYPE_PD ? "pd-pool" : "pool");
+        StatsMgr::instance().setValue(StatsMgr::generateName("subnet", subnet_id,
+                                        StatsMgr::generateName(pool_label, pool->getID(), stat)),
+                                      static_cast<int64_t>(value));
+    }
+}
+
+void
+GenericLeaseMgrTest::testUpdateStatsOn4SameSubnet() {
+    // Create two subnets.
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+
+    Subnet4Ptr subnet1;
+    Pool4Ptr pool1;
+    subnet1.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    pool1.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet1->addPool(pool1);
+    cfg->add(subnet1);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(1);
+    expectedStats[0]["total-addresses"] = 256;
+    expectedStats[0]["assigned-addresses"] = 0;
+    expectedStats[0]["cumulative-assigned-addresses"] = 0;
+    expectedStats[0]["declined-addresses"] = 0;
+    expectedStats[0]["reclaimed-declined-addresses"] = 0;
+    expectedStats[0]["reclaimed-leases"] = 0;
+
+    // Make a subnet1 lease to use as the old lease.
+    Lease4Ptr old_lease = makeLease4("192.0.1.1", 1);
+
+    // Make a copy of to use as the updated lease.
+    Lease4Ptr new_lease(new Lease4(*old_lease));
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t sub1_assigned_;
+        uint32_t sub1_declined_;
+    };
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 1, 0 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state DECLINED
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 1, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 0, 0 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 0, 0 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state REGISTERED - not valid for v4, no stats should change
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1, 1 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-addresses", subnet1->getID(), pool1, 1);
+        setStat("declined-addresses", subnet1->getID(), pool1, 1);
+
+        new_lease->state_ = scenario.new_state_;
+        old_lease->state_ = scenario.old_state_;
+
+        // Set expected stat values for subnet 1.
+        expectedStats[0]["assigned-addresses"] = scenario.sub1_assigned_;
+        expectedStats[0]["declined-addresses"] = scenario.sub1_declined_;
+
+        // Call updateStatsOnAdd(). Stats should not change.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
+}
+
+// This test is sort of BS. How does an updated lease move to
+// a new subnet without changing lease address, other than
+// if the lesae is being manually fixed after config change
+// altered subnets and pool.
+void
+GenericLeaseMgrTest::testUpdateStatsOn4DifferentSubnet() {
+    // Create two subnets.
+    int num_subnets = 2;
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+
+    Subnet4Ptr subnet1;
+    Pool4Ptr pool1;
+    subnet1.reset(new Subnet4(IOAddress("192.0.1.0"), 24, 1, 2, 3, 1));
+    pool1.reset(new Pool4(IOAddress("192.0.1.0"), 24));
+    subnet1->addPool(pool1);
+    cfg->add(subnet1);
+
+    Subnet4Ptr subnet2;
+    Pool4Ptr pool2;
+    subnet2.reset(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 2));
+    pool2.reset(new Pool4(IOAddress("192.0.2.0"), 24));
+    subnet2->addPool(pool2);
+    cfg->add(subnet2);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(num_subnets);
+    for (int i = 0; i < num_subnets; ++i) {
+        expectedStats[i]["total-addresses"] = 256;
+        expectedStats[i]["assigned-addresses"] = 0;
+        expectedStats[i]["cumulative-assigned-addresses"] = 0;
+        expectedStats[i]["declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
+    }
+
+    // Check stats.
+    ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+
+    // Make a subnet1 lease to use as the existing lease .
+    Lease4Ptr old_lease = makeLease4("192.0.1.1", 1);
+
+    // Make a subnet2 lease to use as the updated lease. We use a
+    // different address to verify pool gets updated correctly.
+    Lease4Ptr new_lease = makeLease4("192.0.2.1", 2);
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t sub1_assigned_;
+        uint32_t sub1_declined_;
+        uint32_t sub2_assigned_;
+        uint32_t sub2_declined_;
+    };
+
+    // Prior to each scenario the assigned and declined stats for both subnets
+    // and pools will be set to 1.
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 0, 1, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 0, 0, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 1, 1, 2, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 1, 1, 1, 1 },
+
+    // New state DECLINED
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 0, 1, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 0, 0, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 1, 1, 2, 2 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1, 1, 1, 1 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 0, 0, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1, 1, 1, 1 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 0, 0, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1, 1, 1, 1 },
+
+    // New state REGISTERED - not valid for v4, no stats should change
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1, 1, 1, 1 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-addresses", 1, pool1, 1);
+        setStat("declined-addresses", 1, pool1, 1);
+        setStat("assigned-addresses", 2, pool2, 1);
+        setStat("declined-addresses", 2, pool2, 1);
+        // checkLeaseStats calculates expected global declined.
+        StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(2));
+
+        new_lease->state_ = scenario.new_state_;
+        expectedStats[0]["assigned-addresses"] = scenario.sub1_assigned_;
+        expectedStats[0]["declined-addresses"] = scenario.sub1_declined_;
+
+        old_lease->state_ = scenario.old_state_;
+        expectedStats[1]["assigned-addresses"] = scenario.sub2_assigned_;
+        expectedStats[1]["declined-addresses"] = scenario.sub2_declined_;
+
+        // Call updateStatsOnUpdate() and check stats.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
+}
+
+void
+GenericLeaseMgrTest::testUpdateStatsOn6SameSubnet() {
+    // Create a subnets.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+
+    subnet.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, 1));
+    pool.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                         IOAddress("3001:1::FF")));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(1);
+    expectedStats[0]["total-nas"] = 256;
+    expectedStats[0]["assigned-nas"] = 0;
+    expectedStats[0]["cumulative-assigned-nas"] = 0;
+    expectedStats[0]["declined-addresses"] = 0;
+    expectedStats[0]["reclaimed-declined-addresses"] = 0;
+    expectedStats[0]["reclaimed-leases"] = 0;
+    expectedStats[0]["registered-nas"] = 0;
+    expectedStats[0]["registered-nas"].check_pool_ = false;
+
+    // Make a subnet1 lease to use as the old lease.
+    Lease6Ptr old_lease = makeLease6(Lease::TYPE_NA, "3001:1::1", 128, 1);
+
+    // Make a copy of to use as the updated lease.
+    Lease6Ptr new_lease(new Lease6(*old_lease));
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t exp_assigned_;
+        uint32_t exp_declined_;
+        uint32_t exp_registered_;
+    };
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 1, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 1, 0, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 2, 1, 0 },
+
+    // New state DECLINED
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 1, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 1, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1, 2, 0 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 0, 0, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1, 1, 0 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 0, 0, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1, 1, 0 },
+
+    // New state REGISTERED
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 0, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 0, 0, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1, 1, 1 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-nas", subnet->getID(), pool, 1);
+        setStat("declined-addresses", subnet->getID(), pool, 1);
+        setStat("registered-nas", subnet->getID(), PoolPtr(), 1);
+
+        new_lease->state_ = scenario.new_state_;
+        old_lease->state_ = scenario.old_state_;
+
+        // Set expected stat values for subnet 1.
+        expectedStats[0]["assigned-nas"] = scenario.exp_assigned_;
+        expectedStats[0]["declined-addresses"] = scenario.exp_declined_;
+        expectedStats[0]["registered-nas"] = scenario.exp_registered_;
+        expectedStats[0]["registered-nas"].check_pool_ = false;
+
+        // Call updateStatsOnUpdate() and check stats.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
+}
+
+void
+GenericLeaseMgrTest::testUpdateStatsOn6SameSubnetPD() {
+    // Create a subnet.
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+
+    Subnet6Ptr subnet;
+    Pool6Ptr pool;
+
+    subnet.reset(new Subnet6(IOAddress("3001::"), 64, 1, 2, 3, 4, 1));
+    pool.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet->addPool(pool);
+    cfg->add(subnet);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(1);
+    expectedStats[0]["total-pds"] = 65536;
+    expectedStats[0]["assigned-pds"] = 0;
+    expectedStats[0]["cumulative-assigned-pds"] = 0;
+    expectedStats[0]["declined-addresses"] = 0;
+    expectedStats[0]["declined-addresses"].check_pool_ = false;
+    expectedStats[0]["reclaimed-declined-addresses"] = 0;
+    expectedStats[0]["reclaimed-declined-addresses"].check_pool_ = false;
+    expectedStats[0]["reclaimed-leases"] = 0;
+    expectedStats[0]["reclaimed-leases"].check_pool_ = false;
+    expectedStats[0]["registered-nas"] = 0;
+    expectedStats[0]["registered-nas"].check_pool_ = false;
+
+    // Make a lease to use as the existing lease.
+    Lease6Ptr old_lease = makeLease6(Lease::TYPE_PD, "3001:1:2::", 112, 1);
+    // Make sure lease is in the pool.
+    ASSERT_TRUE(subnet->getPool(Lease::TYPE_PD, old_lease->addr_, false));
+
+    // Make a copy of to use as the updated lease.
+    Lease6Ptr new_lease(new Lease6(*old_lease));
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t exp_assigned_;
+    };
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 2 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 2 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 1 },
+
+    // New state DECLINED - not valid state for PD, expect no changes.
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1 },
+
+    // New state REGISTERED - not valid state for PD, expect no changes.
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-pds", subnet->getID(), pool, 1);
+
+        new_lease->state_ = scenario.new_state_;
+        old_lease->state_ = scenario.old_state_;
+
+        // Set expected stat values for subnet 1.
+        expectedStats[0]["assigned-pds"] = scenario.exp_assigned_;
+
+        // Call updateStatsOnUpdate() and check stats.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
+}
+
+void
+GenericLeaseMgrTest::testUpdateStatsOn6DifferentSubnet() {
+    // Create two subnets.
+    auto num_subnets = 2;
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+
+    Subnet6Ptr subnet1;
+    Pool6Ptr pool1;
+    subnet1.reset(new Subnet6(IOAddress("3001:1::"), 64, 1, 2, 3, 4, 1));
+    pool1.reset(new Pool6(Lease::TYPE_NA, IOAddress("3001:1::"),
+                          IOAddress("3001:1::FF")));
+    subnet1->addPool(pool1);
+    cfg->add(subnet1);
+
+    Subnet6Ptr subnet2;
+    Pool6Ptr pool2;
+    subnet2.reset(new Subnet6(IOAddress("3002:1::"), 64, 1, 2, 3, 4, 2));
+    pool2.reset(new Pool6(Lease::TYPE_NA, IOAddress("3002:1::"),
+                         IOAddress("3002:1::FF")));
+    subnet2->addPool(pool2);
+    cfg->add(subnet2);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(num_subnets);
+    for (int i = 0; i < num_subnets; ++i) {
+        expectedStats[i]["total-nas"] = 256;
+        expectedStats[i]["assigned-nas"] = 0;
+        expectedStats[i]["cumulative-assigned-nas"] = 0;
+        expectedStats[i]["declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-leases"] = 0;
+        expectedStats[i]["registered-nas"] = 0;
+        expectedStats[i]["registered-nas"].check_pool_ = false;
+    }
+
+    // Make a subnet1 lease to use as the old lease.
+    Lease6Ptr old_lease = makeLease6(Lease::TYPE_NA, "3001:1::1", 128, 1);
+
+    // Make a subnet2 lease to use as the updated lease. We use a
+    // different address to verify pool gets updated correctly.
+    Lease6Ptr new_lease = makeLease6(Lease::TYPE_NA, "3002:1::1", 128, 2);
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t exp1_assigned_;
+        uint32_t exp1_declined_;
+        uint32_t exp1_registered_;
+        uint32_t exp2_assigned_;
+        uint32_t exp2_declined_;
+        uint32_t exp2_registered_;
+    };
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 0, 1, 1, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 0, 0, 1, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 1, 1, 1, 2, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 1, 1, 0, 2, 1, 1},
+
+    // New state DECLINED
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 0, 1, 1, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 0, 0, 1, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 1, 1, 1, 2, 2, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1, 1, 0, 2, 2, 1 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 0, 0, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1, 1, 0, 1, 1, 1 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 0, 0, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1, 1, 1, 1, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1, 1, 0, 1, 1, 1 },
+
+    // New state REGISTERED
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 0, 1, 1, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 0, 0, 1, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1, 1, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1, 1, 1, 1, 1, 2 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1, 1, 0, 1, 1, 2 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-nas", subnet1->getID(), pool1, 1);
+        setStat("declined-addresses", subnet1->getID(), pool1, 1);
+        setStat("registered-nas", subnet1->getID(), PoolPtr(), 1);
+        setStat("assigned-nas", subnet2->getID(), pool2, 1);
+        setStat("declined-addresses", subnet2->getID(), pool2, 1);
+        setStat("registered-nas", subnet2->getID(), PoolPtr(), 1);
+
+        new_lease->state_ = scenario.new_state_;
+        old_lease->state_ = scenario.old_state_;
+
+        // Set expected stat values for subnet 1.
+        expectedStats[0]["assigned-nas"] = scenario.exp1_assigned_;
+        expectedStats[0]["declined-addresses"] = scenario.exp1_declined_;
+        expectedStats[0]["registered-nas"] = scenario.exp1_registered_;
+        expectedStats[0]["registered-nas"].check_pool_ = false;
+        // Set expected stat values for subnet 2.
+        expectedStats[1]["assigned-nas"] = scenario.exp2_assigned_;
+        expectedStats[1]["declined-addresses"] = scenario.exp2_declined_;
+        expectedStats[1]["registered-nas"] = scenario.exp2_registered_;
+        expectedStats[1]["registered-nas"].check_pool_ = false;
+        // checkLeaseStats calculates expected global declined.
+        StatsMgr::instance().setValue("declined-addresses", static_cast<int64_t>(2));
+
+        // Call updateStatsOnUpdate() and check stats.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
+}
+
+void
+GenericLeaseMgrTest::testUpdateStatsOn6DifferentSubnetPD() {
+    // Create two subnets.
+    auto num_subnets = 2;
+    CfgSubnets6Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets6();
+
+    Subnet6Ptr subnet1;
+    Pool6Ptr pool1;
+    subnet1.reset(new Subnet6(IOAddress("3001::"), 64, 1, 2, 3, 4, 1));
+    pool1.reset(new Pool6(Lease::TYPE_PD, IOAddress("3001:1:2::"), 96, 112));
+    subnet1->addPool(pool1);
+    cfg->add(subnet1);
+
+    Subnet6Ptr subnet2;
+    Pool6Ptr pool2;
+    subnet2.reset(new Subnet6(IOAddress("3002:1::"), 64, 1, 2, 3, 4, 2));
+    pool2.reset(new Pool6(Lease::TYPE_PD, IOAddress("3002:1:2::"), 96, 112));
+    subnet2->addPool(pool2);
+    cfg->add(subnet2);
+
+    ASSERT_NO_THROW(CfgMgr::instance().commit());
+
+    // Create the expected stats list.  At this point, the only stat
+    // that should be non-zero is total-addresses.
+    StatValMapList expectedStats(num_subnets);
+    for (int i = 0; i < num_subnets; ++i) {
+        expectedStats[i]["total-pds"] = 65536;
+        expectedStats[i]["assigned-pds"] = 0;
+        expectedStats[i]["cumulative-assigned-pds"] = 0;
+        expectedStats[i]["declined-addresses"] = 0;
+        expectedStats[i]["declined-addresses"].check_pool_ = false;
+        expectedStats[i]["reclaimed-declined-addresses"] = 0;
+        expectedStats[i]["reclaimed-declined-addresses"].check_pool_ = false;
+        expectedStats[i]["reclaimed-leases"] = 0;
+        expectedStats[i]["reclaimed-leases"].check_pool_ = false;
+        expectedStats[i]["registered-nas"] = 0;
+        expectedStats[i]["registered-nas"].check_pool_ = false;
+    }
+
+    // Make a lease to use as the existing lease.
+    Lease6Ptr old_lease = makeLease6(Lease::TYPE_PD, "3001:1:2::", 112, subnet1->getID());
+    // Make sure lease is in the pool.
+    ASSERT_TRUE(subnet1->getPool(Lease::TYPE_PD, old_lease->addr_, false));
+
+    // Make a subnet2 lease to use as the updated lease. We use a
+    Lease6Ptr new_lease = makeLease6(Lease::TYPE_PD, "3002:1:2::", 112, subnet2->getID());
+    // Make sure lease is in the pool.
+    ASSERT_TRUE(subnet2->getPool(Lease::TYPE_PD, new_lease->addr_, false));
+
+    struct Scenario {
+        uint32_t line_no_;
+        uint32_t new_state_;
+        uint32_t old_state_;
+        uint32_t exp1_assigned_;
+        uint32_t exp2_assigned_;
+    };
+
+    std::list<Scenario> scenarios {
+    // New state DEFAULT (assigned)
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DEFAULT, 0, 2 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_EXPIRED_RECLAIMED, 1, 2 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_RELEASED, 1, 2 },
+    { __LINE__, Lease::STATE_DEFAULT, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state DECLINED - not valid state for PD, expect no changes.
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DEFAULT, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_DECLINED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state EXPIRED_RECLAIMED
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DEFAULT, 0, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_EXPIRED_RECLAIMED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state RELEASED
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DEFAULT, 0, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_RELEASED, Lease::STATE_REGISTERED, 1, 1 },
+
+    // New state REGISTERED - not valid state for PD, expect no changes.
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DEFAULT, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_DECLINED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_EXPIRED_RECLAIMED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_RELEASED, 1, 1 },
+    { __LINE__, Lease::STATE_REGISTERED, Lease::STATE_REGISTERED, 1, 1 }
+    };
+
+    for (auto scenario : scenarios) {
+        std::stringstream ss;
+        ss << "Scenario at line: " << scenario.line_no_ << " failed";
+        SCOPED_TRACE(ss.str());
+
+        // Reset stats to known values.
+        setStat("assigned-pds", subnet1->getID(), pool1, 1);
+        setStat("assigned-pds", subnet2->getID(), pool2, 1);
+
+        new_lease->state_ = scenario.new_state_;
+        old_lease->state_ = scenario.old_state_;
+
+        // Set expected stat values for subnet 1.
+        expectedStats[0]["assigned-pds"] = scenario.exp1_assigned_;
+
+        // Set expected stat values for subnet 2.
+        expectedStats[1]["assigned-pds"] = scenario.exp2_assigned_;
+
+        // Call updateStatsOnUpdate() and check stats.
+        LeaseMgr::updateStatsOnUpdate(old_lease, new_lease);
+        ASSERT_NO_FATAL_FAILURE(checkLeaseStats(expectedStats));
+    }
 }
 
 }  // namespace test

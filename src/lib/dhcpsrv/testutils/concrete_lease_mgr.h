@@ -140,6 +140,15 @@ public:
     getLeases4(const asiolink::IOAddress& /* lower_bound_address */,
                const LeasePageSize& /* page_size */) const override;
 
+    /// @brief Returns all IPv4 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(uint32_t state,
+                                        SubnetID subnet_id) const override;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// @param addr address of the searched lease
@@ -244,6 +253,15 @@ public:
     getLeases6(SubnetID /* subnet_id */,
                const asiolink::IOAddress& /* lower_bound_address */,
                const LeasePageSize& /* page_size */) const override;
+
+    /// @brief Returns all IPv6 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(uint32_t state,
+                                        SubnetID subnet_id) const override;
 
     /// @brief Returns expired DHCPv6 leases.
     ///

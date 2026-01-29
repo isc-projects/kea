@@ -1,0 +1,49 @@
+{
+    "access": "read",
+    "avail": "3.1.5",
+    "brief": [
+        "This command retrieves all IPv4 leases with the specified state",
+        " and optionally in a subnet."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"lease4-get-by-state\",",
+        "    \"arguments\": {",
+        "        \"state\": 1,",
+        "        \"subnet-id\": 1",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-lease4-get-by-state\"/>",
+    "hook": "lease_cmds",
+    "name": "lease4-get-by-state",
+    "resp-comment": [
+        "Result 0 is returned when at least one lease is found, 1 when parameters are malformed or missing,",
+        "3 is returned if no leases are found."
+    ],
+    "resp-syntax": [
+        "  {",
+        "    \"arguments\": {",
+        "      \"leases\": [",
+        "        {",
+        "          \"client-id\": \"01:00:0c:01:02:03:04\",",
+        "          \"cltt\": 1600432232,",
+        "          \"fqdn-fwd\": false,",
+        "          \"fqdn-rev\": false,",
+        "          \"hostname\": \"\",",
+        "          \"hw-address\": \"00:0c:01:02:03:04\",",
+        "          \"ip-address\": \"192.168.1.150\",",
+        "          \"state\": 1,",
+        "          \"subnet-id\": 1,",
+        "          \"valid-lft\": 4000",
+        "        }",
+        "      ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"1 IPv4 lease(s) found.\"",
+        "  }"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

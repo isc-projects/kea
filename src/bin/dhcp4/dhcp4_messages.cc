@@ -26,9 +26,11 @@ extern const isc::log::MessageID DHCP4_CLASS_UNCONFIGURED = "DHCP4_CLASS_UNCONFI
 extern const isc::log::MessageID DHCP4_CLIENTID_IGNORED_FOR_LEASES = "DHCP4_CLIENTID_IGNORED_FOR_LEASES";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_DATA = "DHCP4_CLIENT_FQDN_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_FQDN_PROCESS = "DHCP4_CLIENT_FQDN_PROCESS";
+extern const isc::log::MessageID DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY = "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_DATA = "DHCP4_CLIENT_HOSTNAME_DATA";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_MALFORMED = "DHCP4_CLIENT_HOSTNAME_MALFORMED";
 extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_PROCESS = "DHCP4_CLIENT_HOSTNAME_PROCESS";
+extern const isc::log::MessageID DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY = "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY";
 extern const isc::log::MessageID DHCP4_CLIENT_NAME_PROC_FAIL = "DHCP4_CLIENT_NAME_PROC_FAIL";
 extern const isc::log::MessageID DHCP4_CONFIG_COMPLETE = "DHCP4_CONFIG_COMPLETE";
 extern const isc::log::MessageID DHCP4_CONFIG_LOAD_FAIL = "DHCP4_CONFIG_LOAD_FAIL";
@@ -207,9 +209,11 @@ const char* values[] = {
     "DHCP4_CLIENTID_IGNORED_FOR_LEASES", "%1: not using client identifier for lease allocation for subnet %2",
     "DHCP4_CLIENT_FQDN_DATA", "%1: Client sent FQDN option: %2",
     "DHCP4_CLIENT_FQDN_PROCESS", "%1: processing Client FQDN option",
+    "DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY", "%1: sanitizing client's FQDN option '%2' yielded an empty string",
     "DHCP4_CLIENT_HOSTNAME_DATA", "%1: client sent Hostname option: %2",
     "DHCP4_CLIENT_HOSTNAME_MALFORMED", "%1: client hostname option malformed: %2",
     "DHCP4_CLIENT_HOSTNAME_PROCESS", "%1: processing client's Hostname option",
+    "DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY", "%1: sanitizing client's Hostname option '%2' yielded an empty string",
     "DHCP4_CLIENT_NAME_PROC_FAIL", "%1: failed to process the fqdn or hostname sent by a client: %2",
     "DHCP4_CONFIG_COMPLETE", "DHCPv4 server has completed configuration: %1",
     "DHCP4_CONFIG_LOAD_FAIL", "configuration error using file: %1, reason: %2",
@@ -295,8 +299,8 @@ const char* values[] = {
     "DHCP4_PACKET_DROP_0008", "%1: DHCP service is globally disabled",
     "DHCP4_PACKET_DROP_0009", "%1: Option 53 missing (no DHCP message type), is this a BOOTP packet?",
     "DHCP4_PACKET_DROP_0010", "dropped as member of the special class 'DROP': %1, %2",
-    "DHCP4_PACKET_DROP_0011", "dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6",
-    "DHCP4_PACKET_DROP_0012", "dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6",
+    "DHCP4_PACKET_DROP_0011", "dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6",
+    "DHCP4_PACKET_DROP_0012", "dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6",
     "DHCP4_PACKET_DROP_0013", "dropped as member of the special class 'DROP' after host reservation lookup: %1, %2",
     "DHCP4_PACKET_DROP_0014", "dropped as member of the special class 'DROP' after early global host reservations lookup: %1, %2",
     "DHCP4_PACKET_NAK_0001", "%1: failed to select a subnet for incoming packet, src %2, type %3",

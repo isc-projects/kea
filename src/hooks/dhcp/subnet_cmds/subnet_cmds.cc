@@ -161,9 +161,8 @@ public:
         /// @brief function which returns true if the pair of option elements
         /// refer to the same option in the configuration.
         auto const& option_match = [&](ElementPtr& left, ElementPtr& right) -> bool {
-            std::string space = space_;
-            std::string left_space = space;
-            std::string right_space = space;
+            std::string left_space = space_;
+            std::string right_space = space_;
             if (left->get("space")) {
                 left_space = left->get("space")->stringValue();
             }
@@ -919,7 +918,7 @@ public:
             throw;
         }
 
-        // Update the statistics for the remaning subnets and pools.
+        // Update the statistics for the remaining subnets and pools.
         cfg->updateStatistics();
 
         std::ostringstream response_text;

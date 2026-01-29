@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2023-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -862,7 +862,8 @@ public:
     /// @brief Adds instance of the attribute to the collection.
     ///
     /// @param attr Pointer to the attribute being added (can be null).
-    void add(const ConstAttributePtr& attr);
+    /// @param back Insert back (vs front).
+    void add(const ConstAttributePtr& attr, bool back = true);
 
     /// @brief Deletes an attribute from the collection.
     ///

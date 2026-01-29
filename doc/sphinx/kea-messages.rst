@@ -2699,7 +2699,7 @@ COMMAND_HTTP_SOCKET_SECURITY_WARNING
     command socket configuration is NOT SECURE: %1
 
 This warning message is issued when security enforcement is disabled
-and command socket configuration does not use HTTPS/TLS or  baseic HTTP
+and command socket configuration does not use HTTPS/TLS or basic HTTP
 authentication. The server will still use the socket as configured but
 is warning that doing so may pose a security risk.
 
@@ -4118,6 +4118,19 @@ This debug message is issued when the server starts processing the Client
 FQDN option sent in the client's query. The argument includes the
 client and transaction identification information.
 
+DHCP4_CLIENT_FQDN_SCRUBBED_EMPTY
+================================
+
+.. code-block:: text
+
+    %1: sanitizing client's FQDN option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(81) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
+
 DHCP4_CLIENT_HOSTNAME_DATA
 ==========================
 
@@ -4156,6 +4169,19 @@ Logged at debug log level 50.
 This debug message is issued when the server starts processing the Hostname
 option sent in the client's query. The argument includes the client and
 transaction identification information.
+
+DHCP4_CLIENT_HOSTNAME_SCRUBBED_EMPTY
+====================================
+
+.. code-block:: text
+
+    %1: sanitizing client's Hostname option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+hostname option(12) sent by the client is an empty string. When this occurs
+the server will ignore the hostname option. The arguments include the
+client and the hostname option it sent.
 
 DHCP4_CLIENT_NAME_PROC_FAIL
 ===========================
@@ -5317,7 +5343,7 @@ DHCP4_PACKET_DROP_0011
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -5331,7 +5357,7 @@ DHCP4_PACKET_DROP_0012
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1, %2 by thread %3 as duplicate of %4, %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -6241,6 +6267,17 @@ Logged at debug log level 40.
 This debug message informs that a class is listed for additional evaluation but
 has no definition. The class is ignored.
 
+DHCP6_ADDR6_REGISTER_DISABLED_DROP
+==================================
+
+.. code-block:: text
+
+    ADDR-REG-INFORM from %1 was dropped because address registration is disabled.
+
+Logged at debug log level 40.
+This debug message is printed when the server drops an ADDR-REG-INFORM packet
+because 'allow-address-registration' is false.
+
 DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE
 ===================================
 
@@ -6257,7 +6294,7 @@ DHCP6_ADDR_REG_INFORM_FAIL
 
 .. code-block:: text
 
-    error on ADDR-REG-INFORM from client %1: %2
+    error on ADDR-REG-INFORM from client %1, %2
 
 This information message is issued when the processing of an ADDR-REG-INFORM
 message failed. The address of the client, usually also the address to
@@ -6437,6 +6474,19 @@ This debug message informs that incoming packet belongs to a class
 which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
+
+DHCP6_CLIENT_FQDN_SCRUBBED_EMPTY
+================================
+
+.. code-block:: text
+
+    %1: sanitizing client's FQDN option '%2' yielded an empty string
+
+Logged at debug log level 50.
+This debug message is issued when the result of sanitizing the
+FQDN option(39) sent by the client is an empty string. When this occurs
+the server will ignore the FQDN option. The arguments include the
+client and the FQDN option it sent.
 
 DHCP6_CONFIG_COMPLETE
 =====================
@@ -7551,7 +7601,7 @@ DHCP6_PACKET_DROP_DUPLICATE
 
 .. code-block:: text
 
-    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by %6
+    dropped as sent by the same client than a packet being processed by another thread: dropped %1 %2 by thread %3 as duplicate of %4 %5 processed by thread %6
 
 Logged at debug log level 15.
 Currently multi-threading processing avoids races between packets sent by
@@ -9964,6 +10014,16 @@ DHCPSRV_MEMFILE_LFC_EXECUTE
 An informational message issued when the memfile lease database backend
 starts a new process to perform Lease File Cleanup.
 
+DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE
+===================================
+
+.. code-block:: text
+
+    Lease File Cleanup pid file create: %1
+
+This error message is issued if the LFC execute code detects a failure
+when trying to create the PID file. It includes a more specific error string.
+
 DHCPSRV_MEMFILE_LFC_LEASE_FILE_RENAME_FAIL
 ==========================================
 
@@ -9998,6 +10058,16 @@ DHCPSRV_MEMFILE_LFC_RESCHEDULED
 An informational message issued when the memfile lease database backend
 rescheduled the periodic Lease File Cleanup at the reception of a
 "kea-lfc-start" command.
+
+DHCPSRV_MEMFILE_LFC_RUNNING
+===========================
+
+.. code-block:: text
+
+    Lease File Cleanup instance already running
+
+This informational message is issued when the LFC execute code detects that
+a previous instance of the LFC process is still running via the PID check.
 
 DHCPSRV_MEMFILE_LFC_SETUP
 =========================
@@ -10545,6 +10615,28 @@ message) that is unknown to the software. This is a configuration error.
 ****
 DHCP
 ****
+
+DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS
+=======================================
+
+.. code-block:: text
+
+    Adding an already existing external socket %1
+
+This warning message indicates that an external socket was added but it
+already exits i.e. adds and deletes are not correctly balanced.
+
+DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD
+===================================
+
+.. code-block:: text
+
+    Attempted to register external socket %1 from different thread %2 than main thread %3
+
+This error message indicates that a different thread than the main thread has
+registered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descriptor and the respective thread ids are included in the message.
 
 DHCP_DDNS_ADD_FAILED
 ====================
@@ -11659,6 +11751,70 @@ DHCP_DDNS_UPDATE_RESPONSE_RECEIVED
 Logged at debug log level 50.
 This is a debug message issued when DHCP_DDNS receives sends a DNS update
 response from a DNS server.
+
+DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD
+===========================================
+
+.. code-block:: text
+
+    Attempted to unregister external sockets from different thread %1 than main thread %2
+
+This error message indicates that a different thread than the main thread has
+deleted all external sockets. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The respective thread ids are included in the message.
+
+DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD
+======================================
+
+.. code-block:: text
+
+    Attempted to unregister external socket %1 from different thread %2 than main thread %3
+
+This error message indicates that a different thread than the main thread has
+unregistered an external socket. This is a programming error and should be fixed.
+Only the main thread is allowed to perform operations on the external sockets.
+The file descriptor and the respective thread ids are included in the message.
+
+DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND
+=====================================
+
+.. code-block:: text
+
+    Deleting a not found external socket %1
+
+This warning message indicates that an external socket was deleted but
+it can't be found i.e. adds and deletes are not correctly balanced.
+
+DHCP_IFACE_SOCKET_ERROR
+=======================
+
+.. code-block:: text
+
+    Got an error on the interface socket %1 of interface %2: %3
+
+This error message indicates that an error was raised on an interface socket.
+The file descriptor, interface name and error message are displayed.
+
+DHCP_RECEIVE4_UNKNOWN
+=====================
+
+.. code-block:: text
+
+    Received data over unknown socket
+
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
+
+DHCP_RECEIVE6_UNKNOWN
+=====================
+
+.. code-block:: text
+
+    Received data over unknown socket
+
+This warning message indicates that the file descriptor event handler
+returns with received data but it was not possible to find which one.
 
 ****
 EVAL
@@ -18057,7 +18213,7 @@ LIMITS_LEASE_LIMIT_EXCEEDED
 
 Logged at debug log level 40.
 Debug message logged to indicate that the current number of leased addresses or
-prefixes for a client class or a subnet is exceeding the limit.
+prefixes for a client class or a subnet has exceeded the limit.
 
 LIMITS_LEASE_WITHIN_LIMITS
 ==========================
@@ -18068,7 +18224,7 @@ LIMITS_LEASE_WITHIN_LIMITS
 
 Logged at debug log level 40.
 Debug message logged to indicate that the current number of leased addresses or
-prefixes for a client class or a subnet is exceeding the limit.
+prefixes for a client class or a subnet has not exceeded the limit.
 
 LIMITS_PACKET_WIIH_SUBNET_ID_RATE_NO_SUBNET
 ===========================================
@@ -20866,6 +21022,52 @@ Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
+MYSQL_LB_GET_STATE4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state.
+
+MYSQL_LB_GET_STATE6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state.
+
+MYSQL_LB_GET_STATE_SUBID4
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the MySQL database with the specified state in
+the specified subnet.
+
+MYSQL_LB_GET_STATE_SUBID6
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the MySQL database with the specified state in
+the specified subnet.
+
 MYSQL_LB_GET_SUBID4
 ===================
 
@@ -21488,7 +21690,7 @@ PERFMON_ALARM_TRIGGERED
 
 This warning message is emitted when the reported mean duration for
 an alarm exceeds its high-water-ms value.  As long as the reported
-averges remain above the low-water-ms value, the alarm will remain
+averages remain above the low-water-ms value, the alarm will remain
 triggered and this message will be repeated every alarm-report-secs.
 Arguments detail the alarm's key, the time the alarm was first
 triggered, the most recent reported mean, and the high-water-ms
@@ -24003,6 +24205,52 @@ Logged at debug log level 50.
 A debug message issued when the server is attempting to obtain a page of
 IPv6 leases beginning with the specified address with a remote id.
 
+PGSQL_LB_GET_STATE4
+===================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database with the specified state.
+
+PGSQL_LB_GET_STATE6
+===================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database with the specified state.
+
+PGSQL_LB_GET_STATE_SUBID4
+=========================
+
+.. code-block:: text
+
+    obtaining IPv4 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv4 leases from the PostgreSQL database with the specified state in
+the specified subnet.
+
+PGSQL_LB_GET_STATE_SUBID6
+=========================
+
+.. code-block:: text
+
+    obtaining IPv6 leases with state %1 in subnet %2
+
+Logged at debug log level 50.
+A debug message issued when the server is attempting to obtain a set
+of IPv6 leases from the PostgreSQL database with the specified state in
+the specified subnet.
+
 PGSQL_LB_GET_SUBID4
 ===================
 
@@ -24579,6 +24827,19 @@ and its 'user-context' contains invalid 'ping-check' configuration.  The
 server will log the error once and then use global ping-check parameters
 for the subnet until the configuration is corrected.
 
+PING_CHECK_NO_LEASE_OR_LEASE_REUSED
+===================================
+
+.. code-block:: text
+
+    Ping check skipped: no lease
+
+Logged at debug log level 50.
+This debug message is emitted when the ping check request made by the
+server does not contain a lease. This typically happens when a lease is
+being reused. The ping check will be skipped and the offer processing will
+continue as normal.
+
 PING_CHECK_PAUSE_FAILED
 =======================
 
@@ -24888,6 +25149,50 @@ This debug message is issued when an address was not found in create
 timestamp aka history container. This should lead to a accounting
 session without a start status message.
 
+RADIUS_ACCOUNTING_STATUS
+========================
+
+.. code-block:: text
+
+    send Status-Server with %1
+
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to accounting servers. The message attributes are logged.
+
+RADIUS_ACCOUNTING_STATUS_ERROR
+==============================
+
+.. code-block:: text
+
+    received error response to Status-Server: %1 (%2) with %3
+
+This error message indicates that a valid response to Status-Server message
+was received from accounting servers but with an unexpected code or
+an Error-Cause attribute. The response details are logged.
+
+RADIUS_ACCOUNTING_STATUS_FAILED
+===============================
+
+.. code-block:: text
+
+    Status-Server failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid response to Status-Server message
+was received from accounting servers.
+
+RADIUS_ACCOUNTING_STATUS_SUCCEED
+================================
+
+.. code-block:: text
+
+    received valid response to Status-Server
+
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from accounting servers.
+
 RADIUS_ACCOUNTING_SYNC
 ======================
 
@@ -24965,6 +25270,50 @@ RADIUS_AUTHENTICATION_ASYNC_REJECTED
 Logged at debug log level 40.
 This debug message indicates that a valid Access-Reject
 message was received. Attributes from the message are logged.
+
+RADIUS_AUTHENTICATION_STATUS
+============================
+
+.. code-block:: text
+
+    send Status-Server with %1
+
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to access servers. The message attributes are logged.
+
+RADIUS_AUTHENTICATION_STATUS_ERROR
+==================================
+
+.. code-block:: text
+
+    received error response to Status-Server: %1 (%2) with %3
+
+This error message indicates that a valid response to Status-Server message
+was received from access servers but with an unexpected code or an
+Error-Cause attribute. The response details are logged.
+
+RADIUS_AUTHENTICATION_STATUS_FAILED
+===================================
+
+.. code-block:: text
+
+    Status-Server failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid response to Status-Server message
+was received from access servers.
+
+RADIUS_AUTHENTICATION_STATUS_SUCCEED
+====================================
+
+.. code-block:: text
+
+    received valid response to Status-Server
+
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from access servers.
 
 RADIUS_AUTHENTICATION_SYNC
 ==========================
@@ -25547,7 +25896,7 @@ RADIUS_THREAD_POOL_STARTED
 
     RADIUS thread pool started with %1 threads.
 
-This informational message is issued when the thread pool is starrted.
+This informational message is issued when the thread pool is started.
 The number of threads is displayed.
 
 ****
@@ -25597,6 +25946,28 @@ RBAC_HTTP_AUTH_ERROR
 This error messages indicates that an error has been raised in
 http_auth callout by the RBAC hooks library. The argument details the error.
 
+RBAC_HTTP_AUTH_FAILED
+=====================
+
+.. code-block:: text
+
+    RBAC processing in http_auth callout failed for unexpected condition: %1.
+
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_auth callout point. The reason of the failure is
+summarized and details are available in a debug log.
+
+RBAC_HTTP_AUTH_REJECT
+=====================
+
+.. code-block:: text
+
+    Role configuration '%1' for role '%2' has rejected command '%3'.
+
+This info message indicates that he command has been rejected in
+http_auth callout. The role configuration name, the role name and the
+command are displayed.
+
 RBAC_HTTP_AUTH_RESPONSE
 =======================
 
@@ -25606,6 +25977,17 @@ RBAC_HTTP_AUTH_RESPONSE
 
 This info message indicates that the RBAC hooks library has returned
 a response in http_auth callout. The response is summarized.
+
+RBAC_HTTP_RESPONSE_FAILED
+=========================
+
+.. code-block:: text
+
+    RBAC processing in http_response callout failed for unexpected condition: %1.
+
+The info message indicates that the RBAC hooks library reached an unexpected
+condition in the http_response callout point. The reason of the failure is
+summarized and details are available in a debug log.
 
 RBAC_LOAD_FAILED
 ================
@@ -25747,17 +26129,6 @@ RBAC_TRACE_HTTP_AUTH_NO_TLS_REJECT
 
 Logged at debug log level 40.
 The non TLS request has been rejected in http_auth callout.
-
-RBAC_TRACE_HTTP_AUTH_REJECT
-===========================
-
-.. code-block:: text
-
-    Role configuration '%1' for role '%2' has rejected command '%3'.
-
-Logged at debug log level 40.
-The command has been rejected in http_auth callout. The role
-configuration name, the role name and the command are displayed.
 
 RBAC_TRACE_HTTP_AUTH_RESPONSE
 =============================
@@ -26635,17 +27006,103 @@ prefix. The second parameter specifies a subnet identifier.
 TCP
 ***
 
-TCP_CLIENT_REQUEST_RECEIVED
-===========================
+TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED
+=======================================
 
 .. code-block:: text
 
-    received TCP request from %1
+    bad response received when communicating with %1 port %2: %3
 
 Logged at debug log level 40.
-This debug message is issued when the server finished receiving a TCP
-request from the remote endpoint. The address of the remote endpoint is
-specified as an argument.
+This debug message is issued when a TCP client fails to receive a response
+from the server or when this response is malformed. The first arguments
+specify the server address and port. The last provides a detailed error
+message.
+
+TCP_CLIENT_BAD_SERVER_RESPONSE_RECEIVED_DETAILS
+===============================================
+
+.. code-block:: text
+
+    detailed information about bad response received from %1 port %2:\n%3
+
+Logged at debug log level 45.
+This debug message is issued when a TCP client receives malformed response
+from the server. The first arguments specify the address and port of the
+server, The last argument provides a dump of the response.
+
+TCP_CLIENT_CONNECTION_CLOSE_CALLBACK_FAILED
+===========================================
+
+.. code-block:: text
+
+    Connection close callback threw an exception
+
+This is an error message emitted when the close connection callback
+registered on the connection failed unexpectedly.  This is a programmatic
+error that should be submitted as a bug.
+
+TCP_CLIENT_MT_STARTED
+=====================
+
+.. code-block:: text
+
+    TcpClient has been started in multi-threaded mode running %1 threads
+
+Logged at debug log level 40.
+This debug message is issued when a multi-threaded TCP client instance has
+been created. The argument specifies the maximum number of threads.
+
+TCP_CLIENT_PREMATURE_CONNECTION_TIMEOUT_OCCURRED
+================================================
+
+.. code-block:: text
+
+    premature connection timeout occurred: in transaction ? %1, transid: %2, current_transid: %3
+
+This warning message is issued when unexpected timeout occurred during the
+transaction. This is proven to occur when the system clock is moved manually
+or as a result of synchronization with a time server. Any ongoing transactions
+will be interrupted. New transactions should be conducted normally.
+
+TCP_CLIENT_QUEUE_SIZE_GROWING
+=============================
+
+.. code-block:: text
+
+    queue for address: %1, port %2, now has %3 entries and may be growing too quickly
+
+This warning message is issued when the queue of pending requests for the
+given address and port appears to be growing more quickly than the requests
+can be handled. It will be emitted periodically as long as the queue size
+continues to grow. This may occur with a surge of client traffic creating
+a momentary backlog which then subsides as the surge subsides. If it happens
+continually then it most likely indicates a deployment configuration that
+cannot sustain the client load.
+
+TCP_CLIENT_REQUEST_SEND
+=======================
+
+.. code-block:: text
+
+    sending TCP request %1 to %2 port %3
+
+Logged at debug log level 50.
+This debug message is issued when the client is starting to send a TCP
+request to a server. The first argument dumps the request, next arguments
+specify address and port of the server.
+
+TCP_CLIENT_SERVER_RESPONSE_RECEIVED
+===================================
+
+.. code-block:: text
+
+    received TCP response from %1 port %2
+
+Logged at debug log level 40.
+This debug message is issued when the client finished receiving a TCP
+response from the server. The address and port of the server are specified
+as arguments.
 
 TCP_CONNECTION_REJECTED_BY_FILTER
 =================================
@@ -26764,6 +27221,18 @@ This debug message is issued when the server starts receiving new request
 over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
+
+TCP_SERVER_CLIENT_REQUEST_RECEIVED
+==================================
+
+.. code-block:: text
+
+    received TCP request from %1
+
+Logged at debug log level 40.
+This debug message is issued when the server finished receiving a TCP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
 
 TCP_SERVER_RESPONSE_SEND
 ========================

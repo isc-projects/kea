@@ -10,31 +10,37 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/testutils/socket_path.h>
 #include <config/timeouts.h>
 #include <config/unix_command_mgr.h>
-#include <testutils/io_utils.h>
-#include <testutils/unix_control_client.h>
 #include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
+#include <testutils/gtest_utils.h>
+#include <testutils/io_utils.h>
+#include <testutils/unix_control_client.h>
 #include <util/filesystem.h>
-#include <gtest/gtest.h>
-#include <testutils/sandbox.h>
-#include <boost/pointer_cast.hpp>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <thread>
+
+#include <boost/pointer_cast.hpp>
+
+#include <gtest/gtest.h>
 #include <unistd.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::dhcp::test;
 using namespace isc::process;
+using namespace isc::test;
 using namespace isc::util;
 using namespace boost::asio;
 namespace ph = std::placeholders;
@@ -106,8 +112,6 @@ private:
 /// @brief Fixture class intended for testing control channel in D2.
 class CtrlChannelD2Test : public ::testing::Test {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Path to the UNIX socket being used to communicate with the server.
     string socket_path_;
 
@@ -122,11 +126,13 @@ public:
     /// @brief Configuration file.
     static const char* CFG_TEST_FILE;
 
+    /// @brief Whether the current test was skipped.
+    bool skipped_;
+
     /// @brief Default constructor.
     ///
     /// Sets socket path to its default value.
-    CtrlChannelD2Test()
-        : server_(NakedD2Controller::instance()) {
+    CtrlChannelD2Test() : server_(NakedD2Controller::instance()), skipped_(false) {
         setSocketTestPath();
         ::remove(socket_path_.c_str());
         file::PathChecker::enableEnforcement(false);
@@ -230,6 +236,13 @@ public:
 
         int status = 0;
         ConstElementPtr txt = parseAnswer(status, answer);
+
+        bool const too_long(SocketPath::isTooLong(socket_path_));
+        if (too_long) {
+            skipped_ = true;
+            SKIP_IF("Socket name too long.");
+        }
+
         // This should succeed. If not, print the error message.
         ASSERT_EQ(0, status) << txt->str();
 
@@ -518,6 +531,7 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
 
     // Created server should register several additional commands.
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
 
     EXPECT_NO_THROW(answer = CommandMgr::instance().processCommand(list_cmds));
     ASSERT_TRUE(answer);
@@ -553,6 +567,7 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
 // Tests that the server properly responds to invalid commands.
 TEST_F(CtrlChannelD2Test, invalid) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"bogus\" }", response);
@@ -567,6 +582,7 @@ TEST_F(CtrlChannelD2Test, invalid) {
 // Tests that the server properly responds to shutdown command.
 TEST_F(CtrlChannelD2Test, shutdown) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
@@ -579,6 +595,7 @@ TEST_F(CtrlChannelD2Test, shutdown) {
 // to shutdown command.
 TEST_F(CtrlChannelD2Test, shutdownExitValue) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\", "
@@ -594,6 +611,7 @@ TEST_F(CtrlChannelD2Test, shutdownExitValue) {
 // This test verifies that the D2 server handles version-get commands.
 TEST_F(CtrlChannelD2Test, getversion) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // Send the version-get command.
@@ -611,6 +629,7 @@ TEST_F(CtrlChannelD2Test, getversion) {
 // Tests that the server properly responds to list-commands command.
 TEST_F(CtrlChannelD2Test, listCommands) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"list-commands\" }", response);
@@ -639,6 +658,7 @@ TEST_F(CtrlChannelD2Test, listCommands) {
 // This test verifies that the D2 server handles status-get commands.
 TEST_F(CtrlChannelD2Test, statusGet) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
 
     std::string response_txt;
 
@@ -680,6 +700,7 @@ TEST_F(CtrlChannelD2Test, statusGet) {
 // config-get handler are actually converting the configuration correctly.
 TEST_F(CtrlChannelD2Test, configGet) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"config-get\" }", response);
@@ -703,6 +724,7 @@ TEST_F(CtrlChannelD2Test, configGet) {
 // config-hash-get.
 TEST_F(CtrlChannelD2Test, configHashGet) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
@@ -787,6 +809,13 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
+
+    bool const too_long(SocketPath::isTooLong(socket_path_));
+    if (too_long) {
+        skipped_ = true;
+        SKIP_IF("Socket name too long.");
+    }
+
     // The config contains random
     // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
@@ -849,13 +878,13 @@ TEST_F(CtrlChannelD2Test, configTest) {
        << "}}";
 
     // Verify the control channel socket exists.
-    ASSERT_TRUE(test::fileExists(socket_path_));
+    ASSERT_TRUE(fileExists(socket_path_));
 
     // Send the config-test command.
     sendUnixCommand(os.str(), response);
 
     // Verify the control channel socket still exists.
-    EXPECT_TRUE(test::fileExists(socket_path_));
+    EXPECT_TRUE(fileExists(socket_path_));
 
     // Verify the configuration was successful.
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration check successful\" }",
@@ -925,6 +954,13 @@ TEST_F(CtrlChannelD2Test, configSet) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
+
+    bool const too_long(SocketPath::isTooLong(socket_path_));
+    if (too_long) {
+        skipped_ = true;
+        SKIP_IF("Socket name too long.");
+    }
+
     // The config contains random
     // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
     // hash will be different each time. As such, we can do simplified checks:
@@ -988,13 +1024,13 @@ TEST_F(CtrlChannelD2Test, configSet) {
        << "}}";
 
     // Verify the control channel socket exists.
-    ASSERT_TRUE(test::fileExists(socket_path_));
+    ASSERT_TRUE(fileExists(socket_path_));
 
     // Send the config-set command.
     sendUnixCommand(os.str(), response);
 
     // Verify the control channel socket no longer exists.
-    EXPECT_FALSE(test::fileExists(socket_path_));
+    EXPECT_FALSE(fileExists(socket_path_));
 
     // Verify the configuration was successful.
     EXPECT_EQ("{ \"arguments\": { \"hash\": \"5206A1BEC7E3C6ADD5E97C5983861F97739EA05CFEAD823CBBC4"
@@ -1011,6 +1047,7 @@ TEST_F(CtrlChannelD2Test, configSet) {
 // Tests if config-write can be called without any parameters.
 TEST_F(CtrlChannelD2Test, writeConfigNoFilename) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // This is normally set by the command line -c parameter.
@@ -1027,6 +1064,7 @@ TEST_F(CtrlChannelD2Test, writeConfigNoFilename) {
 // Tests if config-write can be called with a valid filename as parameter.
 TEST_F(CtrlChannelD2Test, writeConfigFilename) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // This is normally set by the command line -c parameter.
@@ -1043,6 +1081,7 @@ TEST_F(CtrlChannelD2Test, writeConfigFilename) {
 // Tests if config-write can be called with a valid full path as parameter.
 TEST_F(CtrlChannelD2Test, configWriteFullPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1059,6 +1098,7 @@ TEST_F(CtrlChannelD2Test, configWriteFullPath) {
 // Tests if config-write raises an error with invalid path as parameter.
 TEST_F(CtrlChannelD2Test, configWriteBadPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1078,6 +1118,7 @@ TEST_F(CtrlChannelD2Test, configWriteBadPath) {
 // Tests if config-write raises an error with invalid full path as parameter.
 TEST_F(CtrlChannelD2Test, configWriteBadFullPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1098,6 +1139,7 @@ TEST_F(CtrlChannelD2Test, configWriteBadFullPath) {
 // file is missing.
 TEST_F(CtrlChannelD2Test, configReloadMissingFile) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1119,6 +1161,7 @@ TEST_F(CtrlChannelD2Test, configReloadMissingFile) {
 // file is not a valid JSON.
 TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1149,6 +1192,7 @@ TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
 // file is loaded correctly.
 TEST_F(CtrlChannelD2Test, configReloadFileValid) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
     string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1199,6 +1243,7 @@ TEST_F(CtrlChannelD2Test, configReloadFileValid) {
 /// established. (@todo change when response will be sent in multiple chunks)
 TEST_F(CtrlChannelD2Test, concurrentConnections) {
     EXPECT_NO_THROW(createUnixChannelServer());
+    SKIP_IF(skipped_);
 
     boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
     ASSERT_TRUE(client1);
@@ -1270,6 +1315,7 @@ TEST_F(CtrlChannelD2Test, longCommand) {
     );
 
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     string response;
     std::thread th([this, &response, &command]() {
@@ -1328,6 +1374,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
     );
 
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // The UnixControlClient doesn't have any means to check that the entire
     // response has been received. What we want to do is to generate a
@@ -1387,6 +1434,7 @@ TEST_F(CtrlChannelD2Test, longResponse) {
 // takes too long, after receiving a partial command
 TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
@@ -1418,8 +1466,8 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int timeout_15 = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout_15));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();
@@ -1440,6 +1488,7 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutPartialCommand) {
 // takes too long, having received no data from the client.
 TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
@@ -1466,8 +1515,8 @@ TEST_F(CtrlChannelD2Test, connectionTimeoutNoData) {
         // Let's wait up to 15s for the server's response. The response
         // should arrive sooner assuming that the timeout mechanism for
         // the server is working properly.
-        const unsigned int timeout = 15;
-        ASSERT_TRUE(client->getResponse(response, timeout));
+        const unsigned int timeout_15 = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout_15));
 
         // Explicitly close the client's connection.
         client->disconnectFromServer();

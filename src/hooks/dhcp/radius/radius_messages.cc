@@ -28,6 +28,10 @@ extern const isc::log::MessageID RADIUS_ACCOUNTING_ASYNC_SUCCEED = "RADIUS_ACCOU
 extern const isc::log::MessageID RADIUS_ACCOUNTING_ERROR = "RADIUS_ACCOUNTING_ERROR";
 extern const isc::log::MessageID RADIUS_ACCOUNTING_HISTORY_UPDATE_FAILED = "RADIUS_ACCOUNTING_HISTORY_UPDATE_FAILED";
 extern const isc::log::MessageID RADIUS_ACCOUNTING_NO_HISTORY = "RADIUS_ACCOUNTING_NO_HISTORY";
+extern const isc::log::MessageID RADIUS_ACCOUNTING_STATUS = "RADIUS_ACCOUNTING_STATUS";
+extern const isc::log::MessageID RADIUS_ACCOUNTING_STATUS_ERROR = "RADIUS_ACCOUNTING_STATUS_ERROR";
+extern const isc::log::MessageID RADIUS_ACCOUNTING_STATUS_FAILED = "RADIUS_ACCOUNTING_STATUS_FAILED";
+extern const isc::log::MessageID RADIUS_ACCOUNTING_STATUS_SUCCEED = "RADIUS_ACCOUNTING_STATUS_SUCCEED";
 extern const isc::log::MessageID RADIUS_ACCOUNTING_SYNC = "RADIUS_ACCOUNTING_SYNC";
 extern const isc::log::MessageID RADIUS_ACCOUNTING_SYNC_FAILED = "RADIUS_ACCOUNTING_SYNC_FAILED";
 extern const isc::log::MessageID RADIUS_ACCOUNTING_SYNC_SUCCEED = "RADIUS_ACCOUNTING_SYNC_SUCCEED";
@@ -35,6 +39,10 @@ extern const isc::log::MessageID RADIUS_AUTHENTICATION_ASYNC = "RADIUS_AUTHENTIC
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_ASYNC_ACCEPTED = "RADIUS_AUTHENTICATION_ASYNC_ACCEPTED";
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_ASYNC_FAILED = "RADIUS_AUTHENTICATION_ASYNC_FAILED";
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_ASYNC_REJECTED = "RADIUS_AUTHENTICATION_ASYNC_REJECTED";
+extern const isc::log::MessageID RADIUS_AUTHENTICATION_STATUS = "RADIUS_AUTHENTICATION_STATUS";
+extern const isc::log::MessageID RADIUS_AUTHENTICATION_STATUS_ERROR = "RADIUS_AUTHENTICATION_STATUS_ERROR";
+extern const isc::log::MessageID RADIUS_AUTHENTICATION_STATUS_FAILED = "RADIUS_AUTHENTICATION_STATUS_FAILED";
+extern const isc::log::MessageID RADIUS_AUTHENTICATION_STATUS_SUCCEED = "RADIUS_AUTHENTICATION_STATUS_SUCCEED";
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_SYNC = "RADIUS_AUTHENTICATION_SYNC";
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_SYNC_ACCEPTED = "RADIUS_AUTHENTICATION_SYNC_ACCEPTED";
 extern const isc::log::MessageID RADIUS_AUTHENTICATION_SYNC_FAILED = "RADIUS_AUTHENTICATION_SYNC_FAILED";
@@ -117,6 +125,10 @@ const char* values[] = {
     "RADIUS_ACCOUNTING_ERROR", "Accounting-Request failed for %1 on event %2 (%3) failed with %4 (%5)",
     "RADIUS_ACCOUNTING_HISTORY_UPDATE_FAILED", "failed to insert a record for %1 in the history container",
     "RADIUS_ACCOUNTING_NO_HISTORY", "failed to find the date the lease for %1 was created",
+    "RADIUS_ACCOUNTING_STATUS", "send Status-Server with %1",
+    "RADIUS_ACCOUNTING_STATUS_ERROR", "received error response to Status-Server: %1 (%2) with %3",
+    "RADIUS_ACCOUNTING_STATUS_FAILED", "Status-Server failed: return code %1 (%2)",
+    "RADIUS_ACCOUNTING_STATUS_SUCCEED", "received valid response to Status-Server",
     "RADIUS_ACCOUNTING_SYNC", "Synchronous send Accounting-Request for NAS port %1 with %2",
     "RADIUS_ACCOUNTING_SYNC_FAILED", "Synchronous Accounting-Request failed: return code %1 (%2)",
     "RADIUS_ACCOUNTING_SYNC_SUCCEED", "received valid Accounting-Response (synchronously)",
@@ -124,6 +136,10 @@ const char* values[] = {
     "RADIUS_AUTHENTICATION_ASYNC_ACCEPTED", "received valid Access-Accept with %1",
     "RADIUS_AUTHENTICATION_ASYNC_FAILED", "Access-Request failed: return code %1 (%2)",
     "RADIUS_AUTHENTICATION_ASYNC_REJECTED", "received valid Access-Reject with %1",
+    "RADIUS_AUTHENTICATION_STATUS", "send Status-Server with %1",
+    "RADIUS_AUTHENTICATION_STATUS_ERROR", "received error response to Status-Server: %1 (%2) with %3",
+    "RADIUS_AUTHENTICATION_STATUS_FAILED", "Status-Server failed: return code %1 (%2)",
+    "RADIUS_AUTHENTICATION_STATUS_SUCCEED", "received valid response to Status-Server",
     "RADIUS_AUTHENTICATION_SYNC", "send Access-Request for NAS port %1 with %2",
     "RADIUS_AUTHENTICATION_SYNC_ACCEPTED", "received valid Access-Accept with %1",
     "RADIUS_AUTHENTICATION_SYNC_FAILED", "Access-Request failed: return code %1 (%2)",

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <asiolink/io_address.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/testutils/socket_path.h>
 #include <config/timeouts.h>
 #include <database/database_connection.h>
 #include <config/unix_command_mgr.h>
@@ -27,9 +28,9 @@
 #include <stats/stats_mgr.h>
 #include <util/multi_threading_mgr.h>
 #include <util/chrono_time_utils.h>
+#include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
-#include <testutils/sandbox.h>
 
 #include "marker_file.h"
 
@@ -41,9 +42,7 @@
 #include <sstream>
 #include <thread>
 
-#include <sys/select.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <cstdlib>
 #include <unistd.h>
 
@@ -51,6 +50,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::db;
 using namespace isc::dhcp;
@@ -142,8 +142,6 @@ public:
 
 class CtrlChannelDhcpv6SrvTest : public CtrlDhcpv6SrvTest {
 public:
-    isc::test::Sandbox sandbox;
-
     /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
 
@@ -156,10 +154,13 @@ public:
     /// @brief Asynchronous timer service to detect timeouts.
     IntervalTimerPtr test_timer_;
 
+    /// @brief Whether the current test was skipped.
+    bool skipped_;
+
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    CtrlChannelDhcpv6SrvTest() : interfaces_("\"*\"") {
+    CtrlChannelDhcpv6SrvTest() : interfaces_("\"*\""), skipped_(false) {
         reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
@@ -275,6 +276,13 @@ public:
 
         int status = 0;
         ConstElementPtr txt = isc::config::parseAnswer(status, answer);
+
+        bool const too_long(SocketPath::isTooLong(socket_path_));
+        if (too_long) {
+            skipped_ = true;
+            SKIP_IF("Socket name too long.");
+        }
+
         // This should succeed. If not, print the error message.
         ASSERT_EQ(0, status) << txt->str();
 
@@ -577,6 +585,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"bogus\" }", response);
@@ -593,6 +602,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelNegative) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"shutdown\" }", response);
@@ -605,6 +615,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelShutdown) {
 // test of Dhcpv6 statistics.
 TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // Check statistic-get
@@ -628,6 +639,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "pkt6-decline-received",
         "pkt6-release-received",
         "pkt6-infrequest-received",
+        "pkt6-lease-query-received",
         "pkt6-dhcpv4-query-received",
         "pkt6-dhcpv4-response-received",
         "pkt6-addr-reg-inform-received",
@@ -636,10 +648,18 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
         "pkt6-sent",
         "pkt6-advertise-sent",
         "pkt6-reply-sent",
+        "pkt6-lease-query-reply-sent",
         "pkt6-dhcpv4-response-sent",
         "pkt6-addr-reg-reply-sent",
         "pkt6-service-disabled",
         "pkt6-parse-failed",
+        "pkt6-queue-full",
+        "pkt6-duplicate",
+        "pkt6-rfc-violation",
+        "pkt6-admin-filtered",
+        "pkt6-not-for-us",
+        "pkt6-processing-failed",
+        "pkt6-limit-exceeded",
         "pkt6-receive-drop",
         "v6-allocation-fail",
         "v6-allocation-fail-shared-network",
@@ -730,6 +750,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlChannelStats) {
 TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
     setLogTestPath("/dev");
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -914,6 +935,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSet) {
 TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
     setLogTestPath("/dev");
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -1036,10 +1058,170 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
     // Create a pid file holding the PID of the current process. Choosing the
     // pid of the current process guarantees that when the backend starts up
     // the process is alive.
-    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                                    Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
+
+    // Send the config-set command
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with an error
+    EXPECT_EQ("{ \"result\": 1, "
+              "\"text\": \"Can not update configuration while lease file cleanup process is running.\" }",
+              response);
+
+    // Check that the config was not lost
+    subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    def = LibDHCP::getRuntimeOptionDef(DHCP6_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Verify the control channel socket exists.
+    ASSERT_TRUE(fileExists(socket_path_));
+
+    // Clean up after the test.
+    CfgMgr::instance().clear();
+}
+
+// Check that the "config-set" fails when LFC is running using a name.
+TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning2) {
+    setLogTestPath("/dev");
+    createUnixChannelServer();
+    SKIP_IF(skipped_);
+
+    // Define strings to permutate the config arguments
+    // (Note the line feeds makes errors easy to find)
+    string set_config_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string dhcp6_cfg_txt =
+        "    \"Dhcp6\": { \n"
+        "        \"interfaces-config\": { \n"
+        "            \"interfaces\": [\"*\"] \n"
+        "        },   \n"
+        "        \"preferred-lifetime\": 3000, \n"
+        "        \"valid-lifetime\": 4000, \n"
+        "        \"renew-timer\": 1000, \n"
+        "        \"rebind-timer\": 2000, \n"
+        "        \"lease-database\": { \n"
+        "           \"type\": \"memfile\", \n"
+        "           \"persist\":false, \n"
+        "           \"lfc-interval\": 0  \n"
+        "        }, \n"
+        "        \"expired-leases-processing\": { \n"
+        "            \"reclaim-timer-wait-time\": 0, \n"
+        "            \"hold-reclaimed-time\": 0, \n"
+        "            \"flush-reclaimed-timer-wait-time\": 0 \n"
+        "        },"
+        "        \"subnet6\": [ \n";
+    string subnet1 =
+        "               {\"subnet\": \"3002::/64\", \"id\": 1, \n"
+        "                \"pools\": [{ \"pool\": \"3002::100-3002::200\" }]}\n";
+    string subnet2 =
+        "               {\"subnet\": \"3003::/64\", \"id\": 2, \n"
+        "                \"pools\": [{ \"pool\": \"3003::100-3003::200\" }]}\n";
+    string bad_subnet =
+        "               {\"comment\": \"3005::/64\", \"id\": 10, \n"
+        "                \"pools\": [{ \"pool\": \"3005::100-3005::200\" }]}\n";
+    string subnet_footer =
+        "          ] \n";
+    string option_def =
+        "    ,\"option-def\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"type\": \"uint32\",\n"
+        "        \"array\": false,\n"
+        "        \"record-types\": \"\",\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"encapsulate\": \"\"\n"
+        "    }\n"
+        "]\n";
+    string option_data =
+        "    ,\"option-data\": [\n"
+        "    {\n"
+        "        \"name\": \"foo\",\n"
+        "        \"code\": 163,\n"
+        "        \"space\": \"dhcp6\",\n"
+        "        \"csv-format\": true,\n"
+        "        \"data\": \"12345\"\n"
+        "    }\n"
+        "]\n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "       \"socket-type\": \"unix\", \n"
+        "       \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+    string logger_txt =
+        "       ,\"loggers\": [ { \n"
+        "            \"name\": \"kea\", \n"
+        "            \"severity\": \"FATAL\", \n"
+        "            \"output-options\": [{ \n"
+        "                \"output\": \"/dev/null\", \n"
+        "                \"maxsize\": 0"
+        "            }] \n"
+        "        }] \n";
+
+    std::ostringstream os;
+
+    // Create a valid config with all the parts should parse
+    os << set_config_txt << ","
+        << args_txt
+        << dhcp6_cfg_txt
+        << subnet1
+        << subnet_footer
+        << option_def
+        << option_data
+        << control_socket_header
+        << socket_path_
+        << control_socket_footer
+        << logger_txt
+        << "}\n"                      // close dhcp6
+        << "}}";
+
+    // Send the config-set command
+    std::string response;
+    sendUnixCommand(os.str(), response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea6.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet6Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
+    EXPECT_EQ(1, subnets->size());
+
+    OptionDefinitionPtr def =
+        LibDHCP::getRuntimeOptionDef(DHCP6_OPTION_SPACE, 163);
+    ASSERT_TRUE(def);
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = "kea-leases6.csv";
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(getLeaseFilePath(pmap["name"]),
+                                                    Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* f) {
+        reinterpret_cast<PIDFile*>(f)->deleteFile();
+    });
 
     // Send the config-set command
     sendUnixCommand(os.str(), response);
@@ -1068,6 +1250,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetLFCRunning) {
 // config-get handler are actually converting the configuration correctly.
 TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"config-get\" }", response);
@@ -1092,6 +1275,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configGet) {
 // config-hash-get.
 TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"config-hash-get\" }", response);
@@ -1123,6 +1307,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configHashGet) {
 TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
     setLogTestPath("/dev");
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Define strings to permutate the config arguments
     // (Note the line feeds makes errors easy to find)
@@ -1272,6 +1457,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTest) {
 // Verify that the "subnet6-select-test" command will do what we expect.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnetSelectTest) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     string command_txt = "{ \"command\": \"subnet6-select-test\", \"arguments\": { \"classes\": [ \"foo\" ] } }";
 
@@ -1286,6 +1472,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnetSelectTest) {
 // This test verifies that the DHCP server handles version-get commands
 TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     std::string response;
 
@@ -1304,6 +1491,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, getVersion) {
 // This test verifies that the DHCP server handles server-tag-get command
 TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     std::string response;
     std::string expected;
@@ -1325,6 +1513,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, serverTagGet) {
 // This test verifies that the DHCP server handles status-get commands
 TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // start_ is initialized by init.
     ASSERT_THROW(server_->init("/no/such/file"), BadValue);
@@ -1440,6 +1629,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGet) {
 TEST_F(CtrlChannelDhcpv6SrvTest, noManagers) {
     // Send the status-get command.
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     LeaseMgrFactory::destroy();
     HostMgr::create();
     string response_text;
@@ -1464,6 +1654,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSockets) {
 
     // Send the status-get command.
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     string response_text;
     sendUnixCommand(R"({ "command": "status-get" })", response_text);
     ConstElementPtr response;
@@ -1502,6 +1693,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSocketsErrors) {
 
     // Send the status-get command.
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     string response_text;
     sendUnixCommand(R"({ "command": "status-get" })", response_text);
     ConstElementPtr response;
@@ -1539,6 +1731,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, statusGetSocketsErrors) {
 // This test verifies that the DHCP server handles config-backend-pull command
 TEST_F(CtrlChannelDhcpv6SrvTest, configBackendPull) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     std::string response;
     std::string expected;
@@ -1553,6 +1746,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configBackendPull) {
 // leases on leases-reclaim command
 TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Create expired leases. Leases are expired by 40 seconds ago
     // (valid lifetime = 60, cltt = now - 100).
@@ -1615,6 +1809,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaim) {
 // leases on leases-reclaim command with remove = true
 TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Create expired leases. Leases are expired by 40 seconds ago
     // (valid lifetime = 60, cltt = now - 100).
@@ -1658,6 +1853,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, controlLeasesReclaimRemove) {
 // via ControlChannel
 TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"list-commands\" }", response);
@@ -1696,6 +1892,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
 // Tests if config-write can be called without any parameters.
 TEST_F(CtrlChannelDhcpv6SrvTest, configWriteNoFilename) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1712,6 +1909,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteNoFilename) {
 // Tests if config-write can be called with a valid filename as parameter.
 TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFilename) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1727,6 +1925,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFilename) {
 // Tests if config-write can be called with a valid full path as parameter.
 TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFullPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1742,6 +1941,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteFullPath) {
 // Tests if config-write raises an error with invalid path as parameter.
 TEST_F(CtrlChannelDhcpv6SrvTest, configWriteBadPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1760,6 +1960,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteBadPath) {
 // Tests if config-write raises an error with invalid full path as parameter.
 TEST_F(CtrlChannelDhcpv6SrvTest, configWriteBadFullPath) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set by the command line -c parameter.
@@ -1779,6 +1980,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configWriteBadFullPath) {
 // file is missing.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadMissingFile) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1800,6 +2002,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadMissingFile) {
 // file is not a valid JSON.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1827,6 +2030,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadBrokenFile) {
 // Check that the "config-reload" fails when LFC is running.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1860,10 +2064,69 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
     // Create a pid file holding the PID of the current process. Choosing the
     // pid of the current process guarantees that when the backend starts up
     // the process is alive.
-    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"], Memfile_LeaseMgr::FILE_PID));
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(pmap["name"],
+                                                    Memfile_LeaseMgr::FILE_PID));
     pid_file.write();
 
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&pid_file), [](void* p) { reinterpret_cast<PIDFile*>(p)->deleteFile(); });
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* pf) {
+        reinterpret_cast<PIDFile*>(pf)->deleteFile();
+    });
+
+    // Now tell Kea to reload its config.
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload will fail.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"Config reload failed: configuration error using file 'test8.json': "
+              "Can not update configuration while lease file cleanup process is running.\" }",
+              response);
+
+    ::remove("test8.json");
+}
+
+// Check that the "config-reload" fails when LFC is running using a name.
+TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning2) {
+    createUnixChannelServer();
+    SKIP_IF(skipped_);
+    std::string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("test8.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp6\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"subnet6\": ["
+        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1 },"
+        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "     ],"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+    ofstream f("test8.json", ios::trunc);
+    f << cfg_txt;
+    f.close();
+
+    // Create the backend configuration.
+    DatabaseConnection::ParameterMap pmap;
+    pmap["type"] = "memfile";
+    pmap["universe"] = "6";
+    pmap["name"] = "kea-leases6.csv";
+    pmap["lfc-interval"] = "1";
+
+    // Create a pid file holding the PID of the current process. Choosing the
+    // pid of the current process guarantees that when the backend starts up
+    // the process is alive.
+    PIDFile pid_file(Memfile_LeaseMgr::appendSuffix(getLeaseFilePath(pmap["name"]),
+                                                    Memfile_LeaseMgr::FILE_PID));
+    pid_file.write();
+
+    std::unique_ptr<void, void (*)(void*)> p(static_cast<void*>(&pid_file), [](void* pf) {
+        reinterpret_cast<PIDFile*>(pf)->deleteFile();
+    });
 
     // Now tell Kea to reload its config.
     sendUnixCommand("{ \"command\": \"config-reload\" }", response);
@@ -1880,6 +2143,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadLFCRunning) {
 // file is loaded correctly.
 TEST_F(CtrlChannelDhcpv6SrvTest, configReloadValid) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -1942,6 +2206,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadDetectInterfaces) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // This is normally set to whatever value is passed to -c when the server is
@@ -2001,6 +2266,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configReloadDetectInterfaces) {
 // parameters.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableBadParam) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{"
@@ -2076,6 +2342,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableBadParam) {
 // This test verifies if it is possible to disable DHCP service via command.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"dhcp-disable\" }", response);
@@ -2160,6 +2427,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisable) {
 // the origin-id.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableOriginId) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     EXPECT_TRUE(server_->network_state_->isServiceEnabled());
@@ -2193,6 +2461,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableOriginId) {
 // period of time, after which the service is automatically enabled.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     // Send a command to disable DHCP service for 3 seconds.
@@ -2223,6 +2492,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpDisableTemporarily) {
 // parameters.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableBadParam) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
     ConstElementPtr rsp;
 
@@ -2284,6 +2554,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableBadParam) {
 // This test verifies if it is possible to enable DHCP service via command.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\": \"dhcp-enable\" }", response);
@@ -2364,6 +2635,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnable) {
 // the origin-id.
 TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableOriginId) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     ConstElementPtr rsp;
@@ -2418,6 +2690,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, dhcpEnableOriginId) {
 // This test verifies that subnet6-select-test command performs sanity check parameters.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestBadParam) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
     ConstElementPtr rsp;
 
@@ -2588,6 +2861,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestBadParam) {
 // remote/source address.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestAddr) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
@@ -2639,6 +2913,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestAddr) {
 // incoming interface.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestIface) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
@@ -2691,6 +2966,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestIface) {
 // relay link address.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestRelayLinkaddr) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
@@ -2742,6 +3018,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestRelayLinkaddr) {
 // relay interface id.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestRelayInterfaceId) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
@@ -2801,6 +3078,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestRelayInterfaceId) {
 // This test verifies if subnet6-select-test command returns proper guarded subnet.
 TEST_F(CtrlChannelDhcpv6SrvTest, subnet6SelectTestClass) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     auto subnet = Subnet6::create(IOAddress("2001:db8:1::"),
@@ -2865,6 +3143,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, keaLfcStartNoBackend) {
 /// Verify that kea-lfc-start requires persist true.
 TEST_F(CtrlChannelDhcpv6SrvTest, keaLfcStartPersistFalse) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
     std::string response;
 
     sendUnixCommand("{ \"command\" : \"kea-lfc-start\" }", response);
@@ -2883,6 +3162,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, keaLfcStartPersistFalse) {
 /// connections.
 TEST_F(CtrlChannelDhcpv6SrvTest, concurrentConnections) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     boost::scoped_ptr<UnixControlClient> client1(new UnixControlClient());
     ASSERT_TRUE(client1);
@@ -2954,6 +3234,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longCommand) {
     );
 
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     std::string response;
     std::thread th([this, &response, &command]() {
@@ -3012,6 +3293,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
     );
 
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // The UnixControlClient doesn't have any means to check that the entire
     // response has been received. What we want to do is to generate a
@@ -3071,6 +3353,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, longResponse) {
 // takes too long, having received a partial command.
 TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
@@ -3125,6 +3408,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutPartialCommand) {
 // takes too long, having received no data from the client.
 TEST_F(CtrlChannelDhcpv6SrvTest, connectionTimeoutNoData) {
     createUnixChannelServer();
+    SKIP_IF(skipped_);
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.

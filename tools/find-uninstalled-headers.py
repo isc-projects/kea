@@ -19,7 +19,10 @@ EXCLUDE_LIST = [
 
 def main():
     meson_builds = sorted(pathlib.Path('./src/lib').glob('**/meson.build'))
-    headers = sorted(pathlib.Path('./src/lib').glob('**/*.h'))
+    headers = []
+    for ext in ['h', 'hh']:
+        headers += pathlib.Path('./src/lib').glob(f'**/*.{ext}')
+    headers = sorted(headers)
     headers_pattern = re.compile(r'kea_.*_headers = \[([^]]*)(\]?)$')
     failure = False
     for meson_build in meson_builds:

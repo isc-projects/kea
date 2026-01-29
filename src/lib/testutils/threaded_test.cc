@@ -43,9 +43,7 @@ ThreadedTest::signalStopped() {
 void
 ThreadedTest::doWait(bool& flag) {
     std::unique_lock<std::mutex> lock(mutex_);
-    while (!flag) {
-        condvar_.wait(lock);
-    }
+    condvar_.wait(lock, [&]() { return (flag); });
 }
 
 void

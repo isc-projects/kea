@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,18 +8,22 @@
 
 #include <asiolink/testutils/timed_signal.h>
 #include <cc/data.h>
+#include <config/unix_command_config.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
 #include <process/testutils/d_test_stubs.h>
 #include <testutils/gtest_utils.h>
+#include <util/filesystem.h>
 
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink::test;
+using namespace isc::config;
 using namespace isc::netconf;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
+using namespace isc::util::file;
 using namespace std;
 
 namespace {
@@ -33,17 +37,31 @@ const char* valid_netconf_config =
     "    \"dhcp4\": {"
     "      \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/first/dhcp4/socket\""
+    "        \"socket-name\": \"dhcp4-socket\""
     "      }"
     "    },"
     "    \"dhcp6\": {"
     "      \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/first/dhcp6/socket\""
+    "        \"socket-name\": \"dhcp6-socket\""
     "      }"
     "    }"
     "  }"
     "}";
+
+string const bad_socket_name_config(R"(
+{
+  "managed-servers": {
+    "dhcp6": {
+      "control-socket": {
+        "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
+        "socket-type": "unix"
+      },
+      "model": "kea-dhcp6-server"
+    }
+  }
+}
+)");
 
 /// @brief test fixture class for testing NetconfController class.
 ///
@@ -55,6 +73,11 @@ public:
     /// @brief Constructor.
     NetconfControllerTest()
         : DControllerTest(NetconfController::instance) {
+        setSocketTestPath();
+    }
+
+    void TearDown() override {
+        resetSocketPath();
     }
 
     /// @brief Returns pointer to NetconfProcess instance.
@@ -78,6 +101,21 @@ public:
             p = getNetconfCfgMgr()->getNetconfConfig();
         }
         return (p);
+    }
+
+    /// @brief Sets the path in which the socket can be created.
+    ///
+    /// @param explicit_path path to use as the socket path.
+    void setSocketTestPath(const std::string explicit_path = string()) {
+        string path(UnixCommandConfig::getSocketPath(
+            true, (!explicit_path.empty() ? explicit_path : TEST_DATA_BUILDDIR)));
+        UnixCommandConfig::setSocketPathPerms(getPermissions(path));
+    }
+
+    /// @brief Resets the socket path to the default.
+    void resetSocketPath() {
+        UnixCommandConfig::getSocketPath(true);
+        UnixCommandConfig::setSocketPathPerms();
     }
 };  // NetconfControllerTest
 
@@ -184,6 +222,15 @@ TEST_F(NetconfControllerTest, sigtermShutdown) {
     // the maximum run time.  Give generous margin to accommodate slow
     // test environs.
     EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Check that a bad socket path is refused.
+TEST_F(NetconfControllerTest, badSocketPath) {
+    time_duration elapsed_time;
+    EXPECT_THROW_MSG(runWithConfig(bad_socket_name_config, 200, elapsed_time), ProcessInitError,
+                     string("Could Not load configuration file: invalid path specified: '/tmp', "
+                            "supported path is '") +
+                         UnixCommandConfig::getSocketPath() + "'");
 }
 
 }  // namespace

@@ -1,6 +1,7 @@
 kea_tcp_lib = shared_library(
     'kea-tcp',
     'mt_tcp_listener_mgr.cc',
+    'tcp_client.cc',
     'tcp_connection.cc',
     'tcp_connection_pool.cc',
     'tcp_listener.cc',
@@ -14,12 +15,13 @@ kea_tcp_lib = shared_library(
     install_rpath: INSTALL_RPATH,
     build_rpath: BUILD_RPATH,
     link_with: LIBS_BUILT_SO_FAR,
-    version: '43.0.0',
+    version: '44.0.0',
 )
 LIBS_BUILT_SO_FAR = [kea_tcp_lib] + LIBS_BUILT_SO_FAR
 subdir('tests')
 kea_tcp_headers = [
     'mt_tcp_listener_mgr.h',
+    'tcp_client.h',
     'tcp_connection.h',
     'tcp_connection_acceptor.h',
     'tcp_connection_pool.h',
@@ -27,6 +29,7 @@ kea_tcp_headers = [
     'tcp_log.h',
     'tcp_messages.h',
     'tcp_stream_msg.h',
+    'wire_data.h',
 ]
 install_headers(kea_tcp_headers, preserve_path: true, subdir: 'kea/tcp')
 

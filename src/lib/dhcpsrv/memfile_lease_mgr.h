@@ -42,7 +42,7 @@ class LFCSetup;
 /// file will contain many entries for each lease. In order to mitigate this
 /// problem, the backend implements the Lease File Cleanup mechanism which is
 /// described on the Kea wiki:
-/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design.
+/// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design.
 ///
 /// The backend installs an @c asiolink::IntervalTimer to periodically execute
 /// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
@@ -283,6 +283,15 @@ public:
     getLeases4(const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const override;
 
+    /// @brief Returns all IPv4 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(uint32_t state,
+                                        SubnetID subnet_id) const override;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// This function returns a copy of the lease. The modification in the
@@ -400,6 +409,15 @@ public:
     getLeases6(SubnetID subnet_id,
                const asiolink::IOAddress& lower_bound_address,
                const LeasePageSize& page_size) const override;
+
+    /// @brief Returns all IPv6 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(uint32_t state,
+                                        SubnetID subnet_id) const override;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -669,6 +687,22 @@ private:
                             const LeasePageSize& page_size,
                             Lease4Collection& collection) const;
 
+    /// @brief Returns all IPv4 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    /// @param collection lease collection
+    void getLeases4ByStateInternal(uint32_t state,
+                                   SubnetID subnet_id,
+                                   Lease4Collection& collection) const;
+
+    /// @brief Returns all IPv4 leases for the particular state.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param collection lease collection
+    void getLeases4ByStateInternal(uint32_t state,
+                                   Lease4Collection& collection) const;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address and type.
     ///
     /// @param type specifies lease type: (NA, TA or PD)
@@ -766,6 +800,22 @@ private:
     getLeases6Internal(SubnetID subnet_id,
                        const asiolink::IOAddress& lower_bound_address,
                        const LeasePageSize& page_size) const;
+
+    /// @brief Returns all IPv6 leases for the particular state and subnet.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param subnet_id the subnet identifier (0 for all leases).
+    /// @param collection lease collection
+    void getLeases6ByStateInternal(uint32_t state,
+                                   SubnetID subnet_id,
+                                   Lease6Collection& collection) const;
+
+    /// @brief Returns all IPv6 leases for the particular state.
+    ///
+    /// @param state the state e.g. 1 (declined).
+    /// @param collection lease collection
+    void getLeases6ByStateInternal(uint32_t state,
+                                   Lease6Collection& collection) const;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -1006,7 +1056,7 @@ public:
     /// - LFC PID File: ".pid"
     ///
     /// See
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design
     /// for details.
     ///
     /// @param file_name A base file name to which suffix is appended.
@@ -1094,7 +1144,7 @@ private:
     /// The <filename>.2, <filename>.1 and <filename>.completed are the
     /// products of the lease file cleanups (LFC).
     /// See:
-    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design
+    /// https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design
     /// for details.
     ///
     /// @note: When the server starts up or is reconfigured it will try to
@@ -1313,7 +1363,7 @@ private:
     /// the lease files.
     ///
     /// For the design and the terminology used in this description refer to
-    /// the https://gitlab.isc.org/isc-projects/kea/wikis/designs/Lease-File-Cleanup-design.
+    /// the https://gitlab.isc.org/isc-projects/kea/-/wikis/Designs/lease-file-cleanup-design.
     ///
     /// If the method finds that the %Lease File Copy exists it simply runs
     /// the @c kea-lfc application.
@@ -1607,6 +1657,12 @@ private:
     /// Must be called from a thread-safe context.
     virtual void writeLeases6Internal(const std::string& filename);
 
+    /// @brief Post a call to the appropriate main thread callback when memfile
+    /// access is lost (e.g. disk full).
+    /// Note this should only be called within a thread-safe context
+    /// (i.e. inside *Internal functions).
+    void handleDbLost();
+
 public:
     /// @brief Factory class method.
     ///
@@ -1616,6 +1672,12 @@ public:
     /// @return The Memfile Lease Manager.
     static TrackingLeaseMgrPtr
     factory(const isc::db::DatabaseConnection::ParameterMap& parameters);
+
+    /// @brief Returns the connection's ReconnectCtl object.
+    /// This is intended for testing purposes only.
+    util::ReconnectCtlPtr reconnectCtl() {
+        return (conn_.reconnectCtl());
+    }
 };
 
 /// @brief Initialization structure used to register and deregister Memfile Lease Mgr.
