@@ -33,7 +33,7 @@ This is logged before running the kea-admin command to automatically initialize 
 after getting the schema version initially failed. The full kea-admin command is shown.
 
 % DATABASE_MYSQL_ROLLBACK rolling back MySQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % DATABASE_MYSQL_START_TRANSACTION starting new MySQL transaction
@@ -75,7 +75,7 @@ This is logged before running the kea-admin command to automatically initialize 
 after getting the schema version initially failed. The full kea-admin command is shown.
 
 % DATABASE_PGSQL_ROLLBACK rolling back PostgreSQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % DATABASE_PGSQL_ROLLBACK_SAVEPOINT rolling back PostgreSQL database to savepoint: $1

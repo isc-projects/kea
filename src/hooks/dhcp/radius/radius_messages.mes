@@ -393,7 +393,7 @@ attributes, so there can be multiple log messages per RADIUS message.
 It displays the message identifier, the exchange identifier and the
 value of the Reply-Message attribute.
 
-% RADIUS_RESUME_FAILED Resuming ithe RADIUS thread pool failed: %1
+% RADIUS_RESUME_FAILED Resuming the RADIUS thread pool failed: %1
 This error message is emitted when an unexpected error occurred while attempting
 to resume the thread pool. This error is highly unlikely and indicates a
 programmatic issue that should be reported as defect.

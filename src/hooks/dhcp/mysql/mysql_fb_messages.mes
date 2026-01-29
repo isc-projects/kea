@@ -48,7 +48,7 @@ This error message is issued when TLS for the connection was required but
 TLS is not used.
 
 % LEGAL_LOG_MYSQL_ROLLBACK rolling back MySQL database
-The code has issued a rollback call.  All outstanding transaction will
+The code has issued a rollback call.  All outstanding transactions will
 be rolled back and not committed to the database.
 
 % LEGAL_LOG_MYSQL_START_TRANSACTION starting new MySQL transaction
