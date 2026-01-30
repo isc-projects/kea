@@ -133,10 +133,14 @@ public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv6Srv> server_;
 
+    /// @brief Flag which indicates if the server has stopped the IOService and
+    /// the client needs to handle it's own IO events.
+    bool handle_stop_;
+
     /// @brief Default constructor
     ///
     /// Sets socket path to its default value.
-    BaseCtrlChannelDhcpv6Test() : interfaces_("\"*\"") {
+    BaseCtrlChannelDhcpv6Test() : interfaces_("\"*\""), handle_stop_(false) {
         reset();
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
@@ -193,9 +197,23 @@ public:
         try {
             io_service->run();
         } catch (const std::exception& ex) {
+            handle_stop_ = false;
             ADD_FAILURE() << "Exception thrown while running test. Error: " << ex.what();
         } catch (...) {
+            handle_stop_ = false;
             ADD_FAILURE() << "Unknown exception thrown while running test.";
+        }
+        if (handle_stop_) {
+            if (io_service->stopped()) {
+                io_service->restart();
+            }
+            try {
+                io_service->run();
+            } catch (const std::exception& ex) {
+                ADD_FAILURE() << "Exception thrown while running test (client IO). Error: " << ex.what();
+            } catch (...) {
+                ADD_FAILURE() << "Unknown exception thrown while running test (client IO).";
+            }
         }
         test_timer.cancel();
         if (io_service->stopped()) {
@@ -900,6 +918,7 @@ TEST_F(HttpsCtrlChannelDhcpv6Test, controlChannelNegative) {
 // via ControlChannel.
 void
 BaseCtrlChannelDhcpv6Test::testControlChannelShutdown() {
+    handle_stop_ = true;
     createHttpChannelServer();
     std::string response;
 
