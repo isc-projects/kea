@@ -4841,7 +4841,7 @@ as a last resort. For example:
 
 .. note::
 
-   Beginning with Kea 2.7.8, the default value for ``cache-threshold`` is
+   Beginning with Kea 3.0.0, the default value for ``cache-threshold`` is
    0.25 while ``cache-max-age`` is left unspecified.  This means that lease
    caching is enabled by default.  It may be disabled at the desired scope
    either by setting ``cache-threshold`` to 0.0 or setting ``cache-max-age``
