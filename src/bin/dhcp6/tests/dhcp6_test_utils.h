@@ -768,7 +768,8 @@ public:
         // Note that when comparing addresses, we compare the textual
         // representation. IOAddress does not support being streamed to
         // an ostream, which means it can't be used in EXPECT_EQ.
-        EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
+        EXPECT_TRUE(subnet_->inPool(type, addr->getAddress())) 
+                    << "address:" << addr->getAddress().toText();
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
         if (subnet_->getPreferred().getMin() != subnet_->getPreferred().getMax()) {
             EXPECT_LE(subnet_->getPreferred().getMin(), addr->getPreferred());

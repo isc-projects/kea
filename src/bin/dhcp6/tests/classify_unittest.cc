@@ -3465,4 +3465,73 @@ TEST_F(ClassifyTest, classTaggingList) {
     }
 }
 
+// Verify that a template class's dependency on KNOWN is detected.
+TEST_F(ClassifyTest, templateDependOnKnown) {
+    IfaceMgrTestConfig test_config(true);
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "preferred-lifetime": 3000,
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "reservations-global" : true,
+        "reservations": [
+        {
+            "duid": "31:31:31"
+        }],
+
+        "subnet6": [{
+            "pools": [{
+                "client-classes": [ "SPAWN_template-client-id_111" ],
+                "pool": "2001:db8:1::/64"
+            }],
+            "subnet": "2001:db8:1::/64",
+            "id": 1,
+            "interface": "eth1",
+        }],
+        "client-classes": [{
+            "name": "template-client-id",
+            "template-test": "ifelse(member('KNOWN'), substring(option[1].hex,0,3), '')"
+        }]
+    }
+    )^";
+
+    ASSERT_NO_THROW(configure(config));
+
+    uint8_t duid[] = { 0x31, 0x31, 0x31 };
+    OptionBuffer buf(duid, duid + sizeof(duid));
+    OptionPtr clientid(new Option(Option::V6, D6O_CLIENTID, buf));
+    Pkt6Ptr query = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 2345));
+    query->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    query->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
+
+    // Classify packets
+    srv_->classifyPacket(query);
+
+    // Verify class membership isn't set yet because it depends on KNOWN.
+    EXPECT_FALSE(query->inClass("template-client-id"));
+    EXPECT_FALSE(query->inClass("SPAWN_template-client-id_def"));
+
+    // Process the query
+    Pkt6Ptr response;
+    processQuery(*srv_, query, response);
+
+    EXPECT_TRUE(query->inClass("KNOWN"));
+    EXPECT_TRUE(query->inClass("template-client-id"));
+    EXPECT_TRUE(query->inClass("SPAWN_template-client-id_111"));
+
+    ASSERT_TRUE(response);
+    EXPECT_EQ(static_cast<int>(response->getType()), DHCPV6_ADVERTISE);
+    auto iaddr = checkIA_NA(response, 234, 1000, 2000);
+
+    ASSERT_TRUE(iaddr);
+    EXPECT_EQ(iaddr->getAddress(), IOAddress("2001:db8:1::"));
+}
+
 } // end of anonymous namespace

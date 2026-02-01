@@ -2547,4 +2547,72 @@ TEST_F(ClassifyTest, earlySubnetNoFallback) {
     ASSERT_FALSE(resp);
 }
 
+// Verify that a template class's dependency on KNOWN is detected.
+TEST_F(ClassifyTest, templateDependOnKnown) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    string config = R"^(
+    {
+        "interfaces-config": {
+            "interfaces": [ "*" ]
+        },
+        "rebind-timer": 2000,
+        "renew-timer": 1000,
+        "valid-lifetime": 4000,
+        "reservations-global" : true,
+        "reservations": [
+        {
+            "client-id": "31:31:31"
+        }],
+
+        "subnet4": [{
+            "id": 1,
+            "subnet": "192.0.2.0/24",
+            "pools": [{
+                "client-classes": [ "SPAWN_template-client-id_111" ],
+                "pool": "192.0.2.1 - 192.0.2.100"
+             }]
+        }],
+        "client-classes": [{
+            "name": "template-client-id",
+            "template-test": "ifelse(member('KNOWN'), substring(option[61].hex,0,3), '')"
+        }]
+    }
+    )^";
+
+    // Configure DHCP server.
+    configure(config, *srv_);
+
+    // Create packets with enough to select the subnet
+    auto id = ClientId::fromText("31:31:31");
+    OptionPtr clientid = (OptionPtr(new Option(Option::V4,
+                                               DHO_DHCP_CLIENT_IDENTIFIER,
+                                               id->getClientId())));
+
+    Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 1234));
+    query->setRemoteAddr(IOAddress("192.0.2.1"));
+    query->addOption(clientid);
+    query->setIface("eth1");
+    query->setIndex(ETH1_INDEX);
+
+    // Classify packets
+    srv_->classifyPacket(query);
+
+    // Verify class membership isn't set yet because it depends on KNOWN.
+    EXPECT_FALSE(query->inClass("template-client-id"));
+    EXPECT_FALSE(query->inClass("SPAWN_template-client-id_111"));
+
+    // Process query
+    Pkt4Ptr response = srv_->processDiscover(query);
+
+    EXPECT_TRUE(query->inClass("KNOWN"));
+    EXPECT_TRUE(query->inClass("template-client-id"));
+    EXPECT_TRUE(query->inClass("SPAWN_template-client-id_111"));
+
+    ASSERT_TRUE(response);
+    EXPECT_EQ(static_cast<int>(response->getType()), DHCPOFFER);
+    EXPECT_EQ(response->getYiaddr(), IOAddress("192.0.2.1"));
+}
+
 } // end of anonymous namespace

@@ -7,6 +7,7 @@
 #include <config.h>
 #include <cc/data.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_space.h>
@@ -14,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <boost/scoped_ptr.hpp>
 #include <asiolink/io_address.h>
+#include <testutils/gtest_utils.h>
 
 #include <boost/make_shared.hpp>
 #include <gtest/gtest.h>
@@ -1673,6 +1675,56 @@ TEST(ClientClassDictionary, templateCreateOptions) {
     ASSERT_TRUE(option);
     EXPECT_EQ(OptionBuffer(option_desc.formatted_value_.begin(), option_desc.formatted_value_.end()),
               option->getData());
+}
+
+TEST(ClientClassDictionary, templateClassDependOnKnown) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+            //"template-test": "ifelse((option[1].exists and member('KNOWN')), hexstring(substring(option[1].hex, 0, 4),              ''), '')"
+    std::string config_txt = R"^([
+        {
+            "name": "does_not",
+            "template": "hexstring(substring(option[1].hex,0,4))"
+        },
+        {
+            "name": "does",
+            "template-test": "ifelse(member('KNOWN'), hexstring(substring(option[1].hex, 0, 4), ''), '')"
+        },
+        {
+            "name": "does_too",
+            "template-test": "ifelse(member('UNKNOWN'), hexstring(substring(option[1].hex, 0, 4), ''), '')"
+        },
+        {
+            "name": "depend_on_undefined",
+            "template-test": "ifelse(member('SPAWN_does_0003001b'), hexstring(substring(option[1].hex, 0, 4), ''), '')"
+        }
+     ])^";
+
+    ElementPtr config;
+    ASSERT_NO_THROW_LOG(config = Element::fromJSON(config_txt));
+
+    ClientClassDictionaryPtr dictionary;
+    ClientClassDefListParser parser;
+    ASSERT_NO_THROW_LOG(dictionary = parser.parse(config, AF_INET6, true));
+    ASSERT_TRUE(dictionary);
+
+    ClientClassDefPtr cdef;
+    ASSERT_NO_THROW_LOG(cdef = dictionary->findClass("does_not"));
+    ASSERT_TRUE(cdef);
+    ASSERT_FALSE(cdef->getDependOnKnown());
+
+    ASSERT_NO_THROW_LOG(cdef = dictionary->findClass("does"));
+    ASSERT_TRUE(cdef);
+    ASSERT_TRUE(cdef->getDependOnKnown());
+
+    ASSERT_NO_THROW_LOG(cdef = dictionary->findClass("does_too"));
+    ASSERT_TRUE(cdef);
+    ASSERT_TRUE(cdef->getDependOnKnown());
+
+    ASSERT_NO_THROW_LOG(cdef = dictionary->findClass("depend_on_undefined"));
+    ASSERT_TRUE(cdef);
+    ASSERT_FALSE(cdef->getDependOnKnown());
+    ASSERT_TRUE(cdef->dependOnClass("SPAWN_does_0003001b"));
 }
 
 } // end of anonymous namespace

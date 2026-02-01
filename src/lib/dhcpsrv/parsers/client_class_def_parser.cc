@@ -103,28 +103,31 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
     }
     std::string test;
     bool depend_on_known = false;
-#if 0
     EvalContext::CheckDefined check_defined = EvalContext::acceptAll;
     if (template_test_cfg) {
         test_cfg = template_test_cfg;
         parser_type = EvalContext::PARSER_STRING;
         is_template = true;
+        // We need to check for dependency on KNOWN, other than that we do not require
+        // classes in a template expression to be defined.  This permits them to
+        // reference spawned classes. In other words, one template can depend on
+        // membership in the spawn of another template.
+        check_defined =
+        [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
+            // Check direct dependency on [UN]KNOWN
+            if ((cclass == "KNOWN") || (cclass == "UNKNOWN")) {
+                depend_on_known = true;
+            }
+
+            return (true);
+        };
     } else {
-        check_defined = [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
-            return (!check_dependencies || isClientClassDefined(class_dictionary, depend_on_known, cclass));
+        check_defined =
+        [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
+            return (!check_dependencies || isClientClassDefined(class_dictionary,
+                                                                depend_on_known, cclass));
         };
     }
-#else
-    EvalContext::CheckDefined check_defined = [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
-            return (!check_dependencies || isClientClassDefined(class_dictionary, depend_on_known, cclass));
-    };
-
-    if (template_test_cfg) {
-        test_cfg = template_test_cfg;
-        parser_type = EvalContext::PARSER_STRING;
-        is_template = true;
-    }
-#endif
 
     if (test_cfg) {
         ExpressionParser parser;

@@ -1,0 +1,4 @@
+[func]		tmark
+	Template classes testplate-test expressions may
+	now test for membership in 'KNOWN'
+	(Gitlab #4256)
