@@ -1,5 +1,12 @@
 Kea 3.1.5 (development) released on January 28, 2026
 
+[build]		fdupont
+	Fixed Kea build with Boost 1.90: BOOST_STATIC_ASSERT was
+	replaced by C++ static_assert, and deadline_timer by
+	system_timer. This change was included in the 3.1.5 release,
+	but its changelog entry was	not.
+	(Gitlab #4264, #4266)
+
 2435.	[build]		andrei
 	Hammer was extended to prepare additional systems: Alpine 3.23, Fedora 43,
 	FreeBSD 15. "-w sanitizers" can now be passed to install LLVM sanitizer
