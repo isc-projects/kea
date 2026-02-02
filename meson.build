@@ -1067,7 +1067,6 @@ TARGETS_GEN_PARSER = []
 
 subdir('tools')
 subdir('src')
-subdir('fuzz')
 subdir('doc')
 if premium
     subdir('premium')

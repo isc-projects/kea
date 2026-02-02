@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@
 #include <asiolink/interval_timer.h>
 #include <cc/data.h>
 #include <config/cmd_http_listener.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
@@ -43,9 +43,9 @@ namespace {
 
 static pid_t const PID(getpid());
 static string const PID_STR(to_string(PID));
-static string const ADDRESS("::1");
-static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".conf");
-static string const KEA_DHCP6_CSV(KEA_FUZZ_DIR() + "/kea-dhcp6-" + PID_STR + ".csv");
+static string const ADDRESS("127.0.0.1");
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR() + "/kea-dhcp4-" + PID_STR + ".conf");
+static string const KEA_DHCP4_CSV(KEA_FUZZ_DIR() + "/kea-dhcp4-" + PID_STR + ".csv");
 
 static int PORT;
 static string PORT_STR;
@@ -103,7 +103,7 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
-    setenv("KEA_DHCP6_FUZZING_ROTATE_PORT", "true", 0);
+    setenv("KEA_DHCP4_FUZZING_ROTATE_PORT", "true", 0);
 
     // The main focus is on fuzzing the raw HTTP endpoint without the authorization header.
     // So bypass the enforcement.
@@ -115,11 +115,11 @@ LLVMFuzzerInitialize() {
 int
 LLVMFuzzerTearDown() {
     try {
-        remove(KEA_DHCP6_CONF.c_str());
+        remove(KEA_DHCP4_CONF.c_str());
     } catch (...) {
     }
     try {
-        remove(KEA_DHCP6_CSV.c_str());
+        remove(KEA_DHCP4_CSV.c_str());
     } catch (...) {
     }
     return 0;
@@ -128,14 +128,14 @@ LLVMFuzzerTearDown() {
 int
 LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
     CfgMgr::instance().clear();
-    ControlledDhcpv6Srv server;
+    ControlledDhcpv4Srv server;
 
-    PORT = ControlledDhcpv6Srv::getInstance()->getServerPort();
+    PORT = ControlledDhcpv4Srv::getInstance()->getServerPort();
     PORT_STR = to_string(PORT);
 
-    writeToFile(KEA_DHCP6_CONF, R"(
+    writeToFile(KEA_DHCP4_CONF, R"(
       {
-        "Dhcp6": {
+        "Dhcp4": {
           "control-sockets": [
             {
               "socket-address": ")" + ADDRESS + R"(",
@@ -144,25 +144,19 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
             }
           ],
           "lease-database": {
-            "name": ")" + KEA_DHCP6_CSV + R"(",
+            "name": ")" + KEA_DHCP4_CSV + R"(",
             "persist": false,
             "type": "memfile"
-          },
-          "server-id": {
-            "type": "EN",
-            "enterprise-id": 2495,
-            "identifier": "0123456789",
-            "persist": false
           }
         }
       }
     )");
 
-    server.init(KEA_DHCP6_CONF);
+    server.init(KEA_DHCP4_CONF);
 
-    HttpClient client(ControlledDhcpv6Srv::getInstance()->getIOService(), false);
+    HttpClient client(ControlledDhcpv4Srv::getInstance()->getIOService(), false);
     stringstream ss;
-    ss << "http://[" << ADDRESS << "]:" << PORT_STR;
+    ss << "http://" << ADDRESS << ":" << PORT_STR;
     Url url(ss.str());
 
     // Initiate request to the server.
@@ -181,7 +175,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
            string const&) {
         });
 
-    ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
+    ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
 
     // Make sure that the received responses are different. We check that by
     // comparing value of the sequence parameters.
@@ -193,7 +187,7 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
         }
     }
     client.stop();
-    ControlledDhcpv6Srv::getInstance()->getIOService()->poll();
+    ControlledDhcpv4Srv::getInstance()->getIOService()->poll();
     MultiThreadingMgr::instance().setMode(false);
 
     return 0;

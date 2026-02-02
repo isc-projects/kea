@@ -1,4 +1,4 @@
-// Copyright (C) 2024-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2024-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,9 +10,9 @@
 
 #include <cc/command_interpreter.h>
 #include <cc/user_context.h>
-#include <dhcp6/ctrl_dhcp6_srv.h>
-#include <dhcp6/json_config_parser.h>
-#include <dhcp6/parser_context.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
+#include <dhcp4/parser_context.h>
 #include <dhcpsrv/packet_fuzzer.h>
 #include <util/encode/encode.h>
 
@@ -28,9 +28,9 @@ using namespace std;
 
 namespace {
 
-static string const KEA_DHCP6_CONF(KEA_FUZZ_DIR() + "/kea-dhcp6.conf");
-static string KEA_DHCP6_FUZZING_INTERFACE;
-static string KEA_DHCP6_FUZZING_ADDRESS;
+static string const KEA_DHCP4_CONF(KEA_FUZZ_DIR() + "/kea-dhcp4.conf");
+static string KEA_DHCP4_FUZZING_INTERFACE;
+static string KEA_DHCP4_FUZZING_ADDRESS;
 
 }  // namespace
 
@@ -41,47 +41,44 @@ LLVMFuzzerInitialize() {
     static bool initialized(DoInitialization());
     assert(initialized);
 
-    setenv("KEA_DHCP6_FUZZING_ROTATE_PORT", "true", 0);
+    setenv("KEA_DHCP4_FUZZING_ROTATE_PORT", "true", 0);
 
     if (if_nametoindex("lo") > 0) {
-        KEA_DHCP6_FUZZING_INTERFACE = string("lo");
+        KEA_DHCP4_FUZZING_INTERFACE = string("lo");
     } else if (if_nametoindex("lo0") > 0) {
-        KEA_DHCP6_FUZZING_INTERFACE = string("lo0");
+        KEA_DHCP4_FUZZING_INTERFACE = string("lo0");
     }
 
-    char const* iface(getenv("KEA_DHCP6_FUZZING_INTERFACE"));
+    char const* iface(getenv("KEA_DHCP4_FUZZING_INTERFACE"));
     if (iface) {
-        KEA_DHCP6_FUZZING_INTERFACE = string(iface);
+        KEA_DHCP4_FUZZING_INTERFACE = string(iface);
     }
 
-    char const* address(getenv("KEA_DHCP6_FUZZING_ADDRESS"));
-    KEA_DHCP6_FUZZING_ADDRESS = string(address ? address : "::1");
+    char const* address(getenv("KEA_DHCP4_FUZZING_ADDRESS"));
+    KEA_DHCP4_FUZZING_ADDRESS = string(address ? address : "127.0.0.1");
 
-    writeToFile(KEA_DHCP6_CONF, R"(
+    writeToFile(KEA_DHCP4_CONF, R"(
       {
-        "Dhcp6": {
+        "Dhcp4": {
           "interfaces-config": {
+            "dhcp-socket-type": "udp",
             "interfaces": [
-              ")" + KEA_DHCP6_FUZZING_INTERFACE + R"("
+              ")" + KEA_DHCP4_FUZZING_INTERFACE + R"("
             ]
           },
           "lease-database": {
             "persist": false,
             "type": "memfile"
           },
-          "server-id": {
-            "type": "EN",
-            "persist": false
-          },
-          "subnet6": [
+          "subnet4": [
             {
               "id": 1,
               "pools": [
                 {
-                  "pool": "2001:db8::/80"
+                  "pool": "10.0.0.0/8"
                 }
               ],
-              "subnet": "2001:db8::/64"
+              "subnet": "10.0.0.0/8"
             }
           ]
         }
@@ -102,7 +99,7 @@ LLVMFuzzerInitialize() {
 int
 LLVMFuzzerTearDown() {
     try {
-        remove(KEA_DHCP6_CONF.c_str());
+        remove(KEA_DHCP4_CONF.c_str());
     } catch (...) {
     }
     return 0;
@@ -117,14 +114,14 @@ LLVMFuzzerTestOneInput(uint8_t const* data, size_t size) {
         return 0;
     }
 
-    ControlledDhcpv6Srv server;
-    server.init(KEA_DHCP6_CONF);
+    ControlledDhcpv4Srv server;
+    server.init(KEA_DHCP4_CONF);
 
     // Fuzz.
-    PacketFuzzer fuzzer(ControlledDhcpv6Srv::getInstance()->getServerPort(),
-                        KEA_DHCP6_FUZZING_INTERFACE, KEA_DHCP6_FUZZING_ADDRESS);
+    PacketFuzzer fuzzer(ControlledDhcpv4Srv::getInstance()->getServerPort(),
+                        KEA_DHCP4_FUZZING_INTERFACE, KEA_DHCP4_FUZZING_ADDRESS);
     fuzzer.transfer(byte_stream.data(), byte_stream.size());
-    ControlledDhcpv6Srv::getInstance()->runOne();
+    ControlledDhcpv4Srv::getInstance()->runOne();
 
     return 0;
 }
