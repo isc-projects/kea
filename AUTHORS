@@ -323,3 +323,4 @@ We have received the following contributions:
    2025-09: Reported and provided a patch that fixes a dead lock in ping-check
             hooks library.
    2025-10: Reported and tested a data race issue in ping-check hooks library.
+   2026-02: Corrected spelling and grammatical errors in message files.
