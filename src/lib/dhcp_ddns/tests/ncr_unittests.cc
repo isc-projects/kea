@@ -33,7 +33,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -45,7 +44,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -57,7 +55,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -69,7 +66,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
      "}",
      // Has use-conflict-resolution instead of mode
@@ -80,7 +76,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": true"
      "}"
@@ -98,7 +93,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -110,7 +104,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -122,7 +115,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -134,7 +126,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -146,7 +137,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -158,7 +148,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \".bad_name\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -170,7 +159,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"xxxxxx\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -182,7 +170,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -194,7 +181,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -206,19 +192,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"THIS IS BOGUS!!!\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
-     " \"lease-length\" : 1300, "
-     " \"conflict-resolution-mode\": \"check-with-dhcid\""
-     "}",
-    // Invalid lease expiration string
-     "{"
-     " \"change-type\" : 0 , "
-     " \"forward-change\" : true , "
-     " \"reverse-change\" : false , "
-     " \"fqdn\" : \"walah.walah.com\" , "
-     " \"ip-address\" : \"192.168.2.1\" , "
-     " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"Wed Jun 26 13:46:46 EDT 2013\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -230,11 +203,10 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : \"BOGUS\", "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
-    // Invalid conflict-resolution-mode
+    // Invalid conflict-resolution-mode.
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
@@ -242,11 +214,10 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"bogus\""
      "}"
-    // Invalid use-conflict-resolution
+    // Invalid use-conflict-resolution.
      "{"
      " \"change-type\" : 0 , "
      " \"forward-change\" : true , "
@@ -254,7 +225,6 @@ const char *invalid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"use-conflict-resolution\": \"bogus\""
      "}"
@@ -275,31 +245,30 @@ TEST(NameChangeRequestTest, constructionTests) {
     EXPECT_TRUE(ncr);
 
     // Verify that full constructor works.
-    uint64_t expiry = isc::util::detail::getTimeWrapper();
     D2Dhcid dhcid("010203040A7F8E3D");
 
     EXPECT_NO_THROW(ncr.reset(new NameChangeRequest(
                     CHG_ADD, true, true, "walah.walah.com",
-                    "192.168.1.101", dhcid, expiry, 1300)));
+                    "192.168.1.101", dhcid, 1300)));
     EXPECT_TRUE(ncr);
     ncr.reset();
 
     // Verify blank FQDN is detected.
     EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "",
-                 "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+                 "192.168.1.101", dhcid, 1300), NcrMessageError);
 
     // Verify that an invalid IP address is detected.
     EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "valid.fqdn",
-                 "xxx.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+                 "xxx.168.1.101", dhcid, 1300), NcrMessageError);
 
     // Verify that a blank DHCID is detected.
     D2Dhcid blank_dhcid;
     EXPECT_THROW(NameChangeRequest(CHG_ADD, true, true, "walah.walah.com",
-                 "192.168.1.101", blank_dhcid, expiry, 1300), NcrMessageError);
+                 "192.168.1.101", blank_dhcid, 1300), NcrMessageError);
 
     // Verify that one or both of direction flags must be true.
     EXPECT_THROW(NameChangeRequest(CHG_ADD, false, false, "valid.fqdn",
-                "192.168.1.101", dhcid, expiry, 1300), NcrMessageError);
+                "192.168.1.101", dhcid, 1300), NcrMessageError);
 
 }
 
@@ -475,8 +444,6 @@ TEST_F(DhcidTest, fromClientId) {
     clientid.clear();
     EXPECT_THROW(dhcid.fromClientId(clientid, wire_fqdn_),
                  isc::dhcp_ddns::DhcidRdataComputeError);
-
-
 }
 
 // This test verifies that DHCID is properly computed from a buffer holding
@@ -574,7 +541,6 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"fqdn\":\"walah.walah.com.\","
                             "\"ip-address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
                             "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
@@ -604,14 +570,15 @@ TEST(NameChangeRequestTest, basicJsonTest) {
 ///  2. Invalid forward change
 ///  3. Invalid reverse change
 ///  4. Forward and reverse change both false
-///  5. Invalid forward change
-///  6. Blank FQDN
+///  5. Blank FQDN
+///  6. Malformed FQDN
 ///  7. Bad IP address
 ///  8. Blank DHCID
 ///  9. Odd number of digits in DHCID
 /// 10. Text in DHCID
-/// 11. Invalid lease expiration string
-/// 12. Non-integer for lease length.
+/// 11. Non-integer for lease length.
+/// 12. Invalid conflict-resolution-mode.
+/// 13. Invalid use-conflict-resolution.
 /// If more permutations arise they can easily be added to the list.
 TEST(NameChangeRequestTest, invalidMsgChecks) {
     // Iterate over the list of JSON strings, attempting to create a
@@ -660,7 +627,6 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"fqdn\":\"walah.walah.com.\","
                             "\"ip-address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease-expires-on\":\"20130121132405\","
                             "\"lease-length\":1300,"
                             "\"conflict-resolution-mode\":\"check-with-dhcid\""
                           "}";
@@ -688,6 +654,59 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
 
     // Verify that the final string matches the original.
     ASSERT_EQ(final_str, msg_str);
+}
+
+/// @brief Tests converting to and from JSON via isc::util buffer classes.
+/// This test verifies that a InputBuffer containing a valid JSON request rendition
+/// but with extra parameter can be used to create a NameChangeRequest.
+TEST(NameChangeRequestTest, toFromBufferTestWithExtra) {
+    // Define a string containing a valid JSON NameChangeRequest rendition.
+    std::string msg_str = "{"
+                            "\"change-type\":1,"
+                            "\"forward-change\":true,"
+                            "\"reverse-change\":false,"
+                            "\"fqdn\":\"walah.walah.com.\","
+                            "\"ip-address\":\"192.168.2.1\","
+                            "\"dhcid\":\"010203040A7F8E3D\","
+                            "\"extra\":\"19700101000000\","
+                            "\"lease-length\":1300,"
+                            "\"conflict-resolution-mode\":\"check-with-dhcid\""
+                          "}";
+
+    // Create a request from JSON directly.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(msg_str));
+
+    // Verify that we output the request as JSON text to a buffer
+    // without error.
+    isc::util::OutputBuffer output_buffer(1024);
+    ASSERT_NO_THROW(ncr->toFormat(FMT_JSON, output_buffer));
+
+    // Make an InputBuffer from the OutputBuffer.
+    isc::util::InputBuffer input_buffer(output_buffer.getData(),
+                                        output_buffer.getLength());
+
+    // Verify that we can create a new request from the InputBuffer.
+    NameChangeRequestPtr ncr2;
+    ASSERT_NO_THROW(ncr2 =
+                    NameChangeRequest::fromFormat(FMT_JSON, input_buffer));
+
+    // Convert the new request to JSON directly.
+    std::string final_str = ncr2->toJSON();
+
+    std::string exp_msg_str = "{"
+                                "\"change-type\":1,"
+                                "\"forward-change\":true,"
+                                "\"reverse-change\":false,"
+                                "\"fqdn\":\"walah.walah.com.\","
+                                "\"ip-address\":\"192.168.2.1\","
+                                "\"dhcid\":\"010203040A7F8E3D\","
+                                "\"lease-length\":1300,"
+                                "\"conflict-resolution-mode\":\"check-with-dhcid\""
+                              "}";
+
+    // Verify that the final string matches the original.
+    ASSERT_EQ(final_str, exp_msg_str);
 }
 
 /// @brief Tests ip address modification and validation
@@ -742,7 +761,6 @@ TEST(NameChangeRequestTest, useConflictResolutionParsing) {
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 ";
 
     std::string its_true(base_json + ",\"use-conflict-resolution\": true}");
@@ -771,7 +789,6 @@ TEST(NameChangeRequestTest, ConflictResolutionModeParsing) {
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300 ";
 
     std::string its_check_with_dhcid(base_json + ",\"conflict-resolution-mode\": \"check-with-dhcid\"}");

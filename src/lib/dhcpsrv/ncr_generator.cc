@@ -87,8 +87,7 @@ void queueNCRCommon(const NameChangeType& chg_type, const LeasePtrType& lease,
         NameChangeRequestPtr ncr
             (new NameChangeRequest(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                                    lease->hostname_, lease->addr_.toText(),
-                                   dhcid, lease->cltt_ + ttl,
-                                   ttl, conflict_resolution_mode));
+                                   dhcid, ttl, conflict_resolution_mode));
 
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA, DHCPSRV_QUEUE_NCR)
             .arg(label)

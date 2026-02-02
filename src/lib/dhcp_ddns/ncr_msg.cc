@@ -18,10 +18,8 @@
 #include <sstream>
 #include <limits>
 
-
 namespace isc {
 namespace dhcp_ddns {
-
 
 NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
     if (boost::iequals(fmt_str, "JSON")) {
@@ -31,14 +29,13 @@ NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
     isc_throw(BadValue, "Invalid NameChangeRequest format: " << fmt_str);
 }
 
-
 std::string ncrFormatToString(NameChangeFormat format) {
     if (format == FMT_JSON) {
         return ("JSON");
     }
 
     std::ostringstream stream;
-    stream  << "UNKNOWN(" << format << ")";
+    stream << "UNKNOWN(" << format << ")";
     return (stream.str());
 }
 
@@ -78,7 +75,7 @@ ConflictResolutionModeToString(const ConflictResolutionMode& mode) {
     }
 
     std::ostringstream stream;
-    stream  << "unknown(" << mode << ")";
+    stream << "unknown(" << mode << ")";
     return (stream.str());
 }
 
@@ -119,7 +116,6 @@ D2Dhcid::D2Dhcid(const isc::dhcp::DUID& duid,
                  const std::vector<uint8_t>& wire_fqdn) {
     fromDUID(duid, wire_fqdn);
 }
-
 
 void
 D2Dhcid::fromStr(const std::string& data) {
@@ -185,7 +181,6 @@ D2Dhcid::fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
                        hwaddr->hwaddr_.end());
     createDigest(DHCID_ID_HWADDR, hwaddr_data, wire_fqdn);
 }
-
 
 void
 D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
@@ -258,29 +253,21 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
     return (os);
 }
 
-
-
 /**************************** NameChangeRequest ******************************/
-
 NameChangeRequest::NameChangeRequest()
-    : change_type_(CHG_ADD), forward_change_(false),
-    reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
-    dhcid_(), lease_expires_on_(), lease_length_(0),
-    conflict_resolution_mode_(CHECK_WITH_DHCID),
-    status_(ST_NEW) {
+    : change_type_(CHG_ADD), forward_change_(false), reverse_change_(false),
+      fqdn_(""), ip_io_address_("0.0.0.0"), dhcid_(), lease_length_(0),
+      conflict_resolution_mode_(CHECK_WITH_DHCID), status_(ST_NEW) {
 }
 
 NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const bool forward_change, const bool reverse_change,
             const std::string& fqdn, const std::string& ip_address,
-            const D2Dhcid& dhcid,
-            const uint64_t lease_expires_on,
-            const uint32_t lease_length,
+            const D2Dhcid& dhcid, const uint32_t lease_length,
             const ConflictResolutionMode conflict_resolution_mode)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
-    dhcid_(dhcid), lease_expires_on_(lease_expires_on),
-    lease_length_(lease_length),
+    dhcid_(dhcid), lease_length_(lease_length),
     conflict_resolution_mode_(conflict_resolution_mode),
     status_(ST_NEW) {
 
@@ -405,9 +392,6 @@ NameChangeRequest::fromJSON(const std::string& json) {
     element = ncr->getElement("dhcid", element_map);
     ncr->setDhcid(element);
 
-    element = ncr->getElement("lease-expires-on", element_map);
-    ncr->setLeaseExpiresOn(element);
-
     element = ncr->getElement("lease-length", element_map);
     ncr->setLeaseLength(element);
 
@@ -436,7 +420,7 @@ NameChangeRequest::fromJSON(const std::string& json) {
 }
 
 std::string
-NameChangeRequest::toJSON() const  {
+NameChangeRequest::toJSON() const {
     // Create a JSON string of this request's contents.  Note that this method
     // does NOT use the isc::data library as generating the output is straight
     // forward.
@@ -450,7 +434,6 @@ NameChangeRequest::toJSON() const  {
         << "\"fqdn\":\"" << getFqdn() << "\","
         << "\"ip-address\":\"" << getIpAddress() << "\","
         << "\"dhcid\":\"" << getDhcid().toStr() << "\","
-        << "\"lease-expires-on\":\""  << getLeaseExpiresOnStr() << "\","
         << "\"lease-length\":" << getLeaseLength() << ","
         << "\"conflict-resolution-mode\":"
         << "\"" <<ConflictResolutionModeToString(getConflictResolutionMode()) << "\""
@@ -458,7 +441,6 @@ NameChangeRequest::toJSON() const  {
 
     return (stream.str());
 }
-
 
 void
 NameChangeRequest::validateContent() {
@@ -470,7 +452,7 @@ NameChangeRequest::validateContent() {
     }
 
     // Validate the DHCID.
-    if (dhcid_.getBytes().size()  == 0) {
+    if (dhcid_.getBytes().size() == 0) {
         isc_throw(NcrMessageError, "DHCID cannot be blank");
     }
 
@@ -500,7 +482,6 @@ void
 NameChangeRequest::setChangeType(const NameChangeType value) {
     change_type_ = value;
 }
-
 
 void
 NameChangeRequest::setChangeType(isc::data::ConstElementPtr element) {
@@ -566,7 +547,6 @@ NameChangeRequest::setReverseChange(isc::data::ConstElementPtr element) {
     setReverseChange(value);
 }
 
-
 void
 NameChangeRequest::setFqdn(isc::data::ConstElementPtr element) {
     setFqdn(element->stringValue());
@@ -600,7 +580,6 @@ NameChangeRequest::setIpAddress(isc::data::ConstElementPtr element) {
     setIpAddress(element->stringValue());
 }
 
-
 void
 NameChangeRequest::setDhcid(const std::string& value) {
     dhcid_.fromStr(value);
@@ -609,28 +588,6 @@ NameChangeRequest::setDhcid(const std::string& value) {
 void
 NameChangeRequest::setDhcid(isc::data::ConstElementPtr element) {
     setDhcid(element->stringValue());
-}
-
-std::string
-NameChangeRequest::getLeaseExpiresOnStr() const {
-    return (isc::util::timeToText64(lease_expires_on_));
-}
-
-void
-NameChangeRequest::setLeaseExpiresOn(const std::string&  value) {
-    try {
-        lease_expires_on_ = isc::util::timeFromText64(value);
-    } catch (...) {
-        // We were given an invalid string, so throw.
-        isc_throw(NcrMessageError,
-            "Invalid date-time string: [" << value << "]");
-    }
-
-}
-
-void NameChangeRequest::setLeaseExpiresOn(isc::data::ConstElementPtr element) {
-    // Pull out the string value and pass it into the string setter.
-    setLeaseExpiresOn(element->stringValue());
 }
 
 void
@@ -657,7 +614,7 @@ NameChangeRequest::setLeaseLength(isc::data::ConstElementPtr element) {
     }
     if (value < 0) {
         isc_throw(NcrMessageError, "lease_length value " << value <<
-             "is negative.  It must greater than or equal to zero ");
+             "is negative. It must greater than or equal to zero ");
     }
 
     // Good to go, make the assignment.
@@ -723,7 +680,6 @@ NameChangeRequest::toText() const {
            << "FQDN: [" << fqdn_ << "]" << std::endl
            << "IP Address: [" << ip_io_address_ << "]" << std::endl
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
-           << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
            << "Lease Length: " << lease_length_ << std::endl
            << "Conflict Resolution Mode: "
            << ConflictResolutionModeToString(getConflictResolutionMode())
@@ -740,7 +696,6 @@ NameChangeRequest::operator == (const NameChangeRequest& other) const {
             (fqdn_ == other.fqdn_) &&
             (ip_io_address_ == other.ip_io_address_) &&
             (dhcid_ == other.dhcid_) &&
-            (lease_expires_on_ == other.lease_expires_on_) &&
             (lease_length_ == other.lease_length_) &&
             (conflict_resolution_mode_ == other.conflict_resolution_mode_));
 }
@@ -749,7 +704,6 @@ bool
 NameChangeRequest::operator != (const NameChangeRequest& other) const {
     return (!(*this == other));
 }
-
 
 }  // end of isc::dhcp namespace
 }  // end of isc namespace

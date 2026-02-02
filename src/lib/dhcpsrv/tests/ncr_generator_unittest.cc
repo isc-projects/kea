@@ -132,8 +132,6 @@ public:
     /// these values programmatically and place them here. Should the
     /// underlying implementation of createDigest() change these test values
     /// will likely need to be updated as well.
-    /// @param expires A timestamp when the lease associated with the
-    /// NameChangeRequest expires.
     /// @param len A valid lifetime of the lease associated with the
     /// NameChangeRequest.
     /// @param fqdn The expected string value of the FQDN, if blank the
@@ -144,7 +142,6 @@ public:
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
-                                 const uint64_t expires,
                                  const uint16_t len,
                                  const std::string& fqdn="",
                                  const ConflictResolutionMode
@@ -158,7 +155,6 @@ public:
         EXPECT_EQ(reverse, ncr->isReverseChange());
         EXPECT_EQ(addr, ncr->getIpAddress());
         EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
-        EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
         EXPECT_EQ(len, ncr->getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
         EXPECT_EQ(conflict_resolution_mode, ncr->getConflictResolutionMode());
@@ -249,7 +245,7 @@ public:
 
         // Check the details of the NCR.
         verifyNameChangeRequest(chg_type, rev, fwd, lease_->addr_.toText(), exp_dhcid,
-                                lease_->cltt_ + ttl, ttl, fqdn, exp_cr_mode);
+                                ttl, fqdn, exp_cr_mode);
     }
 
     /// @brief Test that calling queueNCR for NULL lease doesn't cause
@@ -657,8 +653,7 @@ TEST_F(NCRGenerator4Test, useClientId) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "192.0.2.1",
                             "000101C7AA5420483BDA99C437636EA7DA2FE18"
-                            "31C9679FEB031C360CA571298F3D1FA",
-                            lease_->cltt_ + ttl, ttl);
+                            "31C9679FEB031C360CA571298F3D1FA", ttl);
     {
         SCOPED_TRACE("case CHG_REMOVE");
         testNCR(CHG_REMOVE, true, true, "myhost.example.com.",

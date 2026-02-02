@@ -101,7 +101,6 @@ public:
         " \"fqdn\" : \"my.example.com.\" , "
         " \"ip-address\" : \"192.168.1.2\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";

@@ -287,7 +287,6 @@ public:
                       const bool forward_change, const bool reverse_change,
                       const std::string& fqdn, const std::string& ip_address,
                       const D2Dhcid& dhcid,
-                      const uint64_t lease_expires_on,
                       const uint32_t lease_length,
                       const ConflictResolutionMode
                       conflict_resolution_mode = CHECK_WITH_DHCID);
@@ -307,7 +306,7 @@ public:
     /// (NOTE currently only JSON is supported.)
     ///
     /// @param format indicates the data format to use
-    /// @param buffer is the input buffer containing the marshalled request
+    /// @param buffer is the input buffer containing the marshaled request
     ///
     /// @return a pointer to the new NameChangeRequest
     ///
@@ -352,7 +351,6 @@ public:
     ///      "fqdn" : "<fqdn>",
     ///      "ip-address" : "<address>",
     ///      "dhcid" : "<hex_string>",
-    ///      "lease-expires-on" : "<yyyymmddHHMMSS>",
     ///      "lease-length" : <secs>,
     ///      "use-conflict-resolution": <boolean>
     ///     }
@@ -380,14 +378,6 @@ public:
     ///   been leased.  The value is a string containing an even number of
     ///   hexadecimal digits without delimiters such as "2C010203040A7F8E3D"
     ///   (case insensitive).
-    /// - lease-expires-on - the date and time on which the lease expires.
-    ///   The value is a string of the form "yyyymmddHHMMSS" where:
-    ///     - yyyy - four digit year
-    ///     - mm - month of year (1-12),
-    ///     - dd - day of the month (1-31),
-    ///     - HH - hour of the day (0-23)
-    ///     - MM - minutes of the hour (0-59)
-    ///     - SS - seconds of the minute (0-59)
     /// - lease-length - the length of the lease in seconds.  This is an
     ///   integer and may range between 1 and 4294967295 (2^32 - 1) inclusive.
     /// - use-conflict-resolution - when true, follow RFC 4703 which uses
@@ -405,7 +395,6 @@ public:
     ///     "fqdn" : "myhost.example.com.",
     ///     "ip-address" : "192.168.2.1" ,
     ///     "dhcid" : "010203040A7F8E3D" ,
-    ///     "lease-expires-on" : "20130121132405",
     ///     "lease-length" : 1300,
     ///     "use-conflict-resolution": true
     ///  }
@@ -421,7 +410,6 @@ public:
     ///     "fqdn" : "someother.example.com.",
     ///     "ip-address" : "2001::db8:1::2",
     ///     "dhcid" : "010203040A7F8E3D" , "
-    ///     "lease-expires-on" : "20130121132405",
     ///     "lease-length" : 27400,
     ///     "use-conflict-resolution": true
     ///   }
@@ -625,47 +613,6 @@ public:
         return (dhcid_.toStr());
     }
 
-    /// @brief Fetches the request lease expiration
-    ///
-    /// @return the lease expiration as the number of seconds since
-    /// the (00:00:00 January 1, 1970)
-    uint64_t getLeaseExpiresOn() const {
-        return (lease_expires_on_);
-    }
-
-    /// @brief Fetches the request lease expiration as string.
-    ///
-    /// The format of the string returned is:
-    ///
-    ///    YYYYMMDDHHmmSS
-    ///
-    /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
-    /// NOTE This is always UTC time.
-    ///
-    /// @return a ISO date-time string of the lease expiration.
-    std::string getLeaseExpiresOnStr() const;
-
-    /// @brief Sets the lease expiration based on the given string.
-    ///
-    /// @param value is an date-time string from which to set the
-    /// lease expiration. The format of the input is:
-    ///
-    ///    YYYYMMDDHHmmSS
-    ///
-    /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
-    /// NOTE This is always UTC time.
-    ///
-    /// @throw NcrMessageError if the ISO string is invalid.
-    void setLeaseExpiresOn(const std::string& value);
-
-    /// @brief Sets the lease expiration based on the given Element.
-    ///
-    /// @param element is string Element containing a date-time string.
-    ///
-    /// @throw NcrMessageError if the element is not a string
-    /// Element, or if the element value is an invalid date-time string.
-    void setLeaseExpiresOn(isc::data::ConstElementPtr element);
-
     /// @brief Fetches the request lease length.
     ///
     /// @return an integer containing the lease length
@@ -781,9 +728,6 @@ private:
     /// @todo Currently, this is uses D2Dhcid it but may be replaced with
     /// dns::DHCID which provides additional validation.
     D2Dhcid dhcid_;
-
-    /// @brief The date-time the lease expires.
-    uint64_t lease_expires_on_;
 
     /// @brief The amount of time in seconds for which the lease is valid (TTL).
     uint32_t lease_length_;

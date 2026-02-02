@@ -273,7 +273,6 @@ TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
         " \"fqdn\" : \"my.forward.example.com.\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
@@ -332,7 +331,6 @@ TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
         " \"fqdn\" : \"my6.forward.example.com.\" , "
         " \"ip-address\" : \"2001:1::100\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";

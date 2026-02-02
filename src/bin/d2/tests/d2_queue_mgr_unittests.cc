@@ -36,7 +36,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}",
@@ -48,7 +47,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}",
@@ -60,7 +58,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\" : \"check-with-dhcid\""
      "}"

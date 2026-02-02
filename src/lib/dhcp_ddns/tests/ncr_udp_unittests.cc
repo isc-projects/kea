@@ -38,7 +38,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}",
@@ -50,7 +49,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"192.168.2.1\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"no-check-with-dhcid\""
      "}",
@@ -62,7 +60,6 @@ const char *valid_msgs[] =
      " \"fqdn\" : \"walah.walah.com\" , "
      " \"ip-address\" : \"fe80::2acf:e9ff:fe12:e56f\" , "
      " \"dhcid\" : \"010203040A7F8E3D\" , "
-     " \"lease-expires-on\" : \"20130121132405\" , "
      " \"lease-length\" : 1300, "
      " \"conflict-resolution-mode\": \"check-with-dhcid\""
      "}"
@@ -229,8 +226,6 @@ public:
         udp_socket.send_to(boost::asio::buffer(ncr_buffer.getData(),
                            ncr_buffer.getLength()), listener_endpoint);
     }
-
-
 
     /// @brief Handler invoked when test timeout is hit
     ///
@@ -1352,7 +1347,6 @@ TEST_F(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequestMultiThreading) 
     // The second request should still be in the queue.
     EXPECT_EQ(1, sender.getQueueSize());
 }
-
 
 // Tests error handling of a failure to clear the watch socket during
 // completion handling.

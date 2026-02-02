@@ -61,7 +61,6 @@ Dhcp6SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
         << std::hex << std::setfill('0') << std::setw(16)
         << dhcid_id_num << "\" , "
 
-        " \"lease-expires-on\" : \"20140121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\" "
         "}";

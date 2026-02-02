@@ -268,7 +268,6 @@ TEST(SimpleAddTransaction, construction) {
         " \"fqdn\" : \"example.com.\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"no-check-with-dhcid\""
         "}";

@@ -2608,11 +2608,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // Get the IP address from the lease.
         NameChangeRequestPtr ncr;
         auto cr_mode = StringToConflictResolutionMode(ctx.getDdnsParams()->getConflictResolutionMode());
-        ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD,
-                                        do_fwd, do_rev,
-                                        opt_fqdn->getDomainName(),
-                                        iaaddr->getAddress().toText(),
-                                        dhcid, 0,
+        ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD, do_fwd, do_rev, opt_fqdn->getDomainName(),
+                                        iaaddr->getAddress().toText(), dhcid,
                                         calculateDdnsTtl(iaaddr->getValid(),
                                                          ctx.getDdnsParams()->getTtlPercent(),
                                                          ctx.getDdnsParams()->getTtl(),

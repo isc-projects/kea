@@ -23,7 +23,6 @@ out DHCP-driven DNS updates.  Each request contains the following information:
       given FQDN
     - dhcid - DHCID (a form of identification) of the client to whom the IP
       address is leased
-    - lease-expires-on - timestamp containing the date/time the lease expires
     - lease-length - duration in seconds for which the lease is valid.
 
 These requests are implemented in this library by the class,

@@ -321,7 +321,6 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
         " \"fqdn\" : \"walah.walah.com\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
@@ -549,7 +548,6 @@ TEST_F(D2ProcessTest, canShutdown) {
         " \"fqdn\" : \"fish.example.com\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"010203040A7F8E3D\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";

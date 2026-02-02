@@ -625,12 +625,10 @@ public:
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
-                                 const uint64_t expires,
                                  const uint16_t valid_lft,
                                  const std::string& fqdn = "",
                                  const ConflictResolutionMode exp_cr_mode = CHECK_WITH_DHCID,
-                                 util::Optional<double> exp_ddns_ttl_percent
-                                 = util::Optional<double>(),
+                                 util::Optional<double> exp_ddns_ttl_percent = util::Optional<double>(),
                                  Optional<uint32_t> exp_ddns_ttl = Optional<uint32_t>(),
                                  Optional<uint32_t> exp_ddns_ttl_min = Optional<uint32_t>(),
                                  Optional<uint32_t> exp_ddns_ttl_max = Optional<uint32_t>()) {
@@ -648,9 +646,6 @@ public:
 
         uint32_t ttl = calculateDdnsTtl(valid_lft, exp_ddns_ttl_percent, exp_ddns_ttl,
                                         exp_ddns_ttl_min, exp_ddns_ttl_max);
-        if (expires != 0) {
-            EXPECT_EQ(expires + ttl, ncr->getLeaseExpiresOn());
-        }
 
         EXPECT_EQ(ttl, ncr->getLeaseLength());
 
@@ -749,7 +744,7 @@ public:
                                 "2001:db8:1::1",
                                 "000201415AA33D1187D148275136FA30300478"
                                 "FAAAA3EBD29826B5C907B2C9268A6F52",
-                                0, valid_lft, "", NO_CHECK_WITH_DHCID,
+                                valid_lft, "", NO_CHECK_WITH_DHCID,
                                 ddns_ttl_percent,
                                 ddns_ttl,
                                 ddns_ttl_min,
@@ -925,7 +920,7 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500);
+                            500);
 }
 
 // Verify that conflict resolution is turned off when the
@@ -959,7 +954,7 @@ TEST_F(FqdnDhcpv6SrvTest, noConflictResolution) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500, "", NO_CHECK_WITH_DHCID);
+                            500, "", NO_CHECK_WITH_DHCID);
 }
 
 // Checks that NameChangeRequests to add entries are not
@@ -1007,7 +1002,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 // Checks that calling queueNCR would not result in error if DDNS updates are
@@ -1045,7 +1040,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 // Test that NameChangeRequest to remove DNS records is not generated when
@@ -1117,7 +1112,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     // Client may send another request message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
@@ -1133,12 +1128,12 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsDiffFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -1162,7 +1157,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequestsSameFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     // Client may send another request message with a same domain-name. In this
     // case the same lease will be returned. The existing DNS entry should be
@@ -1189,7 +1184,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     // When the returning client sends Solicit the code should never generate
     // NameChangeRequest and preserve existing DNS entries for the client.
@@ -1223,7 +1218,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     // Client may send Renew message with a new domain-name. In this
     // case the same lease will be returned. The existing DNS entry needs to
@@ -1239,12 +1234,12 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewDiffFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 // Test that client may send Request followed by the Renew, both holding
@@ -1264,7 +1259,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewSameFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
@@ -1303,7 +1298,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 
     // Renew again with the same flags, this should not generate any NCRs.
     testProcessMessage(DHCPV6_RENEW, "myhost.example.com",
@@ -1329,13 +1324,13 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
 
     // Lastly, we renew with the N flag = 1 (which means no updates) so we
     // should have a dual direction remove NCR but NO add NCR.
@@ -1347,7 +1342,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenewFqdnFlags) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
@@ -1371,7 +1366,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
 
     // Client may send Release message. In this case the lease should be
     // removed and all existing DNS entries for this lease should also
@@ -1384,7 +1379,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            lease_->cltt_, lease_->valid_lft_);
+                            lease_->valid_lft_);
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
@@ -1405,7 +1400,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReleaseNoDelete) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
 
     // Client may send Release message. In this case the lease should be
     // expired and no NameChangeRequest to remove DNS entries is generated.
@@ -1428,7 +1423,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 }
 
 // Checks that FQDN is generated from an ip address, when client sends an empty
@@ -1443,7 +1438,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
                             "2001:db8:1:1::dead:beef",
                             "000201C905E54BE12DE6AF92ADE72752B9F362"
                             "13B5A8BC9D217548CD739B4CF31AFB1B",
-                            0, 4000);
+                            4000);
 }
 
 // Checks that when the server reuses expired lease, the NameChangeRequest
@@ -1484,7 +1479,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, lease_->valid_lft_);
+                            lease_->valid_lft_);
     // One of the following: IAID, DUID or subnet identifier has to be changed
     // because otherwise the allocation engine will treat the lease as
     // being renewed by the same client. If we at least change subnet identifier
@@ -1514,13 +1509,13 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD2"
                             "65FCEA97F93623019B2E0D14E5323D5A",
-                            lease->cltt_, lease->valid_lft_);
+                            lease->valid_lft_);
     // The second name change request should add a DNS mapping for
     // a new lease.
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52", 0, 4);
+                            "FAAAA3EBD29826B5C907B2C9268A6F52", 4);
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
@@ -1531,7 +1526,7 @@ TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 4000);
+                            4000);
 }
 
 // Verify that the host reservation is found and used. Lease host name and
@@ -1585,7 +1580,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationSuffix) {
                             "2001:db8:1:1::babe",
                             "000201E2EB74FB53A5778E74AFD43870ECA5"
                             "4150B1F52B0CFED434802DA1259D6D3CA4",
-                            0, 4000, "alice.example.com.");
+                            4000, "alice.example.com.");
 }
 
 // Verify that the host reservation is found and used, rather than dynamic
@@ -1638,7 +1633,7 @@ TEST_F(FqdnDhcpv6SrvTest, hostnameReservationNoSuffix) {
                             "2001:db8:1:1::babe",
                             "000201E2EB74FB53A5778E74AFD43870ECA5"
                             "4150B1F52B0CFED434802DA1259D6D3CA4",
-                            0, 4000, "alice.example.com.");
+                            4000, "alice.example.com.");
 }
 
 TEST_F(FqdnDhcpv6SrvTest, hostnameReservationDdnsDisabled) {
@@ -1829,7 +1824,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsScopeTest) {
     // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
-                            "", 0, 4000);
+                            "", 4000);
 }
 
 // Verifies that the DDNS parameters used for a lease in subnet in
@@ -1904,7 +1899,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     // ddns-send-updates for subnet 1 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
-                            "", 0, 4000, "client1.one.example.com.");
+                            "", 4000, "client1.one.example.com.");
 
     // Make sure the lease hostname and fqdn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
@@ -1938,7 +1933,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest) {
     // ddns-send-updates for subnet 2 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:2::1",
-                            "", 0, 4000, "client2.two.example.com.");
+                            "", 4000, "client2.two.example.com.");
 
     // Make sure the lease hostname and fqdn flags are correct.
     lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1"));
@@ -2061,7 +2056,7 @@ TEST_F(FqdnDhcpv6SrvTest, ddnsSharedNetworkTest2) {
     // ddns-send-updates for subnet 1 are enabled, verify the NCR is correct.
     ASSERT_EQ(1, CfgMgr::instance().getD2ClientMgr().getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true, "2001:db8:1::1",
-                            "", 0, 4000, "client1.one.example.com.");
+                            "", 4000, "client1.one.example.com.");
 
     // Make sure the lease hostname and fdqn flags are correct.
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
@@ -2185,7 +2180,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
                 ASSERT_EQ(1, d2_mgr_.getQueueSize());
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                         old_lease->addr_.toText(), "",
-                                        0, old_lease->valid_lft_,
+                                        old_lease->valid_lft_,
                                         old_lease->hostname_);
             }
 
@@ -2205,7 +2200,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
                 // Verify NCR content
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                                         old_lease->addr_.toText(), "",
-                                        0, old_lease->valid_lft_,
+                                        old_lease->valid_lft_,
                                         old_lease->hostname_);
             }
 
@@ -2214,7 +2209,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
                 // Verify NCR content
                 verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                         new_lease->addr_.toText(), "",
-                                        0, new_lease->valid_lft_,
+                                        new_lease->valid_lft_,
                                         new_lease->hostname_);
             }
 
@@ -2419,7 +2414,7 @@ TEST_F(FqdnDhcpv6SrvTest, poolDdnsParametersTest) {
             verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                                     scenario.expected_address_.toText(),
                                     scenario.expected_dhcid_,
-                                    0, 4000,
+                                    4000,
                                     scenario.expected_fqdn_);
         }
     }

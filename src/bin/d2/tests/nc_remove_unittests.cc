@@ -273,7 +273,6 @@ TEST(NameRemoveTransaction, construction) {
         " \"fqdn\" : \"example.com.\" , "
         " \"ip-address\" : \"192.168.2.1\" , "
         " \"dhcid\" : \"0102030405060708\" , "
-        " \"lease-expires-on\" : \"20130121132405\" , "
         " \"lease-length\" : 1300, "
         " \"conflict-resolution-mode\" : \"check-with-dhcid\""
         "}";
@@ -292,6 +291,43 @@ TEST(NameRemoveTransaction, construction) {
     EXPECT_THROW(NameRemoveTransaction(io_service, ncr,
                                        forward_domain, reverse_domain, cfg_mgr),
                                        NameRemoveTransactionError);
+
+    // Verify that a valid construction attempt works.
+    ncr->setChangeType(isc::dhcp_ddns::CHG_REMOVE);
+    EXPECT_NO_THROW(NameRemoveTransaction(io_service, ncr,
+                                          forward_domain, reverse_domain,
+                                          cfg_mgr));
+}
+
+/// @brief Tests NameRemoveTransaction construction.
+/// This test verifies that valid construction functions properly if extra
+/// parameters are present.
+TEST(NameRemoveTransaction, constructionWithExtra) {
+    asiolink::IOServicePtr io_service(new isc::asiolink::IOService());
+    D2CfgMgrPtr cfg_mgr(new D2CfgMgr());
+
+    const char* msg_str =
+        "{"
+        " \"change-type\" : 0 , "
+        " \"forward-change\" : true , "
+        " \"reverse-change\" : true , "
+        " \"fqdn\" : \"example.com.\" , "
+        " \"ip-address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"0102030405060708\" , "
+        " \"extra\" : \"19700101000000\" , "
+        " \"lease-length\" : 1300, "
+        " \"conflict-resolution-mode\" : \"check-with-dhcid\""
+        "}";
+
+    dhcp_ddns::NameChangeRequestPtr ncr;
+    DnsServerInfoStoragePtr servers;
+    DdnsDomainPtr forward_domain;
+    DdnsDomainPtr reverse_domain;
+    DdnsDomainPtr empty_domain;
+
+    ASSERT_NO_THROW(ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str));
+    ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", servers)));
+    ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", servers)));
 
     // Verify that a valid construction attempt works.
     ncr->setChangeType(isc::dhcp_ddns::CHG_REMOVE);
