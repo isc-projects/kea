@@ -112,8 +112,7 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         // classes in a template expression to be defined.  This permits them to
         // reference spawned classes. In other words, one template can depend on
         // membership in the spawn of another template.
-        check_defined =
-        [&class_dictionary, &depend_on_known, check_dependencies](const ClientClass& cclass) {
+        check_defined = [&depend_on_known](const ClientClass& cclass) {
             // Check direct dependency on [UN]KNOWN
             if ((cclass == "KNOWN") || (cclass == "UNKNOWN")) {
                 depend_on_known = true;
