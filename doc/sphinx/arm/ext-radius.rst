@@ -624,7 +624,7 @@ set it up to enable basic functionality in Kea.
       check_cert_cn = %{User-Name}
 
    which matches the Common Name of the TLS client (i.e. Kea) certificate
-   with the RADIUS User-Name.
+   subject with the RADIUS User-Name.
 
 .. _radius-lease-allocation:
 
