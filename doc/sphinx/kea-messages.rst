@@ -6175,10 +6175,10 @@ DHCP4_TESTING_MODE_SEND_TO_SOURCE_ENABLED
 
     All packets will be sent to the source address of an incoming packet - use only for testing
 
-This message is printed, then the KEA_TEST_SEND_RESPONSES_TO_SOURCE
-environment variable is set. It's causes Kea to send packets to the
-source address of the incoming packet. It is only usable in a testing environment
-to simulate multiple subnet traffic from single source.
+This message is printed when the KEA_TEST_SEND_RESPONSES_TO_SOURCE
+environment variable is set. It causes Kea to send packets to the
+source address of the incoming packet. It is only usable in a testing
+environment to simulate multiple subnet traffic from single source.
 
 DHCP4_UNKNOWN_ADDRESS_REQUESTED
 ===============================

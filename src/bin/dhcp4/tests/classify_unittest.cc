@@ -1994,7 +1994,7 @@ TEST_F(ClassifyTest, vivsoOptionClassTagTest) {
     // Process query
     Pkt4Ptr response1 = srv_->processDiscover(query1);
 
-    // Verify the reponse contains the VIVSO sub-option
+    // Verify the response contains the VIVSO sub-option
     OptionPtr tmp = response1->getOption(DHO_VIVSO_SUBOPTIONS);
     EXPECT_TRUE(tmp);
 

@@ -132,7 +132,7 @@ public:
 
     /// @brief Adds options to a query response
     ///
-    /// Adds the following options to the reponse (regardless of PRL):
+    /// Adds the following options to the response (regardless of PRL):
     ///
     /// - DHO_DHCP_CLIENT_IDENTIFIER - if one
     /// - DHO_DHCP_LEASE_TIME
