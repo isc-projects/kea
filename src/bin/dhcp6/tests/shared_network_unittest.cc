@@ -3059,8 +3059,8 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
 // expired and been reclaimed. Since lease affinity is enabled it
 // is still in the database.
 // - The client returns looking for a lease.
-// The server should reclaim the lease and also account for
-// the subnet change.
+// The server should reclaim the lease as well as detect and
+// account for the subnet change.
 TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
     const std::string config =
     R"^({
@@ -3084,6 +3084,13 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
                 "ip-addresses" : [ "2001:db8:1::77" ],
                 "hostname": "seventy-seven"
             }],
+            "option-data": [
+            {
+                "name": "domain-search",
+                "data": "111.example.com",
+                "always-send" : true
+            }]
+
         },
         {
             "id": 222,
@@ -3095,6 +3102,12 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
                 "ip-addresses" : [ "2001:db8:2::88" ],
                 "hostname": "eighty-eight"
             }],
+            "option-data": [
+            {
+                "name": "domain-search",
+                "data": "222.example.com",
+                "always-send" : true
+            }]
         }]
     }],
     "valid-lifetime" : 60
@@ -3129,12 +3142,21 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
     ASSERT_TRUE(resp);
     ASSERT_EQ(1, client.getLeaseNum());
     ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::88")));
-    Option6ClientFqdnPtr fqdn_opt = (boost::dynamic_pointer_cast<Option6ClientFqdn>
-                                    (resp->getOption(D6O_CLIENT_FQDN)));
+
+    // We should see the reselect twice, once on solicit, once on request.
+    EXPECT_EQ(2, countFile("DHCP6_SUBNET_DYNAMICALLY_CHANGED duid=[01:02:03:04:05:06]"));
 
     // The FQDN should be generated using the hostname from the reservation.
+    Option6ClientFqdnPtr fqdn_opt = (boost::dynamic_pointer_cast<Option6ClientFqdn>
+                                    (resp->getOption(D6O_CLIENT_FQDN)));
     ASSERT_TRUE(fqdn_opt);
     ASSERT_EQ(fqdn_opt->getDomainName(), "eighty-eight.example.com.");
+
+    // The option should come from the host's subnet.
+    auto domain_search = boost::dynamic_pointer_cast<OptionCustom>
+                                                    (resp->getOption(D6O_DOMAIN_SEARCH));
+    ASSERT_TRUE(domain_search);
+    EXPECT_EQ("222.example.com.", domain_search->readFqdn(0));
 }
 
 } // end of anonymous namespace

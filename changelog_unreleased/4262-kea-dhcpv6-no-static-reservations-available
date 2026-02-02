@@ -1,5 +1,8 @@
 [bug]		tmark
-	Fixed an issue in kea-dhcp6 that caused reserved host
-	names to be not be used, when the reserved lease exists
-	but is in either the RELEASED or EXPIRED-RECLAIMED states. 
+	Fixed an issue in kea-dhcp6 that caused the server to
+	not use a reserved host name or recognize a change to
+	the selected subnet for subnet-level reservations
+	within a shared-network when a lease exists for the
+	reservation but is in either the RELEASED or
+	EXPIRED-RECLAIMED states.
 	(Gitlab #4262)

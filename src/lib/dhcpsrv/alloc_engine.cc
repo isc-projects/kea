@@ -1187,15 +1187,21 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                         // this new value and the server doesn't need to do it and
                         // its processing performance is not impacted by the hostname
                         // updates.
-                        if (host && !host->getHostname().empty()) {
-                            // We have to determine whether the hostname is generated
-                            // in response to client's FQDN or not. If yes, we will
-                            // need to qualify the hostname. Otherwise, we just use
-                            // the hostname as it is specified for the reservation.
-                            OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
-                            ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(host->getHostname(), *ctx.getDdnsParams(),
-                                            static_cast<bool>(fqdn));
+                        if (host) {
+                            // We need to update the selected subnet so we get the
+                            // correct options, parameters, and classes.
+                            ctx.subnet_ = ctx.host_subnet_;
+
+                            if (!host->getHostname().empty()) {
+                                // We have to determine whether the hostname is generated
+                                // in response to client's FQDN or not. If yes, we will
+                                // need to qualify the hostname. Otherwise, we just use
+                                // the hostname as it is specified for the reservation.
+                                OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
+                                ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
+                                    qualifyName(host->getHostname(), *ctx.getDdnsParams(),
+                                                static_cast<bool>(fqdn));
+                            }
                         }
                     }
                 }
