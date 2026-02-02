@@ -97,8 +97,8 @@ public:
     /// @brief Pointer to the tested server object
     boost::shared_ptr<NakedControlledDhcpv4Srv> server_;
 
-    /// @brief Flag which indicates if the server has stopped the IOService and
-    /// the client needs to handle it's own IO events.
+    /// @brief Flag which indicates if the server has stopped the IO service and
+    /// the client needs to handle its own IO events.
     bool handle_stop_;
 
     /// @brief Default constructor
