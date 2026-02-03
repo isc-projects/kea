@@ -1683,7 +1683,7 @@ TEST(ClientClassDictionary, templateClassDependOnKnown) {
     std::string config_txt = R"^([
         {
             "name": "does_not",
-            "template-test": "hexstring(substring(option[1].hex,0,4))"
+            "template-test": "hexstring(substring(option[1].hex, 0, 4), '')"
         },
         {
             "name": "does",
