@@ -1680,11 +1680,10 @@ TEST(ClientClassDictionary, templateCreateOptions) {
 TEST(ClientClassDictionary, templateClassDependOnKnown) {
     CfgMgr::instance().setFamily(AF_INET6);
 
-            //"template-test": "ifelse((option[1].exists and member('KNOWN')), hexstring(substring(option[1].hex, 0, 4),              ''), '')"
     std::string config_txt = R"^([
         {
             "name": "does_not",
-            "template": "hexstring(substring(option[1].hex,0,4))"
+            "template-test": "hexstring(substring(option[1].hex,0,4))"
         },
         {
             "name": "does",

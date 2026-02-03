@@ -3516,7 +3516,7 @@ TEST_F(ClassifyTest, templateDependOnKnown) {
 
     // Verify class membership isn't set yet because it depends on KNOWN.
     EXPECT_FALSE(query->inClass("template-client-id"));
-    EXPECT_FALSE(query->inClass("SPAWN_template-client-id_def"));
+    EXPECT_FALSE(query->inClass("SPAWN_template-client-id_111"));
 
     // Process the query
     Pkt6Ptr response;
