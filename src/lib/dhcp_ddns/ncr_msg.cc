@@ -436,7 +436,7 @@ NameChangeRequest::toJSON() const {
         << "\"dhcid\":\"" << getDhcid().toStr() << "\","
         << "\"lease-length\":" << getLeaseLength() << ","
         << "\"conflict-resolution-mode\":"
-        << "\"" <<ConflictResolutionModeToString(getConflictResolutionMode()) << "\""
+        << "\"" << ConflictResolutionModeToString(getConflictResolutionMode()) << "\""
         << "}";
 
     return (stream.str());

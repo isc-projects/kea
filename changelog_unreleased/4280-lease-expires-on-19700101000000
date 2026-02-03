@@ -1,0 +1,4 @@
+[func]		razvan
+	Removed "Lease Expires On" information from the kea-dhcp-ddns
+	log messages.
+	(Gitlab #4280)
