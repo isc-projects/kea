@@ -3052,4 +3052,89 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
     testPrecedence(config, "2001:db8:1::6");
 }
 
+// Verifies the following scenario:
+// - Client has a reserved address in a subnet in a shared network.
+// but reservation is not in the initially selected subnet.
+// - The client held a lease for that address but it  since
+// expired and been reclaimed. Since lease affinity is enabled it
+// is still in the database.
+// - The client returns looking for a lease.
+// The server should reclaim the lease and also account for
+// the subnet change.
+TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
+    const std::string config =
+    R"^({
+    "dhcp-ddns": {
+        "enable-updates": true
+    },
+    "ddns-replace-client-name": "always",
+    "ddns-generated-prefix": "v6",
+    "ddns-qualifying-suffix": "example.com",
+    "shared-networks":[{
+        "name": "boo",
+        "interface": "eth1",
+        "subnet6": [
+        {
+            "id": 111,
+            "subnet": "2001:db8:1::/64",
+            "pools": [ { "pool" : "2001:db8:1::/64" } ],
+            "reservations": [
+            {
+                "duid": "01:02:03:04:05:07",
+                "ip-addresses" : [ "2001:db8:1::77" ],
+                "hostname": "seventy-seven"
+            }],
+        },
+        {
+            "id": 222,
+            "subnet": "2001:db8:2::/64",
+            "pools": [ { "pool" : "2001:db8:2::/64" } ],
+            "reservations": [
+            {
+                "duid": "01:02:03:04:05:06",
+                "ip-addresses" : [ "2001:db8:2::88" ],
+                "hostname": "eighty-eight"
+            }],
+        }]
+    }],
+    "valid-lifetime" : 60
+    })^";
+
+    // Create client and set DUID to the one that has a reservation.
+    Dhcp6Client client(srv_);
+    client.setInterface("eth1");
+    client.setDUID("01:02:03:04:05:06");
+    client.requestAddress(0xabca);
+
+    // Create server configuration.
+    configure(config, *client.getServer());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    // Add a reclaimed lease for the client's reserved lease.
+    IOAddress expected_address("2001:db8:2::88");
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, expected_address, client.getDuid(), 0xabca,
+                               0, 0, 222, HWAddrPtr(), 128));
+    lease->cltt_ = time(0) - 800;
+    lease->valid_lft_ = 0;
+    // This should also work for STATE_RELEASED. That is tested
+    // under alloc_engine testing.
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Perform SARR.
+    ASSERT_NO_THROW(client.doSARR());
+
+    // Check response.
+    Pkt6Ptr resp = client.getContext().response_;
+    ASSERT_TRUE(resp);
+    ASSERT_EQ(1, client.getLeaseNum());
+    ASSERT_TRUE(hasLeaseForAddress(client, IOAddress("2001:db8:2::88")));
+    Option6ClientFqdnPtr fqdn_opt = (boost::dynamic_pointer_cast<Option6ClientFqdn>
+                                    (resp->getOption(D6O_CLIENT_FQDN)));
+
+    // The FQDN should be generated using the hostname from the reservation.
+    ASSERT_TRUE(fqdn_opt);
+    ASSERT_EQ(fqdn_opt->getDomainName(), "eighty-eight.example.com.");
+}
+
 } // end of anonymous namespace

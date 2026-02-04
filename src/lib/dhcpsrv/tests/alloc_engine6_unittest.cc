@@ -6798,6 +6798,54 @@ TEST_F(AllocEngine6Test, getRemaining) {
     EXPECT_EQ(0, preferred);
 }
 
+TEST_F(AllocEngine6Test, useReleasedReservedLease) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
+
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1c"),
+                               duid_, iaid_, 300, 400,
+                               subnet_->getID(), HWAddrPtr()));
+
+    // Allocated two lifetimes ago.
+    time_t lease_cltt = time(0) - 800;
+    lease->cltt_ = lease_cltt;
+    lease->valid_lft_  = 0;
+    lease->state_ = Lease::STATE_RELEASED;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Client should receive a lease.
+    Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
+    ASSERT_TRUE(new_lease);
+    EXPECT_EQ(new_lease->valid_lft_, 400);
+}
+
+TEST_F(AllocEngine6Test, useReclaimedReservedLease) {
+    // Create reservation for the client. This is in-pool reservation,
+    // as the pool is 2001:db8:1::10 - 2001:db8:1::20.
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
+
+    // Create a lease for the client.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1c"),
+                               duid_, iaid_, 300, 400,
+                               subnet_->getID(), HWAddrPtr()));
+
+    // Allocated two lifetimes ago.
+    time_t lease_cltt = time(0) - 800;
+    lease->cltt_ = lease_cltt;
+    lease->valid_lft_  = 0;
+    lease->state_ = Lease::STATE_EXPIRED_RECLAIMED;
+
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Client should receive a lease.
+    Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
+    ASSERT_TRUE(new_lease);
+    EXPECT_EQ(new_lease->valid_lft_, 400);
+}
+
 }  // namespace test
 }  // namespace dhcp
 }  // namespace isc

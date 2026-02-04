@@ -1139,7 +1139,6 @@ AllocEngine::allocateBestMatch(ClientContext6& ctx,
 void
 AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases) {
-
     // If there are no reservations or the reservation is v4, there's nothing to do.
     if (ctx.hosts_.empty()) {
         LOG_DEBUG(alloc_engine_logger, ALLOC_ENGINE_DBG_TRACE,
@@ -1156,7 +1155,9 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
     // a valid lease for which client has reservation. So, we first check if
     // we already have a lease for a reserved address or prefix.
     for (auto const& lease : existing_leases) {
-        if ((lease->valid_lft_ != 0)) {
+        if (lease->valid_lft_ != 0 ||
+            (lease->state_ == Lease::STATE_EXPIRED_RECLAIMED ||
+             lease->state_ == Lease::STATE_RELEASED)) {
             if ((ctx.hosts_.count(lease->subnet_id_) > 0) &&
                 ctx.hosts_[lease->subnet_id_]->hasReservation(makeIPv6Resrv(*lease))) {
                 // We found existing lease for a reserved address or prefix.
