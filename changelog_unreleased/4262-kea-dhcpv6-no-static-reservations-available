@@ -1,0 +1,5 @@
+[bug]		tmark
+	Fixed an issue in kea-dhcp6 that caused reserved host
+	names to be not be used, when the reserved lease exists
+	but is in either the RELEASED or EXPIRED-RECLAIMED states. 
+	(Gitlab #4262)
