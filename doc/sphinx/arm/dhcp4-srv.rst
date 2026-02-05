@@ -8458,9 +8458,11 @@ are clearly marked as such.
    headers (including data link layer, IP, and UDP headers) are created
    and parsed by Kea, rather than by the system kernel. Currently, Kea
    can only parse the data-link layer headers with a format adhering to
-   the IEEE 802.3 standard, and assumes this data-link-layer header
+   the IEEE 802.3 (Ethernet) standard, and assumes this data-link-layer header
    format for all interfaces. Thus, Kea does not work on interfaces
-   which use different data-link-layer header formats (e.g. Infiniband).
+   which use different data-link-layer header formats, with the exception of
+   LPF being able to handle InfiniBand framing, thus enabling Kea to serve
+   these kind of interfaces on Linux.
 
 .. _dhcp4-srv-examples:
 
