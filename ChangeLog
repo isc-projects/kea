@@ -8,20 +8,21 @@ Kea 3.1.5 (development) released on January 28, 2026
 	(Gitlab #4264, #4266)
 
 2435.	[build]		andrei
-	Hammer was extended to prepare additional systems: Alpine 3.23, Fedora 43,
-	FreeBSD 15. "-w sanitizers" can now be passed to install LLVM sanitizer
-	libraries. Valgrind is also installed when "-w unittest" is passed.
-	To address version mismatch errors in FreeBSD, package installation is now
-	retried with repo updates enabled if it first fails without repo updates.
-	This change was included in the 3.1.5 release, but its changelog entry was
-	not.
-    (Gitlab #4245)
+	Hammer was extended to prepare additional systems: Alpine 3.23,
+	Fedora 43, FreeBSD 15. "-w sanitizers" can now be passed to
+	install LLVM sanitizer libraries. Valgrind is also installed when
+	"-w unittest" is passed. To address version mismatch errors in
+	FreeBSD, package installation is now retried with repo updates
+	enabled if it first fails without repo updates. This change was
+	included in the 3.1.5 release, but its changelog entry was not.
+	(Gitlab #4245)
 
 2434.	[build]		andrei
-	Fixed errors about missing includes appearing on BSD clang v19 and above when
-	compiling under C++23 standard or higher. This change was included in the
-	3.1.5 release, but its changelog entry was not.
-    (Gitlab #4246)
+	Fixed errors about missing includes appearing on BSD clang v19
+	and above when compiling under C++23 standard or higher. This
+	change was included in the 3.1.5 release, but its changelog entry
+	was not.
+	(Gitlab #4246)
 
 2433.	[sec]		fdupont
 	Added to the RADIUS hooks library and security
