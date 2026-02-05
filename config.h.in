@@ -111,3 +111,9 @@
 
 /* Compile with OpenSSL crypto */
 #mesondefine WITH_OPENSSL
+
+/* OpenSSL has the new X.509 certificate API */
+#mesondefine HAVE_NEW_SSL_API
+
+/* Use OpenSSL_version() instead of SSLeay_version() */
+#mesondefine HAVE_OPENSSL_VERSION

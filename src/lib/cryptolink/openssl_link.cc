@@ -77,7 +77,11 @@ CryptoLink::initialize(CryptoLink& c) {
 
 std::string
 CryptoLink::getVersion() {
+#ifdef HAVE_OPENSSL_VERSION
+    return (OpenSSL_version(OPENSSL_VERSION));
+#else
     return (SSLeay_version(SSLEAY_VERSION));
+#endif
 }
 
 } // namespace cryptolink

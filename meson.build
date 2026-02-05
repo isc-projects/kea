@@ -340,6 +340,20 @@ elif CRYPTO_DEP.name() == openssl.name()
         required: true,
     )
     message('Using OpenSSL.')
+    if cpp.has_function(
+        'SSL_get1_peer_certificate',
+        prefix: '#include <openssl/ssl.h>',
+        dependencies: openssl,
+    )
+        conf_data.set('HAVE_NEW_SSL_API', true)
+    endif
+    if cpp.has_function(
+        'OpenSSL_version',
+        prefix: '#include <openssl/crypto.h>',
+        dependencies: openssl,
+    )
+        conf_data.set('HAVE_OPENSSL_VERSION', true)
+    endif
 else
     error('Dependency not found: neither Botan nor OpenSSL.')
 endif

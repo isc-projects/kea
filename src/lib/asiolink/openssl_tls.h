@@ -171,7 +171,11 @@ public:
     ///
     /// @return The commonName part of the subjectName or the empty string.
     virtual std::string getSubject() {
+#ifdef HAVE_NEW_SSL_API
+        ::X509* cert = ::SSL_get1_peer_certificate(this->native_handle());
+#else
         ::X509* cert = ::SSL_get_peer_certificate(this->native_handle());
+#endif
         if (!cert) {
             return ("");
         }
@@ -205,7 +209,11 @@ public:
     ///
     /// @return The commonName part of the issuerName or the empty string.
     virtual std::string getIssuer() {
+#ifdef HAVE_NEW_SSL_API
+        ::X509* cert = ::SSL_get1_peer_certificate(this->native_handle());
+#else
         ::X509* cert = ::SSL_get_peer_certificate(this->native_handle());
+#endif
         if (!cert) {
             return ("");
         }
