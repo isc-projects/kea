@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2018-2025 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2026 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -653,14 +653,18 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         env['DEBIAN_FRONTEND'] = 'noninteractive'
         cmd = 'sudo apt install --no-install-recommends -y'
     elif system == 'freebsd':
-        cmd = 'sudo pkg clean --all --yes; sudo pkg install --no-repo-update --yes'
-        cmd2 = 'sudo pkg clean --all --yes; sudo pkg install --yes'  # with repo update
+        cmd = 'sudo pkg install --no-repo-update --yes'
+        cmd2 = 'sudo pkg install --yes'  # with repo update
     elif system == 'alpine':
         cmd = 'sudo apk add'
     elif system == 'arch':
         cmd = 'sudo pacman -S --needed --noconfirm --overwrite \'*\''
     else:
         raise NotImplementedError('no implementation for %s' % system)
+
+    pkgs_str = ' '.join(pkgs)
+    if system == 'freebsd':
+        execute(f'sudo pkg fetch --dependencies --yes {pkgs_str}')
 
     if one_package_at_a_time:
         for p in pkgs:
@@ -685,9 +689,8 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
                 )
 
     else:
-        pkgs = ' '.join(pkgs)
         exit_code, _ = execute(
-            f"{cmd} {pkgs}",
+            f"{cmd} {pkgs_str}",
             timeout=timeout,
             env=env,
             check_times=check_times,
@@ -698,7 +701,7 @@ def install_pkgs(pkgs, timeout=60, env=None, check_times=False, pkg_cache=None, 
         )
         if exit_code != 0 and cmd2 is not None:
             execute(
-                f"{cmd2} {pkgs}",
+                f"{cmd2} {pkgs_str}",
                 timeout=timeout,
                 env=env,
                 check_times=check_times,
@@ -2135,6 +2138,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
     # prepare freebsd
     elif system == 'freebsd':
         packages.extend(['bash', 'boost-libs', 'botan3', 'coreutils', 'git', 'log4cplus', 'openssl', 'ninja'])
+        packages.append('pcre2')  # dependency of git
         deferred_functions.append(lambda: install_meson(only='meson'))
 
         if 'docs' in features:
