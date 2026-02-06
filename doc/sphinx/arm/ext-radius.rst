@@ -484,12 +484,15 @@ the configuration, mainly because a shared connection is used with TLS
 
 -  the ``secret`` entry is no longer required and defaults to ``radsec``.
 
-For example, the single access server configuration becomes wuth RADIUS/TLS:
+For example, the single access server configuration becomes with RADIUS/TLS:
 
 .. parsed-literal::
 
     {
       "parameters": {
+
+        // Set the protocol to TLS (default is UDP).
+        "protocol": "TLS",
 
         // Other RADIUS parameters here
 
