@@ -169,11 +169,10 @@ public:
 /// Type of shared pointers to test exchange objets.
 typedef boost::shared_ptr<TestExchange> TestExchangePtr;
 
-
 /// Test fixture for testing code of exchange class.
 class ExchangeTest : public radius::test::AttributeTest {
 public:
-    // Constructor.
+    /// @brief Constructor.
     ExchangeTest()
         : radius::test::AttributeTest (), io_service_(new IOService()),
           code_(0), secret_("foobar"), addr_("127.0.0.1"),
@@ -182,15 +181,15 @@ public:
           handler_([this] (const ExchangePtr) { called_ = true; }) {
     }
 
-    // Destructor.
+    /// @brief Destructor.
     virtual ~ExchangeTest() {
         if (exchange_) {
             exchange_->shutdown();
         }
         servers_.clear();
 
-        // As a best practice, call any remaining handlers before destroying the
-        // IO context.
+        // As a best practice, call any remaining handlers before
+        // destroying the IO context.
         io_service_->stopAndPoll();
 
         exchange_.reset();
@@ -199,14 +198,14 @@ public:
         servers_.clear();
     }
 
-    // Create request.
+    /// @brief Create request.
     void createRequest() {
         ASSERT_NO_THROW_LOG(request_.reset(new Message(code_, 0, auth_,
                                                        secret_, send_attrs_)));
         ASSERT_TRUE(request_);
     }
 
-    // Add server.
+    /// @brief Add server.
     void addServer() {
         ServerPtr server;
         TlsContextPtr tls_context;
@@ -218,7 +217,7 @@ public:
         ASSERT_FALSE(servers_.empty());
     }
 
-    // Create exchange.
+    /// @brief Create exchange.
     void createExchange() {
         ASSERT_NO_THROW_LOG(exchange_.reset(new TestExchange(io_service_,
                                                              request_,
@@ -228,49 +227,49 @@ public:
         ASSERT_TRUE(exchange_);
     }
 
-    // IO service.
+    /// @brief IO service.
     IOServicePtr io_service_;
 
-    // Request.
+    /// @brief Request.
     MessagePtr request_;
 
-    // Request code.
+    /// @brief Request code.
     uint8_t code_;
 
-    // Request authenticator.
+    /// @brief Request authenticator.
     vector<uint8_t> auth_;
 
-    // Secret.
+    /// @brief Secret.
     string secret_;
 
-    // Request attributes.
+    /// @brief Request attributes.
     AttributesPtr send_attrs_;
 
-    // Servers.
+    /// @brief Servers.
     Servers servers_;
 
-    // Address.
+    /// @brief Address.
     IOAddress addr_;
 
-    // Port.
+    /// @brief Port.
     uint16_t port_;
 
-    // Timeout.
+    /// @brief Timeout.
     unsigned timeout_;
 
-    // Deadtime.
+    /// @brief Deadtime.
     unsigned deadtime_;
 
-    // Max retries.
+    /// @brief Max retries.
     unsigned maxretries_;
 
-    // Terminated flag: true if and only if the handler was called.
+    /// @brief Terminated flag: true if and only if the handler was called.
     bool called_;
 
-    // Handler.
+    /// @brief Handler.
     Exchange::Handler handler_;
 
-    // Exchange.
+    /// @brief Exchange.
     TestExchangePtr exchange_;
 };
 

@@ -239,7 +239,7 @@ At the service level, three sections can be configured:
       containing the end-entity certificate to use. Required with the TLS
       protocol, ignored otherwise.
 
-   -  ``key-file`` - Since Kea 3.1.6 specifies the  private key of the
+   -  ``key-file`` - Since Kea 3.1.6 specifies the private key of the
       end-entity certificate to use. Required with the TLS protocol,
       ignored otherwise.
 
@@ -458,7 +458,7 @@ is mandatory for the access service. The Kea configuration is rejected if
     :ref:`ha-hub-and-spoke` for details.
 
 .. _radius-tls:
-   
+
 RADIUS/TLS Configuration
 ------------------------
 

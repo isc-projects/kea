@@ -8,6 +8,7 @@
 #define ATTRIBUTE_TEST_H
 
 #include <client_attribute.h>
+#include <dhcpsrv/host_mgr.h>
 #include <gtest/gtest.h>
 
 namespace isc {
@@ -18,7 +19,7 @@ namespace test {
 class AttributeTest : public ::testing::Test {
 public:
     /// @brief Constructor.
-    AttributeTest() {
+    AttributeTest() : host_mgr_(isc::dhcp::HostMgr::instance()) {
         uint32_t vendor = 0;
         AttrDefs::instance().readDictionary(TEST_DICTIONARY, vendor);
         EXPECT_EQ(0, vendor);
@@ -43,6 +44,11 @@ public:
     /// @param second Second attribute collection.
     /// @return true if collections are the same, false otherwise.
     bool compare(const Attributes& first, const Attributes& second);
+
+private:
+
+    /// @brief The host manager.
+    isc::dhcp::HostMgr& host_mgr_;
 };
 
 } // end of namespace isc::radius::test

@@ -897,12 +897,12 @@ TcpExchange::RequestHandler(TcpExchangePtr ex,
     }
 
     // Call handler.
-    auto call_handler = [](TcpExchangePtr ex) {
-        if (ex->handler_) {
-            auto handler = ex->handler_;
+    auto call_handler = [](TcpExchangePtr exchange) {
+        if (exchange->handler_) {
+            auto handler = exchange->handler_;
             // Avoid to keep a circular reference.
-            ex->handler_ = Handler();
-            handler(ex);
+            exchange->handler_ = Handler();
+            handler(exchange);
         }
     };
 

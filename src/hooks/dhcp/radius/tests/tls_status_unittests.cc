@@ -1,4 +1,4 @@
-// Copyright (C) 2020-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <attribute_test.h>
 #include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
@@ -17,7 +18,8 @@
 #include <radius.h>
 #include <radius_status.h>
 #include <radius_tls.h>
-#include <attribute_test.h>
+#include <tcp/tcp_client.h>
+
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -29,6 +31,7 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::radius;
+using namespace isc::tcp;
 using namespace isc::util;
 namespace ph = std::placeholders;
 namespace ba = boost::asio::ip;
@@ -137,7 +140,8 @@ public:
         impl_.reset();
         impl_.setIOService(service_);
         impl_.setIOContext(service_);
-        impl_.tcp_client_.reset(new isc::tcp::TcpClient(service_, false, 0));
+
+        impl_.tcp_client_.reset(new TcpClient(service_, false, 0));
     }
 
     /// @brief Destructor
@@ -159,7 +163,7 @@ public:
     // Handshake callback.
     void handshakeCallback(const boost::system::error_code& ec) {
         handshake_ = true;
-        handshake_error_code_ =  ec;
+        handshake_error_code_ = ec;
     }
 
     /// @brief Poll the I/O service.

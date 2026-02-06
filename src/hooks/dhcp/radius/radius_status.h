@@ -81,7 +81,7 @@ protected:
     ExchangePtr exchange_;
 };
 
-/// @brief class for communication with access servers.
+/// @brief Class for communication with access servers.
 ///
 /// Only the asynchronous variant is defined.
 class RadiusAuthStatus : public RadiusStatus {
@@ -100,9 +100,9 @@ public:
     /// @brief Start communication.
     virtual void start() override;
 
-    /// @brief Invoke access status callback
+    /// @brief Invoke access status callback.
     ///
-    /// @param callback Termination callback
+    /// @param callback Termination callback.
     /// @param exchange the exchange.
     static void invokeCallback(const CallbackStatus& callback,
                                const ExchangePtr exchange);
@@ -111,7 +111,7 @@ public:
 /// @brief Pointer to access status.
 typedef boost::shared_ptr<RadiusAuthStatus> RadiusAuthStatusPtr;
 
-/// @brief class for communication with accounting servers.
+/// @brief Class for communication with accounting servers.
 ///
 /// Only the asynchronous variant is defined.
 class RadiusAcctStatus : public RadiusStatus {
@@ -130,9 +130,9 @@ public:
     /// @brief Start communication.
     virtual void start() override;
 
-    /// @brief Invoke accounting status callback
+    /// @brief Invoke accounting status callback.
     ///
-    /// @param callback Termination callback
+    /// @param callback Termination callback.
     /// @param exchange the exchange.
     static void invokeCallback(const CallbackStatus& callback,
                                const ExchangePtr exchange);
@@ -141,7 +141,7 @@ public:
 /// @brief Pointer to accounting status.
 typedef boost::shared_ptr<RadiusAcctStatus> RadiusAcctStatusPtr;
 
-/// @brief class for communication with common TLS servers.
+/// @brief Class for communication with common TLS servers.
 ///
 /// Only the asynchronous variant is defined.
 class RadiusTlsStatus : public RadiusStatus {
@@ -160,9 +160,9 @@ public:
     /// @brief Start communication.
     virtual void start() override;
 
-    /// @brief Invoke access status callback
+    /// @brief Invoke access status callback.
     ///
-    /// @param callback Termination callback
+    /// @param callback Termination callback.
     /// @param exchange the exchange.
     static void invokeCallback(const CallbackStatus& callback,
                                const ExchangePtr exchange);

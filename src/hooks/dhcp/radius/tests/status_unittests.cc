@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <attribute_test.h>
 #include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
@@ -16,7 +17,6 @@
 #include <radius_access.h>
 #include <radius_accounting.h>
 #include <radius_status.h>
-#include <attribute_test.h>
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <atomic>
@@ -147,6 +147,8 @@ public:
         impl_.reset();
         impl_.setIOService(service_);
         impl_.setIOContext(service_);
+
+        impl_.udp_client_.reset(new UdpClient(service_, 0));
     }
 
     /// @brief Destructor
@@ -257,7 +259,6 @@ public:
 void
 StatusTest::poll() {
     service_->poll();
-    EXPECT_NO_THROW(IfaceMgr::instance().receive4(0, 1000));
 }
 
 void

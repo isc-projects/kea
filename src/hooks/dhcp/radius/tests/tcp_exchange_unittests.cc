@@ -1,4 +1,4 @@
-// Copyright (C) 2023-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,12 +6,15 @@
 
 #include <config.h>
 
-#include <radius.h>
+#include <attribute_test.h>
+#include <asiolink/asio_wrapper.h>
 #include <asiolink/tcp_acceptor.h>
 #include <asiolink/testutils/test_tls.h>
+#include <radius.h>
+#include <tcp/tcp_client.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
-#include <attribute_test.h>
+
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -170,14 +173,14 @@ typedef boost::shared_ptr<TestExchange> TestExchangePtr;
 /// Test fixture for testing code of exchange class.
 class TcpExchangeTest : public radius::test::AttributeTest {
 public:
-    // Constructor.
+    /// @brief Constructor.
     TcpExchangeTest()
         : radius::test::AttributeTest (), impl_(RadiusImpl::instance()),
           io_service_(new IOService()),
           code_(0), secret_("foobar"), addr_("127.0.0.1"), port_(11460),
           timeout_(10), deadtime_(0), maxretries_(3), called_(false),
           accepted_(false), ec_(),
-          handler_([this] (const ExchangePtr ex) { called_ = true; }) {
+          handler_([this] (const ExchangePtr) { called_ = true; }) {
         impl_.reset();
         impl_.setIOService(io_service_);
         impl_.setIOContext(io_service_);
@@ -185,14 +188,13 @@ public:
         impl_.tcp_client_.reset(new TcpClient(io_service_, false, 0));
     }
 
-    // Destructor.
+    /// @brief Destructor.
     virtual ~TcpExchangeTest() {
         if (exchange_) {
             exchange_->shutdown();
         }
         servers_.clear();
 
-        impl_.tcp_client_.reset();
         // As a best practice, call any remaining handlers before
         // destroying the IO context.
         io_service_->stopAndPoll();
@@ -203,14 +205,14 @@ public:
         servers_.clear();
     }
 
-    // Create request.
+    /// @brief Create request.
     void createRequest() {
         ASSERT_NO_THROW_LOG(request_.reset(new Message(code_, 0, auth_,
                                                        secret_, send_attrs_)));
         ASSERT_TRUE(request_);
     }
 
-    // Add server.
+    /// @brief Add server.
     void addServer() {
         ServerPtr server;
         TlsContextPtr tls_context;
@@ -222,7 +224,7 @@ public:
         ASSERT_FALSE(servers_.empty());
     }
 
-    // Create exchange.
+    /// @brief Create exchange.
     void createExchange() {
         ASSERT_NO_THROW_LOG(exchange_.reset(new TestExchange(request_,
                                                              maxretries_,
@@ -231,7 +233,7 @@ public:
         ASSERT_TRUE(exchange_);
     }
 
-    // Accept callback.
+    /// @brief Accept callback.
     void acceptCallback(const boost::system::error_code& ec) {
         accepted_ = true;
         ec_ = ec;
@@ -240,55 +242,55 @@ public:
     /// @brief Radius implementation.
     RadiusImpl& impl_;
 
-    // IO service.
+    /// @brief IO service.
     IOServicePtr io_service_;
 
-    // Request.
+    /// @brief Request.
     MessagePtr request_;
 
-    // Request code.
+    /// @brief Request code.
     uint8_t code_;
 
-    // Request authenticator.
+    /// @brief Request authenticator.
     vector<uint8_t> auth_;
 
-    // Secret.
+    /// @brief Secret.
     string secret_;
 
-    // Request attributes.
+    /// @brief Request attributes.
     AttributesPtr send_attrs_;
 
-    // Servers.
+    /// @brief Servers.
     Servers servers_;
 
-    // Address.
+    /// @brief Address.
     IOAddress addr_;
 
-    // Port.
+    /// @brief Port.
     uint16_t port_;
 
-    // Timeout.
+    /// @brief Timeout.
     unsigned timeout_;
 
-    // Deadtime.
+    /// @brief Deadtime.
     unsigned deadtime_;
 
-    // Max retries.
+    /// @brief Max retries.
     unsigned maxretries_;
 
-    // Terminated flag: true if and only if the handler was called.
+    /// @brief Terminated flag: true if and only if the handler was called.
     bool called_;
 
-    // Accepted flags: true if and only if the accept callback was called.
+    /// @brief Accepted flags: true if and only if the accept callback was called.
     bool accepted_;
 
-    // Boost error code.
+    /// @brief Boost error code.
     boost::system::error_code ec_;
 
-    // Handler.
+    /// @brief Handler.
     Exchange::Handler handler_;
 
-    // Exchange.
+    /// @brief Exchange.
     TestExchangePtr exchange_;
 };
 
@@ -370,11 +372,10 @@ TEST_F(TcpExchangeTest, noServer) {
     ASSERT_NO_THROW_LOG(exchange_->start());
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
-        ASSERT_NO_THROW_LOG(io_service_->poll());
-        if (called_) {
-            break;
-        }
+    size_t count = 0;
+    ASSERT_NO_THROW_LOG(count = io_service_->poll());
+    for (; count;) {
+        ASSERT_NO_THROW_LOG(count = io_service_->poll());
     }
     EXPECT_TRUE(called_);
     EXPECT_EQ(ERROR_RC, exchange_->rc_);
@@ -399,11 +400,12 @@ TEST_F(TcpExchangeTest, timeout) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
+    size_t count = io_service_->runOne();
+    for (; count;) {
         if (called_ || ec_) {
             break;
         }
-        io_service_->runOne();
+        count = io_service_->runOne();
     }
     socket.close();
     acceptor.close();
@@ -431,14 +433,15 @@ TEST_F(TcpExchangeTest, drop) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
+    size_t count = io_service_->runOne();
+    for (; count;) {
         if (accepted_) {
             socket.close();
         }
         if (called_ || ec_) {
             break;
         }
-        io_service_->runOne();
+        count = io_service_->runOne();
     }
     acceptor.close();
     EXPECT_TRUE(accepted_);

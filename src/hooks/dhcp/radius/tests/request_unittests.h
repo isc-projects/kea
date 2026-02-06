@@ -201,6 +201,7 @@ public:
     void doneAcct(int result);
 
     /// @brief Run a request handler i.e. the client part.
+    ///
     /// The server side is simulated by the individual test code.
     void run();
 
@@ -1185,7 +1186,6 @@ TEST_F(RequestTest, shortAcct) {
     size = AUTH_HDR_LEN;                       // header (no attributes).
     send_buffer_.resize(size);
     send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Access-Accept.
-    // There are a lot of ways to get an error including this one.
     send_buffer_[1] = receive_buffer_[1];      // Copy id.
     send_buffer_[2] = size >> 8;               // Length
     send_buffer_[3] = size & 0xff;

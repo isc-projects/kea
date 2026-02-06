@@ -33,7 +33,7 @@ namespace radius {
 /// @brief Keywords for Radius configuration.
 const set<string>
 RadiusConfigParser::RADIUS_KEYWORDS = {
-  "access", "accounting", "common-tls", // services
+    "access", "accounting", "common-tls", // services
     "bindaddr", "canonical-mac-address", "client-id-pop0",
     "client-id-printable", "deadtime", "dictionary",
     "extract-duid", "identifier-type4", "identifier-type6",
@@ -379,7 +379,7 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                 isc_throw(BadValue, "can't set enabled in 'common-tls'");
             }
             service->enabled_ = enabled->boolValue();
-        } else  {
+        } else {
             if ((riref.proto_ == PW_PROTO_TLS) &&
                 (service->name_ != "common-tls")) {
                 service->enabled_ = true;
@@ -415,7 +415,6 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         const ConstElementPtr& peer_updates = srv_cfg->get("peer-updates");
         if (peer_updates) {
             if (service->name_ != "accounting") {
-
                 isc_throw(BadValue, "peer-updates configured for the "
                           << service->name_ << " service, but it is "
                           << "only supported for the accounting service");
@@ -567,7 +566,6 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
 
     // secret.
     string secret;
-    const ConstElementPtr& secret_elm = server->get("secret");
     if (!server->contains("secret") && (service->name_ == "common-tls")) {
         secret = "radsec";
     } else {
@@ -591,8 +589,8 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     }
 
     try {
-      ServerPtr srv(new Server(peer_addr, port, local_addr, tls_context,
-                               secret, riref.timeout_, riref.deadtime_));
+        ServerPtr srv(new Server(peer_addr, port, local_addr, tls_context,
+                                 secret, riref.timeout_, riref.deadtime_));
         service->servers_.push_back(srv);
     } catch (const Exception& ex) {
         isc_throw(ConfigError, "can't create " << service->name_

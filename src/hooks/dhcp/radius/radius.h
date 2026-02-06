@@ -83,7 +83,7 @@ public:
     /// in single-threaded mode.
     const asiolink::IOServicePtr getThreadIOService() const;
 
-    /// @brief the maximum size of the thread pool.
+    /// @brief Fetches the maximum size of the thread pool.
     ///
     /// @return the maximum size of the thread pool.
     unsigned getThreadPoolSize() const;

@@ -796,7 +796,7 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_TRUE(impl_.acct_->enabled_);
 
-    // Can't set enabledin common-Tls.
+    // Can't set enabled in common-Tls.
     common->set("enabled", Element::create(true));
     expected = "can't set enabled in 'common-tls' (parsing common-tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
@@ -810,6 +810,14 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_FALSE(impl_.acct_->enabled_);
 
+    accounting = Element::createMap();
+    config->set("accounting", accounting);
+    access->set("enabled", Element::create(false));
+    EXPECT_NO_THROW(impl_.init(config));
+    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.auth_->enabled_);
+    EXPECT_TRUE(impl_.acct_->enabled_);
+
     // Servers is forbidden outside common-tls.
     common = Element::createMap();
     access = Element::createMap();
@@ -818,7 +826,8 @@ TEST_F(ConfigTest, commonTls) {
     config->set("access", access);
     config->set("accounting", accounting);
     access->set("servers", Element::createList());
-    expected = "can't have servers entry in 'access' with TLS (parsing access)";
+    expected = "can't have servers entry in 'access' with TLS ";
+    expected += "(parsing access)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
     access = Element::createMap();
     config->set("access", access);
@@ -841,8 +850,8 @@ TEST_F(ConfigTest, commonTls) {
     access = Element::createMap();
     config->set("access", access);
     accounting->set("idle-timer-interval", Element::create(60));
-    expected = "can't have idle-timer-interval entry in 'accounting' ";
-    expected += "with TLS (parsing accounting)";
+    expected = "can't have idle-timer-interval entry in 'accounting' with TLS ";
+    expected += "(parsing accounting)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
     // Attribute is forbidden in common-tls.
@@ -865,7 +874,7 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
     EXPECT_EQ(0, impl_.acct_->idle_timer_interval_);
 
-    // Servers for coomon-tls require TLS.
+    // Servers for common-tls require TLS.
     ElementPtr servers = Element::createList();
     ElementPtr server = Element::createMap();
     server->set("name", Element::create("127.0.0.1"));

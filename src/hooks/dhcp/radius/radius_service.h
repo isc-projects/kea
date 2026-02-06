@@ -64,6 +64,7 @@ public:
     /// @brief Idle timer.
     asiolink::IntervalTimerPtr idle_timer_;
 
+protected:
     /// @brief Cancel idle timer.
     ///
     /// @note: The caller must hold the idle timer mutex.
