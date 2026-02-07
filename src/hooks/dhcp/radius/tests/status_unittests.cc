@@ -1354,52 +1354,6 @@ TEST_F(StatusTest, response2) {
     EXPECT_EQ(OK_RC, result_);
 }
 
-#if 0
-TEST_F(StatusTest, signedAuthResponse) {
-    /*
-    request:
-Data (38 bytes)
-
-0000  0c 1f 00 26 38 85 4e 26 26 06 af 84 57 77 e0 2c   ...&8.N&&...Ww.,
-0010  fc 76 d5 84 50 12 15 a5 8a 0b aa 3b 5f 6d a0 bd   .v..P......;_m..
-0020  fc a6 de 60 f9 0f                                 ...`..
-    Data: 0c1f002638854e262606af845777e02cfc76d584501215a58a0baa3b5f6da0bdfca6de60...
-    Status-Server Id 31 MA 0xb92981a1a921d624c4586ad0440a6fb7
-
-    response:
-Data (38 bytes)
-
-0000  02 1f 00 26 9c 98 42 18 f7 fb fd 71 a1 25 4c 69   ...&..B....q.%Li
-0010  9b 95 fd bc 50 12 b9 29 81 a1 a9 21 d6 24 c4 58   ....P..)...!.$.X
-0020  6a d0 44 0a 6f b7                                 j.D.o.
-    Data: 021f00269c984218f7fbfd71a1254c699b95fdbc5012b92981a1a921d624c4586ad0440a...
-    Access-Accept Id 31 MA 0x15a58a0baa3b5f6da0bdfca6de60f90f
-    */
-}
-
-TEST_F(StatusTest, signedAcctResponse) {
-    /*
-    request:
-Data (38 bytes)
-
-0000  0c 1b 00 26 7d 23 d2 f4 04 86 57 17 f9 d2 a8 63   ...&}#....W....c
-0010  36 c7 c1 fc 50 12 ab 13 50 87 20 bd f6 e1 f1 89   6...P...P. .....
-0020  02 81 f7 eb ac 1d                                 ......
-    Data: 0c1b00267d23d2f404865717f9d2a86336c7c1fc5012ab13508720bdf6e1f1890281f7eb...
-    Status-Server Id 27 MA 0xb2a75749a4112b6af9aa9b3173dbdbe8
-
-    response:
-Data (38 bytes)
-
-0000  05 1b 00 26 c0 6f 9d d2 03 0b ea 0b a4 30 0d 5e   ...&.o.......0.^
-0010  36 e5 15 4a 50 12 b2 a7 57 49 a4 11 2b 6a f9 aa   6..JP...WI..+j..
-0020  9b 31 73 db db e8                                 .1s...
-    Data: 051b0026c06f9dd2030bea0ba4300d5e36e5154a5012b2a75749a4112b6af9aa9b3173db...
-    Accounting-Response Id 27
-    */
-}
-#endif
-    
 /// Verify that access IdleTimerCallback works as expected.
 TEST_F(StatusTest, accessIdleTimerCallback) {
     // Use CONFIGS[0].

@@ -1653,4 +1653,151 @@ TEST_F(MessageTest, verboseStatusResponse) {
         << got_attrs->toText() << "\n" << exp_attrs->toText();
 }
 
+// Verify signed Access-Accept response to signed Status-Server.
+TEST_F(MessageTest, signedAuthStatusResponse) {
+    MsgCode code = PW_STATUS_SERVER;
+    uint8_t id = 0x1f;
+    vector<uint8_t> auth = {
+        0x38, 0x85, 0x4e, 0x26, 0x26, 0x06, 0xaf, 0x84,
+        0x57, 0x77, 0xe0, 0x2c, 0xfc, 0x76, 0xd5, 0x84
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "foo";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(38, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x0c,           // Code (Status-Server).
+        0x1f,           // Identifier (0x1f).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0x38, 0x85, 0x4e, 0x26, 0x26, 0x06, 0xaf, 0x84,
+        0x57, 0x77, 0xe0, 0x2c, 0xfc, 0x76, 0xd5, 0x84,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0x15, 0xa5, 0x8a, 0x0b, 0xaa, 0x3b, 0x5f, 0x6d,
+        0xa0, 0xbd, 0xfc, 0xa6, 0xde, 0x60, 0xf9, 0x0f
+    };
+    ASSERT_EQ(38, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 38) << "\n"
+        << str::dumpAsHex(&expected[0], 38);
+
+    // Create message (response).
+    vector<uint8_t> dumped = {
+        0x02,           // Code (Access-Accept).
+        0x1f,           // Identifier (0x1f).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0x9c, 0x98, 0x42, 0x18, 0xf7, 0xfb, 0xfd, 0x71,
+        0xa1, 0x25, 0x4c, 0x69, 0x9b, 0x95, 0xfd, 0xbc,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0xb9, 0x29, 0x81, 0xa1, 0xa9, 0x21, 0xd6, 0x24,
+        0xc4, 0x58, 0x6a, 0xd0, 0x44, 0x0a, 0x6f, 0xb7
+    };
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(dumped, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+}
+
+// Verify signed Accountig-Response response to signed Status-Server.
+TEST_F(MessageTest, signedAcctStatusResponse) {
+    MsgCode code = PW_STATUS_SERVER;
+    uint8_t id = 0x1b;
+    vector<uint8_t> auth = {
+        0x7d, 0x23, 0xd2, 0xf4, 0x04, 0x86, 0x57, 0x17,
+        0xf9, 0xd2, 0xa8, 0x63, 0x36, 0xc7, 0xc1, 0xfc
+    };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
+    string secret = "foo";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, auth, secret, attrs)));
+    ASSERT_TRUE(request);
+
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(38, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x0c,           // Code (Status-Server).
+        0x1b,           // Identifier (0x1b).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0x7d, 0x23, 0xd2, 0xf4, 0x04, 0x86, 0x57, 0x17,
+        0xf9, 0xd2, 0xa8, 0x63, 0x36, 0xc7, 0xc1, 0xfc,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0xab, 0x13, 0x50, 0x87, 0x20, 0xbd, 0xf6, 0xe1,
+        0xf1, 0x89, 0x02, 0x81, 0xf7, 0xeb, 0xac, 0x1d
+    };
+    ASSERT_EQ(38, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 38) << "\n"
+        << str::dumpAsHex(&expected[0], 38);
+
+    // Create message (response).
+    vector<uint8_t> dumped = {
+        0x05,           // Code (Accounting-Response).
+        0x1b,           // Identifier (0x1b).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0xc0, 0x6f, 0x9d, 0xd2, 0x03, 0x0b, 0xea, 0x0b,
+        0xa4, 0x30, 0x0d, 0x5e, 0x36, 0xe5, 0x15, 0x4a,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0xb2, 0xa7, 0x57, 0x49, 0xa4, 0x11, 0x2b, 0x6a,
+        0xf9, 0xaa, 0x9b, 0x31, 0x73, 0xdb, 0xdb, 0xe8
+    };
+    MessagePtr response;
+    ASSERT_NO_THROW(response.reset(new Message(dumped, auth, secret)));
+    ASSERT_TRUE(response);
+
+    // Decode response.
+    ASSERT_NO_THROW(response->decode());
+}
+
 } // end of anonymous namespace
