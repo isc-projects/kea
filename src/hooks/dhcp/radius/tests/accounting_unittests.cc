@@ -485,6 +485,7 @@ struct MTAccountingTest : AccountingTest {
         // Pause the thread pool and resume only after work items have
         // been added to it to increase the chance of finding race conditions.
         EXPECT_EQ(4, impl_.thread_pool_size_);
+        // Can't use ASSERT here.
         EXPECT_TRUE(impl_.udp_client_);
         if (impl_.udp_client_) {
             EXPECT_EQ(4, impl_.udp_client_->getThreadPoolSize());

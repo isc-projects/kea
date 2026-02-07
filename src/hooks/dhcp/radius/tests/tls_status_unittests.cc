@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <attribute_test.h>
 #include <cryptolink/crypto_hash.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
@@ -18,7 +17,7 @@
 #include <radius.h>
 #include <radius_status.h>
 #include <radius_tls.h>
-#include <tcp/tcp_client.h>
+#include <attribute_test.h>
 
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>

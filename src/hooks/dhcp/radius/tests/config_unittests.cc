@@ -796,7 +796,7 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_TRUE(impl_.acct_->enabled_);
 
-    // Can't set enabled in common-Tls.
+    // Can't set enabled in common-tls.
     common->set("enabled", Element::create(true));
     expected = "can't set enabled in 'common-tls' (parsing common-tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);

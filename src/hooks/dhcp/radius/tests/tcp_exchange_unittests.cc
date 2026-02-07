@@ -6,14 +6,13 @@
 
 #include <config.h>
 
-#include <attribute_test.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/tcp_acceptor.h>
 #include <asiolink/testutils/test_tls.h>
 #include <radius.h>
-#include <tcp/tcp_client.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <attribute_test.h>
 
 #include <gtest/gtest.h>
 #include <sstream>
@@ -372,10 +371,11 @@ TEST_F(TcpExchangeTest, noServer) {
     ASSERT_NO_THROW_LOG(exchange_->start());
 
     // Poll the I/O service.
-    size_t count = 0;
-    ASSERT_NO_THROW_LOG(count = io_service_->poll());
-    for (; count;) {
-        ASSERT_NO_THROW_LOG(count = io_service_->poll());
+    for (unsigned i = 0; i < 10; ++i) {
+        ASSERT_NO_THROW_LOG(io_service_->poll());
+        if (called_) {
+            break;
+        }
     }
     EXPECT_TRUE(called_);
     EXPECT_EQ(ERROR_RC, exchange_->rc_);
@@ -400,12 +400,11 @@ TEST_F(TcpExchangeTest, timeout) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    size_t count = io_service_->runOne();
-    for (; count;) {
+    for (unsigned i = 0; i < 10; ++i) {
         if (called_ || ec_) {
             break;
         }
-        count = io_service_->runOne();
+        io_service_->runOne();
     }
     socket.close();
     acceptor.close();
@@ -433,15 +432,14 @@ TEST_F(TcpExchangeTest, drop) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    size_t count = io_service_->runOne();
-    for (; count;) {
+    for (unsigned i = 0; i < 10; ++i) {
         if (accepted_) {
             socket.close();
         }
         if (called_ || ec_) {
             break;
         }
-        count = io_service_->runOne();
+        io_service_->runOne();
     }
     acceptor.close();
     EXPECT_TRUE(accepted_);
