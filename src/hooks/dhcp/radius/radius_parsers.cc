@@ -40,6 +40,7 @@ RadiusConfigParser::RADIUS_KEYWORDS = {
     "nas-ports", "protocol",
     "reselect-subnet-address", "reselect-subnet-pool",
     "retries", "session-history", "thread-pool-size", "timeout",
+    "use-message-authenticator",
     "comment" // not saved for toElement
 };
 
@@ -217,6 +218,18 @@ RadiusConfigParser::parse(ElementPtr& config) {
                       << (numeric_limits<long>::max() / 1000) << "]");
         }
         riref.timeout_ = static_cast<unsigned>(timeout64);
+
+        // use-message-authenticator.
+        const ConstElementPtr use_ma = config->get("use-message-authenticator");
+        if (!use_ma) {
+            if (riref.proto_ != PW_PROTO_TLS) {
+                riref.use_message_authenticator_ = true;
+            } else {
+                riref.use_message_authenticator_ = false;
+            }
+        } else {
+            riref.use_message_authenticator_ = use_ma->boolValue();
+        }
 
         // TLS service.
         const ConstElementPtr& tls = config->get("tls");

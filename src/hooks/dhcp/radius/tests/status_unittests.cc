@@ -17,6 +17,7 @@
 #include <radius_access.h>
 #include <radius_accounting.h>
 #include <radius_status.h>
+#include <radius.h>
 #include <gtest/gtest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <atomic>
@@ -52,7 +53,9 @@ const char* CONFIGS[] = {
 "            \"port\": 11813,\n"
 "            \"secret\": \"bar\" } ] },\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n",
+"    \"timeout\": 1,\n"
+"    \"use-message-authenticator\": false\n"
+"}\n",
     // CONFIGURATION 1
 "{\n"
 "    \"access\": {\n"
@@ -74,7 +77,9 @@ const char* CONFIGS[] = {
 "            \"port\": 11813,\n"
 "            \"secret\": \"bar\" } ] },\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n"
+"    \"timeout\": 1,\n"
+"    \"use-message-authenticator\": false\n"
+"}\n"
 };
 
 /// @brief Class for callbacks.
@@ -583,6 +588,93 @@ TEST_F(StatusTest, accept) {
     EXPECT_EQ(OK_RC, result_);
 }
 
+/// Verify what happens with unsecure Access-Accept response.
+TEST_F(StatusTest, unsecureAccept) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Build request parameters.
+    which_ = "access";
+
+    // Open server socket.
+    open(SERVER_AUTH_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Launch request handler i.e. the client code to test.
+    run();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Sanity checks on the request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+
+    // Build the response.
+    size = AUTH_HDR_LEN;                  // header.
+    send_buffer_.resize(size);
+    send_buffer_[0] = PW_ACCESS_ACCEPT;   // Access-Accept.
+    send_buffer_[1] = receive_buffer_[1]; // Copy id.
+    send_buffer_[2] = size >> 8;          // Length
+    send_buffer_[3] = size & 0xff;
+    // Copy the authenticator.
+    memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
+
+    // Compute the authenticator.
+    vector<unsigned char> auth_input(size + 3);
+    memmove(&auth_input[0], &send_buffer_[0], size);
+    auth_input[size] = 'f';
+    auth_input[size + 1] = 'o';
+    auth_input[size + 2] = 'o';
+    OutputBuffer auth_output(AUTH_VECTOR_LEN);
+    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+           auth_output, AUTH_VECTOR_LEN);
+    memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
+
+    // Require Message-Authenticator in responses.
+    RadiusImpl::instance().use_message_authenticator_ = true;
+
+    // Push a sender on the socket.
+    size_t sent_size = 0;
+    Callback send_callback(send_error_code_, sent_size, sent_);
+    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
+                                 client, send_callback);
+
+    // Second busy loop.
+    while ((!sent_ || !finished_) && !timeout_) {
+        poll();
+    }
+
+    EXPECT_TRUE(finished_);
+    EXPECT_TRUE(sent_);
+    EXPECT_FALSE(timeout_);
+    EXPECT_EQ(size, sent_size);
+
+    // Done.
+    stop();
+    service_->stopWork();
+
+    // Check result.
+    EXPECT_EQ(BADRESP_RC, result_);
+}
+
 /// Verify what happens with Access-Reject response.
 TEST_F(StatusTest, reject) {
     // Use CONFIGS[0].
@@ -667,6 +759,93 @@ TEST_F(StatusTest, reject) {
     EXPECT_EQ(OK_RC, result_);
 }
 
+/// Verify what happens with unsecure Access-Reject response.
+TEST_F(StatusTest, unsecureReject) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Build request parameters.
+    which_ = "access";
+
+    // Open server socket.
+    open(SERVER_AUTH_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Launch request handler i.e. the client code to test.
+    run();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Sanity checks on the request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+
+    // Build the response.
+    size = AUTH_HDR_LEN;                  // header.
+    send_buffer_.resize(size);
+    send_buffer_[0] = PW_ACCESS_REJECT;   // Access-Reject.
+    send_buffer_[1] = receive_buffer_[1]; // Copy id.
+    send_buffer_[2] = size >> 8;          // Length
+    send_buffer_[3] = size & 0xff;
+    // Copy the authenticator.
+    memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
+
+    // Compute the authenticator.
+    vector<unsigned char> auth_input(size + 3);
+    memmove(&auth_input[0], &send_buffer_[0], size);
+    auth_input[size] = 'f';
+    auth_input[size + 1] = 'o';
+    auth_input[size + 2] = 'o';
+    OutputBuffer auth_output(AUTH_VECTOR_LEN);
+    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+           auth_output, AUTH_VECTOR_LEN);
+    memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
+
+    // Require Message-Authenticator in responses.
+    RadiusImpl::instance().use_message_authenticator_ = true;
+
+    // Push a sender on the socket.
+    size_t sent_size = 0;
+    Callback send_callback(send_error_code_, sent_size, sent_);
+    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
+                                 client, send_callback);
+
+    // Second busy loop.
+    while ((!sent_ || !finished_) && !timeout_) {
+        poll();
+    }
+
+    EXPECT_TRUE(finished_);
+    EXPECT_TRUE(sent_);
+    EXPECT_FALSE(timeout_);
+    EXPECT_EQ(size, sent_size);
+
+    // Done.
+    stop();
+    service_->stopWork();
+
+    // Check result.
+    EXPECT_EQ(BADRESP_RC, result_);
+}
+
 /// Verify what happens with Accounting-Response response.
 TEST_F(StatusTest, response) {
     // Use CONFIGS[0].
@@ -749,6 +928,93 @@ TEST_F(StatusTest, response) {
 
     // Check result.
     EXPECT_EQ(OK_RC, result_);
+}
+
+/// Verify what happens with unsecure Accounting-Response response.
+TEST_F(StatusTest, unsecureResponse) {
+    // Use CONFIGS[0].
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
+    ASSERT_NO_THROW(impl_.init(json));
+
+    // Build request parameters.
+    which_ = "accounting";
+
+    // Open server socket.
+    open(SERVER_ACCT_PORT);
+
+    // Push a receiver on it.
+    boost::asio::ip::udp::endpoint client;
+    size_t size = 0;
+    Callback receive_callback(receive_error_code_, size, received_);
+    server_socket_.async_receive_from(
+        boost::asio::buffer(&receive_buffer_[0], receive_buffer_.size()),
+        client, receive_callback);
+
+    // Launch request handler i.e. the client code to test.
+    run();
+
+    // Start timer for 1.5s timeout.
+    start(1500);
+
+    // Busy loop.
+    while (!received_ && !timeout_) {
+        poll();
+    }
+
+    ASSERT_TRUE(received_);
+    ASSERT_FALSE(timeout_);
+
+    // Sanity checks on the request.
+    receive_buffer_.resize(size);
+    ASSERT_LE(20, size);
+
+    // Build the response.
+    size = AUTH_HDR_LEN;                       // header (no attributes).
+    send_buffer_.resize(size);
+    send_buffer_[0] = PW_ACCOUNTING_RESPONSE;  // Accounting-Response.
+    send_buffer_[1] = receive_buffer_[1];      // Copy id.
+    send_buffer_[2] = size >> 8;               // Length
+    send_buffer_[3] = size & 0xff;
+    // Copy the authenticator.
+    memmove(&send_buffer_[4], &receive_buffer_[4], AUTH_VECTOR_LEN);
+
+    // Compute the authenticator.
+    vector<unsigned char> auth_input(size + 3);
+    memmove(&auth_input[0], &send_buffer_[0], size);
+    auth_input[size] = 'b';
+    auth_input[size + 1] = 'a';
+    auth_input[size + 2] = 'r';
+    OutputBuffer auth_output(AUTH_VECTOR_LEN);
+    digest(&auth_input[0], size + 3, isc::cryptolink::MD5,
+           auth_output, AUTH_VECTOR_LEN);
+    memmove(&send_buffer_[4], auth_output.getData(), AUTH_VECTOR_LEN);
+
+    // Require Message-Authenticator in responses.
+    RadiusImpl::instance().use_message_authenticator_ = true;
+
+    // Push a sender on the socket.
+    size_t sent_size = 0;
+    Callback send_callback(send_error_code_, sent_size, sent_);
+    server_socket_.async_send_to(boost::asio::buffer(&send_buffer_[0], size),
+                                 client, send_callback);
+
+    // Second busy loop.
+    while ((!sent_ || !finished_) && !timeout_) {
+        poll();
+    }
+
+    EXPECT_TRUE(finished_);
+    EXPECT_TRUE(sent_);
+    EXPECT_FALSE(timeout_);
+    EXPECT_EQ(size, sent_size);
+
+    // Done.
+    stop();
+    service_->stopWork();
+
+    // Check result.
+    EXPECT_EQ(BADRESP_RC, result_);
 }
 
 /// Verify what happens with error Accounting-Response response.

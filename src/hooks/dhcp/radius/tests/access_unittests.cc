@@ -199,7 +199,8 @@ const char* CONFIG =
 "    \"identifier-type6\": \"flex-id\",\n"
 "    \"retries\": 0,\n"
 "    \"thread-pool-size\": 4,"
-"    \"timeout\": 4\n"
+"    \"timeout\": 4,\n"
+"    \"use-message-authenticator\": false\n"
 "}"
 ;
 

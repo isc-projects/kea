@@ -297,8 +297,9 @@ Exchange::buildRequest(const ServerPtr& server,
         }
     }
 
-    // Add Message-Authenticator to Status-Server message.
-    if ((sent_->getCode() == PW_STATUS_SERVER) &&
+    // Add Message-Authenticator to Status-Server message or when wanted.
+    if ((RadiusImpl::instance().use_message_authenticator_ ||
+         (sent_->getCode() == PW_STATUS_SERVER)) &&
         (attrs->count(PW_MESSAGE_AUTHENTICATOR) == 0)) {
         const vector<uint8_t> zero(AUTH_VECTOR_LEN);
         // The FreeRADIUS server prefers to get it first.
@@ -587,9 +588,16 @@ Exchange::processResponse() {
     try {
         // In order:
         //  - decode message.
+        //  - verify that it is signed.
         //  - verify that identifiers match.
         //  - verify that message codes match.
         received_->decode();
+        if (RadiusImpl::instance().use_message_authenticator_) {
+            auto attrs = received_->getAttributes();
+            if (!attrs || (attrs->count(PW_MESSAGE_AUTHENTICATOR) == 0)) {
+                isc_throw(BadValue, "missing Message-Authenticator");
+            }
+        }
         unsigned got = received_->getIdentifier();
         unsigned expected = sent_->getIdentifier();
         if (got != expected) {

@@ -54,7 +54,9 @@ const char* CONFIGS[] = {
 "            \"port\": 11813,\n"
 "            \"secret\": \"bar\" } ] },\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n",
+"    \"timeout\": 1,\n"
+"    \"use-message-authenticator\": false\n"
+"}\n",
     // CONFIGURATION 1
 "{\n"
 "    \"access\": {\n"
@@ -76,7 +78,9 @@ const char* CONFIGS[] = {
 "            \"port\": 11813,\n"
 "            \"secret\": \"bar\" } ] },\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n"
+"    \"timeout\": 1,\n"
+"    \"use-message-authenticator\": false\n"
+"}\n"
 };
 
 /// @brief Class for callbacks.

@@ -212,6 +212,11 @@ flags:
 -  ``timeout`` (default ``10``) - is the number of seconds during which a
    response is awaited.
 
+-  ``use-message-authenticator`` (default ``true`` when the protocol is not
+   ``TLS``) - add a Message-Authenticator attribute in all sent messages and
+   require it in all received messages. This can use use as a temporary
+   measure against the BLAST vulnerability.
+
 Two services are supported:
 
 -  ``access`` - the authorization service.

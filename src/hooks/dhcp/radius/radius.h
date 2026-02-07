@@ -334,6 +334,9 @@ public:
     /// @brief Identifier type for IPv6.
     dhcp::Host::IdentifierType id_type6_;
 
+    /// @brief Use Message-Authenticator attribute.
+    bool use_message_authenticator_;
+
     /// @brief Flag which indicates that the instance is shutting down.
     static std::atomic<bool> shutdown_;
 

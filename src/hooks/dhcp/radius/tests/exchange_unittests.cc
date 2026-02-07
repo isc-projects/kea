@@ -9,6 +9,7 @@
 #include <client_exchange.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/test_to_element.h>
+#include <radius.h>
 #include <attribute_test.h>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -179,6 +180,7 @@ public:
           port_(11460), timeout_(10), deadtime_(0), maxretries_(3),
           called_(false),
           handler_([this] (const ExchangePtr) { called_ = true; }) {
+        RadiusImpl::instance().use_message_authenticator_ = false;
     }
 
     /// @brief Destructor.

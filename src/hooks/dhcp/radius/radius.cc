@@ -180,6 +180,7 @@ RadiusImpl::RadiusImpl()
       reselect_subnet_pool_(false), reselect_subnet_address_(false),
       retries_(3), thread_pool_size_(0), timeout_(0),
       id_type4_(Host::IDENT_CLIENT_ID), id_type6_(Host::IDENT_DUID),
+      use_message_authenticator_(false),
       io_context_(new IOService()), io_service_(io_context_) {
 }
 
@@ -636,6 +637,10 @@ ElementPtr RadiusImpl::toElement() const {
 
     // timeout.
     result->set("timeout", Element::create(timeout_));
+
+    // use-message-authenticator.
+    result->set("use-message-authenticator",
+                Element::create(use_message_authenticator_));
 
     // services.
     if (proto_ == PW_PROTO_TLS) {

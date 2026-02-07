@@ -119,7 +119,8 @@ TEST_F(ConfigTest, defaults) {
         "\"retries\": 3, "
         "\"session-history\": \"\", "
         "\"thread-pool-size\": 0, "
-        "\"timeout\": 10"
+        "\"timeout\": 10, "
+        "\"use-message-authenticator\": true"
         " }";
     runToElementTest<RadiusImpl>(expected, impl_);
 }
@@ -143,6 +144,7 @@ TEST_F(ConfigTest, global) {
     config->set("session-history", Element::create("/tmp/foobar"));
     config->set("thread-pool-size", Element::create(8));
     config->set("timeout", Element::create(12));
+    config->set("use-message-authenticator", Element::create(false));
     EXPECT_NO_THROW(impl_.init(config));
     string expected = "{ "
         "\"access\": {"
@@ -172,7 +174,8 @@ TEST_F(ConfigTest, global) {
         "\"retries\": 5, "
         "\"session-history\": \"/tmp/foobar\", "
         "\"thread-pool-size\": 8, "
-        "\"timeout\": 12"
+        "\"timeout\": 12, "
+        "\"use-message-authenticator\": false"
         " }";
     runToElementTest<RadiusImpl>(expected, impl_);
 
@@ -193,6 +196,7 @@ TEST_F(ConfigTest, global) {
     EXPECT_EQ("/tmp/foobar", impl_.session_history_filename_);
     EXPECT_EQ(8, impl_.thread_pool_size_);
     EXPECT_EQ(12, impl_.timeout_);
+    EXPECT_FALSE(impl_.use_message_authenticator_);
     EXPECT_TRUE(impl_.remap_.empty());
 }
 
@@ -378,6 +382,12 @@ TEST_F(ConfigTest, badGlobal) {
     expected << "bad timeout 10000000000000000 not in [0.."
              << (numeric_limits<long>::max() / 1000) << "]";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected.str());
+
+    impl_.reset();
+    config = Element::createMap();
+    config->set("use-message-authenticator", Element::create(1));
+    EXPECT_THROW_MSG(impl_.init(config), ConfigError,
+                     "boolValue() called on non-Bool Element");
 
     impl_.reset();
     config = Element::createMap();
@@ -926,7 +936,8 @@ TEST_F(ConfigTest, tls) {
         "\"retries\": 3, "
         "\"session-history\": \"\", "
         "\"thread-pool-size\": 0, "
-        "\"timeout\": 10"
+        "\"timeout\": 10, "
+        "\"use-message-authenticator\": false"
         " }";
     runToElementTest<RadiusImpl>(expected, impl_);
 }

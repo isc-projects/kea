@@ -62,7 +62,8 @@ const char* CONFIGS[] = {
 "    },\n"
 "    \"protocol\": \"TLS\",\n"
 "    \"retries\": 0,\n"
-"    \"timeout\": 1 }\n"
+"    \"timeout\": 1\n"
+"}\n"
 };
 
 /// @brief Class for callbacks.
@@ -1181,7 +1182,7 @@ TEST_F(TlsStatusTest, idleTimerCallback) {
     EXPECT_GE(4096, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    ASSERT_EQ(44, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
@@ -1249,7 +1250,7 @@ TEST_F(TlsStatusTest, idleTimer) {
     EXPECT_GE(4096, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    ASSERT_EQ(44, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
