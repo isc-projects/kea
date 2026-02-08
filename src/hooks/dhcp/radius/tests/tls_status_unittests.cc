@@ -51,7 +51,7 @@ const char* CONFIGS[] = {
 "    \"accounting\": {\n"
 "        \"enabled\": true\n"
 "    },\n"
-"    \"common-tls\": {\n"
+"    \"tls\": {\n"
 "        \"servers\": [ {\n"
 "            \"name\": \"127.0.0.1\",\n"
 "            \"port\": 12083,\n"
@@ -1198,11 +1198,11 @@ TEST_F(TlsStatusTest, idleTimer) {
     ElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(CONFIGS[0]));
     ASSERT_NO_THROW(impl_.init(json));
-    ASSERT_TRUE(impl_.common_);
-    impl_.common_->idle_timer_interval_ = 1;
+    ASSERT_TRUE(impl_.tls_);
+    impl_.tls_->idle_timer_interval_ = 1;
 
     // Set the idle timer.
-    impl_.common_->setIdleTimer();
+    impl_.tls_->setIdleTimer();
 
     // Start timer for 2.5s timeout.
     timer_start(2500);

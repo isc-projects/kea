@@ -172,7 +172,7 @@ RadiusImpl::instancePtr() {
 
 RadiusImpl::RadiusImpl()
     : proto_(PW_PROTO_UDP), udp_client_(), tcp_client_(),
-      common_(new RadiusTls()),
+      tls_(new RadiusTls()),
       auth_(new RadiusAccess()), acct_(new RadiusAccounting()),
       bindaddr_("*"), canonical_mac_address_(false),
       clientid_pop0_(false), clientid_printable_(false),
@@ -234,7 +234,7 @@ void RadiusImpl::cleanup() {
         tcp_client_->stop();
     }
 
-    common_.reset(new RadiusTls());
+    tls_.reset(new RadiusTls());
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
 
@@ -266,7 +266,7 @@ void RadiusImpl::reset() {
 }
 
 void RadiusImpl::init(ElementPtr&config) {
-    common_.reset(new RadiusTls());
+    tls_.reset(new RadiusTls());
     auth_.reset(new RadiusAccess());
     acct_.reset(new RadiusAccounting());
     RadiusConfigParser parser;
@@ -368,7 +368,7 @@ RadiusImpl::serveAccess() const {
     if (proto_ != PW_PROTO_TLS) {
         return (true);
     }
-    return (common_ && common_->enabled_);
+    return (tls_ && tls_->enabled_);
 }
 
 bool
@@ -382,7 +382,7 @@ RadiusImpl::serveAccounting() const {
     if (proto_ != PW_PROTO_TLS) {
         return (true);
     }
-    return (common_ && common_->enabled_);
+    return (tls_ && tls_->enabled_);
 }
 
 const Servers&
@@ -390,7 +390,7 @@ RadiusImpl::getAccessServers() const {
     if (proto_ != PW_PROTO_TLS) {
         return (auth_->servers_);
     } else {
-        return (common_->servers_);
+        return (tls_->servers_);
     }
 }
 
@@ -399,7 +399,7 @@ RadiusImpl::getAccountingServers() const {
     if (proto_ != PW_PROTO_TLS) {
         return (acct_->servers_);
     } else {
-        return (common_->servers_);
+        return (tls_->servers_);
     }
 }
 
@@ -411,7 +411,7 @@ RadiusImpl::setAccessIdleTimer() {
     if (proto_ != PW_PROTO_TLS) {
         auth_->setIdleTimer();
     } else {
-        common_->setIdleTimer();
+        tls_->setIdleTimer();
     }
 }
 
@@ -423,7 +423,7 @@ RadiusImpl::setAccountingIdleTimer() {
     if (proto_ != PW_PROTO_TLS) {
         acct_->setIdleTimer();
     } else {
-        common_->setIdleTimer();
+        tls_->setIdleTimer();
     }
 }
 
@@ -639,7 +639,7 @@ ElementPtr RadiusImpl::toElement() const {
 
     // services.
     if (proto_ == PW_PROTO_TLS) {
-        result->set("common-tls", common_->toElement());
+        result->set("tls", tls_->toElement());
     }
     result->set("access", auth_->toElement());
     result->set("accounting", acct_->toElement());

@@ -56,7 +56,7 @@ const char* CONFIGS[] = {
 "    \"accounting\": {\n"
 "        \"enabled\": true\n"
 "    },\n"
-"    \"common-tls\": {\n"
+"    \"tls\": {\n"
 "        \"servers\": [ {\n"
 "            \"name\": \"::1\",\n"
 "            \"port\": 12083,\n"

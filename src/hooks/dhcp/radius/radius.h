@@ -277,8 +277,8 @@ public:
     /// @brief Subnet ID to NAS port map.
     std::map<uint32_t, uint32_t> remap_;
 
-    /// @brief Pointer to common tls (never null).
-    boost::shared_ptr<RadiusTls> common_;
+    /// @brief Pointer to tls (never null).
+    boost::shared_ptr<RadiusTls> tls_;
 
     /// @brief Pointer to access (never null).
     boost::shared_ptr<RadiusAccess> auth_;

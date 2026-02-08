@@ -12,7 +12,7 @@
 namespace isc {
 namespace radius {
 
-/// @brief Radius common service for TLS transport.
+/// @brief Radius service for TLS transport.
 class RadiusTls : public RadiusService {
 public:
 

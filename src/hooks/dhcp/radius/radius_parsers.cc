@@ -33,7 +33,7 @@ namespace radius {
 /// @brief Keywords for Radius configuration.
 const set<string>
 RadiusConfigParser::RADIUS_KEYWORDS = {
-    "access", "accounting", "common-tls", // services
+    "access", "accounting", "tls", // services
     "bindaddr", "canonical-mac-address", "client-id-pop0",
     "client-id-printable", "deadtime", "dictionary",
     "extract-duid", "identifier-type4", "identifier-type6",
@@ -218,16 +218,16 @@ RadiusConfigParser::parse(ElementPtr& config) {
         }
         riref.timeout_ = static_cast<unsigned>(timeout64);
 
-        // Common TLS service.
-        const ConstElementPtr& common = config->get("common-tls");
-        if (common) {
+        // TLS service.
+        const ConstElementPtr& tls = config->get("tls");
+        if (tls) {
             if (riref.proto_ != PW_PROTO_TLS) {
-                isc_throw(BadValue, "'common-tls' service can't be configured "
+                isc_throw(BadValue, "'tls' service can't be configured "
                           << "when protocol is not 'TLS'");
             }
             RadiusServiceParser parser;
-            parser.parse(riref.common_, common);
-            parser.checkAttributes(riref.common_);
+            parser.parse(riref.tls_, tls);
+            parser.checkAttributes(riref.tls_);
         }
 
         // Access service.
@@ -375,13 +375,13 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
                           << Element::typeToName(enabled->getType())
                           << " instead");
             }
-            if (service->name_ == "common-tls") {
-                isc_throw(BadValue, "can't set enabled in 'common-tls'");
+            if (service->name_ == "tls") {
+                isc_throw(BadValue, "can't set enabled in 'tls'");
             }
             service->enabled_ = enabled->boolValue();
         } else {
             if ((riref.proto_ == PW_PROTO_TLS) &&
-                (service->name_ != "common-tls")) {
+                (service->name_ != "tls")) {
                 service->enabled_ = true;
             }
         }
@@ -390,7 +390,7 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         const ConstElementPtr& servers = srv_cfg->get("servers");
         if (servers) {
             if ((riref.proto_ == PW_PROTO_TLS) &&
-                (service->name_ != "common-tls")) {
+                (service->name_ != "tls")) {
                 isc_throw(BadValue, "can't have servers entry in '"
                           << service->name_ << "' with TLS");
             }
@@ -404,8 +404,8 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
         // attributes.
         const ConstElementPtr& attributes = srv_cfg->get("attributes");
         if (attributes) {
-            if (service->name_ == "common-tls") {
-                isc_throw(BadValue, "can't define attributes in 'common-tls'");
+            if (service->name_ == "tls") {
+                isc_throw(BadValue, "can't define attributes in 'tls'");
             }
             RadiusAttributeListParser parser;
             parser.parse(service, attributes);
@@ -457,7 +457,7 @@ RadiusServiceParser::parse(const RadiusServicePtr& service,
             srv_cfg->get("idle-timer-interval");
         if (idle_timer_interval) {
             if ((riref.proto_ == PW_PROTO_TLS) &&
-                (service->name_ != "common-tls")) {
+                (service->name_ != "tls")) {
                 isc_throw(BadValue, "can't have idle-timer-interval entry in '"
                           << service->name_ << "' with TLS");
             }
@@ -536,7 +536,7 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
     uint16_t port;
     if (server->contains("port")) {
         port = getUint16(server, "port");
-    } else if (service->name_ == "common-tls") {
+    } else if (service->name_ == "tls") {
         port = PW_TLS_PORT;
     } else if (service->name_ == "access") {
         port = PW_AUTH_PORT;
@@ -566,7 +566,7 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
 
     // secret.
     string secret;
-    if (!server->contains("secret") && (service->name_ == "common-tls")) {
+    if (!server->contains("secret") && (service->name_ == "tls")) {
         secret = "radsec";
     } else {
         secret = getString(server, "secret");
@@ -580,7 +580,7 @@ RadiusServerParser::parse(const RadiusServicePtr& service,
 
     // TLS parameters.
     TlsContextPtr tls_context;
-    if (service->name_ == "common-tls") {
+    if (service->name_ == "tls") {
         string trust_anchor = getString(server, "trust-anchor");
         string cert_file = getString(server, "cert-file");
         string key_file = getString(server, "key-file");

@@ -420,22 +420,22 @@ The number of threads is displayed.
 % RADIUS_TLS_STATUS send Status-Server with %1
 Logged at debug log level 40.
 This debug message is issued when starting to send a Status-Server message
-to common TLS servers. The message attributes are logged.
+to TLS servers. The message attributes are logged.
 
 % RADIUS_TLS_STATUS_ERROR received error response to Status-Server: %1 (%2) with %3
 This error message indicates that a valid response to Status-Server message
-was received from common TLS servers but with an unexpected code or an
+was received from TLS servers but with an unexpected code or an
 Error-Cause attribute. The response details are logged.
 
 % RADIUS_TLS_STATUS_FAILED Status-Server failed: return code %1 (%2)
 Logged at debug log level 40.
 This debug message is issued when no valid response to Status-Server message
-was received from common TLS servers.
+was received from TLS servers.
 
 % RADIUS_TLS_STATUS_SUCCEED received valid response to Status-Server
 Logged at debug log level 40.
 This debug message indicates that a valid response to Status-Server message
-was received from common TLS servers.
+was received from TLS servers.
 
 % RADIUS_UDP_EXCHANGE_FAILED UDP exchange %1 failed: %2
 This error message is issued when an UDP exchange terminates with an error.

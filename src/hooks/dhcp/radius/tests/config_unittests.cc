@@ -157,7 +157,7 @@ TEST_F(ConfigTest, global) {
         "\"canonical-mac-address\": true, "
         "\"client-id-pop0\": true, "
         "\"client-id-printable\": true, "
-        "\"common-tls\": {"
+        "\"tls\": {"
         "   \"enabled\": false,"
         "   \"idle-timer-interval\": 0"
         "}, "
@@ -643,7 +643,7 @@ TEST_F(ConfigTest, services) {
     runToElementTest<RadiusService>(expected, *impl_.auth_);
 
     // Needs a server to be enabled.
-    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.tls_->enabled_);
     EXPECT_FALSE(impl_.auth_->enabled_);
     EXPECT_FALSE(impl_.acct_->enabled_);
     config = Element::createMap();
@@ -770,8 +770,8 @@ TEST_F(ConfigTest, services) {
     EXPECT_EQ(16450, srv->getPeerPort());
 }
 
-// Verify syntax of common-tls service.
-TEST_F(ConfigTest, commonTls) {
+// Verify syntax of tls service.
+TEST_F(ConfigTest, tls) {
     // TCP is not implemented.
     ElementPtr config = Element::createMap();
     config->set("protocol", Element::create(string("TCP")));
@@ -781,32 +781,32 @@ TEST_F(ConfigTest, commonTls) {
     EXPECT_NO_THROW(impl_.init(config));
 
     // Services can be empty.
-    ElementPtr common = Element::createMap();
+    ElementPtr tls = Element::createMap();
     ElementPtr access = Element::createMap();
     ElementPtr accounting = Element::createMap();
-    config->set("common-tls", common);
+    config->set("tls", tls);
     config->set("access", access);
     config->set("accounting", accounting);
-    expected = "'common-tls' service can't be configured when protocol ";
+    expected = "'tls' service can't be configured when protocol ";
     expected += "is not 'TLS'";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
     config->set("protocol", Element::create(string("TLS")));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.tls_->enabled_);
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_TRUE(impl_.acct_->enabled_);
 
-    // Can't set enabled in common-tls.
-    common->set("enabled", Element::create(true));
-    expected = "can't set enabled in 'common-tls' (parsing common-tls)";
+    // Can't set enabled in tls.
+    tls->set("enabled", Element::create(true));
+    expected = "can't set enabled in 'tls' (parsing tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
     // Overwrite enabled.
-    common = Element::createMap();
-    config->set("common-tls", common);
+    tls = Element::createMap();
+    config->set("tls", tls);
     accounting->set("enabled", Element::create(false));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.tls_->enabled_);
     EXPECT_TRUE(impl_.auth_->enabled_);
     EXPECT_FALSE(impl_.acct_->enabled_);
 
@@ -814,15 +814,15 @@ TEST_F(ConfigTest, commonTls) {
     config->set("accounting", accounting);
     access->set("enabled", Element::create(false));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_FALSE(impl_.common_->enabled_);
+    EXPECT_FALSE(impl_.tls_->enabled_);
     EXPECT_FALSE(impl_.auth_->enabled_);
     EXPECT_TRUE(impl_.acct_->enabled_);
 
-    // Servers is forbidden outside common-tls.
-    common = Element::createMap();
+    // Servers is forbidden outside tls.
+    tls = Element::createMap();
     access = Element::createMap();
     accounting = Element::createMap();
-    config->set("common-tls", common);
+    config->set("tls", tls);
     config->set("access", access);
     config->set("accounting", accounting);
     access->set("servers", Element::createList());
@@ -836,11 +836,11 @@ TEST_F(ConfigTest, commonTls) {
     expected += "(parsing accounting)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
-    // Idle timer interval is forbidden outside common-tls.
-    common = Element::createMap();
+    // Idle timer interval is forbidden outside tls.
+    tls = Element::createMap();
     access = Element::createMap();
     accounting = Element::createMap();
-    config->set("common-tls", common);
+    config->set("tls", tls);
     config->set("access", access);
     config->set("accounting", accounting);
     access->set("idle-timer-interval", Element::create(60));
@@ -854,34 +854,34 @@ TEST_F(ConfigTest, commonTls) {
     expected += "(parsing accounting)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
-    // Attribute is forbidden in common-tls.
-    common = Element::createMap();
+    // Attribute is forbidden in tls.
+    tls = Element::createMap();
     access = Element::createMap();
     accounting = Element::createMap();
-    config->set("common-tls", common);
+    config->set("tls", tls);
     config->set("access", access);
     config->set("accounting", accounting);
-    common->set("attributes", Element::createList());
-    expected = "can't define attributes in 'common-tls' (parsing common-tls)";
+    tls->set("attributes", Element::createList());
+    expected = "can't define attributes in 'tls' (parsing tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
 
-    // Set idle timer interval in common-tls.
-    common = Element::createMap();
-    config->set("common-tls", common);
-    common->set("idle-timer-interval", Element::create(60));
+    // Set idle timer interval in tls.
+    tls = Element::createMap();
+    config->set("tls", tls);
+    tls->set("idle-timer-interval", Element::create(60));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(60, impl_.common_->idle_timer_interval_);
+    EXPECT_EQ(60, impl_.tls_->idle_timer_interval_);
     EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
     EXPECT_EQ(0, impl_.acct_->idle_timer_interval_);
 
-    // Servers for common-tls require TLS.
+    // Servers for tls require TLS.
     ElementPtr servers = Element::createList();
     ElementPtr server = Element::createMap();
     server->set("name", Element::create("127.0.0.1"));
     // Secret is not required with TLS as it defaults to "radsec".
     servers->add(server);
-    common->set("servers", servers);
-    expected = "missing parameter 'trust-anchor' (:0:0) (parsing common-tls)";
+    tls->set("servers", servers);
+    expected = "missing parameter 'trust-anchor' (:0:0) (parsing tls)";
     EXPECT_THROW_MSG(impl_.init(config), ConfigError, expected);
     string trust_anchor = TEST_CA_DIR;
     server->set("trust-anchor", Element::create(trust_anchor));
@@ -903,7 +903,7 @@ TEST_F(ConfigTest, commonTls) {
         "\"canonical-mac-address\": false, "
         "\"client-id-pop0\": false, "
         "\"client-id-printable\": false, "
-        "\"common-tls\": {"
+        "\"tls\": {"
         "   \"enabled\": true,"
         "   \"idle-timer-interval\": 60, "
         "   \"servers\": [ {"

@@ -1705,6 +1705,11 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
 
+    // Verify the message is signed.
+    auto got_attrs = request->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+
     // Create message (response).
     vector<uint8_t> dumped = {
         0x02,           // Code (Access-Accept).
@@ -1724,6 +1729,11 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
 
     // Decode response.
     ASSERT_NO_THROW(response->decode());
+
+    // Verify the response is signed.
+    got_attrs = response->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 // Verify signed Accountig-Response response to signed Status-Server.
@@ -1779,6 +1789,11 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
 
+    // Verify the request is signed.
+    auto got_attrs = request->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+
     // Create message (response).
     vector<uint8_t> dumped = {
         0x05,           // Code (Accounting-Response).
@@ -1798,6 +1813,11 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
 
     // Decode response.
     ASSERT_NO_THROW(response->decode());
+
+    // Verify the response is signed.
+    got_attrs = response->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 } // end of anonymous namespace

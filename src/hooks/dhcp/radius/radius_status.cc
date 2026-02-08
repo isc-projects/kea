@@ -188,7 +188,7 @@ RadiusTlsStatus::RadiusTlsStatus(const AttributesPtr& send_attrs,
     MessagePtr request(new Message(PW_STATUS_SERVER, 0, vector<uint8_t>(),
                                    "to-be-set", attrs));
     unsigned maxretries = RadiusImpl::instance().retries_;
-    Servers servers = RadiusImpl::instance().common_->servers_;
+    Servers servers = RadiusImpl::instance().tls_->servers_;
     exchange_ = Exchange::create(RadiusImpl::instance().getIOContext(),
                                  request, maxretries, servers,
                                  std::bind(&RadiusTlsStatus::invokeCallback,

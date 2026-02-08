@@ -141,7 +141,7 @@ public:
 /// @brief Pointer to accounting status.
 typedef boost::shared_ptr<RadiusAcctStatus> RadiusAcctStatusPtr;
 
-/// @brief Class for communication with common TLS servers.
+/// @brief Class for communication with TLS servers.
 ///
 /// Only the asynchronous variant is defined.
 class RadiusTlsStatus : public RadiusStatus {

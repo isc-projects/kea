@@ -18,7 +18,7 @@ using namespace isc::util;
 namespace isc {
 namespace radius {
 
-RadiusTls::RadiusTls() : RadiusService("common-tls") {
+RadiusTls::RadiusTls() : RadiusService("tls") {
 }
 
 void

@@ -468,7 +468,7 @@ the configuration, mainly because a shared connection is used with TLS
 
 -  the new ``protocol`` parameter must be set to ``TLS``.
 
--  a new service entry named ``common-tls`` must be used to define
+-  a new service entry named ``tls`` must be used to define
    ``servers`` and ``idle-timer-interval`` parameters.
 
 -  these parameters are not longer allowed in ``access` and ``accounting``
@@ -519,8 +519,8 @@ For example, the single access server configuration becomes with RADIUS/TLS:
           "enabled": false
         }, // End of accounting
 
-        // Common TLS parameters.
-        "common-tls": {
+        // TLS parameters.
+        "tls": {
 
           // This starts the list of servers.
           "servers": [
