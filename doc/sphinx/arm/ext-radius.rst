@@ -214,8 +214,10 @@ flags:
 
 -  ``use-message-authenticator`` (default ``true`` when the protocol is not
    ``TLS``) - add a Message-Authenticator attribute in all sent messages and
-   require it in all received messages. This can use use as a temporary
-   measure against the BLAST vulnerability.
+   require it in all received messages. This can use use as a short-term
+   mitigation against the BLAST vulnerability but works only recent versions
+   of RADIUS servers which can be configured to put the attribute in all
+   responses.
 
 Two services are supported:
 

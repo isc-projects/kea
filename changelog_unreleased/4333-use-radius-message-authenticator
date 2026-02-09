@@ -1,4 +1,4 @@
-[func]*		fdupont
+[sec]*		fdupont
 	Added the 'use-message-authenticator' parameter to the RADIUS
 	hook library. When true (the default when the transport
 	protocol is UDP) a Message-Authenticator is added to messages
