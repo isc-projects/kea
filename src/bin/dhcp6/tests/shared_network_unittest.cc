@@ -3055,7 +3055,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
 // Verifies the following scenario:
 // - Client has a reserved address in a subnet in a shared network.
 // but reservation is not in the initially selected subnet.
-// - The client held a lease for that address but it  since
+// - The client held a lease for that address but it has since
 // expired and been reclaimed. Since lease affinity is enabled it
 // is still in the database.
 // - The client returns looking for a lease.
@@ -3125,7 +3125,8 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
 
     // Add a reclaimed lease for the client's reserved lease.
     IOAddress expected_address("2001:db8:2::88");
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, expected_address, client.getDuid(), 0xabca,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, expected_address,
+                               client.getDuid(), 0xabca,
                                0, 0, 222, HWAddrPtr(), 128));
     lease->cltt_ = time(0) - 800;
     lease->valid_lft_ = 0;
@@ -3147,8 +3148,8 @@ TEST_F(Dhcpv6SharedNetworkTest, useReclaimedReservedLease) {
     EXPECT_EQ(2, countFile("DHCP6_SUBNET_DYNAMICALLY_CHANGED duid=[01:02:03:04:05:06]"));
 
     // The FQDN should be generated using the hostname from the reservation.
-    Option6ClientFqdnPtr fqdn_opt = (boost::dynamic_pointer_cast<Option6ClientFqdn>
-                                    (resp->getOption(D6O_CLIENT_FQDN)));
+    auto fqdn_opt = boost::dynamic_pointer_cast<Option6ClientFqdn>
+                                               (resp->getOption(D6O_CLIENT_FQDN));
     ASSERT_TRUE(fqdn_opt);
     ASSERT_EQ(fqdn_opt->getDomainName(), "eighty-eight.example.com.");
 
