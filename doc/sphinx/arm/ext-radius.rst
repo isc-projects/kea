@@ -747,3 +747,26 @@ RADIUS dictionary. There are differences:
       - Experimentally, only the **first** attribute on the wire from an Access-Accept message is considered.
 
       - Experimentally, only the **last** attribute on the wire from an Access-Accept message is considered.
+
+.. _radius-supported-standards:
+
+Supported RADIUS Standards
+--------------------------
+
+The Remote Authentication Dial In User Service (RADIUS) protocol is specified
+in `RFC 2865 <https://datatracker.ietf.org/doc/html/rfc2865>`__.
+
+The RADIUS Accounting is specified in
+`RFC 2866 <https://datatracker.ietf.org/doc/html/rfc2866>`__.
+
+The Message-Authenticator attribute is specified in the EAP extension in
+`RFC 3579 <https://datatracker.ietf.org/doc/html/rfc3579>`__.
+
+The Status-Server message is specified in
+`RFC 5997 <https://www.rfc-editor.org/rfc/rfc5997.html>`__.
+
+The TCP transport (not supported by heavily referenced for TLS) is specified
+in `RFC 6613 <https://datatracker.ietf.org/doc/html/rfc6613>`__.
+
+The TLS transport (as known as RADIUS/TLS or ``radsec``) is specified in
+`RFC 6614 <https://datatracker.ietf.org/doc/html/rfc6614>`__.

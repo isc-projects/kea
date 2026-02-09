@@ -1,0 +1,4 @@
+[doc]		fdupont
+	Added supported RADIUS standards to the RADIUS hook library
+	documentation in the ARM.
+	(Gitlab #4285)
