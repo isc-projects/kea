@@ -398,7 +398,8 @@ AttrDefs::parseLine(const string& line, uint32_t& vendor, unsigned int depth) {
 }
 
 void
-AttrDefs::readDictionary(const string& path, uint32_t& vendor, unsigned depth) {
+AttrDefs::readDictionary(const string& path, uint32_t& vendor,
+                         unsigned int depth) {
     if (depth >= 5) {
         isc_throw(BadValue, "Too many nested $INCLUDE");
     }

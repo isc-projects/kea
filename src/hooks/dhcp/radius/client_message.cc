@@ -190,10 +190,12 @@ Message::encode() {
     buffer_[2] = static_cast<uint8_t>((length_ & 0xff00) >> 8);
     buffer_[3] = static_cast<uint8_t>(length_ & 0xff);
 
-    // Computed before the Response Authenticator.
+    // Computed before the Authenticator.
     if (msg_auth_ptr != 0) {
         signMessageAuthenticator(msg_auth_ptr);
     }
+
+    // Compute the Authenticator when it is not a random value.
     if ((code_ != PW_ACCESS_REQUEST) && (code_ != PW_STATUS_SERVER)) {
         boost::scoped_ptr<Hash> md(CryptoLink::getCryptoLink().createHash(MD5));
         md->update(&buffer_[0], buffer_.size());

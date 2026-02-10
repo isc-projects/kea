@@ -1653,6 +1653,143 @@ TEST_F(MessageTest, verboseStatusResponse) {
         << got_attrs->toText() << "\n" << exp_attrs->toText();
 }
 
+// Tests below are based on captures of packets creating by FreeRADIUS.
+
+// Verify signed basic Accounting-Request.
+TEST_F(MessageTest, signedBasicAccountingRequest) {
+    MsgCode code = PW_ACCOUNTING_REQUEST;
+    uint8_t id = 0x62;
+    string secret = "bar";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, Message::ZERO_AUTH(),
+                                              secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(38, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x04,           // Code (Accounting-Request).
+        0x62,           // Identifier (0x62).
+        0x00, 0x26,     // Length (38).
+        // Authenticator.
+        0xfd, 0xa2, 0xbb, 0xa0, 0x39, 0x58, 0x71, 0x00,
+        0x65, 0x9a, 0x1b, 0x74, 0x50, 0xa0, 0xeb, 0x02,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0x60, 0xda, 0x7f, 0x9f, 0x0a, 0x11, 0xfe, 0x56,
+        0xfc, 0x46, 0xcf, 0xef, 0x9c, 0x9c, 0x33, 0x60
+    };
+    ASSERT_EQ(38, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 38) << "\n"
+        << str::dumpAsHex(&expected[0], 38);
+
+    // Verify the message is signed.
+    auto got_attrs = request->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+}
+
+// Verify signed Accounting-Request.
+TEST_F(MessageTest, signedAccountingRequest) {
+    MsgCode code = PW_ACCOUNTING_REQUEST;
+    uint8_t id = 0x40;
+    string secret = "bar";
+    AttributesPtr attrs(new Attributes());
+    ASSERT_TRUE(attrs);
+
+    vector<uint8_t> zero(AUTH_VECTOR_LEN);
+    attrs->add(Attribute::fromBinary(PW_MESSAGE_AUTHENTICATOR, zero));
+    attrs->add(Attribute::fromString(PW_USER_NAME, "user"));
+    attrs->add(Attribute::fromInt(PW_NAS_PORT, 1));
+    attrs->add(Attribute::fromInt(PW_ACCT_DELAY_TIME, 0));
+    attrs->add(Attribute::fromIpAddr(PW_NAS_IP_ADDRESS,
+                                     IOAddress("127.0.0.1")));
+
+    // Create message.
+    MessagePtr request;
+    ASSERT_NO_THROW(request.reset(new Message(code, 0, Message::ZERO_AUTH(),
+                                              secret, attrs)));
+    ASSERT_TRUE(request);
+    // Identifier must be set explicitly.
+    request->setIdentifier(id);
+
+    // Encode request.
+    vector<uint8_t> buffer;
+    ASSERT_NO_THROW(buffer = request->encode());
+
+    // Check buffer.
+    uint16_t length = request->getLength();
+    ASSERT_EQ(62, length);
+    vector<uint8_t> got_buffer = request->getBuffer();
+    ASSERT_EQ(buffer.size(), got_buffer.size());
+    EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
+
+    // Verify buffer.
+    vector<uint8_t> expected = {
+        0x04,           // Code (Accounting-Request).
+        0x40,           // Identifier (0x40).
+        0x00, 0x3e,     // Length (62).
+        // Authenticator.
+        0x16, 0x54, 0xa1, 0x67, 0x6c, 0x6c, 0xc6, 0xf2,
+        0xaf, 0x26, 0x0e, 0xef, 0xa3, 0x23, 0xe9, 0x5b,
+        // Message-Authenticator.
+        0x50, 0x12,
+        0xd7, 0x26, 0xda, 0x56, 0xd6, 0xd5, 0x3f, 0xc3,
+        0x20, 0x2f, 0x8a, 0x60, 0x89, 0xb5, 0x0d, 0x3d,
+        // User-Name ("user").
+        0x01, 0x06, 0x75, 0x73, 0x65, 0x72,
+        // NAS-Port (1).
+        0x05, 0x06, 0x00, 0x00, 0x00, 0x01,
+        // Acct-Delay-Time (0).
+        0x29, 0x06, 0x00, 0x00, 0x00, 0x00,
+        // NAS-IP-Address (127.0.0.1).
+        0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
+    };
+    ASSERT_EQ(62, expected.size());
+    EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
+        << str::dumpAsHex(&buffer[0], 62) << "\n"
+        << str::dumpAsHex(&expected[0], 62);
+
+    // Verify the message is signed.
+    auto got_attrs = request->getAttributes();
+    ASSERT_TRUE(got_attrs);
+    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+
+    // and correctly decoded.
+    auto got_attr = got_attrs->get(PW_USER_NAME);
+    ASSERT_TRUE(got_attr);
+    EXPECT_EQ("user", got_attr->toString());
+    got_attr = got_attrs->get(PW_NAS_PORT);
+    ASSERT_TRUE(got_attr);
+    EXPECT_EQ(1, got_attr->toInt());
+    got_attr = got_attrs->get(PW_ACCT_DELAY_TIME);
+    ASSERT_TRUE(got_attr);
+    EXPECT_EQ(0, got_attr->toInt());
+    got_attr = got_attrs->get(PW_NAS_IP_ADDRESS);
+    ASSERT_TRUE(got_attr);
+    EXPECT_EQ("127.0.0.1", got_attr->toIpAddr().toText());
+}
+
 // Verify signed Access-Accept response to signed Status-Server.
 TEST_F(MessageTest, signedAuthStatusResponse) {
     MsgCode code = PW_STATUS_SERVER;
