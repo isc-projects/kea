@@ -41,7 +41,7 @@ public:
     /// @brief Constructor.
     FDEventHandlerTest() {
         handler_.reset(new FDEventHandlerType);
-        pipe(pipe_fd_);
+        EXPECT_EQ(pipe(pipe_fd_), 0);
     }
 
     /// @brief Destructor.
@@ -202,7 +202,7 @@ TEST_F(FDEventHandlerTest, badFD) {
     }
 
     close(pipe_fd_[1]);
-    pipe(pipe_fd_);
+    EXPECT_EQ(pipe(pipe_fd_), 0);
 }
 
 TEST_F(FDEventHandlerTest, hup) {
@@ -213,7 +213,7 @@ TEST_F(FDEventHandlerTest, hup) {
     EXPECT_FALSE(handler_->hasError(pipe_fd_[0]));
 
     close(pipe_fd_[0]);
-    pipe(pipe_fd_);
+    EXPECT_EQ(pipe(pipe_fd_), 0);
 }
 
 TEST_F(FDEventHandlerTest, noLimit) {
