@@ -838,6 +838,7 @@ TEST_F(MessageTest, badDecode) {
             0x66, 0x13, 0x3a, 0x40, 0x31, 0x53, 0x61, 0xcd,
             0xf3, 0x29, 0xe2, 0xb5, 0x00, 0x5f, 0x4f, 0x74
         };
+        ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
         // Correct secret is "bar" so change a bit in it.
         string secret = "Bar";
         MessagePtr message(new Message(buffer, auth, secret));
@@ -1653,7 +1654,7 @@ TEST_F(MessageTest, verboseStatusResponse) {
         << got_attrs->toText() << "\n" << exp_attrs->toText();
 }
 
-// Tests below are based on captures of packets creating by FreeRADIUS.
+// Tests below are based on captures of packets created by FreeRADIUS.
 
 // Verify signed basic Access-Request.
 TEST_F(MessageTest, signedBasicAccessRequest) {
@@ -1663,6 +1664,7 @@ TEST_F(MessageTest, signedBasicAccessRequest) {
         0xe5, 0x9e, 0xf2, 0x63, 0x38, 0xde, 0x71, 0x9b,
         0x61, 0xdb, 0x8d, 0x75, 0x4f, 0xb0, 0xcf, 0xc3
     };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "foo";
     AttributesPtr attrs(new Attributes());
     ASSERT_TRUE(attrs);
@@ -1720,6 +1722,7 @@ TEST_F(MessageTest, signedAccessRequest) {
         0x22, 0xcb, 0xb3, 0xde, 0x5e, 0xfc, 0x5b, 0xd7,
         0xab, 0x8f, 0xf6, 0x90, 0x9d, 0x7a, 0xcd, 0x65
     };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "foo";
     AttributesPtr attrs(new Attributes());
     ASSERT_TRUE(attrs);
@@ -2111,6 +2114,7 @@ TEST_F(MessageTest, signedAccessReject) {
         0x3d, 0x8a, 0x4a, 0x91, 0x27, 0x4f, 0x48, 0x84,
         0x52, 0x25, 0x48, 0xa9, 0x04, 0xca, 0x56, 0x30
     };
+    ASSERT_EQ(AUTH_VECTOR_LEN, auth.size());
     string secret = "foo";
     AttributesPtr attrs(new Attributes());
     ASSERT_TRUE(attrs);
