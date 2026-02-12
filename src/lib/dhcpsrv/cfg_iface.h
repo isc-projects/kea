@@ -453,9 +453,9 @@ private:
     /// traffic. This parameter is ignored for IPv6.
     ///
     /// @return True if at least one socket opened successfully.
-    static bool openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
-                                     const uint16_t family, const uint16_t port,
-                                     const bool can_use_bcast);
+    bool openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
+                              const uint16_t family, const uint16_t port,
+                              const bool can_use_bcast) const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

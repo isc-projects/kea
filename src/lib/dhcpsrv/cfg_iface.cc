@@ -63,39 +63,10 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // Close any open sockets because we're going to modify some properties
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
-    // The loopback interface can be used only when:
-    //  - UDP socket will be used, i.e. not IPv4 and RAW socket
-    //  - the loopback interface is in the interface set or the address map.
-    bool loopback_used_ = false;
-    if ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) {
-        // Check interface set
-        for (auto const& iface_name : iface_set_) {
-            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
-            if (iface && iface->flag_loopback_) {
-                loopback_used_ = true;
-            }
-        }
-        // Check address map
-        for (auto const& unicast : address_map_) {
-            IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
-            if (iface && iface->flag_loopback_) {
-                loopback_used_ = true;
-            }
-        }
-    }
-    // If wildcard interface '*' was not specified, set all interfaces to
-    // inactive state. We will later enable them selectively using the
-    // interface names specified by the user. If wildcard interface was
-    // specified, mark all interfaces active. Mark loopback inactive when
-    // not explicitly allowed.
-    setState(family, !wildcard_used_, !loopback_used_);
-    IfaceMgr& iface_mgr = IfaceMgr::instance();
-    // Remove selection of unicast addresses from all interfaces.
-    iface_mgr.clearUnicasts();
+
     // Initialize IfaceMgr FDEventHandler.
-    iface_mgr.initializeFDEventHandler();
-    // Allow the loopback interface when required.
-    iface_mgr.setAllowLoopBack(loopback_used_);
+    IfaceMgr::instance().initializeFDEventHandler();
+
     // For the DHCPv4 server, if the user has selected that raw sockets
     // should be used, we will try to configure the Interface Manager to
     // support the direct responses to the clients that don't have the
@@ -103,69 +74,16 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // sockets. However, this may be unsupported on some operating
     // systems, so there is no guarantee.
     if ((family == AF_INET) && (!IfaceMgr::instance().isTestMode())) {
-        iface_mgr.setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
+        IfaceMgr::instance().setMatchingPacketFilter(socket_type_ == SOCKET_RAW);
         if ((socket_type_ == SOCKET_RAW) &&
-            !iface_mgr.isDirectResponseSupported()) {
+            !IfaceMgr::instance().isDirectResponseSupported()) {
             LOG_WARN(dhcpsrv_logger, DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED);
-        }
-    }
-    // If there is no wildcard interface specified, we will have to iterate
-    // over the names specified by the caller and enable them.
-    if (!wildcard_used_) {
-        for (auto const& iface_name : iface_set_) {
-            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
-            // This shouldn't really happen because we are checking the
-            // names of interfaces when they are being added (use()
-            // function). But, if someone has triggered detection of
-            // interfaces since then, some interfaces may have disappeared.
-            if (iface == NULL) {
-                isc_throw(Unexpected,
-                          "fail to open socket on interface '"
-                          << iface_name << "' as this interface doesn't"
-                          " exist");
-
-            } else if (family == AF_INET) {
-                iface->inactive4_ = false;
-                setIfaceAddrsState(family, true, *iface);
-
-            } else {
-                iface->inactive6_ = false;
-            }
-        }
-    }
-
-    // Select unicast sockets for DHCPv6 or activate specific IPv4 addresses
-    // for DHCPv4.
-    for (auto const& unicast : address_map_) {
-        IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
-        if (iface == NULL) {
-            isc_throw(Unexpected,
-                      "fail to open unicast socket on interface '"
-                      << unicast.first << "' as this interface doesn't"
-                      " exist");
-        }
-        if (family == AF_INET6) {
-            iface->addUnicast(unicast.second);
-            iface->inactive6_ = false;
-
-        } else {
-            iface->setActive(unicast.second, true);
-            iface->inactive4_ = false;
         }
     }
 
     // Use broadcast only if we're using raw sockets. For the UDP sockets,
     // we only handle the relayed (unicast) traffic.
     const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
-
-    // Opening multiple raw sockets handling brodcast traffic on the single
-    // interface may lead to processing the same message multiple times.
-    // We don't prohibit such configuration because raw sockets can as well
-    // handle the relayed traffic. We have to issue a warning, however, to
-    // draw administrator's attention.
-    if (family == AF_INET && can_use_bcast && multipleAddressesPerInterfaceActive()) {
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
-    }
 
     reconnect_ctl_ = makeReconnectCtl();
     auto sopen = openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
@@ -188,8 +106,6 @@ CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
         socketOpenErrorHandler(errmsg);
         no_errors = false;
     };
-
-    IfaceMgr::instance().detectIfaces(true);
 
     bool sopen = false;
     if (family == AF_INET) {
@@ -225,12 +141,103 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
 bool
 CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
                                const uint16_t family, const uint16_t port,
-                               const bool can_use_bcast) {
+                               const bool can_use_bcast) const {
     MultiThreadingCriticalSection cs;
+
+    // Remove selection of unicast addresses from all interfaces.
+    IfaceMgr::instance().clearUnicasts();
+
+    // The loopback interface can be used only when:
+    //  - UDP socket will be used, i.e. not IPv4 and RAW socket
+    //  - the loopback interface is in the interface set or the address map.
+    bool loopback_used = false;
+    if ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) {
+        // Check interface set
+        for (auto const& iface_name : iface_set_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
+            if (iface && iface->flag_loopback_) {
+                loopback_used = true;
+            }
+        }
+        // Check address map
+        for (auto const& unicast : address_map_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
+            if (iface && iface->flag_loopback_) {
+                loopback_used = true;
+            }
+        }
+    }
+    // Allow the loopback interface when required.
+    IfaceMgr::instance().setAllowLoopBack(loopback_used);
+
+    // If wildcard interface '*' was not specified, set all interfaces to
+    // inactive state. We will later enable them selectively using the
+    // interface names specified by the user. If wildcard interface was
+    // specified, mark all interfaces active. Mark loopback inactive when
+    // not explicitly allowed.
+    setState(family, !wildcard_used_, !loopback_used);
+
+    // If there is no wildcard interface specified, we will have to iterate
+    // over the names specified by the caller and enable them.
+    if (!wildcard_used_) {
+        for (auto const& iface_name : iface_set_) {
+            IfacePtr iface = IfaceMgr::instance().getIface(iface_name);
+
+            // This shouldn't really happen because we are checking the
+            // names of interfaces when they are being added (use()
+            // function). But, if someone has triggered detection of
+            // interfaces since then, some interfaces may have disappeared.
+            if (iface == NULL) {
+                isc_throw(Unexpected,
+                          "fail to open socket on interface '"
+                          << iface_name << "' as this interface doesn't"
+                          " exist");
+            }
+            if (family == AF_INET) {
+                iface->inactive4_ = false;
+                setIfaceAddrsState(family, true, *iface);
+
+            } else {
+                iface->inactive6_ = false;
+            }
+        }
+    }
+
+    // Select unicast sockets for DHCPv6 or activate specific IPv4 addresses
+    // for DHCPv4.
+    for (auto const& unicast : address_map_) {
+        IfacePtr iface = IfaceMgr::instance().getIface(unicast.first);
+        if (iface == NULL) {
+            isc_throw(Unexpected,
+                      "fail to open unicast socket on interface '"
+                      << unicast.first << "' as this interface doesn't"
+                      " exist");
+        }
+        if (family == AF_INET6) {
+            iface->addUnicast(unicast.second);
+            iface->inactive6_ = false;
+
+        } else {
+            iface->setActive(unicast.second, true);
+            iface->inactive4_ = false;
+        }
+    }
+
+    // Opening multiple raw sockets handling brodcast traffic on the single
+    // interface may lead to processing the same message multiple times.
+    // We don't prohibit such configuration because raw sockets can as well
+    // handle the relayed traffic. We have to issue a warning, however, to
+    // draw administrator's attention.
+    if (family == AF_INET && can_use_bcast &&
+        CfgIface::multipleAddressesPerInterfaceActive()) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MULTIPLE_RAW_SOCKETS_PER_IFACE);
+    }
+
+    IfaceMgr::instance().detectIfaces(true);
 
     // Skip opened sockets in the retry calls.
     bool is_initial_call = (reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries());
-    auto result_pair = openSocketsForFamily(family, port, can_use_bcast, !is_initial_call);
+    auto result_pair = CfgIface::openSocketsForFamily(family, port, can_use_bcast, !is_initial_call);
     bool sopen = result_pair.first;
     bool has_errors = !result_pair.second;
 
@@ -249,6 +256,7 @@ CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
         if (!TimerMgr::instance()->isTimerRegistered(timer_name)) {
             TimerMgr::instance()->registerTimer(timer_name,
                                                 std::bind(&CfgIface::openSocketsWithRetry,
+                                                          this,
                                                           reconnect_ctl, family,
                                                           port, can_use_bcast),
                                                 reconnect_ctl->retryInterval(),
