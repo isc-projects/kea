@@ -57,7 +57,7 @@ IfaceMgr::instancePtr() {
 }
 
 Iface::Iface(const std::string& name, unsigned int ifindex)
-    : name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
+    : name_(name), ifindex_(ifindex), mac_len_(0), bcast_mac_len_(0), hardware_type_(0),
       flag_loopback_(false), flag_up_(false), flag_running_(false),
       flag_multicast_(false), flag_broadcast_(false), flags_(0),
       inactive4_(false), inactive6_(false) {
@@ -137,6 +137,21 @@ Iface::getPlainMac() const {
     return (tmp.str());
 }
 
+std::string
+Iface::getPlainBcastMac() const {
+    ostringstream tmp;
+    tmp.fill('0');
+    tmp << hex;
+    for (int i = 0; i < bcast_mac_len_; i++) {
+        tmp.width(2);
+        tmp << static_cast<int>(bcast_mac_[i]);
+        if (i < bcast_mac_len_-1) {
+            tmp << ":";
+        }
+    }
+    return (tmp.str());
+}
+
 void Iface::setMac(const uint8_t* mac, size_t len) {
     if (len > MAX_MAC_LEN) {
         isc_throw(OutOfRange, "Interface " << getFullName()
@@ -147,6 +162,19 @@ void Iface::setMac(const uint8_t* mac, size_t len) {
     mac_len_ = len;
     if (len > 0) {
         memcpy(mac_, mac, len);
+    }
+}
+
+void Iface::setBcastMac(const uint8_t* mac, size_t len) {
+    if (len > MAX_MAC_LEN) {
+        isc_throw(OutOfRange, "Interface " << getFullName()
+                  << " was detected to have link address of length "
+                  << len << ", but maximum supported length is "
+                  << MAX_MAC_LEN);
+    }
+    bcast_mac_len_ = len;
+    if (len > 0) {
+        memcpy(bcast_mac_, mac, len);
     }
 }
 
@@ -804,7 +832,8 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
 
         out << "Detected interface " << iface->getFullName()
             << ", hwtype=" << iface->getHWType()
-            << ", mac=" << iface->getPlainMac();
+            << ", mac=" << iface->getPlainMac()
+            << ", bcast=" << iface->getPlainBcastMac();
         out << ", flags=" << hex << iface->flags_ << dec << "("
             << (iface->flag_loopback_?"LOOPBACK ":"")
             << (iface->flag_up_?"UP ":"")
