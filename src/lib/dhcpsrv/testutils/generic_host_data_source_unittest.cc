@@ -1559,36 +1559,39 @@ GenericHostDataSourceTest::testMultipleSubnets(size_t subnets,
             hdsptr_->get4(i + 1000, host->getIPv4Reservation());
 
         ASSERT_TRUE(from_hds);
-        EXPECT_EQ(i + 1000, from_hds->getIPv4SubnetID());
+        SubnetID subnet_id(i + 1000);
+        EXPECT_EQ(subnet_id, from_hds->getIPv4SubnetID());
 
         // Try to retrieve the host by either HW address of client-id
-        from_hds = hdsptr_->get4(i + 1000, id, &host->getIdentifier()[0],
+        from_hds = hdsptr_->get4(subnet_id, id, &host->getIdentifier()[0],
                                  host->getIdentifier().size());
         ASSERT_TRUE(from_hds);
-        EXPECT_EQ(i + 1000, from_hds->getIPv4SubnetID());
+        EXPECT_EQ(subnet_id, from_hds->getIPv4SubnetID());
     }
 
     // Now check that they can be retrieved all at once, by IPv4 address.
     ConstHostCollection all_by_addr = hdsptr_->getAll4(IOAddress("192.0.2.1"));
-    ASSERT_EQ(subnets, all_by_addr.size());
+    ASSERT_EQ(static_cast<size_t>(subnets), all_by_addr.size());
 
     // Verify that the values returned are proper.
     unsigned i = 0;
     for (auto const& it : all_by_addr) {
         EXPECT_EQ(IOAddress("192.0.2.1"), it->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, it->getIPv4SubnetID());
+        SubnetID subnet_id(1000 + i++);
+        EXPECT_EQ(subnet_id, it->getIPv4SubnetID());
     }
 
     // Finally, check that the hosts can be retrieved by HW address or DUID
     ConstHostCollection all_by_id = hdsptr_->getAll(
         id, &host->getIdentifier()[0], host->getIdentifier().size());
-    ASSERT_EQ(subnets, all_by_id.size());
+    ASSERT_EQ(static_cast<size_t>(subnets), all_by_id.size());
 
     // Check that the returned values are as expected.
     i = 0;
     for (auto const& it : all_by_id) {
         EXPECT_EQ(IOAddress("192.0.2.1"), it->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, it->getIPv4SubnetID());
+        SubnetID subnet_id(1000 + i++);
+        EXPECT_EQ(subnet_id, it->getIPv4SubnetID());
     }
 }
 
@@ -1705,7 +1708,7 @@ GenericHostDataSourceTest::testSubnetId6(size_t subnets,
     // Check that the hosts can all be retrieved by HW address or DUID
     ConstHostCollection all_by_id = hdsptr_->getAll(id, &host->getIdentifier()[0],
                                                     host->getIdentifier().size());
-    ASSERT_EQ(subnets, all_by_id.size());
+    ASSERT_EQ(static_cast<size_t>(subnets), all_by_id.size());
 
     // Check that the returned values are as expected.
     unsigned i = 0;

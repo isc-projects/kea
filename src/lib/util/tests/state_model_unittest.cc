@@ -361,22 +361,22 @@ TEST_F(StateModelTest, eventContextAccessors) {
     ASSERT_NO_THROW(verifyEvents());
 
     // Verify the post-construction values.
-    EXPECT_EQ(NOP_EVT, getNextEvent());
-    EXPECT_EQ(NOP_EVT, getLastEvent());
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getLastEvent()));
 
     // Call setEvent which will update both next event and last event.
     EXPECT_NO_THROW(postNextEvent(START_EVT));
 
     // Verify the values are what we expect.
-    EXPECT_EQ(START_EVT, getNextEvent());
-    EXPECT_EQ(NOP_EVT, getLastEvent());
+    EXPECT_EQ(START_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getLastEvent()));
 
     // Call setEvent again.
     EXPECT_NO_THROW(postNextEvent(WORK_START_EVT));
 
     // Verify the values are what we expect.
-    EXPECT_EQ(WORK_START_EVT, getNextEvent());
-    EXPECT_EQ(START_EVT, getLastEvent());
+    EXPECT_EQ(WORK_START_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(START_EVT, static_cast<int>(getLastEvent()));
 
     // Verify that posting an undefined event throws.
     EXPECT_THROW(postNextEvent(9999), StateModelError);
@@ -457,22 +457,22 @@ TEST_F(StateModelTest, stateContextAccessors) {
     ASSERT_NO_THROW(verifyStates());
 
     // Verify post-construction state values.
-    EXPECT_EQ(NEW_ST, getCurrState());
-    EXPECT_EQ(NEW_ST, getPrevState());
+    EXPECT_EQ(NEW_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NEW_ST, static_cast<int>(getPrevState()));
 
     // Call setState which will update both state and previous state.
     EXPECT_NO_THROW(setState(READY_ST));
 
     // Verify the values are what we expect.
-    EXPECT_EQ(READY_ST, getCurrState());
-    EXPECT_EQ(NEW_ST, getPrevState());
+    EXPECT_EQ(READY_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NEW_ST, static_cast<int>(getPrevState()));
 
     // Call setState again.
     EXPECT_NO_THROW(setState(DO_WORK_ST));
 
     // Verify the values are what we expect.
-    EXPECT_EQ(DO_WORK_ST, getCurrState());
-    EXPECT_EQ(READY_ST, getPrevState());
+    EXPECT_EQ(DO_WORK_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(READY_ST, static_cast<int>(getPrevState()));
 
     // Verify that calling setState with an state that has no handler
     // will throw.
@@ -498,8 +498,8 @@ TEST_F(StateModelTest, runBeforeStart) {
     ASSERT_NO_THROW(runModel(START_EVT));
 
     // Check that state and event are correct.
-    EXPECT_EQ(END_ST, getCurrState());
-    EXPECT_EQ(FAIL_EVT, getNextEvent());
+    EXPECT_EQ(END_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(FAIL_EVT, static_cast<int>(getNextEvent()));
 
     // Verify that failure explanation is not empty.
     EXPECT_FALSE(getFailureExplanation().empty());
@@ -515,19 +515,19 @@ TEST_F(StateModelTest, transitionWithEnd) {
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
 
     //  Verify that state and event members are as expected.
-    EXPECT_EQ(DUMMY_ST, getCurrState());
-    EXPECT_EQ(NEW_ST, getPrevState());
-    EXPECT_EQ(START_EVT, getNextEvent());
-    EXPECT_EQ(NOP_EVT, getLastEvent());
+    EXPECT_EQ(DUMMY_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NEW_ST, static_cast<int>(getPrevState()));
+    EXPECT_EQ(START_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getLastEvent()));
 
     // Call endModel to transition us to the end of the model.
     EXPECT_NO_THROW(endModel());
 
     // Verify state and event members are correctly set.
-    EXPECT_EQ(END_ST, getCurrState());
-    EXPECT_EQ(DUMMY_ST, getPrevState());
-    EXPECT_EQ(END_EVT, getNextEvent());
-    EXPECT_EQ(START_EVT, getLastEvent());
+    EXPECT_EQ(END_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(DUMMY_ST, static_cast<int>(getPrevState()));
+    EXPECT_EQ(END_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(START_EVT, static_cast<int>(getLastEvent()));
 }
 
 /// @brief Tests that the abortModel may be used to transition the model to
@@ -540,19 +540,19 @@ TEST_F(StateModelTest, transitionWithAbort) {
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
 
     //  Verify that state and event members are as expected.
-    EXPECT_EQ(DUMMY_ST, getCurrState());
-    EXPECT_EQ(NEW_ST, getPrevState());
-    EXPECT_EQ(START_EVT, getNextEvent());
-    EXPECT_EQ(NOP_EVT, getLastEvent());
+    EXPECT_EQ(DUMMY_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NEW_ST, static_cast<int>(getPrevState()));
+    EXPECT_EQ(START_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getLastEvent()));
 
     // Call endModel to transition us to the end of the model.
     EXPECT_NO_THROW(abortModel("test invocation"));
 
     // Verify state and event members are correctly set.
-    EXPECT_EQ(END_ST, getCurrState());
-    EXPECT_EQ(DUMMY_ST, getPrevState());
-    EXPECT_EQ(FAIL_EVT, getNextEvent());
-    EXPECT_EQ(START_EVT, getLastEvent());
+    EXPECT_EQ(END_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(DUMMY_ST, static_cast<int>(getPrevState()));
+    EXPECT_EQ(FAIL_EVT, static_cast<int>(getNextEvent()));
+    EXPECT_EQ(START_EVT, static_cast<int>(getLastEvent()));
 }
 
 /// @brief Tests that the boolean indicators for on state entry and exit
@@ -712,8 +712,8 @@ TEST_F(StateModelTest, undefinedState) {
     ASSERT_NO_THROW(startModel(READY_ST));
 
     // Verify we are in the state of DO_WORK_ST with event of NOP_EVT.
-    EXPECT_EQ(DO_WORK_ST, getCurrState());
-    EXPECT_EQ(NOP_EVT, getNextEvent());
+    EXPECT_EQ(DO_WORK_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getNextEvent()));
 
     // Resume the model with next event set to cause the DO_WORK_ST handler
     // to transition to an undefined state. This should cause it to return
@@ -750,8 +750,8 @@ TEST_F(StateModelTest, unexpectedError) {
     ASSERT_NO_THROW(startModel(READY_ST));
 
     // Verify we are in the state of DO_WORK_ST with event of NOP_EVT.
-    EXPECT_EQ(DO_WORK_ST, getCurrState());
-    EXPECT_EQ(NOP_EVT, getNextEvent());
+    EXPECT_EQ(DO_WORK_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getNextEvent()));
 
     // Resume the model with next event set to cause the DO_WORK_ST handler
     // to transition to an undefined state. This should cause it to return
@@ -787,8 +787,8 @@ TEST_F(StateModelTest, undefinedEvent) {
     ASSERT_NO_THROW(startModel(READY_ST));
 
     // Verify we are in the state of DO_WORK_ST with event of NOP_EVT.
-    EXPECT_EQ(DO_WORK_ST, getCurrState());
-    EXPECT_EQ(NOP_EVT, getNextEvent());
+    EXPECT_EQ(DO_WORK_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getNextEvent()));
 
     // Attempting to post an undefined event within runModel should cause it
     // to return without throwing and yield a failed model.
@@ -829,9 +829,9 @@ TEST_F(StateModelTest, stateModelTest) {
 
     // Verify that we are now in state of DO_WORK_ST, the last event was
     // WORK_START_EVT, the next event is NOP_EVT.
-    EXPECT_EQ(DO_WORK_ST, getCurrState());
-    EXPECT_EQ(WORK_START_EVT, getLastEvent());
-    EXPECT_EQ(NOP_EVT, getNextEvent());
+    EXPECT_EQ(DO_WORK_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(WORK_START_EVT, static_cast<int>(getLastEvent()));
+    EXPECT_EQ(NOP_EVT, static_cast<int>(getNextEvent()));
 
     // Simulate completion of async work completion by resuming runModel with
     // an event of WORK_DONE_EVT.
@@ -840,8 +840,8 @@ TEST_F(StateModelTest, stateModelTest) {
     // Verify that the state model has progressed through to completion:
     // it is in the DONE_ST, the status is ST_COMPLETED, and the next event
     // is NOP_EVT.
-    EXPECT_EQ(END_ST, getCurrState());
-    EXPECT_EQ(END_EVT, getNextEvent());
+    EXPECT_EQ(END_ST, static_cast<int>(getCurrState()));
+    EXPECT_EQ(END_EVT, static_cast<int>(getNextEvent()));
 
     // Verify that status methods are correct: model done.
     EXPECT_FALSE(isModelNew());
@@ -875,7 +875,7 @@ TEST_F(StateModelTest, stateModelPause) {
     ASSERT_NO_THROW(startModel(PAUSE_ALWAYS_ST));
 
     // Verify it was successful and that the model is paused.
-    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ALWAYS_ST, static_cast<int>(getCurrState()));
     EXPECT_TRUE(isModelPaused());
 
     // Run the model again. It should still be paused.
@@ -886,30 +886,30 @@ TEST_F(StateModelTest, stateModelPause) {
     // should be paused at most once.
     unpauseModel();
     transition(PAUSE_ONCE_ST, NOP_EVT);
-    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ONCE_ST, static_cast<int>(getCurrState()));
     EXPECT_TRUE(isModelPaused());
 
     // The model should still be paused until explicitly unpaused.
     ASSERT_NO_THROW(runModel(NOP_EVT));
-    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ONCE_ST, static_cast<int>(getCurrState()));
     EXPECT_TRUE(isModelPaused());
 
     unpauseModel();
 
     // Transition back to the first state. The model should pause again.
     transition(PAUSE_ALWAYS_ST, NOP_EVT);
-    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ALWAYS_ST, static_cast<int>(getCurrState()));
     EXPECT_TRUE(isModelPaused());
 
     ASSERT_NO_THROW(runModel(NOP_EVT));
-    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ALWAYS_ST, static_cast<int>(getCurrState()));
     EXPECT_TRUE(isModelPaused());
 
     // Unpause the model and transition to the state in which the model
     // should pause only once. This time it should not pause.
     unpauseModel();
     transition(PAUSE_ONCE_ST, NOP_EVT);
-    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_EQ(PAUSE_ONCE_ST, static_cast<int>(getCurrState()));
     EXPECT_FALSE(isModelPaused());
 }
 
