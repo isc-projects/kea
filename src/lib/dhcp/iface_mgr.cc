@@ -1255,11 +1255,14 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
 
     // We only check external sockets if select detected an event.
     if (result > 0) {
-        // Check for receiver thread read errors.
-        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
-            string msg = dhcp_receiver_->getLastError();
-            dhcp_receiver_->clearReady(WatchedThread::ERROR);
-            isc_throw(SocketReadError, msg);
+        {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
+            // Check for receiver thread read errors.
+            if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+                string msg = dhcp_receiver_->getLastError();
+                dhcp_receiver_->clearReady(WatchedThread::ERROR);
+                isc_throw(SocketReadError, msg);
+            }
         }
 
         // Let's find out which external socket has the data
@@ -1299,6 +1302,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
+    std::lock_guard<std::mutex> lk(receiver_mutex_);
     Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
     if (!pkt) {
         dhcp_receiver_->clearReady(WatchedThread::READY);
@@ -1664,11 +1668,14 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // We only check external sockets if select detected an event.
     if (result > 0) {
-        // Check for receiver thread read errors.
-        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
-            string msg = dhcp_receiver_->getLastError();
-            dhcp_receiver_->clearReady(WatchedThread::ERROR);
-            isc_throw(SocketReadError, msg);
+        {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
+            // Check for receiver thread read errors.
+            if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+                string msg = dhcp_receiver_->getLastError();
+                dhcp_receiver_->clearReady(WatchedThread::ERROR);
+                isc_throw(SocketReadError, msg);
+            }
         }
 
         // Let's find out which external socket has the data
@@ -1708,6 +1715,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
+    std::lock_guard<std::mutex> lk(receiver_mutex_);
     Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
     if (!pkt) {
         dhcp_receiver_->clearReady(WatchedThread::READY);
@@ -1758,8 +1766,11 @@ IfaceMgr::receiveDHCP4Packets() {
             } else if (result < 0) {
                 // This thread should not get signals?
                 if (errno != EINTR) {
-                    // Signal the error to receive4.
-                    dhcp_receiver_->setError(strerror(errno));
+                    {
+                        std::lock_guard<std::mutex> lk(receiver_mutex_);
+                        // Signal the error to receive4.
+                        dhcp_receiver_->setError(strerror(errno));
+                    }
                     // We need to sleep in case of the error condition to
                     // prevent the thread from tight looping when result
                     // gets negative.
@@ -1786,8 +1797,10 @@ IfaceMgr::receiveDHCP4Packets() {
                 }
             }
         } catch (const std::exception& ex) {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
             dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
         } catch (...) {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
             dhcp_receiver_->setError("receive failed");
         }
     }
@@ -1835,8 +1848,11 @@ IfaceMgr::receiveDHCP6Packets() {
             } else if (result < 0) {
                 // This thread should not get signals?
                 if (errno != EINTR) {
-                    // Signal the error to receive6.
-                    dhcp_receiver_->setError(strerror(errno));
+                    {
+                        std::lock_guard<std::mutex> lk(receiver_mutex_);
+                        // Signal the error to receive6.
+                        dhcp_receiver_->setError(strerror(errno));
+                    }
                     // We need to sleep in case of the error condition to
                     // prevent the thread from tight looping when result
                     // gets negative.
@@ -1863,8 +1879,10 @@ IfaceMgr::receiveDHCP6Packets() {
                 }
             }
         } catch (const std::exception& ex) {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
             dhcp_receiver_->setError(string(ex.what()) + " error: " + strerror(errno));
         } catch (...) {
+            std::lock_guard<std::mutex> lk(receiver_mutex_);
             dhcp_receiver_->setError("receive failed");
         }
     }
@@ -1876,6 +1894,7 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         // Signal the error to receive4.
         dhcp_receiver_->setError(strerror(errno));
         return;
@@ -1890,12 +1909,15 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     try {
         pkt = packet_filter_->receive(iface, socket_info);
     } catch (const std::exception& ex) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError(strerror(errno));
     } catch (...) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         getPacketQueue4()->enqueuePacket(pkt, socket_info);
         dhcp_receiver_->markReady(WatchedThread::READY);
     }
@@ -1907,6 +1929,7 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         // Signal the error to receive6.
         dhcp_receiver_->setError(strerror(errno));
         return;
@@ -1921,12 +1944,15 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
     try {
         pkt = packet_filter6_->receive(socket_info);
     } catch (const std::exception& ex) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError(ex.what());
     } catch (...) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
+        std::lock_guard<std::mutex> lk(receiver_mutex_);
         getPacketQueue6()->enqueuePacket(pkt, socket_info);
         dhcp_receiver_->markReady(WatchedThread::READY);
     }

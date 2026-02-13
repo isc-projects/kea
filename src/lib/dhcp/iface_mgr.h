@@ -1715,10 +1715,10 @@ private:
     /// setPacketFilter method.
     PktFilter6Ptr packet_filter6_;
 
-    /// @brief Contains list of callbacks for external sockets
+    /// @brief Contains list of callbacks for external sockets.
     SocketCallbackInfoContainer callbacks_;
 
-    /// @brief Mutex to protect callbacks_ against concurrent access
+    /// @brief Mutex to protect callbacks_ against concurrent access.
     std::mutex callbacks_mutex_;
 
     /// @brief Indicates if the IfaceMgr is in the test mode.
@@ -1734,17 +1734,20 @@ private:
     /// executed, otherwise the @ref detectIfaces will return immediately.
     DetectCallback detect_callback_;
 
-    /// @brief Allows to use loopback
+    /// @brief Allows to use loopback.
     bool allow_loopback_;
 
-    /// @brief Manager for DHCPv4 packet implementations and queues
+    /// @brief Manager for DHCPv4 packet implementations and queues.
     PacketQueueMgr4Ptr packet_queue_mgr4_;
 
-    /// @brief Manager for DHCPv6 packet implementations and queues
+    /// @brief Manager for DHCPv6 packet implementations and queues.
     PacketQueueMgr6Ptr packet_queue_mgr6_;
 
     /// @brief DHCP packet receiver.
     isc::util::WatchedThreadPtr dhcp_receiver_;
+
+    /// @brief Mutex to protect receiver against concurrent access.
+    std::mutex receiver_mutex_;
 
     /// @brief The FDEventHandler instance.
     util::FDEventHandlerPtr fd_event_handler_;
