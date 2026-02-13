@@ -276,7 +276,7 @@ CfgIface::reset() {
     wildcard_used_ = false;
     iface_set_.clear();
     address_map_.clear();
-    useSocketType(AF_INET, SOCKET_RAW);
+    socket_type_ = SOCKET_RAW;
 }
 
 void
