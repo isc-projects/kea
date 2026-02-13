@@ -109,7 +109,7 @@ StateModel::startModel(const int start_state) {
 }
 
 void
-StateModel::runModel(unsigned int run_event) {
+StateModel::runModel(int run_event) {
     /// If the dictionaries aren't built bail out.
     if (!dictionaries_initted_) {
         abortModel("runModel invoked before model has been initialized");
@@ -167,7 +167,7 @@ StateModel::initDictionaries() {
 }
 
 void
-StateModel::defineEvent(unsigned int event_value, const std::string& label) {
+StateModel::defineEvent(int event_value, const std::string& label) {
     if (!isModelNewInternal()) {
         // Don't allow for self-modifying models.
         isc_throw(StateModelError, "Events may only be added to a new model."
@@ -183,7 +183,7 @@ StateModel::defineEvent(unsigned int event_value, const std::string& label) {
 }
 
 const EventPtr&
-StateModel::getEvent(unsigned int event_value) {
+StateModel::getEvent(int event_value) {
     if (!events_.isDefined(event_value)) {
         isc_throw(StateModelError,
                   "Event value is not defined:" << event_value);
@@ -193,7 +193,7 @@ StateModel::getEvent(unsigned int event_value) {
 }
 
 void
-StateModel::defineState(unsigned int state_value, const std::string& label,
+StateModel::defineState(int state_value, const std::string& label,
                         StateHandler handler, const StatePausing& state_pausing) {
     if (!isModelNewInternal()) {
         // Don't allow for self-modifying maps.
@@ -210,13 +210,13 @@ StateModel::defineState(unsigned int state_value, const std::string& label,
 }
 
 const StatePtr
-StateModel::getState(unsigned int state_value) {
+StateModel::getState(int state_value) {
     std::lock_guard<std::mutex> lock(*mutex_);
     return getStateInternal(state_value);
 }
 
 const StatePtr
-StateModel::getStateInternal(unsigned int state_value) {
+StateModel::getStateInternal(int state_value) {
     if (!states_.isDefined(state_value)) {
         isc_throw(StateModelError,
                   "State value is not defined:" << state_value);
@@ -261,7 +261,7 @@ StateModel::onModelFailure(const std::string&) {
 }
 
 void
-StateModel::transition(unsigned int state, unsigned int event) {
+StateModel::transition(int state, int event) {
     std::lock_guard<std::mutex> lock(*mutex_);
     setStateInternal(state);
     postNextEventInternal(event);
@@ -288,13 +288,13 @@ StateModel::abortModel(const std::string& explanation) {
 }
 
 void
-StateModel::setState(unsigned int state) {
+StateModel::setState(int state) {
     std::lock_guard<std::mutex> lock(*mutex_);
     setStateInternal(state);
 }
 
 void
-StateModel::setStateInternal(unsigned int state) {
+StateModel::setStateInternal(int state) {
     if (state != END_ST && !states_.isDefined(state)) {
         isc_throw(StateModelError,
                   "Attempt to set state to an undefined value: " << state );
@@ -317,13 +317,13 @@ StateModel::setStateInternal(unsigned int state) {
 }
 
 void
-StateModel::postNextEvent(unsigned int event_value) {
+StateModel::postNextEvent(int event_value) {
     std::lock_guard<std::mutex> lock(*mutex_);
     postNextEventInternal(event_value);
 }
 
 void
-StateModel::postNextEventInternal(unsigned int event_value) {
+StateModel::postNextEventInternal(int event_value) {
     // Check for FAIL_EVT as special case of model error before events are
     // defined.
     if (event_value != FAIL_EVT && !events_.isDefined(event_value)) {
@@ -351,25 +351,25 @@ StateModel::doOnExit() {
     return (ret);
 }
 
-unsigned int
+int
 StateModel::getCurrState() const {
     std::lock_guard<std::mutex> lock(*mutex_);
     return (curr_state_);
 }
 
-unsigned int
+int
 StateModel::getPrevState() const {
     std::lock_guard<std::mutex> lock(*mutex_);
     return (prev_state_);
 }
 
-unsigned int
+int
 StateModel::getLastEvent() const {
     std::lock_guard<std::mutex> lock(*mutex_);
     return (last_event_);
 }
 
-unsigned int
+int
 StateModel::getNextEvent() const {
     std::lock_guard<std::mutex> lock(*mutex_);
     return (next_event_);

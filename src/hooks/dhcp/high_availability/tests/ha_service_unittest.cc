@@ -159,7 +159,7 @@ public:
     /// @c NOP_EVT is found. This implementation runs a
     /// single handler to allow the tests to verify if the state machine
     /// transitions to an expected state before it is run again.
-    virtual void runModel(unsigned int event) {
+    virtual void runModel(int event) {
         try {
             postNextEvent(event);
             getState(getCurrState())->run();
@@ -6332,7 +6332,7 @@ public:
     /// after receiving such response.
     ///
     /// @param event an event which should trigger IO service to stop.
-    void waitForEvent(const unsigned int event) {
+    void waitForEvent(const int event) {
         ASSERT_NE(event, HAService::NOP_EVT);
 
         service_->postNextEvent(HAService::NOP_EVT);

@@ -345,7 +345,7 @@ public:
     /// @param event is the next event to process
     ///
     /// This method is guaranteed not to throw.
-    virtual void runModel(unsigned int event);
+    virtual void runModel(int event);
 
     /// @brief Conducts a normal transition to the end of the model.
     ///
@@ -414,7 +414,7 @@ protected:
     ///
     /// @throw StateModelError if the model has already been started, if
     /// the value is already defined, or if the label is empty.
-    void defineEvent(unsigned int value, const std::string& label);
+    void defineEvent(int value, const std::string& label);
 
     /// @brief Fetches the event referred to by value.
     ///
@@ -425,7 +425,7 @@ protected:
     /// @return returns a constant pointer reference to the event if found
     ///
     /// @throw StateModelError if the event is not defined.
-    const EventPtr& getEvent(unsigned int value);
+    const EventPtr& getEvent(int value);
 
     /// @brief Validates the contents of the set of events.
     ///
@@ -495,7 +495,7 @@ protected:
     ///
     /// @throw StateModelError if the model has already been started, if
     /// the value is already defined, or if the label is empty.
-    void defineState(unsigned int value, const std::string& label,
+    void defineState(int value, const std::string& label,
                      StateHandler handler,
                      const StatePausing& state_pausing = STATE_PAUSE_NEVER);
 
@@ -506,7 +506,7 @@ protected:
     /// @return returns a constant pointer to the state if found
     ///
     /// @throw StateModelError if the state is not defined.
-    const StatePtr getState(unsigned int value);
+    const StatePtr getState(int value);
 
     /// @brief Validates the contents of the set of states.
     ///
@@ -558,7 +558,7 @@ protected:
     /// @param event the new value to assign to the next event.
     ///
     /// @throw StateModelError if the state is invalid.
-    void transition(unsigned int state, unsigned int event);
+    void transition(int state, int event);
 
     /// @brief Aborts model execution.
     ///
@@ -582,7 +582,7 @@ protected:
     /// @param state the new value to assign to the current state.
     ///
     /// @throw StateModelError if the state is invalid.
-    void setState(unsigned int state);
+    void setState(int state);
 
     /// @brief Sets the next event to the given event value.
     ///
@@ -593,7 +593,7 @@ protected:
     /// @param event the numeric event value to post as the next event.
     ///
     /// @throw StateModelError if the event is undefined
-    void postNextEvent(unsigned int event);
+    void postNextEvent(int event);
 
     /// @brief Checks if on entry flag is true.
     ///
@@ -625,18 +625,18 @@ public:
     /// state whose handler will be executed on the next iteration of the run
     /// loop.
     ///
-    /// @return An unsigned int representing the current state.
-    unsigned int getCurrState() const;
+    /// @return An int representing the current state.
+    int getCurrState() const;
 
     /// @brief Fetches the model's previous state.
     ///
-    /// @return An unsigned int representing the previous state.
-    unsigned int getPrevState() const;
+    /// @return An int representing the previous state.
+    int getPrevState() const;
 
     /// @brief Fetches the model's last event.
     ///
-    /// @return An unsigned int representing the last event.
-    unsigned int getLastEvent() const;
+    /// @return An int representing the last event.
+    int getLastEvent() const;
 
     /// @brief Fetches the model's next event.
     ///
@@ -644,8 +644,8 @@ public:
     /// event that will be passed into the current state's handler on the next
     /// iteration of the run loop.
     ///
-    /// @return An unsigned int representing the next event.
-    unsigned int getNextEvent() const;
+    /// @return An int representing the next event.
+    int getNextEvent() const;
 
     /// @brief Returns whether or not the model is new.
     ///
@@ -727,7 +727,7 @@ protected:
     /// @return returns a constant pointer to the state if found
     ///
     /// @throw StateModelError if the state is not defined.
-    const StatePtr getStateInternal(unsigned int value);
+    const StatePtr getStateInternal(int value);
 
 private:
 
@@ -743,7 +743,7 @@ private:
     /// @param state the new value to assign to the current state.
     ///
     /// @throw StateModelError if the state is invalid.
-    void setStateInternal(unsigned int state);
+    void setStateInternal(int state);
 
     /// @brief Sets the next event to the given event value.
     ///
@@ -755,7 +755,7 @@ private:
     /// @param event the numeric event value to post as the next event.
     ///
     /// @throw StateModelError if the event is undefined
-    void postNextEventInternal(unsigned int event);
+    void postNextEventInternal(int event);
 
     /// @brief Returns whether or not the model is new.
     ///
@@ -818,16 +818,16 @@ private:
     bool dictionaries_initted_;
 
     /// @brief The current state within the model's state model.
-    unsigned int curr_state_;
+    int curr_state_;
 
     /// @brief The previous state within the model's state model.
-    unsigned int prev_state_;
+    int prev_state_;
 
     /// @brief The event last processed by the model.
-    unsigned int last_event_;
+    int last_event_;
 
     /// @brief The event the model should process next.
-    unsigned int next_event_;
+    int next_event_;
 
     /// @brief Indicates if state entry logic should be executed.
     bool on_entry_flag_;

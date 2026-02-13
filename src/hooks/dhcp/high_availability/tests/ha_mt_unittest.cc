@@ -56,7 +56,7 @@ public:
     /// @c NOP_EVT is found. This implementation runs a
     /// single handler to allow the tests to verify if the state machine
     /// transitions to an expected state before it is run again.
-    virtual void runModel(unsigned int event) {
+    virtual void runModel(int event) {
         try {
             postNextEvent(event);
             getState(getCurrState())->run();
