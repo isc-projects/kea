@@ -440,7 +440,7 @@ void configureCommandChannel() {
     }
 }
 
-/// @brief Process a DHCPv6 confguration and return an answer stating if the
+/// @brief Process a DHCPv6 configuration and return an answer stating if the
 /// configuration is valid, or specifying details about the error otherwise.
 ///
 /// @param config_set the configuration being processed
@@ -451,6 +451,8 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
     // Let's set empty container in case a user hasn't specified any configuration
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
+
+    IfaceMgr::instance().detectIfaces(true);
 
     // Answer will hold the result.
     ConstElementPtr answer;
