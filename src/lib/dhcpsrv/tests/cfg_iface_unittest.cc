@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
@@ -657,6 +658,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
+
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
@@ -695,11 +697,24 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
 
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
     // Open an unavailable port
     ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
 
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 10);
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_TRUE(called);
 
     EXPECT_EQ(exp_calls, total_calls);
 }
@@ -720,13 +735,13 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
     cfg4.setServiceSocketsMaxRetries(RETRIES);
     cfg4.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
-    // Set the callback to count calls and check wait time
-    size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
-
     // For eth0 interface perform 1 init open and a few retries,
     // for eth1 interface perform only init open.
     size_t exp_calls = (RETRIES + 1) + 1;
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
 
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
@@ -772,11 +787,130 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
 
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
     // Open an unavailable port
     ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
 
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 10);
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_TRUE(called);
+
+    EXPECT_EQ(exp_calls, total_calls);
+}
+
+// This test verifies that if any IPv4 socket fails to bind, the opening will
+// retry, but no sockets will be opened for a new interface.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitNewInterfaces) {
+    CfgIface cfg4;
+
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth0"));
+    ASSERT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+
+    // Parameters
+    const uint16_t RETRIES = 5;
+    const uint16_t WAIT_TIME = 5; // miliseconds
+
+    // Require retry socket binding
+    cfg4.setServiceSocketsMaxRetries(RETRIES);
+    cfg4.setServiceSocketsRetryWaitTime(WAIT_TIME);
+
+    // For eth0 interface perform 1 init open and a retry,
+    // for eth1 interface perform only init open and expect
+    // to not perform open on eth2 detected while retrying.
+    size_t exp_calls = 3;
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+
+    bool ready = false;
+
+    auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, &ready](uint16_t) {
+        auto now = std::chrono::system_clock::now();
+
+        // Skip the wait time check for the socket when two sockets are
+        // binding in a single attempt.
+
+        // Don't check the waiting time for initial calls.
+        // iface: eth0 addr: 10.0.0.1 port: 67 rbcast: 0 sbcast: 0 - fail
+        // iface: eth1 addr: 192.0.2.3 port: 67 rbcast: 0 sbcast: 0
+        auto interval = now - last_call_time;
+        auto interval_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                interval
+            ).count();
+
+        if (ready) {
+            EXPECT_GE(interval_ms, WAIT_TIME);
+        }
+
+        last_call_time = now;
+
+        total_calls++;
+
+        // Fail to open a socket on eth0, success for eth1
+        if (total_calls == 1) {
+            io_service_->post([&]() {
+                iface_mgr_test_config_.addIface("eth2", 5);
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("192.0.3.7"));
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("fe80::3a60:77ff:fed5:1234"));
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("3001:db8:1::1"));
+            });
+            isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+        }
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilterTestStub> filter(
+        new isc::dhcp::test::PktFilterTestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
+    // Open an unavailable port
+    ASSERT_NO_THROW(cfg4.openSockets(AF_INET, DHCP4_SERVER_PORT));
+
+    ready = true;
+
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
+    // Wait for a finish sockets binding (with a safe margin).
+    doWait(RETRIES * WAIT_TIME * 10);
+
+    auto now = std::chrono::system_clock::now();
+    auto interval = now - last_call_time;
+    auto interval_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            interval
+        ).count();
+
+    if (ready) {
+        EXPECT_GE(interval_ms, WAIT_TIME);
+    }
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_FALSE(called);
 
     EXPECT_EQ(exp_calls, total_calls);
 }
@@ -795,6 +929,7 @@ TEST_F(CfgIfaceTest, retryDoubleOpenServiceSockets4) {
     // Set the callback that interrupt the previous execution.
     uint16_t first_port_calls = 0;
     uint16_t second_port_calls = 0;
+
     auto open_callback = [&first_port_calls, &second_port_calls](uint16_t port) {
         // First timer must be interrupted.
         if (second_port_calls > 0) {
@@ -869,6 +1004,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
+
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
 
@@ -905,11 +1041,24 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
 
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
     // Open an unavailable port
     ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
 
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 10);
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_TRUE(called);
 
     // For each interface perform 1 init open and a few retries.
     EXPECT_EQ(exp_calls, total_calls);
@@ -937,7 +1086,6 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     const uint32_t opened_by_eth0 = 2;
 #endif
 
-
     // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
     // for eth1 interface perform 1 init open and a few retries.
     size_t exp_calls = RETRIES + 1 + opened_by_eth0;
@@ -945,6 +1093,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
     auto last_call_time = std::chrono::system_clock::time_point::min();
+
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
         bool is_eth0 = total_calls < opened_by_eth0;
@@ -957,7 +1106,6 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
         // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
         // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
         // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1 - fails
-
         if (total_calls > (opened_by_eth0 + 1)) {
             auto interval = now - last_call_time;
             auto interval_ms =
@@ -991,11 +1139,145 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
 
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
     // Open an unavailable port
     ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
 
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
     // Wait for a finish sockets binding (with a safe margin).
     doWait(RETRIES * WAIT_TIME * 10);
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_TRUE(called);
+
+    EXPECT_EQ(exp_calls, total_calls);
+}
+
+// This test verifies that if any IPv6 socket fails to bind, the opening will
+// retry, but no sockets will be opened for a new interface.
+TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
+    CfgIface cfg6;
+
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
+
+    // Parameters
+    const uint16_t RETRIES = 5;
+    const uint16_t WAIT_TIME = 5; // miliseconds
+
+    // Require retry socket binding
+    cfg6.setServiceSocketsMaxRetries(RETRIES);
+    cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
+
+#if defined OS_LINUX
+    const uint32_t opened_by_eth0 = 3;
+#else
+    const uint32_t opened_by_eth0 = 1;
+#endif
+
+#if defined OS_LINUX
+    const uint32_t opened_by_eth1 = 2;
+#else
+    const uint32_t opened_by_eth1 = 1;
+#endif
+
+    // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
+    // for eth1 interface perform only 2 (on Linux Systems or 1 otherwise) init open and
+    // expect to not perform open on eth2 detected while retrying.
+    size_t exp_calls = opened_by_eth0 + opened_by_eth1 + 1;
+
+    // Set the callback to count calls and check wait time
+    size_t total_calls = 0;
+    auto last_call_time = std::chrono::system_clock::time_point::min();
+
+    bool ready = false;
+
+    auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, &ready](uint16_t) {
+        auto now = std::chrono::system_clock::now();
+
+        // Skip the wait time check for the socket when two sockets are
+        // binding in a single attempt.
+
+        // Don't check the waiting time for initial calls.
+        // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0 - fail
+        // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
+        // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1
+        // iface: eth1 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        auto interval = now - last_call_time;
+        auto interval_ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                interval
+            ).count();
+
+        if (ready) {
+            EXPECT_GE(interval_ms, WAIT_TIME);
+        }
+
+        last_call_time = now;
+
+        total_calls++;
+
+        // Fail to open a socket on eth0, success for eth1
+        if (total_calls == 1) {
+            io_service_->post([&]() {
+                iface_mgr_test_config_.addIface("eth2", 5);
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("192.0.3.7"));
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("fe80::3a60:77ff:fed5:1234"));
+                iface_mgr_test_config_.addAddress("eth2", IOAddress("3001:db8:1::1"));
+            });
+            isc_throw(Unexpected, "CfgIfaceTest: cannot open a port");
+        }
+    };
+
+    boost::shared_ptr<isc::dhcp::test::PktFilter6TestStub> filter(
+        new isc::dhcp::test::PktFilter6TestStub()
+    );
+
+    filter->setOpenSocketCallback(open_callback);
+
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(IfaceMgr::instance().setPacketFilter(filter));
+
+    bool called = false;
+    CfgIface::OpenSocketsFailedCallback on_fail_callback =
+        [&called](ReconnectCtlPtr) {
+            called = true;
+        };
+
+    CfgIface::open_sockets_failed_callback_ = on_fail_callback;
+
+    // Open an unavailable port
+    ASSERT_NO_THROW(cfg6.openSockets(AF_INET6, DHCP6_SERVER_PORT));
+
+    ready = true;
+
+    EXPECT_TRUE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+
+    // Wait for a finish sockets binding (with a safe margin).
+    doWait(RETRIES * WAIT_TIME * 10);
+
+    auto now = std::chrono::system_clock::now();
+    auto interval = now - last_call_time;
+    auto interval_ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            interval
+        ).count();
+
+    if (ready) {
+        EXPECT_GE(interval_ms, WAIT_TIME);
+    }
+
+    EXPECT_FALSE(TimerMgr::instance()->isTimerRegistered("SocketReopenTimer"));
+    EXPECT_FALSE(called);
 
     EXPECT_EQ(exp_calls, total_calls);
 }
@@ -1014,6 +1296,7 @@ TEST_F(CfgIfaceTest, retryDoubleOpenServiceSockets6) {
     // Set the callback that interrupt the previous execution.
     uint16_t first_port_calls = 0;
     uint16_t second_port_calls = 0;
+
     auto open_callback = [&first_port_calls, &second_port_calls](uint16_t port) {
         // First timer must be interrupted.
         if (second_port_calls > 0) {
