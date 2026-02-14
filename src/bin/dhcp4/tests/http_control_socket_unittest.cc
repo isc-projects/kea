@@ -565,6 +565,14 @@ public:
     // file is loaded correctly.
     void testConfigReloadDetectInterfaces();
 
+    // Tests if config-test attempts to test a config which contains a new interface
+    // which is added after server startup.
+    void testConfigTestDetectInterfaces();
+
+    // Tests if config-set attempts to set a config which contains a new interface
+    // which is added after server startup.
+    void testConfigSetDetectInterfaces();
+
     // This test verifies that disable DHCP service command performs
     // sanity check on parameters.
     void testDhcpDisableBadParam();
@@ -3443,6 +3451,177 @@ TEST_F(HttpCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
 
 TEST_F(HttpsCtrlChannelDhcpv4Test, configReloadDetectInterfaces) {
     testConfigReloadDetectInterfaces();
+}
+
+// Tests if config-test attempts to test a config which contains a new interface
+// which is added after server startup.
+void
+BaseCtrlChannelDhcpv4Test::testConfigTestDetectInterfaces() {
+    interfaces_ = "\"eth0\"";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createHttpChannelServer();
+    std::string response;
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"eth1\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"id\": 1, \"subnet\": \"192.0.2.0/24\", \"interface\": \"eth1\" },"
+        "        { \"id\": 2, \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
+    auto detectUpdateIfaces = [&](bool update_only) {
+        if (update_only) {
+            eth1->addAddress(IOAddress("192.0.2.3"));
+            eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+            eth1->addAddress(IOAddress("3001:db8:100::1"));
+            IfaceMgr::instance().addInterface(eth1);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectUpdateIfaces);
+
+    std::string command = "{ \"command\": \"config-test\", \"arguments\": " + cfg_txt + " }";
+
+    // This command should test the config.
+    sendHttpCommand(command, response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration seems sane. Control-socket,
+    //                       hook-libraries, and D2 configuration were
+    //                       sanity checked, but not applied." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration seems sane. "
+                            "Control-socket, hook-libraries, and D2 configuration "
+                            "were sanity checked, but not applied.\""), std::string::npos);
+
+    // Check that the config was not applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(0, subnets->size());
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, configTestDetectInterfaces) {
+    testConfigTestDetectInterfaces();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configTestDetectInterfaces) {
+    testConfigTestDetectInterfaces();
+}
+
+// Tests if config-set attempts to set a config which contains a new interface
+// which is added after server startup.
+void
+BaseCtrlChannelDhcpv4Test::testConfigSetDetectInterfaces() {
+    interfaces_ = "\"eth0\"";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createHttpChannelServer();
+    std::string response;
+
+    // Ok, enough fooling around. Let's create a valid config.
+    const std::string cfg_txt =
+        "{ \"Dhcp4\": {"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"eth1\" ]"
+        "    },"
+        "    \"subnet4\": ["
+        "        { \"id\": 1, \"subnet\": \"192.0.2.0/24\", \"interface\": \"eth1\" },"
+        "        { \"id\": 2, \"subnet\": \"192.0.3.0/24\" }"
+        "     ],"
+        "    \"valid-lifetime\": 4000,"
+        "    \"lease-database\": {"
+        "       \"type\": \"memfile\", \"persist\": false }"
+        "} }";
+
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
+    auto detectUpdateIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+            eth1->addAddress(IOAddress("192.0.2.3"));
+            eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+            eth1->addAddress(IOAddress("3001:db8:100::1"));
+            IfaceMgr::instance().addInterface(eth1);
+        } else {
+            if (!IfaceMgr::instance().getIface("eth1")) {
+                eth1->addAddress(IOAddress("192.0.2.3"));
+                eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+                eth1->addAddress(IOAddress("3001:db8:100::1"));
+                IfaceMgr::instance().addInterface(eth1);
+            }
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectUpdateIfaces);
+
+    std::string command = "{ \"command\": \"config-set\", \"arguments\": " + cfg_txt + " }";
+
+    // This command should set the config.
+    sendHttpCommand(command, response);
+
+    // Verify the configuration was successful. The config contains random
+    // socket name (/tmp/kea-<value-changing-each-time>/kea4.sock), so the
+    // hash will be different each time. As such, we can do simplified checks:
+    // - verify the "result": 0 is there
+    // - verify the "text": "Configuration successful." is there
+    EXPECT_NE(response.find("\"result\": 0"), std::string::npos);
+    EXPECT_NE(response.find("\"text\": \"Configuration successful.\""), std::string::npos);
+
+    // Check that the config was indeed applied.
+    const Subnet4Collection* subnets =
+        CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
+    EXPECT_EQ(2, subnets->size());
+}
+
+TEST_F(HttpCtrlChannelDhcpv4Test, configSetDetectInterfaces) {
+    testConfigSetDetectInterfaces();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv4Test, configSetDetectInterfaces) {
+    testConfigSetDetectInterfaces();
 }
 
 // This test verifies that disable DHCP service command performs
