@@ -532,8 +532,7 @@ TEST_F(OptionTest, setData) {
     buf_.resize(5, 1);
     opt2->setData(buf_.begin(), buf_.end());
     opt2->pack(outBuf_);
-    ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(),
-              static_cast<long>(buf_.size()));
+    ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
     test_data = outBuf_.getData();
     EXPECT_EQ(0, memcmp(&buf_[0], test_data + opt1->getHeaderLen(), buf_.size()));
 }

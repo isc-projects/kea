@@ -730,7 +730,7 @@ TEST_F(StatsMgrTest, commandGetAll) {
     ASSERT_TRUE(rsp);
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
-    ASSERT_EQ(0, status_code);
+    ASSERT_EQ(0U, status_code);
     ASSERT_TRUE(rep_all);
 
     // Verifying this is a bit more involved, as we don't know whether the
@@ -792,7 +792,7 @@ TEST_F(StatsMgrTest, commandGlobalGetAll) {
     ASSERT_TRUE(rsp);
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
-    ASSERT_EQ(0, status_code);
+    ASSERT_EQ(0U, status_code);
     ASSERT_TRUE(rep_all);
 
     // Verifying this is a bit more involved, as we don't know whether the
@@ -896,7 +896,7 @@ TEST_F(StatsMgrTest, commandResetAll) {
     ASSERT_TRUE(rsp);
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
-    ASSERT_EQ(0, status_code);
+    ASSERT_EQ(0U, status_code);
     ASSERT_TRUE(rep_all);
 
     // Check that they're indeed reset
@@ -968,7 +968,7 @@ TEST_F(StatsMgrTest, commandRemoveAll) {
     ASSERT_TRUE(rsp);
     int status_code;
     ConstElementPtr rep_all = parseAnswer(status_code, rsp);
-    ASSERT_EQ(0, status_code);
+    ASSERT_EQ(0U, status_code);
     ASSERT_TRUE(rep_all);
     std::string exp = "\"Warning: statistic-remove-all command is deprecated.";
     exp += " All statistics removed.\"";

@@ -689,7 +689,7 @@ warnings = [
     '-Wno-missing-field-initializers',
     '-Wshadow',
 ]
-no_warnings = ['-Wno-sign-compare']
+no_warnings = [] # ['-Wno-sign-compare']
 # Clang++ specific settings.
 cxx_id = cpp.get_id()
 if cxx_id == 'clang' and cpp_args_opt.length() == 0
