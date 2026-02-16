@@ -5232,7 +5232,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     OptionUint8Ptr opt_ttl =
         retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
     ASSERT_TRUE(opt_ttl);
-    EXPECT_EQ(11, static_cast<int>(opt_ttl->getValue()));
+    EXPECT_EQ(11U, static_cast<int>(opt_ttl->getValue()));
 
     // Do the same test for the DUID based reservation.
     std::vector<uint8_t> duid;
@@ -5252,7 +5252,7 @@ TEST_F(Dhcp4ParserTest, reservations) {
     EXPECT_EQ("192.0.3.15", dns_addrs[0].toText());
     opt_ttl = retrieveOption<OptionUint8Ptr>(*host, DHO_DEFAULT_IP_TTL);
     ASSERT_TRUE(opt_ttl);
-    EXPECT_EQ(32, static_cast<int>(opt_ttl->getValue()));
+    EXPECT_EQ(32U, static_cast<int>(opt_ttl->getValue()));
 
     // The circuit-id used for one of the reservations in the subnet 542
     // consists of numbers from 6 to 1. So, let's just reverse the order
