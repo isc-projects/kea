@@ -897,7 +897,7 @@ TEST_F(Dhcpv4SrvTest, initResponse) {
 
     // Check fields
     EXPECT_EQ("foo", response->getIface());
-    EXPECT_EQ(111U, response->getIndex());
+    EXPECT_EQ(111, response->getIndex());
     EXPECT_TRUE(response->getSiaddr().isV4Zero());
     EXPECT_TRUE(response->getCiaddr().isV4Zero());
     EXPECT_EQ(5U, response->getHops());
