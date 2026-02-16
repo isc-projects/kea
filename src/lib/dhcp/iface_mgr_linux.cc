@@ -346,7 +346,7 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
         }
 
         nlmsghdr* header = static_cast<nlmsghdr*>(static_cast<void*>(buf));
-        while (NLMSG_OK(header, status)) {
+        while (NLMSG_OK(header, static_cast<unsigned int>(status))) {
 
             // Received a message not addressed to our process, or not
             // with a sequence number we are expecting.  Ignore, and
