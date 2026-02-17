@@ -491,8 +491,8 @@ extern std::string toHexText(const uint8_t* data, size_t len);
 /// @param file source file name
 /// @param line source line number
 extern void checkContext(NameChangeTransactionPtr trans,
-                         const unsigned int exp_state,
-                         const unsigned int exp_evt,
+                         const int exp_state,
+                         const int exp_evt,
                          const std::string& file, int line);
 
 /// @brief Macro for calling checkContext() that supplies invocation location

@@ -978,8 +978,8 @@ checkSimpleRemoveRevPtrsRequest(NameChangeTransaction& tran) {
 
 // Verifies the current state and next event in a transaction
 void
-checkContext(NameChangeTransactionPtr trans, const unsigned int exp_state,
-             const unsigned int exp_evt, const std::string& file, int line) {
+checkContext(NameChangeTransactionPtr trans, const int exp_state,
+             const int exp_evt, const std::string& file, int line) {
     ASSERT_TRUE(trans);
     ASSERT_TRUE(exp_state == trans->getCurrState() && exp_evt == trans->getNextEvent())
             << "expected state: " << trans->getStateLabel(exp_state)
