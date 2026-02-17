@@ -2337,7 +2337,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configTestDetectInterfaces) {
     // Check that the config was not applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(0, subnets->size());
+    EXPECT_EQ(0U, subnets->size());
 }
 
 // Tests if config-set attempts to set a config which contains a new interface
@@ -2418,7 +2418,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configSetDetectInterfaces) {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 }
 
 // This test verifies that disable DHCP service command performs sanity check on

@@ -3476,8 +3476,8 @@ BaseCtrlChannelDhcpv6Test::testConfigTestDetectInterfaces() {
         "        \"interfaces\": [ \"eth1\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "        { \"subnet\": \"3001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
+        "        { \"subnet\": \"3001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
@@ -3516,7 +3516,7 @@ BaseCtrlChannelDhcpv6Test::testConfigTestDetectInterfaces() {
     // Check that the config was not applied.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    EXPECT_EQ(0, subnets->size());
+    EXPECT_EQ(0U, subnets->size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv6Test, configTestDetectInterfaces) {
@@ -3557,8 +3557,8 @@ BaseCtrlChannelDhcpv6Test::testConfigSetDetectInterfaces() {
         "        \"interfaces\": [ \"eth1\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "        { \"subnet\": \"3001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
+        "        { \"subnet\": \"3001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
@@ -3604,7 +3604,7 @@ BaseCtrlChannelDhcpv6Test::testConfigSetDetectInterfaces() {
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv6Test, configSetDetectInterfaces) {

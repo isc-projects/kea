@@ -2292,8 +2292,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTestDetectInterfaces) {
         "        \"interfaces\": [ \"eth1\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "        { \"subnet\": \"3001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
+        "        { \"subnet\": \"3001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
@@ -2332,7 +2332,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configTestDetectInterfaces) {
     // Check that the config was not applied.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    EXPECT_EQ(0, subnets->size());
+    EXPECT_EQ(0U, subnets->size());
 }
 
 // Tests if config-set attempts to set a config which contains a new interface
@@ -2365,8 +2365,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetDetectInterfaces) {
         "        \"interfaces\": [ \"eth1\" ]"
         "    },"
         "    \"subnet6\": ["
-        "        { \"subnet\": \"2001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
-        "        { \"subnet\": \"2001:db8:2::/64\", \"id\": 2 }"
+        "        { \"subnet\": \"3001:db8:1::/64\", \"id\": 1, \"interface\": \"eth1\" },"
+        "        { \"subnet\": \"3001:db8:2::/64\", \"id\": 2 }"
         "     ],"
         "    \"lease-database\": {"
         "       \"type\": \"memfile\", \"persist\": false }"
@@ -2412,7 +2412,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, configSetDetectInterfaces) {
     // Check that the config was indeed applied.
     const Subnet6Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets6()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 }
 
 // This test verifies that disable DHCP service command performs sanity check on

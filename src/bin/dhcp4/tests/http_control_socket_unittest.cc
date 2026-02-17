@@ -3524,7 +3524,7 @@ BaseCtrlChannelDhcpv4Test::testConfigTestDetectInterfaces() {
     // Check that the config was not applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(0, subnets->size());
+    EXPECT_EQ(0U, subnets->size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv4Test, configTestDetectInterfaces) {
@@ -3613,7 +3613,7 @@ BaseCtrlChannelDhcpv4Test::testConfigSetDetectInterfaces() {
     // Check that the config was indeed applied.
     const Subnet4Collection* subnets =
         CfgMgr::instance().getCurrentCfg()->getCfgSubnets4()->getAll();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
 }
 
 TEST_F(HttpCtrlChannelDhcpv4Test, configSetDetectInterfaces) {
