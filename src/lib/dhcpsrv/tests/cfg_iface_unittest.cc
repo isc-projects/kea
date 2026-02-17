@@ -1086,7 +1086,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     const uint32_t opened_by_eth0 = 2;
 #endif
 
-    // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
+    // For eth0 interface perform only 3 (on Linux systems or 2 otherwise) init open,
     // for eth1 interface perform 1 init open and a few retries.
     size_t exp_calls = RETRIES + 1 + opened_by_eth0;
 
@@ -1189,8 +1189,8 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
     const uint32_t opened_by_eth1 = 1;
 #endif
 
-    // For eth0 interface perform only 3 (on Linux Systems or 2 otherwise) init open,
-    // for eth1 interface perform only 2 (on Linux Systems or 1 otherwise) init open and
+    // For eth0 interface perform only 3 (on Linux systems or 2 otherwise) init open and a retry,
+    // for eth1 interface perform only 2 (on Linux systems or 1 otherwise) init open and
     // expect to not perform open on eth2 detected while retrying.
     size_t exp_calls = opened_by_eth0 + opened_by_eth1 + 1;
 

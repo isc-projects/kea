@@ -1,3 +1,9 @@
+2439.	[bug]		razvan
+	Fixed a bug which was causing kea-dhcp servers to bind on other
+	interfaces while retrying to open sockets on configured
+	interfaces.
+	(Gitlab #3062, #3134)
+
 2438.	[bug]		razvan
 	The "config-test" and "config-set" commands now properly redetect
 	interfaces before testing or applying the configuration.
