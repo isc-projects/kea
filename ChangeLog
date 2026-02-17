@@ -1,4 +1,9 @@
-2436.	[bug]		razvan
+2438.	[bug]		razvan
+	The "config-test" and "config-set" commands now properly redetect
+	interfaces before testing or applying the configuration.
+	(Gitlab #3370)
+
+2437.	[bug]		razvan
 	Removed a log that incorrectly stated that the v6 socket was
 	using raw format.
 	(Gitlab #4199)
