@@ -1,10 +1,15 @@
+2436.	[bug]		razvan
+	Removed a log that incorrectly stated that the v6 socket was
+	using raw format.
+	(Gitlab #4199)
+
 Kea 3.1.5 (development) released on January 28, 2026
 
 2436.	[build]		fdupont
 	Fixed Kea build with Boost 1.90: BOOST_STATIC_ASSERT was
 	replaced by C++ static_assert, and deadline_timer by
 	system_timer. This change was included in the 3.1.5 release,
-	but its changelog entry was	not.
+	but its changelog entry was not.
 	(Gitlab #4264, #4266)
 
 2435.	[build]		andrei
@@ -105,9 +110,9 @@ Kea 3.1.5 (development) released on January 28, 2026
 2420.	[func]		tmark
 	Memfile lease back end now supports the ``on-fail``
 	parameter though without retry.  When set to either
-	 ``stop-retry-exit`` or ``serve-retry-exit`` the
+	``stop-retry-exit`` or ``serve-retry-exit`` the
 	server will exit on unrecoverable write errors. If
-	 set to ``serve-retry-continue`` the server will
+	set to ``serve-retry-continue`` the server will
 	continue to run but write errors will continue until
 	corrective action is taken. Applies to both
 	kea-dhcp4 and kea-dhcp6.
