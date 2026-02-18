@@ -1180,7 +1180,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
 #if defined OS_LINUX
     const uint32_t opened_by_eth0 = 3;
 #else
-    const uint32_t opened_by_eth0 = 1;
+    const uint32_t opened_by_eth0 = 2;
 #endif
 
 #if defined OS_LINUX

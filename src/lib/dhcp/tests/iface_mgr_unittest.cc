@@ -2653,6 +2653,9 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
     ASSERT_TRUE(filter);
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
+    ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
+    ifacemgr.getIface("eth1")->addAddress(IOAddress("3001:db8:1::1"));
+
     // Simulate opening sockets using the dummy packet filter.
     bool success = false;
     ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
@@ -2670,6 +2673,18 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
     // for interfaces.
     EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:cdef")));
     EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:abcd")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("2001:db8:1::1"), true));
+    if (ifacemgr.hasOpenSocket(IOAddress("::"))) {
+        // On BSD binding is done using "::" when address is multicast which
+        // makes the address match interface address.
+        EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("3001:db8:1::1")));
+    } else {
+        // On Linux binding is done using link-local and all-servers address
+        // when address is multicast.
+        EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("3001:db8:1::1")));
+    }
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("3001:db8:1::1"), true));
     // Check that there is no socket bound to the address which hasn't been
     // configured on any interface.
     EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:feed:1")));

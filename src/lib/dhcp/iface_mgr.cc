@@ -473,7 +473,7 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
 }
 
 bool
-IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
+IfaceMgr::hasOpenSocket(const IOAddress& addr, bool unicast) const {
     // Fast track for IPv4 using bound addresses.
     if (addr.isV4() && !bound_address_.empty()) {
         return (bound_address_.count(addr.toUint32()) != 0);
@@ -485,7 +485,7 @@ IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
             // if address is unspecified (in6addr_any).
             if (sock.addr_ == addr) {
                 return (true);
-            } else if (sock.addr_.isV6Zero()) {
+            } else if (sock.addr_.isV6Zero() && !unicast) {
                 // Handle the case that the address is unspecified (any).
                 // This happens only with IPv6 so we do not check IPv4.
                 // In this case, we should check if the specified address
@@ -684,7 +684,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // address on BSD and Solaris on any interface, so we make sure that
             // that interface actually has opened sockets by checking the number
             // of sockets to be non zero.
-            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||
+            if (!skip_opened || !IfaceMgr::hasOpenSocket(addr, true) ||
                 !iface->getSockets().size()) {
                 try {
                     IfaceMgr::openSocket(iface->getName(), addr, port, false, false);

@@ -1362,9 +1362,10 @@ public:
     /// specified link-local address and returns true.
     ///
     /// @param addr Address of the socket being searched.
+    /// @param unicast Flag which indicates if the address is unicast.
     ///
     /// @return true if there is a socket bound to the specified address.
-    bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
+    bool hasOpenSocket(const isc::asiolink::IOAddress& addr, bool unicast = false) const;
 
     /// @brief Fetches the DHCPv4 packet queue manager
     ///
