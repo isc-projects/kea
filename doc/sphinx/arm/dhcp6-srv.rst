@@ -970,8 +970,10 @@ all interfaces.
 
 As with the DHCPv4 server, binding to specific addresses and disabling
 re-detection of interfaces are supported. But ``dhcp-socket-type`` is
-not supported, because DHCPv6 uses only UDP/IPv6 sockets. The following example
-shows how to disable interface detection:
+not supported, because DHCPv6 uses only UDP/IPv6 sockets.
+
+Interfaces are re-detected at each reconfiguration. This behavior can be
+disabled by setting the ``re-detect`` value to ``false``, for instance:
 
 ::
 
@@ -983,6 +985,11 @@ shows how to disable interface detection:
        ...
    }
 
+Note that interfaces are not re-detected when the :isccmd:`config-test`
+or :isccmd:`config-set` commands are run.
+However, new interfaces are detected and are available for use by
+the new configuration passed to the :isccmd:`config-test` and
+:isccmd:`config-set` commands.
 
 The loopback interfaces (i.e. the ``lo`` or ``lo0`` interface) are not
 configured by default, unless explicitly mentioned in the

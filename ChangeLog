@@ -5,8 +5,9 @@
 	(Gitlab #3062, #3134)
 
 2438.	[bug]		razvan
-	The "config-test" and "config-set" commands now properly redetect
-	interfaces before testing or applying the configuration.
+	The "config-test" and "config-set" commands can now properly use
+	newly detected interfaces for testing or applying a new
+	configuration.
 	(Gitlab #3370)
 
 2437.	[bug]		razvan

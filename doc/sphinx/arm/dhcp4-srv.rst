@@ -1150,8 +1150,11 @@ disabled by setting the ``re-detect`` value to ``false``, for instance:
        ...
    }
 
-
-Note that interfaces are not re-detected during :isccmd:`config-test`.
+Note that interfaces are not re-detected when the :isccmd:`config-test`
+or :isccmd:`config-set` commands are run.
+However, new interfaces are detected and are available for use by
+the new configuration passed to the :isccmd:`config-test` and
+:isccmd:`config-set` commands.
 
 Usually loopback interfaces (e.g. the ``lo`` or ``lo0`` interface) are not
 configured, but if a loopback interface is explicitly configured and
