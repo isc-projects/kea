@@ -938,6 +938,11 @@ server to listen on all available interfaces:
        ...
    }
 
+.. note::
+
+    Kea by default does not listen on global IPv6 addresses. To enable
+    unicast traffic see :ref:`dhcp6-unicast`.
+
 The asterisk plays the role of a wildcard and means "listen on all
 interfaces." However, it is usually a good idea to explicitly specify
 interface names:
