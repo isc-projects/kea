@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2024 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -657,7 +657,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
@@ -741,7 +741,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitBound) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
@@ -832,7 +832,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets4OmitNewInterfaces) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     bool ready = false;
 
@@ -1003,7 +1003,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
@@ -1092,7 +1092,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     auto open_callback = [this, &total_calls, &last_call_time, WAIT_TIME, exp_calls](uint16_t) {
         auto now = std::chrono::system_clock::now();
@@ -1196,7 +1196,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
 
     // Set the callback to count calls and check wait time
     size_t total_calls = 0;
-    auto last_call_time = std::chrono::system_clock::time_point::min();
+    std::chrono::system_clock::time_point last_call_time;  // epoch zero
 
     bool ready = false;
 
