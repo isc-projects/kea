@@ -1,10 +1,11 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/allocator.h>
@@ -15,6 +16,9 @@
 #include <eval/eval_context.h>
 #include <stats/stats_mgr.h>
 #include <testutils/gtest_utils.h>
+
+#include <string>
+
 #include <boost/pointer_cast.hpp>
 
 using namespace std;
@@ -34,29 +38,29 @@ const bool IN_POOL = true;
 
 // Test convenience method adding hints to IA context.
 TEST(ClientContext6Test, addHint) {
-   AllocEngine::ClientContext6 ctx;
-   ctx.currentIA().addHint(IOAddress("2001:db8:1::1"));
-   ctx.currentIA().addHint(IOAddress("3000:1::"), 64);
-   ctx.currentIA().addHint(IOAddress("3001:2::"), 64, 100, 200);
+    AllocEngine::ClientContext6 ctx;
+    ctx.currentIA().addHint(IOAddress("2001:db8:1::1"));
+    ctx.currentIA().addHint(IOAddress("3000:1::"), 64);
+    ctx.currentIA().addHint(IOAddress("3001:2::"), 64, 100, 200);
 
-   ASSERT_EQ(3, ctx.currentIA().hints_.size());
-   EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].getAddress().toText());
-   EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].getAddress().toText());
-   EXPECT_EQ("3001:2::", ctx.currentIA().hints_[2].getAddress().toText());
-   EXPECT_EQ(100, ctx.currentIA().hints_[2].getPreferred());
-   EXPECT_EQ(200, ctx.currentIA().hints_[2].getValid());
+    ASSERT_EQ(3, ctx.currentIA().hints_.size());
+    EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].getAddress().toText());
+    EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].getAddress().toText());
+    EXPECT_EQ("3001:2::", ctx.currentIA().hints_[2].getAddress().toText());
+    EXPECT_EQ(100, ctx.currentIA().hints_[2].getPreferred());
+    EXPECT_EQ(200, ctx.currentIA().hints_[2].getValid());
 }
 
 // Test convenience method adding allocated prefixes and addresses to
 // a context.
 TEST(ClientContext6Test, addAllocatedResource) {
-   AllocEngine::ClientContext6 ctx;
-   ctx.addAllocatedResource(IOAddress("2001:db8:1::1"));
-   ctx.addAllocatedResource(IOAddress("3000:1::"), 64);
+    AllocEngine::ClientContext6 ctx;
+    ctx.addAllocatedResource(IOAddress("2001:db8:1::1"));
+    ctx.addAllocatedResource(IOAddress("3000:1::"), 64);
 
-   ASSERT_EQ(2, ctx.allocated_resources_.size());
-   EXPECT_TRUE(ctx.isAllocated(IOAddress("2001:db8:1::1")));
-   EXPECT_TRUE(ctx.isAllocated(IOAddress("3000:1::"), 64));
+    ASSERT_EQ(2, ctx.allocated_resources_.size());
+    EXPECT_TRUE(ctx.isAllocated(IOAddress("2001:db8:1::1")));
+    EXPECT_TRUE(ctx.isAllocated(IOAddress("3000:1::"), 64));
 }
 
 // This test checks if the v6 Allocation Engine can be instantiated, parses
@@ -2183,7 +2187,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
         Lease6Collection leases = engine.allocateLeases6(ctx);
         if (leases.empty()) {
             failure++;
-            std::cout << "Alloc for client " << (int)i << " failed." << std::endl;
+            SCOPED_TRACE("Alloc for client " + to_string(i) + " expected to fail.");
             EXPECT_EQ(failure, getStatistics("v6-allocation-fail"));
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-shared-network"));
             EXPECT_EQ(failure, getStatistics("v6-allocation-fail-subnet"));
@@ -2197,8 +2201,8 @@ TEST_F(AllocEngine6Test, reservedAddress) {
             EXPECT_EQ(0, getStatistics("v6-allocation-fail-classes", subnet_->getID()));
         } else {
             success++;
-            std::cout << "Alloc for client " << (int)i << " succeeded:"
-                      << leases[0]->addr_.toText() << std::endl;
+            SCOPED_TRACE("Alloc for client " + to_string(i) +
+                         " expected to succeed: " + leases[0]->addr_.toText());
 
             // The assigned addresses must not match the one reserved.
             EXPECT_NE("2001:db8:1::12", leases[0]->addr_.toText());

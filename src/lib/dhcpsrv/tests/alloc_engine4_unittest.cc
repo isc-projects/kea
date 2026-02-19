@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -4198,7 +4198,6 @@ TEST_F(AllocEngine4Test, storeExtendedInfoEnabled4) {
 
         // If we have a MAC address this scenario is for a new client.
         if (!scenario.mac_.empty()) {
-            std::cout << "setting mac address" << std::endl;
             ASSERT_NO_THROW(ctx.hwaddr_.reset(new HWAddr(scenario.mac_, HTYPE_ETHER)))
                             << "invalid MAC address, test is broken";
         }
@@ -4295,7 +4294,6 @@ TEST_F(AllocEngine4Test, storeExtendedInfoDisabled4) {
 
         // If we have a MAC address this scenario is for a new client.
         if (!scenario.mac_.empty()) {
-            std::cout << "setting mac address" << std::endl;
             ASSERT_NO_THROW(ctx.hwaddr_.reset(new HWAddr(scenario.mac_, HTYPE_ETHER)))
                             << "invalid MAC address, test is broken";
         }

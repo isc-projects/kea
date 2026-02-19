@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2025 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2026 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -114,8 +114,11 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getContext()->str(), user_context);
 
     // Verify that toText called by << operator doesn't bomb.
-    ASSERT_NO_THROW(std::cout << "toText test:" << std::endl <<
-                    *d2_client_config << std::endl);
+    stringstream stream;
+    ASSERT_NO_THROW(stream << "toText test: " << *d2_client_config);
+    EXPECT_EQ(stream.str(), "toText test: enable_updates: yes, server-ip: 127.0.0.1, server-port: "
+                            "477, sender-ip: 127.0.0.1, sender-port: 478, max-queue-size: 2048, "
+                            "ncr-protocol: UDP, ncr-format: JSON");
 
     // Verify what toElement returns.
     std::string expected = "{\n"
