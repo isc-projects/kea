@@ -1,3 +1,40 @@
+Kea 3.1.6 (development) released on February 25, 2026
+
+2446.	[sec]*		fdupont
+	Added the 'use-message-authenticator' parameter to the RADIUS
+	hook library. When true (the default when the transport
+	protocol is not TLS) a Message-Authenticator is added to
+	messages sent by Kea, and required in received messages.
+	(Gitlab #4333)
+
+2445.	[doc]		fdupont
+	Added supported RADIUS standards to the RADIUS hook library
+	documentation in the ARM.
+	(Gitlab #4285)
+
+2444.	[func]		fdupont
+	Implemented RADIUS/TLS in the RADIUS hook library.
+	(Gitlab #4274)
+
+2443.	[bug]		tmark
+	Fixed an issue in kea-dhcp6 that caused the server to
+	not use a reserved host name or recognize a change to
+	the selected subnet for subnet-level reservations
+	within a shared-network when a lease exists for the
+	reservation but is in either the RELEASED or
+	EXPIRED-RECLAIMED states.
+	(Gitlab #4262)
+
+2442.	[func]		razvan
+	Removed "Lease Expires On" information from the kea-dhcp-ddns
+	log messages.
+	(Gitlab #4280)
+
+2441.	[func]		tmark
+	Template classes template-test expressions may
+	now test for membership in 'KNOWN'/'UNKNOWN'.
+	(Gitlab #4256)
+
 2440.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.1.6
 	development release.

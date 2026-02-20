@@ -1,6 +1,0 @@
-[sec]*		fdupont
-	Added the 'use-message-authenticator' parameter to the RADIUS
-	hook library. When true (the default when the transport
-	protocol is not TLS) a Message-Authenticator is added to
-	messages sent by Kea, and required in received messages.
-	(Gitlab #4333)

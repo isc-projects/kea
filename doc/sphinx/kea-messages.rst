@@ -25438,37 +25438,6 @@ This debug message is issued when a message is encoded. The message type name
 and value, the identifier, the length and the number of attributes are
 displayed.
 
-RADIUS_EXCHANGE_FAILED
-======================
-
-.. code-block:: text
-
-    Exchange %1 failed: %2
-
-This error message is issued when an exchange terminates with an error.
-The exchange identifier and the error message are displayed.
-
-RADIUS_EXCHANGE_OPEN_FAILED
-===========================
-
-.. code-block:: text
-
-    Open socket for exchange %1 failed: %2
-
-This error message is issued when an exchange failed to open a new socket.
-The exchange identifier and the error message are displayed.
-
-RADIUS_EXCHANGE_RECEIVED
-========================
-
-.. code-block:: text
-
-    Exchange %1 received %2 bytes.
-
-Logged at debug log level 40.
-This debug message is issued when an exchange received a response.
-The exchange identifier and the response size are displayed.
-
 RADIUS_EXCHANGE_RECEIVED_ACCESS_ACCEPT
 ======================================
 
@@ -25544,104 +25513,6 @@ RADIUS_EXCHANGE_RECEIVED_UNEXPECTED
 This error message is issued when the sent request and the received response
 do not match. The exchange identifier and the two RADIUS message codes are
 displayed.
-
-RADIUS_EXCHANGE_RECEIVE_FAILED
-==============================
-
-.. code-block:: text
-
-    Receive for exchange %1 failed: %2
-
-This error message is issued when an exchange failed to receive a message.
-The exchange identifier and the error message are displayed.
-
-RADIUS_EXCHANGE_SEND_FAILED
-===========================
-
-.. code-block:: text
-
-    Send for exchange %1 failed: %2
-
-This error message is issued when an exchange failed to send a message.
-The exchange identifier and the error message are displayed.
-
-RADIUS_EXCHANGE_SEND_NEW
-========================
-
-.. code-block:: text
-
-    Exchange %1 sends %2 bytes to new server[%3] %4 on port %5
-
-Logged at debug log level 40.
-This debug message is issued when an exchange sends a message to a new server.
-The exchange identifier, message size, server index, address and port
-are displayed.
-
-RADIUS_EXCHANGE_SEND_RETRY
-==========================
-
-.. code-block:: text
-
-    Exchange %1 sends %2 bytes for the %3 try.
-
-Logged at debug log level 40.
-This debug message is issued when an exchange sends a message to a new server.
-The exchange identifier, message size and retry counter are displayed.
-
-RADIUS_EXCHANGE_SENT
-====================
-
-.. code-block:: text
-
-    Exchange %1 sent %2 bytes.
-
-Logged at debug log level 40.
-This debug message is issued when an exchange sent a request and is ready
-to receive the response. The exchange identifier and request size are
-displayed.
-
-RADIUS_EXCHANGE_START
-=====================
-
-.. code-block:: text
-
-    Start exchange %1
-
-Logged at debug log level 40.
-This debug message is issued when an exchange starts. The exchange identifier
-is displayed.
-
-RADIUS_EXCHANGE_SYNC_RETURN
-===========================
-
-.. code-block:: text
-
-    Synchronous exchange %1 returns with %2
-
-Logged at debug log level 40.
-This debug message is issued when a synchronous exchange returns.
-The exchange identifier and the error/return code are displayed.
-
-RADIUS_EXCHANGE_TERMINATE
-=========================
-
-.. code-block:: text
-
-    Exchange %1 terminates with %2
-
-Logged at debug log level 40.
-This debug message is issued when an exchange terminates with success.
-The exchange identifier and the return code are displayed.
-
-RADIUS_EXCHANGE_TIMEOUT
-=======================
-
-.. code-block:: text
-
-    Exchange %1 timeout
-
-This error message is issued when an exchange failed on timeout.
-The exchange identifier is displayed.
 
 RADIUS_HOOK_FAILED
 ==================
@@ -25889,6 +25760,81 @@ failed. The name of the file, the reason of the failure, the number
 of stored records before the failure and the expected number of records
 are displayed.
 
+RADIUS_TCP_EXCHANGE_FAILURE
+===========================
+
+.. code-block:: text
+
+    TCP exchange %1 failed: %2
+
+This error message is issued when a TCP exchange terminates with an error.
+The exchange identifier and the error return code are displayed.
+
+RADIUS_TCP_EXCHANGE_RECEIVED
+============================
+
+.. code-block:: text
+
+    TCP exchange %1 received %2 bytes.
+
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange received a response.
+The exchange identifier and the response size are displayed.
+
+RADIUS_TCP_EXCHANGE_RECEIVE_FAILED
+==================================
+
+.. code-block:: text
+
+    Receive for TCP exchange %1 failed: %2
+
+This error message is issued when a TCP exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+RADIUS_TCP_EXCHANGE_SEND
+========================
+
+.. code-block:: text
+
+    TCP exchange %1 sends %2 bytes to server %3 on port %4%5
+
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange sends a message to a
+server.  The exchange identifier, message size, server address and port,
+and usage of TLS are displayed.
+
+RADIUS_TCP_EXCHANGE_START
+=========================
+
+.. code-block:: text
+
+    Start TCP exchange %1
+
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange starts. The exchange
+identifier is displayed.
+
+RADIUS_TCP_EXCHANGE_START_ERROR
+===============================
+
+.. code-block:: text
+
+    TCP exchange %1 failed: %2
+
+This error message is issued when a TCP exchange failed to start.
+The exchange identifier and the error message are displayed.
+
+RADIUS_TCP_EXCHANGE_SUCCESS
+===========================
+
+.. code-block:: text
+
+    TCP exchange %1 succeeded: %2
+
+Logged at debug log level 40.
+This debug message is issued when a TCP exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
 RADIUS_THREAD_POOL_STARTED
 ==========================
 
@@ -25898,6 +25844,180 @@ RADIUS_THREAD_POOL_STARTED
 
 This informational message is issued when the thread pool is started.
 The number of threads is displayed.
+
+RADIUS_TLS_STATUS
+=================
+
+.. code-block:: text
+
+    send Status-Server with %1
+
+Logged at debug log level 40.
+This debug message is issued when starting to send a Status-Server message
+to TLS servers. The message attributes are logged.
+
+RADIUS_TLS_STATUS_ERROR
+=======================
+
+.. code-block:: text
+
+    received error response to Status-Server: %1 (%2) with %3
+
+This error message indicates that a valid response to Status-Server message
+was received from TLS servers but with an unexpected code or an
+Error-Cause attribute. The response details are logged.
+
+RADIUS_TLS_STATUS_FAILED
+========================
+
+.. code-block:: text
+
+    Status-Server failed: return code %1 (%2)
+
+Logged at debug log level 40.
+This debug message is issued when no valid response to Status-Server message
+was received from TLS servers.
+
+RADIUS_TLS_STATUS_SUCCEED
+=========================
+
+.. code-block:: text
+
+    received valid response to Status-Server
+
+Logged at debug log level 40.
+This debug message indicates that a valid response to Status-Server message
+was received from TLS servers.
+
+RADIUS_UDP_EXCHANGE_FAILED
+==========================
+
+.. code-block:: text
+
+    UDP exchange %1 failed: %2
+
+This error message is issued when an UDP exchange terminates with an error.
+The exchange identifier and the error return code are displayed.
+
+RADIUS_UDP_EXCHANGE_OPEN_FAILED
+===============================
+
+.. code-block:: text
+
+    Open socket for UDP exchange %1 failed: %2
+
+This error message is issued when an UDP exchange failed to open a new socket.
+The exchange identifier and the error message are displayed.
+
+RADIUS_UDP_EXCHANGE_RECEIVED
+============================
+
+.. code-block:: text
+
+    UDP exchange %1 received %2 bytes.
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange received a response.
+The exchange identifier and the response size are displayed.
+
+RADIUS_UDP_EXCHANGE_RECEIVE_FAILED
+==================================
+
+.. code-block:: text
+
+    Receive for UDP exchange %1 failed: %2
+
+This error message is issued when an UDP exchange failed to receive a message.
+The exchange identifier and the error message are displayed.
+
+RADIUS_UDP_EXCHANGE_SEND_FAILED
+===============================
+
+.. code-block:: text
+
+    Send for UDP exchange %1 failed: %2
+
+This error message is issued when an UDP exchange failed to send a message.
+The exchange identifier and the error message are displayed.
+
+RADIUS_UDP_EXCHANGE_SEND_NEW
+============================
+
+.. code-block:: text
+
+    UDP exchange %1 sends %2 bytes to new server[%3] %4 on port %5
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sends a message to a
+new server.  The exchange identifier, message size, server index,
+address and port are displayed.
+
+RADIUS_UDP_EXCHANGE_SEND_RETRY
+==============================
+
+.. code-block:: text
+
+    UDP exchange %1 sends %2 bytes for the %3 try.
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sends a message to a
+new server.  The exchange identifier, message size and retry counter
+are displayed.
+
+RADIUS_UDP_EXCHANGE_SENT
+========================
+
+.. code-block:: text
+
+    UDP exchange %1 sent %2 bytes.
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange sent a request and is ready
+to receive the response. The exchange identifier and request size are
+displayed.
+
+RADIUS_UDP_EXCHANGE_START
+=========================
+
+.. code-block:: text
+
+    Start UDP exchange %1
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange starts. The exchange
+identifier is displayed.
+
+RADIUS_UDP_EXCHANGE_SYNC_RETURN
+===============================
+
+.. code-block:: text
+
+    Synchronous UDP exchange %1 returns with %2
+
+Logged at debug log level 40.
+This debug message is issued when a synchronous UDP exchange returns.
+The exchange identifier and the error/return code are displayed.
+
+RADIUS_UDP_EXCHANGE_TERMINATE
+=============================
+
+.. code-block:: text
+
+    UDP exchange %1 terminates with %2
+
+Logged at debug log level 40.
+This debug message is issued when an UDP exchange terminates with success.
+The exchange identifier and the return code are displayed.
+
+RADIUS_UDP_EXCHANGE_TIMEOUT
+===========================
+
+.. code-block:: text
+
+    UDP exchange %1 timeout
+
+This error message is issued when an UDP exchange failed on timeout.
+The exchange identifier is displayed.
 
 ****
 RBAC

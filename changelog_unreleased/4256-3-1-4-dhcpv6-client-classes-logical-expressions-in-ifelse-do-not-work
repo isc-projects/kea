@@ -1,4 +1,0 @@
-[func]		tmark
-	Template classes template-test expressions may
-	now test for membership in 'KNOWN'/'UNKNOWN'.
-	(Gitlab #4256)
