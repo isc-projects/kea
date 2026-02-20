@@ -32,7 +32,9 @@ of communication between RADIUS clients and servers, known as
 the long-term solution, and also the short-term solution so
 add a Message-Authenticator attribute in all sent messages
 and require it in all received messages (note the second point
-is enforced only by recent RADIUS servers).
+is enforced only by recent RADIUS servers). These solutions
+are experimental.
+
 
 .. _radius-overview:
 
