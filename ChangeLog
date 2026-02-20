@@ -1,3 +1,8 @@
+2440.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 3.1.6
+	development release.
+	(Gitlab #4354)
+
 2439.	[bug]		razvan
 	Fixed a bug which was causing kea-dhcp servers to bind on other
 	interfaces while retrying to open sockets on configured
