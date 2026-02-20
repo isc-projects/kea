@@ -26,9 +26,13 @@ on HMAC-MD5 so not vulnerable and supported by Kea 3.1.5) so even when
 the infrastructure is protected, the RADIUS deployment is impacted by
 Blast-RADIUS.
 
-The planned (for Kea release 3.1.6) solution is to support
+The proposed solutions for Kea release 3.1.6 are to support
 RADIUS/TLS which provides a built-in cryptographic protection
-of communication between RADIUS clients and servers.
+of communication between RADIUS clients and servers, known as
+the long-term solution, and also the short-term solution so
+add a Message-Authenticator attribute in all sent messages
+and require it in all received messages (note the second point
+is enforced only by recent RADIUS servers).
 
 .. _radius-overview:
 
