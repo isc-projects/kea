@@ -2021,7 +2021,7 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
     EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
-// Verify signed Accountig-Response response to signed Status-Server.
+// Verify signed Accounting-Response response to signed Status-Server.
 TEST_F(MessageTest, signedAcctStatusResponse) {
     MsgCode code = PW_STATUS_SERVER;
     uint8_t id = 0x1b;
