@@ -17,7 +17,7 @@
 namespace isc {
 namespace dhcp {
 
-#define VENDOR_ID_CABLE_LABS 4491
+#define VENDOR_ID_CABLE_LABS 4491U
 
 #define DOCSIS3_V4_ORO 1
 #define DOCSIS3_V4_TFTP_SERVERS 2
