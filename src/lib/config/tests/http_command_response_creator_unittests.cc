@@ -55,6 +55,8 @@ public:
         config::CommandMgr::instance().
             registerCommand("foo", std::bind(&HttpCommandResponseCreatorTest::fooCommandHandler,
                                              this, ph::_1, ph::_2));
+        HttpCommandConfig::EMULATE_AGENT_RESPONSE = true;
+        HttpCommandConfig::SUPPORTED_SERVICE = "";
     }
 
     /// @brief Destructor.
@@ -63,31 +65,38 @@ public:
     virtual ~HttpCommandResponseCreatorTest() {
         config::CommandMgr::instance().deregisterAll();
         file::PathChecker::enableEnforcement(true);
+        HttpCommandConfig::EMULATE_AGENT_RESPONSE = true;
+        HttpCommandConfig::SUPPORTED_SERVICE = "";
     }
 
     /// @brief Create HTTP control socket configuration (from text).
     ///
     /// @param emulate_agent_flag The emulation flag (default true).
+    /// @param supported_service The supported service (default "").
     /// @param auth_config The authentication config (default null).
     void setHttpConfig(bool emulate_agent_flag = true,
+                       const string& supported_service = "",
                        const HttpAuthConfigPtr& auth_config =
                        HttpAuthConfigPtr()) {
         ElementPtr json;
         ASSERT_NO_THROW(json = Element::fromJSON(BASIC_CONFIG));
         ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
         HttpCommandConfig::EMULATE_AGENT_RESPONSE = emulate_agent_flag;
+        HttpCommandConfig::SUPPORTED_SERVICE = supported_service;
         http_config_->setAuthConfig(auth_config);
     }
 
     /// @brief Create HTTP response creator.
     ///
     /// @param emulate_agent_flag The emulation flag (default true).
+    /// @param supported_service The supported service (default "").
     /// @param auth_config The authentication config (default null).
     void setHttpCreator(bool emulate_agent_flag = true,
+                        const string& supported_service = "",
                         const HttpAuthConfigPtr& auth_config =
                         HttpAuthConfigPtr()) {
         if (!http_config_) {
-            setHttpConfig(emulate_agent_flag, auth_config);
+            setHttpConfig(emulate_agent_flag, supported_service, auth_config);
         }
         response_creator_.reset(new HttpCommandResponseCreator(http_config_));
         request_ = response_creator_->createNewHttpRequest();
@@ -345,6 +354,316 @@ TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseNoEmulation) {
                 string::npos);
 }
 
+// Test successful server response when the client specifies valid command
+// for a service when no supported service is configured.
+TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseNoService) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry is bad (should be a list) but is not checked.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": \"...\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // No supported service is configured.
+    ASSERT_TRUE(HttpCommandConfig::SUPPORTED_SERVICE.empty());
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 0.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                string::npos);
+}
+
+// Test successful server response when the client specifies valid command
+// for a service is configured.
+TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseService) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry is what the server expects.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": [ \"bar\" ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 0.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                string::npos);
+}
+
+// Test successful server response when the client specifies valid command
+// for an empty list of services.
+TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseEmptyService) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry is empty so ignored for control agent compatibility.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": [ ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 0.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 0") !=
+                string::npos);
+}
+
+// Test error server response when the client specifies valid command
+// for invalid service.
+TEST_F(HttpCommandResponseCreatorTest, checkServiceNotList) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry is not a list.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": \"...\" }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 1.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 1") !=
+                string::npos);
+
+    // Response must contain JSON body with the expected error message.
+    string error = "\"text\": \"service value must be a list\"";
+    EXPECT_TRUE(response_json->toString().find(error) != string::npos);
+}
+
+// Test error server response when the client specifies valid command
+// for too many services.
+TEST_F(HttpCommandResponseCreatorTest, checkServiceTooMany) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry has too many items.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": [ 1, 2 ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 1.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 1") !=
+                string::npos);
+
+    // Response must contain JSON body with the expected error message.
+    string error = "\"text\": \"service value has more than one item\"";
+    EXPECT_TRUE(response_json->toString().find(error) != string::npos);
+}
+
+// Test error server response when the client specifies valid command
+// for service with bad (should be a string) name.
+TEST_F(HttpCommandResponseCreatorTest, checkServiceBadName) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service name is not a string.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": [ 1 ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 1.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 1") !=
+                string::npos);
+
+    // Response must contain JSON body with the expected error message.
+    string error = "\"text\": \"service name must be a string\"";
+    EXPECT_TRUE(response_json->toString().find(error) != string::npos);
+}
+
+// Test error server response when the client specifies valid command
+// for service which does not match the configured one.
+TEST_F(HttpCommandResponseCreatorTest, checkServiceNoMatch) {
+    setHttpCreator();
+
+    setBasicContext(request_);
+
+    // Body: "foo" command has been registered in the test fixture constructor.
+    // The service entry has too many items.
+    request_->context()->body_ =
+        "{ \"command\": \"foo\", \"service\": [ \"test\" ] }";
+
+    // All requests must be finalized before they can be processed.
+    ASSERT_NO_THROW(request_->finalize());
+
+    // Supported service "bar" is configured.
+    HttpCommandConfig::SUPPORTED_SERVICE = "bar";
+
+    // Create response from the request.
+    HttpResponsePtr response;
+    ASSERT_NO_THROW(response = response_creator_->createHttpResponse(request_));
+    ASSERT_TRUE(response);
+
+    // Response must be convertible to HttpResponseJsonPtr.
+    HttpResponseJsonPtr response_json = boost::dynamic_pointer_cast<
+        HttpResponseJson>(response);
+    ASSERT_TRUE(response_json);
+
+    // Response should be in a list by default.
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
+    ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
+                << "response is not a list: " << response_json->toString();
+
+    // Response must be successful.
+    EXPECT_TRUE(response_json->toString().find("HTTP/1.1 200 OK") !=
+                string::npos);
+
+    // Response must contain JSON body with "result" of 1.
+    EXPECT_TRUE(response_json->toString().find("\"result\": 1") !=
+                string::npos);
+
+    // Response must contain JSON body with the expected error message.
+    string error = "\"text\": \"unsupported service 'test', expected 'bar'\"";
+    EXPECT_TRUE(response_json->toString().find(error) != string::npos);
+}
+
 // This test verifies that Internal Server Error is returned when invalid C++
 // request type is used. This is considered an error in the server logic.
 TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseInvalidType) {
@@ -379,7 +698,7 @@ TEST_F(HttpCommandResponseCreatorTest, basicAuthReject) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig());
     EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
-    setHttpCreator(false, basic);
+    setHttpCreator(false, "", basic);
 
     setBasicContext(request_);
 
@@ -405,7 +724,7 @@ TEST_F(HttpCommandResponseCreatorTest, basicAuthRejectHeaders) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig());
     EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
-    setHttpConfig(false, basic);
+    setHttpConfig(false, "", basic);
 
     // Add a STS header.
     CfgHttpHeader hsts("Strict-Transport-Security", "max-age=31536000");
@@ -445,7 +764,7 @@ TEST_F(HttpCommandResponseCreatorTest, basicAuthAccept) {
     // Create basic HTTP authentication configuration.
     BasicHttpAuthConfigPtr basic(new BasicHttpAuthConfig());
     EXPECT_NO_THROW(basic->add("test", "", "123\xa3", ""));
-    setHttpCreator(false, basic);
+    setHttpCreator(false, "", basic);
 
     setBasicContext(request_);
 
