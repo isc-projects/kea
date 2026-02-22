@@ -87,6 +87,12 @@ private:
     virtual http::HttpResponsePtr
     createDynamicHttpResponse(http::HttpRequestPtr request);
 
+    /// @brief Check the service.
+    ///
+    /// @param command The command.
+    /// @return A response with the error or null.
+    data::ConstElementPtr checkService(data::ConstElementPtr command) const;
+
     /// @brief Returns HTTP control socket config.
     ///
     /// Used for HTTP authentication.

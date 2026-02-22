@@ -1489,6 +1489,9 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     // Set the HTTP authentication default realm.
     HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "kea-dhcpv4-server";
 
+    // Set the HTTP supported service.
+    HttpCommandConfig::SUPPORTED_SERVICE = "dhcp4";
+
     // DatabaseConnection uses IO service to run asynchronous timers.
     DatabaseConnection::setIOService(getIOService());
 

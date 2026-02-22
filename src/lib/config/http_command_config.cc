@@ -34,6 +34,8 @@ string HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
 
 bool HttpCommandConfig::EMULATE_AGENT_RESPONSE = true;
 
+string HttpCommandConfig::SUPPORTED_SERVICE = "";
+
 HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     : socket_type_("http"), socket_address_(DEFAULT_SOCKET_ADDRESS),
       socket_port_(DEFAULT_SOCKET_PORT), http_headers_(), auth_config_(),

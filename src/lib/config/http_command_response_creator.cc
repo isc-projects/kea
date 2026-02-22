@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/command_interpreter.h>
 #include <config/http_command_response_creator.h>
 #include <config/command_mgr.h>
 #include <config/config_log.h>
@@ -171,7 +172,11 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     // Process command doesn't generate exceptions but can possibly return
     // null response, if the handler is not implemented properly. This is
     // again an internal server issue.
-    ConstElementPtr response = config::CommandMgr::instance().processCommand(command);
+    // Check service first.
+    ConstElementPtr response = checkService(command);
+    if (!response) {
+        response = config::CommandMgr::instance().processCommand(command);
+    }
 
     if (!response) {
         // Notify the client that we have a problem with our server.
@@ -214,6 +219,44 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     }
 
     return (http_response);
+}
+
+ConstElementPtr
+HttpCommandResponseCreator::checkService(ConstElementPtr command) const {
+    if (HttpCommandConfig::SUPPORTED_SERVICE.empty()) {
+        return (ConstElementPtr());
+    }
+
+    // Sanity checks (errors will be handled by processCommand).
+    if (!command || (command->getType() != Element::map)) {
+        return (ConstElementPtr());
+    }
+    ConstElementPtr services = command->get("service");
+    if (!services) {
+        return (ConstElementPtr());
+    }
+    if (services->getType() != Element::list) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "service value must be a list"));
+    }
+    // Ignore empty service list as the control agent does.
+    if (services->empty()) {
+        return (ConstElementPtr());
+    }
+    if (services->size() != 1) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "service value has more than one item"));
+    }
+    ConstElementPtr service = services->get(0);
+    if (!service || (service->getType() != Element::string)) {
+        return (createAnswer(CONTROL_RESULT_ERROR, "service name must be a string"));
+    }
+    string name = service->stringValue();
+    if (name.empty() || (name == HttpCommandConfig::SUPPORTED_SERVICE)) {
+        return (ConstElementPtr());
+    }
+    // Service name mismatch.
+    string msg = "unsupported service '" + name + "', expected '";
+    msg += HttpCommandConfig::SUPPORTED_SERVICE + "'";
+    return (createAnswer(CONTROL_RESULT_ERROR,msg));
 }
 
 } // end of namespace isc::config

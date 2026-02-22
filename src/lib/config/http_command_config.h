@@ -179,6 +179,9 @@ public:
     /// @brief Emulation flag.
     static bool EMULATE_AGENT_RESPONSE;
 
+    /// @brief Suppoted service.
+    static std::string SUPPORTED_SERVICE;
+
 private:
     /// @brief Check TLS configuration.
     ///
