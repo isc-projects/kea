@@ -75,7 +75,7 @@ public:
         ElementPtr json;
         ASSERT_NO_THROW(json = Element::fromJSON(BASIC_CONFIG));
         ASSERT_NO_THROW(http_config_.reset(new HttpCommandConfig(json)));
-        http_config_->setEmulateAgentResponse(emulate_agent_flag);
+        HttpCommandConfig::EMULATE_AGENT_RESPONSE = emulate_agent_flag;
         http_config_->setAuthConfig(auth_config);
     }
 
@@ -262,7 +262,7 @@ TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponse) {
     ASSERT_TRUE(response_json);
 
     // Response should be in a list by default.
-    ASSERT_TRUE(http_config_->getEmulateAgentResponse());
+    ASSERT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
     ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
                 << "response is not a list: " << response_json->toString();
 
@@ -332,7 +332,7 @@ TEST_F(HttpCommandResponseCreatorTest, createDynamicHttpResponseNoEmulation) {
     ASSERT_TRUE(response_json);
 
     // Response should be a map that is not enclosed in a list.
-    ASSERT_FALSE(http_config_->getEmulateAgentResponse());
+    ASSERT_FALSE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
     ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::map)
                 << "response is not a map: " << response_json->toString();
 

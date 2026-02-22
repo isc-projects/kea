@@ -16,11 +16,6 @@ namespace config {
 
 /// @brief HTTP response creator factory for HTTP control socket.
 ///
-/// @param emulate_agent_response if true results for normal command
-/// outcomes are wrapped in Element::list. This allows
-/// backward compatibility. The value is passed into the
-/// HttpCommandResponseCreator when created. Defaults to true.
-///
 /// See the documentation of the @ref isc::http::HttpResponseCreatorFactory
 /// for the details how the response factory object is used by the
 /// @ref isc::http::HttpListener.

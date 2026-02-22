@@ -149,11 +149,10 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
                                           cmd_config->getCertFile(),
                                           cmd_config->getKeyFile(),
                                           cmd_config->getCertRequired());
-                    // Overwrite the authentication setup, the http headers and the emulation flag
+                    // Overwrite the authentication setup and the http headers
                     // in the response creator config.
                     it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
                     it->second->config_->setHttpHeaders(cmd_config->getHttpHeaders());
-                    it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
                     listener->setTlsContext(tls_context);
                     LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTPS_SERVICE_UPDATED)
                         .arg(server_address.toText())
@@ -168,11 +167,10 @@ HttpCommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr config) {
                     isc_throw(BadValue,
                               "Can not switch from HTTP to HTTPS sockets using the same address and port.");
                 } else {
-                    // Overwrite the authentication setup, the http headers and the emulation flag
+                    // Overwrite the authentication setup and the http headers
                     // in the response creator config.
                     it->second->config_->setAuthConfig(cmd_config->getAuthConfig());
                     it->second->config_->setHttpHeaders(cmd_config->getHttpHeaders());
-                    it->second->config_->setEmulateAgentResponse(cmd_config->getEmulateAgentResponse());
                     LOG_INFO(command_logger, HTTP_COMMAND_MGR_HTTP_SERVICE_UPDATED)
                         .arg(server_address.toText())
                         .arg(server_port);

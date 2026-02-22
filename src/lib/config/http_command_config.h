@@ -162,22 +162,6 @@ public:
         cert_required_ = required;
     }
 
-    /// @brief Returns emulate agent response flag.
-    ///
-    /// @return True when responses for normal command outcomes are
-    /// guaranteed to be wrapped in an Element::list. This allows
-    /// backward compatibility. Defaults to true.
-    bool getEmulateAgentResponse() const {
-        return (emulate_agent_response_);
-    }
-
-    /// @brief Sets emulate agent response flag.
-    ///
-    /// @param emulate_agent_response The new value of the emulation flag.
-    void setEmulateAgentResponse(const bool emulate_agent_response) {
-        emulate_agent_response_ = emulate_agent_response;
-    }
-
     /// @brief Unparse a configuration object.
     ///
     /// @return A pointer to configuration.
@@ -192,6 +176,9 @@ public:
     /// @brief Default HTTP authentication realm.
     static std::string DEFAULT_AUTHENTICATION_REALM;
 
+    /// @brief Emulation flag.
+    static bool EMULATE_AGENT_RESPONSE;
+
 private:
     /// @brief Check TLS configuration.
     ///
@@ -199,9 +186,9 @@ private:
     /// @return true if TLS parameters are all present, false
     /// otherwise.
     /// @throw DhcpConfigError if socket type is https and
-    /// TLS is missing or incomplete, or if socket type is 
+    /// TLS is missing or incomplete, or if socket type is
     /// http and some TLS parameters are specified but not
-    /// all. 
+    /// all.
     bool checkTlsSetup(bool require_tls) const;
 
     /// @brief Socket type ("http" or "https").
@@ -230,9 +217,6 @@ private:
 
     /// @brief Require client certificates flag.
     bool cert_required_;
-
-    /// @brief Emulation flag.
-    bool emulate_agent_response_;
 };
 
 /// @brief Pointer to a HttpCommandConfig object.

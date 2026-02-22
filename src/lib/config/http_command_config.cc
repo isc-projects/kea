@@ -32,11 +32,12 @@ uint16_t HttpCommandConfig::DEFAULT_SOCKET_PORT = 8000;
 
 string HttpCommandConfig::DEFAULT_AUTHENTICATION_REALM = "";
 
+bool HttpCommandConfig::EMULATE_AGENT_RESPONSE = true;
+
 HttpCommandConfig::HttpCommandConfig(ConstElementPtr config)
     : socket_type_("http"), socket_address_(DEFAULT_SOCKET_ADDRESS),
       socket_port_(DEFAULT_SOCKET_PORT), http_headers_(), auth_config_(),
-      trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true),
-      emulate_agent_response_(true) {
+      trust_anchor_(""), cert_file_(""), key_file_(""), cert_required_(true) {
     if (config->getType() != Element::map) {
         isc_throw(DhcpConfigError, "expected map type ("
                   << config->getPosition() << ")");

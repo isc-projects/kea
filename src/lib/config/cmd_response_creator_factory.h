@@ -15,11 +15,6 @@ namespace config {
 
 /// @brief HTTP response creator factory for an API listener
 ///
-/// @param emulate_agent_response if true results for normal command
-/// outcomes are wrapped in Element::list.  This allows
-/// backward compatibility. The value is passed into the
-/// CmdResponseCreator when created. Defaults to true.
-///
 /// See the documentation of the @ref isc::http::HttpResponseCreatorFactory
 /// for the details how the response factory object is used by the
 /// @ref isc::http::HttpListener.
@@ -35,12 +30,7 @@ public:
     ///
     /// Creates sole instance of the @ref CmdResponseCreator object
     /// returned by the @ref CmdResponseCreatorFactory::create.
-    ///
-    /// @param emulate_agent_response if true, responses for normal
-    /// command outcomes are guaranteed to be wrapped in an Element::list.
-    /// This allows backward compatibility. Defaults to true.
-    CmdResponseCreatorFactory(bool emulate_agent_response = true)
-        : sole_creator_(new CmdResponseCreator(emulate_agent_response)) {
+    CmdResponseCreatorFactory() : sole_creator_(new CmdResponseCreator) {
     }
 
     /// @brief Returns an instance of the @ref CmdResponseCreator which

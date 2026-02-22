@@ -68,7 +68,8 @@ public:
     /// @param emulate_agent_flag enables/disables agent response emulation
     /// in the CmdResponsCreator.
     void initCreator(bool emulate_agent_flag = true) {
-        response_creator_.reset(new CmdResponseCreator(emulate_agent_flag));
+        response_creator_.reset(new CmdResponseCreator);
+        CmdResponseCreator::EMULATE_AGENT_RESPONSE = emulate_agent_flag;
         request_ = response_creator_->createNewHttpRequest();
         ASSERT_TRUE(request_) << "initCreator failed to create request";
     }
@@ -189,7 +190,7 @@ TEST_F(CmdResponseCreatorTest, createDynamicHttpResponse) {
     ASSERT_TRUE(response_json);
 
     // Response should be in a list by default.
-    ASSERT_TRUE(response_creator_->emulateAgentResponse());
+    ASSERT_TRUE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
     ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::list)
                 << "response is not a list: " << response_json->toString();
 
@@ -225,7 +226,7 @@ TEST_F(CmdResponseCreatorTest, createDynamicHttpResponseNoEmulation) {
     ASSERT_TRUE(response_json);
 
     // Response should be a map that is not enclosed in a list.
-    ASSERT_FALSE(response_creator_->emulateAgentResponse());
+    ASSERT_FALSE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
     ASSERT_TRUE(response_json->getBodyAsJson()->getType() == Element::map)
                 << "response is not a map: " << response_json->toString();
 

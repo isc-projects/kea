@@ -182,7 +182,7 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     // a list as they may contain responses from multiple daemons.
     // If we're emulating that for backward compatibility, then we need to wrap
     // the answer in a list if it isn't in one already.
-    if ((!config_ || config_->getEmulateAgentResponse()) &&
+    if (HttpCommandConfig::EMULATE_AGENT_RESPONSE &&
         (response->getType() != Element::list)) {
         ElementPtr response_list = Element::createList();
         response_list->add(boost::const_pointer_cast<Element>(response));

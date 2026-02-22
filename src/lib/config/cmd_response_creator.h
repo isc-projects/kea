@@ -32,14 +32,6 @@ namespace config {
 class CmdResponseCreator : public http::HttpResponseCreator {
 public:
 
-    /// @brief Constructor
-    ///
-    /// @param emulate_agent_response if true, responses for normal
-    /// command outcomes are guaranteed to be wrapped in an Element::list.
-    /// This allows backward compatibility.  Defaults to true.
-    CmdResponseCreator(bool emulate_agent_response = true)
-    : emulate_agent_response_(emulate_agent_response) {};
-
     /// @brief Create a new request.
     ///
     /// This method creates a bare instance of the @ref
@@ -58,13 +50,6 @@ public:
     virtual http::HttpResponsePtr
     createStockHttpResponse(const http::HttpRequestPtr& request,
                             const http::HttpStatusCode& status_code) const;
-
-    /// @brief Indicates whether or not agent response emulation is enabled.
-    ///
-    /// @return true if emulation is enabled.
-    bool emulateAgentResponse() {
-        return (emulate_agent_response_);
-    }
 
     /// @brief Filter commands.
     ///
@@ -93,6 +78,9 @@ public:
     /// Default to the empty list which means to accept everything.
     static std::unordered_set<std::string> command_accept_list_;
 
+    /// @brief The emulate agent response flag.
+    static bool EMULATE_AGENT_RESPONSE;
+
 private:
 
     /// @brief Creates un-finalized stock HTTP response.
@@ -115,12 +103,6 @@ private:
     /// @return Pointer to an object representing HTTP response.
     virtual http::HttpResponsePtr
     createDynamicHttpResponse(http::HttpRequestPtr request);
-
-    /// @brief Determines whether or not responses are enclosed in an Element::list.
-    /// For backward compatibility we need to wrap all responses in a list
-    /// of one element. If this is true, we'll ensure
-    /// responses (other than error responses) are in a list.
-    bool emulate_agent_response_;
 };
 
 /// @brief Pointer to the @ref CmdResponseCreator.

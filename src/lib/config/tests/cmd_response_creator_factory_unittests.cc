@@ -28,7 +28,7 @@ TEST(CmdResponseCreatorFactory, createDefault) {
     ASSERT_TRUE(response1);
 
     // Agent response emulation should be enabled by default.
-    EXPECT_TRUE(response1->emulateAgentResponse());
+    EXPECT_TRUE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
 
     // Authorization configuration should be an empty pointer.
     EXPECT_FALSE(CmdResponseCreator::http_auth_config_);
@@ -49,8 +49,11 @@ TEST(CmdResponseCreatorFactory, createDefault) {
 // This test verifies that agent response emulation can
 // be turned off.
 TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
-    // Instantiate the factory with agent emulation disabled.
-    CmdResponseCreatorFactory factory(false);
+    // Instantiate the factory.
+    CmdResponseCreatorFactory factory;
+
+    // Disable agent emulation.
+    CmdResponseCreator::EMULATE_AGENT_RESPONSE = false;
 
     // Create the response creator.
     CmdResponseCreatorPtr response;
@@ -59,7 +62,7 @@ TEST(CmdResponseCreatorFactory, createAgentEmulationDisabled) {
     ASSERT_TRUE(response);
 
     // Agent response emulation should be disabled.
-    EXPECT_FALSE(response->emulateAgentResponse());
+    EXPECT_FALSE(CmdResponseCreator::EMULATE_AGENT_RESPONSE);
 
     // Authorization configuration should be an empty pointer.
     EXPECT_FALSE(CmdResponseCreator::http_auth_config_);

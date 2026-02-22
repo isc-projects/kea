@@ -65,10 +65,6 @@ TEST_F(HttpCommandResponseCreatorFactoryTest, create) {
     // Expect equality.
     EXPECT_EQ(http_config->toElement()->str(), got->toElement()->str());
 
-    // The emulation flag is hidden so check it too.
-    EXPECT_EQ(http_config->getEmulateAgentResponse(),
-              got->getEmulateAgentResponse());
-
     // Get again a response creator.
     HttpCommandResponseCreatorPtr rcf2;
     ASSERT_NO_THROW(rcf2 = boost::dynamic_pointer_cast<

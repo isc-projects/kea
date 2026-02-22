@@ -27,6 +27,8 @@ HttpAuthConfigPtr CmdResponseCreator::http_auth_config_;
 
 unordered_set<string> CmdResponseCreator::command_accept_list_;
 
+bool CmdResponseCreator::EMULATE_AGENT_RESPONSE = true;
+
 HttpRequestPtr
 CmdResponseCreator::createNewHttpRequest() const {
     return (HttpRequestPtr(new PostHttpRequestJson()));
@@ -112,7 +114,7 @@ CmdResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     // which contain responses from multiple daemons.
     // If we're emulating that for backward compatibility, then we need to wrap
     // the answer in a list if it isn't in one already.
-    if (emulateAgentResponse() && (response->getType() != Element::list)) {
+    if (EMULATE_AGENT_RESPONSE && (response->getType() != Element::list)) {
         ElementPtr response_list = Element::createList();
         response_list->add(boost::const_pointer_cast<Element>(response));
         response = response_list;

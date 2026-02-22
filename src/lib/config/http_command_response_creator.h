@@ -89,7 +89,7 @@ private:
 
     /// @brief Returns HTTP control socket config.
     ///
-    /// Used for HTTP authentication and CA emulation.
+    /// Used for HTTP authentication.
     HttpCommandConfigPtr config_;
 };
 

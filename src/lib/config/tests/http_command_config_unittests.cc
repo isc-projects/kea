@@ -71,7 +71,7 @@ TEST_F(HttpCommandConfigTest, default) {
     EXPECT_EQ("", http_config_->getCertFile());
     EXPECT_EQ("", http_config_->getKeyFile());
     EXPECT_TRUE(http_config_->getCertRequired());
-    EXPECT_TRUE(http_config_->getEmulateAgentResponse());
+    EXPECT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
 
     // Check unparse.
     string expected = R"(
@@ -390,7 +390,7 @@ TEST_F(HttpCommandConfigTest, tls) {
     EXPECT_EQ("my cert", http_config_->getCertFile());
     EXPECT_EQ("my key", http_config_->getKeyFile());
     EXPECT_FALSE(http_config_->getCertRequired());
-    EXPECT_TRUE(http_config_->getEmulateAgentResponse());
+    EXPECT_TRUE(HttpCommandConfig::EMULATE_AGENT_RESPONSE);
 
     // Check unparse.
     string expected = R"(
