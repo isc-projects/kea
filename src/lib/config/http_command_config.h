@@ -179,7 +179,7 @@ public:
     /// @brief Emulation flag.
     static bool EMULATE_AGENT_RESPONSE;
 
-    /// @brief Suppoted service.
+    /// @brief Supported service.
     static std::string SUPPORTED_SERVICE;
 
 private:
