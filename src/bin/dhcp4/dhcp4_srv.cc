@@ -3156,7 +3156,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             .arg(query->getLabel())
             .arg(hint != IOAddress::IPV4_ZERO_ADDRESS() ? hint.toText() : "(no hint)");
     } else {
-        LOG_DEBUG(lease4_logger, DBG_DHCP4_DETAIL, DHCP4_REQUEST)
+        LOG_DEBUG(lease4_logger, DBGLVL_COMMAND, DHCP4_REQUEST)
             .arg(query->getLabel())
             .arg(hint != IOAddress::IPV4_ZERO_ADDRESS() ? hint.toText() : "(no hint)");
     }
