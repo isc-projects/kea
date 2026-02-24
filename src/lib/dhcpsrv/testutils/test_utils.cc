@@ -119,16 +119,17 @@ int findLastSocketFd() {
     // Iterate over the open fds
     for (int fd = 0; fd <= max_fd_number; fd++ ) {
         errno = 0;
-        fstat(fd, &stats);
-
-        if (errno == EBADF ) {
-            // Skip any that aren't open
-            continue;
-        }
-
-        // it's a socket, remember it
-        if (S_ISSOCK(stats.st_mode)) {
-            last_socket = fd;
+        if (fstat(fd, &stats) < 0) {
+            if (errno == EBADF ) {
+                // Skip any that aren't open
+                continue;
+            }
+            // Ignore other errors which should not happen...
+        } else {
+            // it's a socket, remember it
+            if (S_ISSOCK(stats.st_mode)) {
+                last_socket = fd;
+            }
         }
     }
 

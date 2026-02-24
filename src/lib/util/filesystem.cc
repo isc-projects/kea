@@ -266,8 +266,12 @@ PathChecker::getPath(bool reset /* = false */,
         if (!explicit_path.empty()) {
             path_ = explicit_path;
         } else if (!env_name_.empty()) {
-            path_ = std::string(std::getenv(env_name_.c_str()) ?
-                                std::getenv(env_name_.c_str()) : default_path_);
+            char* env_path = std::getenv(env_name_.c_str());
+            if (env_path) {
+                path_ = env_path;
+            } else {
+                path_ = default_path_;
+            }
         } else {
             path_ = default_path_;
         }
