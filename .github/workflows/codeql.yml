@@ -21,25 +21,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'python' ]
+        language: [ 'cpp', 'python', 'actions' ]
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      # Was v6.0.2 as of 2026-02-26.
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd 
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
-
-    - name: Install dependencies
-      run: |
-        ./hammer.py prepare-system -p local -w all
-
-    - name: Build Kea
-      run: |
-        meson setup build --auto-features enabled -D fuzz=enabled -D tests=enabled -D cpp_std=c++20
-        meson compile -C build
+        build-mode: none
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
