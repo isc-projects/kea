@@ -1356,7 +1356,7 @@ public:
     /// method will check if the address passed in the argument is configured
     /// on an interface.
     /// Note: On BSD and Solaris the socket is opened for "::" address instead
-    /// of the link-local address or the "ff02::1:2" address. If there are
+    /// of the link-local address or a multicast address. If there are
     /// multiple interfaces joining the multicast group, this function matches
     /// the "::" address bound by any interface, not necessary the one with the
     /// specified link-local address and returns true.
@@ -1613,9 +1613,11 @@ private:
     /// @brief Open an IPv6 socket with multicast support.
     ///
     /// This function opens a socket capable of receiving messages sent to
-    /// the All_DHCP_Relay_Agents_and_Servers (ff02::1:2) multicast address.
+    /// the All_DHCP_Relay_Agents_and_Servers (ff02::1:2) and the
+    /// All_DHCP_Servers (ff05::1:3) multicast addresses.
     /// The socket is bound to the in6addr_any address and the IPV6_JOIN_GROUP
-    /// option is set to point to the ff02::1:2 multicast address.
+    /// option is set to point to the ff02::1:2 and the ff05::1:3 multicast
+    /// addresses, and the interface index.
     ///
     /// @note This function is intended to be called internally by the
     /// @c IfaceMgr::openSockets6. It is not intended to be called from any

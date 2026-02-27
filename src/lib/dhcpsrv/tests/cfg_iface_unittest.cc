@@ -1105,6 +1105,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
         // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0
         // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
         // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        // iface: eth0 addr: ff05::1:3 port: 547 multicast: 0 --- only on Linux systems
         // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1 - fails
         if (total_calls > (opened_by_eth0 + 1)) {
             auto interval = now - last_call_time;
@@ -1210,8 +1211,10 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
         // iface: eth0 addr: 2001:db8:1::1 port: 547 multicast: 0 - fail
         // iface: eth0 addr: fe80::3a60:77ff:fed5:cdef port: 547 multicast: 1
         // iface: eth0 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        // iface: eth0 addr: ff05::1:3 port: 547 multicast: 0 --- only on Linux systems
         // iface: eth1 addr: fe80::3a60:77ff:fed5:abcd port: 547 multicast: 1
         // iface: eth1 addr: ff02::1:2 port: 547 multicast: 0 --- only on Linux systems
+        // iface: eth1 addr: ff05::1:3 port: 547 multicast: 0 --- only on Linux systems
         auto interval = now - last_call_time;
         auto interval_ms =
             std::chrono::duration_cast<std::chrono::milliseconds>(

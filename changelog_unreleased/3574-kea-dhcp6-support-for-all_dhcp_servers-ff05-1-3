@@ -1,0 +1,5 @@
+[bug]		fdupont
+	Kea DHCPv6 servers now can receive packets sent to the
+	All_DHCP_Servers (ff05::1:3) site multicat address as
+	required by the standard,
+	(Gitlab #3574)

@@ -385,13 +385,14 @@ public:
     /// This function checks the expected number of open IPv6 sockets on the
     /// specified interface. On non-Linux systems, sockets are bound to a
     /// link-local address and the number of unicast addresses specified.
-    /// On Linux systems, there is one more socket bound to a ff02::1:2
-    /// multicast address.
+    /// On Linux systems, there is two more sockets bound to ff02::1:2
+    /// and ff05::1:3 multicast addresses.
     ///
     /// @param iface An interface on which sockets are open.
     /// @param unicast_num A number of unicast addresses bound.
     /// @param link_local_num A number of link local addresses bound.
-    void checkSocketsCount6(const Iface& iface, const int unicast_num,
+    void checkSocketsCount6(const Iface& iface,
+                            const int unicast_num,
                             const int link_local_num = 1) {
         // On local-loopback interface, there should be no sockets.
         if (iface.flag_loopback_) {
@@ -401,11 +402,13 @@ public:
             return;
         }
 #if defined OS_LINUX
-        // On Linux, for each link-local address there may be an
-        // additional socket opened and bound to ff02::1:2. This socket
-        // is only opened if the interface is multicast-capable.
-        ASSERT_EQ(unicast_num + (iface.flag_multicast_ ? link_local_num : 0)
-                  + link_local_num, iface.getSockets().size())
+        // On Linux, for each link-local address there may be two
+        // additional sockets opened and bound to multicats. These sockets
+        // are only opened if the interface is multicast-capable.
+        ASSERT_EQ(unicast_num
+                  + (iface.flag_multicast_ ? 2 * link_local_num : 0)
+                  + link_local_num,
+                  iface.getSockets().size())
             << "invalid number of sockets on interface "
             << iface.getName();
 #else
@@ -1636,16 +1639,21 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     IOAddress lo_addr("::1");
-    IOAddress mcastAddr("ff02::1:2");
+    IOAddress mcastAddrL("ff02::1:2");
+    IOAddress mcastAddrS("ff05::1:3");
 
     // bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddrL, 10547);
     EXPECT_GE(socket1, 0); // socket > 0
+    int socket2 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddrS, 10547);
+    EXPECT_GE(socket2, 0); // socket > 0
 
     // expect success. This address/port is already bound, but
     // we are using SO_REUSEADDR, so we can bind it twice
-    int socket2 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddr, 10547);
-    EXPECT_GE(socket2, 0);
+    int socket3 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddrL, 10547);
+    EXPECT_GE(socket3, 0);
+    int socket4 = ifacemgr->openSocket(LOOPBACK_NAME, mcastAddrS, 10547);
+    EXPECT_GE(socket4, 0);
 
     // there's no good way to test negative case here.
     // we would need non-multicast interface. We will be able
@@ -1654,6 +1662,8 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
     close(socket1);
     close(socket2);
+    close(socket3);
+    close(socket4);
 }
 
 // Verifies that basic DHCPv6 packet send and receive operates
@@ -2219,10 +2229,12 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
     // Socket on eth1 should be bound to link local only.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
-    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2300,9 +2312,10 @@ TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
     // Socket on eth1 should be bound to link local only.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2342,13 +2355,15 @@ TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
     // The eth0 is not a multicast-capable interface, so the socket should
     // not be bound to the multicast address.
     EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_SERVERS));
     // Socket on eth1 should be bound to link local only.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
     // on eth1.
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2388,10 +2403,12 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
     // eth1 should have one socket, bound to link-local address.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
-    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2432,14 +2449,16 @@ TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
     // must be bound to this address, nor to multicast address.
     EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
     EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_SERVERS));
     // There should be one socket bound to unicast address.
     EXPECT_TRUE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
     // eth1 should have one socket, bound to link-local address.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2493,12 +2512,14 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
     EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
     EXPECT_FALSE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
     EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_SERVERS));
     // eth1 should have one socket, bound to link-local address.
     EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 #endif
 }
 
@@ -2549,10 +2570,12 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
     // interface is inactive.
     EXPECT_FALSE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
     EXPECT_FALSE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_FALSE(ifacemgr.isBound("eth1", ALL_DHCP_SERVERS));
 
-    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // If we are on Linux, there are two more sockets bound to multicast
 #if defined OS_LINUX
     EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_SERVERS));
 #endif
 }
 

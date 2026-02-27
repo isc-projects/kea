@@ -186,9 +186,10 @@ IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
     // to receive multicast traffic. So, if the multicast is requested,
     // replace the address specified by the caller with the "unspecified"
     // address.
-    IOAddress actual_address = join_multicast ? IOAddress("::") : addr;
+    bool do_multicast = (join_multicast && iface.flag_multicast_);
+    IOAddress actual_address = do_multicast ? IOAddress("::") : addr;
     SocketInfo info = packet_filter6_->openSocket(iface, actual_address, port,
-                                                  join_multicast);
+                                                  do_multicast);
     iface.addSocket(info);
     return (info.sockfd_);
 }
