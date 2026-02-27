@@ -52,13 +52,13 @@ const unsigned int BPF_LOCAL_LOOPBACK_HEADER_LEN = 4;
 struct bpf_insn ethernet_ip_udp_filter [] = {
     // Make sure this is an IP packet: check the half-word (two bytes)
     // at offset 12 in the packet (the Ethernet packet type).  If it
-    // is, advance to the next instruction.  If not, advance 13
+    // is, advance to the next instruction.  If not, advance 11
     // instructions (which takes execution to the last instruction in
     // the sequence: "drop it").
     // #0
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_PACKET_TYPE_OFFSET),
     // #1
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 13),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the Ethernet packet header size
@@ -67,7 +67,7 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
              ETHERNET_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
     // #3
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 11),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
@@ -77,7 +77,7 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     // #4
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS, ETHERNET_HEADER_LEN + IP_FLAGS_OFFSET),
     // #5
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 9, 0),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
 
     // Check the packet's destination address. The program will only
     // allow the packets sent to the broadcast address or unicast
@@ -95,7 +95,7 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     // If this is not broadcast address, compare it with the unicast
     // address specified for the interface.
     // #8
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 6),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
@@ -116,24 +116,14 @@ struct bpf_insn ethernet_ip_udp_filter [] = {
     // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
     // #11
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 3),
-
-    // Make sure this packet does not contain a vlan tag. The tag is stripped
-    // automatically by the kernel when presented to the vlan interface.
-    // Parent interface should not see this packet.
-    // #12
-    BPF_STMT(BPF_LD + BPF_B + BPF_ABS, (u_int)SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT),
-
-    // If this packet contains vlan tag drop the packet.
-    // #13
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0, 0, 1),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
     // If we passed all the tests, ask for the whole packet.
-    // #14
+    // #12
     BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
 
     // Otherwise, drop it.
-    // #15
+    // #13
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
 
@@ -153,7 +143,7 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // #0
     BPF_STMT(BPF_LD + BPF_W + BPF_ABS, 0),
     // #1
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xFFFFFFFF, 0, 13),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0xFFFFFFFF, 0, 11),
 
     // Make sure it's a UDP packet.  The IP protocol is at offset
     // 9 in the IP header so, adding the pseudo header size 4 bytes
@@ -162,7 +152,7 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     BPF_STMT(BPF_LD + BPF_B + BPF_ABS,
              BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_PROTO_TYPE_OFFSET),
     // #3
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 11),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, IPPROTO_UDP, 0, 9),
 
     // Make sure this isn't a fragment by checking that the fragment
     // offset field in the IP header is zero.  This field is the
@@ -173,7 +163,7 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     BPF_STMT(BPF_LD + BPF_H + BPF_ABS,
              BPF_LOCAL_LOOPBACK_HEADER_LEN + IP_FLAGS_OFFSET),
     // #5
-    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 9, 0),
+    BPF_JUMP(BPF_JMP + BPF_JSET + BPF_K, 0x1fff, 7, 0),
 
     // Check the packet's destination address. The program will only
     // allow the packets sent to the broadcast address or unicast
@@ -191,7 +181,7 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // If this is not broadcast address, compare it with the unicast
     // address specified for the interface.
     // #8
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 6),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 0x00000000, 0, 4),
 
     // Get the IP header length.  This is achieved by the following
     // (special) instruction that, given the offset of the start
@@ -213,26 +203,17 @@ struct bpf_insn loopback_ip_udp_filter [] = {
     // offset 11 in the program.  If this is changed, openSocket() must be
     // updated.
     // #11
-    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 3),
-
-    // Make sure this packet does not contain a vlan tag. The tag is stripped
-    // automatically by the kernel when presented to the vlan interface.
-    // Parent interface should not see this packet.
-    // #12
-    BPF_STMT (BPF_LD + BPF_B + BPF_ABS, (u_int)SKF_AD_OFF + SKF_AD_VLAN_TAG_PRESENT),
-
-    // If this packet contains vlan tag drop the packet.
-    // #13
-    BPF_JUMP (BPF_JMP + BPF_JEQ + BPF_K, 0, 0, 1),
+    BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP4_SERVER_PORT, 0, 1),
 
     // If we passed all the tests, ask for the whole packet.
-    // #14
+    // #12
     BPF_STMT(BPF_RET + BPF_K, (u_int)-1),
 
     // Otherwise, drop it.
-    // #15
+    // #13
     BPF_STMT(BPF_RET + BPF_K, 0),
 };
+
 
 }
 
