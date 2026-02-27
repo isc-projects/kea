@@ -163,31 +163,6 @@ PktFilterLPF::openSocket(Iface& iface,
                   << " on the socket " << sock);
     }
 
-    // Create socket filter program. This program will only allow incoming UDP
-    // traffic which arrives on the specific (DHCP) port). It will also filter
-    // out all fragmented packets.
-    struct sock_fprog filter_program;
-    memset(&filter_program, 0, sizeof(filter_program));
-
-    filter_program.filter = dhcp_sock_filter;
-    filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
-
-    // Configure the filter program to receive unicast packets sent to the
-    // specified address. The program will also allow packets sent to the
-    // 255.255.255.255 broadcast address.
-    dhcp_sock_filter[8].k = addr.toUint32();
-
-    // Override the default port value.
-    dhcp_sock_filter[11].k = port;
-    // Apply the filter.
-    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
-                   sizeof(filter_program)) < 0) {
-        close(sock);
-        close(fallback);
-        isc_throw(SocketConfigError, "Failed to install packet filtering program"
-                  << " on the socket " << sock);
-    }
-
 #ifdef SO_TIMESTAMP
     int enable = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
@@ -226,8 +201,57 @@ PktFilterLPF::openSocket(Iface& iface,
                   << iface.getName() << "', reason: " << errmsg);
     }
 
-    return (SocketInfo(addr, port, sock, fallback));
+    struct sock_filter zero_filter[] = { BPF_STMT(BPF_RET + BPF_K, 0) };
+    struct sock_fprog zero_filter_program;
+    memset(&zero_filter_program, 0, sizeof(zero_filter_program));
 
+    zero_filter_program.filter = zero_filter;
+    zero_filter_program.len = sizeof(zero_filter) / sizeof(struct sock_filter);
+
+    // Apply the filter.
+    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &zero_filter_program,
+                   sizeof(zero_filter_program)) < 0) {
+        close(sock);
+        close(fallback);
+        isc_throw(SocketConfigError, "Failed to install zero packet filtering program"
+                  << " on the socket " << sock);
+    }
+
+    int datalen;
+    uint8_t data;
+    // Non-DHCP packets may have been received before the filter was attached,
+    // so drain the socket.
+    do {
+        datalen = recv(sock, &data, sizeof(data), 0);
+    } while (datalen > 0);
+
+    // Create socket filter program. This program will only allow incoming UDP
+    // traffic which arrives on the specific (DHCP) port). It will also filter
+    // out all fragmented packets.
+    struct sock_fprog filter_program;
+    memset(&filter_program, 0, sizeof(filter_program));
+
+    filter_program.filter = dhcp_sock_filter;
+    filter_program.len = sizeof(dhcp_sock_filter) / sizeof(struct sock_filter);
+
+    // Configure the filter program to receive unicast packets sent to the
+    // specified address. The program will also allow packets sent to the
+    // 255.255.255.255 broadcast address.
+    dhcp_sock_filter[8].k = addr.toUint32();
+
+    // Override the default port value.
+    dhcp_sock_filter[11].k = port;
+
+    // Apply the filter.
+    if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
+                   sizeof(filter_program)) < 0) {
+        close(sock);
+        close(fallback);
+        isc_throw(SocketConfigError, "Failed to install packet filtering program"
+                  << " on the socket " << sock);
+    }
+
+    return (SocketInfo(addr, port, sock, fallback));
 }
 
 Pkt4Ptr
