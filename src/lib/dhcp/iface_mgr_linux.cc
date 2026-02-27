@@ -581,16 +581,21 @@ IfaceMgr::openMulticastSocket(Iface& iface,
     /// interfaces. Perhaps a warning should be emitted if the
     /// interface is not a multicast one.
     if (iface.flag_multicast_) {
+        int sockm = -1;
         try {
-            openSocket(iface.getName(),
-                       IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                       port);
+            sockm = openSocket(iface.getName(),
+                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                               port);
+            openSocket(iface.getName(), IOAddress(ALL_DHCP_SERVERS), port);
         } catch (const Exception& ex) {
             // An attempt to open and bind a socket to multicast address
             // has failed. We have to close the socket we previously
             // bound to link-local address - this is everything or
             // nothing strategy.
             iface.delSocket(sock);
+            if (sockm != -1) {
+                iface.delSocket(sockm);
+            }
             IFACEMGR_ERROR(SocketConfigError, error_handler, IfacePtr(),
                            "Failed to open multicast socket on"
                            " interface " << iface.getName()

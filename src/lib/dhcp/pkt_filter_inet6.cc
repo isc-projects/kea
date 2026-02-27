@@ -155,6 +155,14 @@ PktFilterInet6::openSocket(const Iface& iface,
                   << " multicast group.");
     }
 
+    // Join All_DHCP_Servers multicast group if requested.
+    if (join_multicast &&
+        !joinMulticast(sock, iface.getName(), std::string(ALL_DHCP_SERVERS))) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to join "
+                  << ALL_DHCP_SERVERS << " multicast group.");
+    }
+
     return (SocketInfo(addr, port, sock));
 }
 
