@@ -1081,7 +1081,7 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitBound) {
     cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
 #if defined OS_LINUX
-    const uint32_t opened_by_eth0 = 3;
+    const uint32_t opened_by_eth0 = 4;
 #else
     const uint32_t opened_by_eth0 = 2;
 #endif
@@ -1179,13 +1179,13 @@ TEST_F(CfgIfaceTest, retryOpenServiceSockets6OmitNewInterfaces) {
     cfg6.setServiceSocketsRetryWaitTime(WAIT_TIME);
 
 #if defined OS_LINUX
-    const uint32_t opened_by_eth0 = 3;
+    const uint32_t opened_by_eth0 = 4;
 #else
     const uint32_t opened_by_eth0 = 2;
 #endif
 
 #if defined OS_LINUX
-    const uint32_t opened_by_eth1 = 2;
+    const uint32_t opened_by_eth1 = 3;
 #else
     const uint32_t opened_by_eth1 = 1;
 #endif
