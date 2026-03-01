@@ -279,9 +279,11 @@ if netconf_opt.allowed()
         netconf_deps = netconf_deps + {dep: dependency(dep, required: false)}
         if not netconf_deps[dep].found()
             # Try adding lib to it. yang and yang-cpp define the wrong pkg-config.
-            netconf_deps = netconf_deps + {
-                dep: dependency('lib' + dep, required: false),
-            }
+            netconf_deps = (
+                netconf_deps + {
+                                dep: dependency('lib' + dep, required: false),
+                            }
+            )
         endif
 
         if not netconf_deps[dep].found()
@@ -569,7 +571,10 @@ if POSTGRESQL_DEP.found()
 endif
 
 # For Solaris.
-conf_data.set('HAVE_SYS_FILIO_H', cpp.has_header('sys/filio.h', required: false))
+conf_data.set(
+    'HAVE_SYS_FILIO_H',
+    cpp.has_header('sys/filio.h', required: false),
+)
 
 if valgrind.found()
     conf_data.set(
