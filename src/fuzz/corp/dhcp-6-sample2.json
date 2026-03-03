@@ -1,0 +1,68 @@
+{
+    "Dhcp6": {
+        "client-classes": [
+            {
+                "name": "reserved_class"
+            },
+            {
+                "name": "unreserved_class",
+                "test": "not member('reserved_class')"
+            }
+        ],
+        "reservations": [
+            {
+                "hw-address": "aa:bb:cc:dd:ee:fe",
+                "client-classes": [ "reserved_class" ]
+            }
+        ],
+        "reservations-global": true,
+        "reservations-in-subnet": false,
+        "shared-networks": [
+            {
+                "name": "net",
+                "subnet6": [
+                    {
+                        "id": 1,
+                        "subnet": "2001:db8:1::/64",
+                        "pools": [
+                            {
+                                "pool": "2001:db8:1::10 - 2001:db8:1::20",
+                                "client-classes": [ "unreserved_class" ]
+                            },
+                            {
+                                "pool": "2001:db8:1::30 - 2001:db8:1::40",
+                                "client-classes": [ "unreserved_class" ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": 2,
+                        "subnet": "2001:db8:2::/64",
+                        "pools": [
+                            {
+                                "pool": "2001:db8:2::10 - 2001:db8:2::20",
+                                "client-classes": [ "reserved_class" ]
+                            },
+                            {
+                                "pool": "2001:db8:2::30 - 2001:db8:2::40",
+                                "client-classes": [ "reserved_class" ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": 3,
+                        "subnet": "2001:db8:3::/64",
+                        "pools": [
+                            {
+                                "pool": "2001:db8:3::10 - 2001:db8:3::20"
+                            },
+                            {
+                                "pool": "2001:db8:3::30 - 2001:db8:3::40"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

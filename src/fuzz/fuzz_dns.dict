@@ -1,0 +1,109 @@
+# DNS fuzzing dictionary
+# Common DNS wire format markers
+"\x00"
+"\x01"
+"\x02"
+"\x03"
+"\x04"
+"\x05"
+"\x0c"
+"\x0d"
+"\x1f"
+"\x20"
+"\x3f"
+"\x40"
+"\x7f"
+"\xff"
+
+# DNS header patterns
+"\x00\x00\x01\x00"
+"\x00\x00\x81\x80"
+"\x00\x01\x00\x00"
+"\x00\x00\x00\x01"
+
+# Common DNS names and labels
+"."
+".."
+"example"
+"example.com"
+"example.org"
+"localhost"
+"www"
+"ns"
+"ns1"
+"ns2"
+"mail"
+"@"
+"*"
+"_"
+
+# DNS escape sequences
+"\\"
+"\\."
+"\\@"
+"\\000"
+"\\255"
+"\\032"
+
+# RR type values (in text)
+"A"
+"AAAA"
+"NS"
+"SOA"
+"MX"
+"CNAME"
+"PTR"
+"TXT"
+"SRV"
+"TSIG"
+"OPT"
+"DNSKEY"
+"DS"
+"RRSIG"
+"NSEC"
+"NSEC3"
+
+# Class values
+"IN"
+"CH"
+"HS"
+"ANY"
+"NONE"
+
+# TSIG algorithm names
+"HMAC-MD5.SIG-ALG.REG.INT"
+"hmac-sha1"
+"hmac-sha256"
+"hmac-sha384"
+"hmac-sha512"
+
+# Long labels (near 63-byte limit)
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+# Maximum length domain name components
+"a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.0.1.2.3.4.5.6.7.8.9"
+
+# DNS query/response patterns
+"\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00"
+"\x00\x00\x81\x80\x00\x01\x00\x01\x00\x00\x00\x00"
+
+# Common port numbers and values
+"53"
+"5353"
+"853"
+
+# EDNS OPT pseudo-RR
+"\x00\x00\x29"
+
+# Compression pointers
+"\xc0\x00"
+"\xc0\x0c"
+"\xc0\x10"
+"\xc0\x20"
+"\xc0\xff"
+
+# TSIG MAC sizes
+"\x00\x10"
+"\x00\x14"
+"\x00\x20"

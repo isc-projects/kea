@@ -1,0 +1,223 @@
+// This is an example configuration of the Kea DHCPv4 server 1:
+//
+// - uses High Availability hooks library and Lease Commands hooks library
+//   to enable High Availability function for the DHCP server. This config
+//   file is for the primary (the active) server.
+// - uses memfile, which stores lease data in a local CSV file
+// - it assumes a single /24 addressing over a link that is directly reachable
+//   (no DHCP relays)
+// - there is a handful of IP reservations
+//
+// It is expected to run with a standby (the passive) server, which has a very similar
+// configuration. The only difference is that "this-server-name" must be set to "server2" on the
+// other server. Also, the interface configuration depends on the network settings of the
+// particular machine.
+
+{
+
+"Dhcp4": {
+
+    // Add names of your network interfaces to listen on.
+    "interfaces-config": {
+        // The DHCPv4 server listens on this interface. When changing this to
+        // the actual name of your interface, make sure to also update the
+        // interface parameter in the subnet definition below.
+        "interfaces": [ "enp0s8" ]
+    },
+
+    // Control socket is required for communication between the Control
+    // Agent and the DHCP server. High Availability requires Control Agent
+    // to be running because lease updates are sent over the RESTful
+    // API between the HA peers.
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": "/tmp/kea4-ctrl-socket"
+    },
+
+    // Use Memfile lease database backend to store leases in a CSV file.
+    // Depending on how Kea was compiled, it may also support SQL databases
+    // (MySQL and/or PostgreSQL) and even Cassandra. Those database backends
+    // require more parameters, like name, host and possibly user and password.
+    // There are dedicated examples for each backend. See Section 7.2.2 "Lease
+    // Storage" for details.
+    "lease-database": {
+        // Memfile is the simplest and easiest backend to use. It's an in-memory
+        // database with data being written to a CSV file. It is very similar to
+        // what ISC DHCP does.
+        "type": "memfile"
+    },
+
+    // Let's configure some global parameters. The home network is not very dynamic
+    // and there's no shortage of addresses, so no need to recycle aggresively.
+    "valid-lifetime": 43200, // leases will be valid for 12h
+    "renew-timer": 21600, // clients should renew every 6h
+    "rebind-timer": 32400, // clients should start looking for other servers after 9h
+
+    // Kea will clean up its database of expired leases once per hour. However, it
+    // will keep the leases in expired state for 2 days. This greatly increases the
+    // chances for returning devices to get the same address again. To guarantee that,
+    // use host reservation.
+    "expired-leases-processing": {
+        "reclaim-timer-wait-time": 3600,
+        "hold-reclaimed-time": 172800,
+        "max-reclaim-leases": 0,
+        "max-reclaim-time": 0
+    },
+
+    // HA requires two hooks libraries to be loaded: libdhcp_lease_cmds.so and
+    // libdhcp_ha.so. The former handles incoming lease updates from the HA peers.
+    // The latter implements high availability feature for Kea. Note the library name
+    // should be the same, but the path is OS specific.
+    "hooks-libraries": [
+        // The lease_cmds library must be loaded because HA makes use of it to
+        // deliver lease updates to the server as well as synchronize the
+        // lease database after failure.
+        {
+            "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_lease_cmds.so"
+        },
+
+        {
+            // The HA hooks library should be loaded.
+            "library": "/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_ha.so",
+            "parameters": {
+                // Each server should have the same HA configuration, except for the
+                // "this-server-name" parameter.
+                "high-availability": [ {
+                    // This parameter points to this server instance. The respective
+                    // HA peers must have this parameter set to their own names.
+                    "this-server-name": "server1",
+                    // The HA mode is set to hot-standby. In this mode, the active server handles
+                    // all the traffic. The standby takes over if the primary becomes unavailable.
+                    "mode": "hot-standby",
+                    // Heartbeat is to be sent every 10 seconds if no other control
+                    // commands are transmitted.
+                    "heartbeat-delay": 10000,
+                    // Maximum time for partner's response to a heartbeat, after which
+                    // failure detection is started. This is specified in milliseconds.
+                    // If we don't hear from the partner in 60 seconds, it's time to
+                    // start worrying.
+                    "max-response-delay": 60000,
+                    // The following parameters control how the server detects the
+                    // partner's failure. The ACK delay sets the threshold for the
+                    // 'secs' field of the received discovers. This is specified in
+                    // milliseconds.
+                    "max-ack-delay": 5000,
+                    // This specifies the number of clients which send messages to
+                    // the partner but appear to not receive any response.
+                    "max-unacked-clients": 5,
+                    // This specifies the maximum timeout (in milliseconds) for the server
+                    // to complete sync. If you have a large deployment (high tens or
+                    // hundreds of thousands of clients), you may need to increase it
+                    // further. The default value is 60000ms (60 seconds).
+                    "sync-timeout": 60000,
+                    "peers": [
+                        // This is the configuration of this server instance.
+                        {
+                            "name": "server1",
+                            // This specifies the URL of our server instance. The
+                            // Control Agent must run along with our DHCPv4 server
+                            // instance and the "http-host" and "http-port" must be
+                            // set to the corresponding values.
+                            "url": "http://192.168.1.2:8000/",
+                            // This server is primary. The other one must be
+                            // secondary.
+                            "role": "primary"
+                        },
+                        // This is the configuration of our HA peer.
+                        {
+                            "name": "server2",
+                            // Specifies the URL on which the partner's control
+                            // channel can be reached. The Control Agent is required
+                            // to run on the partner's machine with "http-host" and
+                            // "http-port" values set to the corresponding values.
+                            "url": "http://192.168.1.3:8000/",
+                            // The partner is a secondary. Our is primary.
+                            "role": "standby"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    // This example contains a single subnet declaration.
+    "subnet4": [
+        {
+            // Subnet prefix.
+            "subnet": "192.168.1.0/24",
+
+            // There are no relays in this network, so we need to tell Kea that this subnet
+            // is reachable directly via the specified interface.
+            "interface": "enp0s8",
+
+            // Specify a dynamic address pool.
+            "pools": [
+                {
+                    "pool": "192.168.1.100-192.168.1.199"
+                }
+            ],
+
+            // These are options that are subnet specific. In most cases, you need to define at
+            // least routers option, as without this option your clients will not be able to reach
+            // their default gateway and will not have Internet connectivity. If you have many
+            // subnets and they share the same options (e.g. DNS servers typically is the same
+            // everywhere), you may define options at the global scope, so you don't repeat them
+            // for every network.
+            "option-data": [
+                {
+                    // For each IPv4 subnet you typically need to specify at least one router.
+                    "name": "routers",
+                    "data": "192.168.1.1"
+                },
+                {
+                    // Using cloudflare or Quad9 is a reasonable option. Change this
+                    // to your own DNS servers is you have them. Another popular
+                    // choice is 8.8.8.8, owned by Google. Using third party DNS
+                    // service raises some privacy concerns.
+                    "name": "domain-name-servers",
+                    "data": "1.1.1.1,9.9.9.9"
+                }
+            ],
+
+            // Some devices should get a static address. Since the .100 - .199 range is dynamic,
+            // let's use the lower address space for this. There are many ways how reservation
+            // can be defined, but using MAC address (hw-address) is by far the most popular one.
+            // You can use client-id, duid and even custom defined flex-id that may use whatever
+            // parts of the packet you want to use as identifiers. Also, there are many more things
+            // you can specify in addition to just an IP address: extra options, next-server, hostname,
+            // assign device to client classes etc. See the Kea ARM, Section 8.3 for details.
+            // The reservations are subnet specific.
+            "reservations": [
+                {
+                    "hw-address": "1a:1b:1c:1d:1e:1f",
+                    "ip-address": "192.168.1.10"
+                },
+                {
+                    "client-id": "01:11:22:33:44:55:66",
+                    "ip-address": "192.168.1.11"
+                }
+            ]
+        }
+    ],
+
+    // Logging configuration starts here.
+    "loggers": [
+    {
+        // This section affects kea-dhcp4, which is the base logger for DHCPv4 component. It tells
+        // DHCPv4 server to write all log messages (on severity INFO or higher) to a file. The file
+        // will be rotated once it grows to 2MB and up to 4 files will be kept. The debuglevel
+        // (range 0 to 99) is used only when logging on DEBUG level.
+        "name": "kea-dhcp4",
+        "output_options": [
+            {
+                "output": "/var/log/kea-dhcp4.log",
+                "maxsize": 2048000,
+                "maxver": 4
+            }
+        ],
+        "severity": "INFO",
+        "debuglevel": 0
+    }
+  ]
+}
+}

@@ -1,0 +1,3 @@
+lease_id,ip_address,subnet_id,state,valid_since,valid_until,mac_address,client_id,hostname
+1,192.168.1.100,1,0,2023-10-27 10:00:00,2023-10-27 11:00:00,00:11:22:33:44:55,None,device1
+2,192.168.1.101,1,0,2023-10-27 10:05:00,2023-10-27 11:05:00,AA:BB:CC:DD:EE:FF,None,device2

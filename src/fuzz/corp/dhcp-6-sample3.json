@@ -1,0 +1,39 @@
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "blocked",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "data": "2001:db8::2"
+                }
+            ]
+        }
+    ],
+    "reservations": [
+        // Clients on this list will be added to the KNOWN class. Some
+        // will also be added to the blocked class.
+        { "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+          "client-classes": [ "blocked" ] },
+        { "duid": "02:03:04:05:0A:0B:0C:0D:0E:0F" }
+    ],
+    "reservations-in-subnet": true,
+
+    "subnet6": [
+        {
+            "id": 1,
+            "subnet": "2001:db8:1::/48",
+            "pools": [
+                {
+                    "pool": "2001:db8:1:1::/64"
+                }
+            ],
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "data": "2001:db8::1"
+                }
+            ]
+        }
+    ]
+}

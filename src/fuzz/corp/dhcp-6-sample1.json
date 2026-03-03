@@ -1,0 +1,38 @@
+{
+# DHCPv6 configuration starts on the next line
+"Dhcp6": {
+
+# First we set up global values
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+    "preferred-lifetime": 3000,
+
+# Next we set up the interfaces to be used by the server.
+    "interfaces-config": {
+        "interfaces": [ "eth0" ]
+    },
+
+# And we specify the type of lease database
+    "lease-database": {
+        "type": "memfile",
+        "persist": true,
+        "name": "/var/lib/kea/dhcp6.leases"
+    },
+
+# Finally, we list the subnets from which we will be leasing addresses.
+    "subnet6": [
+        {
+            "id": 1,
+            "subnet": "2001:db8:1::/64",
+            "pools": [
+                {
+                    "pool": "2001:db8:1::1-2001:db8:1::ffff"
+                }
+             ]
+        }
+    ]
+# DHCPv6 configuration ends with the next line
+}
+
+}

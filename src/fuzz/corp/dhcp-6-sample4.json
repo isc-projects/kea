@@ -1,0 +1,35 @@
+{
+  "Dhcp6": {
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
+    "preferred-lifetime": 3000,
+    "interfaces-config": {
+      "interfaces": ["eth0"]
+    },
+    "lease-database": {
+      "type": "memfile",
+      "persist": true,
+      "name": "/var/lib/kea/dhcp6.leases"
+    },
+    "option-data": [
+      {
+        "space": "dhcp6",
+        "name": "dns-servers",
+        "data": "2001:db8::1, 2001:db8::2"
+      }
+    ],
+    "subnet6": [
+      {
+        "subnet": "2001:db8:1::/64",
+        "id": 1024,
+        "pools": [
+          {
+            "start": "2001:db8:1::100",
+            "end": "2001:db8:1::200"
+          }
+        ]
+      }
+    ]
+  }
+}
