@@ -599,76 +599,79 @@ defined, or if all servers have different values.
 
 .. table:: List of available parameters
 
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | Name              | Scope    | Type    | Default value       | Description                    |
-   |                   |          |         |                     |                                |
-   +===================+==========+=========+=====================+================================+
-   | client-keytab     | global / | string  | empty               | the Kerberos **client** key    |
-   |                   | server   |         |                     | table                          |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | credentials-cache | global / | string  | empty               | the Kerberos credentials cache |
-   |                   | server   |         |                     |                                |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | server-principal  | global / | string  | empty               | the Kerberos principal name of |
-   |                   | server   |         |                     | the DNS server that will       |
-   |                   |          |         |                     | receive updates                |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | client-principal  | global / | string  | empty               | the Kerberos principal name of |
-   |                   | server   |         |                     | the Kea D2 service             |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | gss-replay-flag   | global / | true /  | true                | require the GSS anti replay    |
-   |                   | server   | false   |                     | service (GSS_C_REPLAY_FLAG)    |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | gss-sequence-flag | global / | true /  | false               | require the GSS sequence       |
-   |                   | server   | false   |                     | service (GSS_C_SEQUENCE_FLAG)  |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | tkey-protocol     | global / | string  | "TCP"               | the protocol used to establish |
-   |                   | server   | "TCP" / |                     | the security context with the  |
-   |                   |          | "UDP"   |                     | DNS servers                    |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | tkey-lifetime     | global / | uint32  | | 3600 seconds      | the lifetime of GSS-TSIG keys  |
-   |                   | server   |         | | ( 1 hour )        |                                |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | rekey-interval    | global / | uint32  | | 2700 seconds      | the time interval the keys are |
-   |                   | server   |         | | ( 45 minutes )    | checked for rekeying           |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | retry-interval    | global / | uint32  | | 120 seconds       | the time interval to retry to  |
-   |                   | server   |         | | ( 2 minutes )     | create a key if any error      |
-   |                   |          |         |                     | occurred previously            |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | fallback          | global / | true /  | false               | the behavior to fallback to    |
-   |                   | server   | false   |                     | non-GSS-TSIG when GSS-TSIG     |
-   |                   |          |         |                     | should be used but no GSS-TSIG |
-   |                   |          |         |                     | key is available.              |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | exchange-timeout  | global / | uint32  | | 3000 milliseconds | the time used to wait for the  |
-   |                   | server   |         | | ( 3 seconds )     | GSS-TSIG TKEY exchange to      |
-   |                   |          |         |                     | finish before it timeouts      |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | user-context      | global / | string  | empty               | the user-provided data in JSON |
-   |                   | server   |         |                     | format (not used by            |
-   |                   |          |         |                     | the GSS-TSIG hook)             |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | comment           | global / | string  | empty               | ignored                        |
-   |                   | server   |         |                     |                                |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | id                | server   | string  | empty               | identifier to a DNS server     |
-   |                   |          |         |                     | (required)                     |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | domain-names      | server   | list of | empty               | the many-to-one relationship   |
-   |                   |          | strings |                     | between D2 DNS servers and     |
-   |                   |          |         |                     | GSS-TSIG DNS servers           |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | ip-address        | server   | IPv4 /  | empty               | the IP address at which the    |
-   |                   |          | IPv6    |                     | GSS-TSIG DNS server listens    |
-   |                   |          | address |                     | for DDNS and TKEY requests     |
-   |                   |          |         |                     | (required)                     |
-   +-------------------+----------+---------+---------------------+--------------------------------+
-   | port              | server   | uint16  | 53                  | the DNS transport port at      |
-   |                   |          |         |                     | which the GSS-TSIG DNS server  |
-   |                   |          |         |                     | listens for DDNS and TKEY      |
-   |                   |          |         |                     | requests                       |
-   +-------------------+----------+---------+---------------------+--------------------------------+
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | Name                 | Scope    | Type    | Default value       | Description                    |
+   |                      |          |         |                     |                                |
+   +======================+==========+=========+=====================+================================+
+   | client-keytab        | global / | string  | empty               | the Kerberos **client** key    |
+   |                      | server   |         |                     | table                          |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | credentials-cache    | global / | string  | empty               | the Kerberos credentials cache |
+   |                      | server   |         |                     |                                |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | server-principal     | global / | string  | empty               | the Kerberos principal name of |
+   |                      | server   |         |                     | the DNS server that will       |
+   |                      |          |         |                     | receive updates                |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | client-principal     | global / | string  | empty               | the Kerberos principal name of |
+   |                      | server   |         |                     | the Kea D2 service             |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | gss-replay-flag      | global / | true /  | true                | require the GSS anti replay    |
+   |                      | server   | false   |                     | service (GSS_C_REPLAY_FLAG)    |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | gss-sequence-flag    | global / | true /  | false               | require the GSS sequence       |
+   |                      | server   | false   |                     | service (GSS_C_SEQUENCE_FLAG)  |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | tkey-protocol        | global / | string  | "TCP"               | the protocol used to establish |
+   |                      | server   | "TCP" / |                     | the security context with the  |
+   |                      |          | "UDP"   |                     | DNS servers                    |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | tkey-lifetime        | global / | uint32  | | 3600 seconds      | the lifetime of GSS-TSIG keys  |
+   |                      | server   |         | | ( 1 hour )        |                                |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | rekey-interval       | global / | uint32  | | 2700 seconds      | the time interval the keys are |
+   |                      | server   |         | | ( 45 minutes )    | checked for rekeying           |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | retry-interval       | global / | uint32  | | 120 seconds       | the time interval to retry to  |
+   |                      | server   |         | | ( 2 minutes )     | create a key if any error      |
+   |                      |          |         |                     | occurred previously            |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | fallback             | global / | true /  | false               | the behavior to fallback to    |
+   |                      | server   | false   |                     | non-GSS-TSIG when GSS-TSIG     |
+   |                      |          |         |                     | should be used but no GSS-TSIG |
+   |                      |          |         |                     | key is available.              |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | exchange-timeout     | global / | uint32  | | 3000 milliseconds | the time used to wait for the  |
+   |                      | server   |         | | ( 3 seconds )     | GSS-TSIG TKEY exchange to      |
+   |                      |          |         |                     | finish before it timeouts      |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | ignore-bad-direction | global   | true /  | false               | ignore invalid MIC / bad       |      
+   |                      |          | false   |                     | direction verify failures.     |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | user-context         | global / | string  | empty               | the user-provided data in JSON |
+   |                      | server   |         |                     | format (not used by            |
+   |                      |          |         |                     | the GSS-TSIG hook)             |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | comment              | global / | string  | empty               | ignored                        |
+   |                      | server   |         |                     |                                |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | id                   | server   | string  | empty               | identifier to a DNS server     |
+   |                      |          |         |                     | (required)                     |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | domain-names         | server   | list of | empty               | the many-to-one relationship   |
+   |                      |          | strings |                     | between D2 DNS servers and     |
+   |                      |          |         |                     | GSS-TSIG DNS servers           |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | ip-address           | server   | IPv4 /  | empty               | the IP address at which the    |
+   |                      |          | IPv6    |                     | GSS-TSIG DNS server listens    |
+   |                      |          | address |                     | for DDNS and TKEY requests     |
+   |                      |          |         |                     | (required)                     |
+   +----------------------+----------+---------+---------------------+--------------------------------+
+   | port                 | server   | uint16  | 53                  | the DNS transport port at      |
+   |                      |          |         |                     | which the GSS-TSIG DNS server  |
+   |                      |          |         |                     | listens for DDNS and TKEY      |
+   |                      |          |         |                     | requests                       |
+   +----------------------+----------+---------+---------------------+--------------------------------+
 
 The global parameters are described below:
 
@@ -818,6 +821,10 @@ The server map parameters are described below:
   set at the per-server level takes precedence over one set at the global
   level. The default and supported values for the per-server level parameter are the same as
   for the global-level parameter.
+
+- ``ignore-bad-direction`` governs a workaround for Microsoft server bug.
+  When set explicitly to true DNS update responses sent when prerequisites
+  fail with the request signature are accepted as verified.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).

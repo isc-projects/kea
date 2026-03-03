@@ -648,4 +648,176 @@ TEST_F(GssTsigContextTest, signBadVerify) {
     EXPECT_EQ(GSS_S_BAD_SIG, srv_key->getSecCtx().getLastError());
 }
 
+/// @brief Check that verify fail on bad direction.
+TEST_F(GssTsigContextTest, badDirection) {
+    GssTsigKeyPtr key;
+    string name = "1234.sig-foo.example.com.";
+    ASSERT_NO_THROW(key.reset(new GssTsigKey(name)));
+    ASSERT_TRUE(key);
+
+    setKeytab();
+    setAdministratorCCache();
+
+    // Server.
+    GssTsigKeyPtr srv_key;
+    ASSERT_NO_THROW(srv_key.reset(new GssTsigKey(name)));
+    ASSERT_TRUE(srv_key);
+    EXPECT_FALSE(srv_key->getSecCtx().get());
+    GssApiName srv_name("DNS/blu.example.nil@EXAMPLE.NIL");
+    OM_uint32 lifetime = 0;
+    GssApiCredPtr srv_cred(new GssApiCred(srv_name, GSS_C_ACCEPT, lifetime));
+
+    // Client.
+    GssApiName clnt_name;
+    GssApiCredPtr cred;
+    EXPECT_FALSE(key->getSecCtx().get());
+    OM_uint32 flags = GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG | GSS_C_INTEG_FLAG;
+    bool ret = false;
+
+    // Exchanges.
+    GssApiBuffer intoken0;
+    GssApiBuffer outtoken0;
+    ASSERT_NO_THROW(ret = key->getSecCtx().init(cred, srv_name, flags,
+                                                intoken0, outtoken0,
+                                                lifetime));
+    ASSERT_FALSE(outtoken0.empty());
+    GssApiBuffer outtoken1;
+    ASSERT_NO_THROW(ret = srv_key->getSecCtx().accept(*srv_cred, outtoken0,
+                                                      clnt_name, outtoken1));
+    EXPECT_TRUE(ret);
+    GssApiBuffer outtoken2;
+    ASSERT_NO_THROW(ret = key->getSecCtx().init(cred, srv_name, flags,
+                                                outtoken1, outtoken2,
+                                                lifetime));
+    ASSERT_TRUE(ret);
+    EXPECT_TRUE(outtoken2.empty());
+
+    // Build the message to sign.
+    message_.clear(Message::RENDER);
+    message_.setQid(0x1234);
+    message_.setOpcode(Opcode::QUERY());
+    message_.setRcode(Rcode::NOERROR());
+    message_.setHeaderFlag(Message::HEADERFLAG_QR);
+    Name qname("foo.example.nil.");
+    message_.addQuestion(Question(qname, RRClass::IN(), RRType::A()));
+    MessageRenderer renderer;
+    OutputBuffer obuf(1024);
+    renderer.setBuffer(&obuf);
+
+    // Sign.
+    GssTsigContextPtr ctx;
+    ASSERT_NO_THROW(ctx.reset(new GssTsigContext(*key)));
+    ASSERT_TRUE(ctx);
+    EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
+    // len is 33 + 62 + 28 = 123.
+    ASSERT_TRUE(obuf.getData());
+    EXPECT_EQ(123, obuf.getLength());
+
+    // Check the TSIG RR.
+    message_.clear(Message::PARSE);
+    InputBuffer ibuf(obuf.getData(), obuf.getLength());
+    EXPECT_NO_THROW(message_.fromWire(ibuf));
+    const TSIGRecord* tsig = message_.getTSIGRecord();
+    ASSERT_TRUE(tsig);
+
+    // Verify using the wrong key.
+    ASSERT_NO_THROW(ctx.reset(new GssTsigContext(*key)));
+    ASSERT_TRUE(ctx);
+    TSIGError error = TSIGError::NOERROR();
+    EXPECT_NO_THROW(error = ctx->verify(tsig, obuf.getData(),
+                                        obuf.getLength()));
+    // Error message is 'A token had an invalid Message Integrity Check (MIC)',
+    // and 'Packet was replayed in wrong direction'.
+    EXPECT_EQ(TSIGError::BAD_SIG(), error);
+    EXPECT_EQ(TSIGError::BAD_SIG(), ctx->getError());
+    EXPECT_EQ(TSIGContext::RECEIVED_REQUEST, ctx->getState());
+    EXPECT_EQ(GSS_S_BAD_SIG, key->getSecCtx().getLastError());
+}
+
+/// @brief Check that verify fail on bad direction instead ignored.
+TEST_F(GssTsigContextTest, ignoreBadDirection) {
+    GssTsigKeyPtr key;
+    string name = "1234.sig-foo.example.com.";
+    ASSERT_NO_THROW(key.reset(new GssTsigKey(name)));
+    ASSERT_TRUE(key);
+
+    setKeytab();
+    setAdministratorCCache();
+
+    // Server.
+    GssTsigKeyPtr srv_key;
+    ASSERT_NO_THROW(srv_key.reset(new GssTsigKey(name)));
+    ASSERT_TRUE(srv_key);
+    EXPECT_FALSE(srv_key->getSecCtx().get());
+    GssApiName srv_name("DNS/blu.example.nil@EXAMPLE.NIL");
+    OM_uint32 lifetime = 0;
+    GssApiCredPtr srv_cred(new GssApiCred(srv_name, GSS_C_ACCEPT, lifetime));
+
+    // Client.
+    GssApiName clnt_name;
+    GssApiCredPtr cred;
+    EXPECT_FALSE(key->getSecCtx().get());
+    OM_uint32 flags = GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG | GSS_C_INTEG_FLAG;
+    bool ret = false;
+
+    // Exchanges.
+    GssApiBuffer intoken0;
+    GssApiBuffer outtoken0;
+    ASSERT_NO_THROW(ret = key->getSecCtx().init(cred, srv_name, flags,
+                                                intoken0, outtoken0,
+                                                lifetime));
+    ASSERT_FALSE(outtoken0.empty());
+    GssApiBuffer outtoken1;
+    ASSERT_NO_THROW(ret = srv_key->getSecCtx().accept(*srv_cred, outtoken0,
+                                                      clnt_name, outtoken1));
+    EXPECT_TRUE(ret);
+    GssApiBuffer outtoken2;
+    ASSERT_NO_THROW(ret = key->getSecCtx().init(cred, srv_name, flags,
+                                                outtoken1, outtoken2,
+                                                lifetime));
+    ASSERT_TRUE(ret);
+    EXPECT_TRUE(outtoken2.empty());
+
+    // Build the message to sign.
+    message_.clear(Message::RENDER);
+    message_.setQid(0x1234);
+    message_.setOpcode(Opcode::QUERY());
+    message_.setRcode(Rcode::NOERROR());
+    message_.setHeaderFlag(Message::HEADERFLAG_QR);
+    Name qname("foo.example.nil.");
+    message_.addQuestion(Question(qname, RRClass::IN(), RRType::A()));
+    MessageRenderer renderer;
+    OutputBuffer obuf(1024);
+    renderer.setBuffer(&obuf);
+
+    // Sign.
+    GssTsigContextPtr ctx;
+    ASSERT_NO_THROW(ctx.reset(new GssTsigContext(*key)));
+    ASSERT_TRUE(ctx);
+    EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
+    // len is 33 + 62 + 28 = 123.
+    ASSERT_TRUE(obuf.getData());
+    EXPECT_EQ(123, obuf.getLength());
+
+    // Check the TSIG RR.
+    message_.clear(Message::PARSE);
+    InputBuffer ibuf(obuf.getData(), obuf.getLength());
+    EXPECT_NO_THROW(message_.fromWire(ibuf));
+    const TSIGRecord* tsig = message_.getTSIGRecord();
+    ASSERT_TRUE(tsig);
+
+    // Verify using the wrong key.
+    ASSERT_NO_THROW(ctx.reset(new GssTsigContext(*key)));
+    ASSERT_TRUE(ctx);
+    TSIGError error = TSIGError::NOERROR();
+    GssApiSecCtx::ignore_bad_direction_ = true;
+    EXPECT_NO_THROW(error = ctx->verify(tsig, obuf.getData(),
+                                        obuf.getLength()));
+    // No longer fail even the signature was in the wrong direction.
+    EXPECT_EQ(TSIGError::NOERROR(), error);
+    EXPECT_TRUE(ctx->lastHadSignature());
+    EXPECT_EQ(TSIGError::NOERROR(), ctx->getError());
+    EXPECT_EQ(TSIGContext::RECEIVED_REQUEST, ctx->getState());
+}
+
 }

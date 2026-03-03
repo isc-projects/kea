@@ -668,6 +668,7 @@ TEST(GssTsigCfgTest, configure) {
         "\"tkey-lifetime\": 7200,\n"
         "\"tkey-protocol\": \"UDP\",\n"
         "\"exchange-timeout\": 2000,\n"
+        "\"ignore-bad-direction\": true,\n"
         "\"servers\": [\n"
         " {\n"
         "  \"domain-names\": [ ],\n"
@@ -697,6 +698,10 @@ TEST(GssTsigCfgTest, configure) {
     EXPECT_EQ("FILE:/etc/krb5.keytab", cfg.getClientKeyTab());
     EXPECT_EQ("FILE:/etc/ccache", cfg.getCredsCache());
     EXPECT_EQ(86400, cfg.getMaxKeyLifetime());
+    EXPECT_TRUE(cfg.getIgnoreBadDirection());
+    EXPECT_TRUE(GssApiSecCtx::ignore_bad_direction_);
+    // Put this in the fixture if one is created...
+    GssApiSecCtx::ignore_bad_direction_ = false;
     const DnsServerList& servers = cfg.getServerList();
     ASSERT_EQ(2, servers.size());
 
@@ -841,6 +846,13 @@ TEST(GssTsigCfgTest, configureUnexpectedType) {
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ASSERT_TRUE(json);
     expected = "gss_tsig 'exchange-timeout' parameter is not an integer";
+    expected += location;
+    EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+
+    config = "{ \"ignore-bad-direction\": 1 }";
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+    ASSERT_TRUE(json);
+    expected = "gss_tsig 'ignore-bad-direction' parameter is not a boolean";
     expected += location;
     EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
 
@@ -1232,6 +1244,18 @@ TEST(GssTsigCfgTest, configureDuplicate) {
     string expected = "'foo' id is already used in ";
     expected += "gss_tsig server entry (<string>:1:106)";
     EXPECT_THROW_MSG(cfg.configure(json), BadValue, expected);
+}
+
+/// @brief Checks ignore bad direction default value.
+TEST(GssTsigCfgTest, IgnoreBadDirectionDefault) {
+    // Constructor default is false.
+     GssTsigCfg cfg;
+     ASSERT_FALSE(cfg.getIgnoreBadDirection());
+     ASSERT_FALSE(GssApiSecCtx::ignore_bad_direction_);
+     ConstElementPtr json = Element::createMap();
+     ASSERT_NO_THROW(cfg.configure(json));
+     EXPECT_FALSE(cfg.getIgnoreBadDirection());
+     EXPECT_FALSE(GssApiSecCtx::ignore_bad_direction_);
 }
 
 /// @brief Check TKEY protocol default value.

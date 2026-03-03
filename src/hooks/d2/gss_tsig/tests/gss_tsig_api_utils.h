@@ -7,6 +7,7 @@
 #ifndef GSS_TSIG_API_UTILS_H
 #define GSS_TSIG_API_UTILS_H
 
+#include <gss_tsig_context.h>
 #include <gtest/gtest.h>
 #include <cstdlib>
 
@@ -30,6 +31,7 @@ public:
             has_ccname = true;
             ccname = std::string(ccname_env);
         }
+        GssApiSecCtx::ignore_bad_direction_ = false;
     }
 
     /// @brief Destructor.
@@ -44,6 +46,7 @@ public:
         } else {
             unsetenv("KRB5CCNAME");
         }
+        GssApiSecCtx::ignore_bad_direction_ = false;
     }
 
     /// @brief Set the keytab.
