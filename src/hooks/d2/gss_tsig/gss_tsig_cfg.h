@@ -532,6 +532,20 @@ public:
         max_tkey_lifetime_ = max_tkey_lifetime;
     }
 
+    /// @brief Get the ignore bad direction flag.
+    ///
+    /// @return the ignore bad direction flag.
+    bool getIgnoreBadDirection() const {
+        return (ignore_bad_direction_);
+    }
+
+    /// @brief Set the ignore bad direction flag.
+    ///
+    /// @param ignore_bad_direction A new ignore bad direction.
+    void setIgnoreBadDirection(bool ignore_bad_direction) {
+        ignore_bad_direction_ = ignore_bad_direction;
+    }
+
 private:
     /// @brief The DNS server list.
     DnsServerList servers_;
@@ -547,6 +561,9 @@ private:
 
     /// @brief The maximum TKEY lifetime.
     uint32_t max_tkey_lifetime_;
+
+    /// @brief The ignore bad direction flag.
+    bool ignore_bad_direction_;
 };
 
 } // end of namespace isc::gss_tsig

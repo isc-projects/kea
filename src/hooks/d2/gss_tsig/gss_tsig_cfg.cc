@@ -8,6 +8,7 @@
 
 #include <dns/name.h>
 #include <gss_tsig_cfg.h>
+#include <gss_tsig_context.h>
 #include <stats/stats_mgr.h>
 
 #include <limits>
@@ -285,26 +286,27 @@ DnsServer::toElement() const {
 }
 
 const SimpleKeywords GssTsigCfg::GLOBAL_PARAMETERS = {
-    { "server-principal",   Element::string },
-    { "client-principal",   Element::string },
-    { "client-keytab",      Element::string },
-    { "credentials-cache",  Element::string },
-    { "gss-replay-flag",    Element::boolean },
-    { "gss-sequence-flag",  Element::boolean },
-    { "tkey-lifetime",      Element::integer },
-    { "rekey-interval",     Element::integer },
-    { "retry-interval",     Element::integer },
-    { "tkey-protocol",      Element::string },
-    { "fallback",           Element::boolean },
-    { "exchange-timeout",   Element::integer },
-    { "servers",            Element::list },
-    { "user-context",       Element::map },
-    { "comment",            Element::string }
+    { "server-principal",      Element::string },
+    { "client-principal",      Element::string },
+    { "client-keytab",         Element::string },
+    { "credentials-cache",     Element::string },
+    { "gss-replay-flag",       Element::boolean },
+    { "gss-sequence-flag",     Element::boolean },
+    { "tkey-lifetime",         Element::integer },
+    { "rekey-interval",        Element::integer },
+    { "retry-interval",        Element::integer },
+    { "tkey-protocol",         Element::string },
+    { "fallback",              Element::boolean },
+    { "exchange-timeout",      Element::integer },
+    { "ignore-bad-direction",  Element::boolean },
+    { "servers",               Element::list },
+    { "user-context",          Element::map },
+    { "comment",               Element::string }
 };
 
 GssTsigCfg::GssTsigCfg()
     : servers_(), servers_rev_map_(), client_keytab_(""), creds_cache_(""),
-      max_tkey_lifetime_(0) {
+      max_tkey_lifetime_(0), ignore_bad_direction_(false) {
 }
 
 GssTsigCfg::~GssTsigCfg() {
@@ -461,6 +463,13 @@ GssTsigCfg::configure(ConstElementPtr params) {
                       "range [0.." << numeric_limits<uint32_t>::max()
                       << "] (" << global_tkey_timeout->getPosition() << ")");
         }
+    }
+
+    ConstElementPtr ignore_bad_direction = params->get("ignore-bad-direction");
+    if (ignore_bad_direction) {
+        bool val = ignore_bad_direction->boolValue();
+        ignore_bad_direction_ = val;
+        GssApiSecCtx::ignore_bad_direction_ = val;
     }
 
     ConstElementPtr servers = params->get("servers");

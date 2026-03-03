@@ -266,6 +266,8 @@ GssApiCred::inquire(GssApiName& name, gss_cred_usage_t& cred_usage,
     }
 }
 
+bool GssApiSecCtx::ignore_bad_direction_ = false;
+
 GssApiSecCtx::GssApiSecCtx(gss_ctx_id_t sec_ctx)
     : GssApiLastError(), sec_ctx_(sec_ctx) {
 }
@@ -357,9 +359,20 @@ GssApiSecCtx::verify(GssApiBuffer& gmessage, GssApiBuffer& gsig) {
     OM_uint32 major = gss_verify_mic(&minor, sec_ctx_, gmessage.getPtr(),
                                      gsig.getPtr(), 0);
     if (major != GSS_S_COMPLETE) {
+        string err_msg = gssApiErrMsg(major, minor);
+        // Should use minor == G_BAD_DIRECTION but the code point is
+        // in a generated include not provided by all packages.
+        if (ignore_bad_direction_ && (major == GSS_S_BAD_MIC) &&
+#ifdef G_BAD_DIRECTION
+            (minor == G_BAD_DIRECTION)
+#else
+            (err_msg.find("wrong direction") != string::npos)
+#endif
+            ) {
+            return;
+        }
         setLastError(major);
-        isc_throw(GssApiError, "gss_verify_mic failed with "
-                  << gssApiErrMsg(major, minor));
+        isc_throw(GssApiError, "gss_verify_mic failed with " << err_msg);
     }
 }
 

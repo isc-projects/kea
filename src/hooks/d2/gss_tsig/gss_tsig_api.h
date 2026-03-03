@@ -289,6 +289,13 @@ typedef boost::shared_ptr<GssApiCred> GssApiCredPtr;
 /// @note: some methods should be const but this does not match the API.
 class GssApiSecCtx : public boost::noncopyable, public GssApiLastError {
 public:
+    /// @brief Ignore bad direction flag.
+    ///
+    /// @note: when true (default is false) verify accepts
+    /// messages sent in the wrong direction as Microsoft servers
+    /// sending DNS update responses when prerequisities fail.
+    static bool ignore_bad_direction_;
+
     /// @brief Constructor.
     ///
     /// @param sec_ctx The GSS-API security context.

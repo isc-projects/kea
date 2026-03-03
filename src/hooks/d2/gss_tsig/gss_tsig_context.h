@@ -70,7 +70,7 @@ public:
     sign(const uint16_t qid, const void* const data,
          const size_t data_len) override;
 
-    /// @brief a DNS message.
+    /// @brief Verify a DNS message.
     ///
     /// See @c isc::dns::TSIGContext::verify().
     ///
