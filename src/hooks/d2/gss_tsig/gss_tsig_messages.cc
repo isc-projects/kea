@@ -9,6 +9,7 @@ namespace gss_tsig {
 
 extern const isc::log::MessageID BAD_CLIENT_CREDENTIALS = "BAD_CLIENT_CREDENTIALS";
 extern const isc::log::MessageID GSS_TSIG_COMMAND_PROCESSED_FAILED = "GSS_TSIG_COMMAND_PROCESSED_FAILED";
+extern const isc::log::MessageID GSS_TSIG_IGNORED_BAD_DIRECTION = "GSS_TSIG_IGNORED_BAD_DIRECTION";
 extern const isc::log::MessageID GSS_TSIG_LOAD_FAILED = "GSS_TSIG_LOAD_FAILED";
 extern const isc::log::MessageID GSS_TSIG_LOAD_OK = "GSS_TSIG_LOAD_OK";
 extern const isc::log::MessageID GSS_TSIG_MANAGER_STARTED = "GSS_TSIG_MANAGER_STARTED";
@@ -64,6 +65,7 @@ namespace {
 const char* values[] = {
     "BAD_CLIENT_CREDENTIALS", "bad client credentials: %1",
     "GSS_TSIG_COMMAND_PROCESSED_FAILED", "command_processed callout failed: %1.",
+    "GSS_TSIG_IGNORED_BAD_DIRECTION", "ignored bad direction verify failure.",
     "GSS_TSIG_LOAD_FAILED", "GSS-TSIG hooks library failed to load: %1.",
     "GSS_TSIG_LOAD_OK", "GSS-TSIG hooks library loaded successfully.",
     "GSS_TSIG_MANAGER_STARTED", "hooks library GSS-TSIG key periodic manager started.",

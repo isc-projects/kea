@@ -10,6 +10,7 @@ namespace gss_tsig {
 
 extern const isc::log::MessageID BAD_CLIENT_CREDENTIALS;
 extern const isc::log::MessageID GSS_TSIG_COMMAND_PROCESSED_FAILED;
+extern const isc::log::MessageID GSS_TSIG_IGNORED_BAD_DIRECTION;
 extern const isc::log::MessageID GSS_TSIG_LOAD_FAILED;
 extern const isc::log::MessageID GSS_TSIG_LOAD_OK;
 extern const isc::log::MessageID GSS_TSIG_MANAGER_STARTED;

@@ -1,0 +1,5 @@
+[func]		fdupont
+	Added the "ignore-bad-direction" workaround flag to
+	the GSS-TSIG hook library to accept DNS update responses
+	with the request signature sent by bogus servers.
+	(Gitlab #4326)

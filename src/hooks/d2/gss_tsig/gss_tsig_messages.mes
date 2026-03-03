@@ -15,6 +15,10 @@ TKEY lifetime. The argument details the error.
 This error message is issued when the callout for the command_processed
 callout point failed. The argument contains a reason for the error.
 
+% GSS_TSIG_IGNORED_BAD_DIRECTION ignored bad direction verify failure.
+This info message indicates that a verify failed because the message
+was in the wrong direction but this failure was ignored.
+
 % GSS_TSIG_LOAD_FAILED GSS-TSIG hooks library failed to load: %1.
 This error message indicates that an error occurred attempting to
 load the GSS-TSIG hooks library. The argument details the error.

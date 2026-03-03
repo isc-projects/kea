@@ -7,6 +7,8 @@
 #include <config.h>
 
 #include <gss_tsig_api.h>
+#include <gss_tsig_log.h>
+#include <gss_tsig_messages.h>
 #include <cstring>
 #include <limits>
 #include <sstream>
@@ -369,6 +371,7 @@ GssApiSecCtx::verify(GssApiBuffer& gmessage, GssApiBuffer& gsig) {
             (err_msg.find("wrong direction") != string::npos)
 #endif
             ) {
+            LOG_INFO(gss_tsig_logger, GSS_TSIG_IGNORED_BAD_DIRECTION);
             return;
         }
         setLastError(major);
