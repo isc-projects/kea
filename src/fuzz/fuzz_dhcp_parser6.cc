@@ -156,9 +156,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // Subnets6ListConfigParser
     try {
         ElementPtr elem = fuzz::parseJSON(full_payload);
-        SrvConfigPtr srv = SrvConfigPtr(new SrvConfig());
+        SrvConfigPtr srvconf = SrvConfigPtr(new SrvConfig());
         Subnets6ListConfigParser parser(fdp.ConsumeBool());
-        parser.parse(srv, elem, fdp.ConsumeBool());
+        parser.parse(srvconf, elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
         // Known exceptions
     }
@@ -187,13 +187,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // CompatibilityParser
     try {
         ElementPtr elem = fuzz::parseJSON(full_payload);
-        SrvConfig srv = SrvConfig();
+        SrvConfig srvconf = SrvConfig();
         CompatibilityParser parser = CompatibilityParser();
-        parser.parse(elem, srv);
+        parser.parse(elem, srvconf);
     } catch (const isc::Exception&) {
         // Known exceptions
     }
 
     return 0;
 }
-

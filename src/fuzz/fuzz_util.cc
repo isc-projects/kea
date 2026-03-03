@@ -99,7 +99,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // Target CSVRow
     try {
         CSVRow row(payload, delim[0]);
-        for (int i = 0; i < row.getValuesCount(); i++) {
+        for (size_t i = 0; i < row.getValuesCount(); i++) {
             row.readAt(i);
             row.readAtEscaped(i);
         }
@@ -153,4 +153,3 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
     return 0;
 }
-

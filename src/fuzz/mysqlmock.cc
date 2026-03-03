@@ -4,9 +4,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ////////////////////////////////////////////////////////////////////////////////
+
+#include <config.h>
+
 #include <fuzzer/FuzzedDataProvider.h>
 
-#include <mariadb/mysql.h>
+#include <mysql.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -70,13 +73,6 @@ static bool is_like(const std::string& hay, const char* needle) {
     std::transform(h.begin(), h.end(), h.begin(), ::tolower);
     std::transform(n.begin(), n.end(), n.begin(), ::tolower);
     return h.find(n) != std::string::npos;
-}
-
-static MYSQL_STMT* make_stmt() {
-    auto s = new StmtState();
-    s->mysql = reinterpret_cast<MYSQL*>(0x1);
-    g_live_stmts.push_back(s);
-    return reinterpret_cast<MYSQL_STMT*>(s);
 }
 
 static StmtState* SS(MYSQL_STMT* st) {
@@ -211,7 +207,7 @@ static void fill_fuzz_rows(StmtState* s, unsigned int ncols) {
 }
 
 extern "C" {
-    int mysql_server_init(int argc, char **argv, char **groups) {
+    int mysql_server_init(int /* argc */, char ** /* argv */, char ** /* groups */) {
         return 0;
     }
 

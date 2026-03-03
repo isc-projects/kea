@@ -5,41 +5,23 @@ endif
 current_build_dir = meson.current_build_dir()
 current_source_dir = meson.current_source_dir()
 
-foreach i : [
-    'fuzz_config_kea_dhcp4',
-    'fuzz_config_kea_dhcp6',
-    'fuzz_http_endpoint_kea_dhcp4',
-    'fuzz_http_endpoint_kea_dhcp6',
-    'fuzz_packets_kea_dhcp4',
-    'fuzz_packets_kea_dhcp6',
-    'fuzz_unix_socket_kea_dhcp4',
-    'fuzz_unix_socket_kea_dhcp6',
-    'fuzz_config_kea_dhcp4/doc-examples',
-    'fuzz_config_kea_dhcp6/doc-examples',
-]
-    command = run_command(GRABBER, f'input/@i@', '*', check: true)
-    foreach j : command.stdout().strip().split('\n')
-        # configure_file doesn't work with path segments in the output, so let
-        # us simulate it with commands.
-        run_command(
-            ['mkdir', '-p', f'@TOP_BUILD_DIR@/fuzz/input/@i@'],
-            check: true,
-        )
-        run_command(
-            ['cp', f'input/@i@/@j@', f'@TOP_BUILD_DIR@/fuzz/input/@i@/@j@'],
-            check: true,
-        )
-    endforeach
-
-endforeach
-
-fuzz_sources = ['fuzz.cc', 'fuzz.h', 'main.cc']
+fuzz_sources = ['fuzz.cc', 'fuzz.h']
 cpp_flags = [
     f'-DKEA_LFC_INSTALLATION="@KEA_LFC_INSTALLED@"',
     f'-DKEA_LFC_SOURCES="@KEA_LFC_BUILT@"',
 ]
 
-includes = [include_directories('.')] + INCLUDES
+# The include paths are a bit invasive, but if we wanted to only have "../hooks" we would need to
+# tweak the include paths in the hooks themselves either to be referenced from "src" or
+# "src/hooks" or to have quotes instead of angled brackets and that is more work.
+includes = [
+    include_directories('.'),
+    include_directories('../hooks'),
+    include_directories('../hooks/d2/gss_tsig'),
+    include_directories('../hooks/dhcp/mysql'),
+    include_directories('../hooks/dhcp/pgsql'),
+    include_directories('../hooks/dhcp/user_chk'),
+] + INCLUDES
 
 fuzz_lib = static_library(
     'fuzz_lib',
@@ -50,7 +32,7 @@ fuzz_lib = static_library(
     link_with: LIBS_BUILT_SO_FAR,
 )
 
-FUZZER_EXECUTABLES = []
+FUZZING_HARNESSES = []
 
 foreach i : [
     'fuzz_config_kea_dhcp4',
@@ -58,7 +40,7 @@ foreach i : [
     'fuzz_packets_kea_dhcp4',
     'fuzz_unix_socket_kea_dhcp4',
 ]
-    FUZZER_EXECUTABLES += executable(
+    FUZZING_HARNESSES += static_library(
         i,
         f'@i@.cc',
         fuzz_sources,
@@ -66,19 +48,17 @@ foreach i : [
         dependencies: [CRYPTO_DEP, GTEST_DEP],
         include_directories: includes,
         link_with: [dhcp4_lib, kea_testutils_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
-        install: true,
-        install_dir: SBINDIR,
-        install_rpath: INSTALL_RPATH,
         build_rpath: BUILD_RPATH,
     )
 endforeach
+
 foreach i : [
     'fuzz_config_kea_dhcp6',
     'fuzz_http_endpoint_kea_dhcp6',
     'fuzz_packets_kea_dhcp6',
     'fuzz_unix_socket_kea_dhcp6',
 ]
-    FUZZER_EXECUTABLES += executable(
+    FUZZING_HARNESSES += static_library(
         i,
         f'@i@.cc',
         fuzz_sources,
@@ -86,11 +66,82 @@ foreach i : [
         dependencies: [CRYPTO_DEP, GTEST_DEP],
         include_directories: includes,
         link_with: [dhcp6_lib, kea_testutils_lib, fuzz_lib] + LIBS_BUILT_SO_FAR,
-        install: true,
-        install_dir: SBINDIR,
-        install_rpath: INSTALL_RPATH,
         build_rpath: BUILD_RPATH,
     )
 endforeach
 
+# From external contribution.
+foreach i : [
+    'fuzz_agent',
+    'fuzz_cc',
+    'fuzz_crypto',
+    'fuzz_cryptolink',
+    'fuzz_d2',
+    'fuzz_dhcp_parser4',
+    'fuzz_dhcp_parser6',
+    'fuzz_dhcp_pkt4',
+    'fuzz_dhcp_pkt6',
+    'fuzz_dhcp_pkt_process4',
+    'fuzz_dhcp_pkt_process6',
+    'fuzz_dhcpsrv',
+    'fuzz_dhcpsrv_csv_lease',
+    'fuzz_dns',
+    'fuzz_encode',
+    'fuzz_eval4',
+    'fuzz_eval6',
+    'fuzz_hook_ddns_tuning4',
+    'fuzz_hook_ddns_tuning6',
+    'fuzz_hook_flex_id4',
+    'fuzz_hook_flex_id6',
+    'fuzz_hook_lease_query4',
+    'fuzz_hook_lease_query6',
+    'fuzz_hook_radius4',
+    'fuzz_hook_radius6',
+    'fuzz_hook_run_script4',
+    'fuzz_hook_run_script6',
+    'fuzz_hook_tsig',
+    'fuzz_hook_user_chk4',
+    'fuzz_hook_user_chk6',
+    'fuzz_http',
+    'fuzz_ioaddress',
+    'fuzz_mysql4',
+    'fuzz_mysql6',
+    'fuzz_pgsql4',
+    'fuzz_pgsql6',
+    'fuzz_util',
+]
+    FUZZING_HARNESSES += static_library(
+        i,
+        f'@i@.cc',
+        'empty_llvm_functions.cc',
+        'helper_func.cc',
+        'mysqlmock.cc',
+        'pgmock.cc',
+        fuzz_sources,
+        cpp_args: cpp_flags,
+        dependencies: [MYSQL_DEP, POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP],
+        include_directories: includes,
+        link_with: [
+            agent_lib,
+            d2_lib,
+            ddns_gss_tsig_lib,
+            dhcp_lease_query_lib,
+            dhcp_flex_id_lib,
+            dhcp_ddns_tuning_lib,
+            dhcp_lease_cmds_lib,
+            dhcp_mysql_lib,
+            dhcp_pgsql_lib,
+            dhcp_radius_lib,
+            dhcp_run_script_lib,
+            dhcp_user_chk_lib,
+            dhcp4_lib,
+            dhcp6_lib,
+            kea_testutils_lib,
+            fuzz_lib,
+        ] + LIBS_BUILT_SO_FAR,
+        build_rpath: BUILD_RPATH,
+    )
+endforeach
+
+subdir('corp')
 subdir('tests')

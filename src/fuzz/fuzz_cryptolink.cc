@@ -25,10 +25,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
 
     FuzzedDataProvider fdp(data, size);
-    
+
     // Choose which crypto operation to test
     uint8_t path = fdp.ConsumeIntegralInRange<uint8_t>(0, 9);
-    
+
     // Pick a hash algorithm
     HashAlgorithm hash_alg = fdp.PickValueInArray({
         HashAlgorithm::MD5,
@@ -38,7 +38,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         HashAlgorithm::SHA384,
         HashAlgorithm::SHA512
     });
-    
+
     try {
         switch (path) {
             case 0: {
@@ -54,7 +54,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 1: {
                 // Test Hash with multiple updates
                 Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
@@ -72,7 +72,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 2: {
                 // Test Hash with OutputBuffer
                 Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
@@ -90,7 +90,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 3: {
                 // Test Hash with void* result
                 Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
@@ -108,7 +108,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 4: {
                 // Test HMAC creation and signing
                 size_t secret_len = fdp.ConsumeIntegralInRange<size_t>(1, 256);
@@ -116,7 +116,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 if (secret.empty()) {
                     secret.push_back(0);  // Ensure non-empty secret
                 }
-                
+
                 HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
                     secret.data(), secret.size(), hash_alg
                 );
@@ -130,7 +130,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 5: {
                 // Test HMAC with multiple updates
                 size_t secret_len = fdp.ConsumeIntegralInRange<size_t>(1, 256);
@@ -138,7 +138,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 if (secret.empty()) {
                     secret.push_back(0);
                 }
-                
+
                 HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
                     secret.data(), secret.size(), hash_alg
                 );
@@ -156,7 +156,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 6: {
                 // Test HMAC with OutputBuffer
                 size_t secret_len = fdp.ConsumeIntegralInRange<size_t>(1, 256);
@@ -164,7 +164,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 if (secret.empty()) {
                     secret.push_back(0);
                 }
-                
+
                 HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
                     secret.data(), secret.size(), hash_alg
                 );
@@ -182,7 +182,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 7: {
                 // Test HMAC verification
                 size_t secret_len = fdp.ConsumeIntegralInRange<size_t>(1, 256);
@@ -190,7 +190,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 if (secret.empty()) {
                     secret.push_back(0);
                 }
-                
+
                 HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
                     secret.data(), secret.size(), hash_alg
                 );
@@ -201,10 +201,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     if (!input_data.empty()) {
                         hmac->update(input_data.data(), input_data.size());
                     }
-                    
+
                     // Generate signature
                     std::vector<uint8_t> signature = hmac->sign(hmac->getOutputLength());
-                    
+
                     // Verify with same data (should succeed)
                     HMAC* verify_hmac = CryptoLink::getCryptoLink().createHMAC(
                         secret.data(), secret.size(), hash_alg
@@ -220,7 +220,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 8: {
                 // Test HMAC with long secret (should be hashed)
                 size_t secret_len = fdp.ConsumeIntegralInRange<size_t>(256, 1024);
@@ -228,7 +228,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 if (secret.size() < 64) {
                     secret.resize(64, 0x42);  // Pad to ensure long secret
                 }
-                
+
                 HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
                     secret.data(), secret.size(), hash_alg
                 );
@@ -242,12 +242,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
                 break;
             }
-            
+
             case 9: {
                 // Test RNG generation
                 size_t rng_len = fdp.ConsumeIntegralInRange<size_t>(0, 1024);
                 std::vector<uint8_t> random_data = isc::cryptolink::random(rng_len);
-                
+
                 // Test Qid generation
                 uint16_t qid = isc::cryptolink::generateQid();
                 (void)qid;  // Use the variable
@@ -259,6 +259,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     } catch (const std::exception&) {
         // Catch any standard library exceptions
     }
-    
+
     return 0;
 }

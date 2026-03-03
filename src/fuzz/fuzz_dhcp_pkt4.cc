@@ -87,17 +87,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         pkt->pack();
         pkt->getName();
         pkt->getName(fdp->ConsumeIntegral<uint8_t>());
-        pkt->getLabel();           
+        pkt->getLabel();
         pkt->getMAC(fdp->ConsumeIntegral<uint16_t>());
     } catch (...) {}
 
     // OptionVendorClass parsing
     try {
-        OptionBuffer buf(data, data + size);
+        OptionBuffer optbuf(data, data + size);
         OptionVendorClassPtr vendor_class;
         vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V4,
-            buf.begin(),
-            buf.end()));
+            optbuf.begin(),
+            optbuf.end()));
     }catch(...){
     }
 
@@ -113,24 +113,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         pkt->pack();
         pkt->getName();
         pkt->getName(fdp->ConsumeIntegral<uint8_t>());
-        pkt->getLabel();   
+        pkt->getLabel();
         pkt->getMAC(fdp->ConsumeIntegral<uint16_t>());
     } catch (...) {}
 
     try {
         // Protocol parsing
-        InputBuffer buf(data, size);
+        InputBuffer inbuf(data, size);
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
-        decodeEthernetHeader(buf, pkt);
-        decodeIpUdpHeader(buf, pkt);
+        decodeEthernetHeader(inbuf, pkt);
+        decodeIpUdpHeader(inbuf, pkt);
         calcChecksum(data, size, fdp->ConsumeIntegral<uint32_t>());
     } catch (...) {}
 
     // OptionVendor parsing
     try{
-        OptionBuffer buf(data, data + size);
+        OptionBuffer outbuf(data, data + size);
         OptionVendorPtr vendor;
-        vendor.reset(new OptionVendor(Option::V4, buf.begin() + 2, buf.end()));
+        vendor.reset(new OptionVendor(Option::V4, outbuf.begin() + 2, outbuf.end()));
         OutputBuffer output(0);
         vendor->pack(output);
     }

@@ -44,14 +44,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
 
     FuzzedDataProvider fdp(data, size);
-    
+
     // Get a choice for which fuzzing path to take
     uint8_t choice = fdp.ConsumeIntegral<uint8_t>();
-    
+
     // Reserve some data for different operations
     std::vector<uint8_t> wire_data = fdp.ConsumeBytes<uint8_t>(fdp.remaining_bytes() / 2);
     std::string string_data = fdp.ConsumeRemainingBytesAsString();
-    
+
     // Fuzz DNS Name parsing from string
     if (choice % 8 == 0 && !string_data.empty()) {
         try {
@@ -61,17 +61,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 std::string text = name.toText();
                 OutputBuffer buffer(0);
                 name.toWire(buffer);
-                
+
                 // Try splitting at different positions
                 if (name.getLabelCount() > 0) {
                     Name stripped = name.split(0);
                     Name reversed = name.reverse();
                 }
-                
+
                 // Try comparison operations
                 Name root = Name::ROOT_NAME();
                 name.compare(root);
-                
+
             } catch (const std::exception&) {
                 // Ignore exceptions from operations
             }
@@ -79,13 +79,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore exceptions from parsing
         }
     }
-    
+
     // Fuzz DNS Name parsing from wire format
     if (choice % 8 == 1 && !wire_data.empty()) {
         try {
             InputBuffer buffer(&wire_data[0], wire_data.size());
             Name name(buffer);
-            
+
             // Try operations on the parsed name
             try {
                 name.toText();
@@ -98,21 +98,21 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore exceptions from parsing
         }
     }
-    
+
     // Fuzz DNS Message parsing from wire
     if (choice % 8 == 2 && !wire_data.empty()) {
         try {
             InputBuffer buffer(&wire_data[0], wire_data.size());
             Message message(Message::PARSE);
             message.fromWire(buffer);
-            
+
             // Try various Message operations
             try {
                 message.getHeaderFlag(Message::HEADERFLAG_AA);
                 message.getRcode();
                 message.getQid();
                 message.getRRCount(Message::SECTION_ANSWER);
-                
+
                 // Try iterating through sections
                 for (int sec = Message::SECTION_QUESTION;
                      sec <= Message::SECTION_ADDITIONAL;
@@ -128,7 +128,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                         // Ignore iteration exceptions
                     }
                 }
-                
+
                 // Try rendering back to wire
                 MessageRenderer renderer;
                 try {
@@ -136,7 +136,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 } catch (const std::exception&) {
                     // Ignore rendering exceptions
                 }
-                
+
             } catch (const std::exception&) {
                 // Ignore operation exceptions
             }
@@ -144,19 +144,19 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore parsing exceptions
         }
     }
-    
+
     // Fuzz Question parsing
     if (choice % 8 == 3 && !wire_data.empty()) {
         try {
             InputBuffer buffer(&wire_data[0], wire_data.size());
             Question question(buffer);
-            
+
             try {
                 question.toText();
                 question.getName();
                 question.getType();
                 question.getClass();
-                
+
                 OutputBuffer out_buffer(0);
                 question.toWire(out_buffer);
             } catch (const std::exception&) {
@@ -166,32 +166,32 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore parsing exceptions
         }
     }
-    
+
     // Fuzz RRset operations
     if (choice % 8 == 4 && !string_data.empty() && !wire_data.empty()) {
         try {
             Name name(string_data);
-            RRsetPtr rrset = RRsetPtr(new RRset(name, RRClass::IN(), 
+            RRsetPtr rrset = RRsetPtr(new RRset(name, RRClass::IN(),
                                                  RRType::A(), RRTTL(3600)));
-            
+
             // Try parsing RDATA from wire
             try {
                 InputBuffer buffer(&wire_data[0], wire_data.size());
                 if (wire_data.size() >= 4) {
-                    rdata::ConstRdataPtr rdata = 
-                        rdata::createRdata(RRType::A(), RRClass::IN(), 
+                    rdata::ConstRdataPtr rdata =
+                        rdata::createRdata(RRType::A(), RRClass::IN(),
                                           buffer, wire_data.size());
                     rrset->addRdata(rdata);
                 }
             } catch (const std::exception&) {
                 // Ignore RDATA parsing exceptions
             }
-            
+
             // Try RRset operations
             try {
                 rrset->toText();
                 rrset->getRdataCount();
-                
+
                 OutputBuffer out_buffer(0);
                 rrset->toWire(out_buffer);
             } catch (const std::exception&) {
@@ -201,34 +201,34 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore exceptions
         }
     }
-    
+
     // Fuzz TSIG operations
     if (choice % 8 == 5 && !string_data.empty() && wire_data.size() >= 16) {
         try {
             // Try creating a TSIG key
             TSIGKey key(string_data + ":secret");
-            
+
             // Try creating TSIG RDATA and then a TSIG record
             try {
                 InputBuffer buffer(&wire_data[0], wire_data.size());
                 // Try to parse TSIG RDATA
-                rdata::ConstRdataPtr rdata = 
-                    rdata::createRdata(RRType::TSIG(), RRClass::ANY(), 
+                rdata::ConstRdataPtr rdata =
+                    rdata::createRdata(RRType::TSIG(), RRClass::ANY(),
                                       buffer, wire_data.size());
-                const rdata::any::TSIG& tsig_rdata = 
+                const rdata::any::TSIG& tsig_rdata =
                     dynamic_cast<const rdata::any::TSIG&>(*rdata);
-                
+
                 // Create a TSIGRecord
                 Name key_name(string_data);
                 TSIGRecord tsig(key_name, tsig_rdata);
                 tsig.toText();
-                
+
                 OutputBuffer out_buffer(0);
                 tsig.toWire(out_buffer);
             } catch (const std::exception&) {
                 // Ignore TSIG parsing exceptions
             }
-            
+
             // Try TSIG context operations (sign operation is public)
             try {
                 TSIGContext ctx(key);
@@ -243,24 +243,24 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore key creation exceptions
         }
     }
-    
+
     // Fuzz MasterLexer with string input
     if (choice % 8 == 6 && !string_data.empty()) {
         try {
             std::istringstream iss(string_data);
             MasterLexer lexer;
             lexer.pushSource(iss);
-            
+
             // Try tokenizing (loop until we hit EOF token)
             for (int i = 0; i < 100; ++i) {
                 try {
                     const MasterToken& token = lexer.getNextToken();
-                    
+
                     // Stop if we hit EOF
                     if (token.getType() == MasterToken::END_OF_FILE) {
                         break;
                     }
-                    
+
                     // Access token properties based on type
                     if (token.getType() == MasterToken::STRING ||
                         token.getType() == MasterToken::QSTRING) {
@@ -280,7 +280,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore lexer exceptions
         }
     }
-    
+
     // Fuzz Message rendering operations
     if (choice % 8 == 7 && !string_data.empty()) {
         try {
@@ -288,25 +288,25 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             message.setQid(fdp.ConsumeIntegral<uint16_t>());
             message.setOpcode(Opcode::QUERY());
             message.setRcode(Rcode::NOERROR());
-            
+
             // Try setting various flags
-            message.setHeaderFlag(Message::HEADERFLAG_AA, 
+            message.setHeaderFlag(Message::HEADERFLAG_AA,
                                  fdp.ConsumeBool());
-            message.setHeaderFlag(Message::HEADERFLAG_RD, 
+            message.setHeaderFlag(Message::HEADERFLAG_RD,
                                  fdp.ConsumeBool());
-            message.setHeaderFlag(Message::HEADERFLAG_RA, 
+            message.setHeaderFlag(Message::HEADERFLAG_RA,
                                  fdp.ConsumeBool());
-            
+
             // Try adding a question
             try {
                 Name qname(string_data);
-                QuestionPtr question(new Question(qname, RRClass::IN(), 
+                QuestionPtr question(new Question(qname, RRClass::IN(),
                                                    RRType::A()));
                 message.addQuestion(question);
             } catch (const std::exception&) {
                 // Ignore question addition exceptions
             }
-            
+
             // Try rendering
             try {
                 MessageRenderer renderer;
@@ -318,6 +318,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             // Ignore message creation exceptions
         }
     }
-    
+
     return 0;
 }

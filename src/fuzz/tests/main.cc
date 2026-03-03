@@ -4,6 +4,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// This file should contain all the symbols which are added by OSS-Fuzz like the main function and the LLVMFuzzer.*
+// functions.
+
 #include <config.h>
 
 #include <exceptions/exceptions.h>
@@ -36,10 +39,10 @@ main(int, char* argv[]) {
 
     // Determine some paths.
     Path const this_binary(argv[0]);
-    string ancestor_path(this_binary.parentPath());
+    string const ancestor_path(this_binary.parentPath());
     string const filename(this_binary.filename());
     stringstream ss;
-    ss << ancestor_path << "/input/" << filename;
+    ss << ancestor_path << "/../corp";
     Path const p(ss.str());
 
     // Print start header.
@@ -53,6 +56,8 @@ main(int, char* argv[]) {
     string directory(p.str());
     if (exists(directory)) {
         // Recursively take all regular files as input.
+        // This means each fuzzing harness runs against each input even if the input is meant for a different fuzzing
+        // harness. A bit chaotic, but let us call it limited fuzzing.
         list<string> files;
 
         struct dirent *dp;

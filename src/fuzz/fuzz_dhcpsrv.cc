@@ -205,7 +205,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         hrp.parse(SubnetID(10), elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
         // Slient exceptions
-    }    
- 
+    }
+
     return 0;
 }

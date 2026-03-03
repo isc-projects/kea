@@ -22,14 +22,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
 
     FuzzedDataProvider fdp(data, size);
-    
+
     // Choose which encoding/decoding path to test
     uint8_t path = fdp.ConsumeIntegralInRange<uint8_t>(0, 11);
-    
+
     std::vector<uint8_t> binary_data;
     std::string encoded_str;
     std::vector<uint8_t> decoded_output;
-    
+
     switch (path) {
         case 0: {
             // Test Base64 encoding from binary data
@@ -44,7 +44,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 1: {
             // Test Base64 decoding from string
             try {
@@ -55,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 2: {
             // Test Base32Hex encoding from binary data
             try {
@@ -69,7 +69,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 3: {
             // Test Base32Hex decoding from string
             try {
@@ -80,7 +80,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 4: {
             // Test Base16 (hex) encoding from binary data
             try {
@@ -94,7 +94,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 5: {
             // Test Base16 (hex) decoding from string
             try {
@@ -105,7 +105,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 6: {
             // Test Base64 with various padding scenarios
             try {
@@ -119,7 +119,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 7: {
             // Test Base32Hex with various padding scenarios
             try {
@@ -134,7 +134,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 8: {
             // Test mixed case Base64 (should be case-sensitive)
             try {
@@ -151,7 +151,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 9: {
             // Test mixed case Base32Hex (case-insensitive)
             try {
@@ -168,7 +168,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 10: {
             // Test Base16 with mixed case (case-insensitive)
             try {
@@ -185,7 +185,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             }
             break;
         }
-        
+
         case 11: {
             // Test encoding/decoding with whitespace injection
             try {
@@ -197,7 +197,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     char ws = fdp.PickValueInArray({' ', '\t', '\n', '\r'});
                     test_str.insert(pos, 1, ws);
                 }
-                
+
                 // Try decoding with all encoders
                 try { decodeBase64(test_str, decoded_output); } catch (...) {}
                 try { decodeBase32Hex(test_str, decoded_output); } catch (...) {}
@@ -208,6 +208,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             break;
         }
     }
-    
+
     return 0;
 }

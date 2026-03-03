@@ -34,7 +34,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     std::string tsig_rdata_txt = fdp.ConsumeRandomLengthString(1024);
     std::string owner_txt = fdp.ConsumeRandomLengthString(128);
     const uint16_t qid = fdp.ConsumeIntegral<uint16_t>();
-    const bool do_chunked = fdp.ConsumeBool();
 
     // Target correct key sign and verify
     try {

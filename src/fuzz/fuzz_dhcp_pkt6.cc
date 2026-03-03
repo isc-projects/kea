@@ -84,11 +84,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // OptionVendor parsing
     try {
-        OptionBuffer buf(data, data + size);
+        OptionBuffer optbuf(data, data + size);
         OptionVendorClassPtr vendor_class;
         vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V6,
-            buf.begin(),
-            buf.end()));
+            optbuf.begin(),
+            optbuf.end()));
     }catch(...){}
 
     try {

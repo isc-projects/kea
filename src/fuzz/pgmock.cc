@@ -4,6 +4,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ////////////////////////////////////////////////////////////////////////////////
+
+#include <config.h>
+
 #include <fuzzer/FuzzedDataProvider.h>
 
 #include <cstdlib>
@@ -133,14 +136,14 @@ extern "C" {
         return const_cast<char*>("");
     }
 
-    PGresult* PQexec(PGconn* , const char* query) {
+    PGresult* PQexec(PGconn* , const char* /* query */) {
         if (g_fdp->ConsumeBool()) {
             return make_version_result();
         }
         return make_fuzz_result();
     }
 
-    PGresult* PQexecParams(PGconn*, const char* cmd, int, const void*,
+    PGresult* PQexecParams(PGconn*, const char* /* cmd */, int, const void*,
                            const char* const*, const int*, const int*, int) {
         if (g_fdp->ConsumeBool()) {
             return make_version_result();
@@ -152,7 +155,7 @@ extern "C" {
         return make_command_ok_result();
     }
 
-    PGresult* PQexecPrepared(PGconn*, const char* name, int, const char* const*,
+    PGresult* PQexecPrepared(PGconn*, const char* /* name */, int, const char* const*,
                              const int*, const int*, int) {
         if (g_fdp->ConsumeBool()) {
             return make_version_result();

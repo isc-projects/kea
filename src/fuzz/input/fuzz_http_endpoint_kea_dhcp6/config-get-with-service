@@ -1,4 +1,0 @@
-{
-  "command": "config-get",
-  "service": [ "dhcp6" ]
-}
