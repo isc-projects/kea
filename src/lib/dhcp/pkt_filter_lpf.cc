@@ -173,8 +173,15 @@ PktFilterLPF::openSocket(Iface& iface,
                   << " on the socket " << sock);
     }
 
-#ifdef SO_TIMESTAMP
     int enable = 1;
+    // Enable ancillary data to detect VLAN tagged packets.
+    if (setsockopt(sock, SOL_PACKET, PACKET_AUXDATA, &enable, sizeof(enable))) {
+        const char* errmsg = strerror(errno);
+        isc_throw(SocketConfigError, "Could not enable PACKET_AUXDATA for " << addr.toText()
+                  << ", error: " << errmsg);
+    }
+
+#ifdef SO_TIMESTAMP
     if (setsockopt(sock, SOL_SOCKET, SO_TIMESTAMP, &enable, sizeof(enable))) {
         const char* errmsg = strerror(errno);
         isc_throw(SocketConfigError, "Could not enable SO_TIMESTAMP for " << addr.toText()

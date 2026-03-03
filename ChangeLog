@@ -1,3 +1,8 @@
+2447.	[func]		razvan
+	When using raw sockets, Kea now properly handles VLAN
+	interfaces and VLAN tagged packets.
+	(Gitlab #1117, #1738, #3792)
+
 Kea 3.1.6 (development) released on February 25, 2026
 
 2446.	[sec]*		fdupont
