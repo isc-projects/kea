@@ -711,7 +711,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // with interface with 2 global addresses, we would bind 3 sockets
             // (one for link-local and two for global). That would result in
             // getting each message 3 times.
-            if (!addr.get().isV6LinkLocal()){
+            if (!addr.get().isV6LinkLocal()) {
                 continue;
             }
 
@@ -726,7 +726,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // the interface actually has opened sockets by checking the number
             // of sockets to be non zero.
             if (!skip_opened || !IfaceMgr::hasOpenSocket(addr) ||
-                !iface->getSockets().size()) {
+                iface->getSockets().size() <= iface->getUnicasts().size()) {
                 try {
                     // Pass a null pointer as an error handler to avoid
                     // suppressing an exception in a system-specific function.
