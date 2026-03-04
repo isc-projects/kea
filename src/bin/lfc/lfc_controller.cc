@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <cerrno>
+#include <sys/resource.h>
 
 using namespace std;
 using namespace isc::util;
@@ -102,6 +103,13 @@ LFCController::launch(int argc, char* argv[], const bool test_mode) {
         if (existing == 0) {
             pid_file.write();
         }
+
+        // Ask scheduling to not give too much resources to LFC.
+        // First parameter means to change only the process priority.
+        // Second parameter (0) means the calling process.
+        // Third parameter 4 is a bit below the default priority of 0 in
+        // a range of -20 (highest priority) and 19 or 20 (lowest priority).
+        static_cast<void>(setpriority(PRIO_PROCESS, 0, 4));
     } catch (const PIDFileError& pid_ex) {
         LOG_FATAL(lfc_logger, LFC_FAIL_PID_CREATE).arg(pid_ex.what());
         return;

@@ -13,7 +13,6 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception_ptr.hpp>
 #include <iostream>
-#include <sys/resource.h>
 
 using namespace std;
 using namespace isc::lfc;
@@ -29,13 +28,6 @@ int main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
     try {
-        // Ask scheduling to not give too much resources to LFC.
-        // First parameter means to change only the process priority.
-        // Second parameter (0) means the calling process.
-        // Third parameter 4 is a bit below the default priority of 0 in
-        // a range of -20 (highest priority) and 19 or 20 (lowest priority).
-        static_cast<void>(setpriority(PRIO_PROCESS, 0, 4));
-
         LFCController lfc_controller;
 
         // Launch the controller passing in command line arguments.
