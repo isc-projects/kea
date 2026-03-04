@@ -146,7 +146,8 @@ to the end of this list.
  - @b Description: this callout is executed when a subnet is being
    selected for the incoming packet. All parameters and addresses
    will be assigned from that subnet. A callout can select a
-   different subnet if it wishes so. The list of all subnets currently
+   different subnet if it wishes so but this subnet MUST be a configured
+   one e.g. returned by a get nmethod. The list of all subnets currently
    configured are provided as "subnet4collection". The list itself must
    not be modified.
 
