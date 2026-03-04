@@ -252,7 +252,6 @@ private:
 /// @brief Type representing the pointer to the @c Dhcpv4Exchange.
 typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
 
-
 /// @brief DHCPv4 server service.
 ///
 /// This singleton class represents DHCPv4 server. It contains all
@@ -700,6 +699,12 @@ protected:
     ///
     /// @return DHCPACK to be sent to the client.
     Pkt4Ptr processInform(Pkt4Ptr& inform, AllocEngine::ClientContext4Ptr& context);
+
+    /// @brief Return a NAK.
+    ///
+    /// Called when the query is in the REJECT class.
+    /// @param ex The exchange.
+    void reject(Dhcpv4Exchange& ex);
 
     /// @brief Build the configured option list
     ///

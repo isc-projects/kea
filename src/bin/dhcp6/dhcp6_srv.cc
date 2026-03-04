@@ -2844,7 +2844,7 @@ Dhcpv6Srv::assignIA_PD(const Pkt6Ptr& query,
     // (compare to the same status code, but different wording below)
     if (!subnet) {
 
-        // Insert status code NoAddrsAvail.
+        // Insert status code NoProfixAvail.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
                                            "Sorry, no subnet available."));
         return (ia_rsp);
@@ -3845,6 +3845,53 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     return (ia_rsp);
 }
 
+void
+Dhcpv6Srv::reject(const Pkt6Ptr& query, Pkt6Ptr& answer) {
+    // Handle IAs.
+    for (auto const& opt : query->options_) {
+        switch (opt.second->getType()) {
+        case D6O_IA_NA: {
+            OptionPtr answer_opt = rejectIA_NA(query,
+                                               boost::dynamic_pointer_cast<
+                                               Option6IA>(opt.second));
+            if (answer_opt) {
+                answer->addOption(answer_opt);
+            }
+            break;
+        }
+        case D6O_IA_PD: {
+            OptionPtr answer_opt = rejectIA_PD(query,
+                                               boost::dynamic_pointer_cast<
+                                               Option6IA>(opt.second));
+            if (answer_opt) {
+                answer->addOption(answer_opt);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
+OptionPtr
+Dhcpv6Srv::rejectIA_NA(const Pkt6Ptr& query, Option6IAPtr ia) {
+    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+    // Insert status code NoAddrsAvail.
+    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
+                                       "Server rejected this request"));
+    return (ia_rsp);
+}
+
+OptionPtr
+Dhcpv6Srv::rejectIA_PD(const Pkt6Ptr& query, Option6IAPtr ia) {
+    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+    // Insert status code NoPrefixAvail.
+    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
+                                       "Server rejected this request"));
+    return (ia_rsp);
+}
+
 Pkt6Ptr
 Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
 
@@ -3881,10 +3928,11 @@ Dhcpv6Srv::processSolicit(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(solicit, response, ctx);
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (solicit->inClass("REJECT")) {
+        reject(solicit, response);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
-
         assignLeases(solicit, response, ctx);
     } else {
         assignLeases(solicit, response, ctx);
@@ -3925,10 +3973,11 @@ Dhcpv6Srv::processRequest(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(request, reply, ctx);
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (request->inClass("REJECT")) {
+        reject(request, reply);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
-
         assignLeases(request, reply, ctx);
     } else {
         assignLeases(request, reply, ctx);
@@ -3965,7 +4014,9 @@ Dhcpv6Srv::processRenew(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(renew, reply, ctx);
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (renew->inClass("REJECT")) {
+        reject(renew, reply);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
 
@@ -4005,7 +4056,9 @@ Dhcpv6Srv::processRebind(AllocEngine::ClientContext6& ctx) {
 
     processClientFqdn(rebind, reply, ctx);
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (rebind->inClass("REJECT")) {
+        reject(rebind, reply);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
 

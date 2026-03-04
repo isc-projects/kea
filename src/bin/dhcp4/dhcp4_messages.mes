@@ -803,6 +803,12 @@ identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
 
+% DHCP4_PACKET_NAK_0005 nacked as member of the special class 'REJECT': %1, %2
+Logged at debug log level 15.
+This message indicates that the server returned a DHCPNAK because the
+incoming query was classified into the special class 'REJECT'. The packet
+details are displayed.
+
 % DHCP4_PACKET_OPTIONS_SKIPPED %1: An error unpacking an option, caused subsequent options to be skipped: %2
 Logged at debug log level 50.
 This debug message is issued when an option failed to unpack correctly, making it

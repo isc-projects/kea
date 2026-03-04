@@ -3067,6 +3067,17 @@ Dhcpv4Srv::assignZero(ConstSubnet4Ptr& subnet,
 }
 
 void
+Dhcpv4Srv::reject(Dhcpv4Exchange& ex) {
+    Pkt4Ptr query = ex.getQuery();
+    Pkt4Ptr resp = ex.getResponse();
+    resp->setType(DHCPNAK);
+    resp->setYiaddr(IOAddress::IPV4_ZERO_ADDRESS());
+    LOG_DEBUG(packet4_logger, DBGLVL_PKT_HANDLING, DHCP4_PACKET_NAK_0005)
+        .arg(query->getLabel())
+        .arg(query->toText());
+}
+
+void
 Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     // Get the pointers to the query and the response messages.
     Pkt4Ptr query = ex.getQuery();
@@ -3973,10 +3984,11 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover, AllocEngine::ClientContext4Ptr& co
         return (Pkt4Ptr());
     }
 
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (discover->inClass("REJECT")) {
+        reject(ex);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
-
         assignLease(ex);
     } else {
         assignLease(ex);
@@ -4055,10 +4067,11 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request, AllocEngine::ClientContext4Ptr& cont
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
     // or even rebinding.
-    if (MultiThreadingMgr::instance().getMode()) {
+    if (request->inClass("REJECT")) {
+        reject(ex);
+    } else if (MultiThreadingMgr::instance().getMode()) {
         // The lease reclamation cannot run at the same time.
         ReadLockGuard share(alloc_engine_->getReadWriteMutex());
-
         assignLease(ex);
     } else {
         assignLease(ex);

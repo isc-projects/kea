@@ -639,6 +639,27 @@ protected:
                            boost::shared_ptr<Option6IA> ia,
                            Lease6Ptr& old_lease);
 
+    /// @brief Reject query.
+    ///
+    /// Called when the query is in the REJECT class.
+    /// @param query client's message
+    /// @param answer server's message
+    void reject(const Pkt6Ptr& query, Pkt6Ptr& answer);
+
+    /// @brief Reject IA_NA.
+    ///
+    /// @param query client's message
+    /// @param ia pointer to client's IA_NA option
+    /// @return IA_NA option
+    OptionPtr rejectIA_NA(const isc::dhcp::Pkt6Ptr& query, Option6IAPtr ia);
+
+    /// @brief Reject IA_PD.
+    ///
+    /// @param query client's message
+    /// @param ia pointer to client's IA_PD option
+    /// @return IA_PD option
+    OptionPtr rejectIA_PD(const isc::dhcp::Pkt6Ptr& query, Option6IAPtr ia);
+
     /// @brief Copies required options from client message to server answer.
     ///
     /// Copies options that must appear in any server response (ADVERTISE, REPLY)

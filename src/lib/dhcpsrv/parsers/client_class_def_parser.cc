@@ -297,8 +297,8 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
         }
     }
 
-    // Sanity checks on DROP
-    if (name == "DROP") {
+    // Sanity checks on DROP and REJECT
+    if ((name == "DROP") || (name == "REJECT")) {
         if (additional) {
             isc_throw(DhcpConfigError, "special class '" << name
                       << "' only-in-additional-list flag must be false");

@@ -1980,6 +1980,40 @@ TEST_F(ClientClassDefListParserTest, dropCheckError) {
     EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
 }
 
+// Verifies that the special REJECT class can't be required.
+TEST_F(ClientClassDefListParserTest, rejectCheckError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"REJECT\", \n"
+        "       \"test\": \"option[123].text == 'abc'\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"REJECT\", \n"
+        "       \"only-in-additional-list\": true \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET), DhcpConfigError);
+
+    // This constraint was relaxed in #1815.
+    cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"REJECT\", \n"
+        "       \"test\": \"member('KNOWN')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+}
+
 // Verify the ability to configure valid lifetime triplet.
 TEST_F(ClientClassDefParserTest, validLifetimeTests) {
 
