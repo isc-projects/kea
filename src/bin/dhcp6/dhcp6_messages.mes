@@ -775,6 +775,12 @@ The IPv6 DHCP server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
+% DHCP6_PACKET_REJECT_CLASS assignment rejected as member of the special class 'REJECT': %1 %2
+Logged at debug log level 15.
+This debug message is emitted when an incoming packet was classified
+into the special class 'REJECT' and no resource was assigned.
+The packet details are displayed.
+
 % DHCP6_PACKET_SEND %1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8
 An INFO message noting that the server is attempting to send the
 specified type of packet. The arguments specify the client

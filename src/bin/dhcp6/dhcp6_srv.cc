@@ -3847,6 +3847,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
 void
 Dhcpv6Srv::reject(const Pkt6Ptr& query, Pkt6Ptr& answer) {
+    LOG_DEBUG(packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_REJECT_CLASS)
+        .arg(query->makeLabel(query->getClientId(), 0))
+        .arg(query->toText());
     // Handle IAs.
     for (auto const& opt : query->options_) {
         switch (opt.second->getType()) {

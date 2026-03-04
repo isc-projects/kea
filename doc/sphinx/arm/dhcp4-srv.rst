@@ -3346,6 +3346,16 @@ member of the class.
    Care should be taken with client classification, as it is easy for
    clients that do not meet class criteria to be denied all service.
 
+
+.. note::
+
+   Kea 3.1.7 added another special class ``REJECT`` which works in a
+   similar way to the ``DROP`` class but instead to drop the incoming
+   query on the floor it skips the lease allocation part so the
+   response to a DHCPDISCOVER or a DHCPREQUEST query should be a
+   DHCPNAK.
+
+
 Setting Fixed Fields in Classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
