@@ -3351,9 +3351,9 @@ member of the class.
 
    Kea 3.1.7 added another special class ``REJECT`` which works in a
    similar way to the ``DROP`` class but instead to drop the incoming
-   query on the floor it skips the lease allocation part so the
-   response to a DHCPDISCOVER or a DHCPREQUEST query should be a
-   DHCPNAK.
+   query on the floor it skips the lease allocation part so no
+   DHCPOFFER response is sent to a DHCPDISCOVER query, and
+   the response to a DHCPREQUEST query should be a DHCPNAK.
 
 
 Setting Fixed Fields in Classification

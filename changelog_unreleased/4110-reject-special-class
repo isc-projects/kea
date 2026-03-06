@@ -1,6 +1,7 @@
 [func]		fdupont
 	Added a new special client class "REJECT" which makes
 	incoming requests in this class to skip the resource
-	allocation part in processing e.g. return DHCPNAK by
-	the DHCPv4 server.
+	allocation part in processing e.g. return DHCPNAK on
+	DHCPREQUEST by the DHCPv4 server, or put status code
+	NoAddrsAvail in all ia-na options by the DHCPv6 server.
 	(Gitlab #4110)

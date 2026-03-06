@@ -3881,7 +3881,7 @@ OptionPtr
 Dhcpv6Srv::rejectIA_NA(const Pkt6Ptr& query, Option6IAPtr ia) {
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
     // Insert status code NoAddrsAvail.
-    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
+    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
                                        "Server rejected this request"));
     return (ia_rsp);
 }
@@ -3890,7 +3890,7 @@ OptionPtr
 Dhcpv6Srv::rejectIA_PD(const Pkt6Ptr& query, Option6IAPtr ia) {
     Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
     // Insert status code NoPrefixAvail.
-    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoAddrsAvail,
+    ia_rsp->addOption(createStatusCode(*query, *ia_rsp, STATUS_NoPrefixAvail,
                                        "Server rejected this request"));
     return (ia_rsp);
 }

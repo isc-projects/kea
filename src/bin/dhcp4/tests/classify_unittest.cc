@@ -502,6 +502,7 @@ const char* CONFIGS[] = {
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"reservations\": [ {"
         "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\""
+        "    } ]"
         " } ]"
     "}",
 
@@ -2830,6 +2831,91 @@ TEST_F(ClassifyTest, rejectClassRequest) {
     EXPECT_EQ(DHCPNAK, type);
     addr = client2.getContext().response_->getYiaddr();
     EXPECT_EQ("0.0.0.0", addr.toText());
+}
+
+// This test checks the handling for the REJECT special class at the host
+// reservation classification point with KNOWN / UNKNOWN.
+TEST_F(ClassifyTest, rejectClassUnknown) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[11], *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Reservation match: no reject.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with another HW address,
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+    client2.setHWAddress("aa:bb:cc:dd:ee:fe");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // No reservation, rejected.
+    EXPECT_FALSE(client2.getContext().response_);
+}
+
+// This test checks the handling for the REJECT special class at the host
+// reservation classification point with a reserved class.
+TEST_F(ClassifyTest, rejectClassReservedClass) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[12], *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Reservation match: no reject.
+    EXPECT_TRUE(client.getContext().response_);
+
+    // Retry with another HW address,
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+    client2.setHWAddress("aa:bb:cc:dd:ee:fe");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // No reservation, rejected.
+    EXPECT_FALSE(client2.getContext().response_);
+}
+
+// This test checks the early global reservations lookup for rejecting.
+TEST_F(ClassifyTest, earlyReject) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[13], *client.getServer());
+
+    // Set the HW address to the reservation.
+    client.setHWAddress("aa:bb:cc:dd:ee:ff");
+
+    // Send the discover.
+    client.doDiscover();
+
+    // Reservation match: reject.
+    EXPECT_FALSE(client.getContext().response_);
+
+    // Retry with another HW address,
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+
+    // Set the HW address to another value.
+    client2.setHWAddress("aa:bb:cc:01:ee:ff");
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Not matching so not rejected.
+    EXPECT_TRUE(client2.getContext().response_);
 }
 
 } // end of anonymous namespace

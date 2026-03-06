@@ -3202,7 +3202,7 @@ member of the class.
    Kea 3.1.7 added another special class ``REJECT`` which works in a
    similar way to the ``DROP`` class but instead to drop the incoming
    query on the floor it skips the lease allocation part so the IAs in
-   the response will get NoAddrsAvail or NoPrefixAvail error codes.
+   the response will get NoAddrsAvail or NoPrefixAvail status codes.
 
 
 Defining and Using Custom Classes
