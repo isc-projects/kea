@@ -93,8 +93,6 @@ namespace {
 ///   - the following class defined: not member('KNOWN'), DROP
 ///     (the not member also verifies that the DROP class is set only
 ///      after the host reservation lookup)
-/// @note the reservation includes a hostname because raw reservations are
-/// not yet allowed.
 ///
 /// - Configuration 7:
 ///   - Used for the DROP class and reservation class.
@@ -124,6 +122,42 @@ namespace {
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
 ///     setting the DROP class
+///
+/// - Configuration 10:
+///   - Used for the REJECT class
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - the following class defined: option[93].hex == 0x0009, REJECT
+///
+/// - Configuration 11:
+///   - Used for the REJECT class and reservation existence.
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
+///   - the following class defined: not member('KNOWN'), REJECT
+///     (the not member also verifies that the REJECT class is set only
+///      after the host reservation lookup)
+///
+/// - Configuration 12:
+///   - Used for the REJECT class and reservation class.
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
+///     setting the allowed class
+///   - the following classes defined:
+///     - allowed
+///     - member('KNOWN') or member('UNKNOWN'), t
+///     - not member('allowed') and member('t'), REJECT
+///     The function of the always true 't' class is to move the REJECT
+///     evaluation to the classification point after the host reservation
+///     lookup, i.e. indirect KNOWN / UNKNOWN dependency.
+///
+/// - Configuration 13:
+///   - Used for the early global reservations lookup / drop.
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - 1 reservation for HW address 'aa:bb:cc:dd:ee:ff'
+///     setting the REJECT class
 ///
 const char* CONFIGS[] = {
     // Configuration 0
@@ -357,8 +391,8 @@ const char* CONFIGS[] = {
         "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"reservations\": [ {"
-        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
-        "        \"hostname\": \"allowed\" } ]"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\""
+        "    } ]"
         " } ]"
     "}",
 
@@ -433,6 +467,85 @@ const char* CONFIGS[] = {
         "\"reservations\": [ {"
         "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
         "    \"client-classes\": [ \"DROP\" ] } ]"
+    "}",
+
+    // Configuration 10
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"REJECT\","
+        "   \"test\": \"option[93].hex == 0x0009\""
+        "}],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]"
+        " } ]"
+    "}",
+
+    // Configuration 11
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"REJECT\","
+        "   \"test\": \"not member('KNOWN')\""
+        "}],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ {"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\""
+        " } ]"
+    "}",
+
+    // Configuration 12
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "{"
+        "   \"name\": \"allowed\""
+        "},"
+        "{"
+        "   \"name\": \"t\","
+        "   \"test\": \"member('KNOWN') or member('UNKNOWN')\""
+        "},"
+        "{"
+        "   \"name\": \"REJECT\","
+        "   \"test\": \"not member('allowed') and member('t')\""
+        "}],"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"reservations\": [ {"
+        "        \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "        \"client-classes\": [ \"allowed\" ] } ]"
+        " } ]"
+    "}",
+
+    // Configuration 13
+    "{ \"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"early-global-reservations-lookup\": true,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"interface\": \"eth0\","
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ] } ],"
+        "\"reservations\": [ {"
+        "    \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "    \"client-classes\": [ \"REJECT\" ] } ]"
     "}",
 
 };
@@ -2645,6 +2758,78 @@ TEST_F(ClassifyTest, templateDependOnKnown) {
     ASSERT_TRUE(response);
     EXPECT_EQ(static_cast<int>(response->getType()), DHCPOFFER);
     EXPECT_EQ(response->getYiaddr(), IOAddress("192.0.2.1"));
+}
+
+// This test checks the handling for the REJECT special class in a Solicit.
+TEST_F(ClassifyTest, rejectClassSolicit) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[10], *client.getServer());
+
+    // Send the discover.
+    client.doDiscover();
+
+    // No option: OFFER.
+    ASSERT_TRUE(client.getContext().response_);
+    int type = client.getContext().response_->getType();
+    EXPECT_EQ(DHCPOFFER, type);
+    IOAddress addr = client.getContext().response_->getYiaddr();
+    EXPECT_EQ("10.0.0.10", addr.toText());
+
+    // Retry with an option matching the REJECT class.
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+
+    // Add the pxe option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client2.addExtraOption(pxe);
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Option: no offer.
+    EXPECT_FALSE(client2.getContext().response_);
+}
+
+// This test checks the handling for the REJECT special class in a Request.
+TEST_F(ClassifyTest, rejectClassRequest) {
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[10], *client.getServer());
+
+    // Send the discover.
+    client.doDiscover();
+
+    // send the request.
+    client.doRequest();
+
+    // No option: ACK.
+    ASSERT_TRUE(client.getContext().response_);
+    int type = client.getContext().response_->getType();
+    EXPECT_EQ(DHCPACK, type);
+    IOAddress addr = client.getContext().response_->getYiaddr();
+    EXPECT_EQ("10.0.0.10", addr.toText());
+
+    // Retry with an option matching the REJECT class.
+    Dhcp4Client client2(srv_, Dhcp4Client::SELECTING);
+
+    // Send the discover.
+    client2.doDiscover();
+
+    // Add the pxe option.
+    OptionPtr pxe(new OptionInt<uint16_t>(Option::V4, 93, 0x0009));
+    client2.addExtraOption(pxe);
+
+    // Send the request.
+    client2.doRequest();
+
+    // Option: no offer.
+    ASSERT_TRUE(client2.getContext().response_);
+    type = client2.getContext().response_->getType();
+    EXPECT_EQ(DHCPNAK, type);
+    addr = client2.getContext().response_->getYiaddr();
+    EXPECT_EQ("0.0.0.0", addr.toText());
 }
 
 } // end of anonymous namespace

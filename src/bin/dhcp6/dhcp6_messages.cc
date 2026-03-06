@@ -122,6 +122,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN = "DHCP
 extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL = "DHCP6_PACKET_QUEUE_FULL";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED = "DHCP6_PACKET_RECEIVED";
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL = "DHCP6_PACKET_RECEIVE_FAIL";
+extern const isc::log::MessageID DHCP6_PACKET_REJECT_CLASS = "DHCP6_PACKET_REJECT_CLASS";
 extern const isc::log::MessageID DHCP6_PACKET_SEND = "DHCP6_PACKET_SEND";
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL = "DHCP6_PACKET_SEND_FAIL";
 extern const isc::log::MessageID DHCP6_PACK_FAIL = "DHCP6_PACK_FAIL";
@@ -303,6 +304,7 @@ const char* values[] = {
     "DHCP6_PACKET_QUEUE_FULL", "multi-threading packet queue is full",
     "DHCP6_PACKET_RECEIVED", "%1: %2 (type %3) received from %4 to %5 on interface %6",
     "DHCP6_PACKET_RECEIVE_FAIL", "error on attempt to receive packet: %1",
+    "DHCP6_PACKET_REJECT_CLASS", "assignment rejected as member of the special class 'REJECT': %1 %2",
     "DHCP6_PACKET_SEND", "%1: trying to send packet %2 (type %3) from [%4]:%5 to [%6]:%7 on interface %8",
     "DHCP6_PACKET_SEND_FAIL", "%1: failed to send DHCPv6 packet: %2",
     "DHCP6_PACK_FAIL", "%1: failed to assemble response correctly: %2",

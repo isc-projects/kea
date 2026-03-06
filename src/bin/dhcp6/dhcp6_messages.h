@@ -123,6 +123,7 @@ extern const isc::log::MessageID DHCP6_PACKET_PROCESS_STD_EXCEPTION_MAIN;
 extern const isc::log::MessageID DHCP6_PACKET_QUEUE_FULL;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVED;
 extern const isc::log::MessageID DHCP6_PACKET_RECEIVE_FAIL;
+extern const isc::log::MessageID DHCP6_PACKET_REJECT_CLASS;
 extern const isc::log::MessageID DHCP6_PACKET_SEND;
 extern const isc::log::MessageID DHCP6_PACKET_SEND_FAIL;
 extern const isc::log::MessageID DHCP6_PACK_FAIL;
