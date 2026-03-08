@@ -499,49 +499,47 @@ if CRYPTO_DEP.name() == botan.name()
     endif
 endif
 
-result = cpp.run(
+result = cpp.links(
     fs.read('compiler-checks/have-optreset.cc'),
     name: 'HAVE_OPTRESET',
 )
-conf_data.set('HAVE_OPTRESET', result.returncode() == 0)
+conf_data.set('HAVE_OPTRESET', result)
 
-result = cpp.run(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
-conf_data.set('HAVE_SA_LEN', result.returncode() == 0)
+result = cpp.compiles(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
+conf_data.set('HAVE_SA_LEN', result)
 
-result = cpp.run(
+result = cpp.links(
     fs.read('compiler-checks/log4cplus-initializer.cc'),
     name: 'LOG4CPLUS_INITIALIZER_H',
     dependencies: [LOG4CPLUS_DEP],
 )
-conf_data.set('LOG4CPLUS_INITIALIZER_H', result.returncode() == 0)
+conf_data.set('LOG4CPLUS_INITIALIZER_H', result)
 
 if MYSQL_DEP.found()
-    result = cpp.run(
+    result = cpp.compiles(
         fs.read('compiler-checks/mysql-my-bool.cc'),
         name: 'MYSQL_MY_BOOL',
         dependencies: [MYSQL_DEP],
     )
-    conf_data.set('HAVE_MYSQL_MY_BOOL', result.returncode() == 0)
+    conf_data.set('HAVE_MYSQL_MY_BOOL', result)
 
-    result = cpp.run(
+    result = cpp.compiles(
         fs.read('compiler-checks/mysql-get-option.cc'),
         name: 'HAVE_MYSQL_GET_OPTION',
         dependencies: [MYSQL_DEP],
     )
-    conf_data.set('HAVE_MYSQL_GET_OPTION', result.returncode() == 0)
+    conf_data.set('HAVE_MYSQL_GET_OPTION', result)
 endif
 
-result = cpp.run(
-    fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
-    name: 'FUZZING_WITH_CLUSTERFUZZLITE',
-)
-FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
-
-have_afl = false
-result = cpp.run(fs.read('compiler-checks/have-afl.cc'), name: 'HAVE_AFL')
-if result.returncode() == 0
-    have_afl = true
+if FUZZ_OPT.enabled()
+    result = cpp.run(
+        fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
+        name: 'FUZZING_WITH_CLUSTERFUZZLITE',
+    )
+    FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
 endif
+
+have_afl = cpp.has_define('__AFL_COMPILER')
 conf_data.set('HAVE_AFL', have_afl)
 
 if GTEST_DEP.found()
@@ -550,22 +548,22 @@ if GTEST_DEP.found()
     if GTEST_DEP.type_name() == 'internal'
         conf_data.set('HAVE_CREATE_UNIFIED_DIFF', true)
     else
-        result = cpp.run(
+        result = cpp.compiles(
             fs.read('compiler-checks/have-create-unified-diff.cc'),
             name: 'HAVE_CREATE_UNIFIED_DIFF',
             dependencies: [GTEST_DEP],
         )
-        conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result.returncode() == 0)
+        conf_data.set('HAVE_CREATE_UNIFIED_DIFF', result)
     endif
 endif
 
 if KRB5_DEP.found()
-    result = cpp.run(
+    result = cpp.links(
         fs.read('compiler-checks/have-gss-str-to-oid.cc'),
         name: 'HAVE_GSS_STR_TO_OID',
         dependencies: [KRB5_DEP],
     )
-    conf_data.set('HAVE_GSS_STR_TO_OID', result.returncode() == 0)
+    conf_data.set('HAVE_GSS_STR_TO_OID', result)
 endif
 
 #### Other checks.
@@ -779,13 +777,12 @@ report_conf_data.set('LD_ARGS', ' '.join(link_args))
 report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
 report_conf_data.set('PYTHON_VERSION', PYTHON.version())
 report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
-result = cpp.run(
-    fs.read('compiler-checks/get-boost-version.cc'),
+result = cpp.get_define('BOOST_LIB_VERSION',
     dependencies: [boost_dep, threads_dep],
-    name: 'Get Boost version',
+    prefix: '#include <boost/version.hpp>',
 )
-if result.returncode() == 0
-    report_conf_data.set('BOOST_VERSION', result.stdout().strip())
+if result != ''
+    report_conf_data.set('BOOST_VERSION', result.strip())
 else
     report_conf_data.set('BOOST_VERSION', 'unknown version')
 endif
@@ -809,13 +806,13 @@ if CRYPTO_DEP.name() == botan.name()
 elif CRYPTO_DEP.name() == openssl.name()
     report_conf_data.set('CRYPTO_NAME', 'OpenSSL')
     report_conf_data.set('SPACES', '              ')
-    result = cpp.run(
-        fs.read('compiler-checks/get-openssl-version.cc'),
-        name: 'Get OpenSSL version',
+    result = cpp.get_define(
+        'OPENSSL_VERSION_TEXT',
         dependencies: [CRYPTO_DEP],
+        prefix: '#include <openssl/opensslv.h>',
     )
-    if result.returncode() == 0
-        version = result.stdout().strip()
+    if result != ''
+        version = result.strip()
     else
         version = openssl.version()
     endif
@@ -824,13 +821,13 @@ elif CRYPTO_DEP.name() == openssl.name()
     endif
     report_conf_data.set('CRYPTO_VERSION', version)
 endif
-result = cpp.run(
-    fs.read('compiler-checks/get-log4cplus-version.cc'),
-    name: 'Get Log4cplus version',
+result = cpp.get_define(
+    'LOG4CPLUS_VERSION_STR',
     dependencies: [LOG4CPLUS_DEP],
+    prefix: '#include <log4cplus/version.h>',
 )
-if result.returncode() == 0
-    version = result.stdout().strip()
+if result != ''
+    version = result.strip()
 else
     version = log4cplus.version()
 endif
