@@ -10,7 +10,7 @@
 # information regarding copyright ownership.
 
 # Require meson >= 0.64.0 for preserve_path arg in install_data.
-# Require meson >= 1.1.0 for meson.options file.
+# Require meson >= 1.3.0 for compiler.has_define().
 # bug_report is not yet supported by meson, its value will be
 # 'kea-dev@lists.isc.org'
 
@@ -18,7 +18,7 @@ project(
     'kea',
     'cpp',
     version: '3.1.9-git',
-    meson_version: '>=1.1.0',
+    meson_version: '>=1.3.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],
     default_options: [
@@ -386,15 +386,8 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 #### Compiler Checks
 
 # The required keyword in cpp.run() is an 1.5.0 feature.
-result = cpp.run(
-    fs.read('compiler-checks/get-cpp-standard.cc'),
-    name: 'Get cpp standard',
-)
-if result.returncode() == 0
-    cpp_standard = result.stdout().strip()
-else
-    error('C++ standard is unknown')
-endif
+
+cpp_standard = cpp.get_define('__cplusplus')
 message(f'Detected C++ standard (__cplusplus value) is @cpp_standard@.')
 cpp_std_opt = get_option('cpp_std')
 no_cpp_std_opt_msg = 'Please set a C++ standard by passing the -D cpp_std argument to meson.'
@@ -452,26 +445,27 @@ if CRYPTO_DEP.name() == botan.name() and cpp_standard.version_compare('<202000')
     error('\n'.join(msgs))
 endif
 
-result = cpp.run(
-    fs.read('compiler-checks/boost-has-threads.cc'),
+result = cpp.has_define(
+    'BOOST_HAS_THREADS',
     dependencies: [boost_dep, threads_dep],
-    name: 'BOOST_HAS_THREADS',
+    prefix: '#include <boost/config.hpp>',
 )
-if result.returncode() != 0
+if not result
     error('boost is not configured to use threads')
 endif
 
 if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
-    result = cpp.run(
-        fs.read('compiler-checks/boost-regex.cc'),
+   result = cpp.has_define(
+       'BOOST_RE_REGEX_H',
         dependencies: [boost_dep, threads_dep],
-        name: 'GET_SYSTEM_VS_BOOST_REGEX_HEADER',
+        prefix: '#include <regex.h>',
     )
-    if result.returncode() != 0
+    if result
         error('boost/regex.h is used in place of system regex.h')
     endif
 endif
 
+# Rewrite this one as it does not work when cross compiling.
 result = cpp.run(
     fs.read('compiler-checks/chrono-same-duration.cc'),
     name: 'CHRONO_SAME_DURATION',
@@ -479,28 +473,28 @@ result = cpp.run(
 conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
 
 if CRYPTO_DEP.name() == openssl.name()
-    result1 = cpp.run(
+    result1 = cpp.compiles(
         fs.read('compiler-checks/have-generic-tls-method.cc'),
         name: 'HAVE_GENERIC_TLS_METHOD',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    result2 = cpp.run(
+    result2 = cpp.compiles(
         fs.read('compiler-checks/stream-truncated-error.cc'),
         name: 'HAVE_STREAM_TRUNCATED_ERROR',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    if result1.returncode() != 0 or result2.returncode() != 0
+    if not result1 or not result2
         error('Boost TLS support broken.')
     endif
 endif
 
 if CRYPTO_DEP.name() == botan.name()
-    result = cpp.run(
+    result = cpp.compiles(
         fs.read('compiler-checks/botan-hash.cc'),
         name: 'CHECK_BOTAN_LIBRARY',
         dependencies: [boost_dep, CRYPTO_DEP, threads_dep],
     )
-    if result.returncode() != 0
+    if not result
         error('Botan library does not work.')
     endif
 endif
