@@ -385,8 +385,6 @@ conf_data.set('HAVE_PGSQL', POSTGRESQL_DEP.found())
 
 #### Compiler Checks
 
-# The required keyword in cpp.run() is an 1.5.0 feature.
-
 cpp_standard = cpp.get_define('__cplusplus')
 message(f'Detected C++ standard (__cplusplus value) is @cpp_standard@.')
 cpp_std_opt = get_option('cpp_std')
@@ -405,12 +403,12 @@ if cpp_standard.version_compare('<201100')
     error('\n'.join(msgs))
 endif
 if cpp_standard.version_compare('<201400')
-    result = cpp.run(
+    result = cpp.compiles(
         fs.read('compiler-checks/boost-math-cpp14.cc'),
         name: 'BOOST_MATH_REQUIRES_CPP14',
         dependencies: [boost_dep, threads_dep],
     )
-    if result.returncode() != 0
+    if not result
         msgs = ['Boost Math requires at least C++14.']
         if cpp_std_opt == 'none'
             msgs += no_cpp_std_opt_msg
@@ -455,8 +453,8 @@ if not result
 endif
 
 if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
-   result = cpp.has_define(
-       'BOOST_RE_REGEX_H',
+    result = cpp.has_define(
+        'BOOST_RE_REGEX_H',
         dependencies: [boost_dep, threads_dep],
         prefix: '#include <regex.h>',
     )
@@ -465,12 +463,11 @@ if cpp.has_header('boost/regex.h', dependencies: [boost_dep], required: false)
     endif
 endif
 
-# Rewrite this one as it does not work when cross compiling.
-result = cpp.run(
+result = cpp.compiles(
     fs.read('compiler-checks/chrono-same-duration.cc'),
     name: 'CHRONO_SAME_DURATION',
 )
-conf_data.set('CHRONO_SAME_DURATION', result.returncode() == 0)
+conf_data.set('CHRONO_SAME_DURATION', result)
 
 if CRYPTO_DEP.name() == openssl.name()
     result1 = cpp.compiles(
@@ -505,7 +502,10 @@ result = cpp.links(
 )
 conf_data.set('HAVE_OPTRESET', result)
 
-result = cpp.compiles(fs.read('compiler-checks/have-sa-len.cc'), name: 'HAVE_SA_LEN')
+result = cpp.compiles(
+    fs.read('compiler-checks/have-sa-len.cc'),
+    name: 'HAVE_SA_LEN',
+)
 conf_data.set('HAVE_SA_LEN', result)
 
 result = cpp.links(
@@ -777,7 +777,8 @@ report_conf_data.set('LD_ARGS', ' '.join(link_args))
 report_conf_data.set('PYTHON_PATH', PYTHON.full_path())
 report_conf_data.set('PYTHON_VERSION', PYTHON.version())
 report_conf_data.set('PKGPYTHONDIR', PKGPYTHONDIR)
-result = cpp.get_define('BOOST_LIB_VERSION',
+result = cpp.get_define(
+    'BOOST_LIB_VERSION',
     dependencies: [boost_dep, threads_dep],
     prefix: '#include <boost/version.hpp>',
 )
