@@ -1,3 +1,8 @@
+2372.	[sec]		razvan
+	Restrict number of recursive calls when parsing config.
+	CVE:2026-3608
+	(Gitlab #4391, #4275, #4288)
+
 Kea 2.6.4 (stable) released on July 16, 2025
 
 2271.	[build]		andrei
