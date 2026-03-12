@@ -609,3 +609,22 @@ TEST_F(CommandMgrTest, groupWritable) {
     mode_t perms = file::getPermissions(socket);
     EXPECT_EQ(S_IWGRP, perms & S_IWGRP);
 }
+
+// This test verifies that removing the group execute on the parent directory
+// still works for the owner.
+TEST_F(CommandMgrTest, group) {
+    // Remove the group execute bit on the parent.
+    setSocketTestPath();
+    const std::string& path = UnixCommandConfig::getSocketPath();
+    mode_t perms = file::getPermissions(path);
+    EXPECT_EQ(0, ::chmod(path.c_str(), perms & ~S_IWGRP));
+
+    ElementPtr json = Element::createMap();
+    ASSERT_THROW(CommandMgr::instance().openCommandSocket(json), BadSocketInfo);
+    json->set("socket-type", Element::create("unix"));
+    json->set("socket-name", Element::create("name"));
+    ASSERT_NO_THROW(CommandMgr::instance().openCommandSocket(json));
+
+    // Restore permissions for other tests?
+    EXPECT_EQ(0, ::chmod(path.c_str(), perms));
+}
