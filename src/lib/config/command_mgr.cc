@@ -20,6 +20,7 @@
 #include <dhcp/iface_mgr.h>
 #include <config/config_log.h>
 #include <config/timeouts.h>
+#include <util/filesystem.h>
 #include <util/watch_socket.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <array>
@@ -581,7 +582,15 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         acceptor_.reset(new UnixDomainSocketAcceptor(io_service_));
         UnixDomainSocketEndpoint endpoint(socket_name_);
         acceptor_->open(endpoint);
-        acceptor_->bind(endpoint);
+        // Kea umask (0027) is too restrictive: the bind() system call
+        // creates the socket file with 0777 (or on some systems fchmod
+        // provided value) masked by the current umask. The 'connect'
+        // system call requires write access to socket file.
+        // So relaxing the umask to allow group write access.
+        {
+            isc::util::file::RelaxUmask ru;
+            socket_info->acceptor_->bind(endpoint);
+        }
         acceptor_->listen();
         // Install this socket in Interface Manager.
         isc::dhcp::IfaceMgr::instance().addExternalSocket(acceptor_->getNative(), 0);
