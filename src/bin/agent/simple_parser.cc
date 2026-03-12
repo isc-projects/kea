@@ -16,6 +16,7 @@
 #include <http/basic_auth_config.h>
 
 using namespace isc::data;
+using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::config;
 
@@ -151,6 +152,10 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
     if (ctrl_sockets) {
         auto const& sockets_map = ctrl_sockets->mapValue();
         for (auto const& cs : sockets_map) {
+            if (!cs.second->get("socket-name")) {
+                isc_throw(DhcpConfigError, "missing parameter 'socket-name' from '" << cs.first
+                          << "' service map (" << cs.second->getPosition() << ")");
+            }
             // Add a validated socket name so we can suppress it in
             // toElement() but don't have to revalidate it every time we
             // want to use it.
