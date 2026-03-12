@@ -6,16 +6,13 @@
 
 #include <config.h>
 
-#include <config/command_mgr.h>
 #include <config/unix_command_config.h>
 #include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
-#include <testutils/test_to_element.h>
 #include <testutils/env_var_wrapper.h>
 
 using namespace isc;
 using namespace isc::config;
-using namespace isc::data;
 using namespace isc::test;
 using namespace isc::util;
 using namespace std;
@@ -51,9 +48,6 @@ public:
         UnixCommandConfig::getSocketPath(true);
         UnixCommandConfig::setSocketPathPerms();
     }
-
-    /// @brief UNIX control socket configuration.
-    UnixCommandConfigPtr unix_config_;
 };
 
 TEST(SocketPathTest, socketDir) {

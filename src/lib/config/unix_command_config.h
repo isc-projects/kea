@@ -67,9 +67,6 @@ public:
     static void setSocketPathPerms(mode_t perms = DEFAULT_SOCKET_PATH_PERMS);
 };
 
-/// @brief Pointer to a UnixCommandConfig object.
-typedef boost::shared_ptr<UnixCommandConfig> UnixCommandConfigPtr;
-
 } // end of isc::config namespace
 } // end of isc namespace
 #endif
