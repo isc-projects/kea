@@ -13,12 +13,14 @@
 #include <cc/dhcp_config_error.h>
 #include <config/command_mgr.h>
 #include <config/unix_command_mgr.h>
+#include <config/testutils/socket_path.h>
 #include <util/filesystem.h>
 #include <string>
 #include <sys/stat.h>
 
 using namespace isc::asiolink;
 using namespace isc::config;
+using namespace isc::config::test;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::util;
