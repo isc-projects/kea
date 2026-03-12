@@ -104,6 +104,13 @@ setUmask() {
     }
 }
 
+RelaxUmask::RelaxUmask() : orig_umask_(umask(S_IRWXO)) {
+}
+
+RelaxUmask::~RelaxUmask() {
+    static_cast<void>(umask(orig_umask_));
+}
+
 Path::Path(string const& full_name) {
     dir_present_ = false;
     if (!full_name.empty()) {

@@ -91,6 +91,35 @@ TEST_F(UnixCommandConfigTest, default) {
     runToElementTest(os.str(), *unix_config_);
 }
 
+// This test verifies that removing the group execute on the parent directory
+// still works for the owner.
+TEST_F(UnixCommandConfigTest, group) {
+    // Remove the group execute bit on the parent.
+    setSocketTestPath();
+    const std::string& path = UnixCommandConfig::getSocketPath();
+    mode_t perms = file::getPermissions(path);
+    EXPECT_EQ(0, ::chmod(path.c_str(), perms & ~S_IWGRP));
+
+    ElementPtr json = Element::createMap();
+    ASSERT_THROW(unix_config_.reset(new UnixCommandConfig(json)), DhcpConfigError);
+    json->set("socket-name", Element::create("name"));
+    ASSERT_NO_THROW_LOG(unix_config_.reset(new UnixCommandConfig(json)));
+
+    // Check default values.
+    EXPECT_EQ("unix", unix_config_->getSocketType());
+    EXPECT_EQ((UnixCommandConfig::getSocketPath() + "/name"),
+              unix_config_->getSocketName());
+
+    std::ostringstream os;
+    os << "{ \"socket-type\": \"unix\", \"socket-name\": \""
+       << UnixCommandConfig::getSocketPath()
+       << "/name\" }";
+    runToElementTest(os.str(), *unix_config_);
+
+    // Restore permissions for other tests?
+    EXPECT_EQ(0, ::chmod(path.c_str(), perms));
+}
+
 // This test verifies direct error cases.
 TEST_F(UnixCommandConfigTest, errors) {
     // Error scenarios.

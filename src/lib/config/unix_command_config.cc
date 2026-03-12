@@ -117,10 +117,12 @@ UnixCommandConfig::validatePath(const std::string socket_path) {
     }
 
     auto valid_path = socket_path_checker_->validatePath(socket_path);
-    if (!socket_path_checker_->pathHasPermissions(socket_path_perms_)) {
+    auto parent_path = socket_path_checker_->getPath();
+    auto parent_perms = getPermissions(parent_path);
+    if ((parent_perms & ~socket_path_perms_) != 0) {
         isc_throw (DhcpConfigError,
-                   "socket path:" << socket_path_checker_->getPath()
-                   << " does not exist or does not have permssions = "
+                   "socket path:" << parent_path
+                   << " does not exist or has more relaxed permissions than "
                    << std::oct << socket_path_perms_);
     }
 
