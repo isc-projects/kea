@@ -595,13 +595,13 @@ TEST_F(CommandMgrTest, groupWritable) {
     bool const too_long(SocketPath::isTooLong("test_socket"));
     if (too_long) {
         // "File name too long"
-        EXPECT_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info), SocketError);
-        EXPECT_EQ(UnixCommandMgr::instance().getControlSocketFD(), -1);
+        EXPECT_THROW(CommandMgr::instance().openCommandSocket(socket_info), SocketError);
+        EXPECT_EQ(CommandMgr::instance().getControlSocketFD(), -1);
         return;
     }
 
-    EXPECT_NO_THROW(UnixCommandMgr::instance().openCommandSocket(socket_info));
-    EXPECT_GE(UnixCommandMgr::instance().getControlSocketFD(), 0);
+    EXPECT_NO_THROW(CommandMgr::instance().openCommandSocket(socket_info));
+    EXPECT_GE(CommandMgr::instance().getControlSocketFD(), 0);
 
     // Check permissions on the socket file.
     std::string socket = UnixCommandConfig::getSocketPath() + "/test_socket";

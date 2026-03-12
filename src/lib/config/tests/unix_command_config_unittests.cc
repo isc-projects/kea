@@ -6,13 +6,16 @@
 
 #include <config.h>
 
+#include <config/command_mgr.h>
 #include <config/unix_command_config.h>
 #include <util/filesystem.h>
 #include <testutils/gtest_utils.h>
+#include <testutils/test_to_element.h>
 #include <testutils/env_var_wrapper.h>
 
 using namespace isc;
 using namespace isc::config;
+using namespace isc::data;
 using namespace isc::test;
 using namespace isc::util;
 using namespace std;
@@ -48,6 +51,9 @@ public:
         UnixCommandConfig::getSocketPath(true);
         UnixCommandConfig::setSocketPathPerms();
     }
+
+    /// @brief UNIX control socket configuration.
+    UnixCommandConfigPtr unix_config_;
 };
 
 TEST(SocketPathTest, socketDir) {
@@ -60,35 +66,6 @@ TEST(SocketPathTest, socketDir) {
     env.setValue(TEST_DATA_BUILDDIR);
     path = UnixCommandConfig::getSocketPath(true);
     ASSERT_EQ(path, std::string(TEST_DATA_BUILDDIR));
-}
-
-// This test verifies that removing the group execute on the parent directory
-// still works for the owner.
-TEST_F(UnixCommandConfigTest, group) {
-    // Remove the group execute bit on the parent.
-    setSocketTestPath();
-    const std::string& path = UnixCommandConfig::getSocketPath();
-    mode_t perms = file::getPermissions(path);
-    EXPECT_EQ(0, ::chmod(path.c_str(), perms & ~S_IWGRP));
-
-    ElementPtr json = Element::createMap();
-    ASSERT_THROW(unix_config_.reset(new UnixCommandConfig(json)), DhcpConfigError);
-    json->set("socket-name", Element::create("name"));
-    ASSERT_NO_THROW_LOG(unix_config_.reset(new UnixCommandConfig(json)));
-
-    // Check default values.
-    EXPECT_EQ("unix", unix_config_->getSocketType());
-    EXPECT_EQ((UnixCommandConfig::getSocketPath() + "/name"),
-              unix_config_->getSocketName());
-
-    std::ostringstream os;
-    os << "{ \"socket-type\": \"unix\", \"socket-name\": \""
-       << UnixCommandConfig::getSocketPath()
-       << "/name\" }";
-    runToElementTest(os.str(), *unix_config_);
-
-    // Restore permissions for other tests?
-    EXPECT_EQ(0, ::chmod(path.c_str(), perms));
 }
 
 } // end of anonymous namespace

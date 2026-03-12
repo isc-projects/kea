@@ -83,6 +83,15 @@ isFile(string const& path) {
     return ((statbuf.st_mode & S_IFMT) == S_IFREG);
 }
 
+bool
+isSocket(string const& path) {
+    struct stat statbuf;
+    if (::stat(path.c_str(), &statbuf) < 0) {
+        return (false);
+    }
+    return ((statbuf.st_mode & S_IFMT) == S_IFSOCK);
+}
+
 void
 setUmask() {
     // No group write and no other access.

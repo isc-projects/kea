@@ -589,7 +589,7 @@ CommandMgrImpl::openCommandSocket(const isc::data::ConstElementPtr& socket_info)
         // So relaxing the umask to allow group write access.
         {
             isc::util::file::RelaxUmask ru;
-            socket_info->acceptor_->bind(endpoint);
+            acceptor_->bind(endpoint);
         }
         acceptor_->listen();
         // Install this socket in Interface Manager.
