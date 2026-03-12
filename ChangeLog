@@ -1,3 +1,8 @@
+2385.	[sec]		razvan
+	Restrict number of recursive calls when parsing config.
+	CVE:2026-3608
+	(Gitlab #4387, #4275, #4288)
+
 2385.	[func]		fdupont
 	Create UNIX sockets as group writable so a tool
 	is allowed to connect to them as soon as it is
