@@ -1,3 +1,8 @@
+2274.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 2.6.5
+	stable release.
+	(Gitlab #4401)
+
 2273.	[func]		fdupont
 	Create UNIX sockets as group writable so a tool
 	is allowed to connect to them as soon as it is
