@@ -790,15 +790,19 @@ endif
 if CRYPTO_DEP.name() == botan.name()
     report_conf_data.set('CRYPTO_NAME', 'Botan')
     report_conf_data.set('SPACES', '                ')
-    result = cpp.run(
-        fs.read('compiler-checks/get-botan-version.cc'),
-        name: 'Get Botan version',
-        dependencies: [CRYPTO_DEP],
-    )
-    if result.returncode() == 0
-        version = result.stdout().strip()
-    else
+    if meson.is_cross_build()
         version = botan.version()
+    else
+        result = cpp.run(
+            fs.read('compiler-checks/get-botan-version.cc'),
+            name: 'Get Botan version',
+            dependencies: [CRYPTO_DEP],
+        )
+        if result.returncode() == 0
+            version = result.stdout().strip()
+        else
+            version = botan.version()
+        endif
     endif
     if version == 'unknown'
         version = 'unknown version'
