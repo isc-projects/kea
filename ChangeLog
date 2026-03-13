@@ -1,11 +1,16 @@
 Kea 3.0.3 (stable) released on March 25, 2026
 
-2386.	[build]		razvan
+2388.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 3.0.3
 	stable release.
 	(Gitlab #4402)
 
-2385.	[sec]		razvan
+2387.	[sec]		razvan
+	Fix a null dereference when configuring the control agent with a
+	control socket that lacks a socket-name entry.
+	(Gitlab #4388, #4365)
+
+2386.	[sec]		razvan
 	Restrict number of recursive calls when parsing config.
 	CVE:2026-3608
 	(Gitlab #4387, #4275, #4288)
@@ -17,7 +22,7 @@ Kea 3.0.3 (stable) released on March 25, 2026
 	run by the owner).
 	Note to disallow this the group execute permission
 	can be removed from the socket parent directory.
-	(Gitlab #4398)
+	(Gitlab #4398, #4260)
 
 Kea 3.0.2 (stable) released on October 29, 2025
 
