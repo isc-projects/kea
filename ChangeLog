@@ -1,23 +1,28 @@
 Kea 2.6.5 (stable) released on March 25, 2026
 
-2274.	[build]		razvan
+2275.	[build]		razvan
 	The library version numbers have been bumped up for the Kea 2.6.5
 	stable release.
 	(Gitlab #4401)
 
-2273.	[func]		fdupont
+2274.	[sec]		razvan
+	Fix a null dereference when configuring the control agent with a
+	control socket that lacks a socket-name entry.
+	(Gitlab #4392, #4365)
+
+2273.	[sec]		razvan
+	Restrict number of recursive calls when parsing config.
+	CVE:2026-3608
+	(Gitlab #4391, #4275, #4288)
+
+2272.	[func]		fdupont
 	Create UNIX sockets as group writable so a tool
 	is allowed to connect to them as soon as it is
 	run by a member of the group (vs. requiring to be
 	run by the owner).
 	Note to disallow this the group execute permission
 	can be removed from the socket parent directory.
-	(Gitlab #4397)
-
-2372.	[sec]		razvan
-	Restrict number of recursive calls when parsing config.
-	CVE:2026-3608
-	(Gitlab #4391, #4275, #4288)
+	(Gitlab #4397, #4260)
 
 Kea 2.6.4 (stable) released on July 16, 2025
 
