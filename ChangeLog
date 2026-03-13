@@ -1,3 +1,8 @@
+2386.	[build]		razvan
+	The library version numbers have been bumped up for the Kea 3.0.3
+	stable release.
+	(Gitlab #4402)
+
 2385.	[sec]		razvan
 	Restrict number of recursive calls when parsing config.
 	CVE:2026-3608
