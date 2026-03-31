@@ -13,7 +13,7 @@
         "    \"arguments\": {",
         "        \"option-defs\": [ {",
         "            \"code\": <option code>,",
-        "            \"space\": <option space>",
+        "            \"space\": <option space>,",
         "            \"force\": false",
         "        } ],",
         "        \"remote\": {",

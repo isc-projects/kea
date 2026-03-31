@@ -1,0 +1,56 @@
+{
+    "access": "read",
+    "avail": "3.1.8",
+    "brief": [
+        "This command returns the list of detected interfaces.",
+        "This command does not take any parameters."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"interface-list\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-interface-list\"/>",
+    "name": "interface-list",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"2 interfaces detected.\",",
+        "    \"arguments\": {",
+        "        \"interfaces\": [ {",
+        "            \"name\": \"eth0\",",
+        "            \"index\": 4,",
+        "            \"mac\": \"00:11:22:33:44:55\",",
+        "            \"type\": 6,",
+        "            \"addresses\" [ \"192.168.1.1\", \"10.10.1.1\",", 
+        "                            \"2003:db8:1::1\", \"3001:db8:1::1\",",
+        "                            \"fe80::3a60:77ff:fed5:abcd\" ],",
+        "            \"flag-loopback\": false,",
+        "            \"flag-up\": true,",
+        "            \"flag-running\": true,",
+        "            \"flag-multicast\": false,",
+        "            \"flag-broadcast\": false,",
+        "            \"in-use\": true",
+        "        }, {",
+        "            \"name\": \"eth1\",",
+        "            \"index\": 7,",
+        "            \"mac\": \"11:22:33:44:55:66\",",
+        "            \"type\": 6,",
+        "            \"addresses\" [ \"10.10.1.2\",", 
+        "                            \"2003:db8:1::2\",",
+        "                            \"fe80::3a60:77ff:fed5:1234\" ],",
+        "            \"flag-loopback\": false,",
+        "            \"flag-up\": true,",
+        "            \"flag-running\": true,",
+        "            \"flag-multicast\": false,",
+        "            \"flag-broadcast\": false,",
+        "            \"in-use\": false",
+        "        }]",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

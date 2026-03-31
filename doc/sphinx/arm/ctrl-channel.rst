@@ -484,6 +484,30 @@ returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
+.. isccmd:: interface-list
+.. _command-interface-list:
+
+The ``interface-list`` Command
+------------------------------
+
+The :isccmd:`interface-list` command retrieves.
+
+.. isccmd:: interface-redetect
+.. _command-interface-redetect:
+
+The ``interface-redetect`` Command
+----------------------------------
+
+The :isccmd:`interface-redetect` command retrieves.
+
+.. isccmd:: interface-use
+.. _command-interface-use:
+
+The ``interface-use`` Command
+-----------------------------
+
+The :isccmd:`interface-use` command updates.
+
 .. isccmd:: list-commands
 .. _command-list-commands:
 

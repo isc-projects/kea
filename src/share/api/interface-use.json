@@ -1,0 +1,32 @@
+{
+    "access": "write",
+    "avail": "3.1.8",
+    "brief": [
+        "This command returns the list of detected interfaces after performing",
+        "a re-detect procedure.",
+        "This command take as parameters the list of interfaces with respective",
+        "addresses (if specified) on which the server should start listening for",
+        "DHCP traffic."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"interface-use\",",
+        "    \"arguments\": {",
+        "        \"interfaces\": [ \"eth0/10.10.1.1\", \"eth0/192.168.1.1\", \"eth1\"]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-interface-use\"/>",
+    "name": "interface-use",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"Operation succeeded.\"",
+        "    }",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}
