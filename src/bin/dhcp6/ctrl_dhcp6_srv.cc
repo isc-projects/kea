@@ -28,6 +28,7 @@
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <process/cfgrpt/config_report.h>
@@ -679,6 +680,104 @@ ControlledDhcpv6Srv::commandDhcpEnableHandler(const std::string&,
 }
 
 ConstElementPtr
+ControlledDhcpv6Srv::commandInterfaceListHandler(const std::string&,
+                                                 ConstElementPtr) {
+    ElementPtr ifaces = Element::createMap();
+    std::string message;
+    try {
+        ifaces->set("interfaces", IfaceMgr::instance().ifacesToElement());
+    } catch (std::exception& ex) {
+        message = ex.what();
+    } catch (...) {
+        message = "unknown error";
+    }
+
+    ostringstream msg;
+    if (message.empty()) {
+        msg << IfaceMgr::instance().getIfaces().size()
+            << " interfaces detected.";
+        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, msg.str(), ifaces));
+    } else {
+        msg << "Unexpected error while retrieving the list of detected interfaces: " << message;
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, msg.str()));
+    }
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandInterfaceRedetectHandler(const std::string&,
+                                                     ConstElementPtr args) {
+    std::string message;
+    try {
+        IfaceMgr::instance().detectIfaces(true);
+    } catch (std::exception& ex) {
+        message = ex.what();
+    } catch (...) {
+        message = "unknown error";
+    }
+
+    ostringstream msg;
+    if (message.empty()) {
+        return (ControlledDhcpv6Srv::commandInterfaceListHandler("", args));
+    } else {
+        msg << "Unexpected error while retrieving the list of detected interfaces: " << message;
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, msg.str()));
+    }
+}
+
+ConstElementPtr
+ControlledDhcpv6Srv::commandInterfaceUseHandler(const std::string&,
+                                                ConstElementPtr args) {
+    string message;
+    ConstElementPtr ifaces_config;
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+        if (args->getType() != Element::map) {
+            message = "arguments for the 'interface-use' command must be a map";
+        } else {
+            ifaces_config = args->get("interfaces");
+            if (!ifaces_config) {
+                message = "Missing mandatory 'interfaces' map parameter in 'arguments'.";
+            }
+            auto map = args->mapValue();
+            for (auto const& key : map) {
+                if (key.first != "interfaces") {
+                    message = "Unsupported '" + key.first + "' map parameter in 'arguments'.";
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!message.empty()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, message));
+    }
+    try {
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(args);
+        mutable_cfg->set("re-detect", Element::create(false));
+        IfacesConfigParser parser(AF_INET6, true);
+        CfgIfacePtr cfg_iface(new CfgIface());
+        parser.parse(cfg_iface, args);
+        CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
+        if (running_cfg_iface->merge(*cfg_iface, AF_INET6)) {
+            running_cfg_iface->triggerOpenSocketsWithRetry(AF_INET6, getServerPort());
+        }
+    } catch (std::exception& ex) {
+        message = ex.what();
+    } catch (...) {
+        message = "unknown error";
+    }
+
+    ostringstream msg;
+    if (message.empty()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
+    } else {
+        msg << "Unexpected error while updating used interfaces: " << message;
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, msg.str()));
+    }
+}
+
+ConstElementPtr
 ControlledDhcpv6Srv::commandVersionGetHandler(const string&, ConstElementPtr) {
     ElementPtr extended = Element::create(Dhcpv6Srv::getVersion(true));
     ElementPtr arguments = Element::createMap();
@@ -1317,6 +1416,15 @@ ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port /*= DHCP6_SERVER_P
     CommandMgr::instance().registerCommand("dhcp-disable",
         std::bind(&ControlledDhcpv6Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("interface-list",
+        std::bind(&ControlledDhcpv6Srv::commandInterfaceListHandler, this, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("interface-redetect",
+        std::bind(&ControlledDhcpv6Srv::commandInterfaceRedetectHandler, this, ph::_1, ph::_2));
+
+    CommandMgr::instance().registerCommand("interface-use",
+        std::bind(&ControlledDhcpv6Srv::commandInterfaceUseHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("kea-lfc-start",
         std::bind(&ControlledDhcpv6Srv::commandLfcStartHandler, this, ph::_1, ph::_2));
 
@@ -1410,6 +1518,9 @@ ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("interface-list");
+        CommandMgr::instance().deregisterCommand("interface-redetect");
+        CommandMgr::instance().deregisterCommand("interface-use");
         CommandMgr::instance().deregisterCommand("kea-lfc-start");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("subnet6-select-test");

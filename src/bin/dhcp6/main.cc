@@ -90,6 +90,7 @@ main(int argc, char* argv[]) {
     std::string config_file("");
 
     // This is the DHCPv6 server
+    IfaceMgr::instance().setFamily(AF_INET6);
     CfgMgr::instance().setFamily(AF_INET6);
 
     while ((ch = getopt(argc, argv, "dvVWc:p:P:t:T:X")) != -1) {

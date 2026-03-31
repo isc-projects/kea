@@ -95,6 +95,16 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     }
 }
 
+void
+CfgIface::triggerOpenSocketsWithRetry(const uint16_t family, const uint16_t port,
+                                      const bool use_bcast) {
+    // Use broadcast only if we're using raw sockets. For the UDP sockets,
+    // we only handle the relayed (unicast) traffic.
+    const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
+
+    openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
+}
+
 std::pair<bool, bool>
 CfgIface::openSocketsForFamily(const uint16_t family, const uint16_t port,
                                const bool can_use_bcast, const bool skip_opened) {
@@ -536,11 +546,68 @@ CfgIface::use(const uint16_t family, const std::string& iface_name) {
 
         // Log that we're listening on the specific interface and that the
         // address is not explicitly specified.
-        if (addr_str.empty()) {
-            LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(name);
-        }
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(name);
         iface_set_.insert(name);
     }
+}
+
+bool
+CfgIface::merge(const CfgIface& other, const uint16_t family) {
+    bool updated = false;
+    if (other.wildcard_used_) {
+        wildcard_used_ = true;
+        updated = true;
+    } else {
+        // Use a copy of the containers so that no change is applied until everything is checked.
+        auto address_map = address_map_;
+        auto iface_set = iface_set_;
+        for (auto const& addr_key : other.address_map_) {
+            // For the IPv4, if the interface name was specified (instead of the interface-
+            // address tuple) all addresses are already activated. Adding an explicit address
+            // for the interface should result in error.
+            if ((family == AF_INET) && (iface_set.find(addr_key.first) != iface_set.end())) {
+                isc_throw(DuplicateIfaceName, "interface '" << addr_key.first
+                          << "' has already been selected");
+            }
+            // Check if the address hasn't been selected already.
+            std::pair<const std::string, IOAddress> iface_address_tuple(addr_key.first, addr_key.second);
+            if (std::find(address_map.begin(), address_map.end(),
+                          iface_address_tuple) != address_map.end()) {
+                isc_throw(DuplicateAddress, "must not select address '"
+                          << addr_key.second << "' for interface '" << addr_key.first << "' "
+                          "because this address is already selected");
+            }
+            address_map.insert(addr_key);
+        }
+        for (auto const& name : other.iface_set_) {
+            if ((name != ALL_IFACES_KEYWORD)) {
+                // An interface has been selected or an IPv4 address on this interface
+                // has been selected it is not allowed to select the whole interface.
+                if ((iface_set.find(name) != iface_set.end()) ||
+                    ((family == AF_INET) && address_map.count(name) > 0)) {
+                    isc_throw(DuplicateIfaceName, "interface '" << name
+                              << "' has already been specified");
+                }
+                iface_set.insert(name);
+            }
+        }
+        // Ready to apply the changes.
+        for (auto const& addr_key : other.address_map_) {
+            address_map_.insert(addr_key);
+            updated = true;
+        }
+        for (auto const& name : other.iface_set_) {
+            if ((name != ALL_IFACES_KEYWORD)) {
+                // Log that we're listening on the specific interface and that the
+                // address is not explicitly specified.
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(name);
+                iface_set_.insert(name);
+                updated = true;
+            }
+        }
+    }
+
+    return (updated);
 }
 
 void

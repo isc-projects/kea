@@ -133,7 +133,7 @@ public:
 /// In order to avoid potentially expensive copies of the @c Iface objects
 /// holding pre-allocated buffers and multiple containers, this class is
 /// noncopyable.
-class Iface : public boost::noncopyable {
+class Iface : public isc::data::CfgToElement, public boost::noncopyable {
 public:
 
     /// Maximum MAC address length (Infiniband uses 20 bytes)
@@ -464,6 +464,17 @@ public:
     ///
     /// @return the list of messages
     ErrorBuffer const& getErrors() const;
+
+    /// @brief Unparse a configuration object
+    ///
+    /// Returns an element which must parse into the same object, i.e.
+    /// @code
+    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
+    /// @endcode
+    ///
+    /// @return a pointer to a configuration which can be parsed into
+    /// the initial configuration object
+    virtual isc::data::ElementPtr toElement() const;
 
 protected:
     /// Socket used to send data.
@@ -1492,6 +1503,21 @@ public:
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);
 
+    /// @brief Sets address family (AF_INET or AF_INET6)
+    void setFamily(uint16_t family) {
+        family_ = family == AF_INET ? AF_INET : AF_INET6;
+    }
+
+    /// @brief Returns address family.
+    uint16_t getFamily() const {
+        return (family_);
+    }
+
+    /// @brief Unparses detected interface list.
+    ///
+    /// @return A pointer to unparsed detected interface list.
+    isc::data::ElementPtr ifacesToElement() const;
+
     // don't use private, we need derived classes in tests
 protected:
 
@@ -1817,6 +1843,9 @@ private:
 
     /// @brief The receiver FDEventHandler instance.
     util::FDEventHandlerPtr receiver_fd_event_handler_;
+
+    /// @brief Address family.
+    uint16_t family_;
 };
 
 }  // namespace isc::dhcp

@@ -207,6 +207,14 @@ public:
     /// @c CfgIface::use has been already called for this interface.
     void use(const uint16_t family, const std::string& iface_name);
 
+    /// @brief Merge the interface list and address list.
+    ///
+    /// @param other The object from which the lists are updated.
+    /// @param family Address family (AF_INET or AF_INET6).
+    ///
+    /// @return true if any change has been done, false otherwise.
+    bool merge(const CfgIface& other, const uint16_t family);
+
     /// @brief Sets the specified socket type to be used by the server.
     ///
     /// Supported socket types for DHCPv4 are:
@@ -359,6 +367,17 @@ public:
     /// @brief Optional callback function to invoke if all retries of the
     /// opening sockets fail.
     static OpenSocketsFailedCallback open_sockets_failed_callback_;
+
+    /// @brief Trigger the reopen sockets with retry mechanism.
+    ///
+    /// @param family Address family (AF_INET or AF_INET6).
+    /// @param port Port number to be used to bind sockets to.
+    /// @param use_bcast A boolean flag which indicates if the broadcast
+    /// traffic should be received through the socket and the raw sockets are
+    /// used. For the UDP sockets, we only handle the relayed (unicast)
+    /// traffic. This parameter is ignored for IPv6.
+    void triggerOpenSocketsWithRetry(const uint16_t family, const uint16_t port,
+                                     const bool use_bcast = true);
 
 private:
 

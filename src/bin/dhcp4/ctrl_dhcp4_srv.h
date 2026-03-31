@@ -238,6 +238,42 @@ private:
     commandDhcpEnableHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
+    /// @brief Handler for processing 'interface-list' command
+    ///
+    /// This handler processes interface-list command.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments for the command (ignored).
+    ///
+    /// @return status of the command with the result
+    isc::data::ConstElementPtr
+    commandInterfaceListHandler(const std::string& command,
+                                isc::data::ConstElementPtr args);
+
+    /// @brief Handler for processing 'interface-redetect' command
+    ///
+    /// This handler processes interface-redetect command.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments for the command (ignored).
+    ///
+    /// @return status of the command with the result
+    isc::data::ConstElementPtr
+    commandInterfaceRedetectHandler(const std::string& command,
+                                    isc::data::ConstElementPtr args);
+
+    /// @brief Handler for processing 'interface-use' command
+    ///
+    /// This handler processes interface-use command.
+    ///
+    /// @param command (parameter ignored)
+    /// @param args arguments for the command.
+    ///
+    /// @return status of the command with the result
+    isc::data::ConstElementPtr
+    commandInterfaceUseHandler(const std::string& command,
+                               isc::data::ConstElementPtr args);
+
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -326,7 +362,7 @@ private:
     /// @param command (parameter ignored)
     /// @param args (ignored)
     ///
-    /// @return status of the command/
+    /// @return status of the command.
     isc::data::ConstElementPtr
     commandConfigBackendPullHandler(const std::string& command,
                                     isc::data::ConstElementPtr args);

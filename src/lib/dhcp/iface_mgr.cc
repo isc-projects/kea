@@ -8,6 +8,7 @@
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_error.h>
 #include <asiolink/udp_endpoint.h>
+#include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/dhcp_log.h>
@@ -37,6 +38,7 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::util;
 using namespace isc::util::io;
 using namespace isc::util::io::internal;
@@ -284,6 +286,28 @@ Iface::countActive4() const {
     return (count);
 }
 
+ElementPtr
+Iface::toElement() const {
+    ElementPtr result = Element::createMap();
+    result->set("name", Element::create(name_));
+    result->set("index", Element::create(ifindex_));
+    result->set("mac", Element::create(getPlainMac()));
+    result->set("type", Element::create(hardware_type_));
+    result->set("flag-loopback", Element::create(flag_loopback_));
+    result->set("flag-up", Element::create(flag_up_));
+    result->set("flag-running", Element::create(flag_running_));
+    result->set("flag-multicast", Element::create(flag_multicast_));
+    result->set("flag-broadcast", Element::create(flag_broadcast_));
+    bool in_use = IfaceMgr::instance().getFamily() == AF_INET ? !inactive4_ : !inactive6_;
+    result->set("in-use", Element::create(in_use));
+    ElementPtr addrs = Element::createList();
+    for (auto const& addr : addrs_) {
+        addrs->add(Element::create(addr.get().toText()));
+    }
+    result->set("addresses", addrs);
+    return (result);
+}
+
 void IfaceMgr::closeSockets() {
     // Clears bound addresses.
     clearBoundAddresses();
@@ -314,6 +338,15 @@ void IfaceMgr::stopDHCPReceiver() {
 
 IfaceMgr::~IfaceMgr() {
     closeSockets();
+}
+
+ElementPtr
+IfaceMgr::ifacesToElement() const {
+    ElementPtr result = Element::createList();
+    for (auto const& iface: ifaces_) {
+        result->add(iface->toElement());
+    }
+    return (result);
 }
 
 bool
