@@ -2,7 +2,7 @@
     "access": "read",
     "avail": "3.1.8",
     "brief": [
-        "This command returns the list of detected interfaces.",
+        "This command retrieves the list of detected interfaces.",
         "This command does not take any parameters."
     ],
     "cmd-syntax": [

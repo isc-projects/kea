@@ -2,9 +2,8 @@
     "access": "write",
     "avail": "3.1.8",
     "brief": [
-        "This command returns the list of detected interfaces after performing",
-        "a re-detect procedure.",
-        "This command take as parameters the list of interfaces with respective",
+        "This command updates the list of interfaces used to process DHCP traffic.",
+        "This command takes as parameter the list of interfaces with respective",
         "addresses (if specified) on which the server should start listening for",
         "DHCP traffic."
     ],

@@ -1890,6 +1890,55 @@ TEST_F(IfaceMgrTest, getIfaceByIndex) {
     EXPECT_TRUE(iface);
 }
 
+// This test checks the getIface by index method.
+TEST_F(IfaceMgrTest, interfacesToElement) {
+    NakedIfaceMgr ifacemgr;
+
+    // Create a set of fake interfaces. At the same time, remove the actual
+    // interfaces that have been detected by the IfaceMgr.
+    ifacemgr.createIfaces();
+
+    auto ifaces = ifacemgr.ifacesToElement();
+    std::string expected = "[ { "
+            "\"addresses\": [ \"127.0.0.1\", \"::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": true, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": false, "
+            "\"index\": 0, "
+            "\"mac\": \"\", "
+            "\"name\": \"lo\", "
+            "\"type\": 0 "
+            "}, { "
+            "\"addresses\": [ \"10.0.0.1\", \"fe80::3a60:77ff:fed5:cdef\", \"2001:db8:1::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": true, "
+            "\"index\": 1, "
+            "\"mac\": \"\", "
+            "\"name\": \"eth0\", "
+            "\"type\": 0 "
+            "}, { "
+            "\"addresses\": [ \"192.0.2.3\", \"fe80::3a60:77ff:fed5:abcd\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": true, "
+            "\"index\": 2, "
+            "\"mac\": \"\", "
+            "\"name\": \"eth1\", "
+            "\"type\": 0 "
+            "} ]";
+    EXPECT_EQ(ifaces->str(), expected);
+}
+
 // This test checks the getIface by packet method.
 TEST_F(IfaceMgrTest, getIfaceByPkt) {
     NakedIfaceMgr ifacemgr;
@@ -3549,6 +3598,14 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
     // Check that there is no socket bound to the address which hasn't been
     // configured on any interface.
     EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:feed:1")));
+}
+
+// Test the Iface structure itself
+TEST_F(IfaceMgrTest, family) {
+    NakedIfaceMgr ifacemgr;
+    EXPECT_EQ(ifacemgr.getFamily(), AF_INET);
+    ifacemgr.setFamily(AF_INET6);
+    EXPECT_EQ(ifacemgr.getFamily(), AF_INET6);
 }
 
 // Test the Iface structure itself

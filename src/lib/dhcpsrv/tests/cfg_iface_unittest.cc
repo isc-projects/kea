@@ -10,6 +10,7 @@
 #include <dhcp/testutils/pkt_filter_test_stub.h>
 #include <dhcp/testutils/pkt_filter6_test_stub.h>
 #include <dhcpsrv/cfg_iface.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <asiolink/io_service.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/interval_timer.h>
@@ -1735,6 +1736,44 @@ TEST_F(CfgIfaceTest, retryDoubleOpenServiceSockets6) {
     EXPECT_GT(first_port_calls, 0);
     // The secondary timer should make 2 calls: initial and 1 retry.
     EXPECT_EQ(second_port_calls, 2);
+}
+
+// Test that merge CfgIface works properly.
+TEST_F(CfgIfaceTest, mergeV4CfgIface) {
+    CfgIfacePtr left(new CfgIface());
+    CfgIfacePtr right(new CfgIface());
+    std::string left_txt("{ \"interfaces\": [\"eth0\", \"eth1/192.0.2.3\"], \"re-detect\": false }");
+    std::string right_txt("{ \"interfaces\": [\"eth0/10.0.0.1\", \"eth1961\"], \"re-detect\": false }");
+    ConstElementPtr left_cfg = Element::fromJSON(left_txt);
+    ConstElementPtr right_cfg = Element::fromJSON(right_txt);
+    IfacesConfigParser parser(AF_INET, true);
+    EXPECT_NO_THROW(parser.parse(left, left_cfg));
+    auto lift_before = left->toElement()->str();
+    EXPECT_NO_THROW(parser.parse(right, right_cfg));
+    auto right_before = right->toElement()->str();
+    EXPECT_THROW(left->merge(*right, AF_INET), DuplicateIfaceName);
+    EXPECT_EQ(lift_before, left->toElement()->str());
+    EXPECT_THROW(right->merge(*left, AF_INET), DuplicateIfaceName);
+    EXPECT_EQ(right_before, right->toElement()->str());
+}
+
+// Test that merge CfgIface works properly.
+TEST_F(CfgIfaceTest, mergeV6CfgIface) {
+    CfgIfacePtr left(new CfgIface());
+    CfgIfacePtr right(new CfgIface());
+    std::string left_txt("{ \"interfaces\": [\"eth0/2001:db8:1::1\", \"eth1\"], \"re-detect\": false }");
+    std::string right_txt("{ \"interfaces\": [\"eth0/2001:db8:1::1\", \"eth1961\"], \"re-detect\": false }");
+    ConstElementPtr left_cfg = Element::fromJSON(left_txt);
+    ConstElementPtr right_cfg = Element::fromJSON(right_txt);
+    IfacesConfigParser parser(AF_INET6, true);
+    EXPECT_NO_THROW(parser.parse(left, left_cfg));
+    auto lift_before = left->toElement()->str();
+    EXPECT_NO_THROW(parser.parse(right, right_cfg));
+    auto right_before = right->toElement()->str();
+    EXPECT_THROW(left->merge(*right, AF_INET6), DuplicateAddress);
+    EXPECT_EQ(lift_before, left->toElement()->str());
+    EXPECT_THROW(right->merge(*left, AF_INET6), DuplicateAddress);
+    EXPECT_EQ(right_before, right->toElement()->str());
 }
 
 // This test verifies that it is possible to specify the socket

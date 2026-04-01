@@ -490,7 +490,8 @@ information about the processing of expired leases (lease reclamation).
 The ``interface-list`` Command
 ------------------------------
 
-The :isccmd:`interface-list` command retrieves.
+The :isccmd:`interface-list` command retrieves the list of detected interfaces.
+This command does not take any parameters.
 
 .. isccmd:: interface-redetect
 .. _command-interface-redetect:
@@ -498,7 +499,9 @@ The :isccmd:`interface-list` command retrieves.
 The ``interface-redetect`` Command
 ----------------------------------
 
-The :isccmd:`interface-redetect` command retrieves.
+The :isccmd:`interface-redetect` command retrieves the list of detected interfaces
+after performing a re-detect procedure.
+This command does not take any parameters."
 
 .. isccmd:: interface-use
 .. _command-interface-use:
@@ -506,7 +509,22 @@ The :isccmd:`interface-redetect` command retrieves.
 The ``interface-use`` Command
 -----------------------------
 
-The :isccmd:`interface-use` command updates.
+The :isccmd:`interface-use` command updates the list of interfaces used
+to process DHCP traffic.
+The command takes as parameter the list of interfaces with respective
+addresses (if specified) on which the server should start listening for
+DHCP traffic.
+
+Please note that the new configuration is
+retained in memory only; if the server is restarted or a configuration
+reload is triggered via a signal, the server uses the configuration
+stored in its configuration file. The server's response contains a
+numeric code, ``result`` (0 for success, non-zero on failure), and a
+string, ``text``, describing the outcome:
+
+::
+
+       {"result": 0, "text": "Configuration successful." }
 
 .. isccmd:: list-commands
 .. _command-list-commands:

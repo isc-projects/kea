@@ -180,7 +180,8 @@ bool Iface::delSocket(const uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     : packet_filter_(new PktFilterInet()),
       packet_filter6_(new PktFilterInet6()),
-      test_mode_(false), check_thread_id_(true), allow_loopback_(false) {
+      test_mode_(false), check_thread_id_(true),
+      allow_loopback_(false), family_(AF_INET) {
     id_ = std::this_thread::get_id();
 
     // Ensure that PQMs have been created to guarantee we have

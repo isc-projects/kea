@@ -2,7 +2,7 @@
     "access": "write",
     "avail": "3.1.8",
     "brief": [
-        "This command returns the list of detected interfaces after performing",
+        "This command retrieves the list of detected interfaces after performing",
         "a re-detect procedure.",
         "This command does not take any parameters."
     ],

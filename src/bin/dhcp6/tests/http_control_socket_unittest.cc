@@ -142,6 +142,7 @@ public:
     /// Sets socket path to its default value.
     BaseCtrlChannelDhcpv6Test() : interfaces_("\"*\""), handle_stop_(false) {
         reset();
+        IfaceMgr::instance().setFamily(AF_INET6);
         IfaceMgr::instance().setTestMode(false);
         IfaceMgr::instance().setDetectCallback(std::bind(&IfaceMgr::checkDetectIfaces,
                                                IfaceMgr::instancePtr().get(), ph::_1));
@@ -581,6 +582,15 @@ public:
     // Tests if config-set attempts to set a config which contains a new interface
     // which is added after server startup.
     void testConfigSetDetectInterfaces();
+
+    // Tests if interface-list works properly.
+    void testInterfaceList();
+
+    // Tests if interface-redetect works properly.
+    void testInterfaceRedetect();
+
+    // Tests if interface-use works properly.
+    void testInterfaceUse();
 
     // This test verifies that disable DHCP service command performs
     // sanity check on parameters.
@@ -2967,6 +2977,10 @@ BaseCtrlChannelDhcpv6Test::testListCommands() {
     checkListCommands(rsp, "config-set");
     checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
+    checkListCommands(rsp, "interface-list");
+    checkListCommands(rsp, "interface-redetect");
+    checkListCommands(rsp, "interface-use");
+    checkListCommands(rsp, "kea-lfc-start");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
     checkListCommands(rsp, "version-get");
@@ -3613,6 +3627,197 @@ TEST_F(HttpCtrlChannelDhcpv6Test, configSetDetectInterfaces) {
 
 TEST_F(HttpsCtrlChannelDhcpv6Test, configSetDetectInterfaces) {
     testConfigSetDetectInterfaces();
+}
+
+// Tests if interface-list works properly.
+void
+BaseCtrlChannelDhcpv6Test::testInterfaceList() {
+    interfaces_ = "";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createHttpChannelServer();
+    std::string response;
+
+    std::string command = "{ \"command\": \"interface-list\" }";
+
+    sendHttpCommand(command, response);
+    string expected = "[ { \"arguments\": { \"interfaces\": [ { "
+            "\"addresses\": [ \"10.0.0.1\", \"fe80::3a60:77ff:fed5:cdef\", \"2001:db8:1::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": false, "
+            "\"index\": 1, "
+            "\"mac\": \"11:22:33:44:55:66\", "
+            "\"name\": \"eth0\", "
+            "\"type\": 1 "
+            "} ] }, \"result\": 0, \"text\": \"1 interfaces detected.\" } ]";
+    EXPECT_EQ(response, expected);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, interfaceList) {
+    testInterfaceList();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, interfaceList) {
+    testInterfaceList();
+}
+
+// Tests if interface-redetect works properly.
+void
+BaseCtrlChannelDhcpv6Test::testInterfaceRedetect() {
+    interfaces_ = "";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    eth0->inactive4_ = true;
+    eth0->inactive6_ = true;
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createHttpChannelServer();
+    std::string response;
+
+    IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
+                                                    "AA:BB:CC:DD:EE:FF");
+    eth1->inactive4_ = true;
+    eth1->inactive6_ = true;
+    auto detectUpdateIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+            eth1->addAddress(IOAddress("192.0.2.3"));
+            eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+            eth1->addAddress(IOAddress("3001:db8:100::1"));
+            IfaceMgr::instance().addInterface(eth1);
+        } else {
+            if (!IfaceMgr::instance().getIface("eth1")) {
+                eth1->addAddress(IOAddress("192.0.2.3"));
+                eth1->addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+                eth1->addAddress(IOAddress("3001:db8:100::1"));
+                IfaceMgr::instance().addInterface(eth1);
+            }
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectUpdateIfaces);
+
+    std::string command = "{ \"command\": \"interface-redetect\" }";
+
+    sendHttpCommand(command, response);
+    string expected = "[ { \"arguments\": { \"interfaces\": [ { "
+            "\"addresses\": [ \"10.0.0.1\", \"fe80::3a60:77ff:fed5:cdef\", \"2001:db8:1::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": false, "
+            "\"index\": 1, "
+            "\"mac\": \"11:22:33:44:55:66\", "
+            "\"name\": \"eth0\", "
+            "\"type\": 1 "
+            "}, { "
+            "\"addresses\": [ \"192.0.2.3\", \"fe80::3a60:77ff:fed5:abcd\", \"3001:db8:100::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": false, "
+            "\"index\": 2, "
+            "\"mac\": \"aa:bb:cc:dd:ee:ff\", "
+            "\"name\": \"eth1\", "
+            "\"type\": 1 "
+            "} ] }, \"result\": 0, \"text\": \"2 interfaces detected.\" } ]";
+    EXPECT_EQ(response, expected);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, interfaceRedetect) {
+    testInterfaceRedetect();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, interfaceRedetect) {
+    testInterfaceRedetect();
+}
+
+// Tests if interface-use works properly.
+void
+BaseCtrlChannelDhcpv6Test::testInterfaceUse() {
+    interfaces_ = "";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            eth0->addAddress(IOAddress("10.0.0.1"));
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createHttpChannelServer();
+    std::string response;
+
+    std::string command = "{ \"command\": \"interface-use\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
+
+    sendHttpCommand(command, response);
+    EXPECT_EQ(response, "[ { \"result\": 0, \"text\": \"Configuration successful.\" } ]");
+
+    command = "{ \"command\": \"interface-list\" }";
+    sendHttpCommand(command, response);
+    string expected = "[ { \"arguments\": { \"interfaces\": [ { "
+            "\"addresses\": [ \"10.0.0.1\", \"fe80::3a60:77ff:fed5:cdef\", \"2001:db8:1::1\" ], "
+            "\"flag-broadcast\": false, "
+            "\"flag-loopback\": false, "
+            "\"flag-multicast\": true, "
+            "\"flag-running\": true, "
+            "\"flag-up\": true, "
+            "\"in-use\": true, "
+            "\"index\": 1, "
+            "\"mac\": \"11:22:33:44:55:66\", "
+            "\"name\": \"eth0\", "
+            "\"type\": 1 "
+            "} ] }, \"result\": 0, \"text\": \"1 interfaces detected.\" } ]";
+    EXPECT_EQ(response, expected);
+}
+
+TEST_F(HttpCtrlChannelDhcpv6Test, interfaceUse) {
+    testInterfaceUse();
+}
+
+TEST_F(HttpsCtrlChannelDhcpv6Test, interfaceUse) {
+    testInterfaceUse();
 }
 
 // This test verifies that disable DHCP service command performs
