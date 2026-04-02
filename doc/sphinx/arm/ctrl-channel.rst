@@ -515,6 +515,12 @@ The command takes as parameter the list of interfaces with respective
 addresses (if specified) on which the server should start listening for
 DHCP traffic.
 
+.. note::
+
+   The command can only append to the existing list of interfaces.
+   There is no way to remove an interface once it has been added and
+   the server has started listening for DHCP traffic.
+
 Please note that the new configuration is
 retained in memory only; if the server is restarted or a configuration
 reload is triggered via a signal, the server uses the configuration
@@ -525,6 +531,9 @@ string, ``text``, describing the outcome:
 ::
 
        {"result": 0, "text": "Configuration successful." }
+
+The updated configuration can also be retrieved using the :isccmd:`config-get`
+command (inside the "interfaces-config" configuration map).
 
 .. isccmd:: list-commands
 .. _command-list-commands:
