@@ -9,6 +9,7 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_IFACE;
+extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_SUBNET4;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE;

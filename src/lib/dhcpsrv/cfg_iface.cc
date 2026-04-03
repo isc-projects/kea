@@ -600,7 +600,7 @@ CfgIface::merge(const CfgIface& other, const uint16_t family) {
             if ((name != ALL_IFACES_KEYWORD)) {
                 // Log that we're listening on the specific interface and that the
                 // address is not explicitly specified.
-                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE).arg(name);
+                LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE).arg(name);
                 iface_set_.insert(name);
                 updated = true;
             }
