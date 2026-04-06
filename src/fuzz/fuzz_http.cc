@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,9 +112,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         request.finalize();
         request.reset();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -139,9 +139,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         response.finalize();
         response.reset();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -151,9 +151,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         json.finalize();
         json.reset();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -164,9 +164,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         copyHttpHeaders(headers, response);
         CfgHttpHeaderstoElement(headers);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try{
@@ -175,9 +175,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         cfg.parse(Element::fromJSON(payload));
         cfg.toElement();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try{
@@ -185,9 +185,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         Url url(payload);
         url.isValid();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try{
@@ -196,9 +196,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         HttpDateTime::fromRfc1123(payload);
         HttpDateTime::fromRfc850(payload);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -207,9 +207,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         request.reset();
         response.reset();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     return 0;

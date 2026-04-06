@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,14 +95,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         try {
             dhcp_backend.getGlobalParameter6(selector, fdp.ConsumeRandomLengthString(32));
         } catch (const isc::Exception& e) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target getAllSubnets6
         try {
             dhcp_backend.getAllSubnets6(selector);
         } catch (const isc::Exception& e) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target createUpdateSubnet6
@@ -135,14 +135,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                                               t1, t2, t3, t4, sid));
             dhcp_backend.createUpdateSubnet6(selector, subnet);
         } catch (const isc::Exception& e) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target deleteSubnet6
         try {
             dhcp_backend.deleteSubnet6(selector, fdp.ConsumeRandomLengthString(32));
         } catch (const isc::Exception& e) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target createUpdateOption6
@@ -159,7 +159,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
             dhcp_backend.createUpdateOption6(selector, opt_name, opt_desc);
         } catch (const isc::Exception& e) {
-            // Slient exceptions
+            // Silent exceptions
         }
     } catch (const isc::Exception&) {
         // Silent top-level exceptions

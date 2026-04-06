@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,7 +145,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         ccdp.parse(dict, payload_elem, AF_INET);
         ccdp.parse(dict, payload_elem, AF_INET6);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
 
@@ -156,7 +156,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         scf.parse(payload_elem, fdp.ConsumeBool());
     }
     catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
 
@@ -167,7 +167,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         ControlSocketsParser csp;
         csp.parse(srv, elem);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -176,7 +176,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         Subnet6ConfigParser scf(fdp.ConsumeBool());
         scf.parse(elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -185,7 +185,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         D2ClientConfigParser d2p;
         d2p.parse(elem);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Host Reservation parsing
@@ -195,7 +195,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         HostReservationParser4 hrp;
         hrp.parse(SubnetID(10), elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     try {
@@ -204,7 +204,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         HostReservationParser6 hrp;
         hrp.parse(SubnetID(10), elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     return 0;

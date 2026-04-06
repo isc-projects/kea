@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
         ctx.verify(&record, tsig_data.data(), tsig_data.size());
     } catch (const isc::Exception&) {
-        // Slient ezceptions
+        // Silent exceptions
     }
 
     // HMAC
@@ -58,7 +58,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             static_cast<HashAlgorithm>(fdp.ConsumeIntegralInRange<int>(0, 6)),
             sig.data(), sig.size());
     } catch (const isc::Exception&) {
-        // Slient ezceptions
+        // Silent exceptions
     }
 
     return 0;

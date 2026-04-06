@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -133,9 +133,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     try {
         srv->fuzz_classifyPacket(pkt);
     } catch (const isc::Exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Prepare client context
@@ -146,9 +146,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     try {
         srv->earlyGHRLookup(pkt, ctx);
     } catch (const isc::Exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Call select subnet
@@ -161,9 +161,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
             ctx->subnet_ = srv->fuzz_selectSubnet(pkt, drop, false);
         }
     } catch (const isc::Exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Fuzz ddns4_update
@@ -184,9 +184,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
         ddns4_update(*handle);
     } catch (const isc::Exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception& e) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Clean handle to avoid mem leak

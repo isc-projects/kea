@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         feed.toElement();
         feed.getErrorMessage();
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Try parse payload to Element pointer
@@ -72,28 +72,28 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         parser.parseIntTriplet(elem, val1);
         parser.parseIntTriplet(elem, val2);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target checkRequired
     try {
         SimpleParser::checkRequired(required, elem);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target checkKeywords
     try {
         SimpleParser::checkKeywords(keywords, elem);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target deriveParams
     try {
         SimpleParser::deriveParams(elem, Element::createMap(), params);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     return 0;

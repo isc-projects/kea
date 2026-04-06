@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -94,7 +94,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 break;
         }
     } catch (const isc::Exception&) {
-        // Slient exceptions use default unassigned server selector
+        // Silent exceptions use default unassigned server selector
     }
 
     try {
@@ -106,35 +106,35 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         try {
             backend.selectQuery(0, binds, PgSqlConnection::ConsumeResultRowFun([](PgSqlResult&, int) {}));
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target insertQuery
         try {
             backend.insertQuery(0, binds);
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target updateDeleteQuery
         try {
             backend.updateDeleteQuery(0, binds);
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target upper level getGlobalParameter6
         try {
             dhcp_backend.getGlobalParameter6(selector, fdp.ConsumeRandomLengthString(32));
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target upper level getAllSubnets6
         try {
             dhcp_backend.getAllSubnets6(selector);
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target upper level createUpdateSubnet6
@@ -165,14 +165,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             Subnet6Ptr subnet(Subnet6::create(address, fdp.ConsumeIntegralInRange(0, 128), t1, t2, t3, t4, sid));
             dhcp_backend.createUpdateSubnet6(selector, subnet);
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target upper level deleteSubnet6
         try {
             dhcp_backend.deleteSubnet6(selector, fdp.ConsumeRandomLengthString(32));
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
 
         // Target upper level createUpdateOption6
@@ -189,10 +189,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
             dhcp_backend.createUpdateOption6(selector, opt_name, opt_desc);
         } catch (const isc::Exception&) {
-            // Slient exceptions
+            // Silent exceptions
         }
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     return 0;

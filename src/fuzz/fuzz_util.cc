@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Ada Logcis Ltd.
+// Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,54 +35,54 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     try {
         str::tokens(payload, delim, isEscape);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str quotedStringToBinary
     try {
         str::quotedStringToBinary(payload);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str decodeFormattedHexString
     try {
         str::decodeFormattedHexString(payload, out);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str decodeColonSeparatedHexString
     try {
         str::decodeColonSeparatedHexString(payload, out);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str decodeSeparatedHexString
     try {
         str::decodeSeparatedHexString(payload, delim, out);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str trim
     try {
         str::trim(payload);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target str lowercase/uppercase
@@ -91,9 +91,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         str::lowercase(temp);
         str::uppercase(temp);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target CSVRow
@@ -104,18 +104,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
             row.readAtEscaped(i);
         }
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target encodeUtf8
     try {
         encode::encodeUtf8(payload);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Prepare posix_time object
@@ -136,9 +136,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     try {
         ptimeToText(pt);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     // Target durationToText
@@ -146,9 +146,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         time_duration td = pt.time_of_day();
         isc::util::durationToText(td);
     } catch (const isc::Exception&) {
-        // Slient exceptions
+        // Silent exceptions
     } catch (const boost::exception&) {
-        // Slient exceptions
+        // Silent exceptions
     }
 
     return 0;
