@@ -17,21 +17,21 @@
 using isc::asiolink::IOAddress;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
-  std::string s(reinterpret_cast<const char*>(data), size);
+    std::string s(reinterpret_cast<const char*>(data), size);
 
-  try {
-    IOAddress addr(s);
-    addr.toText();
-    addr.isV4();
-    addr.isV6();
-    addr.getFamily();
-    addr.toBytes();
+    try {
+        IOAddress addr(s);
+        addr.toText();
+        addr.isV4();
+        addr.isV6();
+        addr.getFamily();
+        addr.toBytes();
 
-    std::vector<uint8_t> bytes = addr.toBytes();
-    IOAddress::fromBytes(addr.getFamily(), &bytes[0]);
-  } catch (const std::exception&) {
-    // Catch exceptions
-  }
+        std::vector<uint8_t> bytes = addr.toBytes();
+        IOAddress::fromBytes(addr.getFamily(), &bytes[0]);
+    } catch (const std::exception&) {
+        // Catch exceptions
+    }
 
-  return 0;
+    return 0;
 }

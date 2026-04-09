@@ -1,3 +1,9 @@
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+////////////////////////////////////////////////////////////////////////////////
 // Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -43,21 +49,20 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         switch (path) {
             case 0: {
                 // Test Hash creation and update
-                Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
+                std::unique_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(hash_alg));
                 if (hash) {
                     std::vector<uint8_t> input_data = fdp.ConsumeRemainingBytes<uint8_t>();
                     if (!input_data.empty()) {
                         hash->update(input_data.data(), input_data.size());
                     }
                     std::vector<uint8_t> digest = hash->final(hash->getOutputLength());
-                    delete hash;
                 }
                 break;
             }
 
             case 1: {
                 // Test Hash with multiple updates
-                Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
+                std::unique_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(hash_alg));
                 if (hash) {
                     size_t num_updates = fdp.ConsumeIntegralInRange<size_t>(1, 10);
                     for (size_t i = 0; i < num_updates && fdp.remaining_bytes() > 0; i++) {
@@ -68,14 +73,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                         }
                     }
                     std::vector<uint8_t> digest = hash->final(hash->getOutputLength());
-                    delete hash;
                 }
                 break;
             }
 
             case 2: {
                 // Test Hash with OutputBuffer
-                Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
+                std::unique_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(hash_alg));
                 if (hash) {
                     std::vector<uint8_t> input_data = fdp.ConsumeBytes<uint8_t>(
                         fdp.ConsumeIntegralInRange<size_t>(0, size)
@@ -86,14 +90,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     isc::util::OutputBuffer result(hash->getOutputLength());
                     size_t len = fdp.ConsumeIntegralInRange<size_t>(0, hash->getOutputLength() * 2);
                     hash->final(result, len);
-                    delete hash;
                 }
                 break;
             }
 
             case 3: {
                 // Test Hash with void* result
-                Hash* hash = CryptoLink::getCryptoLink().createHash(hash_alg);
+                std::unique_ptr<Hash> hash(CryptoLink::getCryptoLink().createHash(hash_alg));
                 if (hash) {
                     std::vector<uint8_t> input_data = fdp.ConsumeBytes<uint8_t>(
                         fdp.ConsumeIntegralInRange<size_t>(0, size)
@@ -104,7 +107,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     std::vector<uint8_t> result(hash->getOutputLength() * 2);
                     size_t len = fdp.ConsumeIntegralInRange<size_t>(0, result.size());
                     hash->final(result.data(), len);
-                    delete hash;
                 }
                 break;
             }
@@ -117,16 +119,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     secret.push_back(0);  // Ensure non-empty secret
                 }
 
-                HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
-                    secret.data(), secret.size(), hash_alg
-                );
+                std::unique_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                 if (hmac) {
                     std::vector<uint8_t> input_data = fdp.ConsumeRemainingBytes<uint8_t>();
                     if (!input_data.empty()) {
                         hmac->update(input_data.data(), input_data.size());
                     }
                     std::vector<uint8_t> signature = hmac->sign(hmac->getOutputLength());
-                    delete hmac;
                 }
                 break;
             }
@@ -139,9 +138,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     secret.push_back(0);
                 }
 
-                HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
-                    secret.data(), secret.size(), hash_alg
-                );
+                std::unique_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                 if (hmac) {
                     size_t num_updates = fdp.ConsumeIntegralInRange<size_t>(1, 10);
                     for (size_t i = 0; i < num_updates && fdp.remaining_bytes() > 0; i++) {
@@ -152,7 +149,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                         }
                     }
                     std::vector<uint8_t> signature = hmac->sign(hmac->getOutputLength());
-                    delete hmac;
                 }
                 break;
             }
@@ -165,9 +161,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     secret.push_back(0);
                 }
 
-                HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
-                    secret.data(), secret.size(), hash_alg
-                );
+                std::unique_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                 if (hmac) {
                     std::vector<uint8_t> input_data = fdp.ConsumeBytes<uint8_t>(
                         fdp.ConsumeIntegralInRange<size_t>(0, size)
@@ -178,7 +172,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     isc::util::OutputBuffer result(hmac->getOutputLength());
                     size_t len = fdp.ConsumeIntegralInRange<size_t>(0, hmac->getOutputLength() * 2);
                     hmac->sign(result, len);
-                    delete hmac;
                 }
                 break;
             }
@@ -191,9 +184,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     secret.push_back(0);
                 }
 
-                HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
-                    secret.data(), secret.size(), hash_alg
-                );
+                std::unique_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                 if (hmac) {
                     std::vector<uint8_t> input_data = fdp.ConsumeBytes<uint8_t>(
                         fdp.ConsumeIntegralInRange<size_t>(0, size)
@@ -206,17 +197,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     std::vector<uint8_t> signature = hmac->sign(hmac->getOutputLength());
 
                     // Verify with same data (should succeed)
-                    HMAC* verify_hmac = CryptoLink::getCryptoLink().createHMAC(
-                        secret.data(), secret.size(), hash_alg
-                    );
+                    std::unique_ptr<HMAC> verify_hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                     if (verify_hmac) {
                         if (!input_data.empty()) {
                             verify_hmac->update(input_data.data(), input_data.size());
                         }
                         verify_hmac->verify(signature.data(), signature.size());
-                        delete verify_hmac;
                     }
-                    delete hmac;
                 }
                 break;
             }
@@ -229,16 +216,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                     secret.resize(64, 0x42);  // Pad to ensure long secret
                 }
 
-                HMAC* hmac = CryptoLink::getCryptoLink().createHMAC(
-                    secret.data(), secret.size(), hash_alg
-                );
+                std::unique_ptr<HMAC> hmac(CryptoLink::getCryptoLink().createHMAC(secret.data(), secret.size(), hash_alg));
                 if (hmac) {
                     std::vector<uint8_t> input_data = fdp.ConsumeRemainingBytes<uint8_t>();
                     if (!input_data.empty()) {
                         hmac->update(input_data.data(), input_data.size());
                     }
                     std::vector<uint8_t> signature = hmac->sign(hmac->getOutputLength());
-                    delete hmac;
                 }
                 break;
             }

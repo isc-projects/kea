@@ -27,7 +27,7 @@ fuzz_lib = static_library(
     'fuzz_lib',
     fuzz_sources,
     cpp_args: cpp_flags,
-    dependencies: [CRYPTO_DEP, GTEST_DEP],
+    dependencies: [KRB5_DEP, CRYPTO_DEP, GTEST_DEP],
     include_directories: includes,
     link_with: LIBS_BUILT_SO_FAR,
 )
@@ -116,10 +116,10 @@ foreach i : [
         'empty_llvm_functions.cc',
         'helper_func.cc',
         'mysqlmock.cc',
-        'pgmock.cc',
+        'pgsqlmock.cc',
         fuzz_sources,
         cpp_args: cpp_flags,
-        dependencies: [MYSQL_DEP, POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP],
+        dependencies: [MYSQL_DEP, POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
         include_directories: includes,
         link_with: [
             agent_lib,

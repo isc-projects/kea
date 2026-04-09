@@ -83,7 +83,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         buffer6_receive(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 

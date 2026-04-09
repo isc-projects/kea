@@ -78,14 +78,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Creating temp config file
     std::string path = fuzz::writeTempConfig(false);
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&path), [](void* f) { fuzz::deleteTempFile(*reinterpret_cast<std::string*>(f)); });
     if (path.empty()) {
         // Early exit if configuration file creation failed
-        fuzz::deleteTempFile(path);
         return 0;
     }
 
     // Creating temp lease file
     std::string lease_path = fuzz::writeTempLease(false);
+    std::unique_ptr<void, void(*)(void*)> pl(static_cast<void*>(&lease_path), [](void* f) { fuzz::deleteTempFile(*reinterpret_cast<std::string*>(f)); });
 
     Pkt6Ptr pkt;
     std::unique_ptr<MyDhcpv6Srv> srv;
@@ -123,7 +124,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->fuzz_classifyPacket(pkt);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -136,7 +137,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->earlyGHRLookup(pkt, ctx);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -152,7 +153,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         subnet6_select(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -175,7 +176,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         lease6_decline(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -198,7 +199,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         lease6_release(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -208,10 +209,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     srv.reset();
-
-    // Remove temp files
-    fuzz::deleteTempFile(path);
-    fuzz::deleteTempFile(lease_path);
 
     return 0;
 }

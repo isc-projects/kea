@@ -172,7 +172,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         try {
             Name name(string_data);
             RRsetPtr rrset = RRsetPtr(new RRset(name, RRClass::IN(),
-                                                 RRType::A(), RRTTL(3600)));
+                                                RRType::A(), RRTTL(3600)));
 
             // Try parsing RDATA from wire
             try {
@@ -214,7 +214,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 // Try to parse TSIG RDATA
                 rdata::ConstRdataPtr rdata =
                     rdata::createRdata(RRType::TSIG(), RRClass::ANY(),
-                                      buffer, wire_data.size());
+                                       buffer, wire_data.size());
                 const rdata::any::TSIG& tsig_rdata =
                     dynamic_cast<const rdata::any::TSIG&>(*rdata);
 
@@ -291,17 +291,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
             // Try setting various flags
             message.setHeaderFlag(Message::HEADERFLAG_AA,
-                                 fdp.ConsumeBool());
+                                  fdp.ConsumeBool());
             message.setHeaderFlag(Message::HEADERFLAG_RD,
-                                 fdp.ConsumeBool());
+                                  fdp.ConsumeBool());
             message.setHeaderFlag(Message::HEADERFLAG_RA,
-                                 fdp.ConsumeBool());
+                                  fdp.ConsumeBool());
 
             // Try adding a question
             try {
                 Name qname(string_data);
                 QuestionPtr question(new Question(qname, RRClass::IN(),
-                                                   RRType::A()));
+                                                  RRType::A()));
                 message.addQuestion(question);
             } catch (const std::exception&) {
                 // Ignore question addition exceptions

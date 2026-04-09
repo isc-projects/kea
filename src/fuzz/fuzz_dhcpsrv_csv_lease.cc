@@ -18,14 +18,14 @@ using namespace isc::data;
 using namespace isc::dhcp;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
-	char filename[256];
-	sprintf(filename, "/tmp/libfuzzer.%d", getpid());
+    char filename[256];
+    sprintf(filename, "/tmp/libfuzzer.%d", getpid());
 
-	FILE *fp = fopen(filename, "wb");
-	if (!fp)
-		return 0;
-	fwrite(Data, Size, 1, fp);
-	fclose(fp);
+    FILE *fp = fopen(filename, "wb");
+    if (!fp)
+        return 0;
+    fwrite(Data, Size, 1, fp);
+    fclose(fp);
 
     try {
         CSVLeaseFile4 lease_file(filename);
@@ -34,7 +34,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         lease_file.next(lease);
         lease_file.close();
     } catch (const std::exception&) {
-      // ignore any errors
+        // ignore any errors
     }
 
     try {

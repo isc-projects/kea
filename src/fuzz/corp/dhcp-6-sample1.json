@@ -17,7 +17,7 @@
     "lease-database": {
         "type": "memfile",
         "persist": true,
-        "name": "/var/lib/kea/dhcp6.leases"
+        "name": "dhcp6.leases"
     },
 
 # Finally, we list the subnets from which we will be leasing addresses.

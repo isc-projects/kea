@@ -33,7 +33,7 @@ enum {
 
 static thread_local FuzzedDataProvider* g_fdp = nullptr;
 
-extern "C" void pgmock_load_bytes(const uint8_t* data, size_t size) {
+extern "C" void pgsqlmock_load_bytes(const uint8_t* data, size_t size) {
     delete g_fdp;
     g_fdp = new FuzzedDataProvider(data, size);
 }

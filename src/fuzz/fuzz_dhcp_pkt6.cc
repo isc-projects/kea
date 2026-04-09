@@ -14,6 +14,7 @@
 #include <dhcp/option_vendor_class.h>
 #include <log/logger_support.h>
 #include <process/daemon.h>
+#include <util/buffer.h>
 #include <util/filesystem.h>
 
 #include <cstddef>
@@ -31,8 +32,9 @@
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace isc::util;
 
-static thread_local FuzzedDataProvider* fdp = nullptr;
+static thread_local std::unique_ptr<FuzzedDataProvider> fdp;
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     if (size < 236) {
@@ -41,7 +43,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     // Randomly enable validatePath checking
-    fdp = new FuzzedDataProvider(data, size);
+    fdp = std::unique_ptr<FuzzedDataProvider>(new FuzzedDataProvider(data, size));
     isc::util::file::PathChecker::enableEnforcement(fdp->ConsumeBool());
 
     // Initialise logging
@@ -59,10 +61,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     // Create temporary configuration file
-    std::string path = fuzz::writeTempConfig(true);
+    std::string path = fuzz::writeTempConfig(false);
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&path), [](void* f) { fuzz::deleteTempFile(*reinterpret_cast<std::string*>(f)); });
     if (path.empty()) {
         // Early exit if configuration file creation failed
-        fuzz::deleteTempFile(path);
         return 0;
     }
 
@@ -71,25 +73,34 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     std::vector<uint8_t> buf(data, data + size);
 
     try {
+        // Package parsing
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(data, size));
         pkt->toText();
         pkt->getType();
         pkt->getTransid();
-        pkt->unpack();
-        pkt->pack();
+        try {
+            pkt->unpack();
+        } catch (...) {
+        }
+        try {
+            pkt->pack();
+        } catch (...) {
+        }
         pkt->getMAC(fdp->ConsumeIntegral<uint32_t>());
         pkt->getName(fdp->ConsumeIntegral<uint8_t>());
         pkt->getLabel();
-    } catch (...) {}
+    } catch (...) {
+    }
 
-    // OptionVendor parsing
+    // OptionVendorClass parsing
     try {
         OptionBuffer optbuf(data, data + size);
         OptionVendorClassPtr vendor_class;
         vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V6,
             optbuf.begin(),
             optbuf.end()));
-    }catch(...){}
+    } catch (...) {
+    }
 
     try {
         // Package parsing
@@ -97,6 +108,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         pkt->toText();
         pkt->getType();
         pkt->getTransid();
+        try {
+            pkt->unpack();
+        } catch (...) {
+        }
+        try {
+            pkt->pack();
+        } catch (...) {
+        }
 
         // Option parsing
         LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options);
@@ -123,9 +142,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     srv.reset();
-
-    // Remove temp configuration file
-    fuzz::deleteTempFile(path);
-    delete fdp;
     return 0;
 }

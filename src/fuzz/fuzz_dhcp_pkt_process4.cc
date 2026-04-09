@@ -26,6 +26,7 @@
 #include <fstream>
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 
 #include "helper_func.h"
 
@@ -86,14 +87,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // Creating temp config file
     std::string path = fuzz::writeTempConfig(true);
+    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&path), [](void* f) { fuzz::deleteTempFile(*reinterpret_cast<std::string*>(f)); });
     if (path.empty()) {
         // Early exit if configuration file creation failed
-        fuzz::deleteTempFile(path);
         return 0;
     }
 
     // Creating temp lease file
     std::string lease_path = fuzz::writeTempLease(true);
+    std::unique_ptr<void, void(*)(void*)> pl(static_cast<void*>(&lease_path), [](void* f) { fuzz::deleteTempFile(*reinterpret_cast<std::string*>(f)); });
 
     Pkt4Ptr pkt;
     std::unique_ptr<MyDhcpv4Srv> srv;
@@ -144,7 +146,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->fuzz_classifyPacket(pkt);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -153,17 +155,23 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->fuzz_accept(pkt);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
     // Call sanityCheck for packet checking
     try {
-        MyDhcpv4Srv::fuzz_sanityCheck(pkt);
+        srv->fuzz_sanityCheck(pkt);
     } catch (const isc::Exception& e) {
-        // Silent exceptions
-    } catch (const boost::exception& e) {
-        // Silent exceptions
+        // Exit early if pkt fails sanity checks.
+        // This is consistent with production code
+        // (processing pkt might crash otherwise).
+        return 0;
+    } catch (const std::exception&) {
+        // Exit early if pkt fails sanity checks.
+        // This is consistent with production code
+        // (processing pkt might crash otherwise).
+        return 0;
     }
 
     // Prepare client context
@@ -174,7 +182,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->earlyGHRLookup(pkt, ctx);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -189,7 +197,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         }
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -198,7 +206,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         srv->processLocalizedQuery4(ctx, false);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -229,7 +237,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         lease4_offer(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -238,7 +246,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         handle->deleteAllArguments();
     }
 
-    // Call lease4_committed
+    // Call leases4_committed
     try {
         uint8_t mac_addr[6];
         for (size_t i = 0; i < 6; ++i) {
@@ -249,11 +257,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         handle->setArgument("leases4", leases);
         handle->setArgument("query4", pkt);
         handle->setArgument("response4", rsp);
-
+        handle->setArgument("deleted_leases4", leases);
         leases4_committed(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 
@@ -264,8 +272,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     srv.reset();
 
-    // Remove temp files
-    fuzz::deleteTempFile(path);
-    fuzz::deleteTempFile(lease_path);
     return 0;
 }

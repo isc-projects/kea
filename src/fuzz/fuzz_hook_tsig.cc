@@ -30,7 +30,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
     // Prepare basic key crypto information
     std::string key_name = fdp.ConsumeRandomLengthString(64);
-    if (key_name.empty()) key_name = "fuzz-key";
+    if (key_name.empty()) {
+        key_name = "fuzz-key";
+    }
     std::string tsig_rdata_txt = fdp.ConsumeRandomLengthString(1024);
     std::string owner_txt = fdp.ConsumeRandomLengthString(128);
     const uint16_t qid = fdp.ConsumeIntegral<uint16_t>();

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <string>
 #include <cstdio>
+#include <cstdlib>
 
 #include "helper_func.h"
 
@@ -92,7 +93,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         buffer4_receive(*handle);
     } catch (const isc::Exception& e) {
         // Silent exceptions
-    } catch (const boost::exception& e) {
+    } catch (const std::exception&) {
         // Silent exceptions
     }
 

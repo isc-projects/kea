@@ -25,11 +25,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
     FuzzedDataProvider fdp(Data, Size);
     EvalContext ctx(Option::V6);
 
-    auto idx =  fdp.ConsumeIntegralInRange<uint8_t>(1, 18);
+    auto idx = fdp.ConsumeIntegralInRange<uint8_t>(1, 18);
     const std::string payload = fdp.ConsumeRemainingBytesAsString();
-    // Fuzz boolean parsing
+
     try {
         Pkt6 pkt(idx, 0);
+        // Fuzz boolean parsing
         if (ctx.parseString(payload, EvalContext::PARSER_BOOL)) {
             ValueStack vs;
             Expression& exp_bool = ctx.expression_;
@@ -40,7 +41,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
             evaluateString(exp_bool, pkt);
             dependOnClass(exp_bool_ptr, payload);
         }
-    } catch(const isc::Exception&) {}
+    } catch(const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
         // Fuzz string parsing
@@ -55,21 +58,27 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
             evaluateString(exp_str, pkt);
             dependOnClass(exp_str_ptr, payload);
         }
-    } catch(const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     location loc;
     try {
         // Fuzz converter
         ctx.convertOptionCode(payload, loc);
-    } catch(const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
         ctx.convertOptionName(payload, loc);
-    } catch(const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
         ctx.convertNestLevelNumber(payload, loc);
-    } catch(const isc::Exception&) {
+    } catch (const isc::Exception&) {
         // Silent exceptions
     }
 

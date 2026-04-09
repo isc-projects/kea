@@ -11,6 +11,7 @@
 
 #include <mysql.h>
 
+#include <mysql/mysql_constants.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,6 +19,8 @@
 #include <string>
 #include <algorithm>
 #include <unordered_map>
+
+using namespace isc::db;
 
 struct StmtState;
 
@@ -85,7 +88,9 @@ static StmtState* SS(MYSQL_STMT* st) {
 
 static StmtState* ensure_state(MYSQL_STMT* st) {
     auto s = SS(st);
-    if (s) return s;
+    if (s) {
+        return s;
+    }
     s = new StmtState();
     s->mysql = reinterpret_cast<MYSQL*>(0x1);
     g_stmt_state[st] = s;

@@ -1,3 +1,9 @@
+// Copyright (C) 2026 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+////////////////////////////////////////////////////////////////////////////////
 // Copyright (C) 2025 Ada Logics Ltd.
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
@@ -46,139 +52,145 @@ static constexpr Parser4Context::ParserType parserTypes[] = {
     Parser4Context::PARSER_POOL4,
 };
 
-static const char *cmds[] = {"config-get",
-                             "config-hash-get",
-                             "config-write",
-                             "config-set",
-                             "config-test",
-                             "config-reload",
-                             "dhcp-disable",
-                             "dhcp-enable",
-                             "version-get",
-                             "build-report",
-                             "leases-reclaim",
-                             "server-tag-get",
-                             "config-backend-pull",
-                             "status-get",
-                             "statistic-set-max-sample-count-all",
-                             "statistic-set-max-sample-age-all",
-                             "subnet4-select-test",
-                             "subnet4o6-select-test",
-                             "lfc-start",
-                             "shutdown"};
+static const char* cmds[] = {
+    "config-get",
+    "config-hash-get",
+    "config-write",
+    "config-set",
+    "config-test",
+    "config-reload",
+    "dhcp-disable",
+    "dhcp-enable",
+    "version-get",
+    "build-report",
+    "leases-reclaim",
+    "server-tag-get",
+    "config-backend-pull",
+    "status-get",
+    "statistic-set-max-sample-count-all",
+    "statistic-set-max-sample-age-all",
+    "subnet4-select-test",
+    "subnet4o6-select-test",
+    "lfc-start",
+    "shutdown"
+};
 
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-  // Initialise logging
-  setenv("KEA_LOGGER_DESTINATION", "/dev/null", 0);
-  setenv("KEA_LOCKFILE_DIR", "/tmp", 0);
-  setenv("KEA_PIDFILE_DIR", "/tmp", 0);
-  setenv("KEA_LFC_EXECUTABLE", "/bin/true", 0);
-  try {
-    isc::log::initLogger("fuzzer");
-    isc::process::Daemon::loggerInit("fuzzer", false);
-    isc::process::Daemon::setDefaultLoggerName("fuzzer");
-  } catch (...) {
-    // Early exit if logging initialisation failed
-    return 0;
-  }
-
-  // Set variables
-  FuzzedDataProvider fdp(data, size);
-  Parser4Context ctx;
-  ControlledDhcpv4Srv srv(0, 0);
-
-  // Get random flags
-  const bool checkOnly = fdp.ConsumeBool();
-  const bool extraChecks = fdp.ConsumeBool();
-
-  // Get random type and command
-  Parser4Context::ParserType type =
-      parserTypes[fdp.ConsumeIntegralInRange<int>(0, 13)];
-  std::string cmdStr =
-      std::string(cmds[fdp.ConsumeIntegralInRange<int>(0, 19)]);
-
-  // If no more remaining bytes, early exit
-  if (fdp.remaining_bytes() <= 0) {
-    return 0;
-  }
-
-  // Provide two type of payload with different length to avoid
-  // timeout from parsing trusted configuration file
-  std::string limit_payload = fdp.ConsumeRandomLengthString(25600);
-  std::string full_payload(reinterpret_cast<const char*>(data), size);
-
-  // First target based on the raw payload entire. This makes seeding a lot
-  // easier.
-  try {
-    ElementPtr rawTree = ctx.parseString(limit_payload, Parser4Context::PARSER_JSON);
-
-    // Configure the server with valid tree
-    if (rawTree) {
-        configureDhcp4Server(srv, rawTree, false, extraChecks);
-        ControlledDhcpv4Srv::checkConfig(rawTree);
-        ControlledDhcpv4Srv::processConfig(rawTree);
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // Initialise logging
+    setenv("KEA_LOGGER_DESTINATION", "/dev/null", 0);
+    setenv("KEA_LOCKFILE_DIR", "/tmp", 0);
+    setenv("KEA_PIDFILE_DIR", "/tmp", 0);
+    setenv("KEA_LFC_EXECUTABLE", "/bin/true", 0);
+    try {
+        isc::log::initLogger("fuzzer");
+        isc::process::Daemon::loggerInit("fuzzer", false);
+        isc::process::Daemon::setDefaultLoggerName("fuzzer");
+    } catch (...) {
+        // Early exit if logging initialisation failed
+        return 0;
     }
-  } catch (const isc::Exception&) {
-  }
 
-  try {
-    ElementPtr tree = ctx.parseString(limit_payload, type);
+    // Set variables
+    FuzzedDataProvider fdp(data, size);
+    Parser4Context ctx;
+    ControlledDhcpv4Srv srv(0, 0);
 
-    // Configure the server with valid tree
-    if (tree) {
-      if (type == Parser4Context::PARSER_JSON ||
-          type == Parser4Context::PARSER_DHCP4) {
-        configureDhcp4Server(srv, tree, checkOnly, extraChecks);
-        ControlledDhcpv4Srv::checkConfig(tree);
-        ControlledDhcpv4Srv::processConfig(tree);
-      }
+    // Get random flags
+    const bool checkOnly = fdp.ConsumeBool();
+    const bool extraChecks = fdp.ConsumeBool();
+
+    // Get random type and command
+    Parser4Context::ParserType type =
+        parserTypes[fdp.ConsumeIntegralInRange<int>(0, sizeof(parserTypes) / sizeof(parserTypes[0]) - 1)];
+    std::string cmdStr =
+        std::string(cmds[fdp.ConsumeIntegralInRange<int>(0, sizeof(cmds) / sizeof(cmds[0]) - 1)]);
+
+    // If no more remaining bytes, early exit
+    if (fdp.remaining_bytes() <= 0) {
+        return 0;
     }
-  } catch (const isc::Exception&) {
-  }
 
-  // File base parsing
-  try {
-    std::string path = fuzz::writeTempFile(limit_payload, "json");
-    if (!path.empty()) {
-      ElementPtr fileTree = ctx.parseFile(path, Parser4Context::PARSER_DHCP4);
-      if (fileTree) {
-        configureDhcp4Server(srv, fileTree, checkOnly, extraChecks);
-        ControlledDhcpv4Srv::checkConfig(fileTree);
-        ControlledDhcpv4Srv::processConfig(fileTree);
-      }
-      unlink(path.c_str());
+    // Provide two type of payload with different length to avoid
+    // timeout from parsing trusted configuration file
+    std::string limit_payload = fdp.ConsumeRandomLengthString(25600);
+    std::string full_payload(reinterpret_cast<const char*>(data), size);
+
+    // Perform an evaluation of the raw data.
+    try {
+        // General parsing
+        ElementPtr rawTree = ctx.parseString(limit_payload, Parser4Context::PARSER_JSON);
+
+        // Configure the server with valid tree
+        if (rawTree) {
+            configureDhcp4Server(srv, rawTree, checkOnly, extraChecks);
+            ControlledDhcpv4Srv::checkConfig(rawTree);
+            ControlledDhcpv4Srv::processConfig(rawTree);
+        }
+    } catch (const isc::Exception&) {
     }
-  } catch (const isc::Exception&) {
-  }
 
-  // Command parsing
-  try {
-    ElementPtr args = fuzz::parseJSON(full_payload);
-    ElementPtr cmd = Element::create(cmdStr);
+    // Generate random string
+    try {
+        // General parsing
+        ElementPtr tree = ctx.parseString(limit_payload, type);
 
-    // Configure root element
-    ElementPtr root = Element::createMap();
-    root->set("command", cmd);
-    root->set("arguments", args);
+        // Configure the server with valid tree
+        if (tree) {
+            if (type == Parser4Context::PARSER_JSON ||
+                type == Parser4Context::PARSER_DHCP4) {
+                configureDhcp4Server(srv, tree, checkOnly, extraChecks);
+                ControlledDhcpv4Srv::checkConfig(tree);
+                ControlledDhcpv4Srv::processConfig(tree);
+            }
+        }
+    } catch (const isc::Exception&) {
+    }
 
-    // Transform to const element
-    ConstElementPtr cmd_const = cmd;
-    ConstElementPtr root_const = root;
+    try {
+        // File base parsing
+        std::string path = fuzz::writeTempFile(limit_payload, "json");
+        std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(&path), [](void* f) { unlink((*reinterpret_cast<std::string*>(f)).c_str()); });
+        if (!path.empty()) {
+            ElementPtr fileTree = ctx.parseFile(path, Parser4Context::PARSER_DHCP4);
+            if (fileTree) {
+                configureDhcp4Server(srv, fileTree, checkOnly, extraChecks);
+                ControlledDhcpv4Srv::checkConfig(fileTree);
+                ControlledDhcpv4Srv::processConfig(fileTree);
+            }
+        }
+    } catch (const isc::Exception&) {
+    }
 
-    parseCommand(cmd_const, root_const);
+    try {
+        // Command parsing
+        ElementPtr args = fuzz::parseJSON(full_payload);
+        ElementPtr cmd = Element::create(cmdStr);
 
-    // Response answer parsing
-    int status = 0;
-    parseAnswer(status, fuzz::parseJSON(full_payload));
-  } catch(const isc::Exception&) {}
+        // Configure root element
+        ElementPtr root = Element::createMap();
+        root->set("command", cmd);
+        root->set("arguments", args);
+
+        // Transform to const element
+        ConstElementPtr cmd_const = cmd;
+        ConstElementPtr root_const = root;
+
+        parseCommand(cmd_const, root_const);
+
+        // Response answer parsing
+        int status = 0;
+        parseAnswer(status, fuzz::parseJSON(full_payload));
+    } catch (const isc::Exception&) {
+        // Known exceptions
+    }
 
     // Try fuzzing specific deeper fuzzers directly
 
-    // Subnets6ListConfigParser
+    // Subnets4ListConfigParser
     try {
         ElementPtr elem = fuzz::parseJSON(full_payload);
         SrvConfigPtr srvconf = SrvConfigPtr(new SrvConfig());
-        Subnets6ListConfigParser parser(fdp.ConsumeBool());
+        Subnets4ListConfigParser parser(fdp.ConsumeBool());
         parser.parse(srvconf, elem, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
         // Known exceptions
@@ -195,12 +207,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         // Known exceptions
     }
 
-    // PdPoolParser
+    // Pool4Parser
     try {
         ElementPtr elem = fuzz::parseJSON(full_payload);
         PoolStoragePtr pools(new PoolStorage());
-        PdPoolParser parser = PdPoolParser();
-        parser.parse(pools, elem, fdp.ConsumeBool());
+        Pool4Parser parser = Pool4Parser();
+        parser.parse(pools, elem, AF_INET, fdp.ConsumeBool());
     } catch (const isc::Exception&) {
         // Known exceptions
     }
@@ -215,5 +227,5 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         // Known exceptions
     }
 
-  return 0;
+    return 0;
 }

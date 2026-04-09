@@ -10,7 +10,7 @@
     "lease-database": {
       "type": "memfile",
       "persist": true,
-      "name": "/var/lib/kea/dhcp6.leases"
+      "name": "dhcp6.leases"
     },
     "option-data": [
       {

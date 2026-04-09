@@ -33,7 +33,7 @@ using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 
-extern "C" void pgmock_load_bytes(const uint8_t* data, size_t size);
+extern "C" void pgsqlmock_load_bytes(const uint8_t* data, size_t size);
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     // Initialise logging
@@ -51,7 +51,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
     }
 
     FuzzedDataProvider fdp(data, size);
-    pgmock_load_bytes(data, size);
+    pgsqlmock_load_bytes(data, size);
 
     DbCallback db_cb;
     size_t index = 0;
@@ -66,7 +66,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
     // Preparer DatabaseConnection parameter map
     DatabaseConnection::ParameterMap params;
-    params["name"] = fdp.ConsumeRandomLengthString(32);
+    std::string dbname = fdp.ConsumeRandomLengthString(32);
+    if (dbname.empty()) {
+        dbname = "kea_fuzz";
+    }
+    params["name"] = dbname;
     params[fdp.ConsumeRandomLengthString(32)] = fdp.ConsumeRandomLengthString(32);
     params[fdp.ConsumeRandomLengthString(32)] = fdp.ConsumeRandomLengthString(32);
     params[fdp.ConsumeRandomLengthString(32)] = fdp.ConsumeRandomLengthString(32);
@@ -187,7 +191,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
         } catch (const isc::Exception&) {
             // Silent exceptions
         }
-    } catch (const isc::Exception& e) {
+    } catch (const isc::Exception&) {
         // Silent exceptions
     }
 

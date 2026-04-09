@@ -199,9 +199,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
                 }
 
                 // Try decoding with all encoders
-                try { decodeBase64(test_str, decoded_output); } catch (...) {}
-                try { decodeBase32Hex(test_str, decoded_output); } catch (...) {}
-                try { decodeHex(test_str, decoded_output); } catch (...) {}
+                try {
+                    decodeBase64(test_str, decoded_output);
+                } catch (...) {
+                }
+                try {
+                    decodeBase32Hex(test_str, decoded_output);
+                } catch (...) {
+                }
+                try {
+                    decodeHex(test_str, decoded_output);
+                } catch (...) {
+                }
             } catch (const isc::Exception&) {
                 // Expected for whitespace handling
             }

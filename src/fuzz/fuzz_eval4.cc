@@ -40,10 +40,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
             evaluateString(exp_bool, pkt);
             dependOnClass(exp_bool_ptr, payload);
         }
-    } catch(const isc::Exception&){}
+    } catch(const isc::Exception&) {
+        // Silent exceptions
+    }
 
-    // Fuzz string parsing
     try {
+        // Fuzz string parsing
         Pkt4 pkt(idx, 0);
         if (ctx.parseString(payload, EvalContext::PARSER_STRING)) {
             ValueStack vs;
@@ -55,21 +57,27 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
             evaluateString(exp_str, pkt);
             dependOnClass(exp_str_ptr, payload);
         }
-    } catch(const isc::Exception&){}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     location loc;
     try {
         // Fuzz converter
         ctx.convertOptionCode(payload, loc);
-    } catch(const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
         ctx.convertOptionName(payload, loc);
-    } catch(const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
         ctx.convertNestLevelNumber(payload, loc);
-    } catch(const isc::Exception&) {
+    } catch (const isc::Exception&) {
         // Silent exceptions
     }
 

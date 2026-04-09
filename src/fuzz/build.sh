@@ -102,7 +102,7 @@ do
   do
     extra_lib=""
     case "$fuzzer" in fuzz_pgsql)
-      extra_lib="$SRC/kea/src/fuzz/pgmock.cc "
+      extra_lib="$SRC/kea/src/fuzz/pgsqlmock.cc "
       extra_lib+="$SRC/kea/build/src/hooks/dhcp/pgsql/libdhcp_pgsql.a"
       ;;
     esac

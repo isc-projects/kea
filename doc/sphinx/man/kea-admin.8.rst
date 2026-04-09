@@ -51,8 +51,7 @@ Arguments
 
    ``lease-dump``
       Dumps the contents of the lease database (for MySQL or
-      PostgreSQL backends) to a CSV (comma-separated values) text file. (Support
-      for the Cassandra backend has been deprecated.)
+      PostgreSQL backends) to a CSV (comma-separated values) text file.
       The first line of the file contains the column names. This can be used
       as a way to switch from a database backend to a memfile backend.
       It can also be used as a diagnostic tool, as it provides a

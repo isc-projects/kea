@@ -51,121 +51,146 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         return 0;
     }
 
-
     try {
         // Simple Parsing
         SimpleParser4::setAllDefaults(payload_elem);
         SimpleParser4::deriveParameters(payload_elem);
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
+    try {
+        // Simple Parsing
         SimpleParser6::setAllDefaults(payload_elem);
         SimpleParser6::deriveParameters(payload_elem);
-    } catch (const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
     try {
         // Configuration Option definition parsing
-        //ElementPtr elem = fuzz::parseJSON(payload);
         CfgOptionDefPtr defs(new CfgOptionDef());
         OptionDefListParser defp4(AF_INET);
         defp4.parse(defs, payload_elem);
-        //elem = fuzz::parseJSON(fdp.ConsumeRandomLengthString());
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
+    try {
+        // Configuration Option definition parsing
+        CfgOptionDefPtr defs(new CfgOptionDef());
         OptionDefListParser defp6(AF_INET6);
         defp6.parse(defs, payload_elem);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // Configuration Option data parsing
-        //ElementPtr elem = fuzz::parseJSON(payload);
         CfgOptionPtr opts(new CfgOption());
         CfgOptionDefPtr defs(new CfgOptionDef());
         OptionDataListParser odlp4(AF_INET, defs);
         odlp4.parse(opts, payload_elem, fdp.ConsumeBool());
-        //elem = fuzz::parseJSON(fdp.ConsumeRandomLengthString());
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
+    try {
+        // Configuration Option data parsing
+        CfgOptionPtr opts(new CfgOption());
+        CfgOptionDefPtr defs(new CfgOptionDef());
         OptionDataListParser odlp6(AF_INET6, defs);
         odlp6.parse(opts, payload_elem, fdp.ConsumeBool());
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // Interfaces configuration parsing
-        //ElementPtr elem = fuzz::parseJSON(payload);
         CfgIfacePtr ifcfg(new CfgIface());
         IfacesConfigParser ifparser4(AF_INET, false);
         ifparser4.parse(ifcfg, payload_elem);
-    } catch (const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
     try {
-        //ElementPtr elem = fuzz::parseJSON(payload);
+        // Interfaces configuration parsing
         CfgIfacePtr ifcfg(new CfgIface());
         IfacesConfigParser ifparser6(AF_INET6, false);
         ifparser6.parse(ifcfg, payload_elem);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // DUID configuration parsing
         ElementPtr elem = fuzz::parseJSON(payload);
         CfgDUIDPtr duid(new CfgDUID());
         DUIDConfigParser duidp;
         duidp.parse(duid, elem);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // Configuration expiration parsing
-        //ElementPtr elem = fuzz::parseJSON(payload);
         CfgExpirationPtr exp(new CfgExpiration());
         ExpirationConfigParser expp;
         expp.parse(payload_elem, exp);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // MAC list parsing
         CfgMACSource macs;
         MACSourcesListConfigParser macp;
-        //ElementPtr elem = fuzz::parseJSON(payload);
         macp.parse(macs, payload_elem);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // Multi-Threading configuration parsing
         SrvConfig srv;
-        //ElementPtr elem = fuzz::parseJSON(payload);
         MultiThreadingConfigParser mtcp;
         mtcp.parse(srv, payload_elem);
-    } catch (const isc::Exception&) {}
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
     try {
-
         // Sanity Check parsing
         SrvConfig srv;
-        //ElementPtr elem = fuzz::parseJSON(payload);
         SanityChecksParser scp;
         scp.parse(srv, payload_elem);
-    } catch (const isc::Exception&) {}
-    try {
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
 
+    try {
         // Client Class definition parsing
-        // ElementPtr elem = fuzz::parseJSON(payload);
         ClientClassDictionaryPtr dict(new ClientClassDictionary());
         ClientClassDefParser ccdp;
         ccdp.parse(dict, payload_elem, AF_INET);
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
+    try {
+        // Client Class definition parsing
+        ClientClassDictionaryPtr dict(new ClientClassDictionary());
+        ClientClassDefParser ccdp;
         ccdp.parse(dict, payload_elem, AF_INET6);
     } catch (const isc::Exception&) {
         // Silent exceptions
     }
 
-
     try {
-        // SubnetConfigParser parsing
-        //ElementPtr elem = fuzz::parseJSON(payload);
+        // Subnet4ConfigParser parsing
         Subnet4ConfigParser scf(fdp.ConsumeBool());
         scf.parse(payload_elem, fdp.ConsumeBool());
-    }
-    catch (const isc::Exception&) {
-        // Silent exceptions
-    }
-
-
-    // ControlSocketsParser
-    try {
-        ElementPtr elem = fuzz::parseJSON(payload);
-        SrvConfig srv;
-        ControlSocketsParser csp;
-        csp.parse(srv, elem);
     } catch (const isc::Exception&) {
         // Silent exceptions
     }
@@ -180,6 +205,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
     }
 
     try {
+        // ControlSocketsParser
+        ElementPtr elem = fuzz::parseJSON(payload);
+        SrvConfig srv;
+        ControlSocketsParser csp;
+        csp.parse(srv, elem);
+    } catch (const isc::Exception&) {
+        // Silent exceptions
+    }
+
+    try {
         // D2ClientConfigParser parsing
         ElementPtr elem = fuzz::parseJSON(payload);
         D2ClientConfigParser d2p;
@@ -188,7 +223,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size) {
         // Silent exceptions
     }
 
-    // Host Reservation parsing
     try {
         // Host Reservation parsing
         ElementPtr elem = fuzz::parseJSON(payload);
