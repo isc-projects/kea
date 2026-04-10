@@ -371,8 +371,11 @@ TEST_F(TcpExchangeTest, noServer) {
     ASSERT_NO_THROW_LOG(exchange_->start());
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
-        ASSERT_NO_THROW_LOG(io_service_->poll());
+    size_t count = 0;
+    bool timeout = false;
+    ASSERT_NO_THROW_LOG(count = io_service_->runOneFor(100 * 1000, timeout));
+    for (; count;) {
+        ASSERT_NO_THROW_LOG(count = io_service_->runOneFor(100 * 1000, timeout));
         if (called_) {
             break;
         }
@@ -400,11 +403,13 @@ TEST_F(TcpExchangeTest, timeout) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
+    bool timeout = false;
+    size_t count = io_service_->runOneFor(10000 * 1000, timeout);
+    for (; count;) {
         if (called_ || ec_) {
             break;
         }
-        io_service_->runOne();
+        count = io_service_->runOneFor(10000 * 1000, timeout);
     }
     socket.close();
     acceptor.close();
@@ -432,14 +437,16 @@ TEST_F(TcpExchangeTest, drop) {
         std::bind(&TcpExchangeTest::acceptCallback, this, ph::_1));
 
     // Poll the I/O service.
-    for (unsigned i = 0; i < 10; ++i) {
+    bool timeout = false;
+    size_t count = io_service_->runOneFor(100 * 1000, timeout);
+    for (; count;) {
         if (accepted_) {
             socket.close();
         }
         if (called_ || ec_) {
             break;
         }
-        io_service_->runOne();
+        count = io_service_->runOneFor(100 * 1000, timeout);
     }
     acceptor.close();
     EXPECT_TRUE(accepted_);
