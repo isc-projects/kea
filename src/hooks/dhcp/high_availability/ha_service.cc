@@ -3441,6 +3441,7 @@ HAService::pauseClientAndListener() {
         }
     } catch (const std::exception& ex) {
         LOG_ERROR(ha_logger, HA_PAUSE_CLIENT_LISTENER_FAILED)
+                  .arg(config_->getThisServerName())
                   .arg(ex.what());
     }
 }

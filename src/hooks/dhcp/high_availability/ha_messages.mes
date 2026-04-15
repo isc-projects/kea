@@ -611,6 +611,7 @@ parameter must be specified for the hooks library to load properly.
 This error message is emitted when attempting to pause HA's HTTP client and
 listener threads. This error is highly unlikely and indicates a programmatic
 issue that should be reported as a defect.
+The server name and the cause of the error are printed.
 
 % HA_PAUSE_CLIENT_LISTENER_ILLEGAL %1: pausing multi-threaded HTTP processing failed: %2
 This error message is emitted when attempting to pause HA's HTTP client or
