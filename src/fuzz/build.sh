@@ -62,7 +62,7 @@ LIBS="-lpthread -ldl -lm -lc++ -lc++abi -lssl -lcrypto -lkrb5 -lgssapi_krb5"
 export CXXFLAGS="${CXXFLAGS} -std=c++17 -stdlib=libc++ -Wno-unused-parameter -Wno-unused-value"
 
 # Build non-dhcp specific fuzzers
-for fuzzer in fuzz_cc fuzz_d2 fuzz_agent fuzz_util fuzz_dhcpsrv fuzz_dhcpsrv_csv_lease fuzz_dns fuzz_encode fuzz_cryptolink
+for fuzzer in fuzz_cc fuzz_d2 fuzz_util fuzz_dhcpsrv fuzz_dhcpsrv_csv_lease fuzz_dns fuzz_encode fuzz_cryptolink
 do
   extra_lib=""
   case "$fuzzer" in fuzz_hook_tsig)
@@ -182,7 +182,7 @@ done
 
 # Prepare maximum size option for configuration parsing related fuzzers
 for fuzzer in fuzz_eval4 fuzz_eval6 fuzz_dhcp_parser4 fuzz_dhcp_parser6 \
-              fuzz_dhcp_pkt4 fuzz_dhcp_pkt6 fuzz_cc fuzz_d2 fuzz_agent \
+              fuzz_dhcp_pkt4 fuzz_dhcp_pkt6 fuzz_cc fuzz_d2 \
               fuzz_config_kea_dhcp4 fuzz_config_kea_dhcp6
 do
     printf '[libfuzzer]\nmax_len=25600\n' > "${OUT}/${fuzzer}.options"
@@ -192,5 +192,4 @@ done
 zip -j "${OUT}/fuzz_dhcpsrv_seed_corpus.zip" "${SRC}/kea/src/fuzz/corp"/*.json
 zip -j "${OUT}/fuzz_dhcp_parser4_seed_corpus.zip" "${SRC}/kea/src/fuzz/corp"/*.json
 zip -j "${OUT}/fuzz_dhcp_parser6_seed_corpus.zip" "${SRC}/kea/src/fuzz/corp"/*.json
-zip -j "${OUT}/fuzz_agent_seed_corpus.zip" "${SRC}/kea/src/bin/agent/tests/testdata"/*.json
 zip -j "${OUT}/fuzz_d2_seed_corpus.zip" "${SRC}/kea/src/bin/d2/tests/testdata"/*.json

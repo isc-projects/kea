@@ -72,7 +72,6 @@ endforeach
 
 # From external contribution.
 foreach i : [
-    'fuzz_agent',
     'fuzz_cc',
     'fuzz_crypto',
     'fuzz_cryptolink',
@@ -122,7 +121,6 @@ foreach i : [
         dependencies: [MYSQL_DEP, POSTGRESQL_DEP, CRYPTO_DEP, GTEST_DEP, KRB5_DEP],
         include_directories: includes,
         link_with: [
-            agent_lib,
             d2_lib,
             ddns_gss_tsig_lib,
             dhcp_lease_query_lib,
