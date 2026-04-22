@@ -110,7 +110,12 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
     }
 
     try {
-        return (response->getBodyAsJson());
+        auto response_list = response->getBodyAsJson();
+        if (response_list->getType() != Element::list) {
+            isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a list, got "
+                      << Element::typeToName(response_list->getType()) << " instead");
+        }
+        return (response_list->get(0));
     } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }

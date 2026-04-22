@@ -492,7 +492,9 @@ protected:
                                           HttpStatusCode::OK));
         ElementPtr map = Element::createMap();
         map->set("received", Element::create(body->str()));
-        response->setBodyAsJson(map);
+        ElementPtr response_list = Element::createList();
+        response_list->add(boost::const_pointer_cast<Element>(map));
+        response->setBodyAsJson(response_list);
         response->finalize();
         return (response);
     }
