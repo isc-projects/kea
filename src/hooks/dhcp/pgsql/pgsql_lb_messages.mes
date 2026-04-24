@@ -320,3 +320,65 @@ Logged at debug log level 50.
 This debug message is issued when the server upgrades IPv6 lease extended info.
 The page number and started address, and the count of already updated leases
 are displayed.
+
+% PGSQL_LB_SFLQ_CREATE_POOL4 creating shared-flq pool for address range %1 - %2, subnet id %3, recreate %4, capacity %5
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end to
+(re)create the shared free lease data for the pool described in the arguments.
+
+% PGSQL_LB_SFLQ_PICK_LEASE4 picking a free lease from address range %1 - %2
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a free address from the pool described in the arguments.
+
+% PGSQL_LB_SFLQ_CREATE_POOL6 creating shared-flq pool for address range %1 - %2, type %3, delegated length: %4, subnet id %5, recreate %6, capacity %7
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end to
+(re)create the shared free lease data for the pool described in the arguments.
+
+% PGSQL_LB_SFLQ_PICK_LEASE6 picking a free lease from address range %1 - %2
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a free lease from the pool described in the arguments.
+
+% PGSQL_LB_SFLQ_POOL4_GET_ALL fetch all V4 SFLQ pools
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v4 SFLQ pools.
+
+% PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET fetch all V4 SFLQ pools for subnet-id %1
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v4 SFLQ pools belonging to a subnet.
+
+% PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE fetch all V4 SFLQ pools that overlap the range %1 and %2
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v4 SFLQ pool that overlap the given address range.
+
+% PGSQL_LB_SFLQ_POOL4_DELETE delete the V4 SFLQ pool with start address %1 and end address %2, forece = %3
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v4 SFLQ pool (and it's free lease data) that match the given start and end
+addresses.
+
+% PGSQL_LB_SFLQ_POOL6_GET_ALL fetch all V6 SFLQ pools
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools.
+
+% PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET fetch all V6 SFLQ pools for subnet-id %1
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools belonging to a subnet.
+
+% PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE fetch all V6 SFLQ pools that overlap the range %1 and %2
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v6 SFLQ pool that overlap the given address range.
+
+% PGSQL_LB_SFLQ_POOL6_DELETE delete the V6 SFLQ pool with start address %1 and end address %2, forece = %3
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v6 SFLQ pool (and it's free lease data) that match the given start and end
+addresses

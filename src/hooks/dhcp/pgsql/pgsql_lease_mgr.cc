@@ -752,6 +752,133 @@ PgSqlTaggedStatement tagged_statements[] = {
       "sflqDeleteLease6",
       "SELECT sflqDeleteLease6(cast($1 as inet), $2)" },
 
+    // SFLQ_SFLQ_POOL4_GET_ALL
+    { 0, { },
+      "sflqPool4GetAll",
+      "SELECT q.id, q.subnet_id, 3 as lease_type, "
+      "       q.start_address, q.end_address, 128 as delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool4 AS q "
+      "    LEFT JOIN free_lease4 AS f "
+      "    ON f.address >= q.start_address AND f.address <= q.end_address "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id, q.start_address"},
+
+    // SFLQ_SFLQ_POOL4_GET_BY_SUBNET
+    { 1, { OID_INT8 },
+      "sflqPool4GetBySubnet",
+      "SELECT q.id, q.subnet_id, 3 as lease_type, "
+      "       q.start_address, q.end_address, 128 as delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool4 AS q "
+      "    LEFT JOIN free_lease4 AS f "
+      "    ON f.address >= q.start_address AND f.address <= q.end_address "
+      "    WHERE q.subnet_id = $1 "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id, q.start_address"},
+
+    // SFLQ_POOL4_GET_BY_RANGE
+    { 2, { OID_INT8, OID_INT8 },
+      "sflqPool4GetByRange",
+      "SELECT q.id, q.subnet_id, 3 as lease_type, "
+      "       q.start_address, q.end_address, 128 as delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool4 AS q "
+      "    LEFT JOIN free_lease4 AS f "
+      "    ON f.address >= q.start_address AND f.address <= q.end_address "
+      //    WHERE ((q.start <= p_start AND p_start <= q.end) OR "
+      //           (q.start <= p_end AND p_pend <= q.end) OR "
+      //           (p_start < q.start AND q.end < p_end))
+      "    WHERE ((q.start_address <= $1 AND $1 <= q.end_address) OR "
+      "           (q.start_address <= $2 AND $2 <= q.end_address) OR "
+      "           ($1 < q.start_address AND q.end_address < $2)) "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
+
+    // SFLQ_POOL4_DEL
+    { 2, { OID_INT8, OID_INT8 },
+      "sflqPool4GetDel",
+      "WITH deleted_pool AS ( "
+      "    DELETE FROM flq_pool4 "
+      "    WHERE start_address = $1 "
+      "      AND end_address = $2 "
+      "    RETURNING start_address, end_address) "
+      "DELETE FROM free_lease4 f "
+      "     USING deleted_pool p "
+      "     WHERE f.address BETWEEN p.start_address AND p.end_address"},
+
+    // SFLQ_SFLQ_POOL6_GET_ALL
+    { 0, { },
+      "sflqPool6GetAll",
+      "SELECT q.id, q.subnet_id, q.lease_type, "
+      "       q.start_address, q.end_address, q.delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool6 AS q "
+      "    LEFT JOIN free_lease6 AS f "
+      "    ON f.bin_address >= inetToBytea(q.start_address) AND "
+      "       f.bin_address <= inetToBytea(q.end_address) "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id ASC, inetToBytea(q.start_address) ASC "},
+
+    // SFLQ_SFLQ_POOL6_GET_BY_SUBNET
+    { 1, { OID_INT8 },
+      "sflqPool6GetBySubnet",
+      "SELECT q.id, q.subnet_id, q.lease_type, "
+      "       q.start_address, q.end_address, q.delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool6 AS q "
+      "    LEFT JOIN free_lease6 AS f "
+      "    ON f.bin_address >= inetToBytea(q.start_address) AND "
+      "       f.bin_address <= inetToBytea(q.end_address) "
+      "    WHERE q.subnet_id = $1 "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id ASC, inetToBytea(q.start_address) ASC "},
+
+    // SFLQ_POOL6_GET_BY_RANGE
+    { 2, { OID_VARCHAR, OID_VARCHAR },
+      "sflqPool6GetByRange",
+      "SELECT q.id, q.subnet_id, q.lease_type, "
+      "       q.start_address, q.end_address, q.delegated_len, "
+      "       gmt_epoch(q.created_ts) as created_ts, "
+      "       gmt_epoch(q.modification_ts) as modification_ts, "
+      "       count(f.address) as free_leases "
+      "    FROM flq_pool6 AS q "
+      "    LEFT JOIN free_lease6 AS f "
+      "    ON f.address >= q.start_address AND f.address <= q.end_address "
+      //    WHERE ((q.start <= p_start AND p_start <= q.end) OR "
+      //           (q.start <= p_end AND p_pend <= q.end) OR "
+      //           (p_start < q.start AND q.end < p_end))
+      "    WHERE ((inetToBytea(q.start_address) <= inetToBytea($1::inet) "
+      "            AND inetToBytea($1::inet) <= inetToBytea(q.end_address)) OR"
+      "           (inetToBytea(q.start_address) <= inetToBytea($2::inet) AND "
+      "            inetToBytea($2::inet) <= inetToBytea(q.end_address)) OR "
+      "           (inetToBytea($1::inet) < inetToBytea(q.start_address) AND "
+      "           inetToBytea(q.end_address) < inetToBytea($2::inet))) "
+      "    GROUP BY q.id "
+      "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
+
+    // SFLQ_POOL6_DEL
+    { 2, { OID_VARCHAR, OID_VARCHAR },
+      "sflqPool6GetDel",
+      "WITH deleted_pool AS ( "
+      "    DELETE FROM flq_pool6 "
+      "    WHERE start_address = $1::inet "
+      "      AND end_address = $2::inet "
+      "    RETURNING start_address, end_address) "
+      "DELETE FROM free_lease6 f "
+      "     USING deleted_pool p "
+      "     WHERE f.bin_address BETWEEN inetToBytea(p.start_address) "
+      "                             AND inetToBytea(p.end_address)"},
     // End of list sentinel
     { 0, { 0 }, 0, 0 }
 };
@@ -4011,19 +4138,24 @@ PgSqlLeaseMgr::byRemoteId6size() const {
 bool
 PgSqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address,
                                   SubnetID subnet_id, bool recreate) {
-    auto capacity = addrsInRange(start_address, end_address);
-    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_CREATE_POOL4)
-        .arg(start_address.toText())
-        .arg(end_address.toText())
-        .arg(subnet_id)
-        .arg(recreate)
-        .arg(capacity);
-
-    if (capacity > SharedFlqAllocator::MAX_V4_POOL_SIZE) {
-        isc_throw(BadValue, "PgSqlLeasMgr::sflqCreateFlqPool4 pool capacity "
-                            << capacity << " exceeds limit of "
+    // This is clunky but it allows us to log the capacity.
+    try {
+        validateV4Range(start_address, end_address);
+        auto capacity = addrsInRange(start_address, end_address);
+        if (capacity > SharedFlqAllocator::MAX_V4_POOL_SIZE) {
+            isc_throw(BadValue, "pool capacity " << capacity << " exceeds limit of "
                             << SharedFlqAllocator::MAX_V4_POOL_SIZE
                             << " for shared-flq allocator on V4 pool ");
+        }
+
+        LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_CREATE_POOL4)
+            .arg(start_address.toText())
+            .arg(end_address.toText())
+            .arg(subnet_id)
+            .arg(recreate)
+            .arg(capacity);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "PgqlLeasMgr::sflqCreateFlqPool4 " << ex.what());
     }
 
     // Get a context
@@ -4066,6 +4198,8 @@ PgSqlLeaseMgr::sflqPickFreeLease4(IOAddress start_address, IOAddress end_address
         .arg(start_address.toText())
         .arg(end_address.toText());
 
+    validateV4Range(start_address, end_address);
+
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
@@ -4107,28 +4241,27 @@ bool
 PgSqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address,
                                   Lease::Type lease_type, uint8_t delegated_len,
                                   SubnetID subnet_id, bool recreate) {
-    uint128_t capacity;
-    if (lease_type == Lease::TYPE_PD) {
-        auto prefix_len = prefixLengthFromRange(start_address, end_address);
-        capacity = prefixesInRange(prefix_len, delegated_len);
-    } else {
-        capacity = addrsInRange(start_address, end_address);
-    }
+    // This is clunky but it allows us to log the capacity.
+    try {
+        validateV6Range(start_address, end_address);
+        uint128_t capacity;
+        if (lease_type == Lease::TYPE_PD) {
+            auto prefix_len = prefixLengthFromRange(start_address, end_address);
+            capacity = prefixesInRange(prefix_len, delegated_len);
+        } else {
+            capacity = addrsInRange(start_address, end_address);
+        }
 
-    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_CREATE_POOL6)
-        .arg(start_address.toText())
-        .arg(end_address.toText())
-        .arg(lease_type)
-        .arg(static_cast<uint16_t>(delegated_len))
-        .arg(subnet_id)
-        .arg(recreate)
-        .arg(capacity);
-
-    if (capacity > SharedFlqAllocator::MAX_V6_POOL_SIZE) {
-        isc_throw(BadValue, "PgSqlLeasMgr::sflqCreateFlqPool6 pool capacity "
-                            << capacity << " exceeds limit of "
-                            << SharedFlqAllocator::MAX_V6_POOL_SIZE
-                            << " for shared-flq allocator on V6 pool ");
+        LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_CREATE_POOL6)
+            .arg(start_address.toText())
+            .arg(end_address.toText())
+            .arg(lease_type)
+            .arg(static_cast<uint16_t>(delegated_len))
+            .arg(subnet_id)
+            .arg(recreate)
+            .arg(capacity);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "PgSqlLeasMgr::sflqCreateFlqPool6 " << ex.what());
     }
 
     // Get a context
@@ -4173,6 +4306,8 @@ PgSqlLeaseMgr::sflqPickFreeLease6(IOAddress start_address, IOAddress end_address
         .arg(start_address.toText())
         .arg(end_address.toText());
 
+    validateV6Range(start_address, end_address);
+
     // Get a context
     PgSqlLeaseContextAlloc get_context(*this);
     PgSqlLeaseContextPtr ctx = get_context.ctx_;
@@ -4211,6 +4346,209 @@ PgSqlLeaseMgr::sflqPickFreeLease6(IOAddress start_address, IOAddress end_address
 
     // Return the address.
     return (PgSqlExchange::getInetValue6(r, 0, 0));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool4GetAll() {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_POOL4_GET_ALL);
+
+    // No input parameters.
+    PsqlBindArray in_bindings;
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_ALL, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool4Get(SubnetID subnet_id) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET)
+              .arg(subnet_id);
+
+    PsqlBindArray in_bindings;
+    in_bindings.add(subnet_id);
+
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_BY_SUBNET, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool4Get(IOAddress start_address, IOAddress end_address) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE)
+              .arg(start_address.toText())
+              .arg(end_address.toText());
+
+    validateV4Range(start_address, end_address);
+
+    PsqlBindArray in_bindings;
+    // Postgresql statement args are numbered so it only needs them once each.
+    in_bindings.add(start_address.toUint32());
+    in_bindings.add(end_address.toUint32());
+
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_BY_RANGE, in_bindings));
+}
+
+bool
+PgSqlLeaseMgr::sflqPool4Del(IOAddress start_address, IOAddress end_address,
+                            bool force /* = false */) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL4_DELETE)
+              .arg(start_address.toText())
+              .arg(end_address.toText())
+              .arg(force ? "true" : "false");
+
+    validateV4Range(start_address, end_address);
+
+    return (sflqPoolDelCommon(start_address, end_address, force, AF_INET));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool6GetAll() {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL, PGSQL_LB_SFLQ_POOL6_GET_ALL);
+
+    // No input parameters.
+    PsqlBindArray in_bindings;
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_ALL, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool6Get(SubnetID subnet_id) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET)
+              .arg(subnet_id);
+
+    PsqlBindArray in_bindings;
+    in_bindings.add(subnet_id);
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_BY_SUBNET, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPool6Get(IOAddress start_address, IOAddress end_address) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE)
+              .arg(start_address.toText())
+              .arg(end_address.toText());
+
+    validateV6Range(start_address, end_address);
+
+    PsqlBindArray in_bindings;
+    // Postgresql statement args are numbered so it only needs them once each.
+    in_bindings.addInet6(start_address);
+    in_bindings.addInet6(end_address);
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_BY_RANGE, in_bindings));
+}
+
+bool
+PgSqlLeaseMgr::sflqPool6Del(IOAddress start_address, IOAddress end_address,
+                            bool force /* = false */) {
+    LOG_DEBUG(pgsql_lb_logger, PGSQL_LB_DBG_TRACE_DETAIL,
+              PGSQL_LB_SFLQ_POOL6_DELETE)
+              .arg(start_address.toText())
+              .arg(end_address.toText())
+              .arg(force ? "true" : "false");
+
+    validateV6Range(start_address, end_address);
+
+    return (sflqPoolDelCommon(start_address, end_address, force, AF_INET6));
+}
+
+SflqPoolInfoCollectionPtr
+PgSqlLeaseMgr::sflqPoolGetCommon(const StatementIndex& stindex,
+                                 const PsqlBindArray& where_bindings) {
+    // Get a context
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+
+    ctx->conn_.selectQuery(tagged_statements[stindex], where_bindings,
+                           [this, &pools]
+                           (PgSqlResult& r, int row) {
+        // Create a convenience worker for the row.
+        PgSqlResultRowWorker worker(r, row);
+        SflqPoolInfoPtr info(new SflqPoolInfo());
+
+        // db pool id is 0, we skip it
+
+        info->subnet_id_ = worker.getInt(1);
+
+        auto lease_type_ = worker.getInt(2);
+        switch(lease_type_) {
+        case Lease::TYPE_V4:
+            info->lease_type_ = Lease::TYPE_V4;
+            break;
+        case Lease::TYPE_NA:
+            info->lease_type_ = Lease::TYPE_NA;
+            break;
+        case Lease::TYPE_PD:
+            info->lease_type_ = Lease::TYPE_PD;
+            break;
+        default:
+            isc_throw(BadValue, "invalid pool lease type returned " <<
+                      static_cast<int>(lease_type_));
+        }
+
+        if (lease_type_ == Lease::TYPE_V4) {
+            info->start_address_ = IOAddress(worker.getInt(3));
+            info->end_address_ = IOAddress(worker.getInt(4));
+        } else {
+            info->start_address_ = worker.getInet6(3);
+            info->end_address_ = worker.getInet6(4);
+        }
+
+        info->delegated_len_ = worker.getInt(5);
+        info->created_ts_ = worker.getTimestamp(6);
+        info->modified_ts_ = worker.getTimestamp(7);
+        info->free_leases_ = worker.getInt(8);
+        pools->push_back(info);
+    });
+
+    return (pools);
+}
+
+bool
+PgSqlLeaseMgr::sflqPoolDelCommon(IOAddress start_address, IOAddress end_address,
+                                 bool force, uint16_t family ) {
+    // If force is false check for overlapping pools.
+    if (!force) {
+        auto pools_in_range = (family == AF_INET ? sflqPool4Get(start_address, end_address)
+                                                 : sflqPool6Get(start_address, end_address));
+        auto count = pools_in_range->size();
+        if (count == 0) {
+            // Nothing to do.
+            return (false);
+        }
+
+        if (count > 1) {
+            // Overlapping pools, warn and bail.
+            isc_throw(InvalidOperation, "Delete would affect "
+                      << count << " overlapping pools");
+        }
+    }
+
+    // Get a context.
+    PgSqlLeaseContextAlloc get_context(*this);
+    PgSqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Make where clause bindings.
+    PsqlBindArray in_bindings;
+    StatementIndex stindex;
+    if (family == AF_INET) {
+        in_bindings.add(start_address.toUint32());
+        in_bindings.add(end_address.toUint32());
+        stindex = SFLQ_POOL4_DELETE;
+    } else {
+        in_bindings.addInet6(start_address);
+        in_bindings.addInet6(end_address);
+        stindex = SFLQ_POOL6_DELETE;
+    }
+
+    ScopedPgSqlTransactionPtr trans(new PgSqlTransaction(ctx->conn_));
+    auto affected_rows = ctx->conn_.updateDeleteQuery(tagged_statements[stindex], in_bindings);
+    trans->commit();
+
+    return(affected_rows > 0);
 }
 
 TrackingLeaseMgrPtr

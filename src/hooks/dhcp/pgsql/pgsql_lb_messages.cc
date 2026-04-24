@@ -58,6 +58,14 @@ extern const isc::log::MessageID PGSQL_LB_SFLQ_CREATE_POOL4 = "PGSQL_LB_SFLQ_CRE
 extern const isc::log::MessageID PGSQL_LB_SFLQ_CREATE_POOL6 = "PGSQL_LB_SFLQ_CREATE_POOL6";
 extern const isc::log::MessageID PGSQL_LB_SFLQ_PICK_LEASE4 = "PGSQL_LB_SFLQ_PICK_LEASE4";
 extern const isc::log::MessageID PGSQL_LB_SFLQ_PICK_LEASE6 = "PGSQL_LB_SFLQ_PICK_LEASE6";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL4_DELETE = "PGSQL_LB_SFLQ_POOL4_DELETE";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL4_GET_ALL = "PGSQL_LB_SFLQ_POOL4_GET_ALL";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE = "PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET = "PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL6_DELETE = "PGSQL_LB_SFLQ_POOL6_DELETE";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL6_GET_ALL = "PGSQL_LB_SFLQ_POOL6_GET_ALL";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE = "PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE";
+extern const isc::log::MessageID PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET = "PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET";
 extern const isc::log::MessageID PGSQL_LB_UPDATE_ADDR4 = "PGSQL_LB_UPDATE_ADDR4";
 extern const isc::log::MessageID PGSQL_LB_UPDATE_ADDR6 = "PGSQL_LB_UPDATE_ADDR6";
 extern const isc::log::MessageID PGSQL_LB_UPGRADE_EXTENDED_INFO4 = "PGSQL_LB_UPGRADE_EXTENDED_INFO4";
@@ -124,6 +132,14 @@ const char* values[] = {
     "PGSQL_LB_SFLQ_CREATE_POOL6", "creating shared-flq pool for address range %1 - %2, type %3, delegated length: %4, subnet id %5, recreate %6, capacity %7",
     "PGSQL_LB_SFLQ_PICK_LEASE4", "picking a free lease from address range %1 - %2",
     "PGSQL_LB_SFLQ_PICK_LEASE6", "picking a free lease from address range %1 - %2",
+    "PGSQL_LB_SFLQ_POOL4_DELETE", "delete the V4 SFLQ pool with start address %1 and end address %2, forece = %3",
+    "PGSQL_LB_SFLQ_POOL4_GET_ALL", "fetch all V4 SFLQ pools",
+    "PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE", "fetch all V4 SFLQ pools that overlap the range %1 and %2",
+    "PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET", "fetch all V4 SFLQ pools for subnet-id %1",
+    "PGSQL_LB_SFLQ_POOL6_DELETE", "delete the V6 SFLQ pool with start address %1 and end address %2, forece = %3",
+    "PGSQL_LB_SFLQ_POOL6_GET_ALL", "fetch all V6 SFLQ pools",
+    "PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE", "fetch all V6 SFLQ pools that overlap the range %1 and %2",
+    "PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET", "fetch all V6 SFLQ pools for subnet-id %1",
     "PGSQL_LB_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "PGSQL_LB_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",
     "PGSQL_LB_UPGRADE_EXTENDED_INFO4", "upgrading IPv4 leases done in %1 pages with %2 updated leases",
