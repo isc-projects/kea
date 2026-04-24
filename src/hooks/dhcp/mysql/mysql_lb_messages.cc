@@ -60,6 +60,14 @@ extern const isc::log::MessageID MYSQL_LB_SFLQ_CREATE_POOL4 = "MYSQL_LB_SFLQ_CRE
 extern const isc::log::MessageID MYSQL_LB_SFLQ_CREATE_POOL6 = "MYSQL_LB_SFLQ_CREATE_POOL6";
 extern const isc::log::MessageID MYSQL_LB_SFLQ_PICK_LEASE4 = "MYSQL_LB_SFLQ_PICK_LEASE4";
 extern const isc::log::MessageID MYSQL_LB_SFLQ_PICK_LEASE6 = "MYSQL_LB_SFLQ_PICK_LEASE6";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL4_DELETE = "MYSQL_LB_SFLQ_POOL4_DELETE";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL4_GET_ALL = "MYSQL_LB_SFLQ_POOL4_GET_ALL";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL4_GET_BY_RANGE = "MYSQL_LB_SFLQ_POOL4_GET_BY_RANGE";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL4_GET_BY_SUBNET = "MYSQL_LB_SFLQ_POOL4_GET_BY_SUBNET";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL6_DELETE = "MYSQL_LB_SFLQ_POOL6_DELETE";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL6_GET_ALL = "MYSQL_LB_SFLQ_POOL6_GET_ALL";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL6_GET_BY_RANGE = "MYSQL_LB_SFLQ_POOL6_GET_BY_RANGE";
+extern const isc::log::MessageID MYSQL_LB_SFLQ_POOL6_GET_BY_SUBNET = "MYSQL_LB_SFLQ_POOL6_GET_BY_SUBNET";
 extern const isc::log::MessageID MYSQL_LB_TLS_CIPHER = "MYSQL_LB_TLS_CIPHER";
 extern const isc::log::MessageID MYSQL_LB_UPDATE_ADDR4 = "MYSQL_LB_UPDATE_ADDR4";
 extern const isc::log::MessageID MYSQL_LB_UPDATE_ADDR6 = "MYSQL_LB_UPDATE_ADDR6";
@@ -129,6 +137,14 @@ const char* values[] = {
     "MYSQL_LB_SFLQ_CREATE_POOL6", "creating shared-flq pool for address range %1 - %2, type %3, delegated length: %4, subnet id %5, recreate %6, capacity %7",
     "MYSQL_LB_SFLQ_PICK_LEASE4", "picking a free lease from address range %1 - %2",
     "MYSQL_LB_SFLQ_PICK_LEASE6", "picking a free lease from address range %1 - %2",
+    "MYSQL_LB_SFLQ_POOL4_DELETE", "delete the V4 SFLQ pool with start address %1 and end address %2, forece = %3",
+    "MYSQL_LB_SFLQ_POOL4_GET_ALL", "fetch all V4 SFLQ pools",
+    "MYSQL_LB_SFLQ_POOL4_GET_BY_RANGE", "fetch all V4 SFLQ pools that overlap the range %1 and %2",
+    "MYSQL_LB_SFLQ_POOL4_GET_BY_SUBNET", "fetch all V4 SFLQ pools for subnet-id %1",
+    "MYSQL_LB_SFLQ_POOL6_DELETE", "delete the V6 SFLQ pool with start address %1 and end address %2, forece = %3",
+    "MYSQL_LB_SFLQ_POOL6_GET_ALL", "fetch all V6 SFLQ pools",
+    "MYSQL_LB_SFLQ_POOL6_GET_BY_RANGE", "fetch all V6 SFLQ pools that overlap the range %1 and %2",
+    "MYSQL_LB_SFLQ_POOL6_GET_BY_SUBNET", "fetch all V6 SFLQ pools for subnet-id %1",
     "MYSQL_LB_TLS_CIPHER", "TLS cipher: %1",
     "MYSQL_LB_UPDATE_ADDR4", "updating IPv4 lease for address %1",
     "MYSQL_LB_UPDATE_ADDR6", "updating IPv6 lease for address %1, lease type %2",

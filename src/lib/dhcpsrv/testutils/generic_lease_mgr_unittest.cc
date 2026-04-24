@@ -430,6 +430,24 @@ GenericLeaseMgrTest::createLeases6() {
 }
 
 void
+GenericLeaseMgrTest::checkPoolInfos(const SflqPoolInfo& lhs,
+                                      const SflqPoolInfo& rhs,
+                                      int lineno) {
+
+    ASSERT_TRUE(lhs.lease_type_ == rhs.lease_type_ &&
+                lhs.start_address_  == rhs.start_address_ &&
+                lhs.end_address_ == rhs.end_address_ &&
+                lhs.delegated_len_ == rhs.delegated_len_ &&
+                lhs.subnet_id_ == rhs.subnet_id_ &&
+                lhs.free_leases_ == rhs.free_leases_ &&
+                lhs.created_ts_ >= rhs.created_ts_ &&
+                lhs.modified_ts_ >= rhs.modified_ts_)
+        << "Pools don't match at line " << lineno << std::endl
+        << "lhs: " << *lhs.toElement() << std::endl
+        << "rhs: " << *rhs.toElement() << std::endl;
+}
+
+void
 GenericLeaseMgrTest::testGetLease4ClientId() {
     // Let's initialize a specific lease ...
     Lease4Ptr lease = initializeLease4(straddress4_[1]);
@@ -6103,6 +6121,474 @@ GenericLeaseMgrTest::testSflqLeaseOps6(Lease::Type lease_type) {
     }
 }
 
+void
+GenericLeaseMgrTest::testSflqAPIFuncs4() {
+    SflqPoolInfoCollectionPtr pool_infos;
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
+    ASSERT_EQ(0, pool_infos->size());
+
+    auto test_start = boost::posix_time::second_clock::local_time();
+
+    // Create three test pools.
+    SflqPoolInfoCollection test_pools;
+    SflqPoolInfoPtr pi;
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.3.0");
+    pi->end_address_ = IOAddress("192.0.3.2");
+    pi->subnet_id_ = 1;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.2.0");
+    pi->end_address_ = IOAddress("192.0.2.2");
+    pi->subnet_id_ = 2;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.1.0");
+    pi->end_address_ = IOAddress("192.0.1.2");
+    pi->subnet_id_ = 1;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    for ( auto const& test_pool : test_pools) {
+        ASSERT_NO_THROW_LOG(
+            lmptr_->sflqCreateFlqPool4(test_pool->start_address_,
+                                       test_pool->end_address_,
+                                       test_pool->subnet_id_, false));
+    }
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+
+    // Should get them back ordered by subnet and start address.
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 1.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(1));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(2, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 2.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(2));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 99
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(99));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(0, pool_infos->size());
+
+    // Fetch by a range that excludes them all.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(IOAddress("1.2.3.4"),
+                                                          IOAddress("1.2.3.4")));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(0, pool_infos->size());
+
+    // Fetch by a range that includes them all.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(IOAddress("192.0.0.0"),
+                                                          IOAddress("192.0.4.0")));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
+
+    // Fetch each by exact range match.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pool->start_address_,
+                                                              test_pool->end_address_));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size());
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // Fetch each by overlapping the pool end.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+        auto start_address = IOAddress::increase(test_pool->start_address_);
+        auto end_address = IOAddress::increase(test_pool->end_address_);
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size());
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // Fetch each by overlapping pool start.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+
+        auto start_address = IOAddress(test_pool->start_address_.toUint32() - 1);
+        auto end_address = IOAddress(test_pool->end_address_.toUint32() - 1);
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size());
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // No match, no delete.
+    bool deleted;
+    ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool4Del(IOAddress("1.2.3.4"),
+                                                       IOAddress("1.2.3.4")));
+    ASSERT_FALSE(deleted);
+
+    // Delete each pool.
+    for ( auto const& test_pool : test_pools) {
+        // Delete the pool.
+        ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool4Del(test_pool->start_address_,
+                                                              test_pool->end_address_));
+        ASSERT_TRUE(deleted);
+
+        // Verify it's no longer there.
+        pool_infos.reset();
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pool->start_address_,
+                                                              test_pool->end_address_));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(0, pool_infos->size());
+    }
+}
+
+void
+GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
+    SflqPoolInfoCollectionPtr pool_infos;
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
+    ASSERT_EQ(0, pool_infos->size());
+
+    auto test_start = boost::posix_time::second_clock::local_time();
+
+    // Create three test pools.
+    SflqPoolInfoCollection test_pools;
+    SflqPoolInfoPtr pi;
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::30");
+    pi->end_address_ = IOAddress("3001::32");
+    pi->subnet_id_ = 1;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::20");
+    pi->end_address_ = IOAddress("3001::22");
+    pi->subnet_id_ = 2;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::10");
+    pi->end_address_ = IOAddress("3001::12");
+    pi->subnet_id_ = 1;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 3;
+    test_pools.push_back(pi);
+
+    for ( auto const& test_pool : test_pools) {
+        ASSERT_NO_THROW_LOG(
+            lmptr_->sflqCreateFlqPool6(test_pool->start_address_,
+                                       test_pool->end_address_,
+                                       test_pool->lease_type_,
+                                       test_pool->delegated_len_,
+                                       test_pool->subnet_id_, false));
+    }
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+
+    // Should get them back ordered by subnet and start address.
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 1.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(1));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(2, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 2.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(2));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
+
+    // Fetch by subnet id for subnet_id = 99
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(99));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(0, pool_infos->size());
+
+    // Fetch by a range that excludes them all.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(IOAddress("2001::1"),
+                                                          IOAddress("2001::2")));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(0, pool_infos->size());
+
+    // Fetch by a range that includes them all.
+    pool_infos.reset();
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(IOAddress("3001::"),
+                                                          IOAddress("3001::FF")));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
+
+    // Fetch each by exact range match.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+        auto start_address = test_pool->start_address_;
+        auto end_address = test_pool->end_address_;
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address.toText(),
+                                                              end_address.toText()));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size()) << start_address.toText() << " - " << end_address.toText();
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // Fetch each by overlapping the pool end.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+        auto start_address = IOAddress::increase(test_pool->start_address_);
+        auto end_address = IOAddress::increase(test_pool->end_address_);
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size());
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // Fetch each by overlapping pool start.
+    for ( auto const& test_pool : test_pools) {
+        pool_infos.reset();
+
+        IOAddress one("::1");
+        auto start_address = IOAddress::subtract(test_pool->start_address_, one);
+        auto end_address = IOAddress::subtract(test_pool->end_address_, one);
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(1, pool_infos->size());
+        checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
+    }
+
+    // No match, no delete.
+    bool deleted;
+    ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool6Del(IOAddress("2001::1"),
+                                                       IOAddress("2001::2")));
+    ASSERT_FALSE(deleted);
+
+    // Delete each pool.
+    for ( auto const& test_pool : test_pools) {
+        // Delete the pool.
+        ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool6Del(test_pool->start_address_,
+                                                              test_pool->end_address_));
+        ASSERT_TRUE(deleted);
+
+        // Verify it's no longer there.
+        pool_infos.reset();
+        ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pool->start_address_,
+                                                              test_pool->end_address_));
+        ASSERT_TRUE(pool_infos);
+        ASSERT_EQ(0, pool_infos->size());
+    }
+}
+
+void
+GenericLeaseMgrTest::testSflqAPIOverlappingPools4() {
+    SflqPoolInfoCollectionPtr pool_infos;
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
+    ASSERT_EQ(0, pool_infos->size());
+
+    auto test_start = boost::posix_time::second_clock::local_time();
+
+    // Create three test pools.
+    SflqPoolInfoCollection test_pools;
+    SflqPoolInfoPtr pi;
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.1.10");
+    pi->end_address_ = IOAddress("192.0.1.20");
+    pi->subnet_id_ = 1;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 11;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.1.15");
+    pi->end_address_ = IOAddress("192.0.1.25");
+    pi->subnet_id_ = 1;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 11;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("192.0.1.20");
+    pi->end_address_ = IOAddress("192.0.1.30");
+    pi->subnet_id_ = 1;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 11;
+    test_pools.push_back(pi);
+
+    for ( auto const& test_pool : test_pools) {
+        ASSERT_NO_THROW_LOG(
+            lmptr_->sflqCreateFlqPool4(test_pool->start_address_,
+                                       test_pool->end_address_,
+                                       test_pool->subnet_id_, false));
+    }
+
+    // Fetch by middle pool's range should return all three.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pools[1]->start_address_,
+                                                          test_pools[1]->end_address_));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
+
+    // Attempting to delete middle pool should return false.
+    ASSERT_THROW_MSG(lmptr_->sflqPool4Del(test_pools[1]->start_address_,
+                                          test_pools[1]->end_address_),
+                     InvalidOperation, "Delete would affect 3 overlapping pools");
+    bool deleted;
+    ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool4Del(test_pools[1]->start_address_,
+                                                       test_pools[1]->end_address_, true));
+    ASSERT_TRUE(deleted);
+
+    // Fetch by middle pool's range should the remaining two.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pools[1]->start_address_,
+                                                          test_pools[1]->end_address_));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(2, pool_infos->size());
+    // Deleting the middle pool affects free_lease count for the other two.
+    // Users would need to fix them by calling create with recreate = true.
+    test_pools[0]->free_leases_ = 5;
+    test_pools[2]->free_leases_ = 5;
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
+}
+
+void
+GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
+    SflqPoolInfoCollectionPtr pool_infos;
+
+    // Fetching all pools should find none.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
+    ASSERT_EQ(0, pool_infos->size());
+
+    auto test_start = boost::posix_time::second_clock::local_time();
+
+    // Create three test pools.
+    SflqPoolInfoCollection test_pools;
+    SflqPoolInfoPtr pi;
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::10");
+    pi->end_address_ = IOAddress("3001::20");
+    pi->subnet_id_ = 1;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 17;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::15");
+    pi->end_address_ = IOAddress("3001::25");
+    pi->subnet_id_ = 1;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 17;
+    test_pools.push_back(pi);
+
+    pi.reset(new SflqPoolInfo());
+    pi->start_address_ = IOAddress("3001::20");
+    pi->end_address_ = IOAddress("3001::30");
+    pi->subnet_id_ = 1;
+    pi->lease_type_ = lease_type;
+    pi->created_ts_ = test_start;
+    pi->modified_ts_ = test_start;
+    pi->free_leases_ = 17;
+    test_pools.push_back(pi);
+
+    for ( auto const& test_pool : test_pools) {
+        ASSERT_NO_THROW_LOG(
+            lmptr_->sflqCreateFlqPool6(test_pool->start_address_,
+                                       test_pool->end_address_,
+                                       test_pool->lease_type_,
+                                       test_pool->delegated_len_,
+                                       test_pool->subnet_id_, false));
+    }
+
+    // Fetch by middle pool's range should return all three.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pools[1]->start_address_,
+                                                          test_pools[1]->end_address_));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(3, pool_infos->size());
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
+    checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
+
+    // Attempting to delete middle pool should return false.
+    ASSERT_THROW_MSG(lmptr_->sflqPool6Del(test_pools[1]->start_address_,
+                                          test_pools[1]->end_address_),
+                     InvalidOperation, "Delete would affect 3 overlapping pools");
+    bool deleted;
+    ASSERT_NO_THROW_LOG(deleted = lmptr_->sflqPool6Del(test_pools[1]->start_address_,
+                                                       test_pools[1]->end_address_, true));
+    ASSERT_TRUE(deleted);
+
+    // Fetch by middle pool's range should the remaining two.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pools[1]->start_address_,
+                                                          test_pools[1]->end_address_));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(2, pool_infos->size());
+    // Deleting the middle pool affects free_lease count for the other two.
+    // Users would need to fix them by calling create with recreate = true.
+    test_pools[0]->free_leases_ = 5;
+    test_pools[2]->free_leases_ = 11;
+    checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
+    checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
+}
 
 }  // namespace test
 }  // namespace dhcp

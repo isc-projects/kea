@@ -411,5 +411,21 @@ IOAddress offsetAddress(const IOAddress& addr, uint128_t offset) {
     return (IOAddress::fromBytes(AF_INET6, &addr_bytes[0]));
 }
 
+void validateV4Range(const IOAddress& start, const IOAddress& end) {
+    if (!start.isV4() || !end.isV4() || end < start) {
+        isc_throw (BadValue, "invalid V4 range - start_address "
+                   << start.toText() << "r, end_address " << end.toText()
+                   << ", must be V4 addresses where start <= end");
+    }
+}
+
+void validateV6Range(const IOAddress& start, const IOAddress& end) {
+    if (!start.isV6() || !end.isV6() || end < start) {
+        isc_throw (BadValue, "invalid V6 range - start_address "
+                   << start.toText() << "r, end_address " << end.toText()
+                   << ", must be V6 addresses where start <= end");
+    }
+}
+
 }
 }

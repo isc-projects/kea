@@ -17,6 +17,7 @@
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
 #include <util/str.h>
+#include <util/boost_time_utils.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -1962,6 +1963,31 @@ LeaseMgr::updateStatsOnDelete(const Lease6Ptr& lease) {
     }
 }
 
+SflqPoolInfo::SflqPoolInfo():
+    lease_type_(Lease::TYPE_V4),
+    start_address_(IOAddress::IPV4_ZERO_ADDRESS()),
+    end_address_(IOAddress::IPV4_ZERO_ADDRESS()),
+    delegated_len_(128),
+    subnet_id_(0),
+    free_leases_(0),
+    created_ts_(),
+    modified_ts_() {
+}
+
+
+data::ConstElementPtr
+SflqPoolInfo::toElement() const {
+    ElementPtr info = Element::createMap();
+    info->set("lease-type", Element::create(Lease::typeToText(lease_type_)));
+    info->set("start-address", Element::create(start_address_.toText()));
+    info->set("end-address", Element::create(end_address_.toText()));
+    info->set("delegated-len", Element::create(delegated_len_));
+    info->set("subnet-id", Element::create(subnet_id_));
+    info->set("free-leases", ElementPtr(new IntElement(free_leases_)));
+    info->set("created-ts", Element::create(isc::util::ptimeToText(created_ts_)));
+    info->set("modified-ts", Element::create(isc::util::ptimeToText(modified_ts_)));
+    return(info);
+}
 
 bool
 LeaseMgr::sflqCreateFlqPool4(IOAddress, IOAddress, SubnetID, bool) {
@@ -1981,6 +2007,46 @@ LeaseMgr::sflqCreateFlqPool6(IOAddress, IOAddress, Lease::Type, uint8_t, SubnetI
 IOAddress
 LeaseMgr::sflqPickFreeLease6(IOAddress, IOAddress) {
     isc_throw(NotImplemented, "LeaseMgr::sflqPickFreeLease6() called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool4GetAll() {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool4GetAll() called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool4Get(SubnetID /* subnet_id */) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool4Get(SubnetID) called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool4Get(asiolink::IOAddress, asiolink::IOAddress) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool4Get(IOAddress,IOAddress) called");
+}
+
+bool
+LeaseMgr::sflqPool4Del(asiolink::IOAddress, asiolink::IOAddress, bool) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool4Del() called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool6GetAll() {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool6GetAll() called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool6Get(SubnetID) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool6Get(SubnetID) called");
+}
+
+SflqPoolInfoCollectionPtr
+LeaseMgr::sflqPool6Get(asiolink::IOAddress, asiolink::IOAddress) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool6Get(IOAdress,IOAddress) called");
+}
+
+bool
+LeaseMgr::sflqPool6Del(asiolink::IOAddress, asiolink::IOAddress, bool) {
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool6Del() called");
 }
 
 bool

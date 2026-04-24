@@ -1462,6 +1462,30 @@ TEST_F(MySqlLeaseMgrTest, testSflqLeaseOps6PD) {
     testSflqLeaseOps6(Lease::TYPE_PD);
 }
 
+TEST_F(MySqlLeaseMgrTest, testSflqAPIFuncs4) {
+    testSflqAPIFuncs4();
+}
+
+TEST_F(MySqlLeaseMgrTest, testSflqAPIFuncs6NA) {
+    testSflqAPIFuncs6(Lease::TYPE_NA);
+}
+
+TEST_F(MySqlLeaseMgrTest, testSflqAPIFuncs6PD) {
+    testSflqAPIFuncs6(Lease::TYPE_PD);
+}
+
+TEST_F(MySqlLeaseMgrTest, testSflqAPIOverlappingPools4) {
+    testSflqAPIOverlappingPools4();
+}
+
+TEST_F(MySqlLeaseMgrTest, testSflqAPIOverlappingPools6NA) {
+    testSflqAPIOverlappingPools6(Lease::TYPE_NA);
+}
+
+TEST_F(MySqlLeaseMgrTest, testSflqAPIOverlappingPools6PD) {
+    testSflqAPIOverlappingPools6(Lease::TYPE_PD);
+}
+
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
 /// backend.
 class CfgMySqlLbDbAccessTest : public ::testing::Test {

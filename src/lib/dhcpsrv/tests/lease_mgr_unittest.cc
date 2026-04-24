@@ -13,6 +13,7 @@
 #include <dhcpsrv/testutils/concrete_lease_mgr.h>
 #include <dhcpsrv/testutils/generic_lease_mgr_unittest.h>
 #include <testutils/gtest_utils.h>
+#include <util/boost_time_utils.h>
 
 #include <iostream>
 #include <list>
@@ -1043,6 +1044,34 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     const vector<uint8_t>& remote_id = ex_info->id_;
     const vector<uint8_t>& exp_remote_id = { 1, 2, 3, 4, 5, 6 };
     EXPECT_EQ(exp_remote_id, remote_id);
+}
+
+// Verifies SfqlPoolInfo::toElement() function.
+TEST(SflqPoolInfo, toElement) {
+    SflqPoolInfo info;
+    info.lease_type_ = Lease::TYPE_V4;
+    info.start_address_ = IOAddress("1.2.3.4");
+    info.end_address_ = IOAddress("1.2.3.5");
+    info.delegated_len_ = 128;
+    info.subnet_id_ = 77;
+    info.free_leases_ = 245;
+    auto now = boost::posix_time::second_clock::local_time();
+    info.created_ts_ = now;
+    info.modified_ts_ = now;
+
+    auto info_elem = info.toElement();
+
+    ElementPtr expected = Element::createMap();
+    expected->set("lease-type", Element::create(Lease::typeToText(info.lease_type_)));
+    expected->set("start-address", Element::create(info.start_address_.toText()));
+    expected->set("end-address", Element::create(info.end_address_.toText()));
+    expected->set("delegated-len", Element::create(info.delegated_len_));
+    expected->set("subnet-id", Element::create(info.subnet_id_));
+    expected->set("free-leases", ElementPtr(new IntElement(info.free_leases_)));
+    expected->set("created-ts", Element::create(isc::util::ptimeToText(info.created_ts_)));
+    expected->set("modified-ts", Element::create(isc::util::ptimeToText(info.modified_ts_)));
+
+    EXPECT_TRUE(info_elem->equals(*expected));
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they

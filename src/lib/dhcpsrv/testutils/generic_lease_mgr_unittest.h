@@ -190,6 +190,17 @@ public:
     int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
                   Lease::Type lease_type) const;
 
+    /// Compare two SflqPoolInfo structures for equality. 
+    ///
+    /// All members are compared for equality except the timestamps. Those
+    /// are considered correct if the lhs timestamps are greater than or
+    /// equal to their rhs counterparts.  Asserts if they are not "equal".
+    /// 
+    /// @param lhs left-side instance to compare 
+    /// @param rhs reft-side instance to compare
+    /// @param lineno source line of invocation (pass in __LINE__)
+    void checkPoolInfos(const SflqPoolInfo& lhs, const SflqPoolInfo& rhs, int lineno);
+
     /// @brief checks that addLease, getLease4(addr) and deleteLease() works
     void testBasicLease4();
 
@@ -712,6 +723,22 @@ public:
     ///
     /// @param lease_type lease type to test (TYPE_NA or TYPE_PD)
     void testSflqLeaseOps6(Lease::Type lease_type);
+
+    /// @brief Checks V4 SFLQ API sflqPool4Get*, sflqPool4Del
+    void testSflqAPIFuncs4();
+
+    /// @brief Checks V4 SFLQ API behavior with overlapping pools.
+    void testSflqAPIOverlappingPools4();
+
+    /// @brief Checks V6 SFLQ API sflqPool6Get*, sflqPool6Del
+    ///
+    /// @param lease_type lease type to test (TYPE_NA or TYPE_PD)
+    void testSflqAPIFuncs6(Lease::Type lease_type);
+
+    /// @brief Checks V6 SFLQ API behavior with overlapping pools.
+    ///
+    /// @param lease_type lease type to test (TYPE_NA or TYPE_PD)
+    void testSflqAPIOverlappingPools6(Lease::Type lease_type);
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;

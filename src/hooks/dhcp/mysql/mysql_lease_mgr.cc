@@ -88,6 +88,9 @@ namespace {
 /// @brief Maximum length of the text returned by the limit checking functions.
 const size_t LIMITS_TEXT_MAX_LEN = 512;
 
+/// @brief Maximum string length of a V6 address.
+const size_t POOL_ADDRESS6_BUF_LENGTH = 45;
+
 boost::array<TaggedStatement, MySqlLeaseMgr::NUM_STATEMENTS>
 tagged_statements = { {
     {MySqlLeaseMgr::DELETE_LEASE4,
@@ -579,6 +582,99 @@ tagged_statements = { {
                                             "?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::SFLQ_DELETE_LEASE6,
                     "SELECT sflqDeleteLease6(?, ?)"},
+
+    {MySqlLeaseMgr::SFLQ_POOL4_GET_ALL,
+                    "SELECT q.id, q.subnet_id, 3 as lease_type, "
+                    "       q.start_address, q.end_address, 128 as delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool4 AS q "
+                    "    LEFT JOIN free_lease4 AS f "
+                    "    ON f.address >= q.start_address AND f.address <= q.end_address "
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id, q.start_address"},
+
+    {MySqlLeaseMgr::SFLQ_POOL4_GET_BY_SUBNET,
+                    "SELECT q.id, q.subnet_id, 3 as lease_type, "
+                    "       q.start_address, q.end_address, 128 as delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool4 AS q "
+                    "    LEFT JOIN free_lease4 AS f "
+                    "    ON f.address >= q.start_address AND f.address <= q.end_address "
+                    "    WHERE q.subnet_id = ? "
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
+
+    {MySqlLeaseMgr::SFLQ_POOL4_GET_BY_RANGE,
+                    "SELECT q.id, q.subnet_id, 3 as lease_type, "
+                    "       q.start_address, q.end_address, 128 as delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool4 AS q "
+                    "    LEFT JOIN free_lease4 AS f "
+                    "    ON f.address >= q.start_address AND f.address <= q.end_address "
+                    //    WHERE ((q.start <= p_start AND p_start <= q.end) OR "
+                    //           (q.start <= p_end AND p_pend <= q.end) OR "
+                    //           (p_start < q.start AND q.end < p_end))
+                    "    WHERE ((q.start_address <= ? AND ? <= q.end_address) OR "
+                    "           (q.start_address <= ? AND ? <= q.end_address) OR "
+                    "           (? < q.start_address AND q.end_address < ?)) "
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
+
+    {MySqlLeaseMgr::SFLQ_POOL4_DELETE,
+                    "DELETE flq_pool4, free_lease4 "
+                    "   FROM flq_pool4 "
+                    "   INNER JOIN free_lease4 "
+                    "   ON free_lease4.address >= start_address "
+                    "       AND free_lease4.address <= end_address "
+                    "   WHERE flq_pool4.start_address = ? AND flq_pool4.end_address = ?"},
+
+    {MySqlLeaseMgr::SFLQ_POOL6_GET_ALL,
+                    "SELECT q.id, q.subnet_id, q.lease_type, "
+                    "       q.start_address, q.end_address, q.delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool6 AS q "
+                    "    LEFT JOIN free_lease6 AS f "
+                    "    ON f.bin_address >= inet6_aton(q.start_address) AND "
+                    "       f.bin_address <= inet6_aton(q.end_address)"
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id ASC, inet6_aton(q.start_address) ASC"},
+
+    {MySqlLeaseMgr::SFLQ_POOL6_GET_BY_SUBNET,
+                    "SELECT q.id, q.subnet_id, q.lease_type, "
+                    "       q.start_address, q.end_address, q.delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool6 AS q "
+                    "    LEFT JOIN free_lease6 AS f "
+                    "    ON f.bin_address >= inet6_aton(q.start_address) AND "
+                    "       f.bin_address <= inet6_aton(q.end_address)"
+
+                    "    WHERE q.subnet_id = ? "
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id ASC, inet6_aton(q.start_address) ASC"},
+    {MySqlLeaseMgr::SFLQ_POOL6_GET_BY_RANGE,
+                    "SELECT q.id, q.subnet_id, q.lease_type,"
+                    "       q.start_address, q.end_address, q.delegated_len, "
+                    "       q.created_ts, q.modification_ts, count(f.address) as free_leases "
+                    "    FROM flq_pool6 AS q "
+                    "    LEFT JOIN free_lease6 AS f "
+                    "    ON f.bin_address >= inet6_aton(q.start_address) AND "
+                    "       f.bin_address <= inet6_aton(q.end_address)"
+                    "    WHERE ((inet6_aton(q.start_address) <= inet6_aton(?) AND "
+                    "            inet6_aton(?) <= inet6_aton(q.end_address)) OR "
+                    "           (inet6_aton(q.start_address) <= inet6_aton(?) AND "
+                    "            inet6_aton(?) <= inet6_aton(q.end_address)) OR "
+                    "           (inet6_aton(?) < inet6_aton(q.start_address) AND "
+                    "            inet6_aton(q.end_address) < inet6_aton(?))) "
+                    "    GROUP BY q.id "
+                    "    ORDER BY q.subnet_id ASC, inet6_aton(q.start_address) ASC"},
+
+    {MySqlLeaseMgr::SFLQ_POOL6_DELETE,
+                    "DELETE flq_pool6, free_lease6 "
+                    "   FROM flq_pool6 "
+                    "   INNER JOIN free_lease6 "
+                    "   ON free_lease6.address >= start_address "
+                    "       AND free_lease6.address <= end_address "
+                    "   WHERE flq_pool6.start_address = ? AND flq_pool6.end_address = ?"}
 } };  // tagged_statements
 
 }  // namespace
@@ -5041,19 +5137,24 @@ MySqlLeaseMgr::byRemoteId6size() const {
 bool
 MySqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address,
                                   SubnetID subnet_id, bool recreate) {
-    auto capacity = addrsInRange(start_address, end_address);
-    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_CREATE_POOL4)
-        .arg(start_address.toText())
-        .arg(end_address.toText())
-        .arg(subnet_id)
-        .arg(recreate)
-        .arg(capacity);
-
-    if (capacity > SharedFlqAllocator::MAX_V4_POOL_SIZE) {
-        isc_throw(BadValue, "MySqlLeasMgr::sflqCreateFlqPool4 pool capacity "
-                            << capacity << " exceeds limit of "
+    // This is clunky but it allows us to log the capacity.
+    try {
+        validateV4Range(start_address, end_address);
+        auto capacity = addrsInRange(start_address, end_address);
+        if (capacity > SharedFlqAllocator::MAX_V4_POOL_SIZE) {
+            isc_throw(BadValue, "pool capacity " << capacity << " exceeds limit of "
                             << SharedFlqAllocator::MAX_V4_POOL_SIZE
                             << " for shared-flq allocator on V4 pool ");
+        }
+
+        LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_CREATE_POOL4)
+            .arg(start_address.toText())
+            .arg(end_address.toText())
+            .arg(subnet_id)
+            .arg(recreate)
+            .arg(capacity);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "MySqlLeasMgr::sflqCreateFlqPool4 " << ex.what());
     }
 
     // Get a context.
@@ -5097,6 +5198,8 @@ MySqlLeaseMgr::sflqPickFreeLease4(IOAddress start_address, IOAddress end_address
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_PICK_LEASE4)
         .arg(start_address.toText())
         .arg(end_address.toText());
+
+    validateV4Range(start_address, end_address);
 
     // Get a context.
     MySqlLeaseContextAlloc get_context(*this);
@@ -5156,28 +5259,27 @@ bool
 MySqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address,
                                   Lease::Type lease_type, uint8_t delegated_len,
                                   SubnetID subnet_id, bool recreate) {
-    uint128_t capacity;
-    if (lease_type == Lease::TYPE_PD) {
-        auto prefix_len = prefixLengthFromRange(start_address, end_address);
-        capacity = prefixesInRange(prefix_len, delegated_len);
-    } else {
-        capacity = addrsInRange(start_address, end_address);
-    }
+    // This is clunky but it allows us to log the capacity.
+    try {
+        validateV6Range(start_address, end_address);
+        uint128_t capacity;
+        if (lease_type == Lease::TYPE_PD) {
+            auto prefix_len = prefixLengthFromRange(start_address, end_address);
+            capacity = prefixesInRange(prefix_len, delegated_len);
+        } else {
+            capacity = addrsInRange(start_address, end_address);
+        }
 
-    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_CREATE_POOL6)
-        .arg(start_address.toText())
-        .arg(end_address.toText())
-        .arg(lease_type)
-        .arg(static_cast<uint16_t>(delegated_len))
-        .arg(subnet_id)
-        .arg(recreate)
-        .arg(capacity);
-
-    if (capacity > SharedFlqAllocator::MAX_V6_POOL_SIZE) {
-        isc_throw(BadValue, "MySqlLeasMgr::sflqCreateFlqPool6 pool capacity "
-                            << capacity << " exceeds limit of "
-                            << SharedFlqAllocator::MAX_V6_POOL_SIZE
-                            << " for shared-flq allocator on V6 pool ");
+        LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_CREATE_POOL6)
+            .arg(start_address.toText())
+            .arg(end_address.toText())
+            .arg(lease_type)
+            .arg(static_cast<uint16_t>(delegated_len))
+            .arg(subnet_id)
+            .arg(recreate)
+            .arg(capacity);
+    } catch (const std::exception& ex) {
+        isc_throw(BadValue, "MySqlLeasMgr::sflqCreateFlqPool6 " << ex.what());
     }
 
     // Get a context.
@@ -5223,6 +5325,8 @@ MySqlLeaseMgr::sflqPickFreeLease6(IOAddress start_address, IOAddress end_address
     LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_PICK_LEASE6)
         .arg(start_address.toText())
         .arg(end_address.toText());
+
+    validateV6Range(start_address, end_address);
 
     // Get a context.
     MySqlLeaseContextAlloc get_context(*this);
@@ -5280,6 +5384,241 @@ MySqlLeaseMgr::sflqPickFreeLease6(IOAddress start_address, IOAddress end_address
     // Return the address.
     std::string tmp(b_addr_buffer, b_addr_buffer + b_addr_length);
     return (IOAddress(tmp));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool4GetAll() {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_POOL4_GET_ALL);
+
+    // No input parameters.
+    MySqlBindingCollection in_bindings = {};
+
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_ALL, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool4Get(SubnetID subnet_id) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL4_GET_BY_SUBNET)
+              .arg(subnet_id);
+
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createInteger<int64_t>(subnet_id)
+    };
+
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_BY_SUBNET, in_bindings));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool4Get(IOAddress start_address, IOAddress end_address) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL4_GET_BY_RANGE)
+              .arg(start_address.toText())
+              .arg(end_address.toText());
+
+    validateV4Range(start_address, end_address);
+
+    MySqlBindingCollection in_bindings = {
+        // SQL needs both addresses three times.
+        MySqlBinding::createInteger<uint32_t>(start_address.toUint32()),
+        MySqlBinding::createInteger<uint32_t>(start_address.toUint32()),
+        MySqlBinding::createInteger<uint32_t>(end_address.toUint32()),
+        MySqlBinding::createInteger<uint32_t>(end_address.toUint32()),
+        MySqlBinding::createInteger<uint32_t>(start_address.toUint32()),
+        MySqlBinding::createInteger<uint32_t>(end_address.toUint32())
+    };
+
+    return (sflqPoolGetCommon(SFLQ_POOL4_GET_BY_RANGE, in_bindings));
+}
+
+bool
+MySqlLeaseMgr::sflqPool4Del(IOAddress start_address, IOAddress end_address,
+                            bool force /* = false */) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL4_DELETE)
+              .arg(start_address.toText())
+              .arg(end_address.toText())
+              .arg(force ? "true" : "false");
+
+    validateV4Range(start_address, end_address);
+
+    return (sflqPoolDelCommon(start_address, end_address, force, AF_INET));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool6GetAll() {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL, MYSQL_LB_SFLQ_POOL6_GET_ALL);
+
+    // No input parameters.
+    MySqlBindingCollection in_bindings = {};
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_ALL, in_bindings, AF_INET6));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool6Get(SubnetID subnet_id) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL6_GET_BY_SUBNET)
+              .arg(subnet_id);
+
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createInteger<int64_t>(subnet_id)
+    };
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_BY_SUBNET, in_bindings, AF_INET6));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPool6Get(IOAddress start_address, IOAddress end_address) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL6_GET_BY_RANGE)
+              .arg(start_address.toText())
+              .arg(end_address.toText());
+
+    validateV6Range(start_address, end_address);
+
+    MySqlBindingCollection in_bindings = {
+        // SQL needs both addresses three times.
+        MySqlBinding::createString(start_address.toText()),
+        MySqlBinding::createString(start_address.toText()),
+        MySqlBinding::createString(end_address.toText()),
+        MySqlBinding::createString(end_address.toText()),
+        MySqlBinding::createString(start_address.toText()),
+        MySqlBinding::createString(end_address.toText())
+    };
+
+    return (sflqPoolGetCommon(SFLQ_POOL6_GET_BY_RANGE, in_bindings, AF_INET6));
+}
+
+bool
+MySqlLeaseMgr::sflqPool6Del(IOAddress start_address, IOAddress end_address,
+                            bool force /* = false */) {
+    LOG_DEBUG(mysql_lb_logger, MYSQL_LB_DBG_TRACE_DETAIL,
+              MYSQL_LB_SFLQ_POOL6_DELETE)
+              .arg(start_address.toText())
+              .arg(end_address.toText())
+              .arg(force ? "true" : "false");
+
+    validateV6Range(start_address, end_address);
+
+    return (sflqPoolDelCommon(start_address, end_address, force, AF_INET6));
+}
+
+SflqPoolInfoCollectionPtr
+MySqlLeaseMgr::sflqPoolGetCommon(StatementIndex stindex,
+                                 MySqlBindingCollection& where_bindings,
+                                 uint16_t family /* = AF_INET*/ ) {
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Create the output bindings. Start with common columns.
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(), // db pool id
+        MySqlBinding::createInteger<uint32_t>(), // subnet_id
+        MySqlBinding::createInteger<uint32_t>(), // lease_type
+    };
+
+    // Type specific start and end address.
+    if (family == AF_INET) {
+        out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());
+        out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());
+    } else {
+        out_bindings.push_back(MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH));
+        out_bindings.push_back(MySqlBinding::createString(POOL_ADDRESS6_BUF_LENGTH));
+    }
+
+    // Add in remaining common columns.
+    out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());  // delegated_len
+    out_bindings.push_back(MySqlBinding::createTimestamp());          // created_ts
+    out_bindings.push_back(MySqlBinding::createTimestamp());          // modification_ts
+    out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());  // free leases
+
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+
+    ctx->conn_.selectQuery(stindex, where_bindings, out_bindings,
+                           [this, &pools]
+                           (MySqlBindingCollection& out_bindings) {
+
+        SflqPoolInfoPtr info(new SflqPoolInfo());
+        // db pool id is 0, we skip it
+        info->subnet_id_ = out_bindings[1]->getInteger<uint32_t>();
+        auto lease_type_ = out_bindings[2]->getInteger<uint32_t>();
+        switch(lease_type_) {
+        case Lease::TYPE_V4:
+            info->lease_type_ = Lease::TYPE_V4;
+            break;
+        case Lease::TYPE_NA:
+            info->lease_type_ = Lease::TYPE_NA;
+            break;
+        case Lease::TYPE_PD:
+            info->lease_type_ = Lease::TYPE_PD;
+            break;
+        default:
+            isc_throw(BadValue, "invalid pool lease type returned " <<
+                      static_cast<int>(lease_type_));
+        }
+
+        if (lease_type_ == Lease::TYPE_V4) {
+            info->start_address_ = IOAddress(out_bindings[3]->getInteger<uint32_t>());
+            info->end_address_ = IOAddress(out_bindings[4]->getInteger<uint32_t>());
+        } else {
+            info->start_address_ = IOAddress(out_bindings[3]->getString());
+            info->end_address_ = IOAddress(out_bindings[4]->getString());
+        }
+
+        info->delegated_len_ = out_bindings[5]->getInteger<uint32_t>();
+        info->created_ts_ = out_bindings[6]->getTimestamp();
+        info->modified_ts_ = out_bindings[7]->getTimestamp();
+        info->free_leases_ = out_bindings[8]->getInteger<uint64_t>();
+        pools->push_back(info);
+    });
+
+    return (pools);
+}
+
+bool
+MySqlLeaseMgr::sflqPoolDelCommon(IOAddress start_address, IOAddress end_address,
+                                 bool force, uint16_t family ) {
+    // If force is false check for overlapping pools.
+    if (!force) {
+        auto pools_in_range = (family == AF_INET ? sflqPool4Get(start_address, end_address)
+                                                 : sflqPool6Get(start_address, end_address));
+        auto count = pools_in_range->size();
+        if (count == 0) {
+            // Nothing to do.
+            return (false);
+        }
+
+        if (count > 1) {
+            // Overlapping pools, warn and bail.
+            isc_throw(InvalidOperation, "Delete would affect "
+                      << count << " overlapping pools");
+        }
+    }
+
+    // Get a context.
+    MySqlLeaseContextAlloc get_context(*this);
+    MySqlLeaseContextPtr ctx = get_context.ctx_;
+
+    // Make where clause bindings.
+    MySqlBindingCollection in_bindings;
+    StatementIndex stindex;
+    if (family == AF_INET) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(start_address.toUint32()));
+        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(end_address.toUint32()));
+        stindex = SFLQ_POOL4_DELETE;
+    } else {
+        in_bindings.push_back(MySqlBinding::createString(start_address.toText()));
+        in_bindings.push_back(MySqlBinding::createString(end_address.toText()));
+        stindex = SFLQ_POOL6_DELETE;
+    }
+
+    ScopedMySqlTransactionPtr trans(new MySqlTransaction(ctx->conn_));
+    auto affected_rows = ctx->conn_.updateDeleteQuery(stindex, in_bindings);
+    trans->commit();
+
+    return(affected_rows > 0);
 }
 
 TrackingLeaseMgrPtr

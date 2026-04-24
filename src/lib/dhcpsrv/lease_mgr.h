@@ -235,6 +235,33 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
+/// @brief Describes a SFLQ pool.
+class SflqPoolInfo {
+public:
+    SflqPoolInfo();
+
+    ~SflqPoolInfo(){};
+    
+    Lease::Type lease_type_;
+    asiolink::IOAddress start_address_;
+    asiolink::IOAddress end_address_;
+    uint8_t delegated_len_;
+    SubnetID subnet_id_;
+    uint64_t free_leases_;
+    boost::posix_time::ptime created_ts_;
+    boost::posix_time::ptime modified_ts_;
+
+    data::ConstElementPtr toElement() const;
+};
+
+/// @brief A pointer to a SFLQPoolInfo instance.
+typedef boost::shared_ptr<SflqPoolInfo> SflqPoolInfoPtr;
+
+/// @brief A collection of SFLQPoolInfo structures.
+typedef std::vector<SflqPoolInfoPtr> SflqPoolInfoCollection;
+typedef boost::shared_ptr<SflqPoolInfoCollection> SflqPoolInfoCollectionPtr;
+
+
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified
@@ -1151,6 +1178,90 @@ public:
     /// @return A free V6 address/prefix or IOAddress::IPV6_ZERO_ADDRESS().
     virtual asiolink::IOAddress sflqPickFreeLease6(asiolink::IOAddress start_address,
                                                    asiolink::IOAddress end_address);
+
+    /// @brief Fetch all SFLQ V4 pools.
+    ///
+    /// @return A collection of the SFLQ V4 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool4GetAll();
+
+    /// @brief Fetch all SFLQ V4 pools belonging to a subnet.
+    ///
+    /// @param subnet_id id of the desired subnet. 
+    ///
+    /// @return A collection of the SFLQ V4 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool4Get(SubnetID subnet_id);
+
+    /// @brief Fetch all SFLQ V4 pools that overlap an address range.
+    ///
+    /// Since overlapping pools are supported, this function returns all V4
+    /// SFLQ pools whose range overlaps the given range.
+    ///
+    /// @param start_address range start address
+    /// @param end_address range end address
+    ///
+    /// @return A collection of the SFLQ V4 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool4Get(asiolink::IOAddress start_address,
+                                                   asiolink::IOAddress end_address);
+
+    /// @brief Delete the SFLQ V4 pool that matches a start and end address.
+    ///
+    /// Deletes the flq_pool4 entry along with its free_lease4 data.
+    /// Fails If there are multiple pools that overalap the given range 
+    /// unless force is true.
+    ///
+    /// @param start_address start address of the pool to delete.
+    /// @param end_address end address of the pool to delete.
+    /// @param force overrides check for overlapping pools when true. Defaults
+    /// to false. 
+    ///
+    /// @return True a pool was deleted.
+    /// @throw InvalidOperation if force is false and overlapping pools are
+    /// detected.
+    virtual bool sflqPool4Del(asiolink::IOAddress start_address,
+                              asiolink::IOAddress end_address,
+                              bool force = false);
+
+    /// @brief Fetch all SFLQ V6 pools.
+    ///
+    /// @return A collection of the SFLQ V6 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool6GetAll();
+
+    /// @brief Fetch all SFLQ V6 pools belonging to a subnet.
+    ///
+    /// @param subnet_id id of the desired subnet. 
+    ///
+    /// @return A collection of the SFLQ V6 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool6Get(SubnetID subnet_id);
+
+    /// @brief Fetch all SFLQ V6 pools that overlap an address range.
+    ///
+    /// Since overlapping pools are supported, this function returns all V6
+    /// SFLQ pools whose range overlaps the given range.
+    ///
+    /// @param start_address range start address
+    /// @param end_address range end address
+    ///
+    /// @return A collection of the SFLQ V6 pools.
+    virtual SflqPoolInfoCollectionPtr sflqPool6Get(asiolink::IOAddress start_address,
+                                                   asiolink::IOAddress end_address);
+
+    /// @brief Delete the SFLQ V6 pool that matches a start and end address.
+    ///
+    /// Deletes the flq_pool6 entry along with its free_lease6 data.
+    /// Fails If there are multiple pools that overalap the given range 
+    /// unless force is true.
+    ///
+    /// @param start_address start address of the pool to delete.
+    /// @param end_address end address of the pool to delete.
+    /// @param force overrides check for overlapping pools when true. Defaults
+    /// to false.
+    ///
+    /// @return True a pool was deleted.
+    /// @throw InvalidOperation if force is false and overlapping pools are
+    /// detected.
+    virtual bool sflqPool6Del(asiolink::IOAddress start_address,
+                              asiolink::IOAddress end_address,
+                              bool force = false);
 
     /// @brief Determine if SFLQ alternate SQL statements should be used
     /// for a given v4 lease
