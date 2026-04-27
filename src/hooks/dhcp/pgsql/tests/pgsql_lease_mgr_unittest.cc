@@ -1450,6 +1450,16 @@ TEST_F(PgSqlLeaseMgrTest, testSflqAPIOverlappingPools6PD) {
     testSflqAPIOverlappingPools6(Lease::TYPE_PD);
 }
 
+TEST_F(PgSqlLeaseMgrTest, sflqCreateFlqPool4Concurrent) {
+    sflqCreateFlqPool4Concurrent();
+}
+
+TEST_F(PgSqlLeaseMgrTest, sflqCreateFlqPool6Concurrent) {
+    sflqCreateFlqPool6Concurrent();
+}
+
+
+
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using PostgreSQL
 /// backend.
 class CfgPgSqlLbDbAccessTest : public ::testing::Test {

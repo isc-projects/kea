@@ -740,6 +740,14 @@ public:
     /// @param lease_type lease type to test (TYPE_NA or TYPE_PD)
     void testSflqAPIOverlappingPools6(Lease::Type lease_type);
 
+    /// @brief Verifies concurrent calls to create the same V4 SFLQ pool
+    /// work correctly.
+    void sflqCreateFlqPool4Concurrent();
+
+    /// @brief Verifies concurrent calls to create the same V6 SFLQ pool
+    /// work correctly.
+    void sflqCreateFlqPool6Concurrent();
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string> straddress4_;
 

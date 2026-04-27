@@ -20,6 +20,7 @@
 #include <stats/testutils/stats_test_utils.h>
 #include <testutils/gtest_utils.h>
 #include <util/bigints.h>
+#include <testutils/multi_threading_utils.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -6588,6 +6589,78 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
     test_pools[2]->free_leases_ = 11;
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
+}
+
+void
+GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
+    // Enable Multi-Threading.
+    isc::test::MultiThreadingTest mt(true);
+
+    // Create the same pool in different threads.
+    bool ret1 = false;
+    bool ret2 = false;
+    IOAddress start_address("192.0.0.0");
+    IOAddress end_address("192.0.255.255");
+    thread th1([this, &ret1, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(ret1 =
+                lmptr_->sflqCreateFlqPool4(start_address, end_address, false));
+    });
+
+    usleep(1000);
+    thread th2([this, &ret2, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(ret2 =
+                lmptr_->sflqCreateFlqPool4(start_address, end_address, false));
+    });
+
+    th1.join();
+    th2.join();
+
+    // One thread should create the pool, the other should not.
+    ASSERT_NE(ret1, ret2);
+
+    // Verify the pool and free leases were created.
+    SflqPoolInfoCollectionPtr pool_infos;
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+}
+
+void
+GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
+    // Enable Multi-Threading.
+    isc::test::MultiThreadingTest mt(true);
+
+    // Create the same pool in different threads.
+    bool ret1 = false;
+    bool ret2 = false;
+    IOAddress start_address("3001::");
+    IOAddress end_address("3001::FFFF");
+    thread th1([this, &ret1, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(ret1 =
+                lmptr_->sflqCreateFlqPool6(start_address, end_address,
+                                           Lease::TYPE_NA, 128, 1, false));
+    });
+
+    thread th2([this, &ret2, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(ret2 =
+                lmptr_->sflqCreateFlqPool6(start_address, end_address,
+                                           Lease::TYPE_NA, 128, 1, false));
+    });
+
+    th1.join();
+    th2.join();
+
+    // One thread should create the pool, the other should not.
+    ASSERT_NE(ret1, ret2);
+
+
+    // Verify the pool and free leases were created.
+    SflqPoolInfoCollectionPtr pool_infos;
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
 }
 
 }  // namespace test

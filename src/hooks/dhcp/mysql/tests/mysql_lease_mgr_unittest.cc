@@ -1486,6 +1486,14 @@ TEST_F(MySqlLeaseMgrTest, testSflqAPIOverlappingPools6PD) {
     testSflqAPIOverlappingPools6(Lease::TYPE_PD);
 }
 
+TEST_F(MySqlLeaseMgrTest, sflqCreateFlqPool4Concurrent) {
+    sflqCreateFlqPool4Concurrent();
+}
+
+TEST_F(MySqlLeaseMgrTest, sflqCreateFlqPool6Concurrent) {
+    sflqCreateFlqPool6Concurrent();
+}
+
 /// @brief Test fixture class for testing @ref CfgDbAccessTest using MySQL
 /// backend.
 class CfgMySqlLbDbAccessTest : public ::testing::Test {
