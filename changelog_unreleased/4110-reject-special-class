@@ -4,4 +4,5 @@
 	allocation part in processing e.g. return DHCPNAK on
 	DHCPREQUEST by the DHCPv4 server, or put status code
 	NoAddrsAvail in all ia-na options by the DHCPv6 server.
+	Proposed by Philip Prindeville.
 	(Gitlab #4110)
