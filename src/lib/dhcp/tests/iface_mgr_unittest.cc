@@ -1159,7 +1159,7 @@ public:
             IfaceMgr::instance().addInterface(iface_n);
         }
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
@@ -1301,7 +1301,7 @@ public:
             IfaceMgr::instance().addInterface(iface_n);
         }
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
@@ -1435,7 +1435,7 @@ public:
             IfaceMgr::instance().addInterface(iface_n);
         }
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
@@ -1519,7 +1519,7 @@ public:
             IfaceMgr::instance().addInterface(iface_n);
         }
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
@@ -1578,7 +1578,7 @@ public:
         const size_t loop_count = 1024;
 
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
@@ -1674,7 +1674,7 @@ public:
         const size_t loop_count = 1024;
 
         if (!direct) {
-            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
+            auto queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 50000, true);
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, queue_control);
         } else {
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
@@ -4736,7 +4736,7 @@ TEST_F(IfaceMgrTest, directReceive4RotateAll) {
     testReceive4RotateAll();
 }
 
-TEST_F(IfaceMgrTest, DISABLED_indirectReceive4RotateAll) {
+TEST_F(IfaceMgrTest, indirectReceive4RotateAll) {
     testReceive4RotateAll(false);
 }
 
@@ -4744,7 +4744,7 @@ TEST_F(IfaceMgrTest, directReceive6RotateAll) {
     testReceive6RotateAll();
 }
 
-TEST_F(IfaceMgrTest, DISABLED_indirectReceive6RotateAll) {
+TEST_F(IfaceMgrTest, indirectReceive6RotateAll) {
     testReceive6RotateAll(false);
 }
 
