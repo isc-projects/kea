@@ -1548,15 +1548,17 @@ ssl_key = {cert_dir}/kea-client.key
     execute(cmd, raise_error=False)
     cmd = "echo 'DROP USER 'keatest_secure'@'localhost';' | sudo mysql -u root"
     execute(cmd, raise_error=False)
-    cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-    cmd += "CREATE DATABASE keatest;\n"
-    cmd += "CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';\n"
-    cmd += "CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';\n"
+    cmd = """
+      sudo mysql -u root -e "
+        CREATE DATABASE keatest;
+        CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';
+        CREATE USER 'keatest_readonly'@'localhost' IDENTIFIED BY 'keatest';
+    """
     if 'tls' in features:
         cmd += "CREATE USER 'keatest_secure'@'localhost' IDENTIFIED BY 'keatest';\n"
     cmd += "GRANT ALL ON keatest.* TO 'keatest'@'localhost';\n"
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
-    cmd += "EOF\n\""
+    cmd += '"'
     execute(cmd)
     if 'tls' in features:
         # ALTER USER is the best place to put the REQUIRE but, if it is not
@@ -1575,22 +1577,26 @@ ssl_key = {cert_dir}/kea-client.key
         execute(cmd)
         cmd = "echo 'DROP USER 'keauser'@'localhost';' | sudo mysql -u root"
         execute(cmd, raise_error=False)
-        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-        cmd += "CREATE DATABASE keadb;\n"
-        cmd += "CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';\n"
-        cmd += "GRANT ALL ON keadb.* TO 'keauser'@'localhost';\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo mysql -u root -e "
+            CREATE DATABASE keadb;
+            CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';
+            GRANT ALL ON keadb.* TO 'keauser'@'localhost';
+          "
+        """
         execute(cmd)
 
     if system == 'debian' and revision == '9':
         log.info('FIX FOR ISSUE kea#389: %s %s', system, revision)
-        cmd = "sh -c \"cat <<EOF | sudo mysql -u root\n"
-        cmd += "use keatest;\n"
-        cmd += "set global innodb_large_prefix=on;\n"
-        cmd += "set global innodb_file_format=Barracuda;\n"
-        cmd += "set global innodb_file_per_table=true;\n"
-        cmd += "set global innodb_default_row_format=dynamic;\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo mysql -u root -e '
+            use keatest;
+            set global innodb_large_prefix=on;
+            set global innodb_file_format=Barracuda;
+            set global innodb_file_per_table=true;
+            set global innodb_default_row_format=dynamic;
+          '
+        """
         execute(cmd)
 
 
@@ -1706,45 +1712,44 @@ def _configure_pgsql(system, features):
 
     _restart_postgresql(system)
 
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql postgres
-        DROP DATABASE IF EXISTS keatest;
-        DROP USER IF EXISTS keatest;
-        DROP USER IF EXISTS keatest_readonly;
-        CREATE USER keatest WITH PASSWORD 'keatest';
-        CREATE USER keatest_readonly WITH PASSWORD 'keatest';
-        CREATE DATABASE keatest;
-        GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
-        ALTER DATABASE keatest SET TIMEZONE='{}';\n""".format(_get_local_timezone())
-    cmd += 'EOF\n"'
+    local_timezone = _get_local_timezone()
+
+    cmd = f"""
+      sudo -u postgres psql postgres \
+        -c "DROP DATABASE IF EXISTS keatest;" \
+        -c "DROP USER IF EXISTS keatest;" \
+        -c "DROP USER IF EXISTS keatest_readonly;" \
+        -c "CREATE USER keatest WITH PASSWORD 'keatest';" \
+        -c "CREATE USER keatest_readonly WITH PASSWORD 'keatest';" \
+        -c "CREATE DATABASE keatest;" \
+        -c "GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;" \
+        -c "ALTER DATABASE keatest SET TIMEZONE='{local_timezone}';"
+    """
     execute(cmd, cwd='/tmp')
 
     # This is needed for postgres >= 15
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keatest
-        GRANT ALL PRIVILEGES ON SCHEMA public TO keatest;\n"""
-    cmd += 'EOF\n"'
+    cmd = "sudo -u postgres psql -U postgres -d keatest -c 'GRANT ALL PRIVILEGES ON SCHEMA public TO keatest'"
     execute(cmd, cwd='/tmp')
 
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres env PGPASSWORD=${PGPASSWORD} psql -U keatest keatest
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
-    cmd += 'EOF\n"'
-    env = os.environ.copy()
-    env['PGPASSWORD'] = 'keatest'
-    execute(cmd, cwd='/tmp', env=env)
+    cmd = """
+      sudo -u postgres env PGPASSWORD=keatest psql -U keatest keatest \
+        -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly'
+    """
+    execute(cmd, cwd='/tmp')
 
     if 'forge' in features:
-        cmd = "sh -c \"cat <<EOF | sudo -u postgres psql postgres\n"
-        cmd += "DROP DATABASE IF EXISTS keadb;\n"
-        cmd += "DROP USER IF EXISTS keauser;\n"
-        cmd += "CREATE USER keauser WITH PASSWORD 'keapass';\n"
-        cmd += "CREATE DATABASE keadb;\n"
-        cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
-        cmd += "EOF\n\""
+        cmd = """
+          sudo -u postgres psql postgres \
+            -c "DROP DATABASE IF EXISTS keadb;" \
+            -c "DROP USER IF EXISTS keauser;" \
+            -c "CREATE USER keauser WITH PASSWORD 'keapass';" \
+            -c "CREATE DATABASE keadb;" \
+            -c "GRANT ALL PRIVILEGES ON DATABASE keadb TO keauser;"
+        """
         execute(cmd, cwd='/tmp')
 
         # This is needed for postgres >= 15
-        cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U postgres -d keadb
-            GRANT ALL PRIVILEGES ON SCHEMA public TO keauser;\n"""
-        cmd += 'EOF\n"'
+        cmd = "sudo -u postgres psql -U postgres -d keadb -c 'GRANT ALL PRIVILEGES ON SCHEMA public TO keauser'"
         execute(cmd, cwd='/tmp')
 
     log.info('postgresql just configured')
