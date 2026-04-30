@@ -17,7 +17,7 @@
 project(
     'kea',
     'cpp',
-    version: '3.1.8-git',
+    version: '3.2.0-git',
     meson_version: '>=1.1.0',
     license: 'MPL-2.0',
     license_files: ['COPYING'],

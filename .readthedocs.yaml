@@ -1,5 +1,5 @@
 build:
-  os: ubuntu-20.04
+  os: ubuntu-lts-latest
   tools:
     python: '3.13'
 formats: all
