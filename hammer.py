@@ -1466,16 +1466,14 @@ def _configure_mysql(system, revision, features):
     if system in ['alpine', 'freebsd']:
         return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
         if return_code == 0:
-            mariadbd_version = '.'.join(output.split(' ')[3].split('-')[0].split('.')[0:2])
+            mariadbd_version = '.'.join(output.split(' ')[3].split('-')[0].split('.')[0:1])
             zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
     else:
-        _, output = execute('sudo systemctl status mysql', capture=True, raise_error=False)
+        _, output = execute('sudo systemctl status mysql', capture=True)
         first_line = output.splitlines()[0]
         if 'mariadb' in first_line.lower():
-            mariadbd_version = '.'.join(first_line.split(' ')[4].split('.')[0:2])
+            mariadbd_version = '.'.join(first_line.split(' ')[4].split('.')[0:1])
             zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
     if not zero_conf_tls:
         cert_dir = '/etc/mysql/ssl'
         kea_cnf = os.path.join(conf_d, 'kea.cnf')
@@ -1513,9 +1511,9 @@ ssl_ca = {cert_dir}/kea-ca.crt
 ssl_cert = {cert_dir}/kea-client.crt
 ssl_key = {cert_dir}/kea-client.key
 '''.format(cert_dir=cert_dir))
-        execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
-        # For all added files and directories, change owner to mysql.
-        execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
+            execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
+            # For all added files and directories, change owner to mysql.
+            execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
 
     if system in ['debian', 'fedora', 'centos', 'rhel', 'rocky']:
         execute('sudo systemctl enable mariadb.service')
