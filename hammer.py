@@ -1469,33 +1469,46 @@ def _configure_mysql(system, revision, features):
         execute('sudo chown mysql:mysql {}'.format(bind_address_cnf))
         execute('sudo rm -f ./bind-address.cnf')
 
-    # If requested, configure TLS.
-    cert_dir = '/etc/mysql/ssl'
-    kea_cnf = os.path.join(conf_d, 'kea.cnf')
-    # But start fresh first. Not enabling TLS in hammer leaves TLS support removed.
-    execute('sudo rm -rf {} {}'.format(cert_dir, kea_cnf))
-    if 'tls' in features:
-        if not os.path.isdir(cert_dir):
-            execute('sudo mkdir -p {}'.format(cert_dir))
-        # Parent dir of hammer.py.
-        p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
-        if not os.path.isdir(f'{p}/src/lib/asiolink/testutils/ca'):
-            # Sometimes we call a standalone hammer.py on another Kea source tree. Let's use cwd in that case.
-            p = '.'
-        for file in [
-            f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-client.key',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-server.crt',
-            f'{p}/src/lib/asiolink/testutils/ca/kea-server.key',
-        ]:
-            if not os.path.exists(file):
-                print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
-                sys.exit(1)
-            basename = os.path.basename(file)
-            execute('sudo cp {} {}'.format(file, os.path.join(cert_dir, basename)))
-        with open('kea.cnf', 'w', encoding='utf-8') as f:
-            f.write('''\
+    # If requested, configure TLS. Except for MariaDB >= 11.8 which introduces zero-config TLS.
+    zero_conf_tls = False
+    if system in ['alpine', 'freebsd']:
+        return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
+        if return_code == 0:
+            mariadbd_version = '.'.join(output.split(' ')[3].split('-')[0].split('.')[0:1])
+            zero_conf_tls = float('11.8') <= float(mariadbd_version)
+    else:
+        _, output = execute('sudo systemctl status mysql', capture=True)
+        first_line = output.splitlines()[0]
+        if 'mariadb' in first_line.lower():
+            mariadbd_version = '.'.join(first_line.split(' ')[4].split('.')[0:1])
+            zero_conf_tls = float('11.8') <= float(mariadbd_version)
+    if not zero_conf_tls:
+        cert_dir = '/etc/mysql/ssl'
+        kea_cnf = os.path.join(conf_d, 'kea.cnf')
+        # But start fresh first. Not enabling TLS in hammer leaves TLS support removed.
+        execute('sudo rm -rf {} {}'.format(cert_dir, kea_cnf))
+        if 'tls' in features:
+            if not os.path.isdir(cert_dir):
+                execute('sudo mkdir -p {}'.format(cert_dir))
+            # Parent dir of hammer.py.
+            p = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0])))
+            if not os.path.isdir(f'{p}/src/lib/asiolink/testutils/ca'):
+                # Sometimes we call a standalone hammer.py on another Kea source tree. Let's use cwd in that case.
+                p = '.'
+            for file in [
+                f'{p}/src/lib/asiolink/testutils/ca/kea-ca.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-client.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-client.key',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-server.crt',
+                f'{p}/src/lib/asiolink/testutils/ca/kea-server.key',
+            ]:
+                if not os.path.exists(file):
+                    print('ERROR: File {} is needed to prepare TLS.'.format(file), file=sys.stderr)
+                    sys.exit(1)
+                basename = os.path.basename(file)
+                execute('sudo cp {} {}'.format(file, os.path.join(cert_dir, basename)))
+            with open('kea.cnf', 'w', encoding='utf-8') as f:
+                f.write('''\
 [mysqld]
 ssl_ca = {cert_dir}/kea-ca.crt
 ssl_cert = {cert_dir}/kea-server.crt
@@ -1506,9 +1519,9 @@ ssl_ca = {cert_dir}/kea-ca.crt
 ssl_cert = {cert_dir}/kea-client.crt
 ssl_key = {cert_dir}/kea-client.key
 '''.format(cert_dir=cert_dir))
-        execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
-        # For all added files and directories, change owner to mysql.
-        execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
+            execute('sudo mv ./kea.cnf {}'.format(kea_cnf))
+            # For all added files and directories, change owner to mysql.
+            execute('sudo chown -R mysql:mysql {} {}'.format(cert_dir, kea_cnf))
 
     if system in ['debian', 'fedora', 'centos', 'rhel', 'rocky']:
         execute('sudo systemctl enable mariadb.service')
