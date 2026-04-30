@@ -1724,7 +1724,7 @@ def _configure_pgsql(system, features):
     cmd += 'EOF\n"'
     execute(cmd, cwd='/tmp')
 
-    cmd = """sh -c \"cat <<EOF | sudo -u postgres psql -U keatest keatest
+    cmd = """sh -c \"cat <<EOF | sudo -u postgres env PGPASSWORD=${PGPASSWORD} psql -U keatest keatest
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO keatest_readonly;\n"""
     cmd += 'EOF\n"'
     env = os.environ.copy()
@@ -2076,7 +2076,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['libkrb5-dev'])
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev', 'make'])
 
         install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
@@ -2110,7 +2110,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.append('googletest')
 
         if 'netconf' in features:
-            packages.extend(['cmake', 'git', 'libpcre2-dev'])
+            packages.extend(['cmake', 'git', 'libpcre2-dev', 'make'])
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
