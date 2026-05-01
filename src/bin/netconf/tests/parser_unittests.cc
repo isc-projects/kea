@@ -121,6 +121,12 @@ TEST(ParserTest, types) {
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
+TEST(ParserTest, integers) {
+    // Should get warnings for all items at the exception of the first one.
+    string txt = "[ 0, 00, 01, 001 ]";
+    testParser(txt, ParserContext::PARSER_JSON);
+}
+
 TEST(ParserTest, keywordJSON) {
     string txt = "{ \"name\": \"user\", "
                  "\"type\": \"password\", "
@@ -486,10 +492,6 @@ TEST(ParserTest, errors) {
     testError("-456",
               ParserContext::PARSER_NETCONF,
               "<string>:1.1-4: syntax error, unexpected integer, "
-              "expecting {");
-    testError("-0001",
-              ParserContext::PARSER_NETCONF,
-              "<string>:1.1-5: syntax error, unexpected integer, "
               "expecting {");
     testError("1234567890123456789012345678901234567890",
               ParserContext::PARSER_JSON,

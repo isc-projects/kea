@@ -578,6 +578,12 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     }
 
     // Is it an integer?
+    // Catch leading zeros: raise an error as logging is not available.
+    if (((number.size() > 1) && (number[0] == '0')) ||
+        ((number.size() > 2) && (number[0] == '-') && (number[1] == '0'))) {
+        throwJSONError("Illegal leading zeros in '" + number + "'",
+                       file, line, start_pos);
+    }
     try {
         return (Element::create(boost::lexical_cast<int64_t>(number),
                                 Element::Position(file, line, start_pos)));
