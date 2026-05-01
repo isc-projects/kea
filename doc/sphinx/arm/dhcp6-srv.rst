@@ -9027,6 +9027,11 @@ the lease will not be offered.
     clients for those subnets while the changes are made. This will avoid
     inconsistencies in SFLQ data.
 
+    SFLQ data is tracked in terms of pools where each pool has a start address
+    and an end address. Configuration changes that change the address range
+    of a pool or split into multiple new pools will trigger SFLQ data creation
+    for the new pools when the new configuration is applied.
+
 As mentioned before when a server restarts or is reconfigured, it will iterate
 over its subnets and initialize the configured allocator for that subnet's pools.
 For the SFLQ Allocator, this will cause the server to request the lease back end
@@ -9049,7 +9054,7 @@ Allocator.
 .. note::
 
     Lease reclamation must be enabled with a low value for the
-    ``reclaim-timer-wait-time`` parameter, to ensure that the server frequently
+    ``reclaim-timer-wait-time`` parameter to ensure that the server frequently
     collects expired leases and makes them available for allocation via the
     SFLQ data. Expired leases are not considered free by the allocator until they are
     reclaimed by the server. See :ref:`lease-reclamation` for more details about the
