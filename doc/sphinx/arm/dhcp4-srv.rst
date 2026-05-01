@@ -9148,7 +9148,7 @@ specialized lease updates employed by the Kea server for leases that belong
 to subnets that are using SFLQ allocation.
 
 The fundamental difference between the FLQ and SFLQ Allocators is that SFLQ
-allocation stores the SLFQ data centrally in the lease back end rather than
+allocation stores the SFLQ data centrally in the lease back end rather than
 locally in Kea server memory. This allows it be shared between servers such
 that they all have the same understanding of current lease state. It also means
 that once created the SFLQ data is persistent and therefore does not have to

@@ -8794,6 +8794,9 @@ are described in detail in later sections.
    +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
    | Free Lease Queue | high                        | high                         | yes                   | slow (depends on pool sizes) | high (varying) |
    +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
+   | Shared FLQ       | high                        | high                         | partial, pools within | slow when adding it's use;   | low            |
+   |                  |                             |                              | subnets are random    | fast once added              |                |
+   +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
 
 
 Iterative Allocator
@@ -8929,3 +8932,132 @@ number of prefixes in pools where the address can be allocated from
 (i.e. if the query is not member of a ``client-classes`` guard of a pool,
 or if the delegated prefix length is not compatible this pool is not taken
 into account).
+
+Shared Free Lease Queue Allocator
+---------------------------------
+
+.. warning::
+
+    Added in Kea 3.2.0, Shared Free Lease Queue Allocator is considered
+    experimental and is not supported for production use.
+
+The Shared Free Lease Queue (SFLQ) Allocator is intended for use sites with
+shared lease back ends (MySQL or PostgreSQL) and subnets with highly
+utilized address pools. In such cases, it can take a considerable
+amount of time for the iterative or random allocator to find an available
+address, because they must repeatedly check whether there is a valid lease for
+an address they will offer. The number of checks can be as high as the number
+of addresses in the subnet when the subnet pools are exhausted. Since each
+check requires a database query this can have a direct negative impact on
+the DHCP response time for each request.
+
+Similar to the Free Lease Queue Allocator, the SFLQ Allocator tracks lease
+allocations and de-allocations and maintains a running list of available
+addresses for each address pool. These lists are referred to as SFLQ data. It
+allows an available lease to be selected within a constant time, regardless
+of the subnet's pools' utilization. The SFLQ data is maintained through
+specialized lease updates employed by the Kea server for leases that belong
+to subnets that are using SFLQ allocation.
+
+The fundamental difference between the FLQ and SFLQ Allocators is that SFLQ
+allocation stores the SFLQ data centrally in the lease back end rather than
+locally in Kea server memory. This allows it be shared between servers such
+that they all have the same understanding of current lease state. It also means
+that once created the SFLQ data is persistent and therefore does not have to
+be re-created upon Kea server startup or reconfiguration. The following
+configuration snippet shows how to select the SFLQ allocator for a subnet:
+
+.. code-block:: json
+
+    {
+        "Dhcp6": {
+            "subnet6": [
+                {
+                    "id": 1,
+                     "subnet": "2001:db8:1::/64",
+                     "allocator": "shared-flq",
+                     "pd-allocator": "shared-flq"
+                }
+            ]
+        }
+    }
+
+
+Allocators for v6 are specified independently for addresses and delegated prefixes.
+SFLQ Allocator may be used for either pool type. The behavior of SFLQ Allocator
+is the same in either case, the following discussion applies equally to both.
+
+There are some considerations that the administrator should take into account
+before using this allocator. Like FLQ, the SFLQ allocator can heavily impact the
+server's startup and reconfiguration time because the allocator has to populate the
+SFLQ data for each pool in each subnet where it is used. These delays can be observed
+both during the configuration reload and when the subnets are created using
+:ischooklib:`libdhcp_subnet_cmds.so`.  Unlike FLQ, these costs only occur the first
+time a subnet is configured to use SFLQ or changes are made to its pools' address
+ranges. In other words, following a restart or reconfiguration the SFLQ data only
+needs to be created for pools for which it does not already exist. Thus the impact
+on subsequent restarts or reconfigurations of subnets that already use SFLQ is minimal.
+
+Since SFLQ data is maintained in the lease back end, the cost of storing
+it is in database server disc space rather than local Kea sever memory. Disk use
+for the SFLQ data is a fraction of what is already stored per lease and as
+pool utilization increases, the size of SFLQ data decreases.
+
+We recommend that the SFLQ allocator be selected only after careful consideration.
+As discussed above, impact on startup can be substantial when introducing the use
+of SFLQ. Creating the initial SFLQ data for Large pools (e.g.``/8``) may delay the
+server's startup by several seconds or more per pool. It is faster for smaller pools
+(e.g.``/16`` or less) but per pool can add up when they are many such pools.  We
+recommend specifying another allocator type at the global level and specifying
+the SFLQ allocator at the subnet or shared-network level only for select subnets.
+
+There is another important aspect of the SFLQ Allocator that warrants discussion.
+As mentioned above when a server is using SFLQ allocation for a given pool, it uses
+specialized back end updates that maintain the SFLQ data. Thus it is critical that
+all servers sharing a lease back end agree on which subnets use SFLQ allocation.
+If they do not agree the SFLQ data will quickly become inaccurate. Addresses may
+look free when they are not vice versa. In the case of the former, the allocation
+engine will detect an existing lease and try another. In the case of the latter,
+the lease will not be offered.
+
+.. note::
+
+    It is strongly recommended that when configuring subnets to use SFLQ allocation,
+    it be done in maintenance windows such that servers are not actively serving
+    clients for those subnets while the changes are made. This will avoid
+    inconsistencies in SFLQ data.
+
+As mentioned before when a server restarts or is reconfigured, it will iterate
+over its subnets and initialize the configured allocator for that subnet's pools.
+For the SFLQ Allocator, this will cause the server to request the lease back end
+to create the SFLQ data for each pool in the subnet. If the SFLQ data already exists
+for a pool, the request will return immediately. If not it will return once
+the SFLQ data for that pool has been created. SFLQ data creation for a specific
+pool is an exclusive operation. Once it has been initiated by a server, any requests
+from other servers to create the SFLQ data for the same pool will block and not
+return until the first request completes creating the SFLQ data for the pool.
+In this way only one server actually creates the pool's SFLQ data and all others
+are prohibited from using the pool until its SFLQ data exists.  This behavior
+is intended to maintain some order during concurrent server restarts and
+reconfigurations.
+
+There is the topic of overlapping pools. Kea permits the configuration
+of pools whose address ranges overlap other pools. The SFLQ Allocator supports
+this seamlessly as long as all such pools are configured to use the SFLQ
+Allocator.
+
+.. note::
+
+    Lease reclamation must be enabled with a low value for the
+    ``reclaim-timer-wait-time`` parameter, to ensure that the server frequently
+    collects expired leases and makes them available for allocation via the
+    SFLQ data. Expired leases are not considered free by the allocator until they are
+    reclaimed by the server. See :ref:`lease-reclamation` for more details about the
+    lease reclamation process.
+
+.. note::
+
+    SFQL Allocator is restricted to use in pools no larger than 16777216 addresses.
+    Pools of larger capacity will cause a configuration error.
+
+SFLQ Allocaor does not support ``adaptive-lease-time-threshold``.
