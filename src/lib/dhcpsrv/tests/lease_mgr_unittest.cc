@@ -1046,7 +1046,7 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     EXPECT_EQ(exp_remote_id, remote_id);
 }
 
-// Verifies SfqlPoolInfo::toElement() function.
+// Verifies SflqPoolInfo::toElement() function.
 TEST(SflqPoolInfo, toElement) {
     SflqPoolInfo info;
     info.lease_type_ = Lease::TYPE_V4;

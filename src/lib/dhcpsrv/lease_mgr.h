@@ -1125,7 +1125,7 @@ public:
     /// and (re)populates the pool.
     ///
     /// @param start_address first address in the pool.
-    /// @param last_address last address in the pool.
+    /// @param end_address last address in the pool.
     /// @param subnet_id id of the subnet to which the pool belongs.
     /// @param recreate when true, the pool is recreated if it already exits.
     ///
@@ -1143,7 +1143,7 @@ public:
     /// conflicts.
     ///
     /// @param start_address first address in the pool.
-    /// @param last_address last address in the pool.
+    /// @param end_address last address in the pool.
     ///
     /// @return A free V4 address or IOAddress::IPV4_ZERO_ADDRESS().
     virtual asiolink::IOAddress sflqPickFreeLease4(asiolink::IOAddress start_address,
@@ -1152,7 +1152,7 @@ public:
     /// @brief Calls stored procedure to create an SFLQ pool for v6.
     ///
     /// @param start_address first address/prefix in the pool.
-    /// @param last_address last address/prefix in the pool.
+    /// @param end_address last address/prefix in the pool.
     /// @param lease_type TYPE_NA or TYPE_PD.
     /// @param delegated_len bit length of the address/prefix to be leases. For
     /// TYPE_NA this parameter should be 128.
@@ -1173,7 +1173,7 @@ public:
     /// Note the returned address/prefix must still be checked for HR conflicts.
     ///
     /// @param start_address first address in the pool.
-    /// @param last_address last address in the pool.
+    /// @param end_address last address in the pool.
     ///
     /// @return A free V6 address/prefix or IOAddress::IPV6_ZERO_ADDRESS().
     virtual asiolink::IOAddress sflqPickFreeLease6(asiolink::IOAddress start_address,
@@ -1268,7 +1268,7 @@ public:
     ///
     /// @param lease v4 lease to test
     ///
-    /// @return true if SLFQ is in use in this config and the lease's subnet uses
+    /// @return true if SFLQ is in use in this config and the lease's subnet uses
     /// SFLQ allocation
     static bool useSharedFlqStatement(Lease4Ptr lease);
 
@@ -1277,7 +1277,7 @@ public:
     ///
     /// @param lease v6 lease to test
     ///
-    /// @return true if SLFQ is in use in this config and the lease's subnet uses
+    /// @return true if SFLQ is in use in this config and the lease's subnet uses
     /// SFLQ allocation for the lease's lease type.
     static bool useSharedFlqStatement(Lease6Ptr lease);
 

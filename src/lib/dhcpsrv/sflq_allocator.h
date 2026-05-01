@@ -32,7 +32,7 @@ namespace dhcp {
 /// pool rather than one query * the total number of addresses in the
 /// pools.
 ///
-/// The SLFQ data tracks the last address picked for each SFLQ pool such
+/// The SFLQ data tracks the last address picked for each SFLQ pool such
 /// that consecutive queries for the same pool will return a different
 /// free address.  This should minimize conflicts with other servers until
 /// the number of free addresses approaches zero.
@@ -56,7 +56,7 @@ public:
 
     /// @brief Returns the allocator type string.
     ///
-    /// @return flq string.
+    /// @return shared-flq string.
     virtual std::string getType() const {
         return ("shared-flq");
     }

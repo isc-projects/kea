@@ -720,7 +720,7 @@ PgSqlTaggedStatement tagged_statements[] = {
             OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_BYTEA,
             OID_BYTEA, OID_INT8, OID_INT8, OID_TIMESTAMP },
 
-      "slfqUpdateLease4",
+      "sflqUpdateLease4",
       "SELECT sflqUpdateLease4($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)" },
 
     // SLQ_DELETE_LEASE4
@@ -742,7 +742,7 @@ PgSqlTaggedStatement tagged_statements[] = {
             OID_INT2, OID_INT4, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
             OID_BYTEA, OID_INT2, OID_INT2,
             OID_INT8, OID_TEXT, OID_INT8, OID_TEXT, OID_TIMESTAMP },
-      "slfqUpdateLease6",
+      "sflqUpdateLease6",
       "SELECT sflqUpdateLease6(cast($1 as inet), $2, $3, $4, $5, $6, $7, $8, $9, "
                               "$10, $11, $12, $13, $14, $15, $16, $17, $18, "
                               "cast($19 as inet), $20)" },

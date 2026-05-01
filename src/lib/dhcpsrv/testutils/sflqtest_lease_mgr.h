@@ -98,7 +98,7 @@ public:
     /// @brief Destructor
     virtual ~SflqTestLeaseMgr();
 
-    /// @brief Factory for creating a SlfqTestLeaseMgr.
+    /// @brief Factory for creating a SflqTestLeaseMgr.
     ///
     /// The only required parameters are "type=sflqtest" adn "universe=4"
     /// or "universe=6".

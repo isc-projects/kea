@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef SFQL_ALLOCATION_STATE_H
-#define SFQL_ALLOCATION_STATE_H
+#ifndef SFLQ_ALLOCATION_STATE_H
+#define SFLQ_ALLOCATION_STATE_H
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/allocation_state.h>
@@ -50,4 +50,4 @@ public:
 } // end of namespace isc::dhcp
 } // end of namespace isc
 
-#endif // SFQL_ALLOCATION_STATE_H
+#endif // SFLQ_ALLOCATION_STATE_H

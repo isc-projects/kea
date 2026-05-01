@@ -95,16 +95,16 @@ IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset);
 
 /// @brief Ensures address pair are both v4 and start <= end
 ///
-/// @param addr input address
-/// @param addr input address
+/// @param start input start address
+/// @param end input end address
 ///
 /// @throw BadValue if either address is not v4 or start > end
 void validateV4Range(const IOAddress& start, const IOAddress& end);
 
 /// @brief Ensures address pair are both v6 and start <= end
 ///
-/// @param addr input address
-/// @param addr input address
+/// @param start input start address
+/// @param end input end address
 ///
 /// @throw BadValue if either address is not v6 or start > end
 void validateV6Range(const IOAddress& start, const IOAddress& end);
