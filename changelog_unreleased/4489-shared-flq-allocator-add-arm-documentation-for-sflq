@@ -1,0 +1,4 @@
+[doc]		tmark
+	Added documentation for the Shared FLQ Allocator
+	to the ARM.
+	(Gitlab #4489)
