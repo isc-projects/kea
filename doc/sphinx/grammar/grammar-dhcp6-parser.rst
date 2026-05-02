@@ -231,7 +231,7 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      ddns_ttl_min ::= "ddns-ttl-min" ":" INTEGER
 
-     ddns_ttl_max ::= "ddns-ttl-mix" ":" INTEGER
+     ddns_ttl_max ::= "ddns-ttl-max" ":" INTEGER
 
      hostname_char_set ::= "hostname-char-set" ":" STRING
 

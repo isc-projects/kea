@@ -1543,7 +1543,7 @@ namespace isc { namespace dhcp {
 #line 1544 "dhcp6_parser.cc"
     break;
 
-  case 188: // ddns_ttl_max: "ddns-ttl-mix" ":" "integer"
+  case 188: // ddns_ttl_max: "ddns-ttl-max" ":" "integer"
 #line 828 "dhcp6_parser.yy"
                                          {
     ctx.unique("ddns-ttl-max", ctx.loc2pos(yystack_[2].location));
@@ -6880,7 +6880,7 @@ namespace isc { namespace dhcp {
   "\"ddns-generated-prefix\"", "\"ddns-qualifying-suffix\"",
   "\"ddns-update-on-renew\"", "\"ddns-use-conflict-resolution\"",
   "\"ddns-ttl-percent\"", "\"ddns-ttl\"", "\"ddns-ttl-min\"",
-  "\"ddns-ttl-mix\"", "\"store-extended-info\"", "\"subnet6\"",
+  "\"ddns-ttl-max\"", "\"store-extended-info\"", "\"subnet6\"",
   "\"option-def\"", "\"option-data\"", "\"name\"", "\"data\"", "\"code\"",
   "\"space\"", "\"csv-format\"", "\"always-send\"", "\"never-send\"",
   "\"record-types\"", "\"encapsulate\"", "\"array\"",

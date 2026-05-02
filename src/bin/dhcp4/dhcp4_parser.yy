@@ -146,7 +146,7 @@ using namespace std;
   DDNS_TTL_PERCENT "ddns-ttl-percent"
   DDNS_TTL "ddns-ttl"
   DDNS_TTL_MIN "ddns-ttl-min"
-  DDNS_TTL_MAX "ddns-ttl-mix"
+  DDNS_TTL_MAX "ddns-ttl-max"
   STORE_EXTENDED_INFO "store-extended-info"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
