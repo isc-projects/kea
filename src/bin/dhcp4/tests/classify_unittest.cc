@@ -629,6 +629,38 @@ TEST_F(ClassifyTest, fixedFieldsInformFile2) {
     testFixedFields(CONFIGS[0], DHCPINFORM, pxe, "0.0.0.0", "", "ipxe.efi");
 }
 
+// This test checks that empty client classes is supported.
+TEST_F(ClassifyTest, emptyClientClasses) {
+    std::string config =
+        "{"
+        "\"interfaces-config\": {"
+        "   \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"client-classes\": ["
+        "],"
+        "\"shared-networks\": [ {"
+        "    \"name\": \"frog\","
+        "    \"subnet4\": [ { "
+        "        \"subnet\": \"10.0.0.0/24\","
+        "        \"id\": 1,"
+        "        \"pools\": [ { "
+        "            \"pool\": \"10.0.0.10-10.0.0.100\""
+        "         } ]"
+        "    } ]"
+        "} ]"
+        "}";
+
+    // Check the config can be parsed.
+    EXPECT_NO_THROW(parseDHCP4(config));
+
+    // Create a client.
+    Dhcp4Client client(srv_, Dhcp4Client::SELECTING);
+
+    // Load the config.
+    configure(config, *client.getServer());
+}
+
 // This test checks that it is possible to specify static reservations for
 // client classes.
 TEST_F(ClassifyTest, clientClassesInHostReservations) {

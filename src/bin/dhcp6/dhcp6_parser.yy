@@ -2634,12 +2634,16 @@ client_classes: CLIENT_CLASSES {
     ctx.leave();
 };
 
-client_classes_list: client_class_entry
-                   | client_classes_list COMMA client_class_entry
-                   | client_classes_list COMMA {
-                       ctx.warnAboutExtraCommas(@2);
-                       }
+client_classes_list: %empty
+                   | not_empty_classes_list
                    ;
+
+not_empty_classes_list: client_class_entry
+                      | not_empty_classes_list COMMA client_class_entry
+                      | not_empty_classes_list COMMA {
+                          ctx.warnAboutExtraCommas(@2);
+                          }
+                      ;
 
 client_class_entry: LCURLY_BRACKET {
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));

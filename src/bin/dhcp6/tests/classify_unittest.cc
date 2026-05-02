@@ -547,6 +547,29 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 };
 
+// This test checks that empty client classes is supported.
+TEST_F(ClassifyTest, emptyClientClasses) {
+    std::string config = "{ \"interfaces-config\": {"
+        "    \"interfaces\": [ \"*\" ] }, "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000, "
+        "\"subnet6\": [ "
+        "{   \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ], "
+        "    \"id\": 1, "
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth1\" } ],"
+        "\"client-classes\": [ "
+        "] }";
+
+    // Check the config can be parsed.
+    EXPECT_NO_THROW(parseDHCP6(config));
+
+    // Load the config.
+    EXPECT_NO_THROW(configure(config));
+}
+
 // Checks if DOCSIS client packets are classified properly
 TEST_F(ClassifyTest, docsisClientClassification) {
     // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
