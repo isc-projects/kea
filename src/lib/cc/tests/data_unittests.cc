@@ -137,8 +137,12 @@ TEST(Element, toAndFromJson) {
     }
 
     sv.clear();
+    // Leading zeros in integers.
     sv.push_back("01");
     sv.push_back("-00");
+    // Leading plus in integers.
+    sv.push_back("+0");
+    sv.push_back("+100");
     sv.push_back("{1}");
     sv.push_back("\n\nTrue");
     sv.push_back("\n\ntru");
@@ -169,9 +173,6 @@ TEST(Element, toAndFromJson) {
     // some json specific format tests, here the str() output is
     // different from the string input
     EXPECT_EQ("0", Element::fromJSON("-0")->str());
-    // +100 is incorrect according to the ECMA 404 JSON standard.
-    // Keeping it as it will be reversed.
-    // EXPECT_EQ("100", Element::fromJSON("+100")->str());
     EXPECT_EQ("100.0", Element::fromJSON("1e2")->str());
     EXPECT_EQ("100.0", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100.0", Element::fromJSON("-1e2")->str());

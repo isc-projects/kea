@@ -584,6 +584,11 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
         throwJSONError("Illegal leading zeros in '" + number + "'",
                        file, line, start_pos);
     }
+    // Catch leading plus: raise an error as logging is not available.
+    if ((number.size() > 1) && (number[0] == '+')) {
+        throwJSONError("Illegal leading plus in '" + number + "'",
+                       file, line, start_pos);
+    }
     try {
         return (Element::create(boost::lexical_cast<int64_t>(number),
                                 Element::Position(file, line, start_pos)));

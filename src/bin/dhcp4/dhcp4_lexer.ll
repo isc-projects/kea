@@ -75,7 +75,6 @@ using namespace isc::dhcp;
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
-int_leading0	\-?0[0-9]+
 int   \-?(0|[1-9][0-9]*)
 blank [ \t\r]
 
@@ -2568,26 +2567,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 ","    { return isc::dhcp::Dhcp4Parser::make_COMMA(driver.loc_); }
 ":"    { return isc::dhcp::Dhcp4Parser::make_COLON(driver.loc_); }
 
-{int} {
-    /* An integer was found. */
-    std::string tmp(yytext);
-    int64_t integer = 0;
-    try {
-        /* In substring we want to use negative values (e.g. -1).
-           In enterprise-id we need to use values up to 0xffffffff.
-           To cover both of those use cases, we need at least
-           int64_t. */
-        integer = boost::lexical_cast<int64_t>(tmp);
-    } catch (const boost::bad_lexical_cast &) {
-        driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
-    }
-
-    /* The parser needs the string form as double conversion is no lossless */
-    return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);
-}
-
-{int_leading0} {
-    /* An integer was found. */
+\-?0[0-9]+ {
+    /* Integer with leading zeros. */
     std::string tmp(yytext);
     int64_t integer = 0;
     try {
@@ -2601,6 +2582,24 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     }
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
+
+    /* The parser needs the string form as double conversion is no lossless */
+    return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);
+}
+
+{int} {
+    /* An integer was found. */
+    std::string tmp(yytext);
+    int64_t integer = 0;
+    try {
+        /* In substring we want to use negative values (e.g. -1).
+           In enterprise-id we need to use values up to 0xffffffff.
+           To cover both of those use cases, we need at least
+           int64_t. */
+        integer = boost::lexical_cast<int64_t>(tmp);
+    } catch (const boost::bad_lexical_cast &) {
+        driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
+    }
 
     /* The parser needs the string form as double conversion is no lossless */
     return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);

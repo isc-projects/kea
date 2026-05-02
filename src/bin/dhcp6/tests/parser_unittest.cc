@@ -121,8 +121,8 @@ TEST(ParserTest, types) {
 
 TEST(ParserTest, integers) {
     // Should get warnings for all items at the exception of the first one.
-    string txt = "[ 0, 00, 01, 001 ]";
-    testParser(txt, Parser6Context::PARSER_JSON);
+    string txt = "[ 0, 00, 01, -001 ]";
+    testParser(txt, Parser6Context::PARSER_JSON, false);
 }
 
 TEST(ParserTest, keywordJSON) {

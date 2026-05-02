@@ -75,8 +75,7 @@ unsigned int comment_start_line = 0;
 /* These are not token expressions yet, just convenience expressions that
    can be used during actual token definitions. Note some can match
    incorrect inputs (e.g., IP addresses) which must be checked. */
-int_leading0	\-?0[0-9]+
-int   \-?[0-9]+
+int   \-?(0|[1-9][0-9]*)
 blank [ \t\r]
 
 UnicodeEscapeSequence           u[0-9A-Fa-f]{4}
@@ -948,8 +947,8 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 ","    { return isc::d2::D2Parser::make_COMMA(driver.loc_); }
 ":"    { return isc::d2::D2Parser::make_COLON(driver.loc_); }
 
-{int_leading0} {
-    /* An integer was found. */
+\-?0[0-9]+ {
+    /* Integer with leading zeros. */
     std::string tmp(yytext);
     int64_t integer = 0;
     try {
