@@ -1814,7 +1814,7 @@ public:
             bind_[1].is_unsigned = MLM_TRUE;
 
             // type tinyint
-            // See lease6_types for values (0 = IA_NA, 1 = IA_TA, 2 = IA_PD)
+            // See lease6_types for values (0 = IA_NA, 2 = IA_PD)
             type_ = resv.getType() == IPv6Resrv::TYPE_NA ? 0 : 2;
             bind_[2].buffer_type = MYSQL_TYPE_TINY;
             bind_[2].buffer = reinterpret_cast<char*>(&type_);

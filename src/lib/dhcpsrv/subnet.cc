@@ -664,12 +664,6 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
                          (Lease::TYPE_NA, subnet));
     subnet->setAllocationState(Lease::TYPE_NA,
                                SubnetIterativeAllocationState::create(subnet));
-    // IA_TA
-    subnet->setAllocator(Lease::TYPE_TA,
-                         boost::make_shared<IterativeAllocator>
-                         (Lease::TYPE_TA, subnet));
-    subnet->setAllocationState(Lease::TYPE_TA,
-                               SubnetIterativeAllocationState::create(subnet));
     // IA_PD
     subnet->setAllocator(Lease::TYPE_PD,
                          boost::make_shared<IterativeAllocator>

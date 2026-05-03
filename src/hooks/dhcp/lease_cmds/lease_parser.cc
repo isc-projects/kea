@@ -223,8 +223,6 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         string txt = getString(lease_info, "type");
         if (txt == "IA_NA") {
             type = Lease::TYPE_NA;
-        } else if (txt == "IA_TA") {
-            type = Lease::TYPE_TA;
         } else if (txt == "IA_PD") {
             type = Lease::TYPE_PD;
 

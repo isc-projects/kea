@@ -705,7 +705,7 @@ protected:
     /// @brief Assigns leases.
     ///
     /// It supports non-temporary addresses (IA_NA) and prefixes (IA_PD). It
-    /// does NOT support temporary addresses (IA_TA).
+    /// does NOT (and shall NEVER) support temporary addresses (IA_TA).
     ///
     /// @param question client's message (with requested IA options)
     /// @param answer server's message (IA options will be added here).

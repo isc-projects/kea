@@ -592,8 +592,6 @@ RadiusAccounting::buildAcct6(const ConstElementPtr& arguments, Event event) {
             txt = SimpleParser::getString(arguments, "type");
             if (txt == "IA_NA") {
                 type = Lease::TYPE_NA;
-            } else if (txt == "IA_TA") {
-                type = Lease::TYPE_TA;
             } else if (txt == "IA_PD") {
                 type = Lease::TYPE_PD;
 

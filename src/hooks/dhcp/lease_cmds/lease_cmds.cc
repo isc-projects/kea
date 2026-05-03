@@ -716,16 +716,13 @@ LeaseCmdsImpl::getParameters(bool v6, const ConstElementPtr& params) {
         string t = params->get("type")->stringValue();
         if (t == "IA_NA" || t == "0") {
             x.lease_type = Lease::TYPE_NA;
-        } else if (t == "IA_TA" || t == "1") {
-            x.lease_type = Lease::TYPE_TA;
         } else if (t == "IA_PD" || t == "2") {
             x.lease_type = Lease::TYPE_PD;
         } else if (t == "V4" || t == "3") {
             x.lease_type = Lease::TYPE_V4;
         } else {
-            isc_throw(BadValue, "Invalid lease type specified: "
-                      << t << ", only supported values are: IA_NA, IA_TA,"
-                      << " IA_PD and V4");
+            isc_throw(BadValue, "Invalid lease type specified: " << t
+                      << ", only supported values are: IA_NA, IA_PD and V4");
         }
     }
 

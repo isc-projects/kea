@@ -2301,8 +2301,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     ConstSubnet6Ptr orig_subnet = ctx.subnet_;
 
     // We need to allocate addresses for all IA_NA options in the client's
-    // question (i.e. SOLICIT or REQUEST) message.
-    // @todo add support for IA_TA
+    // question (i.e. SOLICIT or REQUEST) message. IA_TA options are ignored.
 
     // For the lease allocation it is critical that the client has sent
     // DUID. There is no need to check for the presence of the DUID here
@@ -2311,8 +2310,6 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // Now that we have all information about the client, let's iterate over all
     // received options and handle IA_NA options one by one and store our
     // responses in answer message (ADVERTISE or REPLY).
-    //
-    // @todo: IA_TA once we implement support for temporary addresses.
     for (auto const& opt : question->options_) {
         switch (opt.second->getType()) {
         case D6O_IA_NA: {
@@ -3326,8 +3323,7 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply,
                        AllocEngine::ClientContext6& ctx) {
 
     // We will try to extend lease lifetime for all IA options in the client's
-    // Renew or Rebind message.
-    /// @todo add support for IA_TA
+    // Renew or Rebind message. IA_TA options are ignored.
 
     // For the lease extension it is critical that the client has sent
     // DUID. There is no need to check for the presence of the DUID here
@@ -3374,9 +3370,8 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
                          AllocEngine::ClientContext6& ctx) {
 
     // We need to release addresses for all IA options in the client's
-    // RELEASE message.
+    // RELEASE message. IA_TA options are ignored.
 
-    /// @todo Add support for IA_TA
     /// @todo Consider supporting more than one address in a single IA.
     /// It is allowed by RFC 8415, but it is not widely implemented. The only
     /// software that supports that is Dibbler, but its author seriously doubts
@@ -3410,7 +3405,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
             }
             break;
         }
-        // @todo: add support for IA_TA
+        case D6O_IA_TA:
         default:
             // remaining options are stateless and thus ignored in this context
             ;

@@ -848,8 +848,6 @@ private:
     ///
     /// @param source Message from which IA options will be copied.
     /// @param dest Message to which IA options will be copied.
-    ///
-    /// @todo Add support for IA_TA.
     void copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest);
 
     /// @brief Creates IA options from existing configuration.
