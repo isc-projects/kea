@@ -1148,7 +1148,13 @@ This configuration will cause the server to listen on ``eth1`` on the
 link-local address, the multicast group (ff02::1:2), and 2001:db8::1.
 
 Usually, unicast support is associated with a server unicast option which
-allows clients to send unicast messages to the server. The example above
+allows clients to send unicast messages to the server.
+
+.. note::
+
+   The unicast option was deprecated by the last DHCPv6 RFC.
+
+The example above
 includes a server unicast option specification which causes the
 client to send messages to the specified unicast address.
 
