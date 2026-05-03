@@ -2435,7 +2435,16 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_paths, env, c
         aggr.write('aggregated_tests.xml')
 
     if 'install' in features:
-        execute('sudo meson install -C build', timeout=2 * 60,
+
+        # Try to use full path for meson install due to some distros (i.e. rocky)
+        # do not have /usr/local/bin in secure_path. As result 'meson' is not found with sudo.
+        res, meson_cmd = execute('command -v meson', capture=True, quiet=True, raise_error=False)
+        if res != 0:
+            meson_cmd = 'meson'
+        else:
+            meson_cmd = meson_cmd.rstrip()
+
+        execute(f'sudo {meson_cmd} install -C build', timeout=2 * 60,
                 cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
         if system != 'alpine':
             execute('sudo ldconfig', dry_run=dry_run, env=env)
