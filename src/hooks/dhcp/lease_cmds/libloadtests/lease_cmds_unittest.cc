@@ -53,7 +53,12 @@ TEST_F(LeaseCmdsTest, commands) {
         "lease4-del",               "lease6-del",
         "lease4-update",            "lease6-update",
         "lease4-wipe",              "lease6-wipe",
-        "lease4-resend-ddns",       "lease6-resend-ddns"
+        "lease4-resend-ddns",       "lease6-resend-ddns",
+        "sflq-pool4-create",        "sflq-pool6-create",
+        "sflq-pool4-get-all",       "sflq-pool6-get-all",
+        "sflq-pool4-get-by-subnet", "sflq-pool6-get-by-subnet",
+        "sflq-pool4-get-by-range",  "sflq-pool6-get-by-range",
+        "sflq-pool4-del",           "sflq-pool6-del",
     };
     setFamily(AF_INET);
     testCommands(cmds);

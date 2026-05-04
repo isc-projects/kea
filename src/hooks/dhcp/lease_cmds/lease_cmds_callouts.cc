@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks.h>
 #include <process/daemon.h>
+#include <sflq_cmds.h>
 
 using namespace isc::config;
 using namespace isc::data;
@@ -334,6 +335,116 @@ int lease6_write(CalloutHandle& handle) {
     return(lease_cmds.leaseWriteHandler(handle));
 }
 
+/// @brief This is a command callout for 'sflq-pool4-create' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool4_create(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool4CreateHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool4-get-all' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool4_get_all(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool4GetAllHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool4-get-by-subnet' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool4_get_by_subnet(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool4GetBySubnetHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool4-get-by-range' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool4_get_by_range(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool4GetByRangeHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool4-del' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool4_del(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool4DelHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool6-create' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool6_create(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool6CreateHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool6-get-all' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool6_get_all(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool6GetAllHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool6-get-by-subnet' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool6_get_by_subnet(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool6GetBySubnetHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool6-get-by-range' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool6_get_by_range(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool6GetByRangeHandler(handle));
+}
+
+/// @brief This is a command callout for 'sflq-pool6-del' command.
+///
+/// @param handle Callout handle used to retrieve a command and
+/// provide a response.
+/// @return 0 if this callout has been invoked successfully,
+/// 1 otherwise.
+int sflq_pool6_del(CalloutHandle& handle) {
+    SflqCmds sflq_cmds;
+    return(sflq_cmds.sflqPool6DelHandler(handle));
+}
+
 /// @brief This function is called when the library is loaded.
 ///
 /// @param handle library handle
@@ -386,6 +497,16 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-resend-ddns", lease6_resend_ddns);
     handle.registerCommandCallout("lease4-write", lease4_write);
     handle.registerCommandCallout("lease6-write", lease6_write);
+    handle.registerCommandCallout("sflq-pool4-create", sflq_pool4_create);
+    handle.registerCommandCallout("sflq-pool4-get-all", sflq_pool4_get_all);
+    handle.registerCommandCallout("sflq-pool4-get-by-subnet", sflq_pool4_get_by_subnet);
+    handle.registerCommandCallout("sflq-pool4-get-by-range", sflq_pool4_get_by_range);
+    handle.registerCommandCallout("sflq-pool4-del", sflq_pool4_del);
+    handle.registerCommandCallout("sflq-pool6-create", sflq_pool6_create);
+    handle.registerCommandCallout("sflq-pool6-get-all", sflq_pool6_get_all);
+    handle.registerCommandCallout("sflq-pool6-get-by-subnet", sflq_pool6_get_by_subnet);
+    handle.registerCommandCallout("sflq-pool6-get-by-range", sflq_pool6_get_by_range);
+    handle.registerCommandCallout("sflq-pool6-del", sflq_pool6_del);
 
     // Instantiate the binding-variables manager singleton.
     binding_var_mgr.reset(new BindingVariableMgr(family));
@@ -486,6 +607,5 @@ int leases6_committed(CalloutHandle& handle) {
 
     return (0);
 }
-
 
 } // end extern "C"

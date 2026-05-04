@@ -1974,7 +1974,7 @@ SflqPoolInfo::SflqPoolInfo():
 }
 
 
-data::ConstElementPtr
+data::ElementPtr
 SflqPoolInfo::toElement() const {
     ElementPtr info = Element::createMap();
     info->set("lease-type", Element::create(Lease::typeToText(lease_type_)));

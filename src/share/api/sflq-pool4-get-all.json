@@ -1,0 +1,37 @@
+{
+    "access": "write",
+    "avail": "3.2.0",
+    "brief": [
+        "This command fetches a list of all V4 SFLQ pools from the lease back end."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"sflq-pool4-get-all\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp69\"/>",
+    "hook": "lease_cmds",
+    "name": "sflq-pool4-get-all",
+    "resp-syntax": [
+        "{",
+        "\"arguments\": {",
+        "   \"pools\": [",
+        "       {",
+        "            \"created-ts\": \"2026-05-02 10:54:55.000000\",",
+        "            \"delegated-len\": 128,",
+        "            \"end-address\": \"192.0.2.255\",",
+        "            \"free-leases\": 256,",
+        "            \"lease-type\": \"V4\",",
+        "            \"modified-ts\": \"2026-05-02 10:54:55.000000\",",
+        "            \"start-address\": \"192.0.2.0\",",
+        "            \"subnet-id\": 6",
+        "       }",
+        "]]",
+        \"result\": 0,",
+        \"text\": \"1 pool(s) found.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

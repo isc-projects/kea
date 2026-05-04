@@ -6,6 +6,7 @@ dhcp_lease_cmds_lib = shared_library(
     'lease_cmds_log.cc',
     'lease_cmds_messages.cc',
     'lease_parser.cc',
+    'sflq_cmds.cc',
     'version.cc',
     dependencies: [CRYPTO_DEP],
     include_directories: [include_directories('.')] + INCLUDES,

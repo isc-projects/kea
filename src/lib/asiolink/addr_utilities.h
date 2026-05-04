@@ -95,19 +95,19 @@ IOAddress offsetAddress(const IOAddress& addr, isc::util::uint128_t offset);
 
 /// @brief Ensures address pair are both v4 and start <= end
 ///
-/// @param start input start address
-/// @param end input end address
+/// @param start_address start of the range
+/// @param end_address end of the range
 ///
 /// @throw BadValue if either address is not v4 or start > end
-void validateV4Range(const IOAddress& start, const IOAddress& end);
+void validateV4Range(const IOAddress& start_address, const IOAddress& end_address);
 
 /// @brief Ensures address pair are both v6 and start <= end
 ///
-/// @param start input start address
-/// @param end input end address
+/// @param start_address start of the range
+/// @param end_address end of the range
 ///
 /// @throw BadValue if either address is not v6 or start > end
-void validateV6Range(const IOAddress& start, const IOAddress& end);
+void validateV6Range(const IOAddress& start_address, const IOAddress& end_address);
 
 }  // namespace asiolink
 }  // namespace isc

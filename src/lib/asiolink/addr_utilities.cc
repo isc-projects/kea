@@ -411,19 +411,19 @@ IOAddress offsetAddress(const IOAddress& addr, uint128_t offset) {
     return (IOAddress::fromBytes(AF_INET6, &addr_bytes[0]));
 }
 
-void validateV4Range(const IOAddress& start, const IOAddress& end) {
-    if (!start.isV4() || !end.isV4() || end < start) {
+void validateV4Range(const IOAddress& start_address, const IOAddress& end_address) {
+    if (!start_address.isV4() || !end_address.isV4() || end_address < start_address) {
         isc_throw (BadValue, "invalid V4 range - start_address "
-                   << start.toText() << "r, end_address " << end.toText()
-                   << ", must be V4 addresses where start <= end");
+                   << start_address.toText() << ", end_address " << end_address.toText()
+                   << ", must be V4 addresses where start_address <= end_address");
     }
 }
 
-void validateV6Range(const IOAddress& start, const IOAddress& end) {
-    if (!start.isV6() || !end.isV6() || end < start) {
+void validateV6Range(const IOAddress& start_address, const IOAddress& end_address) {
+    if (!start_address.isV6() || !end_address.isV6() || end_address < start_address) {
         isc_throw (BadValue, "invalid V6 range - start_address "
-                   << start.toText() << "r, end_address " << end.toText()
-                   << ", must be V6 addresses where start <= end");
+                   << start_address.toText() << ", end_address " << end_address.toText()
+                   << ", must be V6 addresses where start_address <= end_address");
     }
 }
 

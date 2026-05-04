@@ -1,0 +1,30 @@
+{
+    "access": "write",
+    "avail": "3.2.0",
+    "brief": [
+        "This command requests the lease back end to a v4 SFLQ pool and its free lease data."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"sflq-pool4-create\",",
+        "    \"arguments\": {",
+        "       \"start-address\": \"1.2.3.4\",",  
+        "       \"end-address\": \"1.2.3.4\",",  
+        "       \"subnet-id\": 123",
+        "        } ]",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"idp69\"/>",
+    "hook": "lease_cmds",
+    "name": "sflq-pool4-create",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"SFLQ pool created.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4"
+    ]
+}

@@ -65,6 +65,20 @@ SflqPool::popFreeAddress() {
     return (free_address);
 }
 
+SflqPoolInfoPtr
+SflqPool::toSflqPoolInfo() const {
+    SflqPoolInfoPtr pi(new SflqPoolInfo());
+    pi->lease_type_ = lease_type_;
+    pi->start_address_ = start_address_;
+    pi->end_address_ = end_address_;
+    pi->delegated_len_ = delegated_len_;
+    pi->subnet_id_ = subnet_id_;
+    pi->free_leases_ = free_addresses_.size();;
+    pi->created_ts_ = boost::posix_time::second_clock::local_time();
+    pi->modified_ts_ = pi->created_ts_;
+    return (pi);
+}
+
 TrackingLeaseMgrPtr
 SflqTestLeaseMgr::factory(const DatabaseConnection::ParameterMap& params) {
     return (TrackingLeaseMgrPtr(new SflqTestLeaseMgr(params)));
@@ -81,8 +95,13 @@ bool
 SflqTestLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address,
                                      SubnetID subnet_id, bool recreate) {
     auto sflq_pool = findPool(start_address, end_address);
-    if (sflq_pool && recreate) {
-        sflq_pool->repopulateFreeLeases();
+    if (sflq_pool) {
+        if (recreate) {
+            sflq_pool->repopulateFreeLeases();
+            return (true);
+        }
+
+        return (false);
     }
 
     // Create the pool and add it to the list of pools.
@@ -106,8 +125,13 @@ SflqTestLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_addr
                                      Lease::Type lease_type, uint8_t delegated_len,
                                      SubnetID subnet_id, bool recreate) {
     auto sflq_pool = findPool(start_address, end_address);
-    if (sflq_pool && recreate) {
-        sflq_pool->repopulateFreeLeases();
+    if (sflq_pool) {
+        if (recreate) {
+            sflq_pool->repopulateFreeLeases();
+            return (true);
+        }
+
+        return (false);
     }
 
     // Create the pool and add it to the list of pools.
@@ -149,6 +173,114 @@ SflqTestLeaseMgr::repopulateFlqPools() {
 std::string
 SflqTestLeaseMgr::getType() const {
     return (std::string("sflqtest"));
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool4GetAll() {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        pools->push_back(pool->toSflqPoolInfo());
+    }
+
+    return (pools);
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool4Get(SubnetID subnet_id) {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        if (pool->subnet_id_ == subnet_id) {
+            pools->push_back(pool->toSflqPoolInfo());
+        }
+    }
+
+    return (pools);
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool4Get(IOAddress start_address, IOAddress end_address) {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        if ((pool->start_address_ <= start_address && start_address <= pool->end_address_) ||
+            (pool->start_address_ <= end_address && end_address <= pool->end_address_) ||
+            (start_address < pool->start_address_ && pool->end_address_ < end_address))
+            pools->push_back(pool->toSflqPoolInfo());
+    }
+
+    return (pools);
+}
+
+bool
+SflqTestLeaseMgr::sflqPool4Del(IOAddress start_address, IOAddress end_address,
+                               bool force /* = false */) {
+    return(sflqPoolDel(start_address, end_address, force));
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool6GetAll() {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        pools->push_back(pool->toSflqPoolInfo());
+    }
+
+    return (pools);
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool6Get(SubnetID subnet_id) {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        if (pool->subnet_id_ == subnet_id) {
+            pools->push_back(pool->toSflqPoolInfo());
+        }
+    }
+
+    return (pools);
+}
+
+SflqPoolInfoCollectionPtr
+SflqTestLeaseMgr::sflqPool6Get(IOAddress start_address, IOAddress end_address) {
+    SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
+    for (auto pool : sflq_pools_) {
+        if ((pool->start_address_ <= start_address && start_address <= pool->end_address_) ||
+            (pool->start_address_ <= end_address && end_address <= pool->end_address_) ||
+            (start_address < pool->start_address_ && pool->end_address_ < end_address))
+            pools->push_back(pool->toSflqPoolInfo());
+    }
+
+    return (pools);
+}
+
+bool
+SflqTestLeaseMgr::sflqPool6Del(IOAddress start_address, IOAddress end_address,
+                               bool force /* = false */) {
+    return(sflqPoolDel(start_address, end_address, force));
+}
+
+bool
+SflqTestLeaseMgr::sflqPoolDel(IOAddress start_address, IOAddress end_address,
+                              bool force) {
+    auto pools = sflqPool6Get(start_address, end_address);
+    if (pools->size() == 0) {
+        return (false);
+    }
+
+    if (pools->size() > 1 && force == false) {
+        // Overlapping pools, warn and bail.
+        isc_throw(InvalidOperation, "Delete would affect "
+                  << pools->size() << " overlapping pools");
+    }
+
+    auto pool = sflq_pools_.begin();
+    while (pool != sflq_pools_.end()) {
+        if ((*pool)->start_address_ == start_address &&
+            (*pool)->end_address_ == end_address) {
+            sflq_pools_.erase(pool);
+            return (true);
+        }
+    }
+
+    return (false);
 }
 
 } // end of namespace isc::dhcp::test

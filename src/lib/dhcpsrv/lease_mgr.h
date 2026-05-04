@@ -235,6 +235,11 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
+// Forward declaration.
+class SflqPoolInfo;
+/// @brief A pointer to a SFLQPoolInfo instance.
+typedef boost::shared_ptr<SflqPoolInfo> SflqPoolInfoPtr;
+
 /// @brief Describes a SFLQ pool.
 class SflqPoolInfo {
 public:
@@ -251,11 +256,8 @@ public:
     boost::posix_time::ptime created_ts_;
     boost::posix_time::ptime modified_ts_;
 
-    data::ConstElementPtr toElement() const;
+    data::ElementPtr toElement() const;
 };
-
-/// @brief A pointer to a SFLQPoolInfo instance.
-typedef boost::shared_ptr<SflqPoolInfo> SflqPoolInfoPtr;
 
 /// @brief A collection of SFLQPoolInfo structures.
 typedef std::vector<SflqPoolInfoPtr> SflqPoolInfoCollection;

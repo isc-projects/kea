@@ -3,6 +3,7 @@ if not TESTS_OPT.enabled()
 endif
 
 libs_testutils = [
+    kea_dhcpsrv_testutils_lib,
     kea_testutils_lib
 ]
 
@@ -13,6 +14,7 @@ dhcp_lease_cmds_libload_tests = executable(
     'lease_cmds_unittest.cc',
     'load_unload_unittests.cc',
     'run_unittests.cc',
+    'sflq_cmds_unittests.cc',
     cpp_args: [
         f'-DLIBDHCP_LEASE_CMDS_SO="@TOP_BUILD_DIR@/src/hooks/dhcp/lease_cmds/libdhcp_lease_cmds.so"',
     ],
