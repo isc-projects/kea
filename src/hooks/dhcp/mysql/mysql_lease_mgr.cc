@@ -591,7 +591,7 @@ tagged_statements = { {
                     "    LEFT JOIN free_lease4 AS f "
                     "    ON f.address >= q.start_address AND f.address <= q.end_address "
                     "    GROUP BY q.id "
-                    "    ORDER BY q.subnet_id, q.start_address"},
+                    "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
 
     {MySqlLeaseMgr::SFLQ_POOL4_GET_BY_SUBNET,
                     "SELECT q.id, q.subnet_id, 3 as lease_type, "
@@ -5352,7 +5352,7 @@ MySqlLeaseMgr::sflqPickFreeLease6(IOAddress start_address, IOAddress end_address
     MYSQL_BIND obind[1];
     memset(obind, 0, sizeof(obind));
 
-    char b_addr_buffer[45];
+    char b_addr_buffer[POOL_ADDRESS6_BUF_LENGTH];
     unsigned long b_addr_length = sizeof(b_addr_buffer);
     obind[0].buffer_type = MYSQL_TYPE_STRING;
     obind[0].buffer = reinterpret_cast<char*>(b_addr_buffer);
@@ -5403,7 +5403,7 @@ MySqlLeaseMgr::sflqPool4Get(SubnetID subnet_id) {
               .arg(subnet_id);
 
     MySqlBindingCollection in_bindings = {
-        MySqlBinding::createInteger<int64_t>(subnet_id)
+        MySqlBinding::createInteger<int32_t>(subnet_id)
     };
 
     return (sflqPoolGetCommon(SFLQ_POOL4_GET_BY_SUBNET, in_bindings));
@@ -5537,7 +5537,7 @@ MySqlLeaseMgr::sflqPoolGetCommon(StatementIndex stindex,
     SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
 
     ctx->conn_.selectQuery(stindex, where_bindings, out_bindings,
-                           [this, &pools]
+                           [&pools]
                            (MySqlBindingCollection& out_bindings) {
 
         SflqPoolInfoPtr info(new SflqPoolInfo());

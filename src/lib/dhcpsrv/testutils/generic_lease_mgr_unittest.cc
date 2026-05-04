@@ -6169,7 +6169,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
                                        test_pool->subnet_id_, false));
     }
 
-    // Fetching all pools should find none.
+    // Fetching all pools should find all three.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
     ASSERT_TRUE(pool_infos);
     ASSERT_EQ(3, pool_infos->size());
@@ -6324,7 +6324,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
                                        test_pool->subnet_id_, false));
     }
 
-    // Fetching all pools should find none.
+    // Fetching all pools should find all three. 
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
     ASSERT_TRUE(pool_infos);
     ASSERT_EQ(3, pool_infos->size());
@@ -6606,7 +6606,6 @@ GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
                 lmptr_->sflqCreateFlqPool4(start_address, end_address, false));
     });
 
-    usleep(1000);
     thread th2([this, &ret2, start_address, end_address]() {
             ASSERT_NO_THROW_LOG(ret2 =
                 lmptr_->sflqCreateFlqPool4(start_address, end_address, false));

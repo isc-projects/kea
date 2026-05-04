@@ -1206,7 +1206,7 @@ public:
     /// @brief Delete the SFLQ V4 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool4 entry along with its free_lease4 data.
-    /// Fails If there are multiple pools that overalap the given range 
+    /// Fails If there are multiple pools that overlap the given range 
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
@@ -1248,7 +1248,7 @@ public:
     /// @brief Delete the SFLQ V6 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool6 entry along with its free_lease6 data.
-    /// Fails If there are multiple pools that overalap the given range 
+    /// Fails If there are multiple pools that overlap the given range 
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.

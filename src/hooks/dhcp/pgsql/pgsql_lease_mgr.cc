@@ -752,7 +752,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "sflqDeleteLease6",
       "SELECT sflqDeleteLease6(cast($1 as inet), $2)" },
 
-    // SFLQ_SFLQ_POOL4_GET_ALL
+    // SFLQ_POOL4_GET_ALL
     { 0, { },
       "sflqPool4GetAll",
       "SELECT q.id, q.subnet_id, 3 as lease_type, "
@@ -764,9 +764,9 @@ PgSqlTaggedStatement tagged_statements[] = {
       "    LEFT JOIN free_lease4 AS f "
       "    ON f.address >= q.start_address AND f.address <= q.end_address "
       "    GROUP BY q.id "
-      "    ORDER BY q.subnet_id, q.start_address"},
+      "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
 
-    // SFLQ_SFLQ_POOL4_GET_BY_SUBNET
+    // SFLQ_POOL4_GET_BY_SUBNET
     { 1, { OID_INT8 },
       "sflqPool4GetBySubnet",
       "SELECT q.id, q.subnet_id, 3 as lease_type, "
@@ -779,7 +779,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "    ON f.address >= q.start_address AND f.address <= q.end_address "
       "    WHERE q.subnet_id = $1 "
       "    GROUP BY q.id "
-      "    ORDER BY q.subnet_id, q.start_address"},
+      "    ORDER BY q.subnet_id ASC, q.start_address ASC"},
 
     // SFLQ_POOL4_GET_BY_RANGE
     { 2, { OID_INT8, OID_INT8 },
@@ -813,7 +813,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "     USING deleted_pool p "
       "     WHERE f.address BETWEEN p.start_address AND p.end_address"},
 
-    // SFLQ_SFLQ_POOL6_GET_ALL
+    // SFLQ_POOL6_GET_ALL
     { 0, { },
       "sflqPool6GetAll",
       "SELECT q.id, q.subnet_id, q.lease_type, "
@@ -828,7 +828,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "    GROUP BY q.id "
       "    ORDER BY q.subnet_id ASC, inetToBytea(q.start_address) ASC "},
 
-    // SFLQ_SFLQ_POOL6_GET_BY_SUBNET
+    // SFLQ_POOL6_GET_BY_SUBNET
     { 1, { OID_INT8 },
       "sflqPool6GetBySubnet",
       "SELECT q.id, q.subnet_id, q.lease_type, "
@@ -4155,7 +4155,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address
             .arg(recreate)
             .arg(capacity);
     } catch (const std::exception& ex) {
-        isc_throw(BadValue, "PgqlLeasMgr::sflqCreateFlqPool4 " << ex.what());
+        isc_throw(BadValue, "PgSqlLeaseMgr::sflqCreateFlqPool4 " << ex.what());
     }
 
     // Get a context

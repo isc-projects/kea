@@ -13,6 +13,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/sflq_allocator.h>
+#include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 #include <util/encode/encode.h>
@@ -1968,7 +1969,7 @@ SflqPoolInfo::SflqPoolInfo():
     start_address_(IOAddress::IPV4_ZERO_ADDRESS()),
     end_address_(IOAddress::IPV4_ZERO_ADDRESS()),
     delegated_len_(128),
-    subnet_id_(0),
+    subnet_id_(SUBNET_ID_UNUSED),
     free_leases_(0),
     created_ts_(),
     modified_ts_() {
@@ -2041,7 +2042,7 @@ LeaseMgr::sflqPool6Get(SubnetID) {
 
 SflqPoolInfoCollectionPtr
 LeaseMgr::sflqPool6Get(asiolink::IOAddress, asiolink::IOAddress) {
-    isc_throw(NotImplemented, "LeaseMgr::sflqPool6Get(IOAdress,IOAddress) called");
+    isc_throw(NotImplemented, "LeaseMgr::sflqPool6Get(IOAddress,IOAddress) called");
 }
 
 bool

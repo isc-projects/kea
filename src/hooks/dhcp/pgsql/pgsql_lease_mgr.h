@@ -1322,7 +1322,7 @@ public:
     /// @brief Delete the SFLQ V4 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool4 entry along with its free_lease4 data.
-    /// Fails If there are multiple pools that overalap the given range
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
@@ -1364,7 +1364,7 @@ public:
     /// @brief Delete the SFLQ V6 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool6 entry along with its free_lease6 data.
-    /// Fails If there are multiple pools that overalap the given range
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
@@ -1388,7 +1388,7 @@ private:
     /// @param stindex index of the SQL statement to execute.
     /// @param where_bindings input bindings holding the where clause parameter
     /// values (if any)
-    /// @param family protocl family AF_INET or AF_INET6
+    /// @param family protocol family AF_INET or AF_INET6
     ///
     /// @return A collection of the SFLQ V4 pools.
     SflqPoolInfoCollectionPtr sflqPoolGetCommon(const StatementIndex& stindex,
@@ -1402,7 +1402,7 @@ private:
     /// @param start_address start address of the pool to delete.
     /// @param end_address end address of the pool to delete.
     /// @param force overrides check for overlapping pools when true.
-    /// @param family protocl family AF_INET or AF_INET6
+    /// @param family protocol family AF_INET or AF_INET6
     ///
     /// @return True a pool was deleted.
     /// @throw InvalidOperation if force is false and overlapping pools are

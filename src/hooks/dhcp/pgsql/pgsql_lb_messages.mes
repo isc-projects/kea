@@ -356,7 +356,7 @@ Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end for
 the v4 SFLQ pool that overlap the given address range.
 
-% PGSQL_LB_SFLQ_POOL4_DELETE delete the V4 SFLQ pool with start address %1 and end address %2, forece = %3
+% PGSQL_LB_SFLQ_POOL4_DELETE delete the V4 SFLQ pool with start address %1 and end address %2, force = %3
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back to delete
 the v4 SFLQ pool (and it's free lease data) that match the given start and end
@@ -377,7 +377,7 @@ Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end for
 the v6 SFLQ pool that overlap the given address range.
 
-% PGSQL_LB_SFLQ_POOL6_DELETE delete the V6 SFLQ pool with start address %1 and end address %2, forece = %3
+% PGSQL_LB_SFLQ_POOL6_DELETE delete the V6 SFLQ pool with start address %1 and end address %2, force = %3
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back to delete
 the v6 SFLQ pool (and it's free lease data) that match the given start and end

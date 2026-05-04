@@ -197,7 +197,7 @@ public:
     /// equal to their rhs counterparts.  Asserts if they are not "equal".
     /// 
     /// @param lhs left-side instance to compare 
-    /// @param rhs reft-side instance to compare
+    /// @param rhs right-side instance to compare
     /// @param lineno source line of invocation (pass in __LINE__)
     void checkPoolInfos(const SflqPoolInfo& lhs, const SflqPoolInfo& rhs, int lineno);
 
