@@ -4463,7 +4463,7 @@ PgSqlLeaseMgr::sflqPoolGetCommon(const StatementIndex& stindex,
     SflqPoolInfoCollectionPtr pools(new SflqPoolInfoCollection());
 
     ctx->conn_.selectQuery(tagged_statements[stindex], where_bindings,
-                           [this, &pools]
+                           [&pools]
                            (PgSqlResult& r, int row) {
         // Create a convenience worker for the row.
         PgSqlResultRowWorker worker(r, row);

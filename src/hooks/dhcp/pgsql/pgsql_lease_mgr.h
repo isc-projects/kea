@@ -1396,7 +1396,7 @@ private:
     /// @brief Delete the SFLQ pool that matches a start and end address.
     ///
     /// Deletes the flq_poolX entry along with its free_leaseX data.
-    /// Fails If there are multiple pools that overalap the given range
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.

@@ -1365,13 +1365,13 @@ public:
     /// @brief Delete the SFLQ V4 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool4 entry along with its free_lease4 data.
-    /// Fails If there are multiple pools that overlap the given range 
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
     /// @param end_address end address of the pool to delete.
     /// @param force overrides check for overlapping pools when true. Defaults
-    /// to false. 
+    /// to false.
     ///
     /// @return True a pool was deleted.
     /// @throw InvalidOperation if force is false and overlapping pools are
@@ -1407,13 +1407,13 @@ public:
     /// @brief Delete the SFLQ V6 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool6 entry along with its free_lease6 data.
-    /// Fails If there are multiple pools that overlap the given range 
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
     /// @param end_address end address of the pool to delete.
     /// @param force overrides check for overlapping pools when true. Defaults
-    /// to false. 
+    /// to false.
     ///
     /// @return True a pool was deleted.
     /// @throw InvalidOperation if force is false and overlapping pools are
@@ -1442,7 +1442,7 @@ private:
     /// @brief Delete the SFLQ pool that matches a start and end address.
     ///
     /// Deletes the flq_poolX entry along with its free_leaseX data.
-    /// Fails If there are multiple pools that overalap the given range 
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
