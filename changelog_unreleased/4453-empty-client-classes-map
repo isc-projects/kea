@@ -1,0 +1,4 @@
+[func]		fdupont
+	Extended the parser to accepted an empty "client-classes" map
+	in Kea server configuration files.
+	(Gitlab #4453)
