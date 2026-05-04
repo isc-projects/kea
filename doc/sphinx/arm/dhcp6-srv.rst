@@ -8964,8 +8964,17 @@ allocation stores the SFLQ data centrally in the lease back end rather than
 locally in Kea server memory. This allows it be shared between servers such
 that they all have the same understanding of current lease state. It also means
 that once created the SFLQ data is persistent and therefore does not have to
-be re-created upon Kea server startup or reconfiguration. The following
-configuration snippet shows how to select the SFLQ allocator for a subnet:
+be re-created upon Kea server startup or reconfiguration.
+
+Because v6 address pools can be quite large and generally have a low rate of
+utilization, the default Iterative Allocator should provide adequate performance.
+The SFLQ Allocator can be very helpful for prefix delegation pools where the
+number of prefixes in a given pool is more constrained and pool utilization
+is can be quite high.
+
+Allocators for v6 are specified independently for addresses and delegated prefixes.
+SFLQ Allocator may be used for either pool type.  The following configuration snippet
+shows how to select the SFLQ allocators for all pools of both types in a subnet:
 
 .. code-block:: json
 
@@ -8982,10 +8991,8 @@ configuration snippet shows how to select the SFLQ allocator for a subnet:
         }
     }
 
-
-Allocators for v6 are specified independently for addresses and delegated prefixes.
-SFLQ Allocator may be used for either pool type. The behavior of SFLQ Allocator
-is the same in either case, the following discussion applies equally to both.
+The behavior of SFLQ Allocator is the same for both address and prefix delegation
+in either case, the following discussion applies equally to both types.
 
 There are some considerations that the administrator should take into account
 before using this allocator. Like FLQ, the SFLQ allocator can heavily impact the
@@ -8999,17 +9006,18 @@ needs to be created for pools for which it does not already exist. Thus the impa
 on subsequent restarts or reconfigurations of subnets that already use SFLQ is minimal.
 
 Since SFLQ data is maintained in the lease back end, the cost of storing
-it is in database server disc space rather than local Kea sever memory. Disk use
+it is in database server disc space rather than local Kea server memory. Disk use
 for the SFLQ data is a fraction of what is already stored per lease and as
 pool utilization increases, the size of SFLQ data decreases.
 
 We recommend that the SFLQ allocator be selected only after careful consideration.
 As discussed above, impact on startup can be substantial when introducing the use
-of SFLQ. Creating the initial SFLQ data for Large pools (e.g.``/8``) may delay the
-server's startup by several seconds or more per pool. It is faster for smaller pools
-(e.g.``/16`` or less) but per pool can add up when they are many such pools.  We
-recommend specifying another allocator type at the global level and specifying
-the SFLQ allocator at the subnet or shared-network level only for select subnets.
+of SFLQ. Creating the initial SFLQ data for Large pools (e.g. > 500K address or
+prefixes) may delay the server's startup by several seconds or more per pool. It is
+faster for smaller pools (e.g. 65K addresses or prefixes) but per pool can add up
+when they are many such pools. We recommend specifying another allocator type at
+the global level and specifying the SFLQ allocator at the subnet or shared-network
+level only for select subnets.
 
 There is another important aspect of the SFLQ Allocator that warrants discussion.
 As mentioned above when a server is using SFLQ allocation for a given pool, it uses
@@ -9022,10 +9030,10 @@ the lease will not be offered.
 
 .. note::
 
-    It is strongly recommended that when configuring subnets to use SFLQ allocation,
-    it be done in maintenance windows such that servers are not actively serving
-    clients for those subnets while the changes are made. This will avoid
-    inconsistencies in SFLQ data.
+    It is strongly recommended that when configuring subnets to use or stop using
+    SFLQ allocation, it be done in maintenance windows such that servers are not
+    actively serving clients for those subnets while the changes are made. This
+    will avoid inconsistencies in SFLQ data.
 
     SFLQ data is tracked in terms of pools where each pool has a start address
     and an end address. Configuration changes that change the address range
@@ -9062,7 +9070,7 @@ Allocator.
 
 .. note::
 
-    SFQL Allocator is restricted to use in pools no larger than 16777216 addresses.
+    SFLQ Allocator is restricted to use in pools no larger than 16777216 addresses.
     Pools of larger capacity will cause a configuration error.
 
-SFLQ Allocaor does not support ``adaptive-lease-time-threshold``.
+SFLQ Allocator does not support ``adaptive-lease-time-threshold``.

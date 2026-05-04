@@ -9182,7 +9182,7 @@ needs to be created for pools for which it does not already exist. Thus the impa
 on subsequent restarts or reconfigurations of subnets that already use SFLQ is minimal.
 
 Since SFLQ data is maintained in the lease back end, the cost of storing
-it is in database server disc space rather than local Kea sever memory. Disk use
+it is in database server disc space rather than local Kea server memory. Disk use
 for the SFLQ data is a fraction of what is already stored per lease and as
 pool utilization increases, the size of SFLQ data decreases.
 
@@ -9245,8 +9245,8 @@ Allocator.
 
 .. note::
 
-    SFQL Allocator is restricted to use in pools no larger than /8
+    SFLQ Allocator is restricted to use in pools no larger than /8
     (e.g. 16777216 addresses). Pools of larger capacity will cause a configuration
     error.
 
-SFLQ Allocaor does not support ``adaptive-lease-time-threshold``.
+SFLQ Allocator does not support ``adaptive-lease-time-threshold``.
