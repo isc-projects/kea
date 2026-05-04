@@ -101,8 +101,6 @@ Subnet::getPoolCapacity(Lease::Type type) const {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return sumPoolCapacity(pools_);
-    case Lease::TYPE_TA:
-        return sumPoolCapacity(pools_ta_);
     case Lease::TYPE_PD:
         return sumPoolCapacity(pools_pd_);
     default:
@@ -118,8 +116,6 @@ Subnet::getPoolCapacity(Lease::Type type,
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return sumPoolCapacity(pools_, client_classes);
-    case Lease::TYPE_TA:
-        return sumPoolCapacity(pools_ta_, client_classes);
     case Lease::TYPE_PD:
         return sumPoolCapacity(pools_pd_, client_classes);
     default:
@@ -137,8 +133,6 @@ Subnet::getPoolCapacity(Lease::Type type,
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return sumPoolCapacity(pools_, client_classes);
-    case Lease::TYPE_TA:
-        return sumPoolCapacity(pools_ta_, client_classes);
     case Lease::TYPE_PD:
         return sumPoolCapacity(pools_pd_, client_classes, prefix_length_match,
                                hint_prefix_length);
@@ -336,8 +330,6 @@ const PoolCollection& Subnet::getPools(Lease::Type type) const {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return (pools_);
-    case Lease::TYPE_TA:
-        return (pools_ta_);
     case Lease::TYPE_PD:
         return (pools_pd_);
     default:
@@ -354,8 +346,6 @@ PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return (pools_);
-    case Lease::TYPE_TA:
-        return (pools_ta_);
     case Lease::TYPE_PD:
         return (pools_pd_);
     default:
@@ -500,8 +490,7 @@ Subnet::addPool(const PoolPtr& pool) {
     } else {
         overlaps =
             poolOverlaps(Lease::TYPE_NA, pool) ||
-            poolOverlaps(Lease::TYPE_PD, pool) ||
-            poolOverlaps(Lease::TYPE_TA, pool);
+            poolOverlaps(Lease::TYPE_PD, pool);
     }
 
     if (overlaps) {
@@ -674,10 +663,10 @@ Subnet6::create(const IOAddress& prefix, uint8_t length,
 }
 
 void Subnet6::checkType(Lease::Type type) const {
-    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) && (type != Lease::TYPE_PD)) {
+    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_PD)) {
         isc_throw(BadValue, "Invalid Pool type: " << Lease::typeToText(type)
                   << "(" << static_cast<int>(type)
-                  << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
+                  << "), must be TYPE_NA or TYPE_PD for Subnet6");
     }
 }
 
@@ -836,11 +825,7 @@ Subnet6::createAllocators() {
         setAllocator(Lease::TYPE_NA,
                      boost::make_shared<RandomAllocator>
                      (Lease::TYPE_NA, shared_from_this()));
-        setAllocator(Lease::TYPE_TA,
-                     boost::make_shared<RandomAllocator>
-                     (Lease::TYPE_TA, shared_from_this()));
         setAllocationState(Lease::TYPE_NA, SubnetAllocationStatePtr());
-        setAllocationState(Lease::TYPE_TA, SubnetAllocationStatePtr());
 
     } else if (allocator_type == "flq") {
         isc_throw(BadValue, "Free Lease Queue allocator is not supported for IPv6 address pools");
@@ -855,7 +840,6 @@ Subnet6::createAllocators() {
                      boost::make_shared<IterativeAllocator>
                      (Lease::TYPE_NA, shared_from_this()));
         setAllocationState(Lease::TYPE_NA, SubnetIterativeAllocationState::create(shared_from_this()));
-        setAllocationState(Lease::TYPE_TA, SubnetIterativeAllocationState::create(shared_from_this()));
     }
 
     auto pd_allocator_type = getPdAllocatorType();
@@ -889,14 +873,6 @@ Subnet6::createAllocators() {
     }
     // Create allocation states for NA pools.
     for (auto const& pool : pools_) {
-        if (allocator_type == "random") {
-            pool->setAllocationState(PoolRandomAllocationState::create(pool));
-        } else {
-            pool->setAllocationState(PoolIterativeAllocationState::create(pool));
-        }
-    }
-    // Create allocation states for TA pools.
-    for (auto const& pool : pools_ta_) {
         if (allocator_type == "random") {
             pool->setAllocationState(PoolRandomAllocationState::create(pool));
         } else {

@@ -59,8 +59,6 @@ Lease::typeToText(Lease::Type type) {
        return string("V4");
    case Lease::TYPE_NA:
        return string("IA_NA");
-   case Lease::TYPE_TA:
-       return string("IA_TA");
    case Lease::TYPE_PD:
        return string("IA_PD");
        break;
@@ -79,9 +77,6 @@ Lease::textToType(const std::string& text) {
 
     } else  if (text == "IA_NA") {
         return (TYPE_NA);
-
-    } else if (text == "IA_TA") {
-        return (TYPE_TA);
 
     } else if (text == "IA_PD") {
         return (TYPE_PD);

@@ -18,38 +18,38 @@
 
 /* DHCPv6 Option codes: */
 enum DHCPv6OptionType {
-   D6O_CLIENTID                            = 1, /* RFC8415 */
-   D6O_SERVERID                            = 2, /* RFC8415 */
-   D6O_IA_NA                               = 3, /* RFC8415 */
-   D6O_IA_TA                               = 4, /* RFC8415 */
-   D6O_IAADDR                              = 5, /* RFC8415 */
-   D6O_ORO                                 = 6, /* RFC8415 */
-   D6O_PREFERENCE                          = 7, /* RFC8415 */
-   D6O_ELAPSED_TIME                        = 8, /* RFC8415 */
-   D6O_RELAY_MSG                           = 9, /* RFC8415 */
+   D6O_CLIENTID                            = 1, /* RFC9915 */
+   D6O_SERVERID                            = 2, /* RFC9915 */
+   D6O_IA_NA                               = 3, /* RFC9915 */
+   D6O_IA_TA                               = 4, /* RFC9915 (deprecated) */
+   D6O_IAADDR                              = 5, /* RFC9915 */
+   D6O_ORO                                 = 6, /* RFC9915 */
+   D6O_PREFERENCE                          = 7, /* RFC9915 */
+   D6O_ELAPSED_TIME                        = 8, /* RFC9915 */
+   D6O_RELAY_MSG                           = 9, /* RFC9915 */
    // Option code 10 is unassigned.
-   D6O_AUTH                                = 11, /* RFC8415 */
-   D6O_UNICAST                             = 12, /* RFC8415 */
-   D6O_STATUS_CODE                         = 13, /* RFC8415 */
-   D6O_RAPID_COMMIT                        = 14, /* RFC8415 */
-   D6O_USER_CLASS                          = 15, /* RFC8415 */
-   D6O_VENDOR_CLASS                        = 16, /* RFC8415 */
-   D6O_VENDOR_OPTS                         = 17, /* RFC8415 */
-   D6O_INTERFACE_ID                        = 18, /* RFC8415 */
-   D6O_RECONF_MSG                          = 19, /* RFC8415 */
-   D6O_RECONF_ACCEPT                       = 20, /* RFC8415 */
+   D6O_AUTH                                = 11, /* RFC9915 */
+   D6O_UNICAST                             = 12, /* RFC9915 (deprecated) */
+   D6O_STATUS_CODE                         = 13, /* RFC9915 */
+   D6O_RAPID_COMMIT                        = 14, /* RFC9915 */
+   D6O_USER_CLASS                          = 15, /* RFC9915 */
+   D6O_VENDOR_CLASS                        = 16, /* RFC9915 */
+   D6O_VENDOR_OPTS                         = 17, /* RFC9915 */
+   D6O_INTERFACE_ID                        = 18, /* RFC9915 */
+   D6O_RECONF_MSG                          = 19, /* RFC9915 */
+   D6O_RECONF_ACCEPT                       = 20, /* RFC9915 */
    D6O_SIP_SERVERS_DNS                     = 21, /* RFC3319 */
    D6O_SIP_SERVERS_ADDR                    = 22, /* RFC3319 */
    D6O_NAME_SERVERS                        = 23, /* RFC3646 */
    D6O_DOMAIN_SEARCH                       = 24, /* RFC3646 */
-   D6O_IA_PD                               = 25, /* RFC8415, RFC3633 */
-   D6O_IAPREFIX                            = 26, /* RFC8415, RFC3633 */
+   D6O_IA_PD                               = 25, /* RFC9915, RFC3633 */
+   D6O_IAPREFIX                            = 26, /* RFC9915, RFC3633 */
    D6O_NIS_SERVERS                         = 27, /* RFC3898 */
    D6O_NISP_SERVERS                        = 28, /* RFC3898 */
    D6O_NIS_DOMAIN_NAME                     = 29, /* RFC3898 */
    D6O_NISP_DOMAIN_NAME                    = 30, /* RFC3898 */
    D6O_SNTP_SERVERS                        = 31, /* RFC4075 */
-   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415, RFC4242 */
+   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC9915, RFC4242 */
    D6O_BCMCS_SERVER_D                      = 33, /* RFC4280 */
    D6O_BCMCS_SERVER_A                      = 34, /* RFC4280 */
    // Option code 35 is unassigned.
@@ -99,8 +99,8 @@ enum DHCPv6OptionType {
    D6O_CLIENT_LINKLAYER_ADDR               = 79, /* RFC6939 */
    D6O_LINK_ADDRESS                        = 80, /* RFC6977 */
 // D6O_RADIUS                              = 81, /* RFC7037 */
-   D6O_SOL_MAX_RT                          = 82, /* RFC8415, RFC7083 */
-   D6O_INF_MAX_RT                          = 83, /* RFC8415, RFC7083 */
+   D6O_SOL_MAX_RT                          = 82, /* RFC9915, RFC7083 */
+   D6O_INF_MAX_RT                          = 83, /* RFC9915, RFC7083 */
 // D6O_ADDRSEL                             = 84, /* RFC7078 */
 // D6O_ADDRSEL_TABLE                       = 85, /* RFC7078 */
 // D6O_V6_PCP_SERVER                       = 86, /* RFC7291 */
@@ -178,7 +178,7 @@ enum DHCPv6StatusCode {
    STATUS_NoAddrsAvail               = 2,
    STATUS_NoBinding                  = 3,
    STATUS_NotOnLink                  = 4,
-   STATUS_UseMulticast               = 5,
+   STATUS_UseMulticast               = 5,  // deprecated
    STATUS_NoPrefixAvail              = 6,
    STATUS_UnknownQueryType           = 7,
    STATUS_MalformedQuery             = 8,

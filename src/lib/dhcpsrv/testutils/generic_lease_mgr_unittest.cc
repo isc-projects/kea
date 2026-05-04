@@ -60,8 +60,8 @@ const char* ADDRESS6[] = {
 
 // Lease types that correspond to ADDRESS6 leases
 static const Lease::Type LEASETYPE6[] = {
-    Lease::TYPE_NA, Lease::TYPE_TA, Lease::TYPE_PD, Lease::TYPE_NA,
-    Lease::TYPE_TA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_TA
+    Lease::TYPE_NA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_PD,
+    Lease::TYPE_NA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_PD
 };
 
 GenericLeaseMgrTest::GenericLeaseMgrTest()
@@ -248,7 +248,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[1]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->type_ = leasetype6_[1];
-        lease->prefixlen_ = 128;
+        lease->prefixlen_ = 48;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 3600;
@@ -264,7 +264,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     } else if (address == straddress6_[2]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
         lease->type_ = leasetype6_[2];
-        lease->prefixlen_ = 48;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 89;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
         lease->preferred_lft_ = 1800;
@@ -280,7 +280,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         // Hardware address same as lease 1.
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         lease->type_ = leasetype6_[3];
-        lease->prefixlen_ = 128;
+        lease->prefixlen_ = 48;
         lease->iaid_ = 0xfffffffe;
         vector<uint8_t> duid;
         for (uint8_t i = 31; i < 126; ++i) {
@@ -357,7 +357,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(), HTYPE_ETHER)); // Empty
         // Same IAID as straddress6_1
         lease->type_ = leasetype6_[7];
-        lease->prefixlen_ = 128;
+        lease->prefixlen_ = 56;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
         lease->preferred_lft_ = 5600;
@@ -1821,8 +1821,8 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Make Two leases per lease type, all with the same DUID, IAID but
     // alternate the subnet_ids.
     vector<Lease6Ptr> leases;
-    for (int i = 0; i < 6; ++i) {
-        if (i > 3) {
+    for (int i = 0; i < 4; ++i) {
+        if (i > 2) {
             empty_lease->prefixlen_ = 48;
         } else {
             empty_lease->prefixlen_ = 128;
@@ -1836,7 +1836,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     }
 
     // Verify getting a single lease by type and address.
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 4; ++i) {
         // Look for exact match for each lease type.
         Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
                                                leases[i]->addr_);
@@ -1852,7 +1852,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Verify getting a collection of leases by type, DUID, and IAID.
     // Iterate over the lease types, asking for leases based on
     // lease type, DUID, and IAID.
-    for (size_t i = 0; i < 3; ++i) {
+    for (size_t i = 0; i < 2; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142);
 
         auto compare = [](const Lease6Ptr& left, const Lease6Ptr& right) {
@@ -1883,7 +1883,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     // Verify getting a collection of leases by type, DUID, IAID, and subnet id.
     // Iterate over the lease types, asking for leases based on
     // lease type, DUID, IAID, and subnet_id.
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 2; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142, 23);
         // We should match one per lease type.
         ASSERT_EQ(1, returned.size());
@@ -1891,7 +1891,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     }
 
     // Verify getting a single lease by type, duid, iad, and subnet id.
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 4; ++i) {
         Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2], *duid, 142, (23 + (i % 2)));
         // We should match one per lease type.
         ASSERT_TRUE(returned);
@@ -2178,21 +2178,21 @@ GenericLeaseMgrTest::testUpdateLease6() {
 
     // Alter the lease again and check.
     ++leases[1]->iaid_;
-    leases[1]->type_ = Lease::TYPE_TA;
+    leases[1]->type_ = Lease::TYPE_NA;
     leases[1]->cltt_ += 6;
     leases[1]->prefixlen_ = 128;
     leases[1]->setContext(Element::fromJSON("{ \"foo\": \"bar\" }"));
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 

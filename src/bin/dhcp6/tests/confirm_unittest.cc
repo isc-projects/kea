@@ -113,7 +113,7 @@ TEST_F(ConfirmTest, sanityCheck) {
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
 // addresses that belong to the same IAID and are sent within the same IA_NA
-// option (RFC 8415, section 18.3.3).
+// option (RFC 9915, section 18.3.3).
 TEST_F(ConfirmTest, directClientSameIAID) {
     Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
@@ -155,7 +155,7 @@ TEST_F(ConfirmTest, directClientSameIAID) {
 // Test that directly connected client's Confirm message is processed and Reply
 // message is sent back. In this test case, the client sends Confirm for two
 // addresses that belong to different IAIDs and are sent within the different
-// IA_NA options (RFC 8415, section 18.3.3).
+// IA_NA options (RFC 9915, section 18.3.3).
 TEST_F(ConfirmTest, directClientDifferentIAID) {
     Dhcp6Client client(srv_);
     // Configure client to request IA_NA.
@@ -201,7 +201,7 @@ TEST_F(ConfirmTest, directClientDifferentIAID) {
 
 
 // Test that relayed client's Confirm message is processed and Reply message
-// is sent back (RFC 8415, section 18.3.3).
+// is sent back (RFC 9915, section 18.3.3).
 TEST_F(ConfirmTest, relayedClient) {
     Dhcp6Client client(srv_);
     // Client to send relayed message.
@@ -243,7 +243,7 @@ TEST_F(ConfirmTest, relayedClient) {
 }
 
 // Test that the Confirm message without any addresses is discarded
-// (RFC 8415, section 18.3.3).
+// (RFC 9915, section 18.3.3).
 TEST_F(ConfirmTest, relayedClientNoAddress) {
     Dhcp6Client client(srv_);
     // Configure the server.
@@ -261,7 +261,7 @@ TEST_F(ConfirmTest, relayedClientNoAddress) {
 }
 
 // This test checks that the server processes Confirm message correctly if
-// the subnet can't be selected for the client (RFC 8415, section 18.3.3).
+// the subnet can't be selected for the client (RFC 9915, section 18.3.3).
 TEST_F(ConfirmTest, relayedClientNoSubnet) {
     Dhcp6Client client(srv_);
     // Client to send relayed message.
@@ -327,7 +327,7 @@ TEST_F(ConfirmTest, relayedUnicast) {
 }
 
 // This test checks that the Confirm message is discarded by the server if it
-// has been sent to unicast address (RFC 8415, section 18.3.3).
+// has been sent to unicast address (RFC 9915, section 18).
 TEST_F(ConfirmTest, unicast) {
     Dhcp6Client client(srv_);
     // Configure client to request IA_NA.

@@ -330,14 +330,10 @@ protected:
 
     /// @brief Check if the message can be sent to unicast.
     ///
-    /// This function checks if the received message conforms to the section 16
-    /// of RFC 8415 which says that: "A server MUST discard any Solicit, Confirm,
-    /// Rebind or Information-request messages it receives with a Layer 3 unicast
-    /// destination address.
+    /// RFC 9915 updated to refuse all messages from clients.
     ///
     /// @param pkt DHCPv6 message to be checked.
-    /// @return false if the message has been sent to unicast address but it is
-    /// not allowed according to RFC3315, section 15; true otherwise.
+    /// @return false if the message has been sent to unicast address.
     bool testUnicast(const Pkt6Ptr& pkt) const;
 
     /// @brief Verifies if specified packet meets RFC requirements
@@ -421,7 +417,7 @@ protected:
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
     /// This function processes Confirm message from the client according
-    /// to section 18.3.3. of RFC 8415. It discards the Confirm message if
+    /// to section 18.3.3. of RFC 9915. It discards the Confirm message if
     /// the message sent by the client contains no addresses, i.e. it has
     /// no IA_NA options or all IA_NA options contain no IAAddr options.
     ///
@@ -553,7 +549,7 @@ protected:
     /// The behavior of this function is different than @c extendIA_NA in that
     /// when there is no subnet found for the rebinding case, the Rebind message
     /// is discarded by the server. That behavior is based on the following
-    /// statement from the RFC 8415, section 18.3.5:
+    /// statement from the RFC 9915, section 18.3.5:
     ///
     /// "If the server chooses to not include any IAs containing IA Address or
     /// IA Prefix options with lifetimes of 0 and the server does not include
@@ -563,7 +559,7 @@ protected:
     ///
     /// @todo We should consider unification of the server behavior for address
     /// assignment and prefix delegation with respect to Rebind message
-    /// processing. The RFC 8415, section 18.3.5 doesn't really differentiate
+    /// processing. The RFC 9915, section 18.3.5 doesn't really differentiate
     /// between IA_NA and IA_PD in how they should be processed by the server.
     /// The intention of the spec is as follows:
     ///

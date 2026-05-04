@@ -22,7 +22,7 @@ namespace dhcp {
 /// The DHCPv6 server uses DHCPv6 Unique Identifier (DUID) to identify itself
 /// to the clients. Typically, the server generates the DUID on the first
 /// startup and writes it to the persistent storage so as it doesn't change
-/// across restarts of the server. RFC 8415 defines different DUID types.
+/// across restarts of the server. RFC 9915 defines different DUID types.
 /// Kea allows for selecting a type of DUID that the server should generate.
 /// It also allows for overriding entire default DUID or parts of it via
 /// configuration file. This class holds the DUID configuration specified

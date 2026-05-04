@@ -2279,8 +2279,7 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
               pools1[0]->toText());
     EXPECT_EQ("type=IA_NA, 2001:db8:1:0:abcd::-2001:db8:1:0:abcd::ffff, delegated_len=128",
               pools1[1]->toText());
-    // There shouldn't be any TA or PD pools
-    EXPECT_TRUE((*subnet)->getPools(Lease::TYPE_TA).empty());
+    // There shouldn't be any PD pools
     EXPECT_TRUE((*subnet)->getPools(Lease::TYPE_PD).empty());
 
     // Check the second subnet
@@ -2291,8 +2290,7 @@ TEST_F(Dhcp6ParserTest, multiplePools) {
               pools2[0]->toText());
     EXPECT_EQ("type=IA_NA, 2001:db8:2::300-2001:db8:2::3ff, delegated_len=128",
               pools2[1]->toText());
-    // There shouldn't be any TA or PD pools
-    EXPECT_TRUE((*subnet)->getPools(Lease::TYPE_TA).empty());
+    // There shouldn't be any PD pools
     EXPECT_TRUE((*subnet)->getPools(Lease::TYPE_PD).empty());
 }
 

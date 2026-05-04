@@ -703,7 +703,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     }
 
     // Get server argument
-    // NoteFF02::1:2 and FF02::1:3 are defined in RFC 8415 as
+    // NoteFF02::1:2 and FF02::1:3 are defined in RFC 9915 as
     // All_DHCP_Relay_Agents_and_Servers and All_DHCP_Servers
     // addresses
     check(optind < argc -1, "extra arguments?");
@@ -892,7 +892,7 @@ CommandOptions::generateDuidTemplate() {
     duid_template_[2] = HWTYPE_ETHERNET >> 8;
     duid_template_[3] = HWTYPE_ETHERNET & 0xff;
 
-    // As described in RFC 8415: 'the time value is the time
+    // As described in RFC 9915: 'the time value is the time
     // that the DUID is generated represented in seconds
     // since midnight (UTC), January 1, 2000, modulo 2^32.'
     ptime now = microsec_clock::universal_time();

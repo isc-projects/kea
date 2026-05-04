@@ -669,7 +669,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
         // No failure here. There's really no way for test LL DUID. It doesn't
         // even make sense to check if that Link Layer is actually present on
-        // a physical interface. RFC 8415 says a server should write its DUID
+        // a physical interface. RFC 9915 says a server should write its DUID
         // and keep it despite hardware changes.
         break;
     }
@@ -2506,8 +2506,12 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     // sent to unicast address.
     const uint8_t not_allowed_unicast[] = {
         DHCPV6_SOLICIT,
+        DHCPV6_REQUEST,
         DHCPV6_CONFIRM,
+        DHCPV6_RENEW,
         DHCPV6_REBIND,
+        DHCPV6_RELEASE,
+        DHCPV6_DECLINE,
         DHCPV6_INFORMATION_REQUEST
     };
     // Iterate over these messages and make sure they are discarded.
@@ -2517,8 +2521,8 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
         EXPECT_FALSE(srv_->testUnicast(msg))
             << "server accepts message type "
             << static_cast<int>(not_allowed_unicast[i])
-            << "being sent to unicast address; this message should"
-            " be discarded according to section 18.4 of RFC 8415";
+            << " being sent to unicast address; this message should"
+            " be discarded according to section 18 of RFC 9915";
     }
 
     // The pkt6-rfc-violation stat should be bumped by one each time.
@@ -2530,10 +2534,6 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     // Explicitly list client/relay message types which are allowed to
     // be sent to unicast.
     const uint8_t allowed_unicast[] = {
-        DHCPV6_REQUEST,
-        DHCPV6_RENEW,
-        DHCPV6_RELEASE,
-        DHCPV6_DECLINE,
         DHCPV6_RELAY_FORW
     };
     // Iterate over these messages and check that they are accepted being
@@ -2541,11 +2541,15 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
     for (size_t i = 0; i < sizeof(allowed_unicast); ++i) {
         Pkt6Ptr msg = Pkt6Ptr(new Pkt6(allowed_unicast[i], 1234));
         msg->setLocalAddr(IOAddress("2001:db8:1::1"));
-        msg->addOption(srv_->getServerID());
+        Pkt6::RelayInfo relay;
+        relay.linkaddr_ = IOAddress("2001:db8:2::1234");
+        relay.peeraddr_ = IOAddress("fe80::1");
+        // In fact what matters is the packet was relayed...
+        msg->relay_info_.push_back(relay);
         EXPECT_TRUE(srv_->testUnicast(msg))
             << "server doesn't accept message type "
             << static_cast<int>(allowed_unicast[i])
-            << "being sent to unicast address";
+            << " being sent to unicast address";
     }
 }
 

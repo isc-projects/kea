@@ -3398,13 +3398,9 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_EQ("", subnet->getDdnsConflictResolutionMode().get());
 
     EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_NA));
-    EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_TA));
     EXPECT_TRUE(subnet->getAllocationState(Lease::TYPE_PD));
 
     auto allocator = subnet->getAllocator(Lease::TYPE_NA);
-    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
-
-    allocator = subnet->getAllocator(Lease::TYPE_TA);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 
     allocator = subnet->getAllocator(Lease::TYPE_PD);
@@ -3818,9 +3814,6 @@ TEST_F(ParseConfigTest, randomSubnetAllocator6) {
     auto allocator = subnet->getAllocator(Lease::TYPE_NA);
     ASSERT_TRUE(allocator);
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
-    allocator = subnet->getAllocator(Lease::TYPE_TA);
-    ASSERT_TRUE(allocator);
-    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>(allocator));
     // PD allocator should be iterative.
     allocator = subnet->getAllocator(Lease::TYPE_PD);
     ASSERT_TRUE(allocator);
@@ -3904,9 +3897,6 @@ TEST_F(ParseConfigTest, randomSubnetPdAllocator6) {
     auto allocator = subnet->getAllocator(Lease::TYPE_NA);
     ASSERT_TRUE(allocator);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
-    allocator = subnet->getAllocator(Lease::TYPE_TA);
-    ASSERT_TRUE(allocator);
-    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
     // PD allocator should be random.
     allocator = subnet->getAllocator(Lease::TYPE_PD);
     ASSERT_TRUE(allocator);
@@ -3939,9 +3929,6 @@ TEST_F(ParseConfigTest, flqSubnetPdAllocator6) {
 
     // Address allocators should be iterative.
     auto allocator = subnet->getAllocator(Lease::TYPE_NA);
-    ASSERT_TRUE(allocator);
-    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
-    allocator = subnet->getAllocator(Lease::TYPE_TA);
     ASSERT_TRUE(allocator);
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
     // PD allocator should use FLQ.

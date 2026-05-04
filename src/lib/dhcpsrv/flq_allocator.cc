@@ -265,7 +265,6 @@ FreeLeaseQueueAllocator::initAfterConfigureInternal() {
         populateFreeAddressLeases(leases4, pools);
         break;
     case Lease::TYPE_NA:
-    case Lease::TYPE_TA:
         leases6 = LeaseMgrFactory::instance().getLeases6(subnet->getID());
         populateFreeAddressLeases(leases6, pools);
         break;

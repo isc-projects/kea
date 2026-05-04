@@ -23,7 +23,7 @@ namespace dhcp {
 /// Class options.
 ///
 /// The format of DHCPv6 Vendor Class option (16) is described in section 21.16
-/// of RFC 8415 and the format of the DHCPv4 V-I Vendor Class option (124) is
+/// of RFC 9915 and the format of the DHCPv4 V-I Vendor Class option (124) is
 /// described in section 3 of RFC3925. Each of these options carries enterprise
 /// id followed by the collection of tuples carrying opaque data. A single tuple
 /// consists of the field holding opaque data length and the actual data.
@@ -169,7 +169,7 @@ private:
     ///
     /// For DHCPv6, The Vendor Class option mandates a 2-byte
     /// OPTION_VENDOR_CLASS followed by a 2-byte option-len with a 4-byte
-    /// enterprise-number.  While section 21.16 of RFC 8415 specifies that the
+    /// enterprise-number.  While section 21.16 of RFC 9915 specifies that the
     /// information contained within the data area can contain one or more
     /// opaque fields, the inclusion of the vendor-class-data is not mandatory
     /// and therefore not factored into the overall possible minimum length.

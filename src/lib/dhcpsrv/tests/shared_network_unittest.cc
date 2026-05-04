@@ -1205,8 +1205,6 @@ TEST(SharedNetwork6Test, getPreferredSubnet) {
     for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
-        preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_TA);
-        EXPECT_EQ(subnets[i]->getID(), preferred->getID());
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_PD);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
     }
@@ -1308,8 +1306,6 @@ TEST(SharedNetwork6Test, getPreferredSubnetMultiThreading) {
     // one, because none of them have been used.
     for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
-        EXPECT_EQ(subnets[i]->getID(), preferred->getID());
-        preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_TA);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_PD);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
@@ -1774,8 +1770,6 @@ TEST(SharedNetwork6Test, sflqGetPreferredSubnet) {
     // one, because none of them have been used.
     for (unsigned i = 0; i < subnets.size(); ++i) {
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_NA);
-        EXPECT_EQ(subnets[i]->getID(), preferred->getID());
-        preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_TA);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());
         preferred = network->getPreferredSubnet(subnets[i], Lease::TYPE_PD);
         EXPECT_EQ(subnets[i]->getID(), preferred->getID());

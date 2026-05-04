@@ -667,7 +667,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     checkIA_NAStatusCode(ia, STATUS_Success, 0, 0);
     checkMsgStatusCode(reply, STATUS_Success);
 
-    // There should be no address returned in RELEASE (see RFC 8415, 18.3.7)
+    // There should be no address returned in RELEASE (see RFC 9915, 18.3.7)
     // There should be no prefix
     EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
     EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));
@@ -836,7 +836,7 @@ Dhcpv6SrvTest::testReleaseAndReclaim(Lease::Type type) {
     checkIA_NAStatusCode(ia, STATUS_Success, 0, 0);
     checkMsgStatusCode(reply, STATUS_Success);
 
-    // There should be no address returned in RELEASE (see RFC 8415, 18.3.7)
+    // There should be no address returned in RELEASE (see RFC 9915, 18.3.7)
     // There should be no prefix
     EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
     EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));

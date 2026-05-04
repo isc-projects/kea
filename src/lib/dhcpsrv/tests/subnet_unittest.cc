@@ -700,7 +700,7 @@ TEST(Subnet4Test, PoolType) {
     PoolPtr pool1(new Pool4(IOAddress("192.2.1.0"), 24));
     PoolPtr pool2(new Pool4(IOAddress("192.2.2.0"), 24));
     PoolPtr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::"), 64));
-    PoolPtr pool4(new Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1:4::"), 64));
+    PoolPtr pool4(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:4::"), 64));
     PoolPtr pool5(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:1::"), 64));
 
     // There should be no pools of any type by default
@@ -708,7 +708,6 @@ TEST(Subnet4Test, PoolType) {
 
     // It should not be possible to ask for V6 pools in Subnet4
     EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_NA), BadValue);
-    EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_TA), BadValue);
     EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_PD), BadValue);
 
     // Let's add a single V4 pool and check that it can be retrieved
@@ -1005,7 +1004,6 @@ TEST(Subnet6Test, Pool6getCapacity) {
     PoolPtr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::"), 96));
 
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_NA));
-    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_TA));
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool1);
@@ -1065,7 +1063,6 @@ TEST(Subnet6Test, Pool6PdgetPoolCapacity) {
     PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:3::"), 48, 80));
 
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_NA));
-    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_TA));
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool1);
@@ -1162,7 +1159,7 @@ TEST(Subnet6Test, poolTypes) {
                                   56, 1, 2, 3, 4, SubnetID(1));
 
     PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
-    PoolPtr pool2(new Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"), 64));
     PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 64));
     PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("3000:1::"), 64));
 
@@ -1170,7 +1167,6 @@ TEST(Subnet6Test, poolTypes) {
 
     // There should be no pools of any type by default
     EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_NA));
-    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_TA));
     EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_PD));
 
     // Trying to get IPv4 pool from Subnet6 is not allowed
@@ -1184,30 +1180,27 @@ TEST(Subnet6Test, poolTypes) {
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:1::1")));
 
     // Check if pools of different type are not returned
-    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_TA));
     EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_PD));
 
     // We ask with good hints, but wrong types, should return nothing
     EXPECT_EQ(PoolPtr(), subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:2::1")));
-    EXPECT_EQ(PoolPtr(), subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:3::1")));
+    EXPECT_EQ(PoolPtr(), subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
 
-    // Let's add TA and PD pools
+    // Let's add second NA and first PD pools
     EXPECT_NO_THROW(subnet->addPool(pool2));
     EXPECT_NO_THROW(subnet->addPool(pool3));
 
     // Try without hints
     EXPECT_EQ(pool1, subnet->getAnyPool(Lease::TYPE_NA));
-    EXPECT_EQ(pool2, subnet->getAnyPool(Lease::TYPE_TA));
     EXPECT_EQ(pool3, subnet->getAnyPool(Lease::TYPE_PD));
 
     // Try with valid hints
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:1::1")));
-    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:2::1")));
+    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:2::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
 
     // Try with bogus hints (hints should be ignored)
     EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:7::1")));
-    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:7::1")));
     EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:7::1")));
 
     // Let's add a second PD pool
@@ -1771,9 +1764,6 @@ TEST(Subnet6Test, createAllocatorsIterative) {
     // NA pool.
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
     subnet->addPool(pool);
-    // TA pool.
-    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
-    subnet->addPool(ta_pool);
     // PD pool.
     auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
     subnet->addPool(pd_pool);
@@ -1782,25 +1772,16 @@ TEST(Subnet6Test, createAllocatorsIterative) {
     // Expect iterative allocator for NA.
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
                 (subnet->getAllocator(Lease::TYPE_NA)));
-    // Expect iterative allocator for TA.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
-                (subnet->getAllocator(Lease::TYPE_TA)));
     // Expect iterative allocator for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>
                 (subnet->getAllocator(Lease::TYPE_PD)));
     // Expect iterative allocation state for NA.
     EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
                 (subnet->getAllocationState(Lease::TYPE_NA)));
-    // Expect iterative allocation state for TA.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
-                (subnet->getAllocationState(Lease::TYPE_TA)));
     // Expect iterative allocation state for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<SubnetIterativeAllocationState>
                 (subnet->getAllocationState(Lease::TYPE_PD)));
     // Expect iterative allocation state for the NA pool.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
-                (pool->getAllocationState()));
-    // Expect iterative allocation state for the TA pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolIterativeAllocationState>
                 (pool->getAllocationState()));
     // Expect iterative allocation state for the PD pool.
@@ -1818,9 +1799,6 @@ TEST(Subnet6Test, createAllocatorsRandom) {
     // NA pool.
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
     subnet->addPool(pool);
-    // TA pool.
-    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
-    subnet->addPool(ta_pool);
     // PD pool.
     auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
     subnet->addPool(pd_pool);
@@ -1832,16 +1810,11 @@ TEST(Subnet6Test, createAllocatorsRandom) {
     // Expect random allocator for NA.
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                 (subnet->getAllocator(Lease::TYPE_NA)));
-    // Expect random allocator for TA.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
-                (subnet->getAllocator(Lease::TYPE_TA)));
     // Expect random allocator for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                 (subnet->getAllocator(Lease::TYPE_PD)));
     // Expect null subnet allocation state for NA.
     EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_NA));
-    // Expect null subnet allocation state for TA.
-    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_TA));
     // Expect null subnet allocation state for PD.
     EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_PD));
     // Expect random allocation state for the NA pool.
@@ -1865,9 +1838,6 @@ TEST(Subnet6Test, createAllocatorsFreeLeaseQueue) {
     // NA pool.
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 112);
     subnet->addPool(pool);
-    // TA pool.
-    auto ta_pool = boost::make_shared<Pool6>(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 112);
-    subnet->addPool(ta_pool);
     // PD pool.
     auto pd_pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
     subnet->addPool(pd_pool);
@@ -1880,28 +1850,20 @@ TEST(Subnet6Test, createAllocatorsFreeLeaseQueue) {
     // Expect random allocator for NA.
     EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
                 (subnet->getAllocator(Lease::TYPE_NA)));
-    // Expect random allocator for TA.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<RandomAllocator>
-                (subnet->getAllocator(Lease::TYPE_TA)));
     // Expect FLQ allocator for PD.
     EXPECT_TRUE(boost::dynamic_pointer_cast<FreeLeaseQueueAllocator>
                 (subnet->getAllocator(Lease::TYPE_PD)));
     // Expect null subnet allocation state for NA.
     EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_NA));
-    // Expect null subnet allocation state for TA.
-    EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_TA));
     // Expect null subnet allocation state for PD.
     EXPECT_FALSE(subnet->getAllocationState(Lease::TYPE_PD));
     // Expect random allocation state for the NA pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
                 (pool->getAllocationState()));
-    // Expect random allocation state for the TA pool.
-    EXPECT_TRUE(boost::dynamic_pointer_cast<PoolRandomAllocationState>
-                (pool->getAllocationState()));
     // Expect FLQ allocation state for the PD pool.
     EXPECT_TRUE(boost::dynamic_pointer_cast<PoolFreeLeaseQueueAllocationState>
-                (pd_pool->getAllocationState()));
-}
+                (pd_pool->getAllocationState()));}
+
 
 // Test that it is not allowed to use the FLQ allocator for the address pools.
 TEST(Subnet6Test, createAllocatorsFreeLeaseQueueNotAllowed) {

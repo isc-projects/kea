@@ -123,7 +123,7 @@ private:
 /// This class extends the base class with the support for enterprise numbers.
 /// The enterprise numbers are assigned by IANA to various organizations
 /// and they are carried as uint32_t integers in DHCPv6 Vendor Specific
-/// Information Options (VSIO). For more information refer to RFC 8415.
+/// Information Options (VSIO). For more information refer to RFC 9915.
 /// All option spaces that group VSIO options must have enterprise number
 /// set. It can be set using a constructor or \ref setVendorSpace function.
 /// The extra functionality of this class (enterprise numbers) allows to

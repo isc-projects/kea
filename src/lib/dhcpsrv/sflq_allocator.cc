@@ -117,8 +117,7 @@ SharedFlqAllocator::pickAddressInternal(const ClientClasses& client_classes,
 
             break;
         }
-        case Lease::TYPE_NA:
-        case Lease::TYPE_TA:{
+        case Lease::TYPE_NA:{
             auto free_lease = LeaseMgrFactory::instance()
                               .sflqPickFreeLease6(pool->getFirstAddress(),
                                                   pool->getLastAddress());
@@ -132,6 +131,9 @@ SharedFlqAllocator::pickAddressInternal(const ClientClasses& client_classes,
         case Lease::TYPE_PD:
             isc_throw(Unexpected, "pickAddressInternal called for Lease::TYPE_PD");
                 break;
+        default:
+            isc_throw(Unexpected, "pickAddressInternal called for unknown lease type " << pool_type_);
+            break;
         }
 
         // Remove the exhausted pool from the list then try another one.
@@ -174,13 +176,12 @@ SharedFlqAllocator::pickPrefixInternal(const ClientClasses& client_classes,
         PoolPtr const pool = available[offset];
         switch(pool_type_) {
         case Lease::TYPE_V4:
-            isc_throw(Unexpected, "pickAddressInternal called for Lease::TYPE_V4");
+            isc_throw(Unexpected, "pickPrefixInternal called for Lease::TYPE_V4");
             break;
         case Lease::TYPE_NA:
-        case Lease::TYPE_TA:
-            isc_throw(Unexpected, "pickAddressInternal called for Lease::TYPE_NA");
+            isc_throw(Unexpected, "pickPrefixInternal called for Lease::TYPE_NA");
             break;
-        case Lease::TYPE_PD:
+        case Lease::TYPE_PD:{
             // Ask the lease manager for a lease from the pool.
             auto free_lease = LeaseMgrFactory::instance()
                               .sflqPickFreeLease6(pool->getFirstAddress(),
@@ -189,7 +190,10 @@ SharedFlqAllocator::pickPrefixInternal(const ClientClasses& client_classes,
                 getSubnetState()->setLastAllocatedTime();
                 return (free_lease);
             }
-
+            }
+            break;
+        default:
+            isc_throw(Unexpected, "pickPrefixInternal called for unknown lease type " << pool_type_);
             break;
         }
 

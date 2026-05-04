@@ -255,10 +255,9 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
-        (type != Lease::TYPE_PD)) {
+    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_PD)) {
         isc_throw(BadValue, "Invalid Pool6 type: " << static_cast<int>(type)
-                  << ", must be TYPE_IA, TYPE_TA or TYPE_PD");
+                  << ", must be TYPE_IA or TYPE_PD");
     }
 
     if (last < first) {
@@ -275,9 +274,9 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
     }
 
     // TYPE_PD is not supported by this constructor. first-last style
-    // parameters are for IA and TA only. There is another dedicated
+    // parameters are for NA only. There is another dedicated
     // constructor for that (it uses prefix/length)
-    if ((type != Lease::TYPE_NA) && (type != Lease::TYPE_TA)) {
+    if (type != Lease::TYPE_NA) {
         isc_throw(BadValue, "Invalid Pool6 type specified: "
                   << static_cast<int>(type));
     }

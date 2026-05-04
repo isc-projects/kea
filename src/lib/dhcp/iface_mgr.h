@@ -788,7 +788,7 @@ public:
 
     /// @brief Packet reception buffer size
     ///
-    /// RFC 8415 states that server responses may be
+    /// RFC 9915 states that server responses may be
     /// fragmented if they are over MTU. There is no
     /// text whether client's packets may be larger
     /// than 1500. For now, we can assume that

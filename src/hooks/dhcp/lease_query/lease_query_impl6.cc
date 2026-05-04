@@ -943,7 +943,7 @@ LeaseQueryImpl6::makeRelayOption(const Lease6& lease) {
     for (size_t i = 0; i < relay_infos.size(); ++i) {
         RelayInfoPtr relay = relay_infos[i];
 
-        // build relay-forw/relay-repl header (see RFC 8415, section 9)
+        // build relay-forw/relay-repl header (see RFC 9915, section 9)
         buffer_out.writeUint8(DHCPV6_RELAY_FORW);
         buffer_out.writeUint8(relay->hop_count_);
         buffer_out.writeData(&(relay->linkaddr_.toBytes()[0]),

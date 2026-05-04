@@ -406,7 +406,7 @@ Pkt6::packUDP() {
             // Now for each relay, we need to...
             for (auto const& relay : relay_info_) {
 
-                // build relay-forw/relay-repl header (see RFC 8415, section 9)
+                // build relay-forw/relay-repl header (see RFC 9915, section 9)
                 buffer_out_.writeUint8(relay.msg_type_);
                 buffer_out_.writeUint8(relay.hop_count_);
                 buffer_out_.writeData(&(relay.linkaddr_.toBytes()[0]),

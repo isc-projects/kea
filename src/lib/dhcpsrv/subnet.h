@@ -423,9 +423,6 @@ protected:
     /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet.
     PoolCollection pools_;
 
-    /// @brief collection of IPv6 temporary address pools in that subnet.
-    PoolCollection pools_ta_;
-
     /// @brief collection of IPv6 prefix pools in that subnet.
     PoolCollection pools_pd_;
 

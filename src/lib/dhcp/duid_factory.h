@@ -18,9 +18,9 @@ namespace dhcp {
 
 /// @brief Factory for generating DUIDs (DHCP Unique Identifiers).
 ///
-/// DHCPv6 clients and servers are identified by DUIDs (see RFC 8415).
+/// DHCPv6 clients and servers are identified by DUIDs (see RFC 9915).
 /// DUIDs are unique identifiers carried in the appropriate DHCP
-/// options. RFC 8415 defines 4 types of DUIDs:
+/// options. RFC 9915 defines 4 types of DUIDs:
 /// -# DUID-LLT
 /// -# DUID-EN
 /// -# DUID-LL
@@ -28,7 +28,7 @@ namespace dhcp {
 ///
 /// of which the DUID-LLT is recommended for all general purpose computing
 /// devices. Future specifications may define new DUID types. The current
-/// implementation of the class only supports DUID types defined in RFC 8415.
+/// implementation of the class only supports DUID types defined in RFC 9915.
 ///
 /// In most cases DUIDs can be generated automatically, i.e. no manual
 /// configuration is required. For example, DUID-LLT is composed of the

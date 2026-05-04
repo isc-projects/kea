@@ -334,7 +334,7 @@ protected:
     ///
     /// Authentication domain name field of variable length holding
     /// a fully qualified domain name of the encrypted DNS resolver.
-    /// This field is formatted as specified in Section 10 of RFC8415.
+    /// This field is formatted as specified in Section 10 of RFC9915.
     boost::shared_ptr<isc::dns::Name> adn_;
 
     /// @brief Length of all following data inside this DNR instance in octets.

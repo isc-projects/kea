@@ -700,17 +700,6 @@ TEST(Lease6Test, constructorDefault) {
                                              duid, iaid, 100, 200,
                                              subnet_id, true, true, "", HWAddrPtr(), 96)),
                      BadValue, "prefixlen must be 128 for non prefix type");
-
-    addr = IOAddress(ADDRESS[4]);
-    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
-                                             duid, iaid, 100, 200,
-                                             subnet_id, HWAddrPtr(), 96)),
-                     BadValue, "prefixlen must be 128 for non prefix type");
-
-    EXPECT_THROW_MSG(lease2.reset(new Lease6(Lease::TYPE_TA, addr,
-                                             duid, iaid, 100, 200,
-                                             subnet_id, true, true, "", HWAddrPtr(), 96)),
-                     BadValue, "prefixlen must be 128 for non prefix type");
 }
 
 // This test verifies that the Lease6 constructor which accepts FQDN data,

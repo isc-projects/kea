@@ -485,7 +485,6 @@ LeaseMgr::recountLeaseStats6() {
                 break;
 
             default:
-                // We don't support TYPE_TAs yet
                 break;
         }
     }
@@ -534,7 +533,6 @@ LeaseMgr::recountLeaseStats6() {
                 break;
 
             default:
-                // We don't support TYPE_TAs yet
                 break;
         }
     }

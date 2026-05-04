@@ -384,7 +384,7 @@ void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
 bool
 Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
     /// @todo Currently we always check server identifier regardless if
-    /// it is allowed in the received message or not (per RFC 8415).
+    /// it is allowed in the received message or not (per RFC 9915).
     /// If the server identifier is not allowed in the message, the
     /// sanityCheck function should deal with it.
     OptionPtr server_id = pkt->getOption(D6O_SERVERID);
@@ -407,23 +407,13 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
 
 bool
 Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
-    switch (pkt->getType()) {
-    case DHCPV6_SOLICIT:
-    case DHCPV6_CONFIRM:
-    case DHCPV6_REBIND:
-    case DHCPV6_INFORMATION_REQUEST:
-        if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
-            LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
-                .arg(pkt->getLabel())
-                .arg(pkt->getName());
-            StatsMgr::instance().addValue("pkt6-rfc-violation",
-                                          static_cast<int64_t>(1));
-            return (false);
-        }
-        break;
-    default:
-        // do nothing
-        ;
+    if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
+	LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
+	    .arg(pkt->getLabel())
+	    .arg(pkt->getName());
+	StatsMgr::instance().addValue("pkt6-rfc-violation",
+				      static_cast<int64_t>(1));
+	return (false);
     }
     return (true);
 }
@@ -956,8 +946,7 @@ Dhcpv6Srv::processPacket(Pkt6Ptr query) {
     }
 
     // Check if the received query has been sent to unicast or multicast.
-    // The Solicit, Confirm, Rebind and Information Request will be
-    // discarded if sent to unicast address.
+    // All queries per RFC 9915 will be discarded if sent to unicast address.
     if (!testUnicast(query)) {
 
         // Increase the statistic of dropped packets.
@@ -3113,7 +3102,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query,
         setTeeTimes(min_preferred_lft, subnet, ia_rsp);
     } else {
         // The server wasn't able allocate new lease and renew an existing
-        // lease. In that case, the server sends NoAddrsAvail per RFC 8415.
+        // lease. In that case, the server sends NoAddrsAvail per RFC 9915.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoAddrsAvail,
                                            "Sorry, no addresses could be"
@@ -3142,7 +3131,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // information about client's leases from lease database. We treat this
     // as no binding for the client.
     if (!subnet) {
-        // Per RFC 8415, section 18.3.4, if there is no binding and we are
+        // Per RFC 9915, section 18.3.4, if there is no binding and we are
         // processing a Renew, the NoBinding status code should be returned.
         if (query->getType() == DHCPV6_RENEW) {
             // Insert status code NoBinding
@@ -3151,7 +3140,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                                " for this duid/iaid."));
             return (ia_rsp);
 
-        // Per RFC 8415, section 18.3.5, if there is no binding and we are
+        // Per RFC 9915, section 18.3.5, if there is no binding and we are
         // processing Rebind, the message has to be discarded (assuming that
         // the server doesn't know if the prefix in the IA_PD option is
         // appropriate for the client's link). The exception being thrown
@@ -3165,7 +3154,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
             /// being able to select the subnet may not be enough, because
             /// there might be other DHCP servers around that are configured
             /// to handle that subnet. Therefore we don't fully follow all
-            /// the paths in section 18.3.5 of RFC 8415 to respond with
+            /// the paths in section 18.3.5 of RFC 9915 to respond with
             /// zero lifetimes for the prefixes being rebound.
             isc_throw(DHCPv6DiscardMessageError, "no subnet found for the"
                       " client sending Rebind to extend lifetime of the"
@@ -3308,7 +3297,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     } else {
         // All is left is to insert the status code.
         // The server wasn't able allocate new lease and renew an existing
-        // lease. In that case, the server sends NoPrefixAvail per RFC 8415.
+        // lease. In that case, the server sends NoPrefixAvail per RFC 9915.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoPrefixAvail,
                                            "Sorry, no prefixes could be"
@@ -3373,7 +3362,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
     // RELEASE message. IA_TA options are ignored.
 
     /// @todo Consider supporting more than one address in a single IA.
-    /// It is allowed by RFC 8415, but it is not widely implemented. The only
+    /// It is allowed by RFC 9915, but it is not widely implemented. The only
     /// software that supports that is Dibbler, but its author seriously doubts
     /// if anyone is really using it. Clients that want more than one address
     /// or prefix just include more instances of IA options.
@@ -4294,7 +4283,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_NO_LEASE)
                 .arg(decline->getLabel()).arg(decline_addr->getAddress().toText());
 
-            // According to RFC 8415, section 18.3.8:
+            // According to RFC 9915, section 18.3.8:
             // "For each IA in the Decline message for which the server has no
             // binding information, the server adds an IA option using the IAID
             // from the Decline message and includes a Status Code option with
@@ -4302,7 +4291,7 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
                                   "Server does not know about such an address."));
 
-            // In the same section of RFC 8415:
+            // In the same section of RFC 9915:
             // "The server ignores addresses not assigned to the IAs (though it may"
             // choose to log an error if it finds such addresses)."
             continue; // There may be other addresses.

@@ -20,7 +20,7 @@ class Option6StatusCode;
 /// @brief Pointer to the @c isc::dhcp::Option6StatusCode.
 typedef boost::shared_ptr<Option6StatusCode> Option6StatusCodePtr;
 
-/// @brief This class represents Status Code option (13) from RFC 8415.
+/// @brief This class represents Status Code option (13) from RFC 9915.
 class Option6StatusCode: public Option {
 public:
     /// @brief Constructor, used for options constructed (during transmission).

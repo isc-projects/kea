@@ -828,7 +828,7 @@ private:
     ///
     /// key is a 16 byte value to be used in the authentication field.
     /// Server replies will contain the below key in authentication field
-    /// as specified in the RFC 8415. While sending reconfigure message
+    /// as specified in the RFC 9915. While sending reconfigure message
     /// authentication field shall contain MD5 hash computed using this key.
     AuthKey key_;
 };
