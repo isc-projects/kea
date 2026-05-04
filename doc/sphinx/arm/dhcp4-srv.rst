@@ -9188,7 +9188,7 @@ pool utilization increases, the size of SFLQ data decreases.
 
 We recommend that the SFLQ allocator be selected only after careful consideration.
 As discussed above, impact on startup can be substantial when introducing the use
-of SFLQ. Creating the initial SFLQ data for Large pools (e.g.``/8``) may delay the
+of SFLQ. Creating the initial SFLQ data for large pools (e.g.``/8``) may delay the
 server's startup by several seconds or more per pool. It is faster for smaller pools
 (e.g.``/16`` or less) but per pool can add up when they are many such pools.  We
 recommend specifying another allocator type at the global level and specifying

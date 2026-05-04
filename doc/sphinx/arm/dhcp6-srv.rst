@@ -8941,6 +8941,12 @@ Shared Free Lease Queue Allocator
     Added in Kea 3.2.0, Shared Free Lease Queue Allocator is considered
     experimental and is not supported for production use.
 
+.. note::
+
+    The SFLQ Allocator may be used for address and/or prefix pools.
+    For clarity the feature is described below in terms of the former but
+    it applies equally to the latter.
+
 The Shared Free Lease Queue (SFLQ) Allocator is intended for use sites with
 shared lease back ends (MySQL or PostgreSQL) and subnets with highly
 utilized address pools. In such cases, it can take a considerable
@@ -8991,8 +8997,6 @@ shows how to select the SFLQ allocators for all pools of both types in a subnet:
         }
     }
 
-The behavior of SFLQ Allocator is the same for both address and prefix delegation
-in either case, the following discussion applies equally to both types.
 
 There are some considerations that the administrator should take into account
 before using this allocator. Like FLQ, the SFLQ allocator can heavily impact the
@@ -9012,7 +9016,7 @@ pool utilization increases, the size of SFLQ data decreases.
 
 We recommend that the SFLQ allocator be selected only after careful consideration.
 As discussed above, impact on startup can be substantial when introducing the use
-of SFLQ. Creating the initial SFLQ data for Large pools (e.g. > 500K address or
+of SFLQ. Creating the initial SFLQ data for large pools (e.g. > 500K addresses or
 prefixes) may delay the server's startup by several seconds or more per pool. It is
 faster for smaller pools (e.g. 65K addresses or prefixes) but per pool can add up
 when they are many such pools. We recommend specifying another allocator type at
