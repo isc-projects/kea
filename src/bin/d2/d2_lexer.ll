@@ -963,7 +963,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::d2::D2Parser::make_INTEGER(integer, driver.loc_);
 }
 
@@ -981,7 +980,6 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
         driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
     }
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::d2::D2Parser::make_INTEGER(integer, driver.loc_);
 }
 

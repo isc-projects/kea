@@ -1172,7 +1172,7 @@ static const flex_int16_t yy_rule_linenum[91] =
       571,  580,  589,  598,  607,  616,  625,  634,  643,  652,
       661,  670,  679,  688,  697,  706,  715,  724,  737,  746,
       755,  856,  872,  921,  929,  944,  945,  946,  947,  948,
-      949,  951,  971,  989, 1002, 1007, 1011, 1013, 1015, 1017
+      949,  951,  970,  987, 1000, 1005, 1009, 1011, 1013, 1015
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2742,13 +2742,12 @@ YY_RULE_SETUP
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::d2::D2Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 971 "d2_lexer.ll"
+#line 970 "d2_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2763,13 +2762,12 @@ YY_RULE_SETUP
         driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
     }
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::d2::D2Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 989 "d2_lexer.ll"
+#line 987 "d2_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2785,7 +2783,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 1002 "d2_lexer.ll"
+#line 1000 "d2_lexer.ll"
 {
     string tmp(yytext);
     return isc::d2::D2Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2793,33 +2791,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 1007 "d2_lexer.ll"
+#line 1005 "d2_lexer.ll"
 {
    return isc::d2::D2Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 1011 "d2_lexer.ll"
+#line 1009 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 1013 "d2_lexer.ll"
+#line 1011 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 1015 "d2_lexer.ll"
+#line 1013 "d2_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 1017 "d2_lexer.ll"
+#line 1015 "d2_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 1019 "d2_lexer.ll"
+#line 1017 "d2_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::d2::D2Parser::make_END(driver.loc_);
@@ -2845,10 +2843,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 1042 "d2_lexer.ll"
+#line 1040 "d2_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2851 "d2_lexer.cc"
+#line 2849 "d2_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3953,7 +3951,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 1042 "d2_lexer.ll"
+#line 1040 "d2_lexer.ll"
 
 
 using namespace isc::dhcp;

@@ -1476,8 +1476,8 @@ static const flex_int16_t yy_rule_linenum[64] =
       269,  278,  287,  296,  305,  314,  323,  332,  341,  350,
       359,  368,  377,  386,  395,  404,  413,  422,  431,  440,
       449,  458,  467,  476,  577,  593,  642,  650,  665,  666,
-      667,  668,  669,  670,  672,  692,  710,  723,  728,  732,
-      734,  736,  738
+      667,  668,  669,  670,  672,  691,  708,  721,  726,  730,
+      732,  734,  736
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -2687,13 +2687,12 @@ YY_RULE_SETUP
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
 
-    /* The parser needs the string form as double conversion is no lossless */
     return NetconfParser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 692 "netconf_lexer.ll"
+#line 691 "netconf_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2708,13 +2707,12 @@ YY_RULE_SETUP
         driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
     }
 
-    /* The parser needs the string form as double conversion is no lossless */
     return NetconfParser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 710 "netconf_lexer.ll"
+#line 708 "netconf_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2730,7 +2728,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 723 "netconf_lexer.ll"
+#line 721 "netconf_lexer.ll"
 {
     string tmp(yytext);
     return NetconfParser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2738,33 +2736,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 728 "netconf_lexer.ll"
+#line 726 "netconf_lexer.ll"
 {
    return NetconfParser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 732 "netconf_lexer.ll"
+#line 730 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 734 "netconf_lexer.ll"
+#line 732 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 736 "netconf_lexer.ll"
+#line 734 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 738 "netconf_lexer.ll"
+#line 736 "netconf_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 740 "netconf_lexer.ll"
+#line 738 "netconf_lexer.ll"
 {
     if (driver.states_.empty()) {
         return NetconfParser::make_END(driver.loc_);
@@ -2790,10 +2788,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 763 "netconf_lexer.ll"
+#line 761 "netconf_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2796 "netconf_lexer.cc"
+#line 2794 "netconf_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3898,7 +3896,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 763 "netconf_lexer.ll"
+#line 761 "netconf_lexer.ll"
 
 
 using namespace isc::dhcp;

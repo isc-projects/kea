@@ -705,13 +705,13 @@ static const flex_int16_t yy_accept[2445] =
     {   0,
       243,  243,    0,    0,    0,    0,    0,    0,    0,    0,
       251,  249,   10,   11,  249,    1,  243,  239,  243,  243,
-      249,  241,  241,  240,  249,  249,  249,  249,  249,  235,
+      249,  242,  242,  240,  249,  249,  249,  249,  249,  235,
       236,  249,  249,  249,  237,  238,    5,    5,    5,  249,
       249,  249,   10,   11,    0,    0,  230,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
         0,    0,    0,    0,    0,    0,    0,    0,    0,    1,
-      243,  243,    0,  241,  241,  243,    3,    2,  242,  241,
+      243,  243,    0,  242,  242,  243,    3,    2,  241,  242,
         6,    0,  243,    0,    0,    0,    0,    0,    0,    4,
 
         0,    0,    9,    0,  231,    0,    0,    0,    0,    0,
@@ -2274,7 +2274,7 @@ static const flex_int16_t yy_rule_linenum[250] =
      2185, 2194, 2203, 2212, 2221, 2232, 2243, 2256, 2269, 2282,
      2291, 2300, 2309, 2318, 2327, 2336, 2345, 2354, 2366, 2375,
      2476, 2492, 2541, 2549, 2564, 2565, 2566, 2567, 2568, 2569,
-     2571, 2589, 2609, 2622, 2627, 2631, 2633, 2635, 2637
+     2571, 2590, 2607, 2620, 2625, 2629, 2631, 2633, 2635
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -5928,27 +5928,6 @@ case 241:
 YY_RULE_SETUP
 #line 2571 "dhcp4_lexer.ll"
 {
-    /* An integer was found. */
-    std::string tmp(yytext);
-    int64_t integer = 0;
-    try {
-        /* In substring we want to use negative values (e.g. -1).
-           In enterprise-id we need to use values up to 0xffffffff.
-           To cover both of those use cases, we need at least
-           int64_t. */
-        integer = boost::lexical_cast<int64_t>(tmp);
-    } catch (const boost::bad_lexical_cast &) {
-        driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
-    }
-
-    /* The parser needs the string form as double conversion is no lossless */
-    return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);
-}
-	YY_BREAK
-case 242:
-YY_RULE_SETUP
-#line 2589 "dhcp4_lexer.ll"
-{
     /* Integer with leading zeros. */
     std::string tmp(yytext);
     int64_t integer = 0;
@@ -5964,13 +5943,32 @@ YY_RULE_SETUP
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
 
-    /* The parser needs the string form as double conversion is no lossless */
+    return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);
+}
+	YY_BREAK
+case 242:
+YY_RULE_SETUP
+#line 2590 "dhcp4_lexer.ll"
+{
+    /* An integer was found. */
+    std::string tmp(yytext);
+    int64_t integer = 0;
+    try {
+        /* In substring we want to use negative values (e.g. -1).
+           In enterprise-id we need to use values up to 0xffffffff.
+           To cover both of those use cases, we need at least
+           int64_t. */
+        integer = boost::lexical_cast<int64_t>(tmp);
+    } catch (const boost::bad_lexical_cast &) {
+        driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
+    }
+
     return isc::dhcp::Dhcp4Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 243:
 YY_RULE_SETUP
-#line 2609 "dhcp4_lexer.ll"
+#line 2607 "dhcp4_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -5986,7 +5984,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 244:
 YY_RULE_SETUP
-#line 2622 "dhcp4_lexer.ll"
+#line 2620 "dhcp4_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp4Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -5994,33 +5992,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 245:
 YY_RULE_SETUP
-#line 2627 "dhcp4_lexer.ll"
+#line 2625 "dhcp4_lexer.ll"
 {
    return isc::dhcp::Dhcp4Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 246:
 YY_RULE_SETUP
-#line 2631 "dhcp4_lexer.ll"
+#line 2629 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 2633 "dhcp4_lexer.ll"
+#line 2631 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 248:
 YY_RULE_SETUP
-#line 2635 "dhcp4_lexer.ll"
+#line 2633 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 2637 "dhcp4_lexer.ll"
+#line 2635 "dhcp4_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 2639 "dhcp4_lexer.ll"
+#line 2637 "dhcp4_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp4Parser::make_END(driver.loc_);
@@ -6046,10 +6044,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
-#line 2662 "dhcp4_lexer.ll"
+#line 2660 "dhcp4_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 6052 "dhcp4_lexer.cc"
+#line 6050 "dhcp4_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -7154,7 +7152,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 2662 "dhcp4_lexer.ll"
+#line 2660 "dhcp4_lexer.ll"
 
 
 using namespace isc::dhcp;

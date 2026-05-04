@@ -2253,8 +2253,8 @@ static const flex_int16_t yy_rule_linenum[254] =
      2210, 2219, 2228, 2237, 2246, 2255, 2264, 2273, 2282, 2291,
      2300, 2309, 2318, 2327, 2336, 2345, 2354, 2363, 2372, 2381,
      2390, 2399, 2408, 2417, 2518, 2534, 2583, 2591, 2606, 2607,
-     2608, 2609, 2610, 2611, 2613, 2633, 2651, 2664, 2669, 2673,
-     2675, 2677, 2679
+     2608, 2609, 2610, 2611, 2613, 2632, 2649, 2662, 2667, 2671,
+     2673, 2675, 2677
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -5977,13 +5977,12 @@ YY_RULE_SETUP
 
     driver.warning(driver.loc_, "leading zeros in integers will be deprecated.");
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 246:
 YY_RULE_SETUP
-#line 2633 "dhcp6_lexer.ll"
+#line 2632 "dhcp6_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -5998,13 +5997,12 @@ YY_RULE_SETUP
         driver.error(driver.loc_, "Failed to convert " + tmp + " to an integer.");
     }
 
-    /* The parser needs the string form as double conversion is no lossless */
     return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, driver.loc_);
 }
 	YY_BREAK
 case 247:
 YY_RULE_SETUP
-#line 2651 "dhcp6_lexer.ll"
+#line 2649 "dhcp6_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -6020,7 +6018,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 248:
 YY_RULE_SETUP
-#line 2664 "dhcp6_lexer.ll"
+#line 2662 "dhcp6_lexer.ll"
 {
     string tmp(yytext);
     return isc::dhcp::Dhcp6Parser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -6028,33 +6026,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
-#line 2669 "dhcp6_lexer.ll"
+#line 2667 "dhcp6_lexer.ll"
 {
    return isc::dhcp::Dhcp6Parser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
-#line 2673 "dhcp6_lexer.ll"
+#line 2671 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
-#line 2675 "dhcp6_lexer.ll"
+#line 2673 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 252:
 YY_RULE_SETUP
-#line 2677 "dhcp6_lexer.ll"
+#line 2675 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 253:
 YY_RULE_SETUP
-#line 2679 "dhcp6_lexer.ll"
+#line 2677 "dhcp6_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 2681 "dhcp6_lexer.ll"
+#line 2679 "dhcp6_lexer.ll"
 {
     if (driver.states_.empty()) {
         return isc::dhcp::Dhcp6Parser::make_END(driver.loc_);
@@ -6080,10 +6078,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 254:
 YY_RULE_SETUP
-#line 2704 "dhcp6_lexer.ll"
+#line 2702 "dhcp6_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 6086 "dhcp6_lexer.cc"
+#line 6084 "dhcp6_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -7188,7 +7186,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 2704 "dhcp6_lexer.ll"
+#line 2702 "dhcp6_lexer.ll"
 
 
 using namespace isc::dhcp;
