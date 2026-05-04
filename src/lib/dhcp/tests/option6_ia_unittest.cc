@@ -115,16 +115,6 @@ TEST_F(Option6IATest, pdBasic) {
     checkIA(D6O_IA_PD);
 }
 
-// Check that this class cannot be used for IA_TA (IA_TA has no T1, T2 fields
-// and people tend to think that if it's good for IA_NA and IA_PD, it can
-// be used for IA_TA as well and that is not true)
-TEST_F(Option6IATest, taForbidden) {
-    EXPECT_THROW(Option6IA(D6O_IA_TA, buf_.begin(), buf_.begin() + 50),
-                 BadValue);
-
-    EXPECT_THROW(Option6IA(D6O_IA_TA, 123), BadValue);
-}
-
 // Check that getters/setters are working as expected.
 TEST_F(Option6IATest, simple) {
     scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_NA, 1234));

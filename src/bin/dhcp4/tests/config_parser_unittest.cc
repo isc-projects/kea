@@ -2296,8 +2296,7 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
               pools1[0]->toText());
     EXPECT_EQ("type=V4, 192.0.2.200-192.0.2.255",
               pools1[1]->toText());
-    // There shouldn't be any TA or PD pools
-    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA), BadValue);
+    // There shouldn't be any PD pools
     EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD), BadValue);
 
     // Check the second subnet
@@ -2308,8 +2307,7 @@ TEST_F(Dhcp4ParserTest, multiplePools) {
               pools2[0]->toText());
     EXPECT_EQ("type=V4, 192.0.3.128-192.0.3.255",
               pools2[1]->toText());
-    // There shouldn't be any TA or PD pools
-    EXPECT_THROW((*subnet)->getPools(Lease::TYPE_TA), BadValue);
+    // There shouldn't be any PD pools
     EXPECT_THROW((*subnet)->getPools(Lease::TYPE_PD), BadValue);
 }
 

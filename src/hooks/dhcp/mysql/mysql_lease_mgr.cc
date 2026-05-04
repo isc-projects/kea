@@ -1851,10 +1851,6 @@ public:
                 type = Lease::TYPE_NA;
                 break;
 
-            case Lease::TYPE_TA:
-                type = Lease::TYPE_TA;
-                break;
-
             case Lease::TYPE_PD:
                 type = Lease::TYPE_PD;
                 break;

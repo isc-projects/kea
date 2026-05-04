@@ -1548,7 +1548,6 @@ public:
         getColumnValue(r, row, col, raw_value);
         switch (raw_value) {
             case Lease6::TYPE_NA:
-            case Lease6::TYPE_TA:
             case Lease6::TYPE_PD:
                 value = static_cast<Lease6::Type>(raw_value);
                 break;
