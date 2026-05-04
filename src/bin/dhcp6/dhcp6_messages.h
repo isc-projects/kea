@@ -16,6 +16,7 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED;
 extern const isc::log::MessageID DHCP6_ADDR6_REGISTER_DISABLED_DROP;
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE;
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL;
+extern const isc::log::MessageID DHCP6_ADD_DEPRECATED_UNICAST;
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE;
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA;
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING;

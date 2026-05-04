@@ -476,12 +476,12 @@ Notes:
    3925 <https://datatracker.ietf.org/doc/html/rfc3925#section-4>`__) and the
    Vendor-Specific Information Option in DHCPv6 (code 17, defined in
    `Section 21.17 of RFC
-   8415 <https://datatracker.ietf.org/doc/html/rfc8415#section-21.17>`__). "Vendor
+   9915 <https://datatracker.ietf.org/doc/html/rfc9915#section-21.17>`__). "Vendor
    class option" means the Vendor-Identifying Vendor Class Option in DHCPv4
    (code 124; see `Section 3 of RFC
    3925 <https://datatracker.ietf.org/doc/html/rfc3925#section-3>`__) in DHCPv4 and
    the Class Option in DHCPv6 (code 16; see `Section 21.16 of RFC
-   8415 <https://datatracker.ietf.org/doc/html/rfc8415#section-21.16>`__). Vendor
+   9915 <https://datatracker.ietf.org/doc/html/rfc9915#section-21.16>`__). Vendor
    options may have sub-options that are referenced by their codes.
    Vendor class options do not have sub-options, but rather data chunks,
    which are referenced by index value. Index 0 means the first data
@@ -495,7 +495,7 @@ Notes:
    option[60] expression.
 
 -  `RFC 3925 <https://datatracker.ietf.org/doc/html/rfc3925>`__ and `RFC
-   8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__ allow for multiple
+   9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__ allow for multiple
    instances of vendor options to appear in a single message. The client
    classification code currently examines the first instance if more
    than one appear. For the ``vendor.enterprise`` and ``vendor-class.enterprise``

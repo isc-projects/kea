@@ -4306,7 +4306,7 @@ if the client obtained the lease using one network card and then the
 network card is moved to another host, the server will wrongly identify
 this host as the one which obtained the lease. Moreover, `RFC
 4361 <https://datatracker.ietf.org/doc/html/rfc4361>`__ gives the recommendation
-to use a DUID (see `RFC 8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__,
+to use a DUID (see `RFC 9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__,
 the DHCPv6 specification) carried as a client identifier when dual-stack
 networks are in use to provide consistent identification information for
 the client, regardless of the type of protocol it is using. Kea adheres to

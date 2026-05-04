@@ -15,6 +15,7 @@ extern const isc::log::MessageID DHCP6_ADDITIONAL_CLASS_UNDEFINED = "DHCP6_ADDIT
 extern const isc::log::MessageID DHCP6_ADDR6_REGISTER_DISABLED_DROP = "DHCP6_ADDR6_REGISTER_DISABLED_DROP";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE = "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE";
 extern const isc::log::MessageID DHCP6_ADDR_REG_INFORM_FAIL = "DHCP6_ADDR_REG_INFORM_FAIL";
+extern const isc::log::MessageID DHCP6_ADD_DEPRECATED_UNICAST = "DHCP6_ADD_DEPRECATED_UNICAST";
 extern const isc::log::MessageID DHCP6_ADD_GLOBAL_STATUS_CODE = "DHCP6_ADD_GLOBAL_STATUS_CODE";
 extern const isc::log::MessageID DHCP6_ADD_STATUS_CODE_FOR_IA = "DHCP6_ADD_STATUS_CODE_FOR_IA";
 extern const isc::log::MessageID DHCP6_ALREADY_RUNNING = "DHCP6_ALREADY_RUNNING";
@@ -194,6 +195,7 @@ const char* values[] = {
     "DHCP6_ADDR6_REGISTER_DISABLED_DROP", "ADDR-REG-INFORM from %1 was dropped because address registration is disabled.",
     "DHCP6_ADDR_REG_INFORM_CLIENT_CHANGE", "received an ADDR-REG-INFORM for %1 from client '%2' but the address was registered by another client '%3'",
     "DHCP6_ADDR_REG_INFORM_FAIL", "error on ADDR-REG-INFORM from client %1, %2",
+    "DHCP6_ADD_DEPRECATED_UNICAST", "%1: adding deprecated unicast option",
     "DHCP6_ADD_GLOBAL_STATUS_CODE", "%1: adding Status Code to DHCPv6 packet: %2",
     "DHCP6_ADD_STATUS_CODE_FOR_IA", "%1: adding Status Code to IA with iaid=%2: %3",
     "DHCP6_ALREADY_RUNNING", "%1 already running? %2",

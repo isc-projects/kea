@@ -61,7 +61,7 @@ const char* ADDRESS6[] = {
 // Lease types that correspond to ADDRESS6 leases
 static const Lease::Type LEASETYPE6[] = {
     Lease::TYPE_NA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_PD,
-    Lease::TYPE_NA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_PD
+    Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_PD, Lease::TYPE_NA
 };
 
 GenericLeaseMgrTest::GenericLeaseMgrTest()
@@ -105,7 +105,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
     // Set the address of the lease
     lease->addr_ = IOAddress(address);
 
-    // Set other parameters.  For historical reasons, address 0 is not used.
+    // Set other parameters.
     if (address == straddress4_[0]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
@@ -229,7 +229,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     // Set the address of the lease
     lease->addr_ = IOAddress(address);
 
-    // Set other parameters.  For historical reasons, address 0 is not used.
+    // Set other parameters.
     if (address == straddress6_[0]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
         lease->type_ = leasetype6_[0];
@@ -259,7 +259,6 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
-        lease->pool_id_ = 7;
 
     } else if (address == straddress6_[2]) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x2a), HTYPE_ETHER));
@@ -275,6 +274,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = false;
         lease->hostname_ = "myhost.example.com.";
+        lease->pool_id_ = 7;
 
     } else if (address == straddress6_[3]) {
         // Hardware address same as lease 1.
@@ -305,7 +305,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x4c), HTYPE_ETHER));
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[4];
-        lease->prefixlen_ = 128;
+        lease->prefixlen_ = 56;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         lease->preferred_lft_ = 4800;
@@ -322,7 +322,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x19), HTYPE_ETHER));
         // Same DUID and IAID as straddress6_1
         lease->type_ = leasetype6_[5];
-        lease->prefixlen_ = 56;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 42;                          // Same as lease 4
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         // Same as lease 4
@@ -340,7 +340,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x6e), HTYPE_ETHER));
         // Same DUID as straddress6_1
         lease->type_ = leasetype6_[6];
-        lease->prefixlen_ = 128;
+        lease->prefixlen_ = 56;
         lease->iaid_ = 93;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         // Same as lease 4
@@ -357,7 +357,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(), HTYPE_ETHER)); // Empty
         // Same IAID as straddress6_1
         lease->type_ = leasetype6_[7];
-        lease->prefixlen_ = 56;
+        lease->prefixlen_ = 128;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
         lease->preferred_lft_ = 5600;
@@ -4790,7 +4790,7 @@ GenericLeaseMgrTest::testTrackAddLeasePD(bool expect_locked) {
                                        TrackingLeaseMgr::TRACK_ADD_LEASE,
                                        SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease. It should trigger the callback.
-    Lease6Ptr lease = initializeLease6(straddress6_[2]);
+    Lease6Ptr lease = initializeLease6(straddress6_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
@@ -4881,7 +4881,7 @@ GenericLeaseMgrTest::testTrackUpdateLeasePD(bool expect_locked) {
                                        TrackingLeaseMgr::TRACK_UPDATE_LEASE,
                                        SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
-    Lease6Ptr lease = initializeLease6(straddress6_[2]);
+    Lease6Ptr lease = initializeLease6(straddress6_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
     EXPECT_TRUE(logs_.empty());
 
@@ -4974,7 +4974,7 @@ GenericLeaseMgrTest::testTrackDeleteLeasePD(bool expect_locked) {
                                        TrackingLeaseMgr::TRACK_DELETE_LEASE,
                                        SUBNET_ID_GLOBAL, ph::_1));
     // Add a lease.
-    Lease6Ptr lease = initializeLease6(straddress6_[2]);
+    Lease6Ptr lease = initializeLease6(straddress6_[1]);
     EXPECT_TRUE(lmptr_->addLease(lease));
     EXPECT_TRUE(logs_.empty());
 

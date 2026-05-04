@@ -689,7 +689,7 @@ public:
     void testBigStats();
 
     /// @brief Checks that the static functions updateStatsOn{Add,Update,Delete)
-    /// work for v4. 
+    /// work for v4.
     void testUpdateStatsOn4SameSubnet();
 
     void testUpdateStatsOn4DifferentSubnet();

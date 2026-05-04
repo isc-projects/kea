@@ -859,7 +859,7 @@ Current lease associated with OPTION_IAPREFIX:
     addrtotext(substring(option[25].option[26].hex, 9, 16))
 
 All other parameters of the options are available at their respective offsets
-in the option. Please read RFC8415 for more details.
+in the option. Please read RFC9915 for more details.
 
 Examples:
 

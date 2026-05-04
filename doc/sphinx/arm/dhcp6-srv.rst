@@ -1152,7 +1152,9 @@ allows clients to send unicast messages to the server.
 
 .. note::
 
-   The unicast option was deprecated by the last DHCPv6 RFC.
+   The unicast option was deprecated by the last DHCPv6 RFC, trying
+   to add one in responses triggers a warning and the server no
+   longer accepts unicast direct queries (vs unicast relayed queries).
 
 The example above
 includes a server unicast option specification which causes the
@@ -1278,7 +1280,7 @@ Subnet and Prefix Delegation Pools
 ----------------------------------
 
 Subnets may also be configured to delegate prefixes, as defined in `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__, section 6.3. A subnet may
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__, section 6.3. A subnet may
 have one or more prefix delegation pools. Each pool has a prefixed
 address, which is specified as a prefix (``prefix``) and a prefix length
 (``prefix-len``), as well as a delegated prefix length
@@ -1895,6 +1897,9 @@ types are given in :ref:`dhcp-types`.
    +--------------------------+-----------------+-----------------+-----------------+
    | addr-reg-enable          | 148             | empty           | false           |
    +--------------------------+-----------------+-----------------+-----------------+
+
+The unicast option was deprecated by the last DHCPv6 RFC, it is still
+supported but not be used and will be removed in a further Kea release.
 
 Options marked with (1) have option definitions, but the logic behind
 them is not implemented. That means that, technically, Kea knows how to
@@ -2822,7 +2827,7 @@ specified:
 Controlling the Values Sent for T1 and T2 Times
 -----------------------------------------------
 
-According to RFC 8415, section 21.4, the recommended T1 and T2 values
+According to RFC 9915, section 21.4, the recommended T1 and T2 values
 are 50% and 80% of the preferred
 lease time, respectively. Kea can be configured to send values that are
 specified explicitly or that are calculated as percentages of the
@@ -2895,11 +2900,11 @@ Calculation of the values is controlled by the following three parameters:
 
 -  ``t1-percent`` - the percentage of the valid lease time to use for
    T1. It is expressed as a real number between 0.0 and 1.0 and must be
-   less than ``t2-percent``. The default value is 0.5, per RFC 8415.
+   less than ``t2-percent``. The default value is 0.5, per RFC 9915.
 
 -  ``t2-percent`` - the percentage of the valid lease time to use for
    T2. It is expressed as a real number between 0.0 and 1.0 and must be
-   greater than ``t1-percent``. The default value is 0.8 per RFC 8415.
+   greater than ``t1-percent``. The default value is 0.8 per RFC 9915.
 
 .. note::
 
@@ -2966,7 +2971,7 @@ Rapid Commit
 ------------
 
 The Rapid Commit option, described in `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__, is supported by the Kea
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__, is supported by the Kea
 DHCPv6 server. However, support is disabled by default. It can be
 enabled on a per-subnet basis using the ``rapid-commit`` parameter as
 shown below:
@@ -6326,7 +6331,7 @@ Server Identifier in DHCPv6
 
 The DHCPv6 protocol uses a "server identifier" (also known as a DUID) to
 allow clients to discriminate between several servers present on the
-same link. `RFC 8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__ currently
+same link. `RFC 9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__ currently
 defines four DUID types: DUID-LLT, DUID-EN, DUID-LL, and DUID-UUID.
 
 The Kea DHCPv6 server generates a server identifier once, upon the first
@@ -6334,7 +6339,7 @@ startup, and stores it in a file. This identifier is not modified across
 restarts of the server and so is a stable identifier.
 
 Kea follows the recommendation from `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__ to use DUID-LLT as the
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__ to use DUID-LLT as the
 default server identifier. However, ISC has received reports that some
 deployments require different DUID types, and that there is a need to
 administratively select both the DUID type and/or its contents.
@@ -6613,7 +6618,7 @@ requires a lease database to be specified even if it is not used.
 
 .. _dhcp6-rfc7550:
 
-Support for RFC 7550 (now part of RFC 8415)
+Support for RFC 7550 (now part of RFC 9915)
 ===========================================
 
 `RFC 7550 <https://datatracker.ietf.org/doc/html/rfc7550>`__ introduced some
@@ -6623,9 +6628,9 @@ changes to the previous DHCPv6 specifications, `RFC
 with the coexistence of multiple stateful options in the messages sent
 between clients and servers. Those changes were later included in
 the most recent DHCPv6 protocol specification, `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__, which obsoleted `RFC
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__, which obsoleted `RFC
 7550 <https://datatracker.ietf.org/doc/html/rfc7550>`__. Kea supports `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__ along with these protocol
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__ along with these protocol
 changes, which are briefly described below.
 
 When a client, such as a requesting router, requests an allocation of
@@ -6653,7 +6658,7 @@ disable this behavior.
 
 The following are the other behaviors first introduced in `RFC
 7550 <https://datatracker.ietf.org/doc/html/rfc7550>`__ (now part of `RFC
-8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__) and supported by the Kea
+9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__) and supported by the Kea
 DHCPv6 server:
 
 -  Set T1/T2 timers to the same value for all stateful (IA_NA and IA_PD)
@@ -6840,7 +6845,7 @@ Supported methods are:
 -  ``duid`` - DHCPv6 uses DUID identifiers instead of MAC addresses.
    There are currently four DUID types defined, and two of them
    (DUID-LLT, which is the default, and DUID-LL) convey MAC address
-   information. Although `RFC 8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__
+   information. Although `RFC 9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__
    forbids it, it is possible to
    parse those DUIDs and extract necessary information from them. This
    method is not completely reliable, as clients may use other DUID
@@ -8329,10 +8334,10 @@ The following standards are currently supported in Kea:
    message, remembers the UDP port, and sends back Relay-reply with a
    copy of the option to the relay agent using this UDP port.
 
--  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 8415
-   <https://datatracker.ietf.org/doc/html/rfc8415>`__: This new DHCPv6 protocol specification
-   obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283,
-   and RFC 7550. All features, with the exception of the RECONFIGURE mechanism and
+-  *Dynamic Host Configuration Protocol for IPv6 (DHCPv6)*, `RFC 9915
+   <https://datatracker.ietf.org/doc/html/rfc9915>`__: This new DHCPv6 protocol specification
+   obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083, RFC 7283, RFC 7550,
+   and RFC 8415.. All features, with the exception of the RECONFIGURE mechanism and
    the now-deprecated temporary addresses (IA_TA) mechanism, are supported.
 
 -  *Captive-Portal Identification in DHCP and Router Advertisements (RAs)*, `RFC 8910
@@ -8357,12 +8362,12 @@ treated as “not yet implemented,” rather than actual limitations.
 
 -  The server allocates, renews, or rebinds a maximum of one lease for
    a particular IA option (IA_NA or IA_PD) sent by a client. `RFC
-   8415 <https://datatracker.ietf.org/doc/html/rfc8415>`__ allows for multiple
+   9915 <https://datatracker.ietf.org/doc/html/rfc9915>`__ allows for multiple
    addresses or prefixes to be allocated for a single IA.
 
 -  Temporary addresses are not supported. There is no intention to ever
-   implement this feature, as it is deprecated in `RFC 8415
-   <https://datatracker.ietf.org/doc/html/rfc8415>`__.
+   implement this feature, as it is deprecated in `RFC 9915
+   <https://datatracker.ietf.org/doc/html/rfc9915>`__.
 
 -  Client reconfiguration (RECONFIGURE) is not yet supported.
 

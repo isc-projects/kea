@@ -1779,6 +1779,10 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer,
                                                                        opt, cclasses);
                 // Got it: add it and jump to the outer loop.
                 if (desc.option_) {
+                    if (opt == D6O_UNICAST) {
+                        LOG_WARN(dhcp6_logger, DHCP6_ADD_DEPRECATED_UNICAST)
+                            .arg(answer->getLabel());
+                    }
                     answer->addOption(desc.option_);
                     break;
                 }
