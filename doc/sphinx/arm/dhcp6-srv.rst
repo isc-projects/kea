@@ -9074,7 +9074,7 @@ Allocator.
 
 .. note::
 
-    SFLQ Allocator is restricted to use in pools no larger than 16777216 addresses.
-    Pools of larger capacity will cause a configuration error.
+    SFLQ Allocator is restricted to use in pools no larger than 16777216 addresses
+    or prefixes.  Pools of larger capacity will cause a configuration error.
 
 SFLQ Allocator does not support ``adaptive-lease-time-threshold``.
