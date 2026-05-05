@@ -49,6 +49,19 @@ namespace {
     ss << "Scenario at line: " << line; \
     SCOPED_TRACE(ss.str());
 
+/// @brief Structure for describing a bad command parameters scenario.
+struct BadParamScenario {
+    /// @brief Source line number (i.e. __FILE__).
+    int line_;
+
+    /// @brief JSON map of arguments.
+    std::string args_;
+
+    /// @brief Expected error response text.
+    std::string exp_rsp_;
+    };
+
+
 /// @brief Class dedicated to testing SFLQ commands in the lease_cmds library.
 ///
 /// These tests use the dhcp::test::SflqTestLeaseMgr for tests as Memfile
@@ -137,6 +150,11 @@ public:
             << "rhs: " << *rhs.toElement() << std::endl;
     }
 
+    /// @brief Extracts a list of SflqPoolnfos from a command response.
+    ///
+    /// @param cmd_rsp command response to extract from
+    /// @return list of SflqPoolInfos
+    /// @throw BadValue if the response is malformed
     SflqPoolInfoCollectionPtr extractPools(ConstElementPtr cmd_rsp) {
         if (!cmd_rsp) {
             isc_throw(BadValue, "cmd_rsp is empty");
@@ -171,6 +189,15 @@ public:
         return (pool_infos);
     }
 
+    /// @brief Extracts the value of "lease-type" from commnd parameters
+    ///
+    /// This function is used both for command parameters and unparsing
+    /// JSON pool infos.
+    ///
+    /// @param params Element map containing the lease-type
+    /// @param family protocol family (AF_INET or AF_INET6)
+    /// @return Lease::Type found
+    /// @throw BadValue if the parameter is missing or invalid
     Lease::Type extractLeaseType(ConstElementPtr& params, uint16_t family) {
         auto tmp = SimpleParser::getString(params, "lease-type");
         if (family == AF_INET) {
@@ -232,6 +259,18 @@ public:
     /// @brief Exercises invalid parameter checks for sflq-pool4-create.
     void sflqPool4CreateBadParams();
 
+    /// @brief Exercises invalid parameter checks for sflq-pool4-get-all.
+    void sflqPool4GetAllBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool4-get-by-subnet.
+    void sflqPool4GetBySubnetBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool4-get-by-range.
+    void sflqPool4GetByRangeBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool4-del.
+    void sflqPool4DelBadParams();
+
     /// @todo invalid arguments for get-by-subnet, get-by-range, and delete
 
     /// @brief Exercises all the V4 SFLQ commands.
@@ -242,13 +281,7 @@ public:
 };
 
 void SflqCmds4Test::sflqPool4CreateBadParams() {
-    struct Scenario {
-        int line_;
-        std::string args_;
-        std::string exp_rsp_;
-    };
-
-    std::list<Scenario> scenarios = {
+    std::list<BadParamScenario> scenarios = {
     {
         __LINE__,
         R"( )",
@@ -335,6 +368,183 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-create", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds4Test::sflqPool4GetAllBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"(
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }};
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool4-get-all", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds4Test::sflqPool4GetBySubnetBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'subnet-id' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": "silly"
+        )",
+        "'subnet-id' parameter is not an integer"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": 1,
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool4-get-by-subnet", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds4Test::sflqPool4GetByRangeBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'start-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.10"
+        )",
+        "missing 'end-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::",
+            "end-address" : "178.0.0.20"
+        )",
+        "invalid V4 range - start_address 3001::, end_address 178.0.0.20,"
+        " must be V4 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.20",
+            "end-address" : "178.0.0.10"
+        )",
+        "invalid V4 range - start_address 178.0.0.20, end_address 178.0.0.10,"
+        " must be V4 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.10",
+            "end-address" : "178.0.0.20",
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool4-get-by-range", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds4Test::sflqPool4DelBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'start-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.10"
+        )",
+        "missing 'end-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::",
+            "end-address" : "178.0.0.20"
+        )",
+        "invalid V4 range - start_address 3001::, end_address 178.0.0.20,"
+        " must be V4 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.20",
+            "end-address" : "178.0.0.10"
+        )",
+        "invalid V4 range - start_address 178.0.0.20, end_address 178.0.0.10,"
+        " must be V4 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.10",
+            "end-address" : "178.0.0.20",
+            "force" : "oops"
+        )",
+        "'force' parameter is not a boolean"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "178.0.0.10",
+            "end-address" : "178.0.0.20",
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool4-del", "arguments": {)"
                 << scenario.args_ << "}}";
 
         testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
@@ -502,9 +712,20 @@ TEST_F(SflqCmds4Test, sflqPool4CreateBadParams) {
     sflqPool4CreateBadParams();
 }
 
-TEST_F(SflqCmds4Test, sflqPool4CreateBadParamsMt) {
-    MultiThreadingTest mt(true);
-    sflqPool4CreateBadParams();
+TEST_F(SflqCmds4Test, sflqPool4GetAllBadParams) {
+    sflqPool4GetAllBadParams();
+}
+
+TEST_F(SflqCmds4Test, sflqPool4GetBySubnetBadParams) {
+    sflqPool4GetBySubnetBadParams();
+}
+
+TEST_F(SflqCmds4Test, sflqPool4GetByRangeBadParams) {
+    sflqPool4GetByRangeBadParams();
+}
+
+TEST_F(SflqCmds4Test, sflqPool4DelBadParams) {
+    sflqPool4DelBadParams();
 }
 
 TEST_F(SflqCmds4Test, testSflqCommands) {
@@ -535,6 +756,18 @@ public:
     /// @brief Exercises invalid parameter checks for sflq-pool6-create.
     void sflqPool6CreateBadParams();
 
+    /// @brief Exercises invalid parameter checks for sflq-pool6-get-all.
+    void sflqPool6GetAllBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool6-get-by-subnet.
+    void sflqPool6GetBySubnetBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool6-get-by-range.
+    void sflqPool6GetByRangeBadParams();
+
+    /// @brief Exercises invalid parameter checks for sflq-pool6-del.
+    void sflqPool6DelBadParams();
+
     /// @todo invalid arguments for get-by-subnet, get-by-range, and delete
 
     /// @brief Exercises all the V4 SFLQ commands.
@@ -548,13 +781,7 @@ public:
 };
 
 void SflqCmds6Test::sflqPool6CreateBadParams() {
-    struct Scenario {
-        int line_;
-        std::string args_;
-        std::string exp_rsp_;
-    };
-
-    std::list<Scenario> scenarios = {
+    std::list<BadParamScenario> scenarios = {
     {
         __LINE__,
         R"( )",
@@ -704,6 +931,185 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
         testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
     }
 }
+
+void SflqCmds6Test::sflqPool6GetAllBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"(
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }};
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool6-get-all", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds6Test::sflqPool6GetBySubnetBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'subnet-id' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": "silly"
+        )",
+        "'subnet-id' parameter is not an integer"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": 1,
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool6-get-by-subnet", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds6Test::sflqPool6GetByRangeBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'start-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10"
+        )",
+        "missing 'end-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "178.0.0.20"
+        )",
+        "invalid V6 range - start_address 3001::10, end_address 178.0.0.20,"
+        " must be V6 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::20",
+            "end-address" : "3001::10"
+        )",
+        "invalid V6 range - start_address 3001::20, end_address 3001::10,"
+        " must be V6 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "3001::20",
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool6-get-by-range", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
+void SflqCmds6Test::sflqPool6DelBadParams() {
+    std::list<BadParamScenario> scenarios = {
+    {
+        __LINE__,
+        R"( )",
+        "missing 'start-address' parameter"
+    },
+
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10"
+        )",
+        "missing 'end-address' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "178.0.0.20"
+        )",
+        "invalid V6 range - start_address 3001::10, end_address 178.0.0.20,"
+        " must be V6 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::20",
+            "end-address" : "3001::10"
+        )",
+        "invalid V6 range - start_address 3001::20, end_address 3001::10,"
+        " must be V6 addresses where start_address <= end_address"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "3001::20",
+            "force" : "oops"
+        )",
+        "'force' parameter is not a boolean"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "3001::20",
+            "bogus" : "fluff"
+        )",
+        "spurious 'bogus' parameter"
+    }
+    };
+
+    for ( auto const& scenario : scenarios) {
+        std::ostringstream oss;
+        oss << "Scenerio at line: " << scenario.line_;
+        SCOPED_TRACE(oss.str());
+        std::ostringstream command;
+        command << R"({ "command": "sflq-pool6-del", "arguments": {)"
+                << scenario.args_ << "}}";
+
+        testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
+    }
+}
+
 
 void
 SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
@@ -869,9 +1275,20 @@ TEST_F(SflqCmds6Test, sflqPool6CreateBadParams) {
     sflqPool6CreateBadParams();
 }
 
-TEST_F(SflqCmds6Test, sflqPool6CreateBadParamsMt) {
-    MultiThreadingTest mt(true);
-    sflqPool6CreateBadParams();
+TEST_F(SflqCmds6Test, sflqPool6GetAllBadParams) {
+    sflqPool6GetAllBadParams();
+}
+
+TEST_F(SflqCmds6Test, sflqPool6GetBySubnetBadParams) {
+    sflqPool6GetBySubnetBadParams();
+}
+
+TEST_F(SflqCmds6Test, sflqPool6GetByRangeBadParams) {
+    sflqPool6GetByRangeBadParams();
+}
+
+TEST_F(SflqCmds6Test, sflqPool6DelBadParams) {
+    sflqPool6DelBadParams();
 }
 
 TEST_F(SflqCmds6Test, testSflqCommandsNA) {
