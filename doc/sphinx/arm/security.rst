@@ -76,9 +76,9 @@ that must be used:
 - LibreSSL 3.2.4 has been tested. LibreSSL shares the OpenSSL 1.0.2 API, so
   it should work, but is not supported.
 
-- Botan 1.x versions are obsolete and must not be used.
+- Botan 1.x and 2.x versions are obsolete and must not be used.
 
-- Botan versions 2.14.0 and later have been tested and are supported. Kea TLS
+- Botan versions 3.4.0 and later have been tested and are supported. Kea TLS
   support requires the four Asio header files which are included in Botan
   packages and which are installed only if Botan is configured with the
   ``--with-boost`` option.
@@ -92,7 +92,7 @@ that must be used:
   directory, but this should be a last-resort procedure.
 
   Without these header files, or with a Botan version prior
-  to 2.14.0, Kea cannot build as the TLS/HTTPS support is considered
+  to 3.4.0, Kea cannot build as the TLS/HTTPS support is considered
   essential for security.
 
 - Very old Boost versions provide SSL support (based on OpenSSL)

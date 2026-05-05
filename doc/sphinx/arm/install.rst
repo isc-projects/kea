@@ -159,7 +159,7 @@ the system:
 -  Boost C++ libraries (https://www.boost.org/) (at least version 1.66).
    On versions before 1.69 the Boost system library must also be installed.
 
--  OpenSSL (at least version 1.0.2) or Botan (at least version 2).
+-  OpenSSL (at least version 1.0.2) or Botan (at least version 3.4.0).
    OpenSSL version 1.1.1 or later is strongly recommended.
 
 -  log4cplus (at least version 1.0.3) development include headers.
@@ -319,14 +319,12 @@ Some commonly used options are:
    :iscman:`kea-netconf`.
 
  - ``-D crypto=botan``
-   Specify the name of the Botan pkg-config library e.g. ``botan-2``
-   to build with Botan for cryptographic functions. It is preferable
-   to use OpenSSL (see below).
+   Use the Botan cryptographic library instead of OpenSSL.
+   Meson searches the 'botan-3' and 'botan' pkg-config library.
 
  - ``--D crypto=openssl``
-   Use the OpenSSL cryptographic library instead of Botan. By default
-   Meson searches for a valid Botan installation; if one is not
-   found, Kea searches for OpenSSL. Normally this is not necessary.
+   Use the OpenSSL cryptographic library. By default the value of
+   the 'crypto' option is 'openssl'.
 
 .. note::
 
