@@ -8794,7 +8794,7 @@ are described in detail in later sections.
    +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
    | Free Lease Queue | high                        | high                         | yes                   | slow (depends on pool sizes) | high (varying) |
    +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
-   | Shared FLQ       | high                        | high                         | partial, pools within | slow when adding it's use;   | low            |
+   | Shared FLQ       | high                        | high                         | partial, pools within | slow when adding its use;    | low            |
    |                  |                             |                              | subnets are random    | fast once added              |                |
    +------------------+-----------------------------+------------------------------+-----------------------+------------------------------+----------------+
 
@@ -9019,16 +9019,16 @@ As discussed above, impact on startup can be substantial when introducing the us
 of SFLQ. Creating the initial SFLQ data for large pools (e.g. > 500K addresses or
 prefixes) may delay the server's startup by several seconds or more per pool. It is
 faster for smaller pools (e.g. 65K addresses or prefixes) but per pool can add up
-when they are many such pools. We recommend specifying another allocator type at
-the global level and specifying the SFLQ allocator at the subnet or shared-network
-level only for select subnets.
+when there are many such pools. To reduce this startup cost we recommend specifying
+another allocator type at the global level and specifying the SFLQ allocator at the
+subnet or shared-network level only for select subnets.
 
 There is another important aspect of the SFLQ Allocator that warrants discussion.
 As mentioned above when a server is using SFLQ allocation for a given pool, it uses
 specialized back end updates that maintain the SFLQ data. Thus it is critical that
 all servers sharing a lease back end agree on which subnets use SFLQ allocation.
 If they do not agree the SFLQ data will quickly become inaccurate. Addresses may
-look free when they are not vice versa. In the case of the former, the allocation
+look free when they are not and vice versa. In the case of the former, the allocation
 engine will detect an existing lease and try another. In the case of the latter,
 the lease will not be offered.
 
