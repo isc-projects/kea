@@ -1,6 +1,6 @@
 [func]*		fdupont
 	Disallowed leading zeros in JSON integer values as
-	required by the standard to become campatible with
+	required by the standard to become compatible with
 	some other JSON tools e.g. the go implementation used
 	by Stork. Now incorrect integer values in Kea config
 	files are still accepted but raise warnings.
