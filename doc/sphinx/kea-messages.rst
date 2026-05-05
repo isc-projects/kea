@@ -14009,6 +14009,7 @@ HA_PAUSE_CLIENT_LISTENER_FAILED
 This error message is emitted when attempting to pause HA's HTTP client and
 listener threads. This error is highly unlikely and indicates a programmatic
 issue that should be reported as a defect.
+The server name and the cause of the error are printed.
 
 HA_PAUSE_CLIENT_LISTENER_ILLEGAL
 ================================
@@ -20980,7 +20981,6 @@ MYSQL_LB_SFLQ_CREATE_POOL4
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end to
 (re)create the shared free lease data for the pool described in the arguments.
-Applies to MySQL and PostgreSQL lease back ends only.
 
 MYSQL_LB_SFLQ_CREATE_POOL6
 ==========================
@@ -20992,7 +20992,6 @@ MYSQL_LB_SFLQ_CREATE_POOL6
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end to
 (re)create the shared free lease data for the pool described in the arguments.
-Applies to MySQL and PostgreSQL lease back ends only.
 
 MYSQL_LB_SFLQ_PICK_LEASE4
 =========================
@@ -21004,7 +21003,6 @@ MYSQL_LB_SFLQ_PICK_LEASE4
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end for
 a free address from the pool described in the arguments.
-Applies to MySQL and PostgreSQL lease back ends only.
 
 MYSQL_LB_SFLQ_PICK_LEASE6
 =========================
@@ -21016,7 +21014,95 @@ MYSQL_LB_SFLQ_PICK_LEASE6
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end for
 a free lease from the pool described in the arguments.
-Applies to MySQL and PostgreSQL lease back ends only.
+
+MYSQL_LB_SFLQ_POOL4_DELETE
+==========================
+
+.. code-block:: text
+
+    delete the V4 SFLQ pool with start address %1 and end address %2, force = %3
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v4 SFLQ pool (and it's free lease data) that match the given start and end
+addresses.
+
+MYSQL_LB_SFLQ_POOL4_GET_ALL
+===========================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for a list of all v4 SFLQ pools.
+
+MYSQL_LB_SFLQ_POOL4_GET_BY_RANGE
+================================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools that overlap the range %1 and %2
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v4 SFLQ pool that overlap the given address range.
+
+MYSQL_LB_SFLQ_POOL4_GET_BY_SUBNET
+=================================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools for subnet-id %1
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v4 SFLQ pools belonging to a subnet.
+
+MYSQL_LB_SFLQ_POOL6_DELETE
+==========================
+
+.. code-block:: text
+
+    delete the V6 SFLQ pool with start address %1 and end address %2, force = %3
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v6 SFLQ pool (and it's free lease data) that match the given start and end
+addresses.
+
+MYSQL_LB_SFLQ_POOL6_GET_ALL
+===========================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools.
+
+MYSQL_LB_SFLQ_POOL6_GET_BY_RANGE
+================================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools that overlap the range %1 and %2
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v6 SFLQ pool that overlap the given address range.
+
+MYSQL_LB_SFLQ_POOL6_GET_BY_SUBNET
+=================================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools for subnet-id %1
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools belonging to a subnet.
 
 MYSQL_LB_TLS_CIPHER
 ===================
@@ -24234,6 +24320,96 @@ PGSQL_LB_SFLQ_PICK_LEASE6
 Logged at debug log level 50.
 This debug message is issued when the server asks the lease back end for
 a free lease from the pool described in the arguments.
+
+PGSQL_LB_SFLQ_POOL4_DELETE
+==========================
+
+.. code-block:: text
+
+    delete the V4 SFLQ pool with start address %1 and end address %2, force = %3
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v4 SFLQ pool (and it's free lease data) that match the given start and end
+addresses.
+
+PGSQL_LB_SFLQ_POOL4_GET_ALL
+===========================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v4 SFLQ pools.
+
+PGSQL_LB_SFLQ_POOL4_GET_BY_RANGE
+================================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools that overlap the range %1 and %2
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v4 SFLQ pool that overlap the given address range.
+
+PGSQL_LB_SFLQ_POOL4_GET_BY_SUBNET
+=================================
+
+.. code-block:: text
+
+    fetch all V4 SFLQ pools for subnet-id %1
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v4 SFLQ pools belonging to a subnet.
+
+PGSQL_LB_SFLQ_POOL6_DELETE
+==========================
+
+.. code-block:: text
+
+    delete the V6 SFLQ pool with start address %1 and end address %2, force = %3
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back to delete
+the v6 SFLQ pool (and it's free lease data) that match the given start and end
+addresses
+
+PGSQL_LB_SFLQ_POOL6_GET_ALL
+===========================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools.
+
+PGSQL_LB_SFLQ_POOL6_GET_BY_RANGE
+================================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools that overlap the range %1 and %2
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+the v6 SFLQ pool that overlap the given address range.
+
+PGSQL_LB_SFLQ_POOL6_GET_BY_SUBNET
+=================================
+
+.. code-block:: text
+
+    fetch all V6 SFLQ pools for subnet-id %1
+
+Logged at debug log level 50.
+This debug message is issued when the server asks the lease back end for
+a list of all v6 SFLQ pools belonging to a subnet.
 
 PGSQL_LB_UPDATE_ADDR4
 =====================
