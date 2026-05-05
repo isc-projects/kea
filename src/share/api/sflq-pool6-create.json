@@ -2,23 +2,24 @@
     "access": "write",
     "avail": "3.2.0",
     "brief": [
-        "This command instructs the lease back end to create a v4 SFLQ pool and its free lease data."
+        "This command instructs the lease back end to create a v6 SFLQ pool and its free lease data."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"sflq-pool4-create\",",
+        "    \"command\": \"sflq-pool6-create\",",
         "    \"arguments\": {",
         "       \"start-address\": \"1.2.3.4\",",  
         "       \"end-address\": \"1.2.3.4\",",  
-        "       \"subnet-id\": 123",
+        "       \"lease-type\": \"IA_PD\"," ,
+        "       \"delegated-len\": 64",
         "       \"recreate\" : false",
         "        } ]",
         "    }",
         "}"
     ],
-    "description": "See <xref linkend=\"command-sflq-pool4-create\"/>",
+    "description": "See <xref linkend=\"command-sflq-pool6-create\"/>",
     "hook": "lease_cmds",
-    "name": "sflq-pool4-create",
+    "name": "sflq-pool6-create",
     "resp-syntax": [
         "{",
         "    \"result\": 0,",

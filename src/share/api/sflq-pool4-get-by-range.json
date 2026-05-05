@@ -2,16 +2,20 @@
     "access": "read",
     "avail": "3.2.0",
     "brief": [
-        "This command fetches a list of all v4 SFLQ pools from the lease back end."
+        "This command fetches a list of all v4 SFLQ pools that overlap an address range from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"sflq-pool4-get-all\"",
+        "   \"command\": \"sflq-pool4-get-get-by-range\"",
+        "   \"arguments\": {",
+        "       \"end-address\": \"192.0.2.255\",",
+        "       \"start-address\": \"192.0.2.0\"",
+        "   }",
         "}"
     ],
-    "description": "See <xref linkend=\"command-sflq-pool4-get-all\"/>",
+    "description": "See <xref linkend=\"command-sflq-pool4-get-by-range\"/>",
     "hook": "lease_cmds",
-    "name": "sflq-pool4-get-all",
+    "name": "sflq-pool4-get-by-range",
     "resp-syntax": [
         "{",
         "\"arguments\": {",
@@ -24,7 +28,7 @@
         "            \"lease-type\": \"V4\",",
         "            \"modified-ts\": \"2026-05-02 10:54:55.000000\",",
         "            \"start-address\": \"192.0.2.0\",",
-        "            \"subnet-id\": 6",
+        "            \"subnet-id\": 123",
         "       }",
         "]]",
         \"result\": 0,",

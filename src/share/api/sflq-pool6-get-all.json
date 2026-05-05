@@ -1,0 +1,49 @@
+{
+    "access": "read",
+    "avail": "3.2.0",
+    "brief": [
+        "This command fetches a list of all v6 SFLQ pools from the lease back end."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"sflq-pool6-get-all\"",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-sflq-pool6-get-all\"/>",
+    "hook": "lease_cmds",
+    "name": "sflq-pool6-get-all",
+    "resp-syntax": [
+        "{",
+        "    \"arguments\": {",
+        "        \"pools\": [",
+        "            {",
+        "                \"created-ts\": \"2026-05-05 08:40:40.000000\",",
+        "                \"delegated-len\": 128,",
+        "                \"end-address\": \"3001::ffff\",",
+        "                \"free-leases\": 65520,",
+        "                \"lease-type\": \"IA_NA\",",
+        "                \"modified-ts\": \"2026-05-05 08:40:41.000000\",",
+        "                \"start-address\": \"3001::10\",",
+        "                \"subnet-id\": 100",
+        "            },",
+        "            {",
+        "                \"created-ts\": \"2026-05-05 08:40:41.000000\",",
+        "                \"delegated-len\": 64,",
+        "                \"end-address\": \"3001:20:0:ff:ffff:ffff:ffff:ffff\",",
+        "                \"free-leases\": 256,",
+        "                \"lease-type\": \"IA_PD\",",
+        "                \"modified-ts\": \"2026-05-05 08:40:41.000000\",",
+        "                \"start-address\": \"3001:20::\",",
+        "                \"subnet-id\": 100",
+        "            }",
+        "        ]",
+        "    },",
+        "    \"result\": 0,",
+        "    \"text\": \"2 pool(s) found.\"",
+        "}"
+   ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

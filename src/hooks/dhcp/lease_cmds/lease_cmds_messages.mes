@@ -175,6 +175,7 @@ The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_CREATE sflq-pool4-create command succeeded, (parameters: %1)
+Logged at debug log level 20.
 The sflq-pool4-create command was successful.
 
 % SFLQ_POOL4_CREATE_FAILED sflq-pool4-create command failed, (parameters: %1, reason: %2)
@@ -182,6 +183,7 @@ The sflq-pool4-create command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_GET_ALL sflq-pool4-get-all command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool4-get-all command was successful.
 
 % SFLQ_POOL4_GET_ALL_FAILED sflq-pool4-get-all command failed, (parameters: %1, reason: %2)
@@ -189,6 +191,7 @@ The sflq-pool4-get-all command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_GET_BY_SUBNET sflq-pool4-get-by-subnet command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool4-get-by-subnet command was successful.
 
 % SFLQ_POOL4_GET_BY_SUBNET_FAILED sflq-pool4-get-by-subnet command failed, (parameters: %1, reason: %2)
@@ -196,6 +199,7 @@ The sflq-pool4-get-subnet command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_GET_BY_RANGE sflq-pool4-get-by-range command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool4-get-by-range command was successful.
 
 % SFLQ_POOL4_GET_BY_RANGE_FAILED sflq-pool4-get-by-range command failed, (parameters: %1, reason: %2)
@@ -203,6 +207,7 @@ The sflq-pool4-get-range command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_DEL sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2
+Logged at debug log level 20.
 The sflq-pool4-del command was successful.
 
 % SFLQ_POOL4_DEL_FAILED sflq-pool4-del command failed, (parameters: %1, reason: %2)
@@ -210,6 +215,7 @@ The sflq-pool4-del command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_CREATE sflq-pool6-create command succeeded, (parameters: %1)
+Logged at debug log level 20.
 The sflq-pool6-create command was successful.
 
 % SFLQ_POOL6_CREATE_FAILED sflq-pool6-create command failed, (parameters: %1, reason: %2)
@@ -217,6 +223,7 @@ The sflq-pool6-create command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_GET_ALL sflq-pool6-get-all command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool6-create command was successful.
 
 % SFLQ_POOL6_GET_ALL_FAILED sflq-pool6-get-all command failed, (parameters: %1, reason: %2)
@@ -224,6 +231,7 @@ The sflq-pool6-get-all command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_GET_BY_SUBNET sflq-pool6-get-by-subnet command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool6-get-by-subnet command was successful.
 
 % SFLQ_POOL6_GET_BY_SUBNET_FAILED sflq-pool6-get-by-subnet command failed, (parameters: %1, reason: %2)
@@ -231,6 +239,7 @@ The sflq-pool6-get-subnet command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_GET_BY_RANGE sflq-pool6-get-by-range command succeeded, (parameters: %1) pools found: %2
+Logged at debug log level 20.
 The sflq-pool6-get-by-range command was successful.
 
 % SFLQ_POOL6_GET_BY_RANGE_FAILED sflq-pool6-get-by-range command failed, (parameters: %1, reason: %2)
@@ -238,6 +247,7 @@ The sflq-pool6-get-range command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_DEL sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2
+Logged at debug log level 20.
 The sflq-pool6-del command was successful.
 
 % SFLQ_POOL6_DEL_FAILED sflq-pool4-del command failed, (parameters: %1, reason: %2)
