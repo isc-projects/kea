@@ -1475,17 +1475,15 @@ def _configure_mysql(system, revision, features):
         return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
         if return_code == 0:
             mariadbd_version = '.'.join(output.split(' ')[3].split('-')[0].split('.')[0:2])
-            log.info('mariadbd_version: %s', mariadbd_version)
             zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('zero_conf_tls: %s', zero_conf_tls)
+            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
     else:
         _, output = execute('sudo systemctl status mysql', capture=True, raise_error=False)
         first_line = output.splitlines()[0]
         if 'mariadb' in first_line.lower():
             mariadbd_version = '.'.join(first_line.split(' ')[4].split('.')[0:2])
-            log.info('mariadbd_version: %s', mariadbd_version)
             zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('zero_conf_tls: %s', zero_conf_tls)
+            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
     if not zero_conf_tls:
         cert_dir = '/etc/mysql/ssl'
         kea_cnf = os.path.join(conf_d, 'kea.cnf')
