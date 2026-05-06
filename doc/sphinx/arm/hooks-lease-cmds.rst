@@ -113,6 +113,32 @@ This library provides the following commands:
 
 -  :isccmd:`lease6-write` - writes the IPv6 memfile lease database into a file.
 
+-  :isccmd::`sflq-pool4-create` - creates an IPv4 SFLQ pool in the lease back end.
+
+-  :isccmd::`sflq-pool6-create` - creates an IPv6 SFLQ pool in the lease back end.
+
+-  :isccmd::`sflq-pool4-get-all` - fetches all IPv4 SFLQ pools from the lease back end.
+
+-  :isccmd::`sflq-pool6-get-all` - fetches all IPv6 SFLQ pools from the lease back end.
+
+-  :isccmd::`sflq-pool4-get-by-subnet` - fetches all IPv4 SFLQ pools that belong to
+   a subnet from the lease back end.
+
+-  :isccmd::`sflq-pool6-get-by-subnet` - fetches all IPv6 SFLQ pools that belong to
+   a subnet from the lease back end.
+
+-  :isccmd::`sflq-pool4-get-by-range` - fetches all IPv4 SFLQ pools that overlap an
+   address range from the lease back end.
+
+-  :isccmd::`sflq-pool6-get-by-range` - fetches all IPv6 SFLQ pools that overlap an
+   address range from the lease back end.
+
+-  :isccmd::`sflq-pool4-del` - deletes an IPv4 SFLQ pool that matches an address
+   range from the lease back end.
+
+-  :isccmd::`sflq-pool6-del` - deletes an IPv6 SFLQ pool that matches an address
+   range from the lease back end.
+
 All commands use JSON syntax and can be issued either using the control
 channel (see :ref:`ctrl-channel`).
 
@@ -1125,6 +1151,533 @@ to the previous filename: for example, ``.bak14326``.
    These commands do not replace the LFC mechanism; they should be used
    only in exceptional circumstances, such as when recovering after
    running out of disk space.
+
+
+Commands for Managing SFLQ Pools
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following commands can be used to manage the SFLQ data (e.g. pools and
+free leases) that exists in the lease back end for subnets that use
+the Shared FLQ Allocator. Under normal circumstances this information
+is created and maintained automatically by the SFLQ Allocator mechanisms.
+With these API commands it is possible view, (re)create, and delete
+SFLQ pools.
+
+First, it is important to understand that SFLQ pools are uniquely identified
+by their start and end address. For any valid IPv4 or IPv6 range, there can
+only be one pool. Pools can however, have overlapping ranges.
+
+Commands that fetch pools, return the following values for each pool:
+
+- ``start-address`` - start address of the pool
+- ``end-address`` - end address of the pool
+- ``subnet-id`` - subnet ID to which the pool was created
+- ``lease-type`` - for IPv4 it is always "V4", for IPv6 is is either "IA_NA" or "IA_PD"
+- ``delegated-len`` - for "V4" and "IA_NA" pools it is always 128.  For "IA_PD" pools
+  it is the delegated prefix length.
+- ``created-ts``  - time the pool was created.
+- ``modified-ts`` - time the pool was last updated. It is initially set when the
+  pool creation completes. Thereafter it is updated each time SFLQ allocation
+  picks a free lease from the pool.
+- ``free-leases`` the number of currently free addresses in the pool.
+
+There at least three cases where these commands are likely to prove most
+useful. First, as a means to look for and remove obsolete pools. Because
+the pools can be be shared by an arbitrary number of servers, none of whom
+can know for certain when a pool is no longer needed, the SFLQ data for a pool
+cannot be automatically removed when its allocation scheme is changed to
+something other than SFLQ Allocator. While inactive pools should not cause
+servers to malfunction they do consume data and index space within the lease
+back end.
+
+The second case is that of mixed allocation schemes. In order for SFLQ
+Allocation to work properly, all servers allocating from a given pool (i.e.
+address or prefix range), must use SFLQ. If some servers do while others
+do not, the SFLQ data can quickly become inaccurate. This can be remedied
+by stopping any servers that are not using SFLQ for the pool(s) in question
+and recreating the pool(s) using the sflq-pool*-create commands, changing
+those servers to use SFLQ for the pool(s) and then restarting them.
+
+The third use case is that of overlapping pools, (i.e. pools whose
+address/prefix ranges overlap each other). Kea supports this as deliberate
+configuration choice but it may also occur inadvertently when configuration
+changes are not made consistently across multiple servers. Fetching the SFLQ
+pools by an address range will fetch all SFLQ pools that overlap the input
+range.
+
+.. note::
+
+    Creating or deleting SFLQ pools while servers are actively allocating
+    from their address ranges could lead to inconsistent results and is generally
+    not recommended.  Commands that fetch SFLQ pools may be safely used at anytime.
+
+.. isccmd:: sflq-pool4-create
+.. _command-sflq-pool4-create:
+
+.. isccmd:: sflq-pool6-create
+.. _command-sflq-pool6-create:
+
+The ``sflq-pool4-create``, ``sflq-pool6-create`` Commands
+---------------------------------------------------------
+
+:isccmd:`sflq-pool4-create` and :isccmd:`sflq-pool6-create` can be used to
+(re)create SFLQ pools and their free lease data.  This is useful in cases
+where one or more servers have been using other allocator schemes for
+the address ranges that include SFLQ pools. If the pool already exists,
+the call will simply return. The option ``recreate`` parameter, which
+defaults to false, can be used to force the pool to recreated.
+
+An example :isccmd:`sflq-pool4-create` command for recreating an IPv4 SFLQ
+Pool is shown below:
+
+::
+
+    {
+        "command": "sflq-pool4-create",
+        "arguments": {
+            "start-address": "192.0.2.0",
+            "end-address": "192.0.2.255",
+            "subnet-id" : 100,
+            "recreate": true
+        }
+    }
+
+Of the parameters shown above, only ``recreate`` is optional.
+
+For IPv6 pools the parameter ``lease-type`` with a value of either "IA_NA"
+or "IA_PD" is required.  An example :isccmd:`sflq-pool6-create` command for
+recreating an IPv6 SFLQ pool for an address pool is shown below:
+
+::
+
+    {
+        "command": "sflq-pool6-create",
+        "arguments": {
+            "start-address": "2001:db8:1::",
+            "end-address": "2001:db8:1::FFFF",
+            "subnet-id" : 100,
+            "lease-type": "IA_NA",
+            "recreate": true
+        }
+    }
+
+For IPv6 prefix delegation pools, the delegated prefix length must be
+specified as ``delegated-len`` which must be greater than 0 and less
+or equal to 128.  An example :isccmd:`sflq-pool6-create` command for
+recreating an IPv6 SFLQ pool for a prefix delegation pool is shown below:
+
+::
+
+    {
+        "command": "sflq-pool6-create",
+        "arguments": {
+            "start-address": "3001:20::",
+            "end-address": "3001:20:0:ff:ffff:ffff:ffff:ffff",
+            "subnet-id" : 100,
+            "lease-type": "IA_PD",
+            "delegated-len": 64,
+            "recreate": true
+        }
+    }
+
+.. note::
+
+    For large pools (e.g. >= 1 million address/prefixes), this command can take
+    twenty seconds or more. During this time the server will not process
+    client queries. Make sure the tool with which you send the commands
+    is confgured for long time outs. Once submitted to the lease back
+    end the query will continue to run, even if the API client disconnects.
+
+The command returns a status that indicates either success (result 0)
+or failure (result 1). A failed command always includes a text
+parameter that explains the cause of failure. For example:
+
+::
+
+   { "result": 0, "text": "SFLQ pool created." }
+
+Example failure:
+
+::
+
+   { "result": 1, "text": "missing 'lease-type' parameter" }
+
+.. isccmd:: sflq-pool4-get-all
+.. _command-sflq-pool4-get-all:
+
+.. isccmd:: sflq-pool6-get-all
+.. _command-sflq-pool6-get-all:
+
+The ``sflq-pool4-get-all``, ``sflq-pool6-get-all`` Commands
+-----------------------------------------------------------
+
+:isccmd:`sflq-pool4-get-all` and :isccmd:`sflq-pool6-get-all` can be used
+to fetch a list of all IPv4 or IPv6 SFLQ pools.  It takes no arguments.
+
+An example :isccmd:`sflq-pool4-get-all` command for fetching IPv4 SFLQ
+pools:
+
+::
+
+    {
+        "command": "sflq-pool4-get-all"
+    }
+
+The returned response contains a detailed list of all IPv4 SLFQ pools. In the
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 11:16:36.000000",
+	                "delegated-len": 128,
+	                "end-address": "178.0.255.255",
+	                "free-leases": 65535,
+	                "lease-type": "V4",
+	                "modified-ts": "2026-05-05 11:16:36.000000",
+	                "start-address": "178.0.0.1",
+	                "subnet-id": 1
+	            },
+                {
+                    "created-ts": "2026-05-05 11:18:02.000000",
+                    "delegated-len": 128,
+                    "end-address": "192.0.2.255",
+                    "free-leases": 256,
+                    "lease-type": "V4",
+                    "modified-ts": "2026-05-05 11:18:02.000000",
+                    "start-address": "192.0.2.0",
+                    "subnet-id": 2
+                }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "1 pool(s) found."
+	}
+
+An example :isccmd:`sflq-pool6-get-all` command for fetching IPv6 SFLQ
+pools:
+
+::
+
+    {
+        "command": "sflq-pool6-get-all"
+    }
+
+The returned response contains a detailed list of all IPv6 SLFQ pools. In the
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 13:21:10.000000",
+	                "delegated-len": 120,
+	                "end-address": "2001:db8:1::ffff",
+	                "free-leases": 256,
+	                "lease-type": "IA_PD",
+	                "modified-ts": "2026-05-05 13:21:10.000000",
+	                "start-address": "2001:db8:1::",
+	                "subnet-id": 1
+	            },
+	            {
+	                "created-ts": "2026-05-05 08:40:40.000000",
+	                "delegated-len": 128,
+	                "end-address": "3001::ffff",
+	                "free-leases": 65520,
+	                "lease-type": "IA_NA",
+	                "modified-ts": "2026-05-05 08:40:41.000000",
+	                "start-address": "3001::10",
+	                "subnet-id": 2
+	            }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "2 pool(s) found."
+	}
+
+
+.. isccmd:: sflq-pool4-get-by-subnet
+.. _command-sflq-pool4-get-by-subnet:
+
+.. isccmd:: sflq-pool6-get-by-subnet
+.. _command-sflq-pool6-get-by-subnet:
+
+The ``sflq-pool4-get-by-subnet``, ``sflq-pool6-get-by-subnet`` Commands
+-----------------------------------------------------------------------
+
+:isccmd:`sflq-pool4-get-by-subnet` and :isccmd:`sflq-pool6-get-by-subnet`
+can be used to fetch a list of all IPv4 or IPv6 SFLQ pools that were
+created for a subnet.
+
+An example :isccmd:`sflq-pool4-get-by-subnet` command for fetching IPv4 SFLQ
+pools is shown below:
+
+::
+
+	{
+	    "command": "sflq-pool4-get-by-subnet",
+	    "arguments": {
+	        "subnet-id" : 1
+	    }
+	}
+
+The returned response contains a detailed list of IPv4 SLFQ pools in
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 11:18:02.000000",
+	                "delegated-len": 128,
+	                "end-address": "192.0.2.255",
+	                "free-leases": 256,
+	                "lease-type": "V4",
+	                "modified-ts": "2026-05-05 11:18:02.000000",
+	                "start-address": "192.0.2.0",
+	                "subnet-id": 1
+	            }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "1 pool(s) found."
+	}
+
+An example :isccmd:`sflq-pool6-get-by-subnet` command for fetching IPv6 SFLQ
+pools is shown below:
+
+::
+
+	{
+	    "command": "sflq-pool6-get-by-subnet",
+	    "arguments": {
+	        "subnet-id" : 100
+	    }
+	}
+
+The returned response contains a detailed list of IPv6 SLFQ pools in
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 13:21:10.000000",
+	                "delegated-len": 120,
+	                "end-address": "2001:db8:1::ffff",
+	                "free-leases": 256,
+	                "lease-type": "IA_PD",
+	                "modified-ts": "2026-05-05 13:21:10.000000",
+	                "start-address": "2001:db8:1::",
+	                "subnet-id": 100
+	            }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "1 pool(s) found."
+	}
+
+.. isccmd:: sflq-pool4-get-by-range
+.. _command-sflq-pool4-get-by-range:
+
+.. isccmd:: sflq-pool6-get-by-range
+.. _command-sflq-pool6-get-by-range:
+
+The ``sflq-pool4-get-by-range``, ``sflq-pool6-get-by-range`` Commands
+---------------------------------------------------------------------
+
+:isccmd:`sflq-pool4-get-by-range` and :isccmd:`sflq-pool6-get-by-range`
+can be used to fetch a list of all IPv4 or IPv6 SFLQ pools that were
+created for a subnet.
+
+An example :isccmd:`sflq-pool4-get-by-range` command for fetching IPv4 SFLQ
+pools is shown below:
+
+::
+
+	{
+	    "command": "sflq-pool4-get-by-range",
+	    "arguments": {
+	        "start-address": "178.0.0.0",
+	        "end-address": "178.255.255.255"
+	    }
+	}
+
+The returned response contains a detailed list of IPv4 SLFQ pools in
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 11:16:36.000000",
+	                "delegated-len": 128,
+	                "end-address": "178.0.255.255",
+	                "free-leases": 65535,
+	                "lease-type": "V4",
+	                "modified-ts": "2026-05-05 11:16:36.000000",
+	                "start-address": "178.0.0.1",
+	                "subnet-id": 1
+	            }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "1 pool(s) found."
+	}
+
+An example :isccmd:`sflq-pool6-get-by-range` command for fetching IPv6 SFLQ
+pools is shown below:
+
+::
+
+	{
+	    "command": "sflq-pool6-get-by-range",
+	    "arguments": {
+	        "start-address": "3001::",
+	        "end-address": "3002::"
+	    }
+	}
+
+The returned response contains a detailed list of IPv6 SLFQ pools in
+following format:
+
+::
+
+	{
+	    "arguments": {
+	        "pools": [
+	            {
+	                "created-ts": "2026-05-05 08:40:40.000000",
+	                "delegated-len": 128,
+	                "end-address": "3001::ffff",
+	                "free-leases": 65520,
+	                "lease-type": "IA_NA",
+	                "modified-ts": "2026-05-05 08:40:41.000000",
+	                "start-address": "3001::10",
+	                "subnet-id": 3001
+	            },
+	            {
+	                "created-ts": "2026-05-05 08:40:41.000000",
+	                "delegated-len": 64,
+	                "end-address": "3001:20:0:ff:ffff:ffff:ffff:ffff",
+	                "free-leases": 256,
+	                "lease-type": "IA_PD",
+	                "modified-ts": "2026-05-05 08:40:41.000000",
+	                "start-address": "3001:20::",
+	                "subnet-id": 3001
+	            }
+	        ]
+	    },
+	    "result": 0,
+	    "text": "2 pool(s) found."
+	}
+
+
+.. isccmd:: sflq-pool4-del
+.. _command-sflq-pool4-del:
+
+.. isccmd:: sflq-pool6-del
+.. _command-sflq-pool6-del:
+
+The ``sflq-pool4-del``, ``sflq-pool6-del`` Commands
+---------------------------------------------------
+
+:isccmd:`sflq-pool4-del` and :isccmd:`sflq-pool6-del` can be used to delete
+an IPv4 or IPv6 SFLQ pool. It requires two arguments, ``start-address`` and
+and ``end-address``.  Only a pool whose range matches these values will be
+deleted and only if no other SFLQ pools overlap the range described by these
+values.  If any overlapping pools are detected the delete will fail with an
+error message stating this to be the case. There is an optional ``force``
+parameter can be used too override this safeguard.  When set to ``true`` the
+matching pool will be deleted without checking for overlapping pools.
+
+Deleting a pool when there are overlapping pools can produce holes in the
+free lease data where the overlaps occur. If the overlapping pools are to
+remain in use, the ``sflq-poolX-create`` commands should be used to rebuild the
+free lease data for the remaining pools.
+
+Alternatively, all of the overlapping pools can be deleted and the next
+Kea server (re)start or (re)configure will recreate any needed pools
+automatically.
+
+An example :isccmd:`sflq-pool4-del` command for deleting an IPv4 SFLQ
+pool is shown below:
+
+::
+
+    {
+        "command": "sflq-pool4-del",
+        "arguments": {
+            "start-address": "192.0.2.10",
+            "end-address": "192.0.2.20",
+            "force": false
+        }
+    }
+
+The returned response, if there were overlapping pools might look as
+follows:
+
+::
+
+    {
+        "result": 1,
+        "text": "Delete would affect 2 overlapping pools"
+    }
+
+And if there were no overlapping pools or ``force`` were set true, and
+the matching pool exists, the result would be similar to that shown below:
+
+::
+
+    {
+        "result": 0,
+        "text": "SFLQ pool deleted"
+    }
+
+An example :isccmd:`sflq-pool6-del` command for deleting an IPv6 SFLQ
+pool is shown below:
+
+::
+
+    {
+        "command": "sflq-pool6-del",
+        "arguments": {
+            "start-address": "3001::",
+            "end-address": "3001::10:FFFF",
+            "force": false
+        }
+    }
+
+The returned response, if there were overlapping pools might look as
+follows:
+
+::
+
+    {
+        "result": 1,
+        "text": "Delete would affect 3 overlapping pools"
+    }
+
+And if there were no overlapping pools or ``force`` were set true, and
+the matching pool exists, the result would be similar to that shown below:
+
+::
+
+    {
+        "result": 0,
+        "text": "SFLQ pool deleted"
+    }
 
 .. _binding-variables:
 

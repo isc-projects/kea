@@ -1,0 +1,4 @@
+[func]		tmark
+	Added API commands for managing SFLQ Allocator
+	pools to lease-cmds hook library.
+	(Gitlab #4492)

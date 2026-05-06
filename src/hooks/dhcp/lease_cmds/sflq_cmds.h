@@ -370,10 +370,13 @@ public:
     /// it returns a value of 128.
     ///
     /// @param params Element map containging the command arguments.
+    /// @param lease_type Lease::Type supplied with the arguments (IA_NA
+    /// or IA_PD)
     ///
     /// @throw BadValue if the parameter is specified as anything other
     /// than an integer value >= 1 and <= 128.
-    static uint8_t extractDelegatedLen(data::ConstElementPtr& params);
+    static uint8_t extractDelegatedLen(data::ConstElementPtr& params,
+                                       dhcp::Lease::Type lease_type);
 
     /// @brief Extracts 'delegated-len' from given parameters map
     ///

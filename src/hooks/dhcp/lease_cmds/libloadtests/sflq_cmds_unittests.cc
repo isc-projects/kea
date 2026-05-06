@@ -381,7 +381,7 @@ void SflqCmds4Test::sflqPool4GetAllBadParams() {
         R"(
             "bogus" : "fluff"
         )",
-        "spurious 'bogus' parameter"
+        "command does not take any arguments"
     }};
 
     for ( auto const& scenario : scenarios) {
@@ -918,7 +918,29 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
             "bogus" : "fluff"
         )",
         "spurious 'bogus' parameter"
-    }};
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "3001::20",
+            "subnet-id" : 100,
+            "lease-type": "IA_NA",
+            "delegated-len": 56
+        )",
+        "'delegated-len' must only be 128 for IA_NA pools"
+    },
+    {
+        __LINE__,
+        R"(
+            "start-address" : "3001::10",
+            "end-address" : "3001::20",
+            "subnet-id" : 100,
+            "lease-type": "IA_PD"
+        )",
+        "'delegated-len' is required for IA_PD pools"
+    }
+    };
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
@@ -939,7 +961,7 @@ void SflqCmds6Test::sflqPool6GetAllBadParams() {
         R"(
             "bogus" : "fluff"
         )",
-        "spurious 'bogus' parameter"
+        "command does not take any arguments"
     }};
 
     for ( auto const& scenario : scenarios) {

@@ -6,7 +6,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool4-get-get-by-range\"",
+        "   \"command\": \"sflq-pool4-del\"",
         "   \"arguments\": {",
         "       \"end-address\": \"192.0.2.255\",",
         "       \"start-address\": \"192.0.2.0\",",
@@ -19,8 +19,8 @@
     "name": "sflq-pool4-del",
     "resp-syntax": [
         "{",
-        \"result\": 0,",
-        \"text\": \"1 pool(s) deleted.\"",
+        "\"result\": 0,",
+        "\"text\": \"1 pool(s) deleted.\"",
         "}"
     ],
     "support": [

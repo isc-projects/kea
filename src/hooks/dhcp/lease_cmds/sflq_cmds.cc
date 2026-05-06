@@ -158,7 +158,7 @@ SflqCmdsImpl::sflqPool6CreateHandler(CalloutHandle& handle) {
         }
 
         auto lease_type = extractLeaseType(cmd_args_, AF_INET6);
-        uint8_t delegated_len = extractDelegatedLen(cmd_args_);
+        uint8_t delegated_len = extractDelegatedLen(cmd_args_, lease_type);
         bool recreate = extractBool(cmd_args_, "recreate", false);
 
         // Invoke the pool create function inside a CriticalSection.
@@ -208,12 +208,10 @@ SflqCmdsImpl::sflqPoolGetAll(CalloutHandle& handle, uint16_t family) {
     static const data::SimpleKeywords keywords;
     try {
         extractCommand(handle);
-        if (!cmd_args_ || cmd_args_->getType() != Element::map) {
-            isc_throw(isc::BadValue, "no parameters specified for the command");
+        if (cmd_args_ && ((cmd_args_->getType() != Element::map) ||
+            (cmd_args_->mapValue().size()) > 0)) {
+            isc_throw(BadValue, "command does not take any arguments");
         }
-
-        // Command has no arguments, this will catch any supplied.
-        SimpleParser::checkKeywords(keywords, cmd_args_);
 
         // Invoke the pool get function.
         auto pools = (family == AF_INET ? LeaseMgrFactory::instance().sflqPool4GetAll()
@@ -223,7 +221,6 @@ SflqCmdsImpl::sflqPoolGetAll(CalloutHandle& handle, uint16_t family) {
         setResponse(handle, resp);
         LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA,
                   (family == AF_INET ? SFLQ_POOL4_GET_ALL : SFLQ_POOL6_GET_ALL))
-                  .arg(cmd_args_->str())
                   .arg(pools->size());
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, (family == AF_INET ? SFLQ_POOL4_GET_ALL_FAILED
@@ -465,9 +462,14 @@ SflqCmdsImpl::extractLeaseType(ConstElementPtr& params, uint16_t family) {
 }
 
 uint8_t
-SflqCmdsImpl::extractDelegatedLen(ConstElementPtr& params) {
+SflqCmdsImpl::extractDelegatedLen(ConstElementPtr& params,
+                                  Lease::Type lease_type) {
     auto tmp = params->get("delegated-len");
     if (!tmp) {
+        if (lease_type == Lease::TYPE_PD) {
+            isc_throw(BadValue, "'delegated-len' is required for IA_PD pools");
+        }
+
         return (128);
     }
 
@@ -479,6 +481,10 @@ SflqCmdsImpl::extractDelegatedLen(ConstElementPtr& params) {
     if (val <= 0 || val > 128) {
         isc_throw(BadValue, "'delegated-len' invalid: " << val
                   << ", it must be >= 1 and =< 128");
+    }
+
+    if (lease_type == Lease::TYPE_NA) {
+        isc_throw(BadValue, "'delegated-len' must only be 128 for IA_NA pools");
     }
 
     return (val);

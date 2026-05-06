@@ -70,7 +70,7 @@ There are several steps needed to document a new API command:
  1. Set up the build with "meson setup build".
  2. Copy src/share/api/_template.json to appropriate name.
  3. Remove comments from it and fill in the actual content.
- 4. Update api_files.mk file in src/share/api.
+ 4. Run "meson setup --reconfigure build" to rebuild the list of API files.
  5. "meson compile -C build doc" will generate both multi-page and single-page
     HTML sites.
 

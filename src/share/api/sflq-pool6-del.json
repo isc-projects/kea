@@ -19,8 +19,8 @@
     "name": "sflq-pool6-del",
     "resp-syntax": [
         "{",
-        \"result\": 0,",
-        \"text\": \"1 pool(s) deleted.\"",
+        "\"result\": 0,",
+        "\"text\": \"1 pool(s) deleted.\"",
         "}"
     ],
     "support": [
