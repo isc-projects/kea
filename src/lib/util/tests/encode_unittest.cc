@@ -137,7 +137,7 @@ public:
         auto pad_char = encoder_->getPadChar();
 
         // Ensure the bit table is the proper size.
-        ASSERT_EQ(encoder_->getBitsTable().size(), 256);
+        ASSERT_EQ(encoder_->getBitsTable().size(), 256U);
 
         // Iterate over the whole ASCII character set:
         // 1. Convert the ASCII value to its encoded binary bit value.
@@ -189,7 +189,7 @@ public:
         EXPECT_EQ(valid_digits, num_digits);
 
         // Verify that all of the ASCII values are accounted for.
-        EXPECT_EQ((valid_digits + upper_cased + whitespaces + bad_chars + pad_chars), 256)
+        EXPECT_EQ((valid_digits + upper_cased + whitespaces + bad_chars + pad_chars), 256U)
             << " : " << valid_digits
             << " + " << upper_cased
             << " + " << whitespaces

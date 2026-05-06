@@ -39,7 +39,7 @@ TEST(TripletTest, constructor) {
 
     // requesting a value from within the range (min < x < max) should
     // return the requested value
-    EXPECT_EQ(17, x.get(17));
+    EXPECT_EQ(17U, x.get(17));
 
     EXPECT_EQ(max, x.get(max));
 
@@ -48,24 +48,24 @@ TEST(TripletTest, constructor) {
     // this will be boring. It is expected to return 42 no matter what
     Triplet<uint32_t> y(42);
 
-    EXPECT_EQ(42, y.getMin()); // min, default and max are equal to 42
-    EXPECT_EQ(42, y.get());    // it returns ...
-    EXPECT_EQ(42, y.getMax()); // the exact value...
+    EXPECT_EQ(42U, y.getMin()); // min, default and max are equal to 42
+    EXPECT_EQ(42U, y.get());    // it returns ...
+    EXPECT_EQ(42U, y.getMax()); // the exact value...
     EXPECT_FALSE(x.unspecified());
 
     // requested values below or above are ignore
-    EXPECT_EQ(42, y.get(5));   // all...
-    EXPECT_EQ(42, y.get(42));  // the...
-    EXPECT_EQ(42, y.get(80));  // time!
+    EXPECT_EQ(42U, y.get(5));   // all...
+    EXPECT_EQ(42U, y.get(42));  // the...
+    EXPECT_EQ(42U, y.get(80));  // time!
 }
 
 TEST(TripletTest, unspecified) {
     Triplet<uint32_t> x;
     // When using the constructor without parameters, the triplet
     // value is unspecified.
-    EXPECT_EQ(0, x.getMin());
-    EXPECT_EQ(0, x.get());
-    EXPECT_EQ(0, x.getMax());
+    EXPECT_EQ(0U, x.getMin());
+    EXPECT_EQ(0U, x.get());
+    EXPECT_EQ(0U, x.getMax());
     EXPECT_TRUE(x.unspecified());
 
     // For the triplet which has unspecified value we can call accessors
@@ -75,9 +75,9 @@ TEST(TripletTest, unspecified) {
 
     x = 72;
     // Check if the new value has been assigned.
-    EXPECT_EQ(72, x.getMin());
-    EXPECT_EQ(72, x.get());
-    EXPECT_EQ(72, x.getMax());
+    EXPECT_EQ(72U, x.getMin());
+    EXPECT_EQ(72U, x.get());
+    EXPECT_EQ(72U, x.getMax());
     // Triplet is now specified.
     EXPECT_FALSE(x.unspecified());
 }
@@ -93,9 +93,9 @@ TEST(TripletTest, operator) {
 
     foo = bar;
 
-    EXPECT_EQ(4, foo.getMin());
-    EXPECT_EQ(5, foo.get());
-    EXPECT_EQ(6, foo.getMax());
+    EXPECT_EQ(4U, foo.getMin());
+    EXPECT_EQ(5U, foo.get());
+    EXPECT_EQ(6U, foo.getMax());
     EXPECT_FALSE(foo.unspecified());
 
     // assignment operator: uint32_t => triplet

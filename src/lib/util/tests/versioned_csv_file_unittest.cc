@@ -149,10 +149,10 @@ TEST_F(VersionedCSVFileTest, addColumn) {
     // Input Header should match defined columns on new files
     // Valid columns should match defined columns on new files
     // Minimum valid columns wasn't set. (Remember it's optional)
-    EXPECT_EQ(3, csv->getColumnCount());
-    EXPECT_EQ(3, csv->getInputHeaderCount());
-    EXPECT_EQ(3, csv->getValidColumnCount());
-    EXPECT_EQ(0, csv->getMinimumValidColumns());
+    EXPECT_EQ(3U, csv->getColumnCount());
+    EXPECT_EQ(3U, csv->getInputHeaderCount());
+    EXPECT_EQ(3U, csv->getValidColumnCount());
+    EXPECT_EQ(0U, csv->getMinimumValidColumns());
 
     // Schema versions for new files should always match
     EXPECT_EQ("3.0", csv->getInputSchemaVersion());
@@ -194,10 +194,10 @@ TEST_F(VersionedCSVFileTest, currentSchemaTest) {
     // 3 columns total found in the header
     // 3 valid columns found in the header
     // Minimum valid columns wasn't set. (Remember it's optional)
-    EXPECT_EQ(3, csv->getColumnCount());
-    EXPECT_EQ(3, csv->getInputHeaderCount());
-    EXPECT_EQ(3, csv->getValidColumnCount());
-    EXPECT_EQ(0, csv->getMinimumValidColumns());
+    EXPECT_EQ(3U, csv->getColumnCount());
+    EXPECT_EQ(3U, csv->getInputHeaderCount());
+    EXPECT_EQ(3U, csv->getValidColumnCount());
+    EXPECT_EQ(0U, csv->getMinimumValidColumns());
 
     // Input schema and current schema should both be  2.0
     EXPECT_EQ("2.0", csv->getInputSchemaVersion());
@@ -253,10 +253,10 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // 1 column found in the header
     // 1 valid column in the header
     // Minimum valid columns wasn't set. (Remember it's optional)
-    EXPECT_EQ(2, csv->getColumnCount());
-    EXPECT_EQ(1, csv->getInputHeaderCount());
-    EXPECT_EQ(1, csv->getValidColumnCount());
-    EXPECT_EQ(0, csv->getMinimumValidColumns());
+    EXPECT_EQ(2U, csv->getColumnCount());
+    EXPECT_EQ(1U, csv->getInputHeaderCount());
+    EXPECT_EQ(1U, csv->getValidColumnCount());
+    EXPECT_EQ(0U, csv->getMinimumValidColumns());
 
     // Input schema should be 1.0, while our current schema should be 2.0
     EXPECT_EQ("1.0", csv->getInputSchemaVersion());
@@ -303,7 +303,7 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
 
     // Create a third schema by adding a column
     ASSERT_NO_THROW(csv->addColumn("age", "3.0", "21"));
-    ASSERT_EQ(3, csv->getColumnCount());
+    ASSERT_EQ(3U, csv->getColumnCount());
 
     // Header should pass validation and allow the open to succeed
     ASSERT_NO_THROW(csv->open());
@@ -313,10 +313,10 @@ TEST_F(VersionedCSVFileTest, upgradeOlderVersions) {
     // 1 column found in the header
     // 1 valid column in the header
     // Minimum valid columns wasn't set. (Remember it's optional)
-    EXPECT_EQ(3, csv->getColumnCount());
-    EXPECT_EQ(1, csv->getInputHeaderCount());
-    EXPECT_EQ(1, csv->getValidColumnCount());
-    EXPECT_EQ(0, csv->getMinimumValidColumns());
+    EXPECT_EQ(3U, csv->getColumnCount());
+    EXPECT_EQ(1U, csv->getInputHeaderCount());
+    EXPECT_EQ(1U, csv->getValidColumnCount());
+    EXPECT_EQ(0U, csv->getMinimumValidColumns());
 
     // Make sure schema versions are accurate
     EXPECT_EQ("1.0", csv->getInputSchemaVersion());
@@ -370,14 +370,14 @@ TEST_F(VersionedCSVFileTest, minimumValidColumn) {
 
     // Set the minimum number of columns to "color"
     csv->setMinimumValidColumns("color");
-    EXPECT_EQ(2, csv->getMinimumValidColumns());
+    EXPECT_EQ(2U, csv->getMinimumValidColumns());
 
     // Header validation should fail, too few columns
     ASSERT_THROW(csv->open(), CSVFileError);
 
     // Set the minimum number of columns to 1.  File should parse now.
     csv->setMinimumValidColumns("animal");
-    EXPECT_EQ(1, csv->getMinimumValidColumns());
+    EXPECT_EQ(1U, csv->getMinimumValidColumns());
     ASSERT_NO_THROW(csv->open());
 
     // First row is correct.
@@ -433,10 +433,10 @@ TEST_F(VersionedCSVFileTest, downGrading) {
     // 3 columns found in the header
     // 2 valid columns in the header
     // Minimum valid columns wasn't set. (Remember it's optional)
-    EXPECT_EQ(2, csv->getColumnCount());
-    EXPECT_EQ(3, csv->getInputHeaderCount());
-    EXPECT_EQ(2, csv->getValidColumnCount());
-    EXPECT_EQ(0, csv->getMinimumValidColumns());
+    EXPECT_EQ(2U, csv->getColumnCount());
+    EXPECT_EQ(3U, csv->getInputHeaderCount());
+    EXPECT_EQ(2U, csv->getValidColumnCount());
+    EXPECT_EQ(0U, csv->getMinimumValidColumns());
 
     // Input schema and current schema should both be 2.0
     EXPECT_EQ("2.0", csv->getInputSchemaVersion());

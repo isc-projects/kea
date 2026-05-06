@@ -46,33 +46,33 @@ TEST(CSVRowTest, escapeUnescape) {
 // This test checks that the single data row is parsed.
 TEST(CSVRow, parse) {
     CSVRow row0("foo,bar,foo-bar");
-    ASSERT_EQ(3, row0.getValuesCount());
+    ASSERT_EQ(3U, row0.getValuesCount());
     EXPECT_EQ("foo", row0.readAt(0));
     EXPECT_EQ("bar", row0.readAt(1));
     EXPECT_EQ("foo-bar", row0.readAt(2));
 
     row0.parse("bar,,foo-bar");
-    ASSERT_EQ(3, row0.getValuesCount());
+    ASSERT_EQ(3U, row0.getValuesCount());
     EXPECT_EQ("bar", row0.readAt(0));
     EXPECT_TRUE(row0.readAt(1).empty());
     EXPECT_EQ("foo-bar", row0.readAt(2));
 
     row0.parse("bar,foo&#x2c-bar");
-    ASSERT_EQ(2, row0.getValuesCount());
+    ASSERT_EQ(2U, row0.getValuesCount());
     EXPECT_EQ("bar", row0.readAt(0));
     // Read the second column as-is and escaped
     EXPECT_EQ("foo&#x2c-bar", row0.readAt(1));
     EXPECT_EQ("foo,-bar", row0.readAtEscaped(1));
 
     CSVRow row1("foo-bar|foo|bar|", '|');
-    ASSERT_EQ(4, row1.getValuesCount());
+    ASSERT_EQ(4U, row1.getValuesCount());
     EXPECT_EQ("foo-bar", row1.readAt(0));
     EXPECT_EQ("foo", row1.readAt(1));
     EXPECT_EQ("bar", row1.readAt(2));
     EXPECT_TRUE(row1.readAt(3).empty());
 
     row1.parse("");
-    ASSERT_EQ(1, row1.getValuesCount());
+    ASSERT_EQ(1U, row1.getValuesCount());
     EXPECT_TRUE(row1.readAt(0).empty());
 }
 
@@ -80,7 +80,7 @@ TEST(CSVRow, parse) {
 TEST(CSVRow, emptyColumns) {
     // Should get four columns, all blank except column the second one.
     CSVRow row(",one,,");
-    ASSERT_EQ(4, row.getValuesCount());
+    ASSERT_EQ(4U, row.getValuesCount());
     EXPECT_EQ("", row.readAt(0));
     EXPECT_EQ("one", row.readAt(1));
     EXPECT_EQ("", row.readAt(2));
@@ -91,7 +91,7 @@ TEST(CSVRow, emptyColumns) {
 TEST(CSVRow, oneColumn) {
     // Should get one column
     CSVRow row("zero");
-    ASSERT_EQ(1, row.getValuesCount());
+    ASSERT_EQ(1U, row.getValuesCount());
     EXPECT_EQ("zero", row.readAt(0));
 }
 
@@ -143,15 +143,15 @@ TEST(CSVRow, writeAt) {
 TEST(CSVRow, append) {
     CSVRow row(3);
 
-    EXPECT_EQ(3, row.getValuesCount());
+    EXPECT_EQ(3U, row.getValuesCount());
 
     row.writeAt(0, "alpha");
     ASSERT_NO_THROW(row.append("delta"));
-    EXPECT_EQ(4, row.getValuesCount());
+    EXPECT_EQ(4U, row.getValuesCount());
     row.writeAt(1, "beta");
     row.writeAt(2, "gamma");
     ASSERT_NO_THROW(row.append("epsilon"));
-    EXPECT_EQ(5, row.getValuesCount());
+    EXPECT_EQ(5U, row.getValuesCount());
 
     std::string text;
     ASSERT_NO_THROW(text = row.render());
@@ -162,7 +162,7 @@ TEST(CSVRow, append) {
 // a given number of elements
 TEST(CSVRow, trim) {
     CSVRow row("zero,one,two,three,four");
-    ASSERT_EQ(5, row.getValuesCount());
+    ASSERT_EQ(5U, row.getValuesCount());
     EXPECT_EQ("zero", row.readAt(0));
     EXPECT_EQ("one", row.readAt(1));
     EXPECT_EQ("two", row.readAt(2));
@@ -173,7 +173,7 @@ TEST(CSVRow, trim) {
 
     // Verify that we can erase just one
     ASSERT_NO_THROW(row.trim(1));
-    ASSERT_EQ(4, row.getValuesCount());
+    ASSERT_EQ(4U, row.getValuesCount());
     EXPECT_EQ("zero", row.readAt(0));
     EXPECT_EQ("one", row.readAt(1));
     EXPECT_EQ("two", row.readAt(2));
@@ -181,7 +181,7 @@ TEST(CSVRow, trim) {
 
     // Verify we can trim more than one
     ASSERT_NO_THROW(row.trim(2));
-    ASSERT_EQ(2, row.getValuesCount());
+    ASSERT_EQ(2U, row.getValuesCount());
     EXPECT_EQ("zero", row.readAt(0));
     EXPECT_EQ("one", row.readAt(1));
 }
@@ -331,7 +331,7 @@ TEST_F(CSVFileTest, openReadAllWrite) {
     // Open this file and check that the header is parsed.
     boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
     ASSERT_NO_THROW(csv->open());
-    ASSERT_EQ(3, csv->getColumnCount());
+    ASSERT_EQ(3U, csv->getColumnCount());
     EXPECT_EQ("animal", csv->getColumnName(0));
     EXPECT_EQ("age", csv->getColumnName(1));
     EXPECT_EQ("color", csv->getColumnName(2));
@@ -339,14 +339,14 @@ TEST_F(CSVFileTest, openReadAllWrite) {
     // Read first row.
     CSVRow row;
     ASSERT_TRUE(csv->next(row));
-    ASSERT_EQ(3, row.getValuesCount());
+    ASSERT_EQ(3U, row.getValuesCount());
     EXPECT_EQ("cat", row.readAt(0));
     EXPECT_EQ("10", row.readAt(1));
     EXPECT_EQ("white", row.readAt(2));
 
     // Read second row.
     ASSERT_TRUE(csv->next(row));
-    ASSERT_EQ(3, row.getValuesCount());
+    ASSERT_EQ(3U, row.getValuesCount());
     EXPECT_EQ("lion", row.readAt(0));
     EXPECT_EQ("15", row.readAt(1));
     EXPECT_EQ("yellow", row.readAt(2));
@@ -421,7 +421,7 @@ TEST_F(CSVFileTest, openReadPartialWrite) {
     // Read the first row.
     CSVRow row0(0);
     ASSERT_NO_THROW(csv->next(row0));
-    ASSERT_EQ(3, row0.getValuesCount());
+    ASSERT_EQ(3U, row0.getValuesCount());
     EXPECT_EQ("cat", row0.readAt(0));
     EXPECT_EQ("10", row0.readAt(1));
     EXPECT_EQ("white", row0.readAt(2));
@@ -587,7 +587,7 @@ TEST_F(CSVFileTest, parseHeaderWithoutTrailingBlankLine) {
     // Open this file and check that the header is parsed.
     CSVFile csv(testfile_);
     ASSERT_NO_THROW(csv.open());
-    ASSERT_EQ(3, csv.getColumnCount());
+    ASSERT_EQ(3U, csv.getColumnCount());
     EXPECT_EQ("animal", csv.getColumnName(0));
     EXPECT_EQ("age", csv.getColumnName(1));
     EXPECT_EQ("color", csv.getColumnName(2));
@@ -612,7 +612,7 @@ TEST_F(CSVFileTest, parseContentWithoutTrailingBlankLine) {
     // Open this file and check that the header is parsed.
     CSVFile csv(testfile_);
     ASSERT_NO_THROW(csv.open());
-    ASSERT_EQ(3, csv.getColumnCount());
+    ASSERT_EQ(3U, csv.getColumnCount());
     EXPECT_EQ("animal", csv.getColumnName(0));
     EXPECT_EQ("age", csv.getColumnName(1));
     EXPECT_EQ("color", csv.getColumnName(2));
@@ -668,7 +668,7 @@ TEST_F(CSVFileTest, parseContentWithBlankLines) {
         // Open this file and check that the header is parsed.
         CSVFile csv(testfile_);
         ASSERT_NO_THROW(csv.open());
-        ASSERT_EQ(3, csv.getColumnCount());
+        ASSERT_EQ(3U, csv.getColumnCount());
         EXPECT_EQ("animal", csv.getColumnName(0));
         EXPECT_EQ("age", csv.getColumnName(1));
         EXPECT_EQ("color", csv.getColumnName(2));

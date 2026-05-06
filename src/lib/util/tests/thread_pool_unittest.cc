@@ -721,9 +721,9 @@ TEST_F(ThreadPoolTest, maxQueueSize) {
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
     // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
+    ASSERT_EQ(thread_pool.count(), 0U);
     // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    ASSERT_EQ(thread_pool.size(), 0U);
 
     items_count = 20;
 
@@ -740,7 +740,7 @@ TEST_F(ThreadPoolTest, maxQueueSize) {
     ASSERT_EQ(thread_pool.count(), items_count);
 
     // change the max count
-    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0);
+    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0U);
     size_t max_queue_size = 10;
     thread_pool.setMaxQueueSize(max_queue_size);
     EXPECT_EQ(thread_pool.getMaxQueueSize(), max_queue_size);
@@ -758,9 +758,9 @@ TEST_F(ThreadPoolTest, addFront) {
     CallBack call_back;
     ThreadPool<CallBack> thread_pool;
     // the item count should be 0
-    ASSERT_EQ(thread_pool.count(), 0);
+    ASSERT_EQ(thread_pool.count(), 0U);
     // the thread count should be 0
-    ASSERT_EQ(thread_pool.size(), 0);
+    ASSERT_EQ(thread_pool.size(), 0U);
 
     items_count = 20;
 
@@ -777,7 +777,7 @@ TEST_F(ThreadPoolTest, addFront) {
     ASSERT_EQ(thread_pool.count(), items_count);
 
     // change the max count
-    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0);
+    ASSERT_EQ(thread_pool.getMaxQueueSize(), 0U);
     size_t max_queue_size = 10;
     thread_pool.setMaxQueueSize(max_queue_size);
     EXPECT_EQ(thread_pool.getMaxQueueSize(), max_queue_size);

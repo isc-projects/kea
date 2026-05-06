@@ -51,7 +51,7 @@ TEST_F(FDTest, read) {
         ASSERT_GE(feeder, 0);
         ssize_t received(read_data(read_pipe, buffer, TEST_DATA_SIZE));
         EXPECT_TRUE(process_ok(feeder));
-        EXPECT_EQ(TEST_DATA_SIZE, received);
+        EXPECT_EQ(TEST_DATA_SIZE, static_cast<size_t>(received));
         EXPECT_EQ(0, memcmp(data, buffer, received));
     }
 }

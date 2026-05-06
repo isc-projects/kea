@@ -153,49 +153,49 @@ TEST_F(StringUtilTest, Tokens) {
 
     // Degenerate cases
     result = tokens("");  // Empty string
-    EXPECT_EQ(0, result.size());
+    EXPECT_EQ(0U, result.size());
 
     result = tokens(" \n ");  // String is all delimiters
-    EXPECT_EQ(0, result.size());
+    EXPECT_EQ(0U, result.size());
 
     result = tokens("abc");  // String has no delimiters
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("abc"), result[0]);
 
     // String containing leading and/or trailing delimiters, no embedded ones.
     result = tokens("\txyz");  // One leading delimiter
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
     result = tokens("\t \nxyz");  // Multiple leading delimiters
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
     result = tokens("xyz\n");  // One trailing delimiter
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
     result = tokens("xyz  \t");  // Multiple trailing
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
     result = tokens("\t xyz \n");  // Leading and trailing
-    ASSERT_EQ(1, result.size());
+    ASSERT_EQ(1U, result.size());
     EXPECT_EQ(string("xyz"), result[0]);
 
     // Embedded delimiters
     result = tokens("abc\ndef");  // 2 tokens, one separator
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
 
     result = tokens("abc\t\t\ndef");  // 2 tokens, 3 separators
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
 
     result = tokens("abc\n  \tdef\t\tghi");
-    ASSERT_EQ(3, result.size());  // Multiple tokens, many delims
+    ASSERT_EQ(3U, result.size());  // Multiple tokens, many delims
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
     EXPECT_EQ(string("ghi"), result[2]);
@@ -203,14 +203,14 @@ TEST_F(StringUtilTest, Tokens) {
     // Embedded and non-embedded delimiters
 
     result = tokens("\t\t  \nabc\n  \tdef\t\tghi   \n\n");
-    ASSERT_EQ(3, result.size());  // Multiple tokens, many delims
+    ASSERT_EQ(3U, result.size());  // Multiple tokens, many delims
     EXPECT_EQ(string("abc"), result[0]);
     EXPECT_EQ(string("def"), result[1]);
     EXPECT_EQ(string("ghi"), result[2]);
 
     // Non-default delimiter
     result = tokens("alpha/beta/ /gamma//delta/epsilon/", "/");
-    ASSERT_EQ(6, result.size());
+    ASSERT_EQ(6U, result.size());
     EXPECT_EQ(string("alpha"), result[0]);
     EXPECT_EQ(string("beta"), result[1]);
     EXPECT_EQ(string(" "), result[2]);
@@ -220,7 +220,7 @@ TEST_F(StringUtilTest, Tokens) {
 
     // Non-default delimiters (plural)
     result = tokens("+*--alpha*beta+ -gamma**delta+epsilon-+**", "*+-");
-    ASSERT_EQ(6, result.size());
+    ASSERT_EQ(6U, result.size());
     EXPECT_EQ(string("alpha"), result[0]);
     EXPECT_EQ(string("beta"), result[1]);
     EXPECT_EQ(string(" "), result[2]);
@@ -230,36 +230,36 @@ TEST_F(StringUtilTest, Tokens) {
 
     // Escaped delimiter
     result = tokens("foo\\,bar", ",", true);
-    EXPECT_EQ(1, result.size());
+    EXPECT_EQ(1U, result.size());
     EXPECT_EQ(string("foo,bar"), result[0]);
 
     // Escaped escape
     result = tokens("foo\\\\,bar", ",", true);
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("foo\\"), result[0]);
     EXPECT_EQ(string("bar"), result[1]);
 
     // Double escapes
     result = tokens("foo\\\\\\\\,\\bar", ",", true);
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("foo\\\\"), result[0]);
     EXPECT_EQ(string("\\bar"), result[1]);
 
     // Escaped standard character
     result = tokens("fo\\o,bar", ",", true);
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("fo\\o"), result[0]);
     EXPECT_EQ(string("bar"), result[1]);
 
     // Escape at the end
     result = tokens("foo,bar\\", ",", true);
-    ASSERT_EQ(2, result.size());
+    ASSERT_EQ(2U, result.size());
     EXPECT_EQ(string("foo"), result[0]);
     EXPECT_EQ(string("bar\\"), result[1]);
 
     // Escape opening a token
     result = tokens("foo,\\,,bar", ",", true);
-    ASSERT_EQ(3, result.size());
+    ASSERT_EQ(3U, result.size());
     EXPECT_EQ(string("foo"), result[0]);
     EXPECT_EQ(string(","), result[1]);
     EXPECT_EQ(string("bar"), result[2]);

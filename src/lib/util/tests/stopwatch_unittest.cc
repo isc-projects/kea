@@ -136,63 +136,63 @@ TEST_F(StopwatchTest, multipleMeasurements) {
     StopwatchMock stopwatch(ref_time_);
     // The stopwatch shouldn't automatically start. The initial
     // durations should be set to 0.
-    EXPECT_EQ(0, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(0, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getTotalDurationInMs());
 
     stopwatch.start();
 
     // Even though the stopwatch is started, the time is still set to
     // the initial value. The durations should not be affected.
-    EXPECT_EQ(0, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(0, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getTotalDurationInMs());
 
     // Move the time by 10 ms.
     stopwatch.ffwd(10);
 
     // It should be possible to retrieve the durations even when the
     // stopwatch is running.
-    EXPECT_EQ(10, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(10, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(10U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(10U, stopwatch.getTotalDurationInMs());
 
     // Now stop it and make sure that the same values are returned.
     stopwatch.stop();
 
-    EXPECT_EQ(10, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(10, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(10U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(10U, stopwatch.getTotalDurationInMs());
 
     // Start it again, but don't move the time forward yet.
     stopwatch.start();
 
     // The new duration should be 0, but the total should be equal to
     // the previously measured duration.
-    EXPECT_EQ(0, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(10, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(10U, stopwatch.getTotalDurationInMs());
 
     // Move time by 5 ms.
     stopwatch.ffwd(5);
 
     // New measured duration should be 5 ms. The total should be 15 ms.
-    EXPECT_EQ(5, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(15, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(5U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(15U, stopwatch.getTotalDurationInMs());
 
     // Stop it again and make sure the values returned are the same.
     stopwatch.stop();
 
-    EXPECT_EQ(5, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(15, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(5U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(15U, stopwatch.getTotalDurationInMs());
 
     // Move the time forward while the stopwatch is stopped.
     stopwatch.ffwd(8);
 
     // The measured values should not be affected.
-    EXPECT_EQ(5, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(15, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(5U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(15U, stopwatch.getTotalDurationInMs());
 
     // Stop should be no-op in this case.
     stopwatch.stop();
 
-    EXPECT_EQ(5, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(15, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(5U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(15U, stopwatch.getTotalDurationInMs());
 
     // Start the stopwatch again.
     stopwatch.start();
@@ -202,8 +202,8 @@ TEST_F(StopwatchTest, multipleMeasurements) {
 
     // Since the stopwatch is running, the measured duration should
     // get updated again.
-    EXPECT_EQ(3, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(18, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(3U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(18U, stopwatch.getTotalDurationInMs());
 
     // Move the time by 2 ms.
     stopwatch.ffwd(2);
@@ -212,14 +212,14 @@ TEST_F(StopwatchTest, multipleMeasurements) {
     stopwatch.start();
 
     // But the durations should be updated.
-    EXPECT_EQ(5, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(20, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(5U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(20U, stopwatch.getTotalDurationInMs());
 
     // Make sure we can reset.
     stopwatch.reset();
 
-    EXPECT_EQ(0, stopwatch.getLastDurationInMs());
-    EXPECT_EQ(0, stopwatch.getTotalDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getLastDurationInMs());
+    EXPECT_EQ(0U, stopwatch.getTotalDurationInMs());
 }
 
 // This test checks that the stopwatch works when the real clock is in use.

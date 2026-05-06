@@ -240,18 +240,20 @@ TEST_F(FDEventHandlerTest, noLimit) {
                 ASSERT_GE(0, result) << "error: " << strerror(errno);
             }
             fds.push_back(pipe_fd[0]);
-            EXPECT_EQ(sizeof(i), write(pipe_fd[1], &i, sizeof(i)));
+            EXPECT_EQ(static_cast<int>(sizeof(i)),
+                      write(pipe_fd[1], &i, sizeof(i)));
             fds.push_back(pipe_fd[1]);
             EXPECT_NO_THROW(handler_->add(pipe_fd[0]));
         }
-        EXPECT_EQ(limit, handler_->waitEvent(0, 1000));
+        EXPECT_EQ(static_cast<int>(limit), handler_->waitEvent(0, 1000));
         for (size_t i = 0; i < fds.size(); i += 2) {
             bool ready = handler_->readReady(fds[i]);
             EXPECT_TRUE(ready);
             EXPECT_FALSE(handler_->hasError(fds[i]));
             size_t data = 0;
             if (ready) {
-                EXPECT_EQ(sizeof(i), read(fds[i], &data, sizeof(data)));
+              EXPECT_EQ(static_cast<int>(sizeof(i)),
+                        read(fds[i], &data, sizeof(data)));
             }
             EXPECT_EQ(data, i / 2);
             close(fds[i]);

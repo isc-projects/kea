@@ -45,14 +45,14 @@ TEST(WatchSocketTest, basics) {
     /// Verify that we have exactly one marker waiting to be read.
     int count = 0;
     EXPECT_FALSE(ioctl(select_fd, FIONREAD, &count));
-    EXPECT_EQ(sizeof(WatchSocket::MARKER), count);
+    EXPECT_EQ(static_cast<int>(sizeof(WatchSocket::MARKER)), count);
 
     /// Verify that we can call markReady again without error.
     ASSERT_NO_THROW(watch->markReady());
 
     /// Verify that we STILL have exactly one marker waiting to be read.
     EXPECT_FALSE(ioctl(select_fd, FIONREAD, &count));
-    EXPECT_EQ(sizeof(WatchSocket::MARKER), count);
+    EXPECT_EQ(static_cast<int>(sizeof(WatchSocket::MARKER)), count);
 
     /// Verify that isReady() is true and that a call to select agrees.
     EXPECT_TRUE(watch->isReady());
@@ -169,7 +169,8 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
 
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
-    ASSERT_EQ((read (select_fd, &buf, sizeof(buf))), sizeof(buf));
+    ASSERT_EQ((read (select_fd, &buf, sizeof(buf))),
+              static_cast<int>(sizeof(buf)));
     ASSERT_EQ(WatchSocket::MARKER, buf);
 
     // Really nothing that can be done to protect against this, but let's
