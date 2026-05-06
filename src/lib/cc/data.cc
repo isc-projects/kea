@@ -565,6 +565,13 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string number = numberFromStringstream(in, pos);
 
+    // Catch leading zeros: raise an error as logging is not available.
+    if (((number.size() > 1) && (number[0] == '0') && isdigit(number[1])) ||
+        ((number.size() > 2) && (number[0] == '-') &&
+         (number[1] == '0') && isdigit(number[2]))) {
+        throwJSONError("Illegal leading zeros in '" + number + "'",
+                       file, line, start_pos);
+    }
     // Is it a double?
     if (number.find_first_of(".eE") < number.size()) {
         try {
@@ -578,17 +585,6 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     }
 
     // Is it an integer?
-    // Catch leading zeros: raise an error as logging is not available.
-    if (((number.size() > 1) && (number[0] == '0')) ||
-        ((number.size() > 2) && (number[0] == '-') && (number[1] == '0'))) {
-        throwJSONError("Illegal leading zeros in '" + number + "'",
-                       file, line, start_pos);
-    }
-    // Catch leading plus: raise an error as logging is not available.
-    if ((number.size() > 1) && (number[0] == '+')) {
-        throwJSONError("Illegal leading plus in '" + number + "'",
-                       file, line, start_pos);
-    }
     try {
         return (Element::create(boost::lexical_cast<int64_t>(number),
                                 Element::Position(file, line, start_pos)));
@@ -817,7 +813,6 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case '9':
             case '0':
             case '-':
-            case '+':
             case '.':
                 in.putback(c);
                 --pos;

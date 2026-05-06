@@ -141,9 +141,15 @@ TEST(Element, toAndFromJson) {
     // Leading zeros in integers.
     sv.push_back("01");
     sv.push_back("-00");
+    // Leading zeros in numbers.
+    sv.push_back("01.2");
+    sv.push_back("-02.3");
     // Leading plus in integers.
     sv.push_back("+0");
     sv.push_back("+100");
+    sv.push_back("+1e2");
+    // Leading plus in numbers.
+    sv.push_back("+123.4");
     sv.push_back("{1}");
     sv.push_back("\n\nTrue");
     sv.push_back("\n\ntru");
@@ -175,7 +181,6 @@ TEST(Element, toAndFromJson) {
     // different from the string input
     EXPECT_EQ("0", Element::fromJSON("-0")->str());
     EXPECT_EQ("100.0", Element::fromJSON("1e2")->str());
-    EXPECT_EQ("100.0", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100.0", Element::fromJSON("-1e2")->str());
 
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
@@ -196,6 +201,9 @@ TEST(Element, toAndFromJson) {
     EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
     EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
     EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
+    // Illegal according to the stardard but still accepted.
+    EXPECT_EQ("0.1", Element::fromJSON(".1")->str());
+    EXPECT_EQ("1.0", Element::fromJSON("1.")->str());
 
     string number;
 

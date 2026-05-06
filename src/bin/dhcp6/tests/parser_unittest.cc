@@ -119,9 +119,25 @@ TEST(ParserTest, types) {
     testParser(txt, Parser6Context::PARSER_JSON);
 }
 
+TEST(ParserTest, plus) {
+    Parser6Context ctx;
+    EXPECT_THROW(ctx.parseString("+100", Parser6Context::PARSER_JSON),
+                 Dhcp6ParseError);
+    EXPECT_THROW(ctx.parseString("+1.0", Parser6Context::PARSER_JSON),
+                 Dhcp6ParseError);
+    EXPECT_THROW(ctx.parseString("+", Parser6Context::PARSER_JSON),
+                 Dhcp6ParseError);
+}
+
 TEST(ParserTest, integers) {
     // Should get warnings for all items at the exception of the first one.
     string txt = "[ 0, 00, 01, -001 ]";
+    testParser(txt, Parser6Context::PARSER_JSON, false);
+}
+
+TEST(ParserTest, numbers) {
+    // Should get warnings for all items at the exception of the first one.
+    string txt = "[ 0.0, 00.1, 01.1, -001.2 ]";
     testParser(txt, Parser6Context::PARSER_JSON, false);
 }
 

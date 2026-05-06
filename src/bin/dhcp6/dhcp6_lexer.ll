@@ -2645,7 +2645,28 @@ ControlCharacterFill            [^"\\]|\\["\\/bfnrtu]
     return isc::dhcp::Dhcp6Parser::make_INTEGER(integer, driver.loc_);
 }
 
-[-+]?[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)? {
+\+[0-9]*\.?[0-9]*([eE][-+]?[0-9]+)? {
+    /* A plus sign was found */
+    std::string tmp(yytext);
+    driver.error(driver.loc_, "Deprecated plus sign in " + tmp + " number.");
+}
+
+\-?0[0-9]+\.?[0-9]*([eE][-+]?[0-9]+)? {
+    /* Floating point with leading zeros. */
+    std::string tmp(yytext);
+    double fp = 0.0;
+    try {
+        fp = boost::lexical_cast<double>(tmp);
+    } catch (const boost::bad_lexical_cast &) {
+        driver.error(driver.loc_, "Failed to convert " + tmp + " to a floating point.");
+    }
+
+    driver.warning(driver.loc_, "leading zeros in numbers will be deprecated.");
+
+    return isc::dhcp::Dhcp6Parser::make_FLOAT(fp, driver.loc_);
+}
+
+\-?(0|[1-9][0-9]*)?\.?[0-9]*([eE][-+]?[0-9]+)? {
     /* A floating point was found. */
     std::string tmp(yytext);
     double fp = 0.0;
