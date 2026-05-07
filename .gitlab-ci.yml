@@ -48,6 +48,12 @@ are-database-scripts-in-sync:
   script:
     - ./src/share/database/scripts/utils/are-scripts-in-sync.py
 
+changelog-lint:
+  stage: test
+  <<: *rules_for_test_stage
+  script:
+    - tools/changelog_lint.py
+
 check-for-json-errors-in-doc:
   stage: test
   <<: *rules_for_test_stage
