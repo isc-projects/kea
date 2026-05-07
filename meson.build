@@ -1113,7 +1113,9 @@ else
         # TODO: kea#3741 Rewrite kea-msg-compiler in Python
         warning('Message generation is disabled when Kea is cross-compiled.')
     else
-        error('No messages to generate. This is probably an error in the meson.build files.')
+        error(
+            'No messages to generate. This is probably an error in the meson.build files.',
+        )
     endif
 endif
 if TARGETS_GEN_PARSER.length() > 0
