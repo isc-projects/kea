@@ -1,12 +1,12 @@
 {
     "access": "read",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command fetches a list of all v6 SFLQ pools that belong to a subnet from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool6-get-get-by-subnet\"",
+        "   \"command\": \"sflq-pool6-get-by-subnet\",",
         "   \"arguments\": {",
         "       \"subnet-id\": 100",
         "   }",

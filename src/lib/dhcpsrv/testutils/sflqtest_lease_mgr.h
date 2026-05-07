@@ -59,7 +59,7 @@ struct SflqPool {
 
     /// @brief Creates an SflqPoolInfo instance from this pool.
     ///
-    /// SflqPoolInfo is the pool representaion returned by SFLQ API
+    /// SflqPoolInfo is the pool representation returned by SFLQ API
     /// "get" functions. The SflqPoolInfo timestamp members are set
     /// to the current time.
     ///

@@ -1,15 +1,15 @@
 {
     "access": "read",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command fetches a list of all v4 SFLQ pools that overlap an address range from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool4-get-get-by-range\"",
+        "   \"command\": \"sflq-pool4-get-by-range\",",
         "   \"arguments\": {",
-        "       \"end-address\": \"192.0.2.255\",",
-        "       \"start-address\": \"192.0.2.0\"",
+        "       \"start-address\": \"192.0.2.0\",",
+        "       \"end-address\": \"192.0.2.255\"",
         "   }",
         "}"
     ],
@@ -30,7 +30,8 @@
         "            \"start-address\": \"192.0.2.0\",",
         "            \"subnet-id\": 123",
         "       }",
-        "]]",
+        "   ]",
+        "},",
         "\"result\": 0,",
         "\"text\": \"1 pool(s) found.\"",
         "}"

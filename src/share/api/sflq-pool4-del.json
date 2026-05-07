@@ -1,15 +1,15 @@
 {
     "access": "write",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command deletes a pool that exactly matches an address range from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool4-del\"",
+        "   \"command\": \"sflq-pool4-del\",",
         "   \"arguments\": {",
-        "       \"end-address\": \"192.0.2.255\",",
         "       \"start-address\": \"192.0.2.0\",",
+        "       \"end-address\": \"192.0.2.255\",",
         "       \"force\": true",
         "   }",
         "}"

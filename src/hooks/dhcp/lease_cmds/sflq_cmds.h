@@ -25,7 +25,7 @@ namespace lease_cmds {
 /// SFLQ pools and data.
 class SflqCmdsImpl : private config::CmdsImpl {
 public:
-    /// @brief Consstructor.
+    /// @brief Constructor.
     SflqCmdsImpl() {};
 
     /// @brief Destructor.
@@ -329,12 +329,12 @@ public:
 
     /// @brief Extracts an ip address range from given parameters map
     ///
-    /// Expects the map to contain valid addressess of the the given
+    /// Expects the map to contain valid addresses of the the given
     /// family (AF_INET or AF_INET6), specified as 'start-address' and
     /// 'end-address' and where the former is less than or equal to the
     /// latter.
     ///
-    /// @param params Element map containging the command arguments.
+    /// @param params Element map containing the command arguments.
     /// @param family protocol family (AF_INET or AF_INET6).
     /// @param[out] start_address IOAddress reference which receives the
     /// extracted start-address value
@@ -353,7 +353,7 @@ public:
     /// value. If the parameter is not found in the map, the function will
     /// the function will return the default value.
     ///
-    /// @param params Element map containging the command arguments.
+    /// @param params Element map containing the command arguments.
     /// @param name name of the desired parameter.
     /// @param default_value value to return if the parameter is optional and
     /// not specified.
@@ -369,7 +369,7 @@ public:
     /// if it is present and is >= 1 and <= 128. If it is not present
     /// it returns a value of 128.
     ///
-    /// @param params Element map containging the command arguments.
+    /// @param params Element map containing the command arguments.
     /// @param lease_type Lease::Type supplied with the arguments (IA_NA
     /// or IA_PD)
     ///
@@ -384,7 +384,7 @@ public:
     /// For v4 it can be either "V4" or "3", for V6 it can be "IA_NA"
     /// "0", "IA_PD", or "2".
     ///
-    /// @param params Element map containging the command arguments.
+    /// @param params Element map containing the command arguments.
     /// @param family protocol family (AF_INET or AF_INET6).
     ///
     /// @throw BadValue if the parameter is not valid for the protocol
@@ -395,7 +395,7 @@ public:
 
 /// @brief Wrapper class around SFLQ pool commands.
 ///
-/// This provides the interfacew through which callouts
+/// This provides the interface through which callouts
 /// execute the commands.
 class SflqCmds {
 public:

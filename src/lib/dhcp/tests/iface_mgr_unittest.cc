@@ -1870,7 +1870,7 @@ TEST_F(IfaceMgrTest, getIfaceByIndex) {
     ASSERT_TRUE(iface);
     EXPECT_EQ("lo", iface->getName());
 
-    // Attemt to get an undefined interface.
+    // Attempt to get an undefined interface.
     iface = ifacemgr.getIface(3);
     EXPECT_FALSE(iface);
 

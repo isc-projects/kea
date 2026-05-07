@@ -9126,7 +9126,7 @@ Shared Free Lease Queue Allocator
 
 .. warning::
 
-    Added in Kea 3.2.0, Shared Free Lease Queue Allocator is considered
+    Added in Kea 3.1.9, Shared Free Lease Queue Allocator is considered
     experimental and is not supported for production use.
 
 The Shared Free Lease Queue (SFLQ) Allocator is intended for use sites with

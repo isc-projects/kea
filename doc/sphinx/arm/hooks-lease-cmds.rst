@@ -113,30 +113,30 @@ This library provides the following commands:
 
 -  :isccmd:`lease6-write` - writes the IPv6 memfile lease database into a file.
 
--  :isccmd::`sflq-pool4-create` - creates an IPv4 SFLQ pool in the lease back end.
+-  :iscmd:`sflq-pool4-create` - creates an IPv4 SFLQ pool in the lease back end.
 
--  :isccmd::`sflq-pool6-create` - creates an IPv6 SFLQ pool in the lease back end.
+-  :iscmd:`sflq-pool6-create` - creates an IPv6 SFLQ pool in the lease back end.
 
--  :isccmd::`sflq-pool4-get-all` - fetches all IPv4 SFLQ pools from the lease back end.
+-  :iscmd:`sflq-pool4-get-all` - fetches all IPv4 SFLQ pools from the lease back end.
 
--  :isccmd::`sflq-pool6-get-all` - fetches all IPv6 SFLQ pools from the lease back end.
+-  :iscmd:`sflq-pool6-get-all` - fetches all IPv6 SFLQ pools from the lease back end.
 
--  :isccmd::`sflq-pool4-get-by-subnet` - fetches all IPv4 SFLQ pools that belong to
+-  :iscmd:`sflq-pool4-get-by-subnet` - fetches all IPv4 SFLQ pools that belong to
    a subnet from the lease back end.
 
--  :isccmd::`sflq-pool6-get-by-subnet` - fetches all IPv6 SFLQ pools that belong to
+-  :iscmd:`sflq-pool6-get-by-subnet` - fetches all IPv6 SFLQ pools that belong to
    a subnet from the lease back end.
 
--  :isccmd::`sflq-pool4-get-by-range` - fetches all IPv4 SFLQ pools that overlap an
+-  :iscmd:`sflq-pool4-get-by-range` - fetches all IPv4 SFLQ pools that overlap an
    address range from the lease back end.
 
--  :isccmd::`sflq-pool6-get-by-range` - fetches all IPv6 SFLQ pools that overlap an
+-  :iscmd:`sflq-pool6-get-by-range` - fetches all IPv6 SFLQ pools that overlap an
    address range from the lease back end.
 
--  :isccmd::`sflq-pool4-del` - deletes an IPv4 SFLQ pool that matches an address
+-  :iscmd:`sflq-pool4-del` - deletes an IPv4 SFLQ pool that matches an address
    range from the lease back end.
 
--  :isccmd::`sflq-pool6-del` - deletes an IPv6 SFLQ pool that matches an address
+-  :iscmd:`sflq-pool6-del` - deletes an IPv6 SFLQ pool that matches an address
    range from the lease back end.
 
 All commands use JSON syntax and can be issued either using the control
@@ -1285,7 +1285,7 @@ recreating an IPv6 SFLQ pool for a prefix delegation pool is shown below:
     For large pools (e.g. >= 1 million address/prefixes), this command can take
     twenty seconds or more. During this time the server will not process
     client queries. Make sure the tool with which you send the commands
-    is confgured for long time outs. Once submitted to the lease back
+    is configured for long time outs. Once submitted to the lease back
     end the query will continue to run, even if the API client disconnects.
 
 The command returns a status that indicates either success (result 0)

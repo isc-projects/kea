@@ -133,7 +133,7 @@ public:
     /// equal to their rhs counterparts.  Asserts if they are not "equal".
     ///
     /// @param lhs left-side instance to compare
-    /// @param rhs reft-side instance to compare
+    /// @param rhs left-side instance to compare
     /// @param lineno source line of invocation (pass in __LINE__)
     void checkPoolInfos(const SflqPoolInfo& lhs, const SflqPoolInfo& rhs, int lineno) {
         ASSERT_TRUE(lhs.lease_type_ == rhs.lease_type_ &&
@@ -172,7 +172,7 @@ public:
 
         auto family = isc::dhcp::CfgMgr::instance().getFamily();
         SflqPoolInfoCollectionPtr pool_infos(new SflqPoolInfoCollection());
-        for (int i = 0; i < pools_elem->size(); ++i) {
+        for (size_t i = 0; i < pools_elem->size(); ++i) {
             auto pool_elem = pools_elem->get(i);
             SflqPoolInfoPtr pi(new SflqPoolInfo());
             pi->start_address_ = SimpleParser::getAddress(pool_elem, "start-address");
@@ -189,7 +189,7 @@ public:
         return (pool_infos);
     }
 
-    /// @brief Extracts the value of "lease-type" from commnd parameters
+    /// @brief Extracts the value of "lease-type" from command parameters
     ///
     /// This function is used both for command parameters and unparsing
     /// JSON pool infos.
@@ -364,7 +364,7 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-create", "arguments": {)"
@@ -386,7 +386,7 @@ void SflqCmds4Test::sflqPool4GetAllBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-get-all", "arguments": {)"
@@ -422,7 +422,7 @@ void SflqCmds4Test::sflqPool4GetBySubnetBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-get-by-subnet", "arguments": {)"
@@ -477,7 +477,7 @@ void SflqCmds4Test::sflqPool4GetByRangeBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-get-by-range", "arguments": {)"
@@ -541,7 +541,7 @@ void SflqCmds4Test::sflqPool4DelBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool4-del", "arguments": {)"
@@ -621,7 +621,7 @@ SflqCmds4Test::testSflqCommands() {
     auto pool_infos = extractPools(cmd_rsp);
 
     // Should get them back in order they were created. Dummy back end doesn't sort.
-    for (int i = 0; i < test_pools.size(); ++i) {
+    for (size_t i = 0; i < test_pools.size(); ++i) {
         checkPoolInfos(*(*pool_infos)[i], *test_pools[i], __LINE__);
     }
 
@@ -944,7 +944,7 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool6-create", "arguments": {)"
@@ -966,7 +966,7 @@ void SflqCmds6Test::sflqPool6GetAllBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool6-get-all", "arguments": {)"
@@ -1002,7 +1002,7 @@ void SflqCmds6Test::sflqPool6GetBySubnetBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool6-get-by-subnet", "arguments": {)"
@@ -1057,7 +1057,7 @@ void SflqCmds6Test::sflqPool6GetByRangeBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool6-get-by-range", "arguments": {)"
@@ -1122,7 +1122,7 @@ void SflqCmds6Test::sflqPool6DelBadParams() {
 
     for ( auto const& scenario : scenarios) {
         std::ostringstream oss;
-        oss << "Scenerio at line: " << scenario.line_;
+        oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
         command << R"({ "command": "sflq-pool6-del", "arguments": {)"
@@ -1208,7 +1208,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     pool_infos = extractPools(cmd_rsp);
 
     // Should get them back in order they were created. Dummy back end doesn't sort.
-    for (int i = 0; i < test_pools.size(); ++i) {
+    for (size_t i = 0; i < test_pools.size(); ++i) {
         checkPoolInfos(*(*pool_infos)[i], *test_pools[i], __LINE__);
     }
 

@@ -1,12 +1,12 @@
 {
     "access": "read",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command fetches a list of all v4 SFLQ pools that belong to a subnet from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool4-get-get-by-subnet\"",
+        "   \"command\": \"sflq-pool4-get-by-subnet\",",
         "   \"arguments\": {",
         "       \"subnet-id\": 123",
         "   }",
@@ -29,7 +29,8 @@
         "            \"start-address\": \"192.0.2.0\",",
         "            \"subnet-id\": 123",
         "       }",
-        "]]",
+        "   ]",
+        "},",
         "\"result\": 0,",
         "\"text\": \"1 pool(s) found.\"",
         "}"

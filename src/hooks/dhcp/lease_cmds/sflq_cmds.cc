@@ -483,7 +483,7 @@ SflqCmdsImpl::extractDelegatedLen(ConstElementPtr& params,
                   << ", it must be >= 1 and =< 128");
     }
 
-    if (lease_type == Lease::TYPE_NA) {
+    if (lease_type == Lease::TYPE_NA && val != 128) {
         isc_throw(BadValue, "'delegated-len' must only be 128 for IA_NA pools");
     }
 

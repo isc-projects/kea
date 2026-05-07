@@ -1,15 +1,15 @@
 {
     "access": "read",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command fetches a list of all v6 SFLQ pools that overlap an address range from the lease back end."
     ],
     "cmd-syntax": [
         "{",
-        "   \"command\": \"sflq-pool6-get-get-by-range\"",
+        "   \"command\": \"sflq-pool6-get-by-range\",",
         "   \"arguments\": {",
-        "       \"end-address\": \"3001::FFFF\",",
-		"       \"start-address\": \"3001::10\"",
+        "       \"start-address\": \"3001::10\",",
+        "       \"end-address\": \"3001::ffff\"",
         "   }",
         "}"
     ],

@@ -1,6 +1,6 @@
 {
     "access": "write",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command instructs the lease back end to create a v6 SFLQ pool and its free lease data."
     ],
@@ -8,12 +8,11 @@
         "{",
         "    \"command\": \"sflq-pool6-create\",",
         "    \"arguments\": {",
-        "       \"start-address\": \"2001:db8:1::\",",  
-        "       \"end-address\": \"2001:db8:1::FFFF\",",  
+        "       \"start-address\": \"2001:db8:1::\",",
+        "       \"end-address\": \"2001:db8:1::ffff\",",
         "       \"lease-type\": \"IA_PD\"," ,
         "       \"delegated-len\": 120,",
         "       \"recreate\" : false",
-        "        } ]",
         "    }",
         "}"
     ],

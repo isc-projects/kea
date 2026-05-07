@@ -1,6 +1,6 @@
 {
     "access": "read",
-    "avail": "3.2.0",
+    "avail": "3.1.9",
     "brief": [
         "This command fetches a list of all v6 SFLQ pools from the lease back end."
     ],
