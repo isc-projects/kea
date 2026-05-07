@@ -195,7 +195,7 @@ boost_dep = dependency('boost', version: '>=1.69', required: false)
 if not boost_dep.found()
     boost_dep = dependency('boost', version: '>=1.66', modules: ['system'])
 endif
-dl_dep = dependency('dl')
+dl_dep = dependency('dl', required: not meson.is_cross_build())
 threads_dep = dependency('threads')
 add_project_dependencies(boost_dep, dl_dep, threads_dep, language: ['cpp'])
 
@@ -1108,9 +1108,13 @@ pkg.generate(
 if TARGETS_GEN_MESSAGES.length() > 0
     alias_target('messages', TARGETS_GEN_MESSAGES)
 else
-    error(
-        'No messages to generate. This is probably an error in the meson.build files.',
-    )
+    if meson.is_cross_build()
+        # Cross-built kea-msg-compiler cannot be run on the host.
+        # TODO: kea#3741 Rewrite kea-msg-compiler in Python
+        warning('Message generation is disabled when Kea is cross-compiled.')
+    else
+        error('No messages to generate. This is probably an error in the meson.build files.')
+    endif
 endif
 if TARGETS_GEN_PARSER.length() > 0
     alias_target('parser', TARGETS_GEN_PARSER)
