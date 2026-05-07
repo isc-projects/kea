@@ -172,15 +172,15 @@ HttpCommandResponseCreator::createDynamicHttpResponse(HttpRequestPtr request) {
     // Process command doesn't generate exceptions but can possibly return
     // null response, if the handler is not implemented properly. This is
     // again an internal server issue.
-    // Check service first.
+    // Check the services argument first.
     ConstElementPtr response = checkService(command);
     if (!response) {
         response = config::CommandMgr::instance().processCommand(command);
-    }
-
-    if (!response) {
-        // Notify the client that we have a problem with our server.
-        return (createStockHttpResponse(request, HttpStatusCode::INTERNAL_SERVER_ERROR));
+        if (!response) {
+            // Notify the client that we have a problem with our server.
+            return (createStockHttpResponse(request,
+                        HttpStatusCode::INTERNAL_SERVER_ERROR));
+        }
     }
 
     // Normal Responses coming from the Kea server must always be wrapped in

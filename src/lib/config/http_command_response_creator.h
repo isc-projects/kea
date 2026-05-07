@@ -87,7 +87,10 @@ private:
     virtual http::HttpResponsePtr
     createDynamicHttpResponse(http::HttpRequestPtr request);
 
-    /// @brief Check the service.
+    /// @brief Checks the services argument.
+    ///
+    /// If the command includes a services argument it must match the response
+    /// creator's service name. If not an error response is returned.
     ///
     /// @param command The command.
     /// @return A response with the error or null.
