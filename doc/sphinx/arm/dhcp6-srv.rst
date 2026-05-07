@@ -1152,7 +1152,8 @@ allows clients to send unicast messages to the server.
 
 .. note::
 
-   The unicast option was deprecated by the last DHCPv6 RFC, trying
+   The unicast option was deprecated by the `RFC 9915
+   <https://datatracker.ietf.org/doc/html/rfc9915>`__, trying
    to add one in responses triggers a warning and the server no
    longer accepts unicast direct queries (vs unicast relayed queries).
 
@@ -1898,7 +1899,8 @@ types are given in :ref:`dhcp-types`.
    | addr-reg-enable          | 148             | empty           | false           |
    +--------------------------+-----------------+-----------------+-----------------+
 
-The unicast option was deprecated by the last DHCPv6 RFC, it is still
+The unicast option was deprecated by the `RFC 9915
+<https://datatracker.ietf.org/doc/html/rfc9915>`__, it is still
 supported but not be used and will be removed in a further Kea release.
 
 Options marked with (1) have option definitions, but the logic behind

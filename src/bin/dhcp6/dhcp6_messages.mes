@@ -54,9 +54,8 @@ register, and the description of the problem are printed.
 
 % DHCP6_ADD_DEPRECATED_UNICAST %1: adding deprecated unicast option
 The warning is logged when the deprecated unicast option is added
-to a response which is displayed. Outside testing purpose the
-server configuration should be fixed as unicast queries are no
-longer accepted.
+to the response. Outside testing purpose the server configuration should
+be fixed as direct unicast queries are no longer accepted.
 
 % DHCP6_ADD_GLOBAL_STATUS_CODE %1: adding Status Code to DHCPv6 packet: %2
 Logged at debug log level 50.

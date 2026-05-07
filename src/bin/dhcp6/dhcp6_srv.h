@@ -330,10 +330,10 @@ protected:
 
     /// @brief Check if the message can be sent to unicast.
     ///
-    /// RFC 9915 updated to refuse all messages from clients.
+    /// RFC 9915 updated to refuse direct messages that are unicast.
     ///
     /// @param pkt DHCPv6 message to be checked.
-    /// @return false if the message has been sent to unicast address.
+    /// @return false if the message is direct and to unicast address.
     bool testUnicast(const Pkt6Ptr& pkt) const;
 
     /// @brief Verifies if specified packet meets RFC requirements

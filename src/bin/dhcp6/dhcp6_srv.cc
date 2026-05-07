@@ -408,12 +408,12 @@ Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
 bool
 Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
     if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
-	LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
-	    .arg(pkt->getLabel())
-	    .arg(pkt->getName());
-	StatsMgr::instance().addValue("pkt6-rfc-violation",
-				      static_cast<int64_t>(1));
-	return (false);
+        LOG_DEBUG(bad_packet6_logger, DBGLVL_PKT_HANDLING, DHCP6_PACKET_DROP_UNICAST)
+            .arg(pkt->getLabel())
+            .arg(pkt->getName());
+        StatsMgr::instance().addValue("pkt6-rfc-violation",
+                                      static_cast<int64_t>(1));
+        return (false);
     }
     return (true);
 }
