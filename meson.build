@@ -306,11 +306,14 @@ if netconf_opt.allowed()
 endif
 
 # Google Test
-GTEST_DEP = dependency(
-    'gtest',
-    fallback: ['gtest', 'gtest_dep'],
-    required: FUZZ_OPT.enabled() or TESTS_OPT.enabled(),
-)
+GTEST_DEP = disabler()
+if FUZZ_OPT.enabled() or TESTS_OPT.enabled()
+    GTEST_DEP = dependency(
+        'gtest',
+        fallback: ['gtest', 'gtest_dep'],
+        required: true,
+    )
+endif
 
 # Crypto
 if crypto_opt == 'botan'
@@ -529,14 +532,6 @@ if MYSQL_DEP.found()
         dependencies: [MYSQL_DEP],
     )
     conf_data.set('HAVE_MYSQL_GET_OPTION', result)
-endif
-
-if FUZZ_OPT.enabled()
-    result = cpp.run(
-        fs.read('compiler-checks/fuzzing-with-clusterfuzzlite.cc'),
-        name: 'FUZZING_WITH_CLUSTERFUZZLITE',
-    )
-    FUZZING_WITH_CLUSTERFUZZLITE = result.returncode() == 0
 endif
 
 have_afl = cpp.has_define('__AFL_COMPILER')
@@ -834,7 +829,7 @@ result = cpp.get_define(
 if result != ''
     version = result.strip()
 else
-    version = log4cplus.version()
+    version = LOG4CPLUS_DEP.version()
 endif
 if version == 'unknown'
     version = 'unknown version'
