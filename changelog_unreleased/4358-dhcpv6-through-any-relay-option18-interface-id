@@ -1,0 +1,6 @@
+[bug]		fdupont
+	Extended DHCPv6 relayed query processing to consider
+	the 'interface-id' option (18) in subnet selection
+	even when no relay sets its link-address to a global
+	unicast address, e.g. is a layer-2 relay.
+	(Gitlab #4358)

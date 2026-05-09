@@ -372,7 +372,7 @@ TEST(CfgSubnets6Test, selectSubnetByNetworkRelayAddress) {
 }
 
 // This test checks that the subnet can be selected using an interface
-// name associated with a asubnet.
+// name associated with a subnet.
 TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
     CfgSubnets6 cfg;
 
@@ -422,7 +422,7 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
 }
 
 // This test checks that the subnet can be selected using an Interface ID
-// option inserted by a relay.
+// option inserted by a relay (TODO: merge with the L2 variant).
 TEST(CfgSubnets6Test, selectSubnetByInterfaceId) {
     CfgSubnets6 cfg;
 
@@ -454,6 +454,65 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceId) {
     // Note that some link address must be specified to indicate that it is
     // a relayed message!
     selector.first_relay_linkaddr_ = IOAddress("5000::1");
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+
+    // Add one of the subnets.
+    cfg.add(subnet1);
+
+    // If only one subnet has been specified, it should be returned when the
+    // interface id matches. But, for a different interface id there should be
+    // no match.
+    EXPECT_EQ(subnet1, cfg.selectSubnet(selector));
+    selector.interface_id_ = ifaceid2;
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+
+    // Add other subnets.
+    cfg.add(subnet2);
+    cfg.add(subnet3);
+
+    // Now that we have all subnets added. we should be able to retrieve them
+    // using appropriate interface ids.
+    selector.interface_id_ = ifaceid3;
+    EXPECT_EQ(subnet3, cfg.selectSubnet(selector));
+    selector.interface_id_ = ifaceid2;
+    EXPECT_EQ(subnet2, cfg.selectSubnet(selector));
+
+    // For invalid interface id, there should be nothing returned.
+    selector.interface_id_ = ifaceid_bogus;
+    EXPECT_FALSE(cfg.selectSubnet(selector));
+}
+
+// This test checks that the subnet can be selected using an Interface ID
+// option inserted by a L2 relay.
+TEST(CfgSubnets6Test, selectSubnetByInterfaceIdL2) {
+    CfgSubnets6 cfg;
+
+    // Create 3 subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"),
+                                   48, 1, 2, 3, 4, SubnetID(1)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"),
+                                   48, 1, 2, 3, 4, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"),
+                                   48, 1, 2, 3, 4, SubnetID(3)));
+
+    // Create Interface-id options used in subnets 1,2, and 3
+    OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
+    OptionPtr ifaceid2 = generateInterfaceId("VL32");
+    // That's a strange interface-id, but this is a real life example
+    OptionPtr ifaceid3 = generateInterfaceId("ISAM144|299|ipv6|nt:vp:1:110");
+
+    // Bogus interface-id.
+    OptionPtr ifaceid_bogus = generateInterfaceId("non-existent");
+
+    // Assign interface ids to the respective subnets.
+    subnet1->setInterfaceId(ifaceid1);
+    subnet2->setInterfaceId(ifaceid2);
+    subnet3->setInterfaceId(ifaceid3);
+
+    // There shouldn't be any subnet configured at this stage.
+    SubnetSelector selector;
+    selector.interface_id_ = ifaceid1;
+    // No longer need to set the relay link address.
     EXPECT_FALSE(cfg.selectSubnet(selector));
 
     // Add one of the subnets.
@@ -626,7 +685,7 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceIdAndClassify) {
     // If we have only a single subnet and the request came from a local
     // address, let's use that subnet
     SubnetSelector selector;
-    selector.first_relay_linkaddr_ = IOAddress("5000::1");
+    // No longer need to set the relay link address.
     selector.client_classes_.insert("bar");
     selector.interface_id_ = ifaceid1;
     EXPECT_EQ(subnet1, cfg.selectSubnet(selector));

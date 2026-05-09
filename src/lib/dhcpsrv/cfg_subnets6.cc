@@ -211,6 +211,7 @@ CfgSubnets6::initSelector(const Pkt6Ptr& query) {
     // Initialize fields specific to relayed messages.
     if (!query->relay_info_.empty()) {
         for (auto const& relay : boost::adaptors::reverse(query->relay_info_)) {
+            // Note that a link local address is useless so skip it.
             if (!relay.linkaddr_.isV6Zero() &&
                 !relay.linkaddr_.isV6LinkLocal()) {
                 selector.first_relay_linkaddr_ = relay.linkaddr_;
@@ -229,9 +230,10 @@ ConstSubnet6Ptr
 CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
     ConstSubnet6Ptr subnet;
 
-    // If relay agent link address is set to zero it means that we're dealing
-    // with a directly connected client.
-    if (selector.first_relay_linkaddr_ == IOAddress("::")) {
+    // If relay agent link address is set to zero and there is no interface id
+    // it means that we're dealing with a directly connected client.
+    if ((selector.first_relay_linkaddr_ == IOAddress("::")) &&
+        !selector.interface_id_) {
         // If interface name is known try to match it with interface names
         // specified for configured subnets.
         if (!selector.iface_name_.empty()) {
@@ -252,7 +254,7 @@ CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
 
         // If Interface ID option could not be matched for any subnet, try
         // the relay agent link address.
-        if (!subnet) {
+        if (!subnet && (selector.first_relay_linkaddr_ != IOAddress("::"))) {
             subnet = selectSubnet(selector.first_relay_linkaddr_,
                                   selector.client_classes_,
                                   true);
