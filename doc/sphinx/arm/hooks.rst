@@ -169,7 +169,6 @@ with the following subscriber libraries:
 
 .. code-block:: console
 
-   /usr/local/lib/kea/hooks/libca_rbac.so -> libdhcp_rbac.so
    /usr/local/lib/kea/hooks/libdhcp_cb_cmds.so
    /usr/local/lib/kea/hooks/libdhcp_rbac.so
 
