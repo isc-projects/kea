@@ -122,7 +122,15 @@ Option6ClientFqdnImpl::Option6ClientFqdnImpl(OptionBufferConstIter first,
     parseWireData(first, last);
     // Verify that flags value was correct. Do not check if MBZ bits are
     // set because we should ignore those bits in received message.
-    checkFlags(flags_, false);
+    try {
+        checkFlags(flags_, false);
+    } catch (const InvalidOption6FqdnFlags& ex) {
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, ex.what());
+        } else {
+            throw;
+        }
+    }
 }
 
 Option6ClientFqdnImpl::
@@ -429,7 +437,15 @@ Option6ClientFqdn::unpack(OptionBufferConstIter first,
     // Check that the flags in the received option are valid. Ignore MBZ bits
     // because we don't want to discard the whole option because of MBZ bits
     // being set.
-    impl_->checkFlags(impl_->flags_, false);
+    try {
+        impl_->checkFlags(impl_->flags_, false);
+    } catch (const InvalidOption6FqdnFlags& ex) {
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, ex.what());
+        } else {
+            throw;
+        }
+    }
 }
 
 std::string

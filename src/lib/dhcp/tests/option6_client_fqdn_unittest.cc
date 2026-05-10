@@ -410,8 +410,12 @@ TEST(Option6ClientFqdnTest, constructFromWireInvalidFlags) {
     // Replace the flags with invalid value and verify that constructor throws
     // appropriate exception.
     in_buf[0] = Option6ClientFqdn::FLAG_N | Option6ClientFqdn::FLAG_S;
+    LenientOptionParsing lop(false);
     EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption6FqdnFlags);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(Option6ClientFqdn(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // This test verifies that if invalid domain name is used the constructor
@@ -702,6 +706,15 @@ TEST(Option6ClientFqdnTest, unpack) {
     EXPECT_FALSE(option->getFlag(Option6ClientFqdn::FLAG_O));
     EXPECT_EQ("myhost.example.com.", option->getDomainName());
     EXPECT_EQ(Option6ClientFqdn::FULL, option->getDomainNameType());
+
+    // Check that flags are checked.
+    in_buf[0] |= Option6ClientFqdn::FLAG_N;
+    LenientOptionParsing lop(false);
+    EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()),
+                 InvalidOption6FqdnFlags);
+    Option::lenient_parsing_ = true;
+    EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()),
+                 SkipThisOptionError);
 }
 
 // This test verifies that on-wire option data holding partial domain name

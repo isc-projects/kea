@@ -16,14 +16,14 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Implements the logic for the Option6ClientFqdn class.
+/// @brief Implements the logic for the Option4ClientFqdn class.
 ///
 /// The purpose of the class is to separate the implementation details
 /// of the Option4ClientFqdn class from the interface. This implementation
 /// uses libdns classes to process FQDNs. At some point it may be
 /// desired to split libdhcp++ from libdns. In such case the
 /// implementation of this class may be changed. The declaration of the
-/// Option6ClientFqdn class holds the pointer to implementation, so
+/// Option4ClientFqdn class holds the pointer to implementation, so
 /// the transition to a different implementation would not affect the
 /// header file.
 class Option4ClientFqdnImpl {
@@ -88,7 +88,7 @@ public:
     /// check if the MBZ bits are set (if true). This parameter should be set
     /// to false when validating flags in the received message. This is because
     /// server should ignore MBZ bits in received messages.
-    /// @throw InvalidOption6FqdnFlags if flags are invalid.
+    /// @throw InvalidOption4FqdnFlags if flags are invalid.
     static void checkFlags(const uint8_t flags, const bool check_mbz);
 
     /// @brief Parse the Option provided in the wire format.
@@ -149,7 +149,15 @@ Option4ClientFqdnImpl::Option4ClientFqdnImpl(OptionBufferConstIter first,
     // Verify that flags value was correct. This constructor is used to parse
     // incoming packet, so don't check MBZ bits. They are ignored because we
     // don't want to discard the whole option because MBZ bits are set.
-    checkFlags(flags_, false);
+    try {
+        checkFlags(flags_, false);
+    } catch (const InvalidOption4FqdnFlags& ex) {
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, ex.what());
+        } else {
+            throw;
+        }
+    }
 }
 
 Option4ClientFqdnImpl::
@@ -509,7 +517,15 @@ Option4ClientFqdn::unpack(OptionBufferConstIter first,
     // Check that the flags in the received option are valid. Ignore MBZ bits,
     // because we don't want to discard the whole option because of MBZ bits
     // being set.
-    impl_->checkFlags(impl_->flags_, false);
+    try {
+        impl_->checkFlags(impl_->flags_, false);
+    } catch (const InvalidOption4FqdnFlags& ex) {
+        if (Option::lenient_parsing_) {
+            isc_throw(SkipThisOptionError, ex.what());
+        } else {
+            throw;
+        }
+    }
 }
 
 std::string
