@@ -1,6 +1,6 @@
 {
     "access": "write",
-    "avail": "3.1.8",
+    "avail": "3.1.9",
     "brief": [
         "This command updates the list of interfaces used to process DHCP traffic.",
         "This command takes as parameter the list of interfaces with respective",

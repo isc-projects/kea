@@ -16,6 +16,7 @@
 #include <database/database_connection.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter6_test_stub.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
@@ -3649,6 +3650,8 @@ BaseCtrlChannelDhcpv6Test::testInterfaceList() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilter6Ptr filter(new PktFilter6TestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-list\" }";
@@ -3700,6 +3703,8 @@ BaseCtrlChannelDhcpv6Test::testInterfaceRedetect() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilter6Ptr filter(new PktFilter6TestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
@@ -3787,6 +3792,8 @@ BaseCtrlChannelDhcpv6Test::testInterfaceUse() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilter6Ptr filter(new PktFilter6TestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-use\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";

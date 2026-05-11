@@ -17,6 +17,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter_test_stub.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
@@ -3657,6 +3658,8 @@ BaseCtrlChannelDhcpv4Test::testInterfaceList() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-list\" }";
@@ -3708,6 +3711,8 @@ BaseCtrlChannelDhcpv4Test::testInterfaceRedetect() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     IfacePtr eth1 = IfaceMgrTestConfig::createIface("eth1", ETH1_INDEX,
@@ -3795,6 +3800,8 @@ BaseCtrlChannelDhcpv4Test::testInterfaceUse() {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createHttpChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
     std::string command = "{ \"command\": \"interface-use\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";

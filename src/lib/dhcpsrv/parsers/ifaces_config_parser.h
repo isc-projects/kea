@@ -44,7 +44,6 @@ public:
     /// are invalid.
     void parse(const CfgIfacePtr& config, const isc::data::ConstElementPtr& values);
 
-private:
     /// @brief parses interfaces-list structure
     ///
     /// This method goes through all the interfaces-specified in
@@ -56,6 +55,8 @@ private:
     /// @throw DhcpConfigError if the interface names are invalid.
     void parseInterfacesList(const CfgIfacePtr& cfg_iface,
                              isc::data::ConstElementPtr ifaces_list);
+
+private:
 
     /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
     int protocol_;

@@ -8,7 +8,6 @@ namespace isc {
 namespace dhcp {
 
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_IFACE = "DHCPSRV_CFGMGR_ADD_IFACE";
-extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE = "DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_SUBNET4 = "DHCPSRV_CFGMGR_ADD_SUBNET4";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ADD_SUBNET6 = "DHCPSRV_CFGMGR_ADD_SUBNET6";
 extern const isc::log::MessageID DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE = "DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE";
@@ -192,7 +191,6 @@ namespace {
 
 const char* values[] = {
     "DHCPSRV_CFGMGR_ADD_IFACE", "listening on interface %1",
-    "DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE", "listening on interface %1",
     "DHCPSRV_CFGMGR_ADD_SUBNET4", "adding subnet %1",
     "DHCPSRV_CFGMGR_ADD_SUBNET6", "adding subnet %1",
     "DHCPSRV_CFGMGR_ALL_IFACES_ACTIVE", "enabling listening on all interfaces",

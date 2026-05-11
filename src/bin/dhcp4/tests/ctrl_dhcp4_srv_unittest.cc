@@ -17,6 +17,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/testutils/iface_mgr_test_config.h>
+#include <dhcp/testutils/pkt_filter_test_stub.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease.h>
@@ -2447,6 +2448,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceList) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     SKIP_IF(skipped_);
     std::string response;
 
@@ -2490,6 +2493,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceRedetect) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     SKIP_IF(skipped_);
     std::string response;
 
@@ -2569,6 +2574,8 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceUse) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().detectIfaces();
     createUnixChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
     SKIP_IF(skipped_);
     std::string response;
 

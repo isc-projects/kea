@@ -10,10 +10,6 @@ $NAMESPACE isc::dhcp
 An info message issued when a new interface is being added to the collection of
 interfaces on which the server listens to DHCP messages.
 
-% DHCPSRV_CFGMGR_ADD_IFACE_ON_MERGE listening on interface %1
-An info message issued when a new interface is being added to the collection of
-interfaces on which the server listens to DHCP messages.
-
 % DHCPSRV_CFGMGR_ADD_SUBNET4 adding subnet %1
 Logged at debug log level 40.
 A debug message reported when the DHCP configuration manager is adding the

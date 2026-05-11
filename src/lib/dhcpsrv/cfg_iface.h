@@ -207,13 +207,13 @@ public:
     /// @c CfgIface::use has been already called for this interface.
     void use(const uint16_t family, const std::string& iface_name);
 
-    /// @brief Merge the interface list and address list.
+    /// @brief Update runtime mutable members.
     ///
-    /// @param other The object from which the lists are updated.
-    /// @param family Address family (AF_INET or AF_INET6).
+    /// @note Currently supported members are @ref iface_set_,
+    /// @ref address_map_ and @ref wildcard_used_.
     ///
-    /// @return true if any change has been done, false otherwise.
-    bool merge(const CfgIface& other, const uint16_t family);
+    /// @param other The other object to update members from.
+    void update(CfgIface& other);
 
     /// @brief Sets the specified socket type to be used by the server.
     ///

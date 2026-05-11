@@ -680,17 +680,20 @@ ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
                                                  ConstElementPtr) {
     ElementPtr ifaces = Element::createMap();
+    bool error = false;
     std::string message;
     try {
         ifaces->set("interfaces", IfaceMgr::instance().ifacesToElement());
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
+        error = true;
         message = ex.what();
     } catch (...) {
+        error = true;
         message = "unknown error";
     }
 
     ostringstream msg;
-    if (message.empty()) {
+    if (!error) {
         msg << IfaceMgr::instance().getIfaces().size()
             << " interfaces detected.";
         return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, msg.str(), ifaces));
@@ -703,17 +706,20 @@ ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
                                                      ConstElementPtr args) {
+    bool error = false;
     std::string message;
     try {
         IfaceMgr::instance().detectIfaces(true);
-    } catch (std::exception& ex) {
+    } catch (const std::exception& ex) {
+        error = true;
         message = ex.what();
     } catch (...) {
+        error = true;
         message = "unknown error";
     }
 
     ostringstream msg;
-    if (message.empty()) {
+    if (!error) {
         return (ControlledDhcpv4Srv::commandInterfaceListHandler("", args));
     } else {
         msg << "Unexpected error while retrieving the list of detected interfaces: " << message;
@@ -724,6 +730,7 @@ ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceUseHandler(const std::string&,
                                                 ConstElementPtr args) {
+    bool error = false;
     string message;
     ConstElementPtr ifaces_config;
     if (!args) {
@@ -750,23 +757,24 @@ ControlledDhcpv4Srv::commandInterfaceUseHandler(const std::string&,
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, message));
     }
     try {
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(args);
-        mutable_cfg->set("re-detect", Element::create(false));
+        CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
+        ElementPtr mutable_running_cfg = running_cfg_iface->toElement();
+        merge(mutable_running_cfg, args);
         IfacesConfigParser parser(AF_INET, true);
         CfgIfacePtr cfg_iface(new CfgIface());
-        parser.parse(cfg_iface, args);
-        CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
-        if (running_cfg_iface->merge(*cfg_iface, AF_INET)) {
-            running_cfg_iface->triggerOpenSocketsWithRetry(AF_INET, getServerPort(), useBroadcast());
-        }
-    } catch (std::exception& ex) {
+        parser.parseInterfacesList(cfg_iface, mutable_running_cfg->get("interfaces"));
+        CfgMgr::instance().getCurrentCfg()->getCfgIface()->update(*cfg_iface);
+        running_cfg_iface->triggerOpenSocketsWithRetry(AF_INET, getServerPort(), useBroadcast());
+    } catch (const std::exception& ex) {
+        error = true;
         message = ex.what();
     } catch (...) {
+        error = true;
         message = "unknown error";
     }
 
     ostringstream msg;
-    if (message.empty()) {
+    if (!error) {
         return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
     } else {
         msg << "Unexpected error while updating used interfaces: " << message;
