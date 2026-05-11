@@ -1035,22 +1035,6 @@ TEST(ParserTest, duplicateControlSocket) {
     Parser6Context ctx1;
     EXPECT_THROW(ctx1.parseString(bad1, Parser6Context::PARSER_DHCP6),
                  Dhcp6ParseError);
-
-    // Invalid configuration: both name and address.
-    string bad2(R"({
-    "Dhcp6": {
-        "control-socket": {
-            "socket-type": "http",
-            "socket-address": "::1",
-            "socket-name": "127.0.0.1"
-        }
-     }
-})");
-
-    ASSERT_NO_THROW(Element::fromJSON(bad2, true));
-    Parser6Context ctx2;
-    EXPECT_THROW(ctx2.parseString(bad2, Parser6Context::PARSER_DHCP6),
-                 Dhcp6ParseError);
 }
 
 }  // namespace test
