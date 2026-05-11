@@ -290,7 +290,7 @@ public:
     /// @return an uint32_t value
     /// @throw isc::dhcp::DhcpConfigError when it is not an uint32_t
     uint32_t getUint32(isc::data::ConstElementPtr scope,
-                       const std::string& name) {
+                              const std::string& name) {
         return (getIntType<uint32_t>(scope, name));
     }
 

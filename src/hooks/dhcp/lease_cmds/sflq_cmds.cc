@@ -254,7 +254,14 @@ SflqCmdsImpl::sflqPoolGetBySubnet(CalloutHandle& handle, uint16_t family) {
 
         SimpleParser::checkRequired(required_keywords, cmd_args_);
         SimpleParser::checkKeywords(keywords, cmd_args_);
-        SubnetID subnet_id = SimpleParser::getInteger(cmd_args_, "subnet-id");
+
+        // Extract subnet-id.
+        int64_t subnet_id = SimpleParser::getInteger(cmd_args_, "subnet-id");
+        if ((subnet_id < 1) || (subnet_id >= SUBNET_ID_UNUSED)) {
+            isc_throw(isc::BadValue, "'subnet-id' " << subnet_id << " is invalid,"
+                                     " must be greater than zero and less than "
+                                     << SUBNET_ID_UNUSED);
+        }
 
         // Invoke the pool get by subnet function.
         auto pools = (family == AF_INET ? LeaseMgrFactory::instance().sflqPool4Get(subnet_id)

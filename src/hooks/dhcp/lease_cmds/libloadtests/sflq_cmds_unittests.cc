@@ -417,6 +417,14 @@ void SflqCmds4Test::sflqPool4GetBySubnetBadParams() {
             "bogus" : "fluff"
         )",
         "spurious 'bogus' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": -1
+        )",
+        "'subnet-id' -1 is invalid, must be greater than zero"
+        " and less than 4294967295"
     }
     };
 
@@ -997,6 +1005,14 @@ void SflqCmds6Test::sflqPool6GetBySubnetBadParams() {
             "bogus" : "fluff"
         )",
         "spurious 'bogus' parameter"
+    },
+    {
+        __LINE__,
+        R"(
+            "subnet-id": -1
+        )",
+        "'subnet-id' -1 is invalid, must be greater than zero"
+        " and less than 4294967295"
     }
     };
 

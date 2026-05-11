@@ -1312,7 +1312,7 @@ The ``sflq-pool4-get-all``, ``sflq-pool6-get-all`` Commands
 -----------------------------------------------------------
 
 :isccmd:`sflq-pool4-get-all` and :isccmd:`sflq-pool6-get-all` can be used
-to fetch a list of all IPv4 or IPv6 SFLQ pools.  It takes no arguments.
+to fetch a list of all IPv4 or IPv6 SFLQ pools.  They take no arguments.
 
 An example :isccmd:`sflq-pool4-get-all` command for fetching IPv4 SFLQ
 pools:
@@ -1594,7 +1594,7 @@ The ``sflq-pool4-del``, ``sflq-pool6-del`` Commands
 ---------------------------------------------------
 
 :isccmd:`sflq-pool4-del` and :isccmd:`sflq-pool6-del` can be used to delete
-an IPv4 or IPv6 SFLQ pool. It requires two arguments, ``start-address`` and
+an IPv4 or IPv6 SFLQ pool. They require two arguments, ``start-address`` and
 and ``end-address``.  Only a pool whose range matches these values will be
 deleted and only if no other SFLQ pools overlap the range described by these
 values.  If any overlapping pools are detected the delete will fail with an
