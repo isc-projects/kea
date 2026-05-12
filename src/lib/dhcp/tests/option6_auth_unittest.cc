@@ -158,9 +158,7 @@ TEST_F(Option6AuthTest, toText) {
     auth.reset(new Option6Auth(1,2,0,9000,{'a','b','c','d'}));
 
     string exp_txt = "  protocol=1, algorithm=2, rdm method=0, rdm value=9000, value=61626364";
-
-    std::cout << auth->toText(2) << std::endl;
-
+    EXPECT_EQ(exp_txt, auth->toText(2));
 }
 
 } //end namespace
