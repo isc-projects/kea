@@ -67,7 +67,7 @@ std::string decommentJSONfile(const std::string& input_file) {
         // First, let's get rid of the # comments
         size_t hash_pos = line.find("#");
         if (hash_pos != string::npos) {
-            line = line.substr(0, hash_pos);
+            line.resize(hash_pos);
         }
 
         // Second, let's get rid of the // comments
@@ -76,7 +76,7 @@ std::string decommentJSONfile(const std::string& input_file) {
         if ((dblslash_pos != string::npos) &&
             ((dblslash_pos == 0) ||
              ((unsigned) line[dblslash_pos - 1] <= 32))) {
-            line = line.substr(0, dblslash_pos);
+            line.resize(dblslash_pos);
         }
 
         // Now the tricky part: c comments.
@@ -94,7 +94,7 @@ std::string decommentJSONfile(const std::string& input_file) {
                     line = line.replace(begin_pos, end_pos + 2, end_pos + 2 - begin_pos, ' ');
                     in_comment = false;
                 } else {
-                    line = line.substr(0, begin_pos);
+                    line.resize(begin_pos);
                 }
             } else {
                 if (in_comment && end_pos != string::npos) {
