@@ -105,6 +105,7 @@ TEST(ChronoTimeUtilsTest, duration) {
 // The 2015 Bastille day
 TEST(ChronoTimeUtilsTest, bastilleDay) {
     struct tm tm;
+    memset(&tm, 0, sizeof(tm));
     tm.tm_year = 2015 - 1900;
     tm.tm_mon = 7 - 1;
     tm.tm_mday = 14;
