@@ -91,6 +91,10 @@ public:
     /// with an appropriate constructor, the caller must create a
     /// template specialization similar to the one provided for
     /// @c std::string below.
+    ///
+    /// @todo: when C++17 will be required can be solved using "if contexpr"
+    /// for type convertible from int or default constructible.
+    /// This will fix complains from code checkers e.g. cppcheck CWE 476.
     Optional()
         : default_(T(0)), unspecified_(true) {
     }
