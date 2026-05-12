@@ -30,7 +30,7 @@ TEST(CryptoLinkTest, Singleton) {
 
 // Tests whether getRNG() returns a global value
 TEST(CryptoLinkTest, GlobalRNG) {
-    CryptoLink& c = CryptoLink::getCryptoLink();
+    const CryptoLink& c = CryptoLink::getCryptoLink();
     RNGPtr rng1 = c.getRNG();
     RNGPtr rng2 = c.getRNG();
     ASSERT_EQ(rng1, rng2);
