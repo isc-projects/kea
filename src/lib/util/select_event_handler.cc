@@ -21,7 +21,9 @@
 namespace isc {
 namespace util {
 
-SelectEventHandler::SelectEventHandler() : FDEventHandler(TYPE_SELECT), max_fd_(0) {
+SelectEventHandler::SelectEventHandler()
+    : FDEventHandler(TYPE_SELECT), max_fd_(0),
+      read_fd_set_(), read_fd_set_data_() {
     clear();
 }
 

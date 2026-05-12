@@ -103,7 +103,7 @@ public:
     /// \throw InvalidParameter A value type token is specified.
     /// \param type The type of the token.  It must indicate a non-value
     /// type (not larger than \c NOVALUE_TYPE_MAX).
-    explicit MasterToken(Type type) : type_(type) {
+    explicit MasterToken(Type type) : type_(type), val_() {
         if (type > NOVALUE_TYPE_MAX) {
             isc_throw(InvalidParameter, "Token per-type constructor "
                       "called with invalid type: " << type);

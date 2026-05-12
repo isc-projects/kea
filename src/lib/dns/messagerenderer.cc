@@ -163,7 +163,8 @@ struct MessageRenderer::MessageRendererImpl {
     /// \brief Constructor
     MessageRendererImpl() :
         msglength_limit_(512), truncated_(false),
-        compress_mode_(MessageRenderer::CASE_INSENSITIVE) {
+        compress_mode_(MessageRenderer::CASE_INSENSITIVE),
+        seq_hashes_() {
         // Reserve some spaces for hash table items.
         for (size_t i = 0; i < BUCKETS; ++i) {
             table_[i].reserve(RESERVED_ITEMS);
