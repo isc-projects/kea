@@ -39,7 +39,7 @@ Option6StatusCode::Option6StatusCode(OptionBufferConstIter begin,
       status_code_(STATUS_Success), status_message_() {
 
     // Parse data
-    unpack(begin, end);
+    Option6StatusCode::unpack(begin, end);
 }
 
 OptionPtr
@@ -149,7 +149,7 @@ Option4SlpServiceScope::Option4SlpServiceScope(OptionBufferConstIter begin,
       mandatory_flag_(false), scope_list_() {
 
     // Parse data
-    unpack(begin, end);
+    Option4SlpServiceScope::unpack(begin, end);
 }
 
 OptionPtr

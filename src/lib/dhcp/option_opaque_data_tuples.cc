@@ -32,7 +32,7 @@ OptionOpaqueDataTuples::OptionOpaqueDataTuples(Option::Universe u,
     if (length_field_type_ == OpaqueDataTuple::LENGTH_EMPTY) {
         length_field_type_ = OptionDataTypeUtil::getTupleLenFieldType(u);
     }
-    unpack(begin, end);
+    OptionOpaqueDataTuples::unpack(begin, end);
 }
 
 OptionPtr

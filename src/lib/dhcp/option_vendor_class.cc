@@ -28,7 +28,7 @@ OptionVendorClass::OptionVendorClass(Option::Universe u,
                                      OptionBufferConstIter begin,
                                      OptionBufferConstIter end)
     : Option(u, getOptionCode(u)) {
-    unpack(begin, end);
+    OptionVendorClass::unpack(begin, end);
 }
 
 OptionPtr

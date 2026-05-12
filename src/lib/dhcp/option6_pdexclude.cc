@@ -116,7 +116,7 @@ Option6PDExclude::Option6PDExclude(OptionBufferConstIter begin,
     : Option(V6, D6O_PD_EXCLUDE),
       excluded_prefix_length_(0),
       subnet_id_() {
-    unpack(begin, end);
+    Option6PDExclude::unpack(begin, end);
 }
 
 OptionPtr
