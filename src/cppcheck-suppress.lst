@@ -1,6 +1,6 @@
-// Supress errors that are often false positives.
+// Suppress errors that are often false positives.
 missingIncludeSystem
 
-// Supress errors from external sources.
+// Suppress errors from external sources.
 *:/usr/include/*
 *:/usr/src/googletest/*
