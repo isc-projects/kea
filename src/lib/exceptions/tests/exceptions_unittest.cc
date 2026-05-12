@@ -101,9 +101,10 @@ TEST_F(ExceptionTest, message) {
 // Sanity check that 'isc_throw_assert' macro operates correctly.
 TEST(IscThrowAssert, checkMessage) {
     int m = 5;
+    int m1 = 5;
     int n = 7;
 
-    ASSERT_NO_THROW(isc_throw_assert(m == m));
+    ASSERT_NO_THROW(isc_throw_assert(m == m1));
 
     int line_no;
     try {
