@@ -36,7 +36,7 @@ ICMPMsg::unpack(const uint8_t* wire_data, size_t length) {
     }
 
     // Find the IP header length...
-    struct ip* ip_header = (struct ip*)(wire_data);
+    struct ip const* ip_header = reinterpret_cast<struct ip const*>(wire_data);
     auto hlen = (ip_header->ip_hl << 2);
 
     // Make sure we received enough data.

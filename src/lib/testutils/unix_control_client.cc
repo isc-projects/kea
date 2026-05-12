@@ -61,7 +61,7 @@ bool UnixControlClient::connectToServer(const std::string& socket_path) {
     socklen_t len = sizeof(srv_addr);
 
     // Connect to the specified UNIX socket
-    int status = connect(socket_fd_, (struct sockaddr*)&srv_addr, len);
+    int status = connect(socket_fd_, reinterpret_cast<struct sockaddr*>(&srv_addr), len);
     if (status == -1) {
         const char* errmsg = strerror(errno);
         ADD_FAILURE() << "Failed to connect unix socket: fd=" << socket_fd_
