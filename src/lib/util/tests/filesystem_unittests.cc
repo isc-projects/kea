@@ -397,7 +397,7 @@ TEST_F(PathCheckerTest, validatePathEnforcePath) {
 
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         std::ostringstream oss;
         oss << " Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
@@ -489,7 +489,7 @@ TEST_F(PathCheckerTest, validatePathEnforcePathFalse) {
 
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         std::ostringstream oss;
         oss << " Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
@@ -570,7 +570,7 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePath) {
 
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         std::ostringstream oss;
         oss << " Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
@@ -634,7 +634,7 @@ TEST_F(PathCheckerTest, validateDirectoryEnforcePathFalse) {
 
     // Create a PathChecker with a supported path of def_path.
     PathChecker checker(def_path);
-    for (auto scenario : scenarios) {
+    for (auto const& scenario : scenarios) {
         std::ostringstream oss;
         oss << " Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
