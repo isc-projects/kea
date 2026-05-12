@@ -470,7 +470,8 @@ public:
                       " by readInteger is unsupported integer type");
         }
 
-        if (buf.size() < OptionDataTypeTraits<T>::len) {
+        if ((OptionDataTypeTraits<T>::len > 0) &&
+            (buf.size() < OptionDataTypeTraits<T>::len)) {
             isc_throw(isc::dhcp::BadDataTypeCast,
                       "failed to read an integer value from a buffer"
                       << " - buffer is truncated.");
