@@ -18,8 +18,6 @@ namespace {
 
 // Exercises isc::util::areDoublesEquivalent().
 TEST(Doubles, areDoublesEquivalent) {
-    std::vector<uint8_t> data;
-
     // Default tolerance is 0.000001
     EXPECT_TRUE(areDoublesEquivalent( 1.0000000, 1.0000005));
     EXPECT_FALSE(areDoublesEquivalent(1.0000000, 1.000005));
