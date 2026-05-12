@@ -50,7 +50,8 @@ ICMPMsg::unpack(const uint8_t* wire_data, size_t length) {
     msg->setDestination(IOAddress(ntohl(ip_header->ip_dst.s_addr)));
 
     // Get the message type.
-    struct icmp* reply = (struct icmp*)(wire_data + hlen);
+    struct icmp const* reply =
+        reinterpret_cast<struct icmp const*>(wire_data + hlen);
     msg->setType(reply->icmp_type);
     msg->setCode(reply->icmp_code);
 
@@ -59,7 +60,8 @@ ICMPMsg::unpack(const uint8_t* wire_data, size_t length) {
     msg->setSequence(ntohs(reply->icmp_hun.ih_idseq.icd_seq));
 
     auto payload_len = length - hlen - ICMP_HEADER_SIZE;
-    msg->setPayload((const uint8_t*)(&reply->icmp_dun), payload_len);
+    const uint8_t* idata = reinterpret_cast<const uint8_t*>(&reply->icmp_dun);
+    msg->setPayload(idata, payload_len);
 
     return (msg);
 }
@@ -72,7 +74,8 @@ ICMPMsg::pack() const {
     outbound->icmp_id = htons(id_);
     outbound->icmp_seq = htons(sequence_);
     /// @todo copy in payload - not needed for ECHO REQUEST
-    outbound->icmp_cksum = htons(~calcChecksum((const uint8_t*)(outbound.get()), sizeof(struct icmp)));
+    uint8_t* odata = reinterpret_cast<uint8_t*>(outbound.get());
+    outbound->icmp_cksum = htons(~calcChecksum(odata, sizeof(struct icmp)));
     return (outbound);
 }
 
