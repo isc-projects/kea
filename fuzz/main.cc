@@ -58,7 +58,7 @@ main(int, char* argv[]) {
         struct dirent *dp;
         DIR *dfd(opendir(directory.c_str()));
         if (!dfd) {
-            cerr << "ERROR: "opendir failed " << directory << ": "
+            cerr << "ERROR: opendir failed " << directory << ": "
                  << strerror(errno) << endl;
             return 1;
         }
