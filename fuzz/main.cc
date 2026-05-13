@@ -58,7 +58,9 @@ main(int, char* argv[]) {
         struct dirent *dp;
         DIR *dfd(opendir(directory.c_str()));
         if (!dfd) {
-            isc_throw(Unexpected, "opendir failed " << directory << ": " << strerror(errno));
+            cerr << "ERROR: "opendir failed " << directory << ": "
+                 << strerror(errno) << endl;
+            return 1;
         }
         std::unique_ptr<DIR, void(*)(DIR*)> defer(dfd, [](DIR* d) { closedir(d); });
         while ((dp = readdir(dfd)) != nullptr) {
