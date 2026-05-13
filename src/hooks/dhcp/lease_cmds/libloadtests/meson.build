@@ -2,10 +2,7 @@ if not TESTS_OPT.enabled()
     subdir_done()
 endif
 
-libs_testutils = [
-    kea_dhcpsrv_testutils_lib,
-    kea_testutils_lib
-]
+libs_testutils = [kea_dhcpsrv_testutils_lib, kea_testutils_lib]
 
 dhcp_lease_cmds_libload_tests = executable(
     'dhcp-lease-cmds-libload-tests',

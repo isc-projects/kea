@@ -15,9 +15,7 @@ configure_file(
     configuration: kea_hooks_conf_data,
 )
 
-libs_testutils = [
-    kea_testutils_lib
-]
+libs_testutils = [kea_testutils_lib]
 
 nvl = shared_library(
     'nvl',
