@@ -23,7 +23,7 @@ OptionClasslessStaticRoute::OptionClasslessStaticRoute(OptionBufferConstIter beg
                                                        bool convenient_notation)
     : Option(V4, DHO_CLASSLESS_STATIC_ROUTE), static_routes_(), data_len_(0),
       convenient_notation_(convenient_notation) {
-    unpack(begin, end);
+    OptionClasslessStaticRoute::unpack(begin, end);
 }
 
 OptionPtr

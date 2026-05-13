@@ -268,7 +268,7 @@ TCPSocket<C>::TCPSocket(const IOServicePtr& io_service) : io_service_(io_service
 
 template <typename C>
 TCPSocket<C>::~TCPSocket() {
-    close();
+    TCPSocket<C>::close();
 }
 
 // Open the socket.

@@ -179,7 +179,7 @@ UDPSocket<C>::UDPSocket(const IOServicePtr& io_service) : io_service_(io_service
 
 template <typename C>
 UDPSocket<C>::~UDPSocket() {
-    close();
+    UDPSocket<C>::close();
 }
 
 // Open the socket.
