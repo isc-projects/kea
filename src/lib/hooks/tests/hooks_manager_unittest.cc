@@ -1120,11 +1120,11 @@ TEST_F(HooksParserTest, getHooksPath) {
 }
 
 TEST_F(HooksParserTest, getHooksPathWithEnv) {
-    std::string evar("KEA_HOOKS_PATH=/tmp");
-    putenv(const_cast<char*>(evar.c_str()));
+    std::string evar("/tmp");
+    setenv("KEA_HOOKS_PATH", evar.c_str(), 1);
     ASSERT_TRUE(std::getenv("KEA_HOOKS_PATH"));
     auto hooks_path = HooksLibrariesParser::getHooksPath(true);
-    EXPECT_EQ(hooks_path, "/tmp");
+    EXPECT_EQ(hooks_path, evar);
 }
 
 TEST_F(HooksParserTest, getHooksPathExplicit) {

@@ -15,7 +15,7 @@ dhcp_ping_check_libloadtests = executable(
     link_with: [kea_testutils_lib] + LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp-ping-check-libloadtests',
+    'dhcp-ping-check-libload-tests',
     dhcp_ping_check_libloadtests,
     depends: [dhcp_ping_check_lib],
     protocol: 'gtest',

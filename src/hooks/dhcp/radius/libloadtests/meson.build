@@ -16,7 +16,7 @@ dhcp_radius_libloadtests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp-radius-libloadtests',
+    'dhcp-radius-libload-tests',
     dhcp_radius_libloadtests,
     depends: [dhcp_radius_lib],
     protocol: 'gtest',

@@ -14,7 +14,7 @@ dhcp_subnet_cmds_libloadtests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp-subnet-cmds-libloadtests',
+    'dhcp-subnet-cmds-libload-tests',
     dhcp_subnet_cmds_libloadtests,
     depends: [dhcp_subnet_cmds_lib],
     protocol: 'gtest',

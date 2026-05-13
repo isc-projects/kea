@@ -738,6 +738,9 @@ TEST_F(LFCControllerTest, alreadyRunning) {
         ASSERT_NE(-1, child_pid);
         if (child_pid == 0) {
             launch(lfc_controller, argc, argv);
+            char* sh_argv[] = { const_cast<char*>(TEST_SCRIPT_SH), 0 };
+            char* sh_env[] = { 0 };
+            execve(TEST_SCRIPT_SH, sh_argv, sh_env);
             _exit(0);
         }
     }

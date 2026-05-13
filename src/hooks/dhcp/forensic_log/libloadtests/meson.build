@@ -35,7 +35,7 @@ dhcp_forensic_log_libloadtests = executable(
 )
 
 test(
-    'dhcp-forensic-log-libloadtests',
+    'dhcp-forensic-log-libload-tests',
     dhcp_forensic_log_libloadtests,
     depends: [dhcp_forensic_log_lib],
     protocol: 'gtest',

@@ -16,7 +16,7 @@ dhcp_flex_id_libloadtests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp-flex-id-libloadtests',
+    'dhcp-flex-id-libload-tests',
     dhcp_flex_id_libloadtests,
     depends: [dhcp_flex_id_lib],
     protocol: 'gtest',

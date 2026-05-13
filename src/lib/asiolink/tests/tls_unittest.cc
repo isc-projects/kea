@@ -387,7 +387,7 @@ public:
                 }
             }
             // Should have failed but did not: bad.
-            ADD_FAILURE() << party << " did not failed as expected";
+            ADD_FAILURE() << party << " did not fail as expected";
             return;
         }
 

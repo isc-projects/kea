@@ -16,7 +16,7 @@ ddns_gss_tsig_libloadtests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'ddns-gss-tsig-libloadtests',
+    'ddns-gss-tsig-libload-tests',
     ddns_gss_tsig_libloadtests,
     depends: [ddns_gss_tsig_lib],
     protocol: 'gtest',

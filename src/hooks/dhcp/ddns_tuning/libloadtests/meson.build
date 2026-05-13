@@ -17,7 +17,7 @@ dhcp_ddns_tuning_libloadtests = executable(
     link_with: LIBS_BUILT_SO_FAR,
 )
 test(
-    'dhcp-ddns-tuning-libloadtests',
+    'dhcp-ddns-tuning-libload-tests',
     dhcp_ddns_tuning_libloadtests,
     depends: [dhcp_ddns_tuning_lib],
     protocol: 'gtest',
