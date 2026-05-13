@@ -1137,18 +1137,18 @@ top_docs = [
 ]
 install_data(top_docs, install_dir: DATADIR / 'doc/kea')
 
-install_emptydir(LOGDIR)
-install_emptydir(RUNSTATEDIR)
-install_emptydir(SHAREDSTATEDIR)
+install_emptydir(LOGDIR, install_mode: 'rwxr-x---')
+install_emptydir(RUNSTATEDIR, install_mode: 'rwxr-x---')
+install_emptydir(SHAREDSTATEDIR, install_mode: 'rwxr-x---')
 
 # Meson is annoying with its opinionated alteration of certain paths based on whether prefix is default or not.
 # So we revert what it does..
 # In case prefix is default, install to hardcoded path.
 if PREFIX == '/usr/local'
-    install_emptydir('/usr/local/lib/kea')
-    install_emptydir('/usr/local/var/lib/kea')
-    install_emptydir('/usr/local/var/log/kea')
-    install_emptydir('/usr/local/var/run/kea')
+    install_emptydir('/usr/local/lib/kea', install_mode: 'rwxr-x---')
+    install_emptydir('/usr/local/var/lib/kea', install_mode: 'rwxr-x---')
+    install_emptydir('/usr/local/var/log/kea', install_mode: 'rwxr-x---')
+    install_emptydir('/usr/local/var/run/kea', install_mode: 'rwxr-x---')
 endif
 
 # Print the setup report.
