@@ -10,6 +10,7 @@
 #include <exceptions/exceptions.h>
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 namespace isc {
 namespace util {
@@ -161,6 +162,10 @@ public:
 protected:
     T default_;         ///< Encapsulated value.
     bool unspecified_;  ///< Flag which indicates if the value is specified.
+
+private:
+    // Refuse instantiation by a reference type.
+    static_assert(!std::is_reference<T>::value, "!std::is_reference<T>::value");
 };
 
 /// @brief Specialization of the default @c Optional constructor for
