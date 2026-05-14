@@ -69,6 +69,7 @@ SYSTEMS = {
         '41': False,
         '42': False,
         '43': True,
+        '44': True,
     },
     'centos': {
         '7': False,
@@ -95,6 +96,7 @@ SYSTEMS = {
         '21.04': False,
         '22.04': True,
         '24.04': True,
+        '26.04': True,
     },
     'debian': {
         '8': False,
@@ -1858,7 +1860,15 @@ def install_packages_local(system, revision, features, check_times, ignore_error
             packages.extend(['rpm-build', 'python3-devel'])
 
         if 'docs' in features:
-            packages.extend(['python3-sphinx', 'python3-sphinx_rtd_theme', 'texlive', 'texlive-collection-latexextra'])
+            packages.extend(
+                [
+                    'python3-sphinx',
+                    'python3-sphinx_rtd_theme',
+                    'texlive',
+                    'texlive-collection-latexextra',
+                    'texlive-times',
+                ]
+            )
 
         if 'mysql' in features:
             packages.extend(['mariadb', 'mariadb-server', 'mariadb-connector-c-devel'])
@@ -2044,7 +2054,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 'gcc',
                 'g++',
                 'gnupg',
-                'libboost-system-dev',
+                'libboost-all-dev',
                 'liblog4cplus-dev',
                 'libpcap-dev',
                 'libssl-dev',
@@ -2066,7 +2076,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
 
         if 'native-pkg' in features:
             packages.extend(['build-essential', 'fakeroot', 'devscripts'])
-            packages.extend(['debhelper', 'libboost-dev', 'python3-dev'])
+            packages.extend(['debhelper', 'python3-dev'])
             if 20.04 <= float(revision):
                 packages.extend(['dh-python'])
 
@@ -2099,7 +2109,7 @@ def install_packages_local(system, revision, features, check_times, ignore_error
                 'gcc',
                 'g++',
                 'gnupg',
-                'libboost-system-dev',
+                'libboost-all-dev',
                 'liblog4cplus-dev',
                 'libpcap-dev',
                 'libssl-dev',
