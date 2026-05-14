@@ -5534,12 +5534,12 @@ MySqlLeaseMgr::sflqPoolGetCommon(StatementIndex stindex,
 
     ctx->conn_.selectQuery(stindex, where_bindings, out_bindings,
                            [&pools]
-                           (MySqlBindingCollection& out_bindings) {
+                           (MySqlBindingCollection& result) {
 
         SflqPoolInfoPtr info(new SflqPoolInfo());
         // db pool id is 0, we skip it
-        info->subnet_id_ = out_bindings[1]->getInteger<uint32_t>();
-        auto lease_type_ = out_bindings[2]->getInteger<uint32_t>();
+        info->subnet_id_ = result[1]->getInteger<uint32_t>();
+        auto lease_type_ = result[2]->getInteger<uint32_t>();
         switch(lease_type_) {
         case Lease::TYPE_V4:
             info->lease_type_ = Lease::TYPE_V4;
@@ -5556,17 +5556,17 @@ MySqlLeaseMgr::sflqPoolGetCommon(StatementIndex stindex,
         }
 
         if (lease_type_ == Lease::TYPE_V4) {
-            info->start_address_ = IOAddress(out_bindings[3]->getInteger<uint32_t>());
-            info->end_address_ = IOAddress(out_bindings[4]->getInteger<uint32_t>());
+            info->start_address_ = IOAddress(result[3]->getInteger<uint32_t>());
+            info->end_address_ = IOAddress(result[4]->getInteger<uint32_t>());
         } else {
-            info->start_address_ = IOAddress(out_bindings[3]->getString());
-            info->end_address_ = IOAddress(out_bindings[4]->getString());
+            info->start_address_ = IOAddress(result[3]->getString());
+            info->end_address_ = IOAddress(result[4]->getString());
         }
 
-        info->delegated_len_ = out_bindings[5]->getInteger<uint32_t>();
-        info->created_ts_ = out_bindings[6]->getTimestamp();
-        info->modified_ts_ = out_bindings[7]->getTimestamp();
-        info->free_leases_ = out_bindings[8]->getInteger<uint64_t>();
+        info->delegated_len_ = result[5]->getInteger<uint32_t>();
+        info->created_ts_ = result[6]->getTimestamp();
+        info->modified_ts_ = result[7]->getTimestamp();
+        info->free_leases_ = result[8]->getInteger<uint64_t>();
         pools->push_back(info);
     });
 

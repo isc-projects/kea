@@ -335,15 +335,15 @@ int lease6_write(CalloutHandle& handle) {
     return(lease_cmds.leaseWriteHandler(handle));
 }
 
-/// @brief This is a command callout for 'sflq-pool4-create' command.
+/// @brief This is a command callout for 'sflq-pool4-rebuild' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
 /// provide a response.
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
-int sflq_pool4_create(CalloutHandle& handle) {
+int sflq_pool4_rebuild(CalloutHandle& handle) {
     SflqCmds sflq_cmds;
-    return(sflq_cmds.sflqPool4CreateHandler(handle));
+    return(sflq_cmds.sflqPool4RebuildHandler(handle));
 }
 
 /// @brief This is a command callout for 'sflq-pool4-get-all' command.
@@ -390,15 +390,15 @@ int sflq_pool4_del(CalloutHandle& handle) {
     return(sflq_cmds.sflqPool4DelHandler(handle));
 }
 
-/// @brief This is a command callout for 'sflq-pool6-create' command.
+/// @brief This is a command callout for 'sflq-pool6-rebuild' command.
 ///
 /// @param handle Callout handle used to retrieve a command and
 /// provide a response.
 /// @return 0 if this callout has been invoked successfully,
 /// 1 otherwise.
-int sflq_pool6_create(CalloutHandle& handle) {
+int sflq_pool6_rebuild(CalloutHandle& handle) {
     SflqCmds sflq_cmds;
-    return(sflq_cmds.sflqPool6CreateHandler(handle));
+    return(sflq_cmds.sflqPool6RebuildHandler(handle));
 }
 
 /// @brief This is a command callout for 'sflq-pool6-get-all' command.
@@ -497,12 +497,12 @@ int load(LibraryHandle& handle) {
     handle.registerCommandCallout("lease6-resend-ddns", lease6_resend_ddns);
     handle.registerCommandCallout("lease4-write", lease4_write);
     handle.registerCommandCallout("lease6-write", lease6_write);
-    handle.registerCommandCallout("sflq-pool4-create", sflq_pool4_create);
+    handle.registerCommandCallout("sflq-pool4-rebuild", sflq_pool4_rebuild);
     handle.registerCommandCallout("sflq-pool4-get-all", sflq_pool4_get_all);
     handle.registerCommandCallout("sflq-pool4-get-by-subnet", sflq_pool4_get_by_subnet);
     handle.registerCommandCallout("sflq-pool4-get-by-range", sflq_pool4_get_by_range);
     handle.registerCommandCallout("sflq-pool4-del", sflq_pool4_del);
-    handle.registerCommandCallout("sflq-pool6-create", sflq_pool6_create);
+    handle.registerCommandCallout("sflq-pool6-rebuild", sflq_pool6_rebuild);
     handle.registerCommandCallout("sflq-pool6-get-all", sflq_pool6_get_all);
     handle.registerCommandCallout("sflq-pool6-get-by-subnet", sflq_pool6_get_by_subnet);
     handle.registerCommandCallout("sflq-pool6-get-by-range", sflq_pool6_get_by_range);

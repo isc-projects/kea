@@ -41,8 +41,6 @@ extern const isc::log::MessageID LEASE_CMDS_WIPE4 = "LEASE_CMDS_WIPE4";
 extern const isc::log::MessageID LEASE_CMDS_WIPE4_FAILED = "LEASE_CMDS_WIPE4_FAILED";
 extern const isc::log::MessageID LEASE_CMDS_WIPE6 = "LEASE_CMDS_WIPE6";
 extern const isc::log::MessageID LEASE_CMDS_WIPE6_FAILED = "LEASE_CMDS_WIPE6_FAILED";
-extern const isc::log::MessageID SFLQ_POOL4_CREATE = "SFLQ_POOL4_CREATE";
-extern const isc::log::MessageID SFLQ_POOL4_CREATE_FAILED = "SFLQ_POOL4_CREATE_FAILED";
 extern const isc::log::MessageID SFLQ_POOL4_DEL = "SFLQ_POOL4_DEL";
 extern const isc::log::MessageID SFLQ_POOL4_DEL_FAILED = "SFLQ_POOL4_DEL_FAILED";
 extern const isc::log::MessageID SFLQ_POOL4_GET_ALL = "SFLQ_POOL4_GET_ALL";
@@ -51,8 +49,8 @@ extern const isc::log::MessageID SFLQ_POOL4_GET_BY_RANGE = "SFLQ_POOL4_GET_BY_RA
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_RANGE_FAILED = "SFLQ_POOL4_GET_BY_RANGE_FAILED";
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_SUBNET = "SFLQ_POOL4_GET_BY_SUBNET";
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_SUBNET_FAILED = "SFLQ_POOL4_GET_BY_SUBNET_FAILED";
-extern const isc::log::MessageID SFLQ_POOL6_CREATE = "SFLQ_POOL6_CREATE";
-extern const isc::log::MessageID SFLQ_POOL6_CREATE_FAILED = "SFLQ_POOL6_CREATE_FAILED";
+extern const isc::log::MessageID SFLQ_POOL4_REBUILD = "SFLQ_POOL4_REBUILD";
+extern const isc::log::MessageID SFLQ_POOL4_REBUILD_FAILED = "SFLQ_POOL4_REBUILD_FAILED";
 extern const isc::log::MessageID SFLQ_POOL6_DEL = "SFLQ_POOL6_DEL";
 extern const isc::log::MessageID SFLQ_POOL6_DEL_FAILED = "SFLQ_POOL6_DEL_FAILED";
 extern const isc::log::MessageID SFLQ_POOL6_GET_ALL = "SFLQ_POOL6_GET_ALL";
@@ -61,6 +59,8 @@ extern const isc::log::MessageID SFLQ_POOL6_GET_BY_RANGE = "SFLQ_POOL6_GET_BY_RA
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_RANGE_FAILED = "SFLQ_POOL6_GET_BY_RANGE_FAILED";
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_SUBNET = "SFLQ_POOL6_GET_BY_SUBNET";
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_SUBNET_FAILED = "SFLQ_POOL6_GET_BY_SUBNET_FAILED";
+extern const isc::log::MessageID SFLQ_POOL6_REBUILD = "SFLQ_POOL6_REBUILD";
+extern const isc::log::MessageID SFLQ_POOL6_REBUILD_FAILED = "SFLQ_POOL6_REBUILD_FAILED";
 
 namespace {
 
@@ -102,8 +102,6 @@ const char* values[] = {
     "LEASE_CMDS_WIPE4_FAILED", "lease4-wipe command failed (parameters: %1, reason: %2)",
     "LEASE_CMDS_WIPE6", "lease6-wipe command successful (parameters: %1)",
     "LEASE_CMDS_WIPE6_FAILED", "lease6-wipe command failed (parameters: %1, reason: %2)",
-    "SFLQ_POOL4_CREATE", "sflq-pool4-create command succeeded, (parameters: %1)",
-    "SFLQ_POOL4_CREATE_FAILED", "sflq-pool4-create command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL4_DEL", "sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2",
     "SFLQ_POOL4_DEL_FAILED", "sflq-pool4-del command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL4_GET_ALL", "sflq-pool4-get-all command succeeded, pools found: %1",
@@ -112,8 +110,8 @@ const char* values[] = {
     "SFLQ_POOL4_GET_BY_RANGE_FAILED", "sflq-pool4-get-by-range command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL4_GET_BY_SUBNET", "sflq-pool4-get-by-subnet command succeeded, (parameters: %1) pools found: %2",
     "SFLQ_POOL4_GET_BY_SUBNET_FAILED", "sflq-pool4-get-by-subnet command failed, (parameters: %1, reason: %2)",
-    "SFLQ_POOL6_CREATE", "sflq-pool6-create command succeeded, (parameters: %1)",
-    "SFLQ_POOL6_CREATE_FAILED", "sflq-pool6-create command failed, (parameters: %1, reason: %2)",
+    "SFLQ_POOL4_REBUILD", "sflq-pool4-rebuild command succeeded, (parameters: %1) pools rebuilt: %2",
+    "SFLQ_POOL4_REBUILD_FAILED", "sflq-pool4-rebuild command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL6_DEL", "sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2",
     "SFLQ_POOL6_DEL_FAILED", "sflq-pool4-del command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL6_GET_ALL", "sflq-pool6-get-all command succeeded, pools found: %1",
@@ -122,6 +120,8 @@ const char* values[] = {
     "SFLQ_POOL6_GET_BY_RANGE_FAILED", "sflq-pool6-get-by-range command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL6_GET_BY_SUBNET", "sflq-pool6-get-by-subnet command succeeded, (parameters: %1) pools found: %2",
     "SFLQ_POOL6_GET_BY_SUBNET_FAILED", "sflq-pool6-get-by-subnet command failed, (parameters: %1, reason: %2)",
+    "SFLQ_POOL6_REBUILD", "sflq-pool6-rebuild command succeeded, (parameters: %1) pools rebuilt: %2",
+    "SFLQ_POOL6_REBUILD_FAILED", "sflq-pool6-rebuild command failed, (parameters: %1, reason: %2)",
     NULL
 };
 

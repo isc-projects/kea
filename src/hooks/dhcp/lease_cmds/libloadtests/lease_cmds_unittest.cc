@@ -54,7 +54,7 @@ TEST_F(LeaseCmdsTest, commands) {
         "lease4-update",            "lease6-update",
         "lease4-wipe",              "lease6-wipe",
         "lease4-resend-ddns",       "lease6-resend-ddns",
-        "sflq-pool4-create",        "sflq-pool6-create",
+        "sflq-pool4-rebuild",       "sflq-pool6-rebuild",
         "sflq-pool4-get-all",       "sflq-pool6-get-all",
         "sflq-pool4-get-by-subnet", "sflq-pool6-get-by-subnet",
         "sflq-pool4-get-by-range",  "sflq-pool6-get-by-range",

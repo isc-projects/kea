@@ -1,0 +1,29 @@
+{
+    "access": "write",
+    "avail": "3.1.9",
+    "brief": [
+        "This command instructs the lease back end rebuild the free lease data for a v6 SFLQ pool."
+    ],
+    "cmd-syntax": [
+        "{",
+        "    \"command\": \"sflq-pool6-rebuild\",",
+        "    \"arguments\": {",
+        "       \"start-address\": \"2001:db8:1::\",",
+        "       \"end-address\": \"2001:db8:1::ffff\"",
+        "    }",
+        "}"
+    ],
+    "description": "See <xref linkend=\"command-sflq-pool6-rebuild\"/>",
+    "hook": "lease_cmds",
+    "name": "sflq-pool6-rebuild",
+    "resp-syntax": [
+        "{",
+        "    \"result\": 0,",
+        "    \"text\": \"SFLQ pool rebuilt.\"",
+        "}"
+    ],
+    "support": [
+        "kea-dhcp4",
+        "kea-dhcp6"
+    ]
+}

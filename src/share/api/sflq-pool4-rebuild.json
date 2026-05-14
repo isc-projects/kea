@@ -2,26 +2,24 @@
     "access": "write",
     "avail": "3.1.9",
     "brief": [
-        "This command instructs the lease back end to create a v4 SFLQ pool and its free lease data."
+        "This command instructs the lease back rebuild the free lease data for a v4 SFLQ pool."
     ],
     "cmd-syntax": [
         "{",
         "    \"command\": \"sflq-pool4-create\",",
         "    \"arguments\": {",
         "       \"start-address\": \"1.2.3.4\",",
-        "       \"end-address\": \"1.2.3.4\",",
-        "       \"subnet-id\": 123,",
-        "       \"recreate\" : false",
+        "       \"end-address\": \"1.2.3.4\"",
         "    }",
         "}"
     ],
-    "description": "See <xref linkend=\"command-sflq-pool4-create\"/>",
+    "description": "See <xref linkend=\"command-sflq-pool4-rebuild\"/>",
     "hook": "lease_cmds",
-    "name": "sflq-pool4-create",
+    "name": "sflq-pool4-rebuild",
     "resp-syntax": [
         "{",
         "    \"result\": 0,",
-        "    \"text\": \"SFLQ pool created.\"",
+        "    \"text\": \"SFLQ pool rebuilt.\"",
         "}"
     ],
     "support": [

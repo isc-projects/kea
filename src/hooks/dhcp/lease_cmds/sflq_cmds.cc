@@ -36,20 +36,17 @@ namespace isc {
 namespace lease_cmds {
 
 int
-SflqCmdsImpl::sflqPool4CreateHandler(CalloutHandle& handle) {
+SflqCmdsImpl::sflqPool4RebuildHandler(CalloutHandle& handle) {
     static const data::SimpleKeywords keywords =
     {
         { "start-address",  Element::string  },
         { "end-address",    Element::string  },
-        { "subnet-id",      Element::integer },
-        { "recreate",       Element::boolean }
     };
 
     static const data::SimpleRequiredKeywords required_keywords =
     {
         "start-address",
         "end-address",
-        "subnet-id",
     };
 
     stringstream resp;
@@ -67,32 +64,46 @@ SflqCmdsImpl::sflqPool4CreateHandler(CalloutHandle& handle) {
         IOAddress end_address(IOAddress::IPV4_ZERO_ADDRESS());
         extractRange(cmd_args_, AF_INET, start_address, end_address);
 
-        /// @todo Should we verify the subnet-id and/or check allocator for subnet?
-        SubnetID subnet_id = SimpleParser::getInteger(cmd_args_, "subnet-id");
-        if (subnet_id <= 0) {
-            isc_throw(isc::BadValue, "'subnet-id' must be greater than zero");
+        // Fetch pools by range.
+        auto pools = LeaseMgrFactory::instance().sflqPool4Get(start_address, end_address);
+
+        // Since get can return more than one, look for an exact match.
+        bool rebuilt = false;
+        for (auto const& pool : *pools ) {
+            if (pool->start_address_ == start_address && pool->end_address_ == end_address) {
+                // Found a match, rebuild it.
+                // Invoke the pool create function inside a CriticalSection. Rebuilding
+                // large pools can take a long time.
+                MultiThreadingCriticalSection cs;
+                LeaseMgrFactory::instance().sflqCreateFlqPool4(start_address, end_address,
+                                                               pool->subnet_id_, true);
+                rebuilt = true;
+                break;
+            }
         }
 
-        bool recreate = extractBool(cmd_args_, "recreate", false);
+        if (rebuilt){
+            auto response = createAnswer(CONTROL_RESULT_SUCCESS,
+                                         "SFLQ pool rebuilt.", cmd_args_);
+            setResponse(handle, response);
+        } else {
+            auto response = createAnswer(CONTROL_RESULT_EMPTY,
+                                         "SFLQ pool does not exist.", cmd_args_);
+            setResponse(handle, response);
+        }
 
-        // Invoke the pool create function inside a CriticalSection.
-        MultiThreadingCriticalSection cs;
-        bool created = LeaseMgrFactory::instance().
-                       sflqCreateFlqPool4(start_address, end_address, subnet_id, recreate);
+        LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL4_REBUILD)
+                  .arg(cmd_args_)
+                  .arg(rebuilt ? 1 : 0);
 
-        resp << (created ? "SFLQ pool created" : "SFLQ pool already exists") << ".";
     } catch (const std::exception& ex) {
-        LOG_ERROR(lease_cmds_logger, SFLQ_POOL4_CREATE_FAILED)
+        LOG_ERROR(lease_cmds_logger, SFLQ_POOL4_REBUILD_FAILED)
             .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL4_CREATE)
-        .arg(cmd_args_->str());
-
-    setSuccessResponse(handle, resp.str());
     return (0);
 }
 
@@ -117,23 +128,17 @@ SflqCmdsImpl::sflqPool4DelHandler(CalloutHandle& handle) {
 }
 
 int
-SflqCmdsImpl::sflqPool6CreateHandler(CalloutHandle& handle) {
+SflqCmdsImpl::sflqPool6RebuildHandler(CalloutHandle& handle) {
     static const data::SimpleKeywords keywords =
     {
         { "start-address",  Element::string  },
         { "end-address",    Element::string  },
-        { "subnet-id",      Element::integer },
-        { "lease-type",     Element::string  },
-        { "delegated-len",  Element::integer },
-        { "recreate",       Element::boolean }
     };
 
     static const data::SimpleRequiredKeywords required_keywords =
     {
         "start-address",
         "end-address",
-        "subnet-id",
-        "lease-type"
     };
 
     stringstream resp;
@@ -151,35 +156,47 @@ SflqCmdsImpl::sflqPool6CreateHandler(CalloutHandle& handle) {
         IOAddress end_address(IOAddress::IPV6_ZERO_ADDRESS());
         extractRange(cmd_args_, AF_INET6, start_address, end_address);
 
-        /// @todo Should we verify the subnet-id and/or check allocator for subnet?
-        SubnetID subnet_id = SimpleParser::getInteger(cmd_args_, "subnet-id");
-        if (subnet_id <= 0) {
-            isc_throw(isc::BadValue, "'subnet-id' must be greater than zero");
+        // Fetch pools by range.
+        auto pools = LeaseMgrFactory::instance().sflqPool6Get(start_address, end_address);
+
+        // Since get can return more than one, look for an exact match.
+        bool rebuilt = false;
+        for (auto const& pool : *pools ) {
+            if (pool->start_address_ == start_address && pool->end_address_ == end_address) {
+                // Found a match, rebuild it.
+                // Invoke the pool create function inside a CriticalSection. Rebuilding
+                // large pools can take a long time.
+                MultiThreadingCriticalSection cs;
+                LeaseMgrFactory::instance().sflqCreateFlqPool6(start_address, end_address,
+                                                               pool->lease_type_,
+                                                               pool->delegated_len_,
+                                                               pool->subnet_id_, true);
+                rebuilt = true;
+                break;
+            }
         }
 
-        auto lease_type = extractLeaseType(cmd_args_, AF_INET6);
-        uint8_t delegated_len = extractDelegatedLen(cmd_args_, lease_type);
-        bool recreate = extractBool(cmd_args_, "recreate", false);
+        if (rebuilt){
+            auto response = createAnswer(CONTROL_RESULT_SUCCESS,
+                                         "SFLQ pool rebuilt.", cmd_args_);
+            setResponse(handle, response);
+        } else {
+            auto response = createAnswer(CONTROL_RESULT_EMPTY,
+                                         "SFLQ pool does not exist.", cmd_args_);
+            setResponse(handle, response);
+        }
 
-        // Invoke the pool create function inside a CriticalSection.
-        MultiThreadingCriticalSection cs;
-        bool created = LeaseMgrFactory::instance().
-                       sflqCreateFlqPool6(start_address, end_address, lease_type,
-                                          delegated_len, subnet_id, recreate);
-
-        resp << (created ? "SFLQ pool created" : "SFLQ pool already exists") << ".";
+        LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL6_REBUILD)
+                  .arg(cmd_args_)
+                  .arg(rebuilt ? 1 : 0);
     } catch (const std::exception& ex) {
-        LOG_ERROR(lease_cmds_logger, SFLQ_POOL6_CREATE_FAILED)
+        LOG_ERROR(lease_cmds_logger, SFLQ_POOL6_REBUILD_FAILED)
             .arg(cmd_args_ ? cmd_args_->str() : "<no args>")
             .arg(ex.what());
         setErrorResponse(handle, ex.what());
         return (1);
     }
 
-    LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL6_CREATE)
-        .arg(cmd_args_->str());
-
-    setSuccessResponse(handle, resp.str());
     return (0);
 }
 
@@ -468,42 +485,13 @@ SflqCmdsImpl::extractLeaseType(ConstElementPtr& params, uint16_t family) {
               << tmp << ", valid values are IA_NA and IA_PD");
 }
 
-uint8_t
-SflqCmdsImpl::extractDelegatedLen(ConstElementPtr& params,
-                                  Lease::Type lease_type) {
-    auto tmp = params->get("delegated-len");
-    if (!tmp) {
-        if (lease_type == Lease::TYPE_PD) {
-            isc_throw(BadValue, "'delegated-len' is required for IA_PD pools");
-        }
-
-        return (128);
-    }
-
-    if (tmp->getType() != Element::integer) {
-        isc_throw(BadValue, "'delegated-len' parameter is not integer.");
-    }
-
-    auto val = tmp->intValue();
-    if (val <= 0 || val > 128) {
-        isc_throw(BadValue, "'delegated-len' invalid: " << val
-                  << ", it must be >= 1 and =< 128");
-    }
-
-    if (lease_type == Lease::TYPE_NA && val != 128) {
-        isc_throw(BadValue, "'delegated-len' must only be 128 for IA_NA pools");
-    }
-
-    return (val);
-}
-
 SflqCmds::SflqCmds()
     : sflq_impl_(new SflqCmdsImpl()) {
 }
 
 int
-SflqCmds::sflqPool4CreateHandler(CalloutHandle& handle) {
-    return (sflq_impl_->sflqPool4CreateHandler(handle));
+SflqCmds::sflqPool4RebuildHandler(CalloutHandle& handle) {
+    return (sflq_impl_->sflqPool4RebuildHandler(handle));
 }
 
 int
@@ -527,8 +515,8 @@ SflqCmds::sflqPool4DelHandler(CalloutHandle& handle) {
 }
 
 int
-SflqCmds::sflqPool6CreateHandler(CalloutHandle& handle) {
-    return (sflq_impl_->sflqPool6CreateHandler(handle));
+SflqCmds::sflqPool6RebuildHandler(CalloutHandle& handle) {
+    return (sflq_impl_->sflqPool6RebuildHandler(handle));
 }
 
 int

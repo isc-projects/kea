@@ -42,8 +42,6 @@ extern const isc::log::MessageID LEASE_CMDS_WIPE4;
 extern const isc::log::MessageID LEASE_CMDS_WIPE4_FAILED;
 extern const isc::log::MessageID LEASE_CMDS_WIPE6;
 extern const isc::log::MessageID LEASE_CMDS_WIPE6_FAILED;
-extern const isc::log::MessageID SFLQ_POOL4_CREATE;
-extern const isc::log::MessageID SFLQ_POOL4_CREATE_FAILED;
 extern const isc::log::MessageID SFLQ_POOL4_DEL;
 extern const isc::log::MessageID SFLQ_POOL4_DEL_FAILED;
 extern const isc::log::MessageID SFLQ_POOL4_GET_ALL;
@@ -52,8 +50,8 @@ extern const isc::log::MessageID SFLQ_POOL4_GET_BY_RANGE;
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_RANGE_FAILED;
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_SUBNET;
 extern const isc::log::MessageID SFLQ_POOL4_GET_BY_SUBNET_FAILED;
-extern const isc::log::MessageID SFLQ_POOL6_CREATE;
-extern const isc::log::MessageID SFLQ_POOL6_CREATE_FAILED;
+extern const isc::log::MessageID SFLQ_POOL4_REBUILD;
+extern const isc::log::MessageID SFLQ_POOL4_REBUILD_FAILED;
 extern const isc::log::MessageID SFLQ_POOL6_DEL;
 extern const isc::log::MessageID SFLQ_POOL6_DEL_FAILED;
 extern const isc::log::MessageID SFLQ_POOL6_GET_ALL;
@@ -62,5 +60,7 @@ extern const isc::log::MessageID SFLQ_POOL6_GET_BY_RANGE;
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_RANGE_FAILED;
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_SUBNET;
 extern const isc::log::MessageID SFLQ_POOL6_GET_BY_SUBNET_FAILED;
+extern const isc::log::MessageID SFLQ_POOL6_REBUILD;
+extern const isc::log::MessageID SFLQ_POOL6_REBUILD_FAILED;
 
 #endif // LEASE_CMDS_MESSAGES_H

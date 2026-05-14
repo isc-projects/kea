@@ -174,12 +174,12 @@ are logged.
 The lease6-wipe command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% SFLQ_POOL4_CREATE sflq-pool4-create command succeeded, (parameters: %1)
+% SFLQ_POOL4_REBUILD sflq-pool4-rebuild command succeeded, (parameters: %1) pools rebuilt: %2
 Logged at debug log level 20.
-The sflq-pool4-create command was successful.
+The sflq-pool4-rebuild command was successful.
 
-% SFLQ_POOL4_CREATE_FAILED sflq-pool4-create command failed, (parameters: %1, reason: %2)
-The sflq-pool4-create command has failed. Both the reason as well as the
+% SFLQ_POOL4_REBUILD_FAILED sflq-pool4-rebuild command failed, (parameters: %1, reason: %2)
+The sflq-pool4-rebuild command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL4_GET_ALL sflq-pool4-get-all command succeeded, pools found: %1
@@ -214,17 +214,17 @@ The sflq-pool4-del command was successful.
 The sflq-pool4-del command has failed. Both the reason as well as the
 parameters passed are logged.
 
-% SFLQ_POOL6_CREATE sflq-pool6-create command succeeded, (parameters: %1)
+% SFLQ_POOL6_REBUILD sflq-pool6-rebuild command succeeded, (parameters: %1) pools rebuilt: %2
 Logged at debug log level 20.
-The sflq-pool6-create command was successful.
+The sflq-pool6-rebuild command was successful.
 
-% SFLQ_POOL6_CREATE_FAILED sflq-pool6-create command failed, (parameters: %1, reason: %2)
-The sflq-pool6-create command has failed. Both the reason as well as the
+% SFLQ_POOL6_REBUILD_FAILED sflq-pool6-rebuild command failed, (parameters: %1, reason: %2)
+The sflq-pool6-rebuild command has failed. Both the reason as well as the
 parameters passed are logged.
 
 % SFLQ_POOL6_GET_ALL sflq-pool6-get-all command succeeded, pools found: %1
 Logged at debug log level 20.
-The sflq-pool6-create command was successful.
+The sflq-pool6-rebuild command was successful.
 
 % SFLQ_POOL6_GET_ALL_FAILED sflq-pool6-get-all command failed, (parameters: %1, reason: %2)
 The sflq-pool6-get-all command has failed. Both the reason as well as the

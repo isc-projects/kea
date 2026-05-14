@@ -31,7 +31,7 @@ public:
     /// @brief Destructor.
     virtual ~SflqCmdsImpl() {};
 
-    /// @brief The 'sflq-pool4-create' command handler
+    /// @brief The 'sflq-pool4-rebuild' command handler
     ///
     /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
@@ -39,21 +39,17 @@ public:
     ///
     /// An example command with all supported arguments is shown below:
     /// {
-    ///     "command": "sflq-pool4-create",
+    ///     "command": "sflq-pool4-rebuild",
     ///     "arguments": {
     ///         "start-address": "192.0.2.0",
-    ///         "end-address": "192.0.2.255",
-    ///         "subnet-id": 77,
-    ///         "recreate": true
+    ///         "end-address": "192.0.2.255"
     ///     }
     /// }
-    ///
-    /// The 'recreate' parameter is optional, it defaults false.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// the command JSON text in the "command" argument
     /// @return result of the operation
-    int sflqPool4CreateHandler(hooks::CalloutHandle& handle);
+    int sflqPool4RebuildHandler(hooks::CalloutHandle& handle);
 
     /// @brief The 'sflq-pool4-get-all' command handler
     ///
@@ -132,7 +128,7 @@ public:
     /// @return result of the operation
     int sflqPool4DelHandler(hooks::CalloutHandle& handle);
 
-    /// @brief The 'sflq-pool6-create' command handler
+    /// @brief The 'sflq-pool6-rebuild' command handler
     ///
     /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
@@ -140,23 +136,17 @@ public:
     ///
     /// An example command with all supported arguments is shown below:
     /// {
-    ///     "command": "sflq-pool6-create",
+    ///     "command": "sflq-pool6-rebuild",
     ///     "arguments": {
     ///         "start-address": "3001::",
-    ///         "end-address": "3001::FF",
-    ///         "subnet-id": 77,
-    ///         "lease-type" : "IA_PD",
-    ///         "delegated_len: 64
-    ///         "recreate": true
+    ///         "end-address": "3001::FF"
     ///     }
     /// }
-    ///
-    /// The 'recreate' parameter is optional, it defaults false.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// the command JSON text in the "command" argument
     /// @return result of the operation
-    int sflqPool6CreateHandler(hooks::CalloutHandle& handle);
+    int sflqPool6RebuildHandler(hooks::CalloutHandle& handle);
 
     /// @brief The 'sflq-pool6-get-all' command handler
     ///
@@ -363,22 +353,7 @@ public:
     static bool extractBool(data::ConstElementPtr& params, const std::string& name,
                             bool default_value = false);
 
-    /// @brief Extracts 'delegated-len' from given parameters map
-    ///
-    /// Extracts an integer element, 'delegate-len' from the given map
-    /// if it is present and is >= 1 and <= 128. If it is not present
-    /// it returns a value of 128.
-    ///
-    /// @param params Element map containing the command arguments.
-    /// @param lease_type Lease::Type supplied with the arguments (IA_NA
-    /// or IA_PD)
-    ///
-    /// @throw BadValue if the parameter is specified as anything other
-    /// than an integer value >= 1 and <= 128.
-    static uint8_t extractDelegatedLen(data::ConstElementPtr& params,
-                                       dhcp::Lease::Type lease_type);
-
-    /// @brief Extracts 'delegated-len' from given parameters map
+    /// @brief Extracts 'lease-type' from given parameters map
     ///
     /// Extracts a string element, 'lease-type' from the given map
     /// For v4 it can be either "V4" or "3", for V6 it can be "IA_NA"
@@ -404,7 +379,7 @@ public:
     /// It creates an instance of the @c SflqCmds
     SflqCmds();
 
-    /// @brief sflq-pool4-create handler.
+    /// @brief sflq-pool4-rebuild handler.
     ///
     /// Invokes LeaseMgr::sflqCreateFlqPool4() after parsing the arguments.
     /// @brief lease6-resend-ddns command handler
@@ -415,21 +390,17 @@ public:
     ///
     /// An example command with all supported arguments is shown below:
     /// {
-    ///     "command": "sflq-pool4-create",
+    ///     "command": "sflq-pool4-rebuild",
     ///     "arguments": {
     ///         "start-address": "192.0.2.0",
-    ///         "end-address": "192.0.2.255",
-    ///         "subnet-id": 77,
-    ///         "recreate": true
+    ///         "end-address": "192.0.2.255"
     ///     }
     /// }
-    ///
-    /// The 'recreate' parameter is optional, it defaults false.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// the command JSON text in the "command" argument
     /// @return result of the operation
-    int sflqPool4CreateHandler(hooks::CalloutHandle& handle);
+    int sflqPool4RebuildHandler(hooks::CalloutHandle& handle);
 
     /// @brief The 'sflq-pool4-get-all' command handler
     ///
@@ -508,7 +479,7 @@ public:
     /// @return result of the operation
     int sflqPool4DelHandler(hooks::CalloutHandle& handle);
 
-    /// @brief The 'sflq-pool6-create' command handler
+    /// @brief The 'sflq-pool6-rebuild' command handler
     ///
     /// It extracts the command name and arguments from the given CalloutHandle,
     /// attempts to process them, and then set's the handle's "response"
@@ -516,24 +487,17 @@ public:
     ///
     /// An example command with all supported arguments is shown below:
     /// {
-    ///     "command": "sflq-pool6-create",
+    ///     "command": "sflq-pool6-rebuild",
     ///     "arguments": {
     ///         "start-address": "3001::",
-    ///         "end-address": "3001::FF",
-    ///         "subnet-id": 77,
-    ///         "lease-type" : "IA_PD",
-    ///         "delegated_len: 64
-    ///         "recreate": true
+    ///         "end-address": "3001::FF"
     ///     }
     /// }
-    ///
-    /// The 'delegated-len' is optional, it defaults to 128.
-    /// The 'recreate' parameter is optional, it defaults false.
     ///
     /// @param handle Callout context - which is expected to contain the
     /// the command JSON text in the "command" argument
     /// @return result of the operation
-    int sflqPool6CreateHandler(hooks::CalloutHandle& handle);
+    int sflqPool6RebuildHandler(hooks::CalloutHandle& handle);
 
     /// @brief The 'sflq-pool6-get-all' command handler
     ///

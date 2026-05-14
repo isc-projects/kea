@@ -113,30 +113,30 @@ This library provides the following commands:
 
 -  :isccmd:`lease6-write` - writes the IPv6 memfile lease database into a file.
 
--  :iscmd:`sflq-pool4-create` - creates an IPv4 SFLQ pool in the lease back end.
+-  :isccmd:`sflq-pool4-rebuild` - rebuilds an IPv4 SFLQ pool in the lease back end.
 
--  :iscmd:`sflq-pool6-create` - creates an IPv6 SFLQ pool in the lease back end.
+-  :isccmd:`sflq-pool6-rebuild` - rebuilds an IPv6 SFLQ pool in the lease back end.
 
--  :iscmd:`sflq-pool4-get-all` - fetches all IPv4 SFLQ pools from the lease back end.
+-  :isccmd:`sflq-pool4-get-all` - fetches all IPv4 SFLQ pools from the lease back end.
 
--  :iscmd:`sflq-pool6-get-all` - fetches all IPv6 SFLQ pools from the lease back end.
+-  :isccmd:`sflq-pool6-get-all` - fetches all IPv6 SFLQ pools from the lease back end.
 
--  :iscmd:`sflq-pool4-get-by-subnet` - fetches all IPv4 SFLQ pools that belong to
+-  :isccmd:`sflq-pool4-get-by-subnet` - fetches all IPv4 SFLQ pools that belong to
    a subnet from the lease back end.
 
--  :iscmd:`sflq-pool6-get-by-subnet` - fetches all IPv6 SFLQ pools that belong to
+-  :isccmd:`sflq-pool6-get-by-subnet` - fetches all IPv6 SFLQ pools that belong to
    a subnet from the lease back end.
 
--  :iscmd:`sflq-pool4-get-by-range` - fetches all IPv4 SFLQ pools that overlap an
+-  :isccmd:`sflq-pool4-get-by-range` - fetches all IPv4 SFLQ pools that overlap an
    address range from the lease back end.
 
--  :iscmd:`sflq-pool6-get-by-range` - fetches all IPv6 SFLQ pools that overlap an
+-  :isccmd:`sflq-pool6-get-by-range` - fetches all IPv6 SFLQ pools that overlap an
    address range from the lease back end.
 
--  :iscmd:`sflq-pool4-del` - deletes an IPv4 SFLQ pool that matches an address
+-  :isccmd:`sflq-pool4-del` - deletes an IPv4 SFLQ pool that matches an address
    range from the lease back end.
 
--  :iscmd:`sflq-pool6-del` - deletes an IPv6 SFLQ pool that matches an address
+-  :isccmd:`sflq-pool6-del` - deletes an IPv6 SFLQ pool that matches an address
    range from the lease back end.
 
 All commands use JSON syntax and can be issued either using the control
@@ -1195,7 +1195,7 @@ Allocation to work properly, all servers allocating from a given pool (i.e.
 address or prefix range), must use SFLQ. If some servers do while others
 do not, the SFLQ data can quickly become inaccurate. This can be remedied
 by stopping any servers that are not using SFLQ for the pool(s) in question
-and recreating the pool(s) using the sflq-pool*-create commands, changing
+and rebuilding the pool(s) using the sflq-pool*-rebuild commands, changing
 those servers to use SFLQ for the pool(s) and then restarting them.
 
 The third use case is that of overlapping pools, (i.e. pools whose
@@ -1211,23 +1211,24 @@ range.
     from their address ranges could lead to inconsistent results and is generally
     not recommended.  Commands that fetch SFLQ pools may be safely used at anytime.
 
-.. isccmd:: sflq-pool4-create
-.. _command-sflq-pool4-create:
+.. isccmd:: sflq-pool4-rebuild
+.. _command-sflq-pool4-rebuild:
 
-.. isccmd:: sflq-pool6-create
-.. _command-sflq-pool6-create:
+.. isccmd:: sflq-pool6-rebuild
+.. _command-sflq-pool6-rebuild:
 
-The ``sflq-pool4-create``, ``sflq-pool6-create`` Commands
----------------------------------------------------------
+The ``sflq-pool4-rebuild``, ``sflq-pool6-rebuild`` Commands
+-----------------------------------------------------------
 
-:isccmd:`sflq-pool4-create` and :isccmd:`sflq-pool6-create` can be used to
-(re)create SFLQ pools and their free lease data.  This is useful in cases
+:isccmd:`sflq-pool4-rebuild` and :isccmd:`sflq-pool6-rebuild` can be used to
+rebuild the free lease data for existing SFLQ pools.  This is useful in cases
 where one or more servers have been using other allocator schemes for
-the address ranges that include SFLQ pools. If the pool already exists,
-the call will simply return. The option ``recreate`` parameter, which
-defaults to false, can be used to force the pool to recreated.
+the address ranges that include SFLQ pools. Issuing the command will cause
+the lease back end to discard and then rebuild the free lease data for the
+given pool. Only a pool that exactly matches the start and end adddress
+given will rebuilt.
 
-An example :isccmd:`sflq-pool4-create` command for recreating an IPv4 SFLQ
+An example :isccmd:`sflq-pool4-rebuild` command for rebuiding an IPv4 SFLQ
 Pool is shown below:
 
 ::
@@ -1236,17 +1237,12 @@ Pool is shown below:
         "command": "sflq-pool4-create",
         "arguments": {
             "start-address": "192.0.2.0",
-            "end-address": "192.0.2.255",
-            "subnet-id" : 100,
-            "recreate": true
+            "end-address": "192.0.2.255"
         }
     }
 
-Of the parameters shown above, only ``recreate`` is optional.
-
-For IPv6 pools the parameter ``lease-type`` with a value of either "IA_NA"
-or "IA_PD" is required.  An example :isccmd:`sflq-pool6-create` command for
-recreating an IPv6 SFLQ pool for an address pool is shown below:
+An example :isccmd:`sflq-pool6-rebuild` command for rebuilding an IPv6
+SFLQ pool for an address pool is shown below:
 
 ::
 
@@ -1254,29 +1250,7 @@ recreating an IPv6 SFLQ pool for an address pool is shown below:
         "command": "sflq-pool6-create",
         "arguments": {
             "start-address": "2001:db8:1::",
-            "end-address": "2001:db8:1::FFFF",
-            "subnet-id" : 100,
-            "lease-type": "IA_NA",
-            "recreate": true
-        }
-    }
-
-For IPv6 prefix delegation pools, the delegated prefix length must be
-specified as ``delegated-len`` which must be greater than 0 and less
-or equal to 128.  An example :isccmd:`sflq-pool6-create` command for
-recreating an IPv6 SFLQ pool for a prefix delegation pool is shown below:
-
-::
-
-    {
-        "command": "sflq-pool6-create",
-        "arguments": {
-            "start-address": "3001:20::",
-            "end-address": "3001:20:0:ff:ffff:ffff:ffff:ffff",
-            "subnet-id" : 100,
-            "lease-type": "IA_PD",
-            "delegated-len": 64,
-            "recreate": true
+            "end-address": "2001:db8:1::FFFF"
         }
     }
 
@@ -1294,13 +1268,7 @@ parameter that explains the cause of failure. For example:
 
 ::
 
-   { "result": 0, "text": "SFLQ pool created." }
-
-Example failure:
-
-::
-
-   { "result": 1, "text": "missing 'lease-type' parameter" }
+   { "result": 0, "text": "SFLQ pool rebuilt." }
 
 .. isccmd:: sflq-pool4-get-all
 .. _command-sflq-pool4-get-all:

@@ -70,9 +70,6 @@ struct BadParamScenario {
 /// Provides convenience methods for loading, testing the SLFQ commands.
 class SflqCmdsTest : public LibLoadTest {
 public:
-    /// @brief Pointer to the lease manager
-    isc::dhcp::LeaseMgr* lmptr_;
-
     /// @brief Constructor
     ///
     /// Sets the library filename and clears the lease manager pointer.
@@ -97,7 +94,6 @@ public:
 
         ASSERT_TRUE(LeaseMgrFactory::haveInstance());
         ASSERT_EQ(LeaseMgrFactory::instance().getType(), "sflqtest");
-        // initSubnet4();
         SharedFlqAllocator::setInUse(false);
     }
 
@@ -109,7 +105,6 @@ public:
         // a clang/boost bug
         isc::dhcp::LeaseMgrFactory::destroy();
         unloadLibs();
-        lmptr_ = 0;
         isc::util::file::PathChecker::enableEnforcement(true);
     }
 
@@ -256,8 +251,8 @@ public:
     /// @brief Destructor
     virtual ~SflqCmds4Test() {}
 
-    /// @brief Exercises invalid parameter checks for sflq-pool4-create.
-    void sflqPool4CreateBadParams();
+    /// @brief Exercises invalid parameter checks for sflq-pool4-rebuild.
+    void sflqPool4RebuildBadParams();
 
     /// @brief Exercises invalid parameter checks for sflq-pool4-get-all.
     void sflqPool4GetAllBadParams();
@@ -280,7 +275,7 @@ public:
     void testSflqCommands();
 };
 
-void SflqCmds4Test::sflqPool4CreateBadParams() {
+void SflqCmds4Test::sflqPool4RebuildBadParams() {
     std::list<BadParamScenario> scenarios = {
     {
         __LINE__,
@@ -297,17 +292,8 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
     {
         __LINE__,
         R"(
-            "start-address" : "178.0.0.10",
-            "end-address" : "178.0.0.20"
-        )",
-        "missing 'subnet-id' parameter"
-    },
-    {
-        __LINE__,
-        R"(
             "start-address" : "3001::",
-            "end-address" : "178.0.0.20",
-            "subnet-id" : 1
+            "end-address" : "178.0.0.20"
         )",
         "invalid V4 range - start_address 3001::, end_address 178.0.0.20,"
         " must be V4 addresses where start_address <= end_address"
@@ -316,8 +302,7 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
         __LINE__,
         R"(
             "start-address" : "178.0.0.20",
-            "end-address" : "178.0.0.10",
-            "subnet-id" : 1
+            "end-address" : "178.0.0.10"
         )",
         "invalid V4 range - start_address 178.0.0.20, end_address 178.0.0.10,"
         " must be V4 addresses where start_address <= end_address"
@@ -327,36 +312,6 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
         R"(
             "start-address" : "178.0.0.10",
             "end-address" : "178.0.0.20",
-            "subnet-id" : "bogus"
-        )",
-        "'subnet-id' parameter is not an integer"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "178.0.0.10",
-            "end-address" : "178.0.0.20",
-            "subnet-id" : 0
-        )",
-        "'subnet-id' must be greater than zero"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "178.0.0.10",
-            "end-address" : "178.0.0.20",
-            "subnet-id" : 0,
-            "recreate" : 1
-        )",
-        "'recreate' parameter is not a boolean"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "178.0.0.10",
-            "end-address" : "178.0.0.20",
-            "subnet-id" : 0,
-            "recreate" : true,
             "bogus" : "fluff"
         )",
         "spurious 'bogus' parameter"
@@ -367,7 +322,7 @@ void SflqCmds4Test::sflqPool4CreateBadParams() {
         oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
-        command << R"({ "command": "sflq-pool4-create", "arguments": {)"
+        command << R"({ "command": "sflq-pool4-rebuild", "arguments": {)"
                 << scenario.args_ << "}}";
 
         testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
@@ -600,28 +555,28 @@ SflqCmds4Test::testSflqCommands() {
 
     // Now create the pools.
     for ( auto const& test_pool : test_pools) {
-        auto args = test_pool->toElement();
-        // Take out what we don't need.
-        args->remove("lease-type");
-        args->remove("delegated-len");
-        args->remove("created-ts");
-        args->remove("modified-ts");
-        args->remove("free-leases");
-        // Add recreate flag.
-        args->set("recreate", Element::create(false));
+        // Create the pool directly through lease manager.
+        bool created = false;
+        ASSERT_NO_THROW_LOG(created = LeaseMgrFactory::instance().sflqCreateFlqPool4(
+            test_pool->start_address_, test_pool->end_address_,
+            test_pool->subnet_id_, false));
+        ASSERT_TRUE(created);
 
-        // Initial create should work.
-        command = buildCommand("sflq-pool4-create", args);
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool created.");
-
-        // Trying again without recreate should say it already exists.
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool already exists.");
-
-        // Recreating it should work.
-        args->set("recreate", Element::create(true));
-        command = buildCommand("sflq-pool4-create", args);
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool created.");
+        // Rebuild should work.
+        auto args = Element::createMap();
+        args->set("start-address", Element::create(test_pool->start_address_.toText()));
+        args->set("end-address", Element::create(test_pool->end_address_.toText()));
+        command = buildCommand("sflq-pool4-rebuild", args);
+        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool rebuilt.");
     }
+
+
+    // Rebuild should fail without an exact match.
+    auto args = Element::createMap();
+    args->set("start-address", Element::create(test_pools[0]->start_address_.toText()));
+    args->set("end-address", Element::create(test_pools[2]->end_address_.toText()));
+    command = buildCommand("sflq-pool4-rebuild", args);
+    testCommand(command, CONTROL_RESULT_EMPTY, "SFLQ pool does not exist.");
 
     // Fetching all pools should find all three.
     command = buildCommand("sflq-pool4-get-all");
@@ -635,7 +590,7 @@ SflqCmds4Test::testSflqCommands() {
 
     // Fetch by subnet id for subnet_id = 1.
     pool_infos.reset();
-    auto args = Element::fromJSON("{\"subnet-id\": 1}");
+    args = Element::fromJSON("{\"subnet-id\": 1}");
     command = buildCommand("sflq-pool4-get-by-subnet", args);
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "2 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
@@ -716,8 +671,8 @@ SflqCmds4Test::testSflqCommands() {
     }
 }
 
-TEST_F(SflqCmds4Test, sflqPool4CreateBadParams) {
-    sflqPool4CreateBadParams();
+TEST_F(SflqCmds4Test, sflqPool4RebuildBadParams) {
+    sflqPool4RebuildBadParams();
 }
 
 TEST_F(SflqCmds4Test, sflqPool4GetAllBadParams) {
@@ -761,8 +716,8 @@ public:
     /// @brief Destructor
     virtual ~SflqCmds6Test() {}
 
-    /// @brief Exercises invalid parameter checks for sflq-pool6-create.
-    void sflqPool6CreateBadParams();
+    /// @brief Exercises invalid parameter checks for sflq-pool6-rebuild.
+    void sflqPool6RebuildBadParams();
 
     /// @brief Exercises invalid parameter checks for sflq-pool6-get-all.
     void sflqPool6GetAllBadParams();
@@ -788,7 +743,7 @@ public:
     void testSflqCommands(Lease::Type lease_type);
 };
 
-void SflqCmds6Test::sflqPool6CreateBadParams() {
+void SflqCmds6Test::sflqPool6RebuildBadParams() {
     std::list<BadParamScenario> scenarios = {
     {
         __LINE__,
@@ -806,26 +761,7 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
         __LINE__,
         R"(
             "start-address" : "3001::10",
-            "end-address" : "3001::20"
-        )",
-        "missing 'subnet-id' parameter"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 1
-        )",
-        "missing 'lease-type' parameter"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "178.0.0.20",
-            "subnet-id" : 1,
-            "lease-type": "IA_NA"
+            "end-address" : "178.0.0.20"
         )",
         "invalid V6 range - start_address 3001::10, end_address 178.0.0.20,"
         " must be V6 addresses where start_address <= end_address"
@@ -834,9 +770,7 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
         __LINE__,
         R"(
             "start-address" : "3001::20",
-            "end-address" : "3001::10",
-            "subnet-id" : 1,
-            "lease-type": "IA_NA"
+            "end-address" : "3001::10"
         )",
         "invalid V6 range - start_address 3001::20, end_address 3001::10,"
         " must be V6 addresses where start_address <= end_address"
@@ -846,107 +780,9 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
         R"(
             "start-address" : "3001::10",
             "end-address" : "3001::20",
-            "subnet-id" : "bogus",
-            "lease-type": "IA_NA"
-        )",
-        "'subnet-id' parameter is not an integer"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 0,
-            "lease-type": "IA_NA"
-        )",
-        "'subnet-id' must be greater than zero"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 1,
-            "lease-type": "bogus"
-        )",
-        "invalid V6 'lease-type': bogus, valid values are IA_NA and IA_PD"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 1,
-            "lease-type": "IA_PD",
-            "delegated-len": "bogus"
-        )",
-        "'delegated-len' parameter is not an integer"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 1,
-            "lease-type": "IA_PD",
-            "delegated-len": 0
-        )",
-        "'delegated-len' invalid: 0, it must be >= 1 and =< 128"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 1,
-            "lease-type": "IA_PD",
-            "delegated-len": 129
-        )",
-        "'delegated-len' invalid: 129, it must be >= 1 and =< 128"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 0,
-            "lease-type": "IA_NA",
-            "recreate" : 1
-        )",
-        "'recreate' parameter is not a boolean"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 0,
-            "lease-type": "IA_NA",
-            "recreate" : true,
             "bogus" : "fluff"
         )",
         "spurious 'bogus' parameter"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 100,
-            "lease-type": "IA_NA",
-            "delegated-len": 56
-        )",
-        "'delegated-len' must only be 128 for IA_NA pools"
-    },
-    {
-        __LINE__,
-        R"(
-            "start-address" : "3001::10",
-            "end-address" : "3001::20",
-            "subnet-id" : 100,
-            "lease-type": "IA_PD"
-        )",
-        "'delegated-len' is required for IA_PD pools"
     }
     };
 
@@ -955,7 +791,7 @@ void SflqCmds6Test::sflqPool6CreateBadParams() {
         oss << "Scenario at line: " << scenario.line_;
         SCOPED_TRACE(oss.str());
         std::ostringstream command;
-        command << R"({ "command": "sflq-pool6-create", "arguments": {)"
+        command << R"({ "command": "sflq-pool6-rebuild", "arguments": {)"
                 << scenario.args_ << "}}";
 
         testCommand(command.str(), CONTROL_RESULT_ERROR, scenario.exp_rsp_);
@@ -1196,27 +1032,28 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
 
     // Now create the pools.
     for ( auto const& test_pool : test_pools) {
-        auto args = test_pool->toElement();
-        // Take out what we don't need.
-        args->remove("created-ts");
-        args->remove("modified-ts");
-        args->remove("free-leases");
-        // Add recreate flag.
-        args->set("recreate", Element::create(false));
+        // Create the pool directly through lease manager.
+        bool created = false;
+        ASSERT_NO_THROW_LOG(created = LeaseMgrFactory::instance().sflqCreateFlqPool6(
+            test_pool->start_address_, test_pool->end_address_,
+            test_pool->lease_type_, test_pool->delegated_len_,
+            test_pool->subnet_id_, false));
+        ASSERT_TRUE(created);
 
-        // Initial create should work.
-        command = buildCommand("sflq-pool6-create", args);
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool created.");
-
-        // Trying again without recreate should say it already exists.
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool already exists.");
-
-        // Recreating it should work.
-        args->set("recreate", Element::create(true));
-        command = buildCommand("sflq-pool6-create", args);
-        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool created.");
-
+        // Rebuild should work.
+        auto args = Element::createMap();
+        args->set("start-address", Element::create(test_pool->start_address_.toText()));
+        args->set("end-address", Element::create(test_pool->end_address_.toText()));
+        command = buildCommand("sflq-pool6-rebuild", args);
+        testCommand(command, CONTROL_RESULT_SUCCESS, "SFLQ pool rebuilt.");
     }
+
+    // Rebuild should fail without an exact match.
+    auto args = Element::createMap();
+    args->set("start-address", Element::create(test_pools[0]->start_address_.toText()));
+    args->set("end-address", Element::create(test_pools[2]->end_address_.toText()));
+    command = buildCommand("sflq-pool6-rebuild", args);
+    testCommand(command, CONTROL_RESULT_EMPTY, "SFLQ pool does not exist.");
 
     // Fetching all pools should find all three.
     command = buildCommand("sflq-pool6-get-all");
@@ -1230,7 +1067,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
 
    // Fetch by subnet id for subnet_id = 1.
     pool_infos.reset();
-    auto args = Element::fromJSON("{\"subnet-id\": 1}");
+    args = Element::fromJSON("{\"subnet-id\": 1}");
     command = buildCommand("sflq-pool6-get-by-subnet", args);
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "2 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
@@ -1309,8 +1146,8 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     }
 }
 
-TEST_F(SflqCmds6Test, sflqPool6CreateBadParams) {
-    sflqPool6CreateBadParams();
+TEST_F(SflqCmds6Test, sflqPool6RebuildBadParams) {
+    sflqPool6RebuildBadParams();
 }
 
 TEST_F(SflqCmds6Test, sflqPool6GetAllBadParams) {
