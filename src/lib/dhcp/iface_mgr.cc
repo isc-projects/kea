@@ -321,19 +321,21 @@ void IfaceMgr::closeSockets() {
     }
 }
 
-void IfaceMgr::stopDHCPReceiver() {
+void IfaceMgr::stopDHCPReceiver(bool clear_queue) {
     if (isDHCPReceiverRunning()) {
         dhcp_receiver_->stop();
     }
 
     dhcp_receiver_.reset();
 
-    if (getPacketQueue4()) {
-        getPacketQueue4()->clear();
-    }
+    if (clear_queue) {
+        if (getPacketQueue4()) {
+            getPacketQueue4()->clear();
+        }
 
-    if (getPacketQueue6()) {
-        getPacketQueue6()->clear();
+        if (getPacketQueue6()) {
+            getPacketQueue6()->clear();
+        }
     }
 }
 

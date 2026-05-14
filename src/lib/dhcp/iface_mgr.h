@@ -1478,8 +1478,11 @@ public:
     /// @brief Stops the DHCP packet receiver.
     ///
     /// If the thread exists, it is stopped, deleted, and
-    /// the packet queue is flushed.
-    void stopDHCPReceiver();
+    /// the packet queue is flushed only if clear_queue is true.
+    ///
+    /// @param clear_queue The flag which indicates that the
+    /// packet queue should be cleared.
+    void stopDHCPReceiver(bool clear_queue = true);
 
     /// @brief Returns true if there is a receiver exists and its
     /// thread is currently running.

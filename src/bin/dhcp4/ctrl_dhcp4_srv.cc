@@ -737,7 +737,6 @@ ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
     // stop thread pool (if running)
     MultiThreadingCriticalSection cs;
     string message;
-    bool error = false;
     ConstElementPtr ifaces_config;
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
@@ -765,6 +764,7 @@ ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
     if (!ifaces_config->size()) {
         return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
     }
+    bool error = false;
     try {
         ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(args);
         CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
@@ -1660,14 +1660,14 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("dhcp-disable",
         std::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, ph::_1, ph::_2));
 
+    CommandMgr::instance().registerCommand("interface-add",
+        std::bind(&ControlledDhcpv4Srv::commandInterfaceAddHandler, this, ph::_1, ph::_2));
+
     CommandMgr::instance().registerCommand("interface-list",
         std::bind(&ControlledDhcpv4Srv::commandInterfaceListHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("interface-redetect",
         std::bind(&ControlledDhcpv4Srv::commandInterfaceRedetectHandler, this, ph::_1, ph::_2));
-
-    CommandMgr::instance().registerCommand("interface-add",
-        std::bind(&ControlledDhcpv4Srv::commandInterfaceAddHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("kea-lfc-start",
         std::bind(&ControlledDhcpv4Srv::commandLfcStartHandler, this, ph::_1, ph::_2));
@@ -1765,9 +1765,9 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("config-write");
         CommandMgr::instance().deregisterCommand("dhcp-disable");
         CommandMgr::instance().deregisterCommand("dhcp-enable");
+        CommandMgr::instance().deregisterCommand("interface-add");
         CommandMgr::instance().deregisterCommand("interface-list");
         CommandMgr::instance().deregisterCommand("interface-redetect");
-        CommandMgr::instance().deregisterCommand("interface-add");
         CommandMgr::instance().deregisterCommand("kea-lfc-start");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("subnet4-select-test");
