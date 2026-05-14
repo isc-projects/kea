@@ -102,6 +102,8 @@ CfgIface::triggerOpenSocketsWithRetry(const uint16_t family, const uint16_t port
     // we only handle the relayed (unicast) traffic.
     const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
 
+    reconnect_ctl_->resetRetries();
+
     openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
 }
 

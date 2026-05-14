@@ -503,13 +503,13 @@ The :isccmd:`interface-redetect` command retrieves the list of detected interfac
 after performing a re-detect procedure.
 This command does not take any parameters."
 
-.. isccmd:: interface-use
-.. _command-interface-use:
+.. isccmd:: interface-add
+.. _command-interface-add:
 
-The ``interface-use`` Command
+The ``interface-add`` Command
 -----------------------------
 
-The :isccmd:`interface-use` command updates the list of interfaces used
+The :isccmd:`interface-add` command updates the list of interfaces used
 to process DHCP traffic.
 The command takes as parameter the list of interfaces with respective
 addresses (if specified) on which the server should start listening for

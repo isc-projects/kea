@@ -45,7 +45,7 @@ src/share/api/ha-sync.json
 src/share/api/ha-sync-complete-notify.json
 src/share/api/interface-list.json
 src/share/api/interface-redetect.json
-src/share/api/interface-use.json
+src/share/api/interface-add.json
 src/share/api/kea-lfc-start.json
 src/share/api/lease4-add.json
 src/share/api/lease4-del.json

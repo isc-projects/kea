@@ -581,8 +581,8 @@ public:
     // Tests if interface-redetect works properly.
     void testInterfaceRedetect();
 
-    // Tests if interface-use works properly.
-    void testInterfaceUse();
+    // Tests if interface-add works properly.
+    void testInterfaceAdd();
 
     // This test verifies that disable DHCP service command performs
     // sanity check on parameters.
@@ -2982,7 +2982,7 @@ BaseCtrlChannelDhcpv4Test::testListCommands() {
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "interface-list");
     checkListCommands(rsp, "interface-redetect");
-    checkListCommands(rsp, "interface-use");
+    checkListCommands(rsp, "interface-add");
     checkListCommands(rsp, "kea-lfc-start");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
@@ -3780,9 +3780,9 @@ TEST_F(HttpsCtrlChannelDhcpv4Test, interfaceRedetect) {
     testInterfaceRedetect();
 }
 
-// Tests if interface-use works properly.
+// Tests if interface-add works properly.
 void
-BaseCtrlChannelDhcpv4Test::testInterfaceUse() {
+BaseCtrlChannelDhcpv4Test::testInterfaceAdd() {
     interfaces_ = "";
     IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
                                                     "11:22:33:44:55:66");
@@ -3804,7 +3804,7 @@ BaseCtrlChannelDhcpv4Test::testInterfaceUse() {
     IfaceMgr::instance().setPacketFilter(filter);
     std::string response;
 
-    std::string command = "{ \"command\": \"interface-use\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
+    std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
     sendHttpCommand(command, response);
     EXPECT_EQ(response, "[ { \"result\": 0, \"text\": \"Configuration successful.\" } ]");
@@ -3827,12 +3827,12 @@ BaseCtrlChannelDhcpv4Test::testInterfaceUse() {
     EXPECT_EQ(response, expected);
 }
 
-TEST_F(HttpCtrlChannelDhcpv4Test, interfaceUse) {
-    testInterfaceUse();
+TEST_F(HttpCtrlChannelDhcpv4Test, interfaceAdd) {
+    testInterfaceAdd();
 }
 
-TEST_F(HttpsCtrlChannelDhcpv4Test, interfaceUse) {
-    testInterfaceUse();
+TEST_F(HttpsCtrlChannelDhcpv4Test, interfaceAdd) {
+    testInterfaceAdd();
 }
 
 // This test verifies that disable DHCP service command performs

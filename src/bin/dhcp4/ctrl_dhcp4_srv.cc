@@ -679,9 +679,11 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
                                                  ConstElementPtr) {
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
     ElementPtr ifaces = Element::createMap();
-    bool error = false;
     std::string message;
+    bool error = false;
     try {
         ifaces->set("interfaces", IfaceMgr::instance().ifacesToElement());
     } catch (const std::exception& ex) {
@@ -706,8 +708,10 @@ ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
                                                      ConstElementPtr args) {
-    bool error = false;
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
     std::string message;
+    bool error = false;
     try {
         IfaceMgr::instance().detectIfaces(true);
     } catch (const std::exception& ex) {
@@ -728,16 +732,18 @@ ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::commandInterfaceUseHandler(const std::string&,
+ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
                                                 ConstElementPtr args) {
-    bool error = false;
+    // stop thread pool (if running)
+    MultiThreadingCriticalSection cs;
     string message;
+    bool error = false;
     ConstElementPtr ifaces_config;
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
         if (args->getType() != Element::map) {
-            message = "arguments for the 'interface-use' command must be a map";
+            message = "arguments for the 'interface-add' command must be a map";
         } else {
             ifaces_config = args->get("interfaces");
             if (!ifaces_config) {
@@ -756,10 +762,30 @@ ControlledDhcpv4Srv::commandInterfaceUseHandler(const std::string&,
     if (!message.empty()) {
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, message));
     }
+    if (!ifaces_config->size()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
+    }
     try {
+        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(args);
         CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
         ElementPtr mutable_running_cfg = running_cfg_iface->toElement();
-        merge(mutable_running_cfg, args);
+        auto const& element_empty = [](ElementPtr&) {
+            return (true);
+        };
+        auto const& element_match_any = [](ElementPtr&, ElementPtr&) -> bool {
+            return (true);
+        };
+        auto const& element_match = [](ElementPtr& left, ElementPtr& right) -> bool {
+            return (left->stringValue() == right->stringValue());
+        };
+        auto const& element_is_key = [](const std::string& key) -> bool {
+            return (key == "interfaces");
+        };
+        isc::data::HierarchyDescriptor hierarchy = {
+            { { "interfaces-config", { element_match_any, element_empty, element_is_key } } },
+            { { "interfaces", { element_match, element_empty, element_is_key } } }
+        };
+        mergeDiffAdd(mutable_running_cfg, mutable_cfg, hierarchy, "interfaces");
         IfacesConfigParser parser(AF_INET, true);
         CfgIfacePtr cfg_iface(new CfgIface());
         parser.parseInterfacesList(cfg_iface, mutable_running_cfg->get("interfaces"));
@@ -1640,8 +1666,8 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_P
     CommandMgr::instance().registerCommand("interface-redetect",
         std::bind(&ControlledDhcpv4Srv::commandInterfaceRedetectHandler, this, ph::_1, ph::_2));
 
-    CommandMgr::instance().registerCommand("interface-use",
-        std::bind(&ControlledDhcpv4Srv::commandInterfaceUseHandler, this, ph::_1, ph::_2));
+    CommandMgr::instance().registerCommand("interface-add",
+        std::bind(&ControlledDhcpv4Srv::commandInterfaceAddHandler, this, ph::_1, ph::_2));
 
     CommandMgr::instance().registerCommand("kea-lfc-start",
         std::bind(&ControlledDhcpv4Srv::commandLfcStartHandler, this, ph::_1, ph::_2));
@@ -1741,7 +1767,7 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("interface-list");
         CommandMgr::instance().deregisterCommand("interface-redetect");
-        CommandMgr::instance().deregisterCommand("interface-use");
+        CommandMgr::instance().deregisterCommand("interface-add");
         CommandMgr::instance().deregisterCommand("kea-lfc-start");
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("subnet4-select-test");

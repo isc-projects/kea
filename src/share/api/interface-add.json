@@ -9,14 +9,14 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"interface-use\",",
+        "    \"command\": \"interface-add\",",
         "    \"arguments\": {",
         "        \"interfaces\": [ \"eth0/10.10.1.1\", \"eth0/192.168.1.1\", \"eth1\"]",
         "    }",
         "}"
     ],
-    "description": "See <xref linkend=\"command-interface-use\"/>",
-    "name": "interface-use",
+    "description": "See <xref linkend=\"command-interface-add\"/>",
+    "name": "interface-add",
     "resp-syntax": [
         "{",
         "    \"result\": 0,",

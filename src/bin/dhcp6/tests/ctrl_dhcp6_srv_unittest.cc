@@ -556,7 +556,7 @@ TEST_F(CtrlDhcpv6SrvTest, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"interface-list\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"interface-redetect\"") != string::npos);
-    EXPECT_TRUE(command_list.find("\"interface-use\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"interface-add\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"kea-lfc-start\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"leases-reclaim\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"subnet6-select-test\"") != string::npos);
@@ -1877,7 +1877,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, listCommands) {
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "interface-list");
     checkListCommands(rsp, "interface-redetect");
-    checkListCommands(rsp, "interface-use");
+    checkListCommands(rsp, "interface-add");
     checkListCommands(rsp, "kea-lfc-start");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "leases-reclaim");
@@ -2549,8 +2549,8 @@ TEST_F(CtrlChannelDhcpv6SrvTest, interfaceRedetect) {
     EXPECT_EQ(response, expected);
 }
 
-// Tests if interface-use works properly.
-TEST_F(CtrlChannelDhcpv6SrvTest, interfaceUse) {
+// Tests if interface-add works properly.
+TEST_F(CtrlChannelDhcpv6SrvTest, interfaceAdd) {
     interfaces_ = "";
     IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
                                                     "11:22:33:44:55:66");
@@ -2573,7 +2573,7 @@ TEST_F(CtrlChannelDhcpv6SrvTest, interfaceUse) {
     SKIP_IF(skipped_);
     std::string response;
 
-    std::string command = "{ \"command\": \"interface-use\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
+    std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
     sendUnixCommand(command, response);
     EXPECT_EQ(response, "{ \"result\": 0, \"text\": \"Configuration successful.\" }");

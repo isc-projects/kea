@@ -262,16 +262,16 @@ private:
     commandInterfaceRedetectHandler(const std::string& command,
                                     isc::data::ConstElementPtr args);
 
-    /// @brief Handler for processing 'interface-use' command
+    /// @brief Handler for processing 'interface-add' command
     ///
-    /// This handler processes interface-use command.
+    /// This handler processes interface-add command.
     ///
     /// @param command (parameter ignored)
     /// @param args arguments for the command.
     ///
     /// @return status of the command with the result
     isc::data::ConstElementPtr
-    commandInterfaceUseHandler(const std::string& command,
+    commandInterfaceAddHandler(const std::string& command,
                                isc::data::ConstElementPtr args);
 
     /// @Brief handler for processing 'version-get' command
