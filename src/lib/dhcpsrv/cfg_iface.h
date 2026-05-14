@@ -470,11 +470,13 @@ private:
     /// traffic should be received through the socket and the raw sockets are
     /// used. For the UDP sockets, we only handle the relayed (unicast)
     /// traffic. This parameter is ignored for IPv6.
+    /// @param skip_opened Omits the already opened sockets (doesn't try to
+    /// re-bind).
     ///
     /// @return True if at least one socket opened successfully.
     bool openSocketsWithRetry(util::ReconnectCtlPtr reconnect_ctl,
                               const uint16_t family, const uint16_t port,
-                              const bool can_use_bcast) const;
+                              const bool can_use_bcast, bool skip_opened) const;
 
     /// @brief Represents a set of interface names.
     typedef std::set<std::string> IfaceSet;

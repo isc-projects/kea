@@ -86,7 +86,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     const bool can_use_bcast = use_bcast && (socket_type_ == SOCKET_RAW);
 
     reconnect_ctl_ = makeReconnectCtl();
-    auto sopen = openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
+    auto sopen = openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast, false);
 
     if (!sopen) {
         // If no socket were opened, log a warning because the server will
@@ -104,7 +104,7 @@ CfgIface::triggerOpenSocketsWithRetry(const uint16_t family, const uint16_t port
 
     reconnect_ctl_->resetRetries();
 
-    openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast);
+    openSocketsWithRetry(reconnect_ctl_, family, port, can_use_bcast, true);
 }
 
 std::pair<bool, bool>
@@ -153,7 +153,7 @@ ReconnectCtlPtr CfgIface::makeReconnectCtl() const {
 bool
 CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
                                const uint16_t family, const uint16_t port,
-                               const bool can_use_bcast) const {
+                               const bool can_use_bcast, bool skip_opened) const {
     MultiThreadingCriticalSection cs;
 
     // The detection must be done before resetting and setting the
@@ -250,7 +250,10 @@ CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
     }
 
     // Skip opened sockets in the retry calls.
-    bool is_initial_call = (reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries());
+    bool is_initial_call = false;
+    if (!skip_opened) {
+        is_initial_call = (reconnect_ctl->retriesLeft() == reconnect_ctl->maxRetries());
+    }
     auto result_pair = CfgIface::openSocketsForFamily(family, port, can_use_bcast, !is_initial_call);
     bool sopen = result_pair.first;
     bool has_errors = !result_pair.second;
@@ -272,7 +275,7 @@ CfgIface::openSocketsWithRetry(ReconnectCtlPtr reconnect_ctl,
                                                 std::bind(&CfgIface::openSocketsWithRetry,
                                                           this,
                                                           reconnect_ctl, family,
-                                                          port, can_use_bcast),
+                                                          port, can_use_bcast, false),
                                                 reconnect_ctl->retryInterval(),
                                                 asiolink::IntervalTimer::ONE_SHOT);
         }
