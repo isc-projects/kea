@@ -484,6 +484,40 @@ returning client that previously used that lease. See :ref:`lease-affinity`
 for details. Also, see :ref:`lease-reclamation` for general
 information about the processing of expired leases (lease reclamation).
 
+.. isccmd:: interface-add
+.. _command-interface-add:
+
+The ``interface-add`` Command
+-----------------------------
+
+The :isccmd:`interface-add` command updates the list of interfaces used
+to process DHCP traffic.
+The command takes as parameter the list of interfaces with respective
+addresses (if specified) on which the server should start listening for
+DHCP traffic. If there are duplicate entries in the command list or they
+are duplicating the entries in the running configuration, these entries
+will have no effect on the new configuration.
+
+.. note::
+
+   The command can only append to the existing list of interfaces.
+   There is no way to remove an interface once it has been added and
+   the server has started listening for DHCP traffic.
+
+Please note that the new configuration is
+retained in memory only; if the server is restarted or a configuration
+reload is triggered via a signal, the server uses the configuration
+stored in its configuration file. The server's response contains a
+numeric code, ``result`` (0 for success, non-zero on failure), and a
+string, ``text``, describing the outcome:
+
+::
+
+       { "result": 0, "text": "Interface configuration successfully updated." }
+
+The updated configuration can also be retrieved using the :isccmd:`config-get`
+command (inside the "interfaces-config" configuration map).
+
 .. isccmd:: interface-list
 .. _command-interface-list:
 
@@ -503,38 +537,6 @@ The :isccmd:`interface-redetect` command retrieves the list of detected interfac
 after performing a re-detect procedure which only adds newly discovered interfaces,
 without removing any previously detected interfaces.
 This command does not take any parameters."
-
-.. isccmd:: interface-add
-.. _command-interface-add:
-
-The ``interface-add`` Command
------------------------------
-
-The :isccmd:`interface-add` command updates the list of interfaces used
-to process DHCP traffic.
-The command takes as parameter the list of interfaces with respective
-addresses (if specified) on which the server should start listening for
-DHCP traffic.
-
-.. note::
-
-   The command can only append to the existing list of interfaces.
-   There is no way to remove an interface once it has been added and
-   the server has started listening for DHCP traffic.
-
-Please note that the new configuration is
-retained in memory only; if the server is restarted or a configuration
-reload is triggered via a signal, the server uses the configuration
-stored in its configuration file. The server's response contains a
-numeric code, ``result`` (0 for success, non-zero on failure), and a
-string, ``text``, describing the outcome:
-
-::
-
-       {"result": 0, "text": "Configuration successful." }
-
-The updated configuration can also be retrieved using the :isccmd:`config-get`
-command (inside the "interfaces-config" configuration map).
 
 .. isccmd:: list-commands
 .. _command-list-commands:

@@ -4821,4 +4821,26 @@ TEST_F(IfaceMgrTest, indirectReceive6RotateIfaces) {
     testReceive6RotateIfaces(false);
 }
 
+TEST_F(IfaceMgrTest, receiverCS) {
+    ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    {
+        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    }
+    ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    bool queue_enabled = false;
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500);
+    ASSERT_NO_THROW(queue_enabled = IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, config));
+    ASSERT_TRUE(queue_enabled);
+
+    // Thread should only start when there is a packet queue.
+    ASSERT_NO_THROW(IfaceMgr::instance().startDHCPReceiver(AF_INET));
+    ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+    {
+        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    }
+    ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+}
+
 }

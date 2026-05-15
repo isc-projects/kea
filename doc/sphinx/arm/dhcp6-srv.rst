@@ -7986,9 +7986,9 @@ The DHCPv6 server supports the following operational commands:
 - :isccmd:`config-write`
 - :isccmd:`dhcp-disable`
 - :isccmd:`dhcp-enable`
+- :isccmd:`interface-add`
 - :isccmd:`interface-list`
 - :isccmd:`interface-redetect`
-- :isccmd:`interface-add`
 - :isccmd:`leases-reclaim`
 - :isccmd:`list-commands`
 - :isccmd:`shutdown`

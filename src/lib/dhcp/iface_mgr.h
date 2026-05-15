@@ -869,6 +869,13 @@ public:
         check_thread_id_ = check;
     }
 
+    /// @brief Check if called from the main thread.
+    ///
+    /// @return true if the current thread is the main thread, false otherwise.
+    bool isMainThread() const {
+        return (std::this_thread::get_id() == id_);
+    }
+
     /// @brief Allows or disallows the loopback interface
     ///
     /// By default the loopback interface is not considered when opening
@@ -1849,6 +1856,40 @@ private:
 
     /// @brief Address family.
     uint16_t family_;
+};
+
+/// @brief RAII class creating a critical section for the receiver thread.
+class ReceiverCriticalSection : public boost::noncopyable {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Entering the critical section: if running, the receiver
+    /// is stopped not clearing the packet queue.
+    ReceiverCriticalSection(IfaceMgr& iface_mgr)
+        : iface_mgr_(iface_mgr), is_running_(iface_mgr.isDHCPReceiverRunning()) {
+        if (is_running_) {
+            iface_mgr_.stopDHCPReceiver(false);
+        }
+    }
+
+    /// @brief Destructor.
+    ///
+    /// Leaving the critical section: if it was running, the receiver
+    /// is started.
+    ~ReceiverCriticalSection() {
+        if (is_running_) {
+            auto family = iface_mgr_.getFamily();
+            iface_mgr_.startDHCPReceiver(family);
+        }
+    }
+
+private:
+    /// @brief The IfaceMgr instance.
+    IfaceMgr& iface_mgr_;
+
+    /// @brief Is running flag.
+    bool is_running_;
 };
 
 }  // namespace isc::dhcp

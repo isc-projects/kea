@@ -679,8 +679,10 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
                                                  ConstElementPtr) {
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'interface-list' on a different thread than main thread"));
+    }
     ElementPtr ifaces = Element::createMap();
     std::string message;
     bool error = false;
@@ -708,11 +710,15 @@ ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
                                                      ConstElementPtr args) {
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'interface-redetect' on a different thread than main thread"));
+    }
     std::string message;
     bool error = false;
     try {
+        // stop thread pool (if running)
+        MultiThreadingCriticalSection cs;
         IfaceMgr::instance().detectIfaces(true);
     } catch (const std::exception& ex) {
         error = true;
@@ -734,8 +740,10 @@ ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
                                                 ConstElementPtr args) {
-    // stop thread pool (if running)
-    MultiThreadingCriticalSection cs;
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'interface-add' on a different thread than main thread"));
+    }
     string message;
     ConstElementPtr ifaces_config;
     if (!args) {
@@ -766,31 +774,29 @@ ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
     }
     bool error = false;
     try {
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(args);
-        CfgIfacePtr running_cfg_iface = CfgMgr::instance().getCurrentCfg()->getCfgIface();
-        ElementPtr mutable_running_cfg = running_cfg_iface->toElement();
-        auto const& element_empty = [](ElementPtr&) {
-            return (true);
-        };
-        auto const& element_match_any = [](ElementPtr&, ElementPtr&) -> bool {
-            return (true);
-        };
-        auto const& element_match = [](ElementPtr& left, ElementPtr& right) -> bool {
-            return (left->stringValue() == right->stringValue());
-        };
-        auto const& element_is_key = [](const std::string& key) -> bool {
-            return (key == "interfaces");
-        };
-        isc::data::HierarchyDescriptor hierarchy = {
-            { { "interfaces-config", { element_match_any, element_empty, element_is_key } } },
-            { { "interfaces", { element_match, element_empty, element_is_key } } }
-        };
-        mergeDiffAdd(mutable_running_cfg, mutable_cfg, hierarchy, "interfaces");
+        CfgIfacePtr running_cfg = CfgMgr::instance().getCurrentCfg()->getCfgIface();
+        ElementPtr ifaces = Element::createList();
+        std::set<std::string> seen;
+        auto running_ifaces = running_cfg->toElement()->get("interfaces");
+        if (running_ifaces && (running_ifaces->getType() == Element::list)) {
+            for (auto const& item : running_ifaces->listValue()) {
+                seen.insert(item->stringValue());
+                ifaces->add(item);
+            }
+        }
+        for (auto const& item : ifaces_config->listValue()) {
+            auto const& str = item->stringValue();
+            if (seen.find(item->stringValue()) != seen.end()) {
+                continue;
+            }
+            seen.insert(item->stringValue());
+            ifaces->add(item);
+        }
         IfacesConfigParser parser(AF_INET, true);
         CfgIfacePtr cfg_iface(new CfgIface());
-        parser.parseInterfacesList(cfg_iface, mutable_running_cfg->get("interfaces"));
-        CfgMgr::instance().getCurrentCfg()->getCfgIface()->update(*cfg_iface);
-        running_cfg_iface->triggerOpenSocketsWithRetry(AF_INET, getServerPort(), useBroadcast());
+        parser.parseInterfacesList(cfg_iface, ifaces);
+        running_cfg->update(*cfg_iface);
+        running_cfg->triggerOpenSocketsWithRetry(AF_INET, getServerPort(), useBroadcast());
     } catch (const std::exception& ex) {
         error = true;
         message = ex.what();

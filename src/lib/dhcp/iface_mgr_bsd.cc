@@ -31,17 +31,7 @@ namespace dhcp {
 /// This is a BSD specific interface detection method.
 void
 IfaceMgr::detectIfaces(bool update_only) {
-    IfaceMgr* mgr_p = 0;
-    if (isDHCPReceiverRunning()) {
-        mgr_p = this;
-        stopDHCPReceiver(false);
-    }
-    std::unique_ptr<void, void(*)(void*)> p(static_cast<void*>(mgr_p), [](void* m) {
-        if (m) {
-            IfaceMgr* mgr = reinterpret_cast<IfaceMgr*>(m);
-            mgr->startDHCPReceiver(mgr->getFamily());
-        }
-    });
+    ReceiverCriticalSection rcs(*this);
     if (detect_callback_) {
         if (!detect_callback_(update_only)) {
             return;
