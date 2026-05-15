@@ -1350,6 +1350,11 @@ and which is delegated a prefix from this pool.
        ]
    }
 
+.. _overlapping-pools:
+
+Overlapping Pools
+-----------------
+
 .. note::
 
     Here are some liberties and limits to the values that subnets and pools can
@@ -9071,10 +9076,17 @@ are prohibited from using the pool until its SFLQ data exists.  This behavior
 is intended to maintain some order during concurrent server restarts and
 reconfigurations.
 
-There is the topic of overlapping pools. Kea permits the configuration
-of pools whose address ranges overlap other pools. The SFLQ Allocator supports
-this seamlessly as long as all such pools are configured to use the SFLQ
-Allocator.
+Finally, there is the topic of overlapping pools. Kea permits the configuration
+of pools whose address ranges overlap other pools (see :ref:`overlapping-pools`).
+SFLQ Allocator generally supports these use cases as long as all such pools on
+all servers:
+
+- Are configured to use the SFLQ Allocator
+- Are of the same lease type (all ``TYPE_NA`` or all ``TYPE_PD``)
+- For prefix delegation pools, must have the same delegated_len
+
+Overlapping prefix delegation pools in any situation other than having the
+same pool declared in multiple subnets is discouraged.
 
 .. note::
 
