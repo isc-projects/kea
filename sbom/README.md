@@ -7,11 +7,16 @@
 pushd kea
 export CXXFLAGS="${CXXFLAGS:-} -gdwarf-4"
 export LDFLAGS="${LDFLAGS:-} -gdwarf-4"
+
+
+# Tomek: The following exports caused my compiler (g++ 13.3.0 on ubuntu 24.04.4 LTS)
+# to fail. With them skipped, the compilation and SBOM generation succeeded
 CPP_ARGS="-stdlib=libc++  \
   -DCHRONO_SAME_DURATION=1 -D_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR \
   -D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION -D_GLIBCXX_USE_DEPRECATED=1"
 LD_ARGS="-stdlib=libc++"
-meson subprojects download 
+
+meson subprojects download
 meson setup build -D cpp_std=c++17 -D crypto=openssl -D default_library=static \
   -D default_both_libraries=static -D cpp_args="$CPP_ARGS" -D cpp_link_args="$LD_ARGS" \
   -D postgresql=enabled -D mysql=enabled -D krb5=enabled
