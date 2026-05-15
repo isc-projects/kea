@@ -120,7 +120,7 @@ const char* values[] = {
     "SFLQ_POOL6_GET_BY_RANGE_FAILED", "sflq-pool6-get-by-range command failed, (parameters: %1, reason: %2)",
     "SFLQ_POOL6_GET_BY_SUBNET", "sflq-pool6-get-by-subnet command succeeded, (parameters: %1) pools found: %2",
     "SFLQ_POOL6_GET_BY_SUBNET_FAILED", "sflq-pool6-get-by-subnet command failed, (parameters: %1, reason: %2)",
-    "SFLQ_POOL6_REBUILD", "sflq-pool6-rebuild command succeeded, (parameters: %1) pools rebuilt: %2",
+    "SFLQ_POOL6_REBUILD", "sflq-pool4-rebuild command succeeded, (parameters: %1) pools rebuilt: %2",
     "SFLQ_POOL6_REBUILD_FAILED", "sflq-pool6-rebuild command failed, (parameters: %1, reason: %2)",
     NULL
 };

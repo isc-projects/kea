@@ -1226,15 +1226,15 @@ where one or more servers have been using other allocator schemes for
 the address ranges that include SFLQ pools. Issuing the command will cause
 the lease back end to discard and then rebuild the free lease data for the
 given pool. Only a pool that exactly matches the start and end adddress
-given will rebuilt.
+given will be rebuilt.
 
-An example :isccmd:`sflq-pool4-rebuild` command for rebuiding an IPv4 SFLQ
+An example :isccmd:`sflq-pool4-rebuild` command for rebuilding an IPv4 SFLQ
 Pool is shown below:
 
 ::
 
     {
-        "command": "sflq-pool4-create",
+        "command": "sflq-pool4-rebuild",
         "arguments": {
             "start-address": "192.0.2.0",
             "end-address": "192.0.2.255"
@@ -1247,7 +1247,7 @@ SFLQ pool for an address pool is shown below:
 ::
 
     {
-        "command": "sflq-pool6-create",
+        "command": "sflq-pool6-rebuild",
         "arguments": {
             "start-address": "2001:db8:1::",
             "end-address": "2001:db8:1::FFFF"
@@ -1572,7 +1572,7 @@ matching pool will be deleted without checking for overlapping pools.
 
 Deleting a pool when there are overlapping pools can produce holes in the
 free lease data where the overlaps occur. If the overlapping pools are to
-remain in use, the ``sflq-poolX-create`` commands should be used to rebuild the
+remain in use, the ``sflq-poolX-rebuild`` commands should be used to rebuild the
 free lease data for the remaining pools.
 
 Alternatively, all of the overlapping pools can be deleted and the next
