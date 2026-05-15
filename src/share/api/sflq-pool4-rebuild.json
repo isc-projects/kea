@@ -6,7 +6,7 @@
     ],
     "cmd-syntax": [
         "{",
-        "    \"command\": \"sflq-pool4-create\",",
+        "    \"command\": \"sflq-pool4-rebuild\",",
         "    \"arguments\": {",
         "       \"start-address\": \"1.2.3.4\",",
         "       \"end-address\": \"1.2.3.4\"",

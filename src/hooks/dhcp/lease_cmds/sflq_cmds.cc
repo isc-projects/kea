@@ -93,7 +93,7 @@ SflqCmdsImpl::sflqPool4RebuildHandler(CalloutHandle& handle) {
         }
 
         LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL4_REBUILD)
-                  .arg(cmd_args_)
+                  .arg(cmd_args_->str())
                   .arg(rebuilt ? 1 : 0);
 
     } catch (const std::exception& ex) {
@@ -187,7 +187,7 @@ SflqCmdsImpl::sflqPool6RebuildHandler(CalloutHandle& handle) {
         }
 
         LOG_DEBUG(lease_cmds_logger, LEASE_CMDS_DBG_COMMAND_DATA, SFLQ_POOL6_REBUILD)
-                  .arg(cmd_args_)
+                  .arg(cmd_args_->str())
                   .arg(rebuilt ? 1 : 0);
     } catch (const std::exception& ex) {
         LOG_ERROR(lease_cmds_logger, SFLQ_POOL6_REBUILD_FAILED)
