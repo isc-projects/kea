@@ -3,7 +3,8 @@
     "avail": "3.1.9",
     "brief": [
         "This command retrieves the list of detected interfaces after performing",
-        "a re-detect procedure.",
+        "a re-detect procedure which only adds newly discovered interfaces,",
+        "without removing any previously detected interfaces.",
         "This command does not take any parameters."
     ],
     "cmd-syntax": [

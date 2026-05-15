@@ -2582,7 +2582,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAdd) {
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
     sendUnixCommand(command, response);
-    EXPECT_EQ(response, "{ \"result\": 0, \"text\": \"Configuration successful.\" }");
+    EXPECT_EQ(response, "{ \"result\": 0, \"text\": \"Interface configuration successfully updated.\" }");
 
     command = "{ \"command\": \"interface-list\" }";
     sendUnixCommand(command, response);

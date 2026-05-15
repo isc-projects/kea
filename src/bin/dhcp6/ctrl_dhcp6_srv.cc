@@ -765,7 +765,7 @@ ControlledDhcpv6Srv::commandInterfaceAddHandler(const std::string&,
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, message));
     }
     if (!ifaces_config->size()) {
-        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
+        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Interface configuration successfully updated."));
     }
     bool error = false;
     try {
@@ -804,9 +804,9 @@ ControlledDhcpv6Srv::commandInterfaceAddHandler(const std::string&,
 
     ostringstream msg;
     if (!error) {
-        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful."));
+        return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Interface configuration successfully updated."));
     } else {
-        msg << "Unexpected error while updating used interfaces: " << message;
+        msg << "Updating used interfaces failed: " << message;
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, msg.str()));
     }
 }

@@ -990,6 +990,8 @@ disabled by setting the ``re-detect`` value to ``false``, for instance:
        ...
    }
 
+The re-detect mechanism usually removes previously detected interfaces and
+then adds all currently detected interfaces.
 Note that interfaces are not re-detected when the :isccmd:`config-test`
 or :isccmd:`config-set` commands are run.
 However, new interfaces are detected and are available for use by

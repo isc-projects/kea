@@ -3799,7 +3799,7 @@ BaseCtrlChannelDhcpv6Test::testInterfaceAdd() {
     std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
 
     sendHttpCommand(command, response);
-    EXPECT_EQ(response, "[ { \"result\": 0, \"text\": \"Configuration successful.\" } ]");
+    EXPECT_EQ(response, "[ { \"result\": 0, \"text\": \"Interface configuration successfully updated.\" } ]");
 
     command = "{ \"command\": \"interface-list\" }";
     sendHttpCommand(command, response);
