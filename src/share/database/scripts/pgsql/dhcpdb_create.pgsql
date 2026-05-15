@@ -7633,8 +7633,9 @@ UPDATE schema_version
 
 -- This line starts the schema upgrade to version 34.0.
 
--- Populate flq_pool6 and free_lease6 based on an address
--- range and delegated len. Use 128 for NA addresses.
+-- Check delegated_len change on recreate = 0
+-- Update flq_pool6 values on recreate = 1
+-- Fix free_lease loop logic
 CREATE OR REPLACE FUNCTION sflqCreateFlqPool6(p_start_address INET,
                                                p_end_address INET,
                                                p_lease_type SMALLINT,
@@ -7651,6 +7652,7 @@ DECLARE
     max_prefixes_per_batch INTEGER := 10000;
     last_bin BYTEA;
     next_bin BYTEA;
+    x_pool_id BIGINT;
     pool_changed INTEGER;
 BEGIN
     IF ((p_start_address = '::'::inet) OR (p_start_address > p_end_address))
@@ -7670,18 +7672,24 @@ BEGIN
     pool_changed = 0;
     IF (p_recreate = false)
     THEN
-        SELECT count(*) INTO pool_changed
+        x_pool_id = NULL;
+        SELECT id INTO x_pool_id
             FROM flq_pool6
             WHERE (start_address = p_start_address AND
                    end_address = p_end_address AND
                    delegated_len != p_delegated_len)
-            LIMIT 1;
+            FOR UPDATE;
+
+        IF (x_pool_id IS NOT NULL)
+        THEN
+            pool_changed = 1;
+        END IF;
     END IF;
 
     -- Create the flq_pool6 row. Concurrent attempts will hang until
     -- this one commits and then they will fail with duplicate key
     -- error. Callers should treat the duplicate error as success.
-    IF (p_recreate = true OR pool_changed > 0)
+    IF (p_recreate = true OR pool_changed = 1)
     THEN
         -- (Re)creating should ignore duplicate on insert
         INSERT INTO flq_pool6

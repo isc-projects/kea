@@ -6754,7 +6754,7 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
     ASSERT_EQ(Lease::TYPE_PD, (*pool_infos)[0]->lease_type_);
 
     // Now let's try creates with a different delegated_len.
-    // This should make them act like recreates.
+    // This should make one act like a recreate.
     threads.clear();
     for (int i = 0; i < num_threads; ++i) {
         rets[i] = false;
@@ -6778,8 +6778,8 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
         }
     }
 
-    // All should report true.
-    ASSERT_EQ(num_threads, true_cnt);
+    // Only should report true.
+    ASSERT_EQ(1, true_cnt);
 }
 
 }  // namespace test

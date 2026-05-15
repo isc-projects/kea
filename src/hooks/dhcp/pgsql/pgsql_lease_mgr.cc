@@ -4151,7 +4151,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address
             .arg(start_address.toText())
             .arg(end_address.toText())
             .arg(subnet_id)
-            .arg(recreate)
+            .arg(recreate ? "true" : "false")
             .arg(capacity);
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "PgSqlLeaseMgr::sflqCreateFlqPool4 " << ex.what());
@@ -4260,7 +4260,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address
             .arg(lease_type)
             .arg(static_cast<uint16_t>(delegated_len))
             .arg(subnet_id)
-            .arg(recreate)
+            .arg(recreate ? "true" : "false")
             .arg(capacity);
     } catch (const std::exception& ex) {
         isc_throw(BadValue, "PgSqlLeasMgr::sflqCreateFlqPool6 " << ex.what());
