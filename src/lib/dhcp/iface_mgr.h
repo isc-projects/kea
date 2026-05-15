@@ -465,7 +465,7 @@ public:
     /// @return the list of messages
     ErrorBuffer const& getErrors() const;
 
-    /// @brief Unparse a configuration object
+    /// @brief Unparse a configuration object.
     ///
     /// Returns an element which must parse into the same object, i.e.
     /// @code

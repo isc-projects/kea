@@ -422,11 +422,11 @@ outcome:
 
 ::
 
-       {"result": 0, "text": "Configuration seems sane..." }
+       { "result": 0, "text": "Configuration seems sane..." }
 
        or
 
-       {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
+       { "result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
 .. isccmd:: config-write
 .. _command-config-write:
@@ -613,11 +613,11 @@ string, ``text``, describing the outcome:
 
 ::
 
-       {"result": 0, "text": "Configuration successful." }
+       { "result": 0, "text": "Configuration successful." }
 
        or
 
-       {"result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
+       { "result": 1, "text": "unsupported parameter: BOGUS (<string>:16:26)" }
 
 In Kea 2.4.0 and later, the successful response from a DHCPv4, DHCPv6, or DHCP-DDNS daemon
 also contains a SHA-256 digest of the newly set configuration. The digest can be used to easily

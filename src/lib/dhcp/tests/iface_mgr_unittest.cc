@@ -389,6 +389,7 @@ public:
     /// @brief Constructor.
     IfaceMgrTest()
         : errors_count_(0), kea_event_handler_type_("KEA_EVENT_HANDLER_TYPE") {
+        IfaceMgr::instance().setFamily(AF_INET);
         struct rlimit limit;
         getrlimit(RLIMIT_NOFILE, &limit_);
         limit.rlim_cur = 16 * FD_SETSIZE;
@@ -406,6 +407,7 @@ public:
         IfaceMgr::instance().setPacketFilter(PktFilter6Ptr(new PktFilterInet6()));
         IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
         IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
+        IfaceMgr::instance().setFamily(AF_INET);
     }
 
     /// @brief Tests the number of IPv6 sockets on interface
@@ -4708,11 +4710,19 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     EXPECT_TRUE(ifacemgr->getPacketQueue4());
     ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
+    const isc::asiolink::IOAddress addr("::");
+    const uint16_t port = 0;
+    Pkt4Ptr pkt;
+    SocketInfo si(addr, port, 0);
+    ifacemgr->getPacketQueue4()->enqueuePacket(pkt, si);
+    ASSERT_FALSE(ifacemgr->getPacketQueue4()->empty());
+
     // Now let's stop stop the thread.
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
     ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     // Stopping the thread should not destroy the queue.
     ASSERT_TRUE(ifacemgr->getPacketQueue4());
+    ASSERT_TRUE(ifacemgr->getPacketQueue4()->empty());
 
     // Reconfigure with the queue turned off.  We should have neither queue nor thread.
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
@@ -4777,11 +4787,19 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     EXPECT_TRUE(ifacemgr->getPacketQueue6());
     ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
+    const isc::asiolink::IOAddress addr("::");
+    const uint16_t port = 0;
+    Pkt6Ptr pkt;
+    SocketInfo si(addr, port, 0);
+    ifacemgr->getPacketQueue6()->enqueuePacket(pkt, si);
+    ASSERT_FALSE(ifacemgr->getPacketQueue6()->empty());
+
     // Now let's stop stop the thread.
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
     ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     // Stopping the thread should not destroy the queue.
     ASSERT_TRUE(ifacemgr->getPacketQueue6());
+    ASSERT_TRUE(ifacemgr->getPacketQueue6()->empty());
 
     // Reconfigure with the queue turned off.  We should have neither queue nor thread.
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
@@ -4821,26 +4839,71 @@ TEST_F(IfaceMgrTest, indirectReceive6RotateIfaces) {
     testReceive6RotateIfaces(false);
 }
 
-TEST_F(IfaceMgrTest, receiverCS) {
+TEST_F(IfaceMgrTest, receiverCS4) {
+    const isc::asiolink::IOAddress addr("::");
+    const uint16_t port = 0;
+    Pkt4Ptr pkt;
+    SocketInfo si(addr, port, 0);
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
     ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
     {
         ReceiverCriticalSection rcs(IfaceMgr::instance());
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
     }
     ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
     bool queue_enabled = false;
     data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500);
     ASSERT_NO_THROW(queue_enabled = IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, config));
     ASSERT_TRUE(queue_enabled);
+    IfaceMgr::instance().getPacketQueue4()->enqueuePacket(pkt, si);
 
     // Thread should only start when there is a packet queue.
     ASSERT_NO_THROW(IfaceMgr::instance().startDHCPReceiver(AF_INET));
     ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
     {
         ReceiverCriticalSection rcs(IfaceMgr::instance());
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
     }
     ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
+}
+
+TEST_F(IfaceMgrTest, receiverCS6) {
+    IfaceMgr::instance().setFamily(AF_INET6);
+    const isc::asiolink::IOAddress addr("::");
+    const uint16_t port = 0;
+    Pkt6Ptr pkt;
+    SocketInfo si(addr, port, 0);
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
+    ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    {
+        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
+    }
+    ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
+    bool queue_enabled = false;
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500);
+    ASSERT_NO_THROW(queue_enabled = IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, config));
+    ASSERT_TRUE(queue_enabled);
+    IfaceMgr::instance().getPacketQueue6()->enqueuePacket(pkt, si);
+
+    // Thread should only start when there is a packet queue.
+    ASSERT_NO_THROW(IfaceMgr::instance().startDHCPReceiver(AF_INET6));
+    ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
+    {
+        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
+    }
+    ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
+    ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
 }
 
 }

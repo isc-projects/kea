@@ -9,6 +9,7 @@
 #include <dhcp/testutils/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/client_class_def.h>
+#include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
 #include <process/logging_info.h>
@@ -19,9 +20,10 @@
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp_ddns;
 using namespace isc::dhcp;
-using namespace isc::data;
+using namespace isc::dhcp::test;
 using namespace isc::process;
 using namespace isc::util;
 
@@ -2303,6 +2305,53 @@ TEST_F(SrvConfigTest, sanityChecksDdnsTtlParameters) {
         conf.addConfiguredGlobal("ddns-ttl-max", Element::create(100));
         EXPECT_NO_THROW(conf.sanityChecksDdnsTtlParameters());
     }
+}
+
+TEST_F(SrvConfigTest, update) {
+    CfgIfacePtr running_cfg(new CfgIface());
+    {
+        std::string config =
+            "{ \"user-context\": { \"foo\": \"bar\" }, "
+            "  \"interfaces\": [ \"eth0/10.0.0.1\", \"lo\", \"eth1961/198.51.100.1\" ], "
+            "  \"dhcp-socket-type\": \"udp\","
+            "  \"outbound-interface\": \"use-routing\", "
+            "  \"re-detect\": false }";
+        ElementPtr config_element = Element::fromJSON(config);
+        IfacesConfigParser parser(AF_INET, true);
+        parser.parse(running_cfg, config_element);
+    }
+    std::string expected = "{ "
+            "\"dhcp-socket-type\": \"udp\", "
+            "\"interfaces\": [ \"lo\", \"eth0/10.0.0.1\", \"eth1961/198.51.100.1\" ], "
+            "\"outbound-interface\": \"use-routing\", "
+            "\"re-detect\": false, "
+            "\"user-context\": { \"foo\": \"bar\" } }";
+    ASSERT_EQ(expected, running_cfg->toElement()->str());
+    CfgIfacePtr cfg_iface(new CfgIface());
+    {
+        std::string config =
+            "{ \"user-context\": { \"black\": \"sheep\" }, "
+            "  \"interfaces\": [ \"eth1/192.0.2.3\", \"eth1/192.0.2.5\", \"*\" ], "
+            "  \"dhcp-socket-type\": \"raw\","
+            "  \"outbound-interface\": \"same-as-inbound\", "
+            "  \"re-detect\": true }";
+        ElementPtr config_element = Element::fromJSON(config);
+        IfacesConfigParser parser(AF_INET, true);
+        parser.parse(cfg_iface, config_element);
+    }
+    expected = "{ "
+            "\"interfaces\": [ \"*\", \"eth1/192.0.2.3\", \"eth1/192.0.2.5\" ], "
+            "\"re-detect\": true, "
+            "\"user-context\": { \"black\": \"sheep\" } }";
+    ASSERT_EQ(expected, cfg_iface->toElement()->str());
+    running_cfg->update(*cfg_iface);
+    expected = "{ "
+            "\"dhcp-socket-type\": \"udp\", "
+            "\"interfaces\": [ \"*\", \"eth1/192.0.2.3\", \"eth1/192.0.2.5\" ], "
+            "\"outbound-interface\": \"use-routing\", "
+            "\"re-detect\": false, "
+            "\"user-context\": { \"foo\": \"bar\" } }";
+    ASSERT_EQ(expected, running_cfg->toElement()->str());
 }
 
 /// @brief Class for DdnsParams class.
