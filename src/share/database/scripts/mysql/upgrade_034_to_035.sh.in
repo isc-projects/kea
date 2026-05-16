@@ -1,0 +1,263 @@
+#!/bin/sh
+
+# Copyright (C) 2025-2026 Internet Systems Consortium, Inc. ("ISC") #
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Exit with error if commands exit with non-zero and if undefined variables are
+# used.
+set -eu
+
+# shellcheck disable=SC2034
+# SC2034: ... appears unused. Verify use (or export if used externally).
+prefix="@prefix@"
+
+# Include utilities based on location of this script. Check for sources first,
+# so that the unexpected situations with weird paths fall on the default
+# case of installed.
+script_path=$(cd "$(dirname "${0}")" && pwd)
+if test "${script_path}" = "@abs_top_builddir@/src/share/database/scripts/mysql"; then
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@abs_top_builddir@/src/bin/admin/admin-utils.sh"
+else
+    # shellcheck source=./src/bin/admin/admin-utils.sh.in
+    . "@datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh"
+fi
+
+# Check only major version to allow for intermediary backported schema changes.
+version=$(mysql_version "${@}" | cut -d '.' -f 1)
+if test "${version}" != '34'; then
+    printf 'This script upgrades 34.* to 35.0. '
+    printf 'Reported version is %s. Skipping upgrade.\n' "${version}"
+    exit 0
+fi
+
+# Get the schema name from database argument. We need this to
+# query information_schema for the right database.
+for arg in "${@}"
+do
+    if ! printf '%s' "${arg}" | grep -Eq -- '^--'
+    then
+        schema="$arg"
+        break
+    fi
+done
+
+# Make sure we have the schema.
+if [ -z "$schema" ]
+then
+    printf "Could not find database schema name in cmd line args: %s\n" "${*}"
+    exit 255
+fi
+
+mysql "$@" <<EOF
+
+-- This line starts the schema upgrade to version 35.0.
+
+-- Remove transaction statements.
+-- Populate flq_pool4 and free_lease4 based on an address range.
+-- This must be called from within a transaction.
+DROP PROCEDURE IF EXISTS sflqCreateFlqPool4;
+DELIMITER $$
+CREATE PROCEDURE sflqCreateFlqPool4(IN p_start_address INT UNSIGNED,
+                                    IN p_end_address INT UNSIGNED,
+                                    IN p_subnet_id INT UNSIGNED,
+                                    IN p_recreate TINYINT)
+BEGIN
+    DECLARE loop_limit INT UNSIGNED;
+    DECLARE next_start_address INT UNSIGNED;
+    DECLARE next_end_address INT UNSIGNED;
+    DECLARE remaining INT UNSIGNED;
+    DECLARE error_msg VARCHAR(512);
+
+    IF (p_start_address = inet_aton('0.0.0.0') OR
+        p_start_address > p_end_address)
+    THEN
+        SET error_msg = CONCAT('Invalid range: ', inet_ntoa(p_start_address),
+                               ' - ', inet_ntoa(p_end_address));
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = error_msg;
+    END IF;
+
+    -- Create the flq_pool4 row. Concurrent attempts will hang until
+    -- this one commits and then they will fail with duplicate key
+    -- error. Callers should treat the duplicate error as success.
+    IF p_recreate = 1
+    THEN
+        -- (Re)creating should ignore duplicate on insert
+        INSERT INTO flq_pool4 (start_address, end_address, subnet_id)
+           VALUES (p_start_address, p_end_address, p_subnet_id)
+        ON DUPLICATE KEY UPDATE start_address = start_address;
+    ELSE
+        INSERT INTO flq_pool4 (start_address, end_address, subnet_id)
+           VALUES (p_start_address, p_end_address, p_subnet_id);
+    END IF;
+
+    -- Wipe out existing free addresses. This ensures we fix any mixed allocation entries.
+    DELETE FROM free_lease4 WHERE address >= p_start_address and address <= p_end_address;
+
+    -- Insert available leases into free_lease4 table.  If insert fails on
+    -- duplicate ignore it. MySql limits recursive queries so we iterate
+    -- pool address range in chunks.
+    CALL setLoopLimit();
+    SET loop_limit = @kea_recursion_limit - 1;
+    SET next_start_address = p_start_address;
+    SET next_end_address = p_start_address;
+    start_loop: WHILE next_start_address <= p_end_address DO
+        SET remaining = p_end_address - next_start_address;
+        IF (remaining > loop_limit)
+        THEN
+            SET next_end_address = next_end_address + loop_limit;
+        ELSE
+            SET next_end_address = next_end_address + remaining;
+        END IF;
+
+        INSERT INTO free_lease4 (address)
+            WITH RECURSIVE addresses AS (
+                SELECT next_start_address AS avail
+                UNION ALL
+                SELECT avail + 1 FROM addresses WHERE avail < next_end_address
+            )
+            SELECT avail FROM addresses
+                LEFT JOIN lease4 on avail = lease4.address
+                WHERE (lease4.address IS NULL OR lease4.state = 2)
+            ON DUPLICATE KEY UPDATE free_lease4.address = avail;
+
+        IF next_start_address + loop_limit <= 4294967295 THEN
+            SET next_start_address = next_start_address + loop_limit;
+        ELSE
+            LEAVE start_loop;
+        END IF;
+    END WHILE start_loop;
+
+    -- Update the modification time in the flq_pool row.
+    UPDATE flq_pool4 SET modification_ts = now()
+        WHERE (start_address = p_start_address AND end_address = p_end_address);
+END $$
+DELIMITER ;
+
+-- Populate flq_pool6 and free_lease6 based on an address
+-- range and delegated len. Use 128 for NA addresses.
+-- This must be called from within a transaction.
+DROP PROCEDURE IF EXISTS sflqCreateFlqPool6;
+DELIMITER $$
+CREATE PROCEDURE sflqCreateFlqPool6(IN p_start_address VARCHAR(45),
+                                    IN p_end_address VARCHAR(45),
+                                    IN p_lease_type TINYINT UNSIGNED,
+                                    IN p_delegated_len TINYINT UNSIGNED,
+                                    IN p_subnet_id INT UNSIGNED,
+                                    IN p_recreate TINYINT)
+BEGIN
+    DECLARE bin_next_address BINARY(16);
+    DECLARE bin_end_address BINARY(16);
+    DECLARE lease_address VARCHAR(45);
+    DECLARE error_msg VARCHAR(512);
+    DECLARE x_delegated_len TINYINT UNSIGNED;
+    DECLARE pool_changed TINYINT;
+
+    SET bin_next_address = INET6_ATON(p_start_address);
+    SET bin_end_address = INET6_ATON(p_end_address);
+
+    IF (p_start_address =  "::" OR
+        bin_next_address > bin_end_address)
+    THEN
+        SET error_msg = CONCAT('Invalid range: ', p_start_address,
+                               ' - ', p_end_address);
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = error_msg;
+    END IF;
+
+    IF (p_delegated_len < 1 OR p_delegated_len > 128)
+    THEN
+        SET error_msg = CONCAT('Invalid p_delegated_len: ', p_delegated_len);
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = error_msg;
+    END IF;
+
+    -- If we are not re-creating the pool, look for a pre-existing pool
+    -- and see if delegated length has changed. If so we need to treat
+    -- it as recreate. This should catch configuration changes to
+    -- pools pre-existing pools.
+    SET pool_changed = 0;
+    IF (p_recreate = 0)
+    THEN
+        SELECT count(*) INTO pool_changed
+            FROM flq_pool6
+            WHERE (start_address = p_start_address AND
+                   end_address = p_end_address AND
+                   delegated_len != p_delegated_len)
+            LIMIT 1;
+    END IF;
+
+    -- Create the flq_pool6 row. Concurrent attempts will hang until
+    -- this one commits and then they will fail with duplicate key
+    -- error. Callers should treat the duplicate error as success.
+    IF (p_recreate = 1 OR pool_changed = 1)
+    THEN
+        -- (Re)creating should ignore duplicate on insert
+        INSERT INTO flq_pool6
+            (start_address, end_address, lease_type, delegated_len, subnet_id)
+            VALUES
+            (p_start_address, p_end_address, p_lease_type, p_delegated_len, p_subnet_id)
+            ON DUPLICATE KEY UPDATE
+                    -- Recreate may have changed these
+                    lease_type = p_lease_type,
+                    delegated_len = p_delegated_len,
+                    subnet_id = p_subnet_id;
+    ELSE
+        INSERT INTO flq_pool6
+            (start_address, end_address, lease_type, delegated_len, subnet_id)
+            VALUES
+            (p_start_address, p_end_address, p_lease_type, p_delegated_len, p_subnet_id);
+    END IF;
+
+    -- Wipe out existing free addresses. This ensures we fix any mixed allocation entries.
+    DELETE FROM free_lease6 WHERE bin_address >= bin_next_address and bin_address <= bin_end_address;
+    -- Enumerate the addresses into a temp table to use in a bulk insert.
+    DROP TEMPORARY TABLE IF EXISTS _flq6_candidates;
+    CREATE TEMPORARY TABLE _flq6_candidates (
+        bin_address BINARY(16) NOT NULL PRIMARY KEY,
+        address VARCHAR(45) NOT NULL
+    ) ENGINE=InnoDB;
+
+    label: WHILE bin_next_address <= bin_end_address
+    DO
+        INSERT INTO _flq6_candidates (bin_address, address)
+            VALUES (bin_next_address, INET6_NTOA(bin_next_address));
+
+        IF (bin_next_address = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        THEN
+            LEAVE label;
+        END IF;
+
+        SET bin_next_address = incrementV6Prefix(bin_next_address, p_delegated_len);
+    END WHILE label;
+
+    -- Bulk insert available leases into free_lease6 table. If insert fails on
+    -- duplicate ignore it.
+    INSERT INTO free_lease6 (address, bin_address)
+        SELECT c.address, c.bin_address
+        FROM _flq6_candidates c
+        WHERE NOT EXISTS (
+            SELECT 1 FROM lease6 l
+            WHERE l.address = c.address AND l.state != 2
+        )
+        ON DUPLICATE KEY UPDATE free_lease6.address = c.address;
+
+    DROP TEMPORARY TABLE _flq6_candidates;
+
+    -- Update the modification time in the flq_pool row.
+    UPDATE flq_pool6 SET modification_ts = now()
+        WHERE (start_address = p_start_address AND end_address = p_end_address);
+END $$
+DELIMITER ;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '35', minor = '0';
+
+-- This line concludes the schema upgrade to version 35.0.
+
+EOF

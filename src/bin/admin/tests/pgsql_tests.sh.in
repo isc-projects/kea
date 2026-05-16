@@ -166,7 +166,7 @@ pgsql_db_version_test() {
     run_command \
         "${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "33.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "34.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -1186,6 +1186,63 @@ pgsql_upgrade_32_to_33_test() {
     assert_str_eq '3001::' "${OUTPUT}"
 }
 
+pgsql_upgrade_33_to_34_test() {
+    qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
+    run_statement "Pre-test deletes" "${qry}"
+
+    # Steps 1 - 3 Verifies updated recreate on delegated_len change logic.
+
+    # Step 1 - create and verify an NA pool.
+    qry="SELECT sflqCreateFlqPool6('3001::'::inet, '3001::ffff'::inet,\
+                                   0::smallint, 128::smallint, 1::bigint, 'f')"
+    run_statement "Step 1.1" "${qry}"
+
+    qry="SELECT count(*) from flq_pool6 where start_address = '3001::' AND delegated_len = 128"
+    run_statement "Step 1.2" "${qry}" "1"
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 1.3" "${qry}" "65536"
+
+    # Step 2 - set recreate to true and call create again.
+    qry="DELETE from free_lease6"
+    run_statement "Step 2.1" "${qry}"
+
+    qry="SELECT sflqCreateFlqPool6('3001::'::inet, '3001::ffff'::inet,\
+                                   0::smallint, 128::smallint, 1::bigint, 't')"
+    run_statement "Step 2.2." "${qry}" 
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 2.3" "${qry}" "65536"
+
+    # Step 3 - call create with different delegated_len.
+    qry="SELECT sflqCreateFlqPool6('3001::'::inet, '3001::ffff'::inet,\
+                                   0::smallint, 127::smallint, 1::bigint, 'f')"
+    run_statement "Step 3.1" "${qry}"
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 3.2" "${qry}" '32768'
+
+    # Step 4 - Verifies that MySQL does not have the one too many prefixes issue.
+    qry="DELETE from flq_pool6;DELETE from free_lease6"
+    run_statement "Step 4.1" "${qry}"
+
+    qry="SELECT sflqCreateFlqPool6('2001::fff0'::inet, '2001::ffff'::inet,\
+                                   2::smallint, 128::smallint, 1::bigint, 'f')"
+    run_statement "Step 4.2" "${qry}"
+
+    # Verify free_lease6 has only the expected addresses.
+    sql="SELECT count(bin_address) from free_lease6 \
+            where bin_address >= inetToBytea('2001::fff0'::inet) \
+            and bin_address <= inetToBytea('2001::ffff'::inet)"
+    run_statement "Step 4.3" "$sql" "16"
+
+    sql="SELECT count(bin_address) from free_lease6"
+    run_statement "Step 4.4 failed" "$sql" "16"
+
+    qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
+    run_statement "Postrtest deletes" "${qry}"
+}
+
 pgsql_upgrade_test() {
     test_start "pgsql.upgrade"
 
@@ -1204,7 +1261,7 @@ pgsql_upgrade_test() {
 
     # Verify upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "33.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
+    assert_str_eq "34.0" "${version}" 'Expected kea-admin to return %s, returned value was %s'
 
     # Check 1.0 to 2.0 upgrade
     pgsql_upgrade_1_0_to_2_0_test
@@ -1295,6 +1352,9 @@ pgsql_upgrade_test() {
 
     # Check 32 to 33 upgrade
     pgsql_upgrade_32_to_33_test
+
+    # Check 33 to 34 upgrade
+    pgsql_upgrade_33_to_34_test
 
     # Let's wipe the whole database
     pgsql_wipe

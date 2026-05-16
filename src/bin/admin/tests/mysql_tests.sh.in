@@ -165,7 +165,7 @@ mysql_db_version_test() {
     run_command \
         "${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}"
     version="${OUTPUT}"
-    assert_str_eq "34.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -1195,6 +1195,59 @@ mysql_upgrade_33_to_34_test() {
     assert_str_eq '3001::1' "${OUTPUT}"
 }
 
+mysql_upgrade_34_to_35_test() {
+    qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
+    run_statement "Pre-test deletes" "${qry}"
+
+    # Steps 1 - 3 Verifies updated recreate on delegated_len change logic.
+
+    # Step 1 - create and verify an NA pool.
+    qry="CALL sflqCreateFlqPool6('3001::', '3001::ffff', 0, 128, 1, 0)"
+    run_statement "Step 1.1" "${qry}"
+
+    qry="SELECT count(*) from flq_pool6 where start_address = '3001::' AND delegated_len = 128"
+    run_statement "Step 1.2" "${qry}" "1"
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 1.3" "${qry}" "65536"
+
+    # Step 2 - set recreate to true and call create again.
+    qry="DELETE from free_lease6"
+    run_statement "Step 2.1" "${qry}"
+
+    qry="CALL sflqCreateFlqPool6('3001::', '3001::ffff', 0, 128, 1, 1)"
+    run_statement "Step 2.2." "${qry}" 
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 2.3" "${qry}" "65536"
+
+    # Step 3 - call create with different delegated_len.
+    qry="CALL sflqCreateFlqPool6('3001::', '3001::ffff', 0, 127, 1, 0)"
+    run_statement "Step 3.1" "${qry}"
+
+    qry="SELECT count(*) from free_lease6"
+    run_statement "Step 3.2" "${qry}" '32768'
+
+    # Step 4 - Verifies that MySQL does not have the one too many prefixes issue.
+    qry="DELETE from flq_pool6;DELETE from free_lease6"
+    run_statement "Step 4.1" "${qry}"
+
+    qry="CALL sflqCreateFlqPool6('2001::fff0', '2001::ffff', 2, 128, 1, 0)"
+    run_statement "Step 4.2" "${qry}"
+
+    # Verify free_lease6 has only the expected addresses.
+    sql="SELECT count(bin_address) from free_lease6 \
+            where bin_address >= inet6_aton('2001::fff0') \
+            and bin_address <= inet6_aton('2001::ffff')"
+    run_statement "Step 4.3" "$sql" "16"
+
+    sql="SELECT count(bin_address) from free_lease6"
+    run_statement "Step 4.4 failed" "$sql" "16"
+
+    qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
+    run_statement "Post-test deletes" "${qry}"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.upgrade"
@@ -1216,7 +1269,7 @@ mysql_upgrade_test() {
 
     # Verify that the upgraded schema reports the latest version.
     version=$("${kea_admin}" db-version mysql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}")
-    assert_str_eq "34.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "35.0" "${version}" "Expected kea-admin to return %s, returned value was %s"
 
     # Let's check that the new tables are indeed there.
 
@@ -1913,6 +1966,9 @@ SET @disable_audit = 0"
 
     # Check upgrade from 33.0 to 34.0.
     mysql_upgrade_33_to_34_test
+
+    # Check upgrade from 34.0 to 35.0.
+    mysql_upgrade_34_to_35_test
 
     # Let's wipe the whole database
     mysql_wipe

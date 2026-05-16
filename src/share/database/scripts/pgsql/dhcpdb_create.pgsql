@@ -7631,6 +7631,139 @@ UPDATE schema_version
 
 -- This line concludes the schema upgrade to version 33.0.
 
+-- This line starts the schema upgrade to version 34.0.
+
+-- Populate flq_pool6 and free_lease6 based on an address
+-- range and delegated len. Use 128 for NA addresses.
+CREATE OR REPLACE FUNCTION sflqCreateFlqPool6(p_start_address INET,
+                                               p_end_address INET,
+                                               p_lease_type SMALLINT,
+                                               p_delegated_len SMALLINT,
+                                               p_subnet_id BIGINT,
+                                               p_recreate BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql AS $$
+DECLARE
+    current_ts TIMESTAMP WITH TIME ZONE := now();
+    p_end_bin BYTEA := inetToBytea(p_end_address);
+    batch_start_address INET := p_start_address;
+    batch_start_bin BYTEA := inetToBytea(p_start_address);
+    max_prefixes_per_batch INTEGER := 10000;
+    last_bin BYTEA;
+    next_bin BYTEA;
+    pool_changed INTEGER;
+BEGIN
+    IF ((p_start_address = '::'::inet) OR (p_start_address > p_end_address))
+    THEN
+        RAISE EXCEPTION 'Invalid range: % - %', host(p_start_address), host(p_end_address);
+    END IF;
+
+    IF (p_delegated_len < 1 OR p_delegated_len > 128)
+    THEN
+        RAISE EXCEPTION 'Invalid p_delegated_len: %', p_delegated_len;
+    END IF;
+
+    -- If we are not re-creating the pool, look for a pre-existing pool
+    -- and see if delegated length has changed. If so we need to treat
+    -- it as recreate. This should catch configuration changes to
+    -- pre-existing pools.
+    pool_changed = 0;
+    IF (p_recreate = false)
+    THEN
+        SELECT count(*) INTO pool_changed
+            FROM flq_pool6
+            WHERE (start_address = p_start_address AND
+                   end_address = p_end_address AND
+                   delegated_len != p_delegated_len)
+            LIMIT 1;
+    END IF;
+
+    -- Create the flq_pool6 row. Concurrent attempts will hang until
+    -- this one commits and then they will fail with duplicate key
+    -- error. Callers should treat the duplicate error as success.
+    IF (p_recreate = true OR pool_changed > 0)
+    THEN
+        -- (Re)creating should ignore duplicate on insert
+        INSERT INTO flq_pool6
+            (start_address, end_address, lease_type, delegated_len, subnet_id)
+            VALUES
+            (p_start_address, p_end_address, p_lease_type, p_delegated_len, p_subnet_id)
+            -- ON CONFLICT (start_address, end_address) DO UPDATE SET
+            ON CONFLICT (start_address, end_address) DO UPDATE SET
+                    -- Recreate may have changed these
+                    lease_type = p_lease_type,
+                    delegated_len = p_delegated_len,
+                    subnet_id = p_subnet_id;
+    ELSE
+        INSERT INTO flq_pool6
+            (start_address, end_address, lease_type, delegated_len, subnet_id)
+            VALUES
+            (p_start_address, p_end_address, p_lease_type, p_delegated_len, p_subnet_id);
+    END IF;
+
+    -- Wipe out existing free addresses. This ensures we fix any mixed allocation entries.
+    DELETE FROM free_lease6 WHERE address >= p_start_address and address <= p_end_address;
+
+    -- Enumerate prefixes in bounded chunks and insert free entries in bulk.
+    WHILE batch_start_address <= p_end_address
+    LOOP
+        WITH RECURSIVE prefixes(depth, bin_address, address) AS (
+            SELECT 1, batch_start_bin, batch_start_address
+            UNION ALL
+            SELECT prefixes.depth + 1,
+                   next_prefix.bin_address,
+                   byteaToInet(next_prefix.bin_address)
+            FROM prefixes,
+                LATERAL (SELECT incrementV6Prefix(prefixes.bin_address, p_delegated_len)
+                    AS bin_address) AS next_prefix
+            WHERE (next_prefix.bin_address > prefixes.bin_address AND 
+                   next_prefix.bin_address < p_end_bin AND
+                   prefixes.depth < max_prefixes_per_batch)
+        ),
+        ins AS (
+            INSERT INTO free_lease6(address, bin_address)
+                SELECT p.address, p.bin_address
+                FROM prefixes p
+                LEFT JOIN lease6 l
+                    ON l.address = p.address AND l.state != 2
+                WHERE l.address IS NULL
+                ON CONFLICT DO NOTHING
+                RETURNING 1
+        )
+        SELECT last_prefix.bin_address INTO STRICT last_bin
+            FROM (
+                SELECT bin_address
+                FROM prefixes
+                ORDER BY depth DESC
+                LIMIT 1
+            ) AS last_prefix;
+
+        next_bin := incrementV6Prefix(last_bin, p_delegated_len);
+
+        -- Stepped past the pool end (binary order), or increment wrapped at
+        -- all-ones IPv6 (:: after FFFF:...:FFFF) so inet compare would loop forever.
+        IF next_bin > p_end_bin OR next_bin < last_bin
+        THEN
+            EXIT;
+        END IF;
+
+        batch_start_bin := next_bin;
+        batch_start_address := byteaToInet(next_bin);
+    END LOOP;
+
+    -- Update the modification time in the flq_pool row.
+    UPDATE flq_pool6 SET modification_ts = now()
+        WHERE (start_address = p_start_address AND end_address = p_end_address);
+END;
+$$;
+
+-- Update the schema version number.
+UPDATE schema_version
+    SET version = '34', minor = '0';
+
+-- This line concludes the schema upgrade to version 34.0.
+
+
 -- Commit the script transaction.
 COMMIT;
 

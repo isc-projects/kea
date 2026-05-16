@@ -4171,6 +4171,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address
     ibind.add(recreate);
 
     // Execute the select.
+    ScopedPgSqlTransactionPtr trans(new PgSqlTransaction(ctx->conn_));
     PgSqlResult r(PQexecPrepared(ctx->conn_,
                                  tagged_statements[stindex].name,
                                  tagged_statements[stindex].nbparams,
@@ -4187,6 +4188,8 @@ PgSqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address
 
         ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     }
+
+    trans->commit();
 
     return (true);
 }
@@ -4278,6 +4281,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address
     ibind.add(subnet_id);
     ibind.add(recreate);
 
+    ScopedPgSqlTransactionPtr trans(new PgSqlTransaction(ctx->conn_));
     // Execute the select.
     PgSqlResult r(PQexecPrepared(ctx->conn_,
                                  tagged_statements[stindex].name,
@@ -4296,6 +4300,7 @@ PgSqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address
         ctx->conn_.checkStatementError(r, tagged_statements[stindex]);
     }
 
+    trans->commit();
     return (true);
 }
 

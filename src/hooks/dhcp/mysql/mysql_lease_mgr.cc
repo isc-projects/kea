@@ -5174,17 +5174,22 @@ MySqlLeaseMgr::sflqCreateFlqPool4(IOAddress start_address, IOAddress end_address
     int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), &ibind_vec[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
-    // Execute
+    // Execute the create inside a transaction.
+    ScopedMySqlTransactionPtr trans(new MySqlTransaction(ctx->conn_));
     status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     if (status != 0) {
         // Failure: check for the special case of duplicate entry.  If this is
-        // the case, we ignore it.
+        // the case, we don't consider it an errror but still need to rollback
+        // to relinquish lock.
         if (mysql_errno(ctx->conn_.mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
 
         checkError(ctx, status, stindex, "unable to execute");
     }
+
+    // Commit any changes.
+    trans->commit();
 
     return (true);
 }
@@ -5301,17 +5306,22 @@ MySqlLeaseMgr::sflqCreateFlqPool6(IOAddress start_address, IOAddress end_address
     int status = mysql_stmt_bind_param(ctx->conn_.getStatement(stindex), &ibind_vec[0]);
     checkError(ctx, status, stindex, "unable to bind parameters");
 
-    // Execute
+    // Execute the create inside a transaction.
+    ScopedMySqlTransactionPtr trans(new MySqlTransaction(ctx->conn_));
     status = MysqlExecuteStatement(ctx->conn_.getStatement(stindex));
     if (status != 0) {
         // Failure: check for the special case of duplicate entry.  If this is
-        // the case, we ignore it.
+        // the case, we don't consider it an errror but still need to rollback
+        // to relinquish lock.
         if (mysql_errno(ctx->conn_.mysql_) == ER_DUP_ENTRY) {
             return (false);
         }
 
         checkError(ctx, status, stindex, "unable to execute");
     }
+
+    // Commit any changes.
+    trans->commit();
 
     return (true);
 }

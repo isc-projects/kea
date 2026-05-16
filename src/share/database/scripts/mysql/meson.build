@@ -75,6 +75,7 @@ upgrade_scripts = [
     'upgrade_031_to_032.sh',
     'upgrade_032_to_033.sh',
     'upgrade_033_to_034.sh',
+    'upgrade_034_to_035.sh',
 ]
 list = run_command(
     GRABBER,

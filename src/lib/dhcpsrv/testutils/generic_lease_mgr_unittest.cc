@@ -6324,7 +6324,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
                                        test_pool->subnet_id_, false));
     }
 
-    // Fetching all pools should find all three. 
+    // Fetching all pools should find all three.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
     ASSERT_TRUE(pool_infos);
     ASSERT_EQ(3, pool_infos->size());
@@ -6591,39 +6591,86 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
     checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
 }
 
+typedef boost::shared_ptr<thread> ThreadPtr;
+
 void
 GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
     // Enable Multi-Threading.
     isc::test::MultiThreadingTest mt(true);
 
-    // Create the same pool in different threads.
-    bool ret1 = false;
-    bool ret2 = false;
     IOAddress start_address("192.0.0.0");
     IOAddress end_address("192.0.255.255");
-    thread th1([this, &ret1, start_address, end_address]() {
-            ASSERT_NO_THROW_LOG(ret1 =
-                lmptr_->sflqCreateFlqPool4(start_address, end_address, false));
-    });
 
-    thread th2([this, &ret2, start_address, end_address]() {
-            ASSERT_NO_THROW_LOG(ret2 =
-                lmptr_->sflqCreateFlqPool4(start_address, end_address, false));
-    });
+    // First we'll do concurrent creates with recreate = false;
+    auto num_threads = 5;
+    std::vector<bool> rets(num_threads);
+    std::list<ThreadPtr> threads;
+    for (int i = 0; i < num_threads; ++i) {
+        rets[i] = false;
+        ThreadPtr th(new thread([this, &rets, i, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(rets[i] =
+                lmptr_->sflqCreateFlqPool4(start_address, end_address, 1, false));
+        }));
 
-    th1.join();
-    th2.join();
+        threads.push_back(th);
+    }
 
-    // One thread should create the pool, the other should not.
-    ASSERT_NE(ret1, ret2);
+    for (auto th : threads) {
+        th->join();
+    }
 
-    // Verify the pool and free leases were created.
+    // Count the true returns.
+    int true_cnt = 0;
+    for (auto ret : rets) {
+        if (ret) {
+            ++true_cnt;
+        }
+    }
+
+    // Only 1 should be true (i.e. did the create).
+    ASSERT_EQ(1, true_cnt);
+
+    // Verify the pool and free leases are correct.
     SflqPoolInfoCollectionPtr pool_infos;
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
     ASSERT_EQ(1, pool_infos->size());
     ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+
+    // Now let's do concurrent recreates.
+    threads.clear();
+    for (int i = 0; i < num_threads; ++i) {
+        rets[i] = false;
+        ThreadPtr th(new thread([this, &rets, i, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(rets[i] =
+                lmptr_->sflqCreateFlqPool4(start_address, end_address, 1, true));
+            EXPECT_TRUE(rets[i]) << "not true pass: " << i;
+        }));
+
+        threads.push_back(th);
+    }
+
+    for (auto th : threads) {
+        th->join();
+    }
+
+    true_cnt = 0;
+    for (auto ret : rets) {
+        if (ret) {
+            ++true_cnt;
+        }
+    }
+
+    // All should report true.
+    ASSERT_EQ(num_threads, true_cnt);
+
+    // Verify the pool and free leases are correct.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
 }
+
 
 void
 GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
@@ -6631,35 +6678,108 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
     isc::test::MultiThreadingTest mt(true);
 
     // Create the same pool in different threads.
-    bool ret1 = false;
-    bool ret2 = false;
     IOAddress start_address("3001::");
     IOAddress end_address("3001::FFFF");
-    thread th1([this, &ret1, start_address, end_address]() {
-            ASSERT_NO_THROW_LOG(ret1 =
+
+    // First we'll do concurrent creates with recreate = false;
+    auto num_threads = 5;
+    std::vector<bool> rets(num_threads);
+    std::list<ThreadPtr> threads;
+    for (int i = 0; i < num_threads; ++i) {
+        rets[i] = false;
+        ThreadPtr th(new thread([this, &rets, i, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(rets[i] =
                 lmptr_->sflqCreateFlqPool6(start_address, end_address,
-                                           Lease::TYPE_NA, 128, 1, false));
-    });
+                                           Lease::TYPE_PD, 128, 1, false));
+        }));
 
-    thread th2([this, &ret2, start_address, end_address]() {
-            ASSERT_NO_THROW_LOG(ret2 =
-                lmptr_->sflqCreateFlqPool6(start_address, end_address,
-                                           Lease::TYPE_NA, 128, 1, false));
-    });
+        threads.push_back(th);
+    }
 
-    th1.join();
-    th2.join();
+    for (auto th : threads) {
+        th->join();
+    }
 
-    // One thread should create the pool, the other should not.
-    ASSERT_NE(ret1, ret2);
+    // Count the true returns.
+    int true_cnt = 0;
+    for (auto ret : rets) {
+        if (ret) {
+            ++true_cnt;
+        }
+    }
 
+    // Only 1 should be true (i.e. did the create).
+    ASSERT_EQ(1, true_cnt);
 
-    // Verify the pool and free leases were created.
+    // Verify the pool and free leases are correct.
     SflqPoolInfoCollectionPtr pool_infos;
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
     ASSERT_EQ(1, pool_infos->size());
     ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(Lease::TYPE_PD, (*pool_infos)[0]->lease_type_);
+
+    // Now let's do concurrent recreates.
+    threads.clear();
+    for (int i = 0; i < num_threads; ++i) {
+        rets[i] = false;
+        ThreadPtr th(new thread([this, &rets, i, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(rets[i] =
+                lmptr_->sflqCreateFlqPool6(start_address, end_address,
+                                           Lease::TYPE_PD, 128, 1, true));
+        }));
+
+        threads.push_back(th);
+    }
+
+    for (auto th : threads) {
+        th->join();
+    }
+
+    true_cnt = 0;
+    for (auto ret : rets) {
+        if (ret) {
+            ++true_cnt;
+        }
+    }
+
+    // All should report true.
+    ASSERT_EQ(num_threads, true_cnt);
+
+    // Verify the pool and free leases are correct.
+    ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
+    ASSERT_TRUE(pool_infos);
+    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(Lease::TYPE_PD, (*pool_infos)[0]->lease_type_);
+
+    // Now let's try creates with a different delegated_len.
+    // This should make them act like recreates.
+    threads.clear();
+    for (int i = 0; i < num_threads; ++i) {
+        rets[i] = false;
+        ThreadPtr th(new thread([this, &rets, i, start_address, end_address]() {
+            ASSERT_NO_THROW_LOG(rets[i] =
+                lmptr_->sflqCreateFlqPool6(start_address, end_address,
+                                           Lease::TYPE_PD, 127, 1, false));
+        }));
+
+        threads.push_back(th);
+    }
+
+    for (auto th : threads) {
+        th->join();
+    }
+
+    true_cnt = 0;
+    for (auto ret : rets) {
+        if (ret) {
+            ++true_cnt;
+        }
+    }
+
+    // All should report true.
+    ASSERT_EQ(num_threads, true_cnt);
 }
 
 }  // namespace test
