@@ -1267,7 +1267,7 @@ public:
         columns_[DHCP_SUBNET_ID_COL] = "dhcp_subnet_id";
         columns_[HOST_ID_COL] = "host_id";
 
-        static_assert(11 <= OPTION_COLUMNS, "11 <= OPTION_COLUMNS");
+        static_assert(10 < OPTION_COLUMNS, "10 < OPTION_COLUMNS");
     }
 
     /// @brief Creates binding array to insert option data into database.

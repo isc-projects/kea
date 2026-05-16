@@ -1760,7 +1760,7 @@ public:
         columns_[5] = "excluded_prefix";
         columns_[6] = "excluded_prefix_len";
 
-        static_assert(6 < RESRV_COLUMNS, "6 < RESRV_COLUMNS");
+        static_assert(7 < RESRV_COLUMNS, "7 < RESRV_COLUMNS");
     }
 
     /// @brief Create MYSQL_BIND objects for IPv6 Reservation.
@@ -1895,7 +1895,7 @@ private:
     uint8_t type_;
 
     /// @brief IAID.
-    uint8_t iaid_;
+    uint32_t iaid_;
 
     /// @brief Object holding reservation being sent to the database.
     IPv6Resrv resv_;
@@ -1944,7 +1944,7 @@ public:
           subnet_id_(SUBNET_ID_UNUSED),
           host_id_(0), option_() {
 
-        static_assert(11 <= OPTION_COLUMNS, "11 <= OPTION_COLUMNS");
+        static_assert(10 < OPTION_COLUMNS, "10 < OPTION_COLUMNS");
     }
 
     /// @brief Creates binding array to insert option data into database.
