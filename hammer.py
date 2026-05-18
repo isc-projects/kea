@@ -1472,20 +1472,26 @@ def _configure_mysql(system, revision, features):
         execute('sudo rm -f ./bind-address.cnf')
 
     # If requested, configure TLS. Except for MariaDB >= 11.8 which introduces zero-config TLS.
+    mariadbd_version = None
+    using_mariadb = None
     zero_conf_tls = False
     if system in ['alpine', 'freebsd']:
-        return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
-        if return_code == 0:
-            mariadbd_version = '.'.join(output.split(' ')[3].split('-')[0].split('.')[0:2])
-            zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
+        using_mariadb = True
     else:
         _, output = execute('sudo systemctl status mysql', capture=True, raise_error=False)
-        first_line = output.splitlines()[0]
-        if 'mariadb' in first_line.lower():
-            mariadbd_version = '.'.join(first_line.split(' ')[4].split('.')[0:2])
+        using_mariadb = 'mariadb.service' in output
+    if using_mariadb:
+        return_code, output = execute('mariadbd --version', capture=True, raise_error=False)
+        if return_code == 0:
+            matches = re.search(r'Ver ([0-9]+\.[0-9]+)', output)
+            if matches is None:
+                log.error('Could not detect version of mariadbd')
+                sys.exit(1)
+            mariadbd_version = matches.group(1)
             zero_conf_tls = float('11.8') <= float(mariadbd_version)
-            log.info('mariadbd_version: %s, zero_conf_tls: %s', mariadbd_version, zero_conf_tls)
+    log.info(
+        'using_mariadb: %s, mariadbd_version: %s, zero_conf_tls: %s', using_mariadb, mariadbd_version, zero_conf_tls
+    )
     if not zero_conf_tls:
         cert_dir = '/etc/mysql/ssl'
         kea_cnf = os.path.join(conf_d, 'kea.cnf')
