@@ -7765,6 +7765,12 @@ BEGIN
 END;
 $$;
 
+-- Drop IA_TA from lease6_types table.
+-- On the off chance that somehow there are IA_TA leases convert them
+-- or the foreign key contraint will blow this up.
+   UPDATE lease6 SET lease_type = 0 WHERE lease_type = 1;
+   DELETE FROM lease6_types where lease_type = 1;
+
 -- Update the schema version number.
 UPDATE schema_version
     SET version = '34', minor = '0';

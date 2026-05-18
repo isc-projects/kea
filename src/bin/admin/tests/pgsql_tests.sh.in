@@ -410,7 +410,7 @@ pgsql_upgrade_7_0_to_8_0_test() {
 
     # Check lease6Dump*().
     run_command \
-        pgsql_execute "INSERT INTO lease6 VALUES(cast('::10' as inet),E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,1,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',0)"
+        pgsql_execute "INSERT INTO lease6 VALUES(cast('::10' as inet),E'\\\\x3230',30,TO_TIMESTAMP(1678900000),40,50,0,60,70,'t','t','one,example,com',0,E'\\\\x3830',16,0,'{ \"a\": 1, \"b\": 2 }',0)"
     assert_eq 0 "${EXIT_CODE}" 'INSERT INTO lease6 failed, expected exit code %d, actual %d'
     assert_str_eq '' "${OUTPUT}"
 
@@ -422,7 +422,7 @@ pgsql_upgrade_7_0_to_8_0_test() {
     run_command \
         pgsql_execute "SELECT * FROM lease6DumpData()" --field-separator=','
     assert_eq 0 "${EXIT_CODE}" 'lease6DumpData() failed, expected exit code %d, actual %d'
-    assert_str_eq '::10,32:30,30,1678900000,40,50,1,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },16,0,0' "${OUTPUT}"
+    assert_str_eq '::10,32:30,30,1678900000,40,50,0,60,70,1,1,one&#x2cexample&#x2ccom,38:30,0,{ "a": 1&#x2c "b": 2 },16,0,0' "${OUTPUT}"
 
     # Check lease4Upload().
     run_command \
@@ -789,7 +789,7 @@ pgsql_upgrade_16_to_17_test() {
 
 pgsql_upgrade_17_to_18_test() {
     # Verify that lease6 address is binary.
-    qry="insert into lease6 (address,duid,prefix_len,lease_type,subnet_id) values(cast('3001::99' as inet),'18219',128,1,0);"
+    qry="insert into lease6 (address,duid,prefix_len,lease_type,subnet_id) values(cast('3001::99' as inet),'18219',128,0,0);"
     run_statement "lease6_insert" "$qry"
 
     qry="select host(address) from lease6 where duid = '18219';"
@@ -1209,7 +1209,7 @@ pgsql_upgrade_33_to_34_test() {
 
     qry="SELECT sflqCreateFlqPool6('3001::'::inet, '3001::ffff'::inet,\
                                    0::smallint, 128::smallint, 1::bigint, 't')"
-    run_statement "Step 2.2." "${qry}" 
+    run_statement "Step 2.2." "${qry}"
 
     qry="SELECT count(*) from free_lease6"
     run_statement "Step 2.3" "${qry}" "65536"
@@ -1238,6 +1238,10 @@ pgsql_upgrade_33_to_34_test() {
 
     sql="SELECT count(bin_address) from free_lease6"
     run_statement "Step 4.4 failed" "$sql" "16"
+
+    # Verify type IA_TA type was deleted.
+    qry="select count(lease_type) from lease6_types where lease_type = 1 OR name='IA_TA'"
+    run_statement "Check lease6_types" "${qry}" "0"
 
     qry="DELETE from lease6; DELETE from flq_pool6; DELETE from free_lease6"
     run_statement "Postrtest deletes" "${qry}"
@@ -1482,9 +1486,9 @@ pgsql_lease6_dump_test() {
     # Because shell evaluates the double quoted string one more time, they need to be doubled.
     # Otherwise, the value is interpreted as ASCII instead of raw bytes.
     insert_sql="\
-insert into lease6 values(cast('::10' as inet),E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,1,60,128,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0); \
-insert into lease6 values(cast('::11' as inet),E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,1,60,128,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0); \
-insert into lease6 values(cast('::12' as inet),E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,1,60,128,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0)"
+insert into lease6 values(cast('::10' as inet),E'\\\\x323033',30,TO_TIMESTAMP(1642000000),40,50,0,60,128,'t','t','one.example.com',0,decode(encode('80','hex'),'hex'),90,16,'',0); \
+insert into lease6 values(cast('::11' as inet),E'\\\\x323133',30,TO_TIMESTAMP(1643210000),40,50,0,60,128,'t','t','',1,decode(encode('80','hex'),'hex'),90,1,'{  }',0); \
+insert into lease6 values(cast('::12' as inet),E'\\\\x323233',30,TO_TIMESTAMP(1643212345),40,50,0,60,128,'t','t','three,example,com',2,decode(encode('80','hex'),'hex'),90,4,'{ \"a\": 1, \"b\": \"c\" }',0)"
 
     run_command \
         pgsql_execute "$insert_sql"
@@ -1953,7 +1957,7 @@ pgsql_lease6_stat_registered() {
 
 # Verifies that lease6_stat triggers operation correctly
 # for both NA and PD lease types, pgsql_lease6_stat_per_type()
-# and for mysql_lease6_stat_registered()
+# and for pgsql_lease6_stat_registered()
 pgsql_lease6_stat_test() {
 
     test_start "pgsql.lease6_stat_test"
@@ -1974,7 +1978,7 @@ pgsql_lease6_stat_test() {
     pgsql_lease6_stat_per_type "::11" "::12" "::13" "0"
 
     # Test for address 222, PD lease type
-    pgsql_lease6_stat_per_type "::22" "::23" "::24" "1"
+    pgsql_lease6_stat_per_type "::22" "::23" "::24" "2"
 
     # Test for registered addresses ::33, ::34 and ::35
     pgsql_lease6_stat_registered "::33" "::34" "::35"
@@ -2017,10 +2021,10 @@ pgsql_lease_stat_upgrade_test() {
     qry=\
 "insert into lease6 (address, lease_type, subnet_id, state) values ('::11',0,40,0);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::22',0,40,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::33',1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::44',1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::55',1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values ('::66',1,40,2)"
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::33',2,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::44',2,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::55',2,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values ('::66',2,40,2)"
     run_statement "insert v6 leases" "$qry"
 
     # Let's upgrade it to the latest version.
@@ -2124,11 +2128,11 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.2" "$qry" 1
 
     # Assigned (PD) leases for subnet 40 should be 1
-    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 2 and state = 0"
     run_statement "#6.3" "$qry" 1
 
     # Assigned (PD) leases for subnet 40 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.4" "$qry" 1
 
     # Declined leases for subnet 40 should be 1
@@ -2140,11 +2144,11 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.6" "$qry" 1
 
     # Assigned (PD) leases for subnet 50 should be 2
-    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 2 and state = 0"
     run_statement "#6.7" "$qry" 2
 
     # Assigned (PD) leases for subnet 50 should be 2
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.8" "$qry" 2
 
     # Should be no records for EXPIRED
@@ -2160,19 +2164,19 @@ pgsql_lease_stat_upgrade_test() {
     #
 
     # Insert a new lease subnet 50
-    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values ('::77',50,1,1,0)"
+    qry="insert into lease6 (address, subnet_id, pool_id, lease_type, state) values ('::77',50,1,2,0)"
     run_statement "#6.11" "$qry"
 
     # Assigned count for subnet 50 should be 3
-    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 2 and state = 0"
     run_statement "#6.12" "$qry" 3
 
     # Assigned count for subnet 50 should be 2
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.13" "$qry" 2
 
     # Assigned count for subnet 50 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 1 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 1 and state = 0"
     run_statement "#6.14" "$qry" 1
 
     # Update the state of the new lease to expired
@@ -2180,11 +2184,11 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.15" "$qry"
 
     # Assigned count for subnet 50 should be 2 again
-    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 2 and state = 0"
     run_statement "#6.16" "$qry" 2
 
     # Assigned count for subnet 50 should be 0 again
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 1 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 1 and state = 0"
     run_statement "#6.17" "$qry" 0
 
     # Delete another PD lease.
@@ -2192,11 +2196,11 @@ pgsql_lease_stat_upgrade_test() {
     run_statement "#6.18" "$qry"
 
     # Assigned leases for subnet 50 should be 1
-    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 2 and state = 0"
     run_statement "#6.19" "$qry" 1
 
     # Assigned leases for subnet 50 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.20" "$qry" 1
 
     # Let's wipe the whole database
@@ -2228,10 +2232,10 @@ pgsql_lease_stat_recount_test() {
     qry=\
 "insert into lease6 (address, lease_type, subnet_id, state) values (cast('::11' as inet),0,40,0);\
  insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (cast('::22' as inet),0,40,1,1);\
- insert into lease6 (address, lease_type, subnet_id, state) values (cast('::33' as inet),1,40,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (cast('::44' as inet),1,50,0);\
- insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (cast('::55' as inet),1,50,2,0);\
- insert into lease6 (address, lease_type, subnet_id, state) values (cast('::66' as inet),1,40,2);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (cast('::33' as inet),2,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (cast('::44' as inet),2,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, pool_id, state) values (cast('::55' as inet),2,50,2,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (cast('::66' as inet),2,40,2);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::77',0,40,4);\
  insert into lease6 (address, lease_type, subnet_id, state) values ('::88',0,40,4)"
     run_statement "insert v6 leases" "$qry"
@@ -2252,14 +2256,14 @@ pgsql_lease_stat_recount_test() {
     qry=\
 "insert into lease6_stat (subnet_id, lease_type, state, leases) values (20,1,0,1);\
  update lease6_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and state = 0;\
- delete from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 2;\
+ delete from lease6_stat where subnet_id = 40 and lease_type = 2 and state = 2;\
  delete from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 4"
     run_statement "change v6 stats" "$qry"
 
     qry=\
-"insert into lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) values (20,3,1,0,1);\
+"insert into lease6_pool_stat (subnet_id, pool_id, lease_type, state, leases) values (20,3,2,0,1);\
  update lease6_pool_stat set leases = 5 where subnet_id = 40 and lease_type = 0 and pool_id = 0 and state = 0;\
- delete from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 2"
+ delete from lease6_pool_stat where subnet_id = 40 and lease_type = 2 and pool_id = 0 and state = 2"
     run_statement "change v6 pool stats" "$qry"
 
     # Recount all statistics from scratch.
@@ -2328,11 +2332,11 @@ pgsql_lease_stat_recount_test() {
     run_statement "#6.2" "$qry" 1
 
     # Assigned (PD) leases for subnet 40 should be 1
-    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 2 and state = 0"
     run_statement "#6.3" "$qry" 1
 
     # Assigned (PD) leases for subnet 40 pool 0 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 40 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.4" "$qry" 1
 
     # Declined leases for subnet 40 should be 1
@@ -2344,15 +2348,15 @@ pgsql_lease_stat_recount_test() {
     run_statement "#6.6" "$qry" 1
 
     # Assigned (PD) leases for subnet 50 should be 2
-    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 2 and state = 0"
     run_statement "#6.7" "$qry" 2
 
     # Assigned (PD) leases for subnet 50 pool 0 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 0 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 0 and state = 0"
     run_statement "#6.8" "$qry" 1
 
     # Assigned (PD) leases for subnet 50 pool 2 should be 1
-    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 1 and pool_id = 2 and state = 0"
+    qry="select leases from lease6_pool_stat where subnet_id = 50 and lease_type = 2 and pool_id = 2 and state = 0"
     run_statement "#6.9" "$qry" 1
 
     # Should be no records for EXPIRED
@@ -2530,8 +2534,8 @@ pgsql_update_v6_addresses_to_binary() {
     pgsql_upgrade_schema_to_version 16.0
 
     sql=\
-"insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf14', 1, 1);
-insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf15', 1, 1);"
+"insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf14', 0, 1);
+insert into lease6 (address, lease_type, subnet_id) values('2601:19e:8100:1e10:b1b:51a8:f616:cf15', 0, 1);"
 
     run_statement "insert v6 leases" "$sql"
 
@@ -3493,25 +3497,25 @@ pgsql_sflqCreateFlqPool6() {
 
     # Insert an assigned lease
     sql="insert into lease6 (address, lease_type, subnet_id, valid_lifetime, expire, state) \
-            values ('3001::1'::inet, 1, 1, 3600, '$future'::timestamp, 0)";
+            values ('3001::1'::inet, 0, 1, 3600, '$future'::timestamp, 0)";
     run_statement "insert 3001::1" "$sql"  "";
 
     # Insert a declined lease
     sql="insert into lease6 (address, lease_type, subnet_id, valid_lifetime, expire, state) \
-            values ('3001::3'::inet, 1, 1, 3600, '$future'::timestamp, 1)";
+            values ('3001::3'::inet, 0, 1, 3600, '$future'::timestamp, 1)";
     run_statement "insert 3001::3" "$sql"  "";
 
     # Insert an expired lease
     sql="insert into lease6 (address, lease_type, subnet_id, valid_lifetime, expire, state) \
-            values ('3001::5'::inet, 1, 1, 3600, '$expired'::timestamp, 0)";
+            values ('3001::5'::inet, 0, 1, 3600, '$expired'::timestamp, 0)";
     run_statement "insert 3001::5" "$sql"  "";
 
     # Insert reclaimed lease
     sql="insert into lease6 (address, lease_type, subnet_id, valid_lifetime, expire, state) \
-            values ('3001::7'::inet, 1, 1, 3600, '$future'::timestamp, 2)";
+            values ('3001::7'::inet, 0, 1, 3600, '$future'::timestamp, 2)";
     run_statement "insert 3001::7" "$sql"  "";
 
-    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::8'::inet, 1::smallint, 128::smallint,\
+    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::8'::inet, 0::smallint, 128::smallint,\
                                  1::bigint, false)"
     run_statement "sflqCreateFlqPool6" "$sql"
 
@@ -3544,25 +3548,25 @@ pgsql_sflqCreateFlqPool6Invalid() {
 
     # Cannot use :: as a start.
     export KEA_EXPECTED_EXIT_CODE="3"
-    sql="select sflqCreateFlqPool6('::'::inet, '::1'::inet, 1, 128, 1, false)"
+    sql="select sflqCreateFlqPool6('::'::inet, '::1'::inet, 2, 128, 1, false)"
     run_statement "sflqCreateFlqPool6.3" "${sql}"
     unset KEA_EXPECTED_EXIT_CODE
 
     # Cannot start cannot be greater than end.
     export KEA_EXPECTED_EXIT_CODE="3"
-    sql="select sflqCreateFlqPool6('::2'::inet, '::1'::inet, 1, 128, 1, false)"
+    sql="select sflqCreateFlqPool6('::2'::inet, '::1'::inet, 2, 128, 1, false)"
     run_statement "sflqCreateFlqPool6.3" "${sql}"
     unset KEA_EXPECTED_EXIT_CODE
 
     # Cannot specify delegated_len < 1
     export KEA_EXPECTED_EXIT_CODE="3"
-    sql="select sflqCreateFlqPool6('::1::inet', '::2::inet', 1, 0, 1, false)"
+    sql="select sflqCreateFlqPool6('::1::inet', '::2::inet', 2, 0, 1, false)"
     run_statement "sflqCreateFlqPool6.3" "${sql}"
     unset KEA_EXPECTED_EXIT_CODE
 
     # Cannot specify delegated_len > 128
     export KEA_EXPECTED_EXIT_CODE="3"
-    sql="select sflqCreateFlqPool6('::1'::inet, '::2'::inet, 1, 129, 1, false)"
+    sql="select sflqCreateFlqPool6('::1'::inet, '::2'::inet, 2, 129, 1, false)"
     run_statement "sflqCreateFlqPool6.3" "${sql}"
     unset KEA_EXPECTED_EXIT_CODE
 
@@ -3585,7 +3589,7 @@ pgsql_sflqPickFreeLease6() {
         "${kea_admin}" db-init pgsql -u "${db_user}" -p "${db_password}" -n "${db_name}" -d "${db_scripts_dir}"
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
-    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::02'::inet, 1::smallint,\
+    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::02'::inet, 2::smallint,\
                                  128::smallint, 1::bigint, false)"
     run_statement "sflqCreateFlqPool6" "$sql"
 
@@ -3595,7 +3599,7 @@ pgsql_sflqPickFreeLease6() {
     run_statement "sflqPickFreeLease6.3" "$sql"  "3001::2";
 
     # Inserting a lease directly. Pick should still see it.
-    sql="insert into lease6 (address, lease_type, subnet_id) values ('3001::1'::inet, 1::smallint, 1::bigint)";
+    sql="insert into lease6 (address, lease_type, subnet_id) values ('3001::1'::inet, 2::smallint, 1::bigint)";
     run_statement "insert 3001::1" "$sql"  "";
 
     sql="select sflqPickFreeLease6('3001::'::inet, '3001::02'::inet)"
@@ -3623,7 +3627,7 @@ pgsql_sflqPickFreeLease6() {
 
     # Check pools with one address.
     address="'2001:db8::8bd:1002'::inet"
-    sql="select sflqCreateFlqPool6(${address}, ${address}, 1::smallint, \
+    sql="select sflqCreateFlqPool6(${address}, ${address}, 2::smallint, \
                                  128::smallint, 1::bigint, false)"
     run_statement "sflqCreateFlqPool6.2" "${sql}"
 
@@ -3634,7 +3638,7 @@ pgsql_sflqPickFreeLease6() {
 
     # Check picking last address.
     address="'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'::inet"
-    sql="select sflqCreateFlqPool6(${address}, ${address}, 1::smallint, \
+    sql="select sflqCreateFlqPool6(${address}, ${address}, 2::smallint, \
                                  128::smallint, 1::bigint, false)"
     run_statement "sflqCreateFlqPool6.3" "${sql}"
 
@@ -3946,7 +3950,7 @@ pgsql_sflqInsertLease6() {
     bin_address="inetToBytea('3001::1'::inet)"
     duid="decode('01020304','hex')"
     subnet_id="1"
-    ltype="1"
+    ltype="0"
     iaid="1234"
     state="0"
     sql="select sflqInsertLease6($in_address::inet, $duid, 3600::bigint, '$future'::timestamp,\
@@ -4056,7 +4060,7 @@ pgsql_sflqUpdateLease6() {
     bin_address="inetToBytea('3001::1'::inet)"
     duid="decode('01020304','hex')"
     subnet_id="1"
-    ltype="1"
+    ltype="0"
     iaid="1234"
     state="0"
     sql="select sflqInsertLease6($in_address::inet, $duid, 3600::bigint, '$future'::timestamp,\
@@ -4165,7 +4169,7 @@ pgsql_sflqDeleteLease6() {
     bin_address="inetToBytea('3001::1'::inet)"
     duid="decode('01020304','hex')"
     subnet_id="1"
-    ltype="1"
+    ltype="0"
     iaid="1234"
     state="0"
     sql="select sflqInsertLease6($in_address::inet, $duid, 3600::bigint, '$future'::timestamp,\
@@ -4248,6 +4252,57 @@ pgsql_inetToBytea() {
     test_finish 0
 }
 
+# Verifies that TA lease types are migrated
+pgsql_migrate_IA_TA() {
+    test_start "pgsql.migrate_IA_TA"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to schema 1.0.
+    pgsql_execute_script "@abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql"
+    assert_eq 0 "${EXIT_CODE}" "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 33.0
+    pgsql_upgrade_schema_to_version 33.0
+
+    # Now three leases
+    sql="\
+         insert into lease6 (address, lease_type, subnet_id) values ('3001::1', 0, 1);\
+         insert into lease6 (address, lease_type, subnet_id) values ('3001::2', 1, 1);\
+         insert into lease6 (address, lease_type, subnet_id) values ('3001::3', 2, 1)";
+    run_statement "Step 1" "$sql"
+
+    # Verify the inserted record counts.
+    qry="select count(*) from lease6 where lease_type = 0;"
+    run_statement "Step 2 - NA" "$qry" 1
+    qry="select count(*) from lease6 where lease_type = 1;"
+    run_statement "Step 2 - TA" "$qry" 1
+    qry="select count(*) from lease6 where lease_type = 2;"
+    run_statement "Step 2 - PD" "$qry" 1
+
+    # Upgrade to schema 34.0
+    pgsql_upgrade_schema_to_version 34.0
+
+    # Verify the post-upgrade record counts.
+    qry="select count(*) from lease6 where lease_type = 0;"
+    run_statement "Step 2 - NA" "$qry" 2
+    qry="select count(*) from lease6 where lease_type = 1;"
+    run_statement "Step 2 - TA" "$qry" 0
+    qry="select count(*) from lease6 where lease_type = 2;"
+    run_statement "Step 2 - PD" "$qry" 1
+
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
 # Handy shortcut for running a single test.
 if [ $# -gt 0 ]; then
     echo "RUNNING ${1} only"
@@ -4298,3 +4353,4 @@ pgsql_sflqDeleteLease4
 pgsql_sflqInsertLease6
 pgsql_sflqUpdateLease6
 pgsql_sflqDeleteLease6
+pgsql_migrate_IA_TA
