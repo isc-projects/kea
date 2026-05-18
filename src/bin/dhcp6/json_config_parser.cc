@@ -455,6 +455,8 @@ processDhcp6Config(isc::data::ConstElementPtr config_set) {
     // for option definitions. This is equivalent to committing empty container.
     LibDHCP::setRuntimeOptionDefs(OptionDefSpaceContainer());
 
+    ReceiverCriticalSection rcs;
+
     IfaceMgr::instance().detectIfaces(true);
 
     // Answer will hold the result.

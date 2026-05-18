@@ -4847,7 +4847,14 @@ TEST_F(IfaceMgrTest, receiverCS4) {
     ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
     ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
     {
-        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ReceiverCriticalSection rcs;
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
+        {
+            ReceiverCriticalSection rcs_deep;
+            ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+            ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
+        }
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
         ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4());
     }
@@ -4864,7 +4871,14 @@ TEST_F(IfaceMgrTest, receiverCS4) {
     ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
     ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
     {
-        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ReceiverCriticalSection rcs;
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
+        {
+            ReceiverCriticalSection rcs_deep;
+            ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+            ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
+        }
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
         ASSERT_FALSE(IfaceMgr::instance().getPacketQueue4()->empty());
     }
@@ -4881,7 +4895,14 @@ TEST_F(IfaceMgrTest, receiverCS6) {
     ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
     ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
     {
-        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ReceiverCriticalSection rcs;
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
+        {
+            ReceiverCriticalSection rcs_deep;
+            ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+            ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
+        }
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
         ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6());
     }
@@ -4898,7 +4919,14 @@ TEST_F(IfaceMgrTest, receiverCS6) {
     ASSERT_TRUE(IfaceMgr::instance().isDHCPReceiverRunning());
     ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
     {
-        ReceiverCriticalSection rcs(IfaceMgr::instance());
+        ReceiverCriticalSection rcs;
+        ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+        ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
+        {
+            ReceiverCriticalSection rcs_deep;
+            ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
+            ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
+        }
         ASSERT_FALSE(IfaceMgr::instance().isDHCPReceiverRunning());
         ASSERT_FALSE(IfaceMgr::instance().getPacketQueue6()->empty());
     }

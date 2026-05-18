@@ -719,6 +719,7 @@ ControlledDhcpv4Srv::commandInterfaceRedetectHandler(const std::string&,
     try {
         // stop thread pool (if running)
         MultiThreadingCriticalSection cs;
+        ReceiverCriticalSection rcs;
         IfaceMgr::instance().detectIfaces(true);
     } catch (const std::exception& ex) {
         error = true;

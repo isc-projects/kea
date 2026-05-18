@@ -31,7 +31,6 @@ namespace dhcp {
 /// This is a BSD specific interface detection method.
 void
 IfaceMgr::detectIfaces(bool update_only) {
-    ReceiverCriticalSection rcs(*this);
     if (detect_callback_) {
         if (!detect_callback_(update_only)) {
             return;

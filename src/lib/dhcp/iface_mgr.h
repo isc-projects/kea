@@ -1859,6 +1859,11 @@ private:
 };
 
 /// @brief RAII class creating a critical section for the receiver thread.
+///
+/// Node: Should be used outside IfaceMgr member functions as this might
+/// cause a deadlock then calling the members in the IfaceMgr constructor
+/// because this class uses IfaceMgr::instance() to access the singleton
+/// instance.
 class ReceiverCriticalSection : public boost::noncopyable {
 public:
 
@@ -1866,10 +1871,10 @@ public:
     ///
     /// Entering the critical section: if running, the receiver
     /// is stopped not clearing the packet queue.
-    ReceiverCriticalSection(IfaceMgr& iface_mgr)
-        : iface_mgr_(iface_mgr), is_running_(iface_mgr.isDHCPReceiverRunning()) {
+    ReceiverCriticalSection()
+        : is_running_(IfaceMgr::instance().isDHCPReceiverRunning()) {
         if (is_running_) {
-            iface_mgr_.stopDHCPReceiver(false);
+            IfaceMgr::instance().stopDHCPReceiver(false);
         }
     }
 
@@ -1878,16 +1883,13 @@ public:
     /// Leaving the critical section: if it was running, the receiver
     /// is started.
     ~ReceiverCriticalSection() {
-        if (is_running_) {
-            auto family = iface_mgr_.getFamily();
-            iface_mgr_.startDHCPReceiver(family);
+        if (is_running_ && !IfaceMgr::instance().isDHCPReceiverRunning()) {
+            auto family = IfaceMgr::instance().getFamily();
+            IfaceMgr::instance().startDHCPReceiver(family);
         }
     }
 
 private:
-    /// @brief The IfaceMgr instance.
-    IfaceMgr& iface_mgr_;
-
     /// @brief Is running flag.
     bool is_running_;
 };

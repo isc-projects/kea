@@ -534,8 +534,8 @@ The ``interface-redetect`` Command
 ----------------------------------
 
 The :isccmd:`interface-redetect` command retrieves the list of detected interfaces
-after performing a re-detect procedure which only adds newly discovered interfaces,
-without removing any previously detected interfaces.
+after performing a re-detect procedure which only adds newly discovered interfaces
+and addresses, without removing any previously detected interfaces or addresses.
 This command does not take any parameters."
 
 .. isccmd:: list-commands
