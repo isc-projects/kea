@@ -304,6 +304,34 @@ TEST_F(FreeLeaseQueueAllocatorTest4, noPools) {
     EXPECT_EQ(0., r);
 }
 
+// Test that the allocator still works with a single pool of a single address.
+TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolSingleAddress) {
+    FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
+
+    subnet_->delPools(Lease::TYPE_V4);
+    auto addr = IOAddress("192.0.2.10");
+    auto pool = boost::make_shared<Pool4>(addr, addr);
+    subnet_->addPool(pool);
+
+    ASSERT_NO_THROW(alloc.initAfterConfigure());
+
+    // The unique address is returned.
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0")));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0")));
+
+    // Create and add the lease for the address.
+    auto lease = createLease4(addr, 0);
+    EXPECT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Now the address is busy,
+    auto candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
+    EXPECT_TRUE(candidate.isV4Zero());
+
+    double r = alloc.getOccupancyRate(addr, cc_);
+    EXPECT_EQ(1., r);
+}
+
 // Test that the allocator respects client class guards.
 TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
    FreeLeaseQueueAllocator alloc(Lease::TYPE_V4, subnet_);
@@ -647,6 +675,31 @@ TEST_F(FreeLeaseQueueAllocatorTest6, noPools) {
 
    IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
    EXPECT_TRUE(candidate.isV6Zero());
+}
+
+// Test that the allocator still works with a single pool of a single address.
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolSingleAddress) {
+    FreeLeaseQueueAllocator alloc(Lease::TYPE_NA, subnet_);
+
+    subnet_->delPools(Lease::TYPE_NA);
+    auto addr = IOAddress("2001:db8:1::1");
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, addr, addr);
+    subnet_->addPool(pool);
+
+    ASSERT_NO_THROW(alloc.initAfterConfigure());
+
+    // The unique address is returned.
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, duid_, IOAddress("::")));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, duid_, IOAddress("::")));
+
+    // Create and add the lease for the address.
+    auto lease = createLease6(Lease::TYPE_NA, addr, 0);
+    EXPECT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Now the address is busy,
+    auto candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
+    EXPECT_TRUE(candidate.isV6Zero());
 }
 
 // Test that the allocator respects client class guards.
@@ -1059,6 +1112,40 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPdPoolsPreferHigher) {
     double r = alloc.getOccupancyRate(IOAddress("3001::"), 128, cc_);
     // getOccupancyRate argument is always considered as not free.
     EXPECT_EQ((assigned ? 2560. : 2561.) / 68096., r);
+}
+
+// Test that the allocator still works with a single pd pool of a single prefix.
+TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolSinglePrefix) {
+    FreeLeaseQueueAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    subnet_->delPools(Lease::TYPE_PD);
+    auto addr = IOAddress("3000::");
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD, addr, 120, 120);
+    subnet_->addPool(pool);
+
+    ASSERT_NO_THROW(alloc.initAfterConfigure());
+
+    // The unique prefix is returned.
+    EXPECT_EQ(addr, alloc.pickPrefix(cc_, pool, duid_,
+                                     Allocator::PREFIX_LEN_HIGHER,
+                                     IOAddress("::"), 0));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickPrefix(cc_, pool, duid_,
+                                     Allocator::PREFIX_LEN_HIGHER,
+                                     IOAddress("::"), 0));
+
+    // Create and add the lease for the prefix.
+    auto lease = createLease6(Lease::TYPE_PD, addr, 0);
+    EXPECT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Now the prefix is busy,
+    auto candidate = alloc.pickPrefix(cc_, pool, duid_,
+                                     Allocator::PREFIX_LEN_HIGHER,
+                                     IOAddress("::"), 0);
+    EXPECT_TRUE(candidate.isV6Zero());
+
+    double r = alloc.getOccupancyRate(addr, 128, cc_);
+    EXPECT_EQ(1., r);
 }
 
 // Test that the allocator respects client class guards.

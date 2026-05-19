@@ -123,6 +123,21 @@ TEST_F(RandomAllocatorTest4, noPools) {
    EXPECT_TRUE(candidate.isV4Zero());
 }
 
+// Test that the allocator still works with a single pool of a single address.
+TEST_F(RandomAllocatorTest4, singlePoolSingleAddress) {
+    RandomAllocator alloc(Lease::TYPE_V4, subnet_);
+
+    subnet_->delPools(Lease::TYPE_V4);
+    auto addr = IOAddress("192.0.2.10");
+    auto pool = boost::make_shared<Pool4>(addr, addr);
+    subnet_->addPool(pool);
+
+    // The unique address is returned.
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0")));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0")));
+}
+
 // Test that the allocator respects client classes while it picks
 // pools and addresses.
 TEST_F(RandomAllocatorTest4, clientClasses) {
@@ -275,6 +290,21 @@ TEST_F(RandomAllocatorTest6, manyPools) {
     }
 }
 
+// Test that the allocator still works with a single pool of a single address.
+TEST_F(RandomAllocatorTest6, singlePoolSingleAddress) {
+    RandomAllocator alloc(Lease::TYPE_NA, subnet_);
+
+    subnet_->delPools(Lease::TYPE_NA);
+    auto addr = IOAddress("2001:db8:1::1");
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_NA, addr, addr);
+    subnet_->addPool(pool);
+
+    // The unique address is returned.
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, duid_, IOAddress("::")));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickAddress(cc_, duid_, IOAddress("::")));
+}
+
 // Test that the allocator respects client classes while it picks
 // pools and addresses.
 TEST_F(RandomAllocatorTest6, clientClasses) {
@@ -354,6 +384,25 @@ TEST_F(RandomAllocatorTest6, singlePdPool) {
     }
     // The pool comprises 65536 prefixes. All should be returned.
     EXPECT_EQ(65536, prefixes.size());
+}
+
+// Test that the allocator still works with a single pd pool of a single prefix.
+TEST_F(RandomAllocatorTest6, singlePdPoolSinglePrefix) {
+    RandomAllocator alloc(Lease::TYPE_PD, subnet_);
+
+    subnet_->delPools(Lease::TYPE_PD);
+    auto addr = IOAddress("3000::");
+    auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD, addr, 120, 120);
+    subnet_->addPool(pool);
+
+    // The unique prefix is returned.
+    EXPECT_EQ(addr, alloc.pickPrefix(cc_, pool, duid_,
+                                     Allocator::PREFIX_LEN_HIGHER,
+                                     IOAddress("::"), 0));
+    // Forever...
+    EXPECT_EQ(addr, alloc.pickPrefix(cc_, pool, duid_,
+                                     Allocator::PREFIX_LEN_HIGHER,
+                                     IOAddress("::"), 0));
 }
 
 // Test allocating delegated prefixes from multiple pools.
