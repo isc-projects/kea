@@ -20,6 +20,10 @@ IPRangePermutation::IPRangePermutation(const AddressRange& range)
       initial_cursor_(cursor_), state_(), done_(false), generator_() {
     std::random_device rd;
     generator_.seed(rd());
+    // One address in range case.
+    if (!initial_cursor_) {
+        state_.insert(std::make_pair(0, range_start_));
+    }
 }
 
 IPRangePermutation::IPRangePermutation(const PrefixRange& range)
@@ -28,6 +32,10 @@ IPRangePermutation::IPRangePermutation(const PrefixRange& range)
       initial_cursor_(cursor_), state_(), done_(false), generator_() {
     std::random_device rd;
     generator_.seed(rd());
+    // One address in range case.
+    if (!initial_cursor_) {
+        state_.insert(std::make_pair(0, range_start_));
+    }
 }
 
 IOAddress
@@ -108,6 +116,10 @@ IPRangePermutation::reset() {
     state_.clear();
     cursor_ = initial_cursor_;
     done_ = false;
+    // One address in range case.
+    if (!initial_cursor_) {
+        state_.insert(std::make_pair(0, range_start_));
+    }
 }
 
 } // end of namespace isc::dhcp

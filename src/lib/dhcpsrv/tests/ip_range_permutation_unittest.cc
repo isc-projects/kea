@@ -63,6 +63,8 @@ TEST(IPRangePermutationTest, ipv4) {
                 // We're not done yet, so these flag should still be false.
                 EXPECT_FALSE(done);
                 EXPECT_FALSE(perm.exhausted());
+                // Returned address should not be zero.
+                EXPECT_FALSE(next.isV4Zero());
             }
             // Insert the address returned to the set and vector.
             addrs.insert(next);
@@ -70,7 +72,7 @@ TEST(IPRangePermutationTest, ipv4) {
         }
 
         // We should have recorded 92 unique addresses, including the zero address.
-        EXPECT_EQ(92, addrs.size());
+        EXPECT_EQ(92U, addrs.size());
         EXPECT_TRUE(addrs.begin()->isV4Zero());
 
         iterations.push_back(ordered_addrs);
@@ -126,13 +128,15 @@ TEST(IPRangePermutationTest, ipv6) {
                 // We're not done yet, so these flag should still be false.
                 EXPECT_FALSE(done);
                 EXPECT_FALSE(perm.exhausted());
+                // Returned address should not be zero.
+                EXPECT_FALSE(next.isV6Zero());
             }
             // Insert the address returned to the set and vector.
             addrs.insert(next);
             ordered_addrs.push_back(next);
         }
         // We should have recorded 44335 unique addresses, including the zero address.
-        EXPECT_EQ(44335, addrs.size());
+        EXPECT_EQ(44335U, addrs.size());
         EXPECT_TRUE(addrs.begin()->isV6Zero());
 
         iterations.push_back(ordered_addrs);
@@ -193,13 +197,13 @@ TEST(IPRangePermutationTest, pd) {
             ordered_addrs.push_back(next);
         }
         // We should have recorded 257 unique addresses, including the zero address.
-        EXPECT_EQ(257, addrs.size());
+        EXPECT_EQ(257U, addrs.size());
         EXPECT_TRUE(addrs.begin()->isV6Zero());
 
         iterations.push_back(ordered_addrs);
     }
 
-    ASSERT_EQ(2, iterations.size());
+    ASSERT_EQ(2U, iterations.size());
 
     // We want to make sure that each new permutation instance produces a different
     // sequence of prefixes. It checks whether or not the random device has been
@@ -254,7 +258,7 @@ TEST(IPRangePermutationTest, pdStartEnd) {
     }
 
     // We should have recorded 257 unique addresses, including the zero address.
-    EXPECT_EQ(257, addrs.size());
+    EXPECT_EQ(257U, addrs.size());
     EXPECT_TRUE(addrs.begin()->isV6Zero());
 }
 
@@ -274,7 +278,7 @@ TEST(IPRangePermutationTest, reset) {
         EXPECT_FALSE(next.isV4Zero());
         addrs.insert(next);
     }
-    EXPECT_EQ(5, addrs.size());
+    EXPECT_EQ(5U, addrs.size());
 
     // Reset the permutation. We should be able to get all addresses again.
     perm.reset();
@@ -284,7 +288,46 @@ TEST(IPRangePermutationTest, reset) {
         EXPECT_FALSE(next.isV4Zero());
         addrs.insert(next);
     }
-    EXPECT_EQ(11, addrs.size());
+    EXPECT_EQ(11U, addrs.size());
+}
+
+// This test verifies that a permutation of IPv4 address range with
+// only one address is correctly generated.
+TEST(IPRangePermutationTest, ipv4OneAddress) {
+    // Create address range with 1 address.
+    AddressRange range(IOAddress("192.0.2.10"), IOAddress("192.0.2.10"));
+    IPRangePermutation perm(range);
+    bool done = false;
+    ASSERT_NO_THROW(EXPECT_EQ(IOAddress("192.0.2.10"), perm.next(done)));
+    EXPECT_TRUE(done);
+    EXPECT_TRUE(perm.exhausted());
+    EXPECT_TRUE(perm.next(done).isV4Zero());
+}
+
+// This test verifies that a permutation of IPv6 address range with
+// only one address is correctly generated.
+TEST(IPRangePermutationTest, ipv6OneAddress) {
+    // Create address range with 1 address.
+    AddressRange range(IOAddress("2001:db8::fea0"), IOAddress("2001:db8::fea0"));
+    IPRangePermutation perm(range);
+    bool done = false;
+    ASSERT_NO_THROW(EXPECT_EQ(IOAddress("2001:db8::fea0"), perm.next(done)));
+    EXPECT_TRUE(done);
+    EXPECT_TRUE(perm.exhausted());
+    EXPECT_TRUE(perm.next(done).isV6Zero());
+}
+
+// This test verifies that a permutation of delegated prefixes range with
+// only one prefix is correctly generated.
+TEST(IPRangePermutationTest, pdOnePrefix) {
+    // Create prefix range with 1 prefix.
+    PrefixRange range(IOAddress("3000::"), 112, 112);
+    IPRangePermutation perm(range);
+    bool done = false;
+    ASSERT_NO_THROW(EXPECT_EQ(IOAddress("3000::"), perm.next(done)));
+    EXPECT_TRUE(done);
+    EXPECT_TRUE(perm.exhausted());
+    EXPECT_TRUE(perm.next(done).isV6Zero());
 }
 
 } // end of anonymous namespace
