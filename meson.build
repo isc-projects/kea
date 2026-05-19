@@ -992,7 +992,6 @@ if valgrind.found()
         'valgrind',
         exe_wrapper: [
             valgrind,
-            '--child-silent-after-fork=yes',
             '--error-exitcode=0',
             '--fullpath-after=',
             '--leak-check=full',
@@ -1009,7 +1008,6 @@ if valgrind.found()
         'valgrind_gen_suppressions',
         exe_wrapper: [
             valgrind,
-            '--child-silent-after-fork=yes',
             '--error-exitcode=0',
             '--fullpath-after=',
             '--leak-check=full',
@@ -1018,7 +1016,7 @@ if valgrind.found()
             '--show-leak-kinds=all',
             f'--suppressions=@TOP_SOURCE_DIR@/src/valgrind.supp',
             '--gen-suppressions=all',
-            '--log-file=valgrind.supp',
+            f'--log-file=@TOP_SOURCE_DIR@/src/valgrind_new-%p.supp',
         ],
         exclude_suites: ['python-tests', 'shell-tests'],
     )
