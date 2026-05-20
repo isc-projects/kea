@@ -1,0 +1,7 @@
+[func]		fdupont
+	Removed the 'socket-name' vs 'socket-address' exclusivity
+	check when parsing config files. Note that configuring
+	both for the same control socket is still rejected but
+	because 'socket-name' makes sense only for the 'unix' type,
+	and 'socket-address' for the 'http' and 'https' types.
+	(Gitlab #3971)
