@@ -7548,8 +7548,14 @@ DELIMITER ;
 -- Drop IA_TA from lease6_types table.
 -- On the off chance that somehow there are IA_TA leases convert them
 -- or the foreign key contraint will blow this up.
-   UPDATE lease6 SET lease_type = 0 WHERE lease_type = 1;
-   DELETE FROM lease6_types where lease_type = 1;
+UPDATE lease6 SET lease_type = 0 WHERE lease_type = 1;
+DELETE FROM lease6_stat_by_client_class WHERE lease_type = 1;
+DELETE FROM lease6_stat WHERE lease_type = 1;
+DELETE FROM lease6_types where lease_type = 1;
+
+ALTER TABLE flq_pool6
+    ADD CONSTRAINT fk_flq_pool6_lease6_type FOREIGN KEY (lease_type)
+    REFERENCES lease6_types (lease_type);
 
 -- Update the schema version number.
 UPDATE schema_version

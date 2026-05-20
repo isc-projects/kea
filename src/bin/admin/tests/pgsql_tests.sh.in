@@ -3925,7 +3925,7 @@ pgsql_sflqInsertLease6() {
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
     # Create a SFLQ pool 3001:: - 3001::4
-    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 1::smallint, 128::smallint,\
+    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 0::smallint, 128::smallint,\
                                  1::bigint, false)"
     run_statement "sflqCreateFlqPool6" "$sql"
 
@@ -4035,7 +4035,7 @@ pgsql_sflqUpdateLease6() {
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
     # Create a SFLQ pool 3001:: - 3001::4
-    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 1::smallint, 128::smallint,\
+    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 0::smallint, 128::smallint,\
                                  1::bigint, false)"
     run_statement "sflqCreateFlqPool6" "$sql"
 
@@ -4149,7 +4149,7 @@ pgsql_sflqDeleteLease6() {
     assert_eq 0 "${EXIT_CODE}" "cannot initialize the database, expected exit code: %d, actual: %d"
 
     # Create a SFLQ pool 3001:: - 3001::4
-    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 1::smallint, 128::smallint,\
+    sql="select sflqCreateFlqPool6('3001::'::inet, '3001::4'::inet, 0::smallint, 128::smallint,\
                                  1::bigint, false)"
     run_statement "sflqCreateFlqPool6" "$sql"
 
