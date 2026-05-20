@@ -9887,12 +9887,13 @@ DHCPSRV_MEMFILE_LFC_SPAWN_FAIL
 
     lease file cleanup failed to run because kea-lfc process couldn't be spawned
 
-This error message is logged when the Kea server fails to run kea-lfc,
-the program that cleans up the lease file. The server will try again the
-next time a lease file cleanup is scheduled. Although this message should
-not appear and the reason why it did investigated, the occasional failure
-to start the lease file cleanup will not impact operations. Should the
-failure persist however, the size of the lease file will increase without bound.
+This error message is logged when the Kea server fails to run kea-lfc, the
+program that cleans up the lease file. The server will try again the next
+time a lease file cleanup is scheduled. Although this message should not
+appear and the reason why it did should be investigated, the occasional
+failure to start the lease file cleanup will not impact operations. Should
+the failure persist however, the size of the lease file will increase without
+bound.
 
 DHCPSRV_MEMFILE_LFC_START
 =========================

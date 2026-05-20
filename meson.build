@@ -990,6 +990,7 @@ endif
 if valgrind.found()
     add_test_setup(
         'valgrind',
+        timeout_multiplier=4,
         exe_wrapper: [
             valgrind,
             '--error-exitcode=0',
@@ -1006,6 +1007,7 @@ if valgrind.found()
     )
     add_test_setup(
         'valgrind_gen_suppressions',
+        timeout_multiplier=4,
         exe_wrapper: [
             valgrind,
             '--error-exitcode=0',

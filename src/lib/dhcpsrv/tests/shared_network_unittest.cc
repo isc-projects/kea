@@ -228,7 +228,7 @@ TEST(SharedNetwork4Test, replaceSubnet4) {
                              SubnetID(2)));
     EXPECT_FALSE(network->replace(subnet));
 
-    // Subnets did not changed.
+    // Subnets did not change.
     ASSERT_EQ(3, network->getAllSubnets()->size());
     auto returned_it = network->getAllSubnets()->begin();
     Subnet4Ptr returned_subnet = *returned_it;
@@ -272,7 +272,7 @@ TEST(SharedNetwork4Test, replaceSubnet4) {
     EXPECT_TRUE(network1);
     EXPECT_TRUE(network == network1);
 
-    // Other subnets did not changed.
+    // Other subnets did not change.
     returned_it = network->getAllSubnets()->begin();
     returned_subnet = *++returned_it;
     ASSERT_TRUE(returned_subnet);
@@ -975,7 +975,7 @@ TEST(SharedNetwork6Test, replaceSubnet6) {
                              SubnetID(2)));
     EXPECT_FALSE(network->replace(subnet));
 
-    // Subnets did not changed.
+    // Subnets did not change.
     ASSERT_EQ(3, network->getAllSubnets()->size());
     auto returned_it = network->getAllSubnets()->begin();
     Subnet6Ptr returned_subnet = *returned_it;
@@ -1021,7 +1021,7 @@ TEST(SharedNetwork6Test, replaceSubnet6) {
     EXPECT_TRUE(network1);
     EXPECT_TRUE(network == network1);
 
-    // Other subnets did not changed.
+    // Other subnets did not change.
     returned_it = network->getAllSubnets()->begin();
     returned_subnet = *++returned_it;
     ASSERT_TRUE(returned_subnet);

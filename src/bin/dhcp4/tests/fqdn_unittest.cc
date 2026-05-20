@@ -2911,7 +2911,7 @@ TEST_F(NameDhcpv4SrvTest, withOfferLifetime) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("client-name.example.com.", lease->hostname_);
 
-    // Verify assigned states did not incremented again.
+    // Verify assigned states did not increment again.
     checkSubnetStat(subnet->getID(), "total-addresses", 1);
     checkSubnetStat(subnet->getID(), "cumulative-assigned-addresses", 1);
     checkSubnetStat(subnet->getID(), "assigned-addresses", 1);

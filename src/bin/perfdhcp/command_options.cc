@@ -692,7 +692,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // and REQUEST/REPLY exchanges make sure we have transaction id
     // and random duid offsets for both exchanges. We will duplicate
     // value specified as -X<value> and -R<value> for second
-    // exchange if user did not specified otherwise.
+    // exchange if user did not specify otherwise.
     if (template_file_.size() > 1) {
         if (xid_offset_.size() == 1) {
             xid_offset_.push_back(xid_offset_[0]);
