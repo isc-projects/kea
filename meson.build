@@ -990,7 +990,7 @@ endif
 if valgrind.found()
     add_test_setup(
         'valgrind',
-        timeout_multiplier=4,
+        timeout_multiplier:8,
         exe_wrapper: [
             valgrind,
             '--error-exitcode=0',
@@ -1007,7 +1007,7 @@ if valgrind.found()
     )
     add_test_setup(
         'valgrind_gen_suppressions',
-        timeout_multiplier=4,
+        timeout_multiplier:8,
         exe_wrapper: [
             valgrind,
             '--error-exitcode=0',
@@ -1018,7 +1018,8 @@ if valgrind.found()
             '--show-leak-kinds=all',
             f'--suppressions=@TOP_SOURCE_DIR@/src/valgrind.supp',
             '--gen-suppressions=all',
-            f'--log-file=@TOP_SOURCE_DIR@/src/valgrind_new-%p.supp',
+            '--xml=yes',
+            '--xml-file=valgrind-supp-%p.xml',
         ],
         exclude_suites: ['python-tests', 'shell-tests'],
     )
