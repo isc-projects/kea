@@ -1,5 +1,5 @@
 [bug]		fdupont
-	Allowed IP range permutations for range with only
-	one element so pools with one address or prefix in
-	random and FLQ allocators.
+	Corrected an issue that prevented using pools of
+	only one element (e.g. address or prefix) with
+	either the Random and FLQ allocators.
 	(Gitlab #4444)
