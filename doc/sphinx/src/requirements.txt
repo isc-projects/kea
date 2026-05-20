@@ -16,7 +16,7 @@ docutils==0.22.4
     # via
     #   sphinx
     #   sphinx-rtd-theme
-idna==3.13
+idna==3.15
     # via requests
 imagesize==2.0.0
     # via sphinx
@@ -36,11 +36,11 @@ snowballstemmer==3.0.1
     # via sphinx
 sphinx==9.1.0
     # via
-    #   -r src/requirements.in
+    #   -r requirements.in
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
 sphinx-rtd-theme==3.1.0
-    # via -r src/requirements.in
+    # via -r requirements.in
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
 sphinxcontrib-devhelp==2.0.0
