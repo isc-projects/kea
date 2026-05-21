@@ -126,7 +126,7 @@ Option6ClientFqdnImpl::Option6ClientFqdnImpl(OptionBufferConstIter first,
         checkFlags(flags_, false);
     } catch (const InvalidOption6FqdnFlags& ex) {
         if (Option::lenient_parsing_) {
-            isc_throw(SkipThisOptionError, ex.what());
+            flags_ &= ~Option6ClientFqdn::FLAG_N;
         } else {
             throw;
         }
@@ -441,7 +441,7 @@ Option6ClientFqdn::unpack(OptionBufferConstIter first,
         impl_->checkFlags(impl_->flags_, false);
     } catch (const InvalidOption6FqdnFlags& ex) {
         if (Option::lenient_parsing_) {
-            isc_throw(SkipThisOptionError, ex.what());
+            impl_->flags_ &= ~Option6ClientFqdn::FLAG_N;
         } else {
             throw;
         }

@@ -462,9 +462,13 @@ TEST(Option4ClientFqdnTest, constructFromWireInvalidFlags) {
     LenientOptionParsing lop(false);
     EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
                  InvalidOption4FqdnFlags);
+    // Lenient parsing allows this but reset the N bit.
     Option::lenient_parsing_ = true;
-    EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
-                 SkipThisOptionError);
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    EXPECT_NO_THROW(option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end())));
+    ASSERT_TRUE(option);
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
 }
 
 // This test verifies that if invalid domain name is used the constructor
@@ -844,9 +848,11 @@ TEST(Option4ClientFqdnTest, unpack) {
     LenientOptionParsing lop(false);
     EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()),
                  InvalidOption4FqdnFlags);
+    // Lenient parsing allows bad flags but reset the N bit.
     Option::lenient_parsing_ = true;
-    EXPECT_THROW(option->unpack(in_buf.begin(), in_buf.end()),
-                 SkipThisOptionError);
+    ASSERT_NO_THROW(option->unpack(in_buf.begin(), in_buf.end()));
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
 }
 
 // This test verifies that on-wire option data holding partial domain name

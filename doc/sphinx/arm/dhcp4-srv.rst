@@ -8872,7 +8872,8 @@ or in terms of the log message above, the tuple length ``y`` becomes ``x``.
 
 Starting with Kea version 2.5.8, this parsing is extended to silently ignore
 FQDN (81) options with some invalid domain names, and starting with Kea
-version 3.1.9 with invalid flags (i.e. 'S" and 'N' flags set to 1).
+version 3.1.9 to fix invalid flags, i.e. when 'S' and 'N' flags set to 1
+the 'N' flag is reset to 0 for compatibility with ISC DHCP behavior.
 
 Ignore DHCP Server Identifier
 -----------------------------

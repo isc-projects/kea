@@ -1,4 +1,4 @@
 [func]		fdupont
 	Extended lenient parsing of v4 "fqdn" and v6 "client-fqdn"
-	options to skip options with bad flags.
+	options to fix options with bad flags.
 	(Gitlab #4443)

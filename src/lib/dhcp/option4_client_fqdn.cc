@@ -153,7 +153,7 @@ Option4ClientFqdnImpl::Option4ClientFqdnImpl(OptionBufferConstIter first,
         checkFlags(flags_, false);
     } catch (const InvalidOption4FqdnFlags& ex) {
         if (Option::lenient_parsing_) {
-            isc_throw(SkipThisOptionError, ex.what());
+            flags_ &= ~Option4ClientFqdn::FLAG_N;
         } else {
             throw;
         }
@@ -521,7 +521,7 @@ Option4ClientFqdn::unpack(OptionBufferConstIter first,
         impl_->checkFlags(impl_->flags_, false);
     } catch (const InvalidOption4FqdnFlags& ex) {
         if (Option::lenient_parsing_) {
-            isc_throw(SkipThisOptionError, ex.what());
+            impl_->flags_ &= ~Option4ClientFqdn::FLAG_N;
         } else {
             throw;
         }
