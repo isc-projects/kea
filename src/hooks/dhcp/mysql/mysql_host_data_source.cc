@@ -908,6 +908,8 @@ private:
             memset(formatted_value_, 0, sizeof(formatted_value_));
             memset(space_, 0, sizeof(space_));
             memset(user_context_, 0, sizeof(user_context_));
+
+            static_assert(8 < OPTION_COLUMNS, "8 < OPTION_COLUMNS");
         }
 
         /// @brief Returns identifier of the currently processed option.

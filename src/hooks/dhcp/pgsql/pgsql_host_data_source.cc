@@ -139,7 +139,7 @@ public:
         columns_[DHCP4_BOOT_FILE_NAME_COL] = "dhcp4_boot_file_name";
         columns_[AUTH_KEY_COL] = "auth_key";
 
-        static_assert(12 < HOST_COLUMNS, "12 < HOST_COLUMNS");
+        static_assert(13 < HOST_COLUMNS, "13 < HOST_COLUMNS");
     };
 
     /// @brief Virtual destructor.
@@ -739,6 +739,8 @@ private:
             columns[cancelled_index_] = "cancelled";
             columns[user_context_index_] = "user_context";
             columns[client_classes_index_] = "client_classes";
+
+            static_assert(8 < OPTION_COLUMNS, "8 < OPTION_COLUMNS");
         }
 
     private:

@@ -63,10 +63,9 @@ public:
     /// @brief Constructor
     PgSqlLegLExchange() : address_(""), log_("") {
 
-        static_assert(0 < LOG_COLUMNS, "0 < LOG_COLUMNS");
-
         // Set the column names (for error messages)
         columns_.push_back("log");
+        static_assert(1 < LOG_COLUMNS, "1 < LOG_COLUMNS");
     }
 
     /// @brief Destructor

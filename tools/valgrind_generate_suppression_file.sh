@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 # run unittests
 # ./meson.sh test -C build --setup valgrind_gen_suppressions
 for i in $(find build | grep "valgrind-supp-" | grep -v "txt\.supp")
@@ -12,7 +14,7 @@ do
 	# remove useless data
 	xmlstarlet sel -t -v "/valgrindoutput/error/suppression/rawtext" "$i" | grep "\S" | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&apos;/'"'"'/g' > "$i-txt.supp"
 	# extract the binary path and name
-	found_in_path=$(grep "<exe>.*</exe>" "$i" | grep -v "valgrind" | xmlstarlet sel -t -v "/exe" | sed "s|.*src|src|")
+	found_in_path=$(xmlstarlet sel -t -v "/valgrindoutput/args/argv/exe" "$i" | sed "s|.*src|src|")
 	# insert a comment with the binary path and name
 	sed -i "s|<insert_a_suppression_name_here>|<insert_a_suppression_name_here>\n   # detected in $found_in_path|g" "$i-txt.supp"
 	# split the file
