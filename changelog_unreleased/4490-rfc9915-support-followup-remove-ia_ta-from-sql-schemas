@@ -1,4 +1,4 @@
 [func]		tmark
 	IA_TA lease6 lease type has been removed from the
-    MySQL and PostgreSQL schemas.
+	MySQL and PostgreSQL schemas.
 	(Gitlab #4490)
