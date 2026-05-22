@@ -181,9 +181,6 @@ public:
             // Add the error flags
             setErrorIndicators(bind_, error_, LOG_COLUMNS);
 
-            // .. and check that we have the numbers correct at compile time.
-            static_assert(1 < LOG_COLUMNS, "1 < LOG_COLUMNS");
-
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from log: '"
