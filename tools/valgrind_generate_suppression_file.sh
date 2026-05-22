@@ -83,8 +83,12 @@ for i in $(find build -type f -name '*txt.supp-part.*'); do
     else
         # extract the binary path and name
         found_in_path=$(grep " # detected in " "$i" || true)
-        # update comment with binary path and name if hash not present
-        sed -i "s|valgrind_hash_$label|valgrind_hash_$label\n$found_in_path|g" build/valgrind_suppression.supp
+        # check if comment is present
+        match=$(grep -c "$found_in_path" build/valgrind_suppression.supp || true)
+        if [ "$match" -eq 0 ]; then
+            # update comment with binary path and name if hash is present
+            sed -i "s|valgrind_hash_$label|valgrind_hash_$label\n$found_in_path|g" build/valgrind_suppression.supp
+        fi
     fi
 done
 csplit -s -z -f build/valgrind_suppression.supp.part. build/valgrind_suppression.supp '/{/' '{*}'
