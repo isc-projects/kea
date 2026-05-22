@@ -86,7 +86,7 @@ PIDFile::deleteFile() const {
     }
 }
 
-  PIDLock::PIDLock(const std::string& lockname, bool blocking)
+PIDLock::PIDLock(const std::string& lockname, bool blocking)
     : lockname_(lockname), fd_(-1), locked_(false) {
     // Open the lock file.
     fd_ = open(lockname_.c_str(), O_RDONLY | O_CREAT, 0600);

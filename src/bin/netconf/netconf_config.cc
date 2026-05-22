@@ -81,7 +81,7 @@ CfgServer::CfgServer(const string& model, CfgControlSocketPtr ctrl_sock)
 string
 CfgServer::toText() const {
     ostringstream s;
-    s << "model: " << model_ << ", control socker: ";
+    s << "model: " << model_ << ", control socket: ";
     if (!control_socket_) {
         s << "none";
     } else {
@@ -138,6 +138,10 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     string url_str = getString(ctrl_sock_config, "socket-url");
     ConstElementPtr user_context = ctrl_sock_config->get("user-context");
 
+    if (type_str.size() == 0) {
+        isc_throw(ConfigError, "socket-type is mandatory and is not set");
+    }
+
     // Type must be valid.
     CfgControlSocket::Type type;
     try {
@@ -145,6 +149,29 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
     } catch (exception const& ex) {
         isc_throw(ConfigError, ex.what() << " '" << type_str << "' ("
                   << getPosition("socket-type", ctrl_sock_config)  << ")");
+    }
+
+    // Check the combination of settings.
+    switch (type) {
+    case CfgControlSocket::Type::UNIX:
+        if (name.size() == 0) {
+            isc_throw(ConfigError, "socket-name must not be empty when socket type is configured to unix");
+        }
+        isc::config::UnixCommandConfig::validatePath(name);
+        break;
+    case CfgControlSocket::Type::HTTP:
+        if (name.size() != 0) {
+            isc_throw(ConfigError, "socket-name is extraneous when socket type is configured to http");
+        }
+        break;
+    case CfgControlSocket::Type::STDOUT:
+        if (name.size() != 0) {
+            isc_throw(ConfigError, "socket-name is extraneous when socket type is configured to stdout");
+        }
+        break;
+    default:
+        isc_throw(ConfigError, "Unknown control socket type: " << type);
+        break;
     }
 
     // Url must be valid.

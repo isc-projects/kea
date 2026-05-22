@@ -45,7 +45,7 @@ const SimpleDefaults NetconfSimpleParser::NETCONF_DEFAULTS = {
 
 /// @brief Supplies defaults for control-socket elements
 const SimpleDefaults NetconfSimpleParser::CTRL_SOCK_DEFAULTS = {
-    { "socket-type", Element::string, "stdout" },
+    { "socket-type", Element::string, "" },
     { "socket-name", Element::string, "" },
     { "socket-url" , Element::string, "http://127.0.0.1:8000/" }
 };
