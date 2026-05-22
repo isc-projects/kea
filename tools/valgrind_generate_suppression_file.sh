@@ -1,10 +1,10 @@
 #!/bin/sh
 
-set -eu
-
 # shellcheck disable=SC2044
 # SC2044 (warning): For loops over find output are fragile. Use find -exec or a while read loop.
 # reason: They're fine. We don't use spaces in file names.
+
+set -eu
 
 # Print usage.
 print_usage() {
