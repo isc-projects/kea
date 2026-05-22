@@ -114,7 +114,7 @@ done
 # remove files
 find build -type f -name '*valgrind_hash_*' -exec rm -rf {} ';'
 find build -type f -name '*txt.supp-part.*' -exec rm -rf {} ';'
-if [ $keep_files -eq false ]; then
+if [ "${keep_files}" = 'false' ]; then
     find build -type f -name '*valgrind-supp-*' -exec rm -rf {} ';'
 fi
 mv build/valgrind_suppression.supp src/valgrind.supp
