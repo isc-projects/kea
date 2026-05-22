@@ -55,49 +55,49 @@ if test -z "${partial_suppression_files}"; then
 fi
 
 for i in ${partial_suppression_files}; do
-    found=$(grep -c "<suppression>" "$i" || true)
-    if [ "$found" -eq 0 ]; then
+    found=$(grep -c "<suppression>" "${i}" || true)
+    if [ "${found}" -eq 0 ]; then
         continue
     fi
     # remove useless data
-    xmlstarlet sel -t -v "/valgrindoutput/error/suppression/rawtext" "$i" | grep "\S" | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&apos;/'"'"'/g' >"$i-txt.supp"
+    xmlstarlet sel -t -v "/valgrindoutput/error/suppression/rawtext" "${i}" | grep "\S" | sed 's/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g; s/&quot;/"/g; s/&apos;/'"'"'/g' >"${i}-txt.supp"
     # extract the binary path and name
-    found_in_path=$(xmlstarlet sel -t -v "/valgrindoutput/args/argv/exe" "$i" | sed "s|.*src|src|")
+    found_in_path=$(xmlstarlet sel -t -v "/valgrindoutput/args/argv/exe" "${i}" | sed "s|.*src|src|")
     # insert a comment with the binary path and name
-    sed -i "s|<insert_a_suppression_name_here>|<insert_a_suppression_name_here>\n   # detected in $found_in_path|g" "$i-txt.supp"
+    sed -i'' "s|<insert_a_suppression_name_here>|<insert_a_suppression_name_here>\n   # detected in ${found_in_path}|g" "${i}-txt.supp"
     # split the file
-    csplit -s -z -f "$i-txt.supp-part." "$i-txt.supp" '/{/' '{*}'
+    csplit -s -z -f "${i}-txt.supp-part." "${i}-txt.supp" '/{/' '{*}'
 done
 
 echo "" >build/valgrind_suppression.supp
 for i in $(find build -type f -name '*txt.supp-part.*'); do
     # compute md5sum
-    label=$(grep -v "insert_a_suppression_name_here" "$i" | grep -v "# detected in " | md5sum | cut -d " " -f 1)
+    label=$(grep -v "insert_a_suppression_name_here" "${i}" | grep -v "# detected in " | md5sum | cut -d " " -f 1)
     # update label
-    sed -i "s/<insert_a_suppression_name_here>/valgrind_hash_$label/g" "$i"
+    sed -i'' "s/<insert_a_suppression_name_here>/valgrind_hash_${label}/g" "${i}"
     # check if hash is present
-    match=$(grep -c "$label" build/valgrind_suppression.supp || true)
-    if [ "$match" -eq 0 ]; then
+    match=$(grep -c "${label}" build/valgrind_suppression.supp || true)
+    if [ "${match}" -eq 0 ]; then
         # include entire content if hash not present
-        cat "$i" >>build/valgrind_suppression.supp
+        cat "${i}" >>build/valgrind_suppression.supp
     else
         # extract the binary path and name
-        found_in_path=$(grep " # detected in " "$i" || true)
+        found_in_path=$(grep " # detected in " "${i}" || true)
         # check if comment is present
-        match=$(grep -c "$found_in_path" build/valgrind_suppression.supp || true)
-        if [ "$match" -eq 0 ]; then
+        match=$(grep -c "${found_in_path}" build/valgrind_suppression.supp || true)
+        if [ "${match}" -eq 0 ]; then
             # update comment with binary path and name if hash is present
-            sed -i "s|valgrind_hash_$label|valgrind_hash_$label\n$found_in_path|g" build/valgrind_suppression.supp
+            sed -i'' "s|valgrind_hash_${label}|valgrind_hash_${label}\n${found_in_path}|g" build/valgrind_suppression.supp
         fi
     fi
 done
 csplit -s -z -f build/valgrind_suppression.supp.part. build/valgrind_suppression.supp '/{/' '{*}'
 for i in $(find build -type f -name '*valgrind_suppression.supp.part.*'); do
-    name=$(grep "valgrind_hash_" "$i" | tr -d " ")
-    if [ -z "$name" ]; then
+    name=$(grep "valgrind_hash_" "${i}" | tr -d " ")
+    if [ -z "${name}" ]; then
         continue
     fi
-    mv "$i" "build/$name"
+    mv "${i}" "build/${name}"
 done
 cat <<EOF >build/valgrind_suppression.supp
 # Valgrind suppressions file. Place permanent suppressions that we never
@@ -113,7 +113,7 @@ cat <<EOF >build/valgrind_suppression.supp
 # with a command like: c++filt < valgrind-suppressions
 EOF
 for i in $(find build -type f -name '*valgrind_hash_*' | sort -V); do
-    cat "$i" >>build/valgrind_suppression.supp
+    cat "${i}" >>build/valgrind_suppression.supp
 done
 # remove files
 find build -type f -name '*valgrind_hash_*' -exec rm -rf {} ';'
