@@ -111,11 +111,16 @@ HttpControlSocket::sendCommand(ConstElementPtr command) {
 
     try {
         auto response_list = response->getBodyAsJson();
-        if (response_list->getType() != Element::list) {
-            isc_throw(CtrlChannelError, "invalid answer: expected toplevel entry to be a list, got "
-                      << Element::typeToName(response_list->getType()) << " instead");
+        // If there is no error the expected response is a list.
+        if (response_list->getType() == Element::list) {
+            // There must be at least one response.
+            if (response_list->empty()) {
+                isc_throw(ControlSocketError, "list of responses must not be empty");
+            }
+            return (response_list->get(0));
         }
-        return (response_list->get(0));
+        // If there is an error the expected response is a map.
+        return (response->getBodyAsJson());
     } catch (exception const& ex) {
         isc_throw(ControlSocketError, "unparsable response: " << ex.what());
     }

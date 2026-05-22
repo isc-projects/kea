@@ -432,6 +432,12 @@ public:
         return (HttpRequestPtr(new PostHttpRequestJson()));
     }
 
+    /// @brief Flag which sets the type of reply (either list or map).
+    ///
+    /// @note The kea daemons reply using a list if the command succeeds and
+    /// with a map if there is an error.
+    static bool emulate_agent_response_;
+
 protected:
     /// @brief Creates HTTP response.
     ///
@@ -492,13 +498,19 @@ protected:
                                           HttpStatusCode::OK));
         ElementPtr map = Element::createMap();
         map->set("received", Element::create(body->str()));
-        ElementPtr response_list = Element::createList();
-        response_list->add(boost::const_pointer_cast<Element>(map));
-        response->setBodyAsJson(response_list);
+        if (TestHttpResponseCreator::emulate_agent_response_) {
+            ElementPtr response_list = Element::createList();
+            response_list->add(boost::const_pointer_cast<Element>(map));
+            response->setBodyAsJson(response_list);
+        } else {
+            response->setBodyAsJson(map);
+        }
         response->finalize();
         return (response);
     }
 };  // TestHttpResponseCreator
+
+bool TestHttpResponseCreator::emulate_agent_response_ = true;
 
 /// @brief Implementation of the test HttpResponseCreatorFactory.
 class TestHttpResponseCreatorFactory : public HttpResponseCreatorFactory {
@@ -519,10 +531,12 @@ public:
     }
 
     void SetUp() override {
+        TestHttpResponseCreator::emulate_agent_response_ = true;
         SysrepoSetup::cleanSharedMemory();
     }
 
     void TearDown() override {
+        TestHttpResponseCreator::emulate_agent_response_ = true;
         SysrepoSetup::cleanSharedMemory();
         if (thread_) {
             thread_->join();
@@ -776,6 +790,98 @@ TEST_F(HttpControlSocketTest, partial) {
         FAIL() << "unexpected exception";
     }
     stop();
+}
+
+// Verifies that http control sockets handle configGet() as expected.
+TEST_F(HttpControlSocketTest, configGetReceiveMap) {
+    TestHttpResponseCreator::emulate_agent_response_ = false;
+    CfgControlSocketPtr cfg = createCfgControlSocket();
+    ASSERT_TRUE(cfg);
+    HttpControlSocketPtr hcs(new HttpControlSocket(cfg));
+    ASSERT_TRUE(hcs);
+
+    // Run a reflecting server in a thread.
+    createReflectListener();
+    start();
+
+    // Try configGet.
+    ConstElementPtr reflected;
+    EXPECT_NO_THROW_LOG(reflected = hcs->configGet("foo"));
+    stop();
+
+    // Check result.
+    ASSERT_TRUE(reflected);
+    ASSERT_EQ(Element::map, reflected->getType());
+    ConstElementPtr command = reflected->get("received");
+    ASSERT_TRUE(command);
+    ASSERT_EQ(Element::string, command->getType());
+    string expected = "{ \"command\": \"config-get\", "
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
+    EXPECT_EQ(expected, command->stringValue());
+}
+
+// Verifies that http control sockets handle configTest() as expected.
+TEST_F(HttpControlSocketTest, configTestReceiveMap) {
+    TestHttpResponseCreator::emulate_agent_response_ = false;
+    CfgControlSocketPtr cfg = createCfgControlSocket();
+    ASSERT_TRUE(cfg);
+    HttpControlSocketPtr hcs(new HttpControlSocket(cfg));
+    ASSERT_TRUE(hcs);
+
+    // Run a reflecting server in a thread.
+    createReflectListener();
+    start();
+
+    // Prepare a config to test.
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+
+    // Try configTest.
+    ConstElementPtr reflected;
+    EXPECT_NO_THROW_LOG(reflected = hcs->configTest(json, "foo"));
+    stop();
+
+    // Check result.
+    ASSERT_TRUE(reflected);
+    ASSERT_EQ(Element::map, reflected->getType());
+    ConstElementPtr command = reflected->get("received");
+    ASSERT_TRUE(command);
+    ASSERT_EQ(Element::string, command->getType());
+    string expected = "{ \"arguments\": { \"bar\": 1 }, "
+        "\"command\": \"config-test\", "
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
+    EXPECT_EQ(expected, command->stringValue());
+}
+
+// Verifies that http control sockets handle configSet() as expected.
+TEST_F(HttpControlSocketTest, configSetReceiveMap) {
+    TestHttpResponseCreator::emulate_agent_response_ = false;
+    CfgControlSocketPtr cfg = createCfgControlSocket();
+    ASSERT_TRUE(cfg);
+    HttpControlSocketPtr hcs(new HttpControlSocket(cfg));
+    ASSERT_TRUE(hcs);
+
+    // Run a reflecting server in a thread.
+    createReflectListener();
+    start();
+
+    // Prepare a config to set.
+    ElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
+
+    // Try configSet.
+    ConstElementPtr reflected;
+    EXPECT_NO_THROW_LOG(reflected = hcs->configSet(json, "foo"));
+    stop();
+
+    // Check result.
+    ASSERT_TRUE(reflected);
+    ASSERT_EQ(Element::map, reflected->getType());
+    ConstElementPtr command = reflected->get("received");
+    ASSERT_TRUE(command);
+    ASSERT_EQ(Element::string, command->getType());
+    string expected = "{ \"arguments\": { \"bar\": 1 }, "
+        "\"command\": \"config-set\", "
+        "\"remote-address\": \"127.0.0.1\", \"service\": [ \"foo\" ] }";
+    EXPECT_EQ(expected, command->stringValue());
 }
 
 }  // namespace

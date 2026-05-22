@@ -1,4 +1,4 @@
-2462.	[bug]		razvan
+2463.	[bug]		razvan
 	Fixed kea-netconf communication over HTTP sockets with the kea
 	dhcp demons. The control socket type is now mandatory for each
 	server in the "managed-servers" configuration map.
