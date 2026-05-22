@@ -1494,7 +1494,7 @@ public:
         columns_[excluded_prefix_index_] = "excluded_prefix";
         columns_[excluded_prefix_len_index_] = "excluded_prefix_len";
 
-        static_assert(6 < RESERVATION_COLUMNS, "6 < RESERVATION_COLUMNS");.
+        static_assert(6 < RESERVATION_COLUMNS, "6 < RESERVATION_COLUMNS");
     }
 
     /// @brief Returns last fetched reservation id.
