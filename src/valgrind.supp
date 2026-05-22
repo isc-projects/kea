@@ -114,7 +114,6 @@
 {
    valgrind_hash_0fd2370961a6dd19d5f23de6935f078b
    # detected in src/bin/perfdhcp/tests/perfdhcp-tests
-   # detected in src/bin/perfdhcp/tests/perfdhcp-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:_Znam
@@ -733,7 +732,6 @@
 {
    valgrind_hash_5c62c7b060216c19aea67817f9dde567
    # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
-   # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:malloc
@@ -928,7 +926,6 @@
 }
 {
    valgrind_hash_6fac1cf5258c73743ff6310eda9ada97
-   # detected in src/hooks/dhcp/pgsql/tests/dhcp-pgsql-lib-tests
    # detected in src/hooks/dhcp/pgsql/tests/dhcp-pgsql-lib-tests
    Memcheck:Leak
    match-leak-kinds: reachable
@@ -1404,17 +1401,9 @@
 }
 {
    valgrind_hash_40f847627ced5c06de1c1e2af6d000fc
-   # detected in src/hooks/dhcp/run_script/libloadtests/dhcp-run-script-libload-tests
-   # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
-   # detected in src/hooks/dhcp/lease_query/libloadtests/dhcp-lease-query-libload-tests
-   # detected in src/lib/cryptolink/tests/kea-cryptolink-tests
-   # detected in src/lib/process/tests/kea-process-tests
-   # detected in src/hooks/dhcp/ddns_tuning/tests/dhcp-ddns-tuning-tests
-   # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
-   # detected in src/hooks/dhcp/ping_check/libloadtests/dhcp-ping-check-libload-tests
-   # detected in src/hooks/dhcp/mysql/libloadtests/dhcp-mysql-libload-tests
-   # detected in src/hooks/dhcp/high_availability/tests/dhcp-ha-lib-tests
-   # detected in src/lib/config_backend/tests/kea-config_backend-tests
+   # detected in src/hooks/dhcp/flex_option/libloadtests/dhcp-flex-option-libload-tests
+   # detected in src/lib/d2srv/tests/kea-d2srv-tests
+   # detected in src/hooks/dhcp/bootp/tests/dhcp-bootp-lib-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:_Znwm
@@ -2139,7 +2128,6 @@
 {
    valgrind_hash_833cdee3309d39e0de771ec5ec6f3c3c
    # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
-   # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:malloc
@@ -2527,8 +2515,6 @@
 {
    valgrind_hash_4114f1d85961daedc63a2e6c8669497b
    # detected in src/bin/perfdhcp/tests/perfdhcp-tests
-   # detected in src/bin/perfdhcp/tests/perfdhcp-tests
-   # detected in src/bin/perfdhcp/tests/perfdhcp-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:_Znam
@@ -2909,7 +2895,6 @@
 }
 {
    valgrind_hash_68212a3c4fa163ae90e8b0a075c10be3
-   # detected in src/lib/pgsql/tests/kea-pgsql-tests
    # detected in src/lib/pgsql/tests/kea-pgsql-tests
    Memcheck:Leak
    match-leak-kinds: reachable
@@ -3432,7 +3417,6 @@
 {
    valgrind_hash_a8bddced6faae3a6bb648467dd6a1f08
    # detected in src/bin/dhcp6/tests/kea-dhcp6-tests
-   # detected in src/bin/dhcp6/tests/kea-dhcp6-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:malloc
@@ -3914,7 +3898,6 @@
 }
 {
    valgrind_hash_ae0f88f6063bb57a11325008eb073618
-   # detected in src/bin/dhcp4/tests/kea-dhcp4-tests
    # detected in src/bin/dhcp4/tests/kea-dhcp4-tests
    Memcheck:Leak
    match-leak-kinds: reachable
@@ -4581,62 +4564,37 @@
 }
 {
    valgrind_hash_c305d72282a7ea5ff0866907a0132ed4
-   # detected in src/lib/cc/tests/kea-cc-tests
-   # detected in src/hooks/dhcp/cb_cmds/libloadtests/dhcp-cb-cmds-libload-tests
-   # detected in src/hooks/dhcp/high_availability/libloadtests/dhcp-ha-libload-tests
-   # detected in src/hooks/dhcp/host_cmds/tests/dhcp-cmds-tests
-   # detected in src/bin/dhcp4/tests/kea-dhcp4-tests
-   # detected in src/lib/tcp/tests/kea-tcp-tests
-   # detected in src/hooks/dhcp/limits/libloadtests/dhcp-limits-libload-tests
-   # detected in src/bin/dhcp6/tests/kea-dhcp6-tests
-   # detected in src/lib/process/cfgrpt/tests/kea-process-cfgrpt-tests
-   # detected in src/hooks/dhcp/user_chk/tests/dhcp-user-chk-lib-tests
-   # detected in src/lib/config/tests/kea-config-tests
-   # detected in src/bin/d2/tests/kea-d2-tests
-   # detected in src/lib/config_backend/tests/kea-config_backend-tests
-   # detected in src/bin/netconf/tests/kea-netconf-tests
-   # detected in src/hooks/dhcp/mysql/libloadtests/dhcp-mysql-libload-tests
-   # detected in src/hooks/dhcp/ping_check/libloadtests/dhcp-ping-check-libload-tests
-   # detected in src/hooks/d2/gss_tsig/libloadtests/ddns-gss-tsig-libload-tests
-   # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
-   # detected in src/hooks/dhcp/lease_query/tests/dhcp-lease-query-tests
-   # detected in src/hooks/dhcp/run_script/libloadtests/dhcp-run-script-libload-tests
-   # detected in src/hooks/dhcp/rbac/tests/dhcp-rbac-tests
-   # detected in src/hooks/dhcp/pgsql/libloadtests/dhcp-pgsql-libload-tests
-   # detected in src/hooks/dhcp/radius/libloadtests/dhcp-radius-libload-tests
-   # detected in src/lib/yang/tests/kea-yang-tests
-   # detected in src/lib/pgsql/tests/kea-pgsql-tests
-   # detected in src/lib/dhcpsrv/tests/kea-dhcpsrv-tests
    # detected in src/lib/asiodns/tests/kea-asiodns-tests
-   # detected in src/lib/log/tests/kea-log-init-tests
-   # detected in src/lib/stats/tests/kea-stats-tests
-   # detected in src/hooks/dhcp/ddns_tuning/tests/dhcp-ddns-tuning-tests
-   # detected in src/hooks/dhcp/run_script/tests/dhcp-run-script-lib-tests
-   # detected in src/hooks/dhcp/ping_check/tests/dhcp-ping-check-tests
-   # detected in src/lib/http/tests/kea-http-tests
-   # detected in src/hooks/dhcp/mysql/tests/dhcp-mysql-lib-tests
-   # detected in src/lib/log/tests/kea-log-tests
-   # detected in src/lib/asiolink/tests/kea-asiolink-tests
-   # detected in src/hooks/dhcp/limits/tests/dhcp-limits-tests
-   # detected in src/lib/eval/tests/kea-eval-tests
-   # detected in src/hooks/dhcp/flex_option/libloadtests/dhcp-flex-option-libload-tests
-   # detected in src/bin/perfdhcp/tests/perfdhcp-tests
-   # detected in src/hooks/dhcp/subnet_cmds/libloadtests/dhcp-subnet-cmds-libload-tests
-   # detected in src/hooks/d2/gss_tsig/tests/ddns-gss-tsig-tests
-   # detected in src/hooks/dhcp/subnet_cmds/tests/dhcp-subnet-cmds-tests
-   # detected in src/hooks/dhcp/host_cache/tests/dhcp-host-cache-tests
-   # detected in src/hooks/dhcp/high_availability/tests/dhcp-ha-lib-tests
-   # detected in src/hooks/dhcp/pgsql/tests/dhcp-pgsql-lib-tests
-   # detected in src/hooks/dhcp/radius/tests/dhcp-radius-tests
+   # detected in src/hooks/dhcp/class_cmds/libloadtests/dhcp-class-cmds-libload-tests
+   # detected in src/lib/hooks/tests/kea-hooks-tests
    # detected in src/hooks/dhcp/stat_cmds/libloadtests/dhcp-stat-cmds-libload-tests
-   # detected in src/bin/lfc/tests/kea-lfc-tests
-   # detected in src/lib/process/tests/kea-process-tests
-   # detected in src/hooks/dhcp/host_cmds/libloadtests/dhcp-host-cmds-libload-tests
-   # detected in src/hooks/dhcp/lease_query/libloadtests/dhcp-lease-query-libload-tests
-   # detected in src/hooks/dhcp/stat_cmds/tests/dhcp-stat-cmds-lib-tests
+   # detected in src/hooks/dhcp/limits/libloadtests/dhcp-limits-libload-tests
+   # detected in src/lib/tcp/tests/kea-tcp-tests
+   # detected in src/hooks/dhcp/subnet_cmds/libloadtests/dhcp-subnet-cmds-libload-tests
    # detected in src/lib/dhcp/tests/kea-dhcp-tests
-   # detected in src/lib/cryptolink/tests/kea-cryptolink-tests
-   # detected in src/hooks/dhcp/lease_cmds/libloadtests/dhcp-lease-cmds-libload-tests
+   # detected in src/hooks/dhcp/run_script/libloadtests/dhcp-run-script-libload-tests
+   # detected in src/lib/http/tests/kea-http-tests
+   # detected in src/lib/stats/tests/kea-stats-tests
+   # detected in src/hooks/dhcp/subnet_cmds/tests/dhcp-subnet-cmds-tests
+   # detected in src/hooks/dhcp/limits/tests/dhcp-limits-tests
+   # detected in src/hooks/dhcp/host_cmds/libloadtests/dhcp-host-cmds-libload-tests
+   # detected in src/hooks/dhcp/flex_option/tests/dhcp-flex-option-lib-tests
+   # detected in src/hooks/dhcp/perfmon/libloadtests/dhcp-perfmon-libload-tests
+   # detected in src/lib/yang/tests/kea-yang-tests
+   # detected in src/lib/log/tests/kea-log-tests
+   # detected in src/hooks/dhcp/rbac/tests/dhcp-rbac-tests
+   # detected in src/bin/lfc/tests/kea-lfc-tests
+   # detected in src/hooks/dhcp/forensic_log/libloadtests/dhcp-forensic-log-libload-tests
+   # detected in src/hooks/dhcp/high_availability/tests/dhcp-ha-lib-tests
+   # detected in src/hooks/dhcp/rbac/libloadtests/dhcp-rbac-libload-tests
+   # detected in src/hooks/dhcp/ping_check/tests/dhcp-ping-check-tests
+   # detected in src/hooks/dhcp/user_chk/tests/dhcp-user-chk-lib-tests
+   # detected in src/hooks/dhcp/host_cache/tests/dhcp-host-cache-tests
+   # detected in src/hooks/dhcp/pgsql/libloadtests/dhcp-pgsql-libload-tests
+   # detected in src/lib/dhcpsrv/tests/kea-dhcpsrv-tests
+   # detected in src/lib/mysql/tests/kea-mysql-tests
+   # detected in src/hooks/dhcp/host_cache/libloadtests/dhcp-host-cache-libload-tests
+   # detected in src/lib/config/tests/kea-config-tests
    Memcheck:Leak
    match-leak-kinds: possible
    fun:calloc
@@ -5526,7 +5484,6 @@
 {
    valgrind_hash_f7daa8da2c0c6636e0962ecd08970721
    # detected in src/hooks/dhcp/lease_query/tests/dhcp-lease-query-tests
-   # detected in src/hooks/dhcp/lease_query/tests/dhcp-lease-query-tests
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:malloc
@@ -5712,12 +5669,12 @@
 }
 {
    valgrind_hash_fde24afed0906d2cd8a8c36bb4d8446d
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_packets_kea_dhcp4
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_unix_socket_kea_dhcp4
    # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_http_endpoint_kea_dhcp6
-   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_http_endpoint_kea_dhcp4
    # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_unix_socket_kea_dhcp6
+   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_unix_socket_kea_dhcp4
+   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_http_endpoint_kea_dhcp4
    # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_packets_kea_dhcp6
+   # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_packets_kea_dhcp4
    # detected in /home/razvan/isc/git/kea-work/build/fuzz/fuzz_config_kea_dhcp4
    Memcheck:Leak
    match-leak-kinds: possible
