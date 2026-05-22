@@ -1,3 +1,9 @@
+2462.	[bug]		razvan
+	Fixed kea-netconf communication over HTTP sockets with the kea
+	dhcp demons. The control socket type is now mandatory for each
+	server in the "managed-servers" configuration map.
+	(Gitlab #4460)
+
 2462.	[func]		razvan
 	Added 'interface-add', 'interface-list' and 'interface-redetect'
 	which can be used to add interfaces, list currently detected
