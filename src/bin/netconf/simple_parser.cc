@@ -163,7 +163,7 @@ NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
     if (servers) {
         for (auto const& it : servers->mapValue()) {
             ServerConfigParser server_parser;
-            CfgServerPtr server = server_parser.parse(it.second);
+            CfgServerPtr server = server_parser.parse(it.second, it.first);
             ctx->getCfgServersMap()->insert(make_pair(it.first, server));
         }
     }

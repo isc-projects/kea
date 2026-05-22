@@ -13,6 +13,7 @@ extern const isc::log::MessageID NETCONF_CONFIG_CHANGE_EVENT = "NETCONF_CONFIG_C
 extern const isc::log::MessageID NETCONF_CONFIG_CHECK_FAIL = "NETCONF_CONFIG_CHECK_FAIL";
 extern const isc::log::MessageID NETCONF_CONFIG_FAIL = "NETCONF_CONFIG_FAIL";
 extern const isc::log::MessageID NETCONF_CONFIG_SYNTAX_WARNING = "NETCONF_CONFIG_SYNTAX_WARNING";
+extern const isc::log::MessageID NETCONF_CONTROL_SOCKET_INFO = "NETCONF_CONTROL_SOCKET_INFO";
 extern const isc::log::MessageID NETCONF_FAILED = "NETCONF_FAILED";
 extern const isc::log::MessageID NETCONF_GET_CONFIG = "NETCONF_GET_CONFIG";
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED = "NETCONF_GET_CONFIG_FAILED";
@@ -55,6 +56,7 @@ const char* values[] = {
     "NETCONF_CONFIG_CHECK_FAIL", "NETCONF configuration check failed: %1",
     "NETCONF_CONFIG_FAIL", "NETCONF configuration failed: %1",
     "NETCONF_CONFIG_SYNTAX_WARNING", "NETCONF configuration syntax warning: %1",
+    "NETCONF_CONTROL_SOCKET_INFO", "the service: %1 started using control socket type: %2 %3",
     "NETCONF_FAILED", "application experienced a fatal error: %1",
     "NETCONF_GET_CONFIG", "got configuration from %1 server: %2",
     "NETCONF_GET_CONFIG_FAILED", "getting configuration from %1 server failed: %2",

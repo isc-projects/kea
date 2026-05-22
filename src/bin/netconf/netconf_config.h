@@ -299,9 +299,11 @@ public:
     /// instance.
     ///
     /// @param ctrl_sock_config is the "control-socket" configuration to parse.
+    /// @param service The service name.
     ///
     /// @return pointer to the new CfgControlSocket instance.
-    CfgControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config);
+    CfgControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config,
+                              const std::string& service = "");
 };  // ControlSocketConfigParser
 
 /// @brief Parser for CfgServer.
@@ -317,8 +319,10 @@ public:
     /// CfgServer, validates those entries, creates a CfgServer instance.
     ///
     /// @param server_config is the value from the "managed-servers" map to parse.
+    /// @param service The service name.
     /// @return pointer to the new CfgServer instance.
-    CfgServerPtr parse(data::ConstElementPtr server_config);
+    CfgServerPtr parse(data::ConstElementPtr server_config,
+                       const std::string& service = "");
 };  // ServerConfigParser
 
 }  // namespace netconf

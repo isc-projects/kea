@@ -14,6 +14,7 @@ extern const isc::log::MessageID NETCONF_CONFIG_CHANGE_EVENT;
 extern const isc::log::MessageID NETCONF_CONFIG_CHECK_FAIL;
 extern const isc::log::MessageID NETCONF_CONFIG_FAIL;
 extern const isc::log::MessageID NETCONF_CONFIG_SYNTAX_WARNING;
+extern const isc::log::MessageID NETCONF_CONTROL_SOCKET_INFO;
 extern const isc::log::MessageID NETCONF_FAILED;
 extern const isc::log::MessageID NETCONF_GET_CONFIG;
 extern const isc::log::MessageID NETCONF_GET_CONFIG_FAILED;

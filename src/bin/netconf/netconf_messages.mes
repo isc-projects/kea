@@ -34,6 +34,10 @@ in earlier log entries, possibly on lower levels.
 This warning message indicates that the NETCONF configuration had a minor
 syntax error. The error was displayed and the configuration parsing resumed.
 
+% NETCONF_CONTROL_SOCKET_INFO the service: %1 started using control socket type: %2 %3
+This info message provides details of the control socket used for the
+respective service. The service name, socket type and details are logged.
+
 % NETCONF_FAILED application experienced a fatal error: %1
 This is a fatal error message issued when kea-netconf
 got an unrecoverable error from within the event loop.

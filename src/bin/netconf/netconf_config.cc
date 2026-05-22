@@ -131,7 +131,7 @@ operator<<(ostream& os, const CfgServer& server) {
 // *********************** ControlSocketConfigParser  *************************
 
 CfgControlSocketPtr
-ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
+ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config, const std::string& service) {
     CfgControlSocketPtr result;
     string type_str = getString(ctrl_sock_config, "socket-type");
     string name = getString(ctrl_sock_config, "socket-name");
@@ -199,13 +199,30 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
         result->setContext(user_context);
     }
 
+    std::ostringstream msg;
+    switch (type) {
+    case CfgControlSocket::Type::UNIX:
+        msg << "with socket name: " << name;
+        break;
+    case CfgControlSocket::Type::HTTP:
+        msg << "with url: " << url_str;
+        break;
+    case CfgControlSocket::Type::STDOUT:
+        msg << "used for logging";
+        break;
+    }
+    LOG_INFO(netconf_logger, NETCONF_CONTROL_SOCKET_INFO)
+        .arg(service)
+        .arg(type_str)
+        .arg(msg.str());
+
     return (result);
 }
 
 // *********************** ServerConfigParser  *************************
 
 CfgServerPtr
-ServerConfigParser::parse(ConstElementPtr server_config) {
+ServerConfigParser::parse(ConstElementPtr server_config, const string& service) {
     CfgServerPtr result;
     string model = getString(server_config, "model");
     ConstElementPtr user_context = server_config->get("user-context");
@@ -213,7 +230,7 @@ ServerConfigParser::parse(ConstElementPtr server_config) {
     CfgControlSocketPtr ctrl_sock;
     if (ctrl_sock_config) {
         ControlSocketConfigParser parser;
-        ctrl_sock = parser.parse(ctrl_sock_config);
+        ctrl_sock = parser.parse(ctrl_sock_config, service);
     }
     try {
         result.reset(new CfgServer(model, ctrl_sock));
