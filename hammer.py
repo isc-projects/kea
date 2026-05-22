@@ -2503,7 +2503,7 @@ def _check_installed_rpm_or_debs(services_list, log_text, expect_success_on_star
 
 
 def _build_rpm(system, revision, features, env, check_times, dry_run,
-               pkg_version, pkg_isc_version):
+               pkg_version, pkg_isc_version, jobs):
 
     # unpack kea sources tarball
     _, arch = execute('arch', capture=True)
@@ -2541,10 +2541,14 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
                 replace_in_file(f, fr'^({k}=.*)', r'# \1')
 
     # do rpm build
-    cmd = "rpmbuild --define 'kea_version %s' --define 'isc_version %s' -ba %s/SPECS/kea.spec"
-    cmd += " -D'_topdir %s'"
-    cmd += " --undefine=_debugsource_packages"  # disable creating debugsource package
-    cmd = cmd % (pkg_version, pkg_isc_version, rpm_root_path, rpm_root_path)
+    cmd = (
+        f'rpmbuild -ba {rpm_root_path}/SPECS/kea.spec'
+        f" --define '_topdir {rpm_root_path}'"
+        f" --define 'kea_version {pkg_version}'"
+        f" --define 'isc_version {pkg_isc_version}'"
+        f" --define 'meson_job_count {jobs}'"
+        ' --undefine=_debugsource_packages'  # disable creating debugsource package
+    )
     execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
@@ -2561,7 +2565,7 @@ def _build_rpm(system, revision, features, env, check_times, dry_run,
 
 
 def _build_deb(system, revision, features, env, check_times, dry_run,
-               pkg_version, pkg_isc_version, repo_url):
+               pkg_version, pkg_isc_version, repo_url, jobs):
 
     _, arch = execute('arch', capture=True)
     if system == 'debian' and revision == '9':
@@ -2615,8 +2619,17 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
     # do deb build
     env['LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
     env['LD_LIBRARY_PATH'] = f'/usr/lib/{arch.strip()}-linux-gnu'
-    cmd = ('debuild --preserve-envvar=CCACHE_DIR --preserve-envvar=LD_LIBRARY_PATH --preserve-envvar=LIBRARY_PATH '
-           '--prepend-path=/usr/lib/ccache --prepend-path=/usr/local/bin -b -i -us -uc')
+    env['MESON_JOB_COUNT'] = str(jobs)
+    cmd = (
+        'debuild'
+        ' --preserve-envvar=CCACHE_DIR'
+        ' --preserve-envvar=LD_LIBRARY_PATH'
+        ' --preserve-envvar=LIBRARY_PATH'
+        ' --preserve-envvar=MESON_JOB_COUNT'
+        ' --prepend-path=/usr/lib/ccache'
+        ' --prepend-path=/usr/local/bin'
+        ' -b -i -uc -us'
+    )
     execute(cmd, env=env, cwd='kea-src', timeout=60 * 40, check_times=check_times, dry_run=dry_run)
 
     if 'install' in features:
@@ -2629,7 +2642,7 @@ def _build_deb(system, revision, features, env, check_times, dry_run,
         _check_installed_rpm_or_debs(services_list, '_STARTED Kea')
 
 
-def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version):
+def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version, jobs):
     _, arch = execute('arch', capture=True)
 
     execute('sudo rm -rf packages', check_times=check_times, dry_run=dry_run)
@@ -2643,7 +2656,9 @@ def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_versi
 
     # Build packages.
     execute('abuild-keygen -n -a -i', check_times=check_times, dry_run=dry_run)
-    execute('abuild -v -r', cwd='kea-src', check_times=check_times, dry_run=dry_run)
+    env = os.environ.copy()
+    env['MESON_JOB_COUNT'] = str(jobs)
+    execute('abuild -r -v', cwd='kea-src', check_times=check_times, dry_run=dry_run, env=env)
 
     # copy packages from alpine specific dir with produced pkgs to common place
     alpine_repo_dir = os.path.basename(os.getcwd())
@@ -2672,7 +2687,7 @@ def _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_versi
 
 
 def _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
-                      ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir):
+                      ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir, jobs):
     """Build native (RPM or DEB or Alpine APK) packages."""
 
     # enable ccache if requested
@@ -2695,14 +2710,14 @@ def _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_p
 
     if system in ['fedora', 'centos', 'rhel', 'rocky']:
         _build_rpm(system, revision, features, env, check_times, dry_run,
-                   pkg_version, pkg_isc_version)
+                   pkg_version, pkg_isc_version, jobs)
 
     elif system in ['ubuntu', 'debian']:
         _build_deb(system, revision, features, env, check_times, dry_run,
-                   pkg_version, pkg_isc_version, repo_url)
+                   pkg_version, pkg_isc_version, repo_url, jobs)
 
     elif system in ['alpine']:
-        _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version)
+        _build_alpine_apk(features, check_times, dry_run, pkg_version, pkg_isc_version, jobs)
 
     elif system in ['arch']:
         pass
@@ -2742,7 +2757,7 @@ def build_local(features, tarball_paths, kea_packaging_path, check_times, dry_ru
 
     if 'native-pkg' in features:
         _build_native_pkg(system, revision, features, tarball_paths, kea_packaging_path, env, check_times, dry_run,
-                          ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir)
+                          ccache_dir, pkg_version, pkg_isc_version, repository_url, pkgs_dir, jobs)
     else:
         _build_binaries_and_run_ut(
             system, revision, features, tarball_paths, env, check_times, dry_run, ccache_dir, jobs
@@ -3424,7 +3439,6 @@ def main():
         prepare_system_cmd(args)
 
     elif args.command == "build":
-        os.environ['MESON_NUM_PROCESSES'] = str(args.jobs)
         build_cmd(args)
 
     elif args.command == "ssh":
