@@ -1250,7 +1250,7 @@ TEST(GssTsigCfgTest, configureDuplicate) {
 TEST(GssTsigCfgTest, IgnoreBadDirectionDefault) {
     // Constructor default is false.
     GssTsigCfg cfg;
-    xASSERT_FALSE(cfg.getIgnoreBadDirection());
+    ASSERT_FALSE(cfg.getIgnoreBadDirection());
     ASSERT_FALSE(GssApiSecCtx::ignore_bad_direction_);
     ConstElementPtr json = Element::createMap();
     ASSERT_NO_THROW(cfg.configure(json));
