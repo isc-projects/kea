@@ -140,10 +140,14 @@ TEST(Element, toAndFromJson) {
     sv.clear();
     // Leading zeros in integers.
     sv.push_back("01");
+    sv.push_back("002");
+    sv.push_back("-03");
     sv.push_back("-00");
     // Leading zeros in numbers.
     sv.push_back("01.2");
+    sv.push_back("002.1");
     sv.push_back("-02.3");
+    sv.push_back("-003.2");
     // Leading plus in integers.
     sv.push_back("+0");
     sv.push_back("+100");
