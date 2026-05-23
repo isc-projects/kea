@@ -142,6 +142,7 @@ TEST(Element, toAndFromJson) {
     sv.push_back("01");
     sv.push_back("002");
     sv.push_back("-03");
+    sv.push_back("-003");
     sv.push_back("-00");
     // Leading zeros in numbers.
     sv.push_back("01.2");
@@ -150,9 +151,12 @@ TEST(Element, toAndFromJson) {
     sv.push_back("-003.2");
     // Leading plus in integers.
     sv.push_back("+0");
+    sv.push_back("+0100");
     sv.push_back("+100");
+    sv.push_back("+01e2");
     sv.push_back("+1e2");
     // Leading plus in numbers.
+    sv.push_back("+0123.4");
     sv.push_back("+123.4");
     sv.push_back("{1}");
     sv.push_back("\n\nTrue");
