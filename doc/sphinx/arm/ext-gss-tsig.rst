@@ -645,7 +645,7 @@ defined, or if all servers have different values.
    |                      | server   |         | | ( 3 seconds )     | GSS-TSIG TKEY exchange to      |
    |                      |          |         |                     | finish before it timeouts      |
    +----------------------+----------+---------+---------------------+--------------------------------+
-   | ignore-bad-direction | global   | true /  | false               | ignore invalid MIC / bad       |      
+   | ignore-bad-direction | global   | true /  | false               | ignore invalid MIC / bad       |
    |                      |          | false   |                     | direction verify failures.     |
    +----------------------+----------+---------+---------------------+--------------------------------+
    | user-context         | global / | string  | empty               | the user-provided data in JSON |
@@ -823,8 +823,8 @@ The server map parameters are described below:
   for the global-level parameter.
 
 - ``ignore-bad-direction`` governs a workaround for Microsoft server bug.
-  When set explicitly to true DNS update responses sent when prerequisites
-  fail with the request signature are accepted as verified.
+  When set explicitly to true sent DNS update responses are accepted as
+  verified even when prerequisites fail with the request signature.
 
 - ``user-context`` is an optional parameter (see :ref:`user-context`
   for a general description of user contexts in Kea).

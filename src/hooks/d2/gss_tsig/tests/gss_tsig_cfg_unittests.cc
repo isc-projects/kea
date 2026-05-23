@@ -1249,13 +1249,13 @@ TEST(GssTsigCfgTest, configureDuplicate) {
 /// @brief Checks ignore bad direction default value.
 TEST(GssTsigCfgTest, IgnoreBadDirectionDefault) {
     // Constructor default is false.
-     GssTsigCfg cfg;
-     ASSERT_FALSE(cfg.getIgnoreBadDirection());
-     ASSERT_FALSE(GssApiSecCtx::ignore_bad_direction_);
-     ConstElementPtr json = Element::createMap();
-     ASSERT_NO_THROW(cfg.configure(json));
-     EXPECT_FALSE(cfg.getIgnoreBadDirection());
-     EXPECT_FALSE(GssApiSecCtx::ignore_bad_direction_);
+    GssTsigCfg cfg;
+    xASSERT_FALSE(cfg.getIgnoreBadDirection());
+    ASSERT_FALSE(GssApiSecCtx::ignore_bad_direction_);
+    ConstElementPtr json = Element::createMap();
+    ASSERT_NO_THROW(cfg.configure(json));
+    EXPECT_FALSE(cfg.getIgnoreBadDirection());
+    EXPECT_FALSE(GssApiSecCtx::ignore_bad_direction_);
 }
 
 /// @brief Check TKEY protocol default value.
