@@ -208,7 +208,7 @@ ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config, const std::st
         msg << "with url: " << url_str;
         break;
     case CfgControlSocket::Type::STDOUT:
-        msg << "used for logging";
+        msg << "suited for logging";
         break;
     }
     LOG_INFO(netconf_logger, NETCONF_CONTROL_SOCKET_INFO)

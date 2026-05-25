@@ -173,9 +173,11 @@ END;
 
 -- Drop IA_TA from lease6_types table.
 -- On the off chance that somehow there are IA_TA leases convert them
--- or the foreign key contraint will blow this up.
+-- or the foreign key constraint will blow this up.
 UPDATE lease6 SET lease_type = 0 WHERE lease_type = 1;
+UPDATE flq_pool6 SET lease_type = 0 WHERE lease_type = 1;
 DELETE FROM lease6_stat_by_client_class WHERE lease_type = 1;
+DELETE FROM lease6_pool_stat WHERE lease_type = 1;
 DELETE FROM lease6_stat WHERE lease_type = 1;
 DELETE FROM lease6_types where lease_type = 1;
 
