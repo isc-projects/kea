@@ -1,3 +1,0 @@
-[build]		fdupont
-	Kea can now be cross-compiled using Meson.
-	(Gitlab #3982)

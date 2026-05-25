@@ -1,5 +1,0 @@
-[bug]		fdupont
-	Corrected an issue that prevented using pools of
-	only one element (e.g. address or prefix) with
-	either the Random or FLQ allocators.
-	(Gitlab #4444)

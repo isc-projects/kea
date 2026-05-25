@@ -1,7 +1,0 @@
-[bug]		tmark
-	Corrected an issue in PostgreSQL SFLQ allocation that
-	was generating one too many free leases. SFLQ pool creation
-	automatically rebuilds pools whose delegated length has
-	changed (MySQL and PostgreSQL). These changes required a
-	schema update.
-	(Gitlab #4491)

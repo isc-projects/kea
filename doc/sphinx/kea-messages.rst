@@ -6100,6 +6100,17 @@ This information message is issued when the processing of an ADDR-REG-INFORM
 message failed. The address of the client, usually also the address to
 register, and the description of the problem are printed.
 
+DHCP6_ADD_DEPRECATED_UNICAST
+============================
+
+.. code-block:: text
+
+    %1: adding deprecated unicast option
+
+The warning is logged when the deprecated unicast option is added
+to the response. Outside testing purposes the server configuration should
+be fixed as direct unicast queries are no longer accepted.
+
 DHCP6_ADD_GLOBAL_STATUS_CODE
 ============================
 
@@ -12708,6 +12719,16 @@ GSS_TSIG_COMMAND_PROCESSED_FAILED
 
 This error message is issued when the callout for the command_processed
 callout point failed. The argument contains a reason for the error.
+
+GSS_TSIG_IGNORED_BAD_DIRECTION
+==============================
+
+.. code-block:: text
+
+    ignored bad direction verify failure.
+
+This info message indicates that a verify failed because the message
+was in the wrong direction but this failure was ignored.
 
 GSS_TSIG_LOAD_FAILED
 ====================
@@ -21274,6 +21295,16 @@ NETCONF_CONFIG_SYNTAX_WARNING
 This warning message indicates that the NETCONF configuration had a minor
 syntax error. The error was displayed and the configuration parsing resumed.
 
+NETCONF_CONTROL_SOCKET_INFO
+===========================
+
+.. code-block:: text
+
+    the service: %1 started using control socket type: %2 %3
+
+This info message provides details of the control socket used for the
+respective service. The service name, socket type and details are logged.
+
 NETCONF_FAILED
 ==============
 
@@ -26460,6 +26491,214 @@ RUN_SCRIPT_UNLOAD
     Run Script hooks library has been unloaded
 
 This info message indicates that the RunScript hooks library has been unloaded.
+
+****
+SFLQ
+****
+
+SFLQ_POOL4_DEL
+==============
+
+.. code-block:: text
+
+    sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2
+
+Logged at debug log level 20.
+The sflq-pool4-del command was successful. It prints the command arguments
+along with the number of pools deleted.
+
+SFLQ_POOL4_DEL_FAILED
+=====================
+
+.. code-block:: text
+
+    sflq-pool4-del command failed, (parameters: %1, reason: %2)
+
+The sflq-pool4-del command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL4_GET_ALL
+==================
+
+.. code-block:: text
+
+    sflq-pool4-get-all command succeeded, pools found: %1
+
+Logged at debug log level 20.
+The sflq-pool4-get-all command was successful.
+
+SFLQ_POOL4_GET_ALL_FAILED
+=========================
+
+.. code-block:: text
+
+    sflq-pool4-get-all command failed, (parameters: %1, reason: %2)
+
+The sflq-pool4-get-all command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL4_GET_BY_RANGE
+=======================
+
+.. code-block:: text
+
+    sflq-pool4-get-by-range command succeeded, (parameters: %1) pools found: %2
+
+Logged at debug log level 20.
+The sflq-pool4-get-by-range command was successful.
+
+SFLQ_POOL4_GET_BY_RANGE_FAILED
+==============================
+
+.. code-block:: text
+
+    sflq-pool4-get-by-range command failed, (parameters: %1, reason: %2)
+
+The sflq-pool4-get-range command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL4_GET_BY_SUBNET
+========================
+
+.. code-block:: text
+
+    sflq-pool4-get-by-subnet command succeeded, (parameters: %1) pools found: %2
+
+Logged at debug log level 20.
+The sflq-pool4-get-by-subnet command was successful.
+
+SFLQ_POOL4_GET_BY_SUBNET_FAILED
+===============================
+
+.. code-block:: text
+
+    sflq-pool4-get-by-subnet command failed, (parameters: %1, reason: %2)
+
+The sflq-pool4-get-subnet command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL4_REBUILD
+==================
+
+.. code-block:: text
+
+    sflq-pool4-rebuild command succeeded, (parameters: %1) pools rebuilt: %2
+
+Logged at debug log level 20.
+The sflq-pool4-rebuild command was successful. It prints the command arguments
+along with the number of pools rebuilt.
+
+SFLQ_POOL4_REBUILD_FAILED
+=========================
+
+.. code-block:: text
+
+    sflq-pool4-rebuild command failed, (parameters: %1, reason: %2)
+
+The sflq-pool4-rebuild command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL6_DEL
+==============
+
+.. code-block:: text
+
+    sflq-pool4-del command succeeded, (parameters: %1) pools deleted: %2
+
+Logged at debug log level 20.
+The sflq-pool6-del command was successful. It prints the command arguments
+along with the number of pools deleted.
+
+SFLQ_POOL6_DEL_FAILED
+=====================
+
+.. code-block:: text
+
+    sflq-pool4-del command failed, (parameters: %1, reason: %2)
+
+The sflq-pool6-del command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL6_GET_ALL
+==================
+
+.. code-block:: text
+
+    sflq-pool6-get-all command succeeded, pools found: %1
+
+Logged at debug log level 20.
+The sflq-pool6-rebuild command was successful.
+
+SFLQ_POOL6_GET_ALL_FAILED
+=========================
+
+.. code-block:: text
+
+    sflq-pool6-get-all command failed, (parameters: %1, reason: %2)
+
+The sflq-pool6-get-all command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL6_GET_BY_RANGE
+=======================
+
+.. code-block:: text
+
+    sflq-pool6-get-by-range command succeeded, (parameters: %1) pools found: %2
+
+Logged at debug log level 20.
+The sflq-pool6-get-by-range command was successful.
+
+SFLQ_POOL6_GET_BY_RANGE_FAILED
+==============================
+
+.. code-block:: text
+
+    sflq-pool6-get-by-range command failed, (parameters: %1, reason: %2)
+
+The sflq-pool6-get-range command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL6_GET_BY_SUBNET
+========================
+
+.. code-block:: text
+
+    sflq-pool6-get-by-subnet command succeeded, (parameters: %1) pools found: %2
+
+Logged at debug log level 20.
+The sflq-pool6-get-by-subnet command was successful.
+
+SFLQ_POOL6_GET_BY_SUBNET_FAILED
+===============================
+
+.. code-block:: text
+
+    sflq-pool6-get-by-subnet command failed, (parameters: %1, reason: %2)
+
+The sflq-pool6-get-subnet command has failed. Both the reason as well as the
+parameters passed are logged.
+
+SFLQ_POOL6_REBUILD
+==================
+
+.. code-block:: text
+
+    sflq-pool6-rebuild command succeeded, (parameters: %1) pools rebuilt: %2
+
+Logged at debug log level 20.
+The sflq-pool6-rebuild command was successful. It prints the command arguments
+along with the number of pools rebuilt.
+
+SFLQ_POOL6_REBUILD_FAILED
+=========================
+
+.. code-block:: text
+
+    sflq-pool6-rebuild command failed, (parameters: %1, reason: %2)
+
+The sflq-pool6-rebuild command has failed. Both the reason as well as the
+parameters passed are logged.
 
 *****
 START

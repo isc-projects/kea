@@ -1,6 +1,0 @@
-[func]*		fdupont
-	Disallowed leading zeros in JSON floating point values.
-	Now incorrect number values in Kea config files are
-	still accepted but raise warnings. Also fixed the bug
-	which made leading plus '+' not be always rejected.
-	(Gitlab #4495)

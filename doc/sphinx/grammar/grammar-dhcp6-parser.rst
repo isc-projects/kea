@@ -901,9 +901,12 @@ This grammar is generated from ``dhcp6_parser.yy``. See :ref:`dhcp6` for more de
 
      client_classes ::= "client-classes" ":" "[" client_classes_list "]"
 
-     client_classes_list ::= client_class_entry
-                        | client_classes_list "," client_class_entry
-                        | client_classes_list ","
+     client_classes_list ::= 
+                        | not_empty_classes_list
+
+     not_empty_classes_list ::= client_class_entry
+                           | not_empty_classes_list "," client_class_entry
+                           | not_empty_classes_list ","
 
      client_class_entry ::= "{" client_class_params "}"
 

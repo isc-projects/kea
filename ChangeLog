@@ -1,3 +1,87 @@
+Kea 3.1.9 (development) released on May 27, 2026
+
+2477.	[build]		andrei
+	The library version numbers have been bumped up for the Kea 3.1.9
+	development release.
+	(Gitlab #4542)
+
+2476.	[func]		fdupont
+	Added the "ignore-bad-direction" workaround flag to
+	the GSS-TSIG hook library to accept DNS update responses
+	with the request signature sent by bogus servers.
+	(Gitlab #4326)
+
+2475.	[func]*		fdupont
+	Disallowed leading zeros in JSON floating point values.
+	Now incorrect number values in Kea config files are
+	still accepted but raise warnings. Also fixed the bug
+	which made leading plus '+' not be always rejected.
+	(Gitlab #4495)
+
+2474.	[func]		fdupont
+	Removed the 'socket-name' vs 'socket-address' exclusivity
+	check when parsing config files. Note that configuring
+	both for the same control socket is still rejected but
+	because 'socket-name' makes sense only for the 'unix' type,
+	and 'socket-address' for the 'http' and 'https' types.
+	(Gitlab #3971)
+
+2473.	[func]		tmark
+	IA_TA lease6 lease type has been removed from the
+	MySQL and PostgreSQL schemas.
+	(Gitlab #4490)
+
+2472.	[bug]		fdupont
+	Corrected an issue that prevented using pools of
+	only one element (e.g. address or prefix) with
+	either the Random or FLQ allocators.
+	(Gitlab #4444)
+
+2471.	[bug]		tmark
+	Corrected an issue in PostgreSQL SFLQ allocation that
+	was generating one too many free leases. SFLQ pool creation
+	automatically rebuilds pools whose delegated length has
+	changed (MySQL and PostgreSQL). These changes required a
+	schema update.
+	(Gitlab #4491)
+
+2470.	[func]		tmark
+	Added API commands for managing SFLQ Allocator
+	pools to lease-cmds hook library.
+	(Gitlab #4492)
+
+2469.	[build]		fdupont
+	Kea can now be cross-compiled using Meson.
+	(Gitlab #3982)
+
+2468.	[func]*		fdupont
+	Added support for the last DHCP RFC 9915 including
+	the deprecation of the unicast option.
+	(Gitlab #4368)
+
+2467.	[bug]		fdupont
+	The from JSON double value to string no longer produces
+	an incorrect output when there is only an exponent part.
+	(Gitlab #4493)
+
+2466.	[doc]		tmark
+	Added documentation for the Shared FLQ Allocator
+	to the ARM.
+	(Gitlab #4489)
+
+2465.	[func]*		fdupont
+	Disallowed leading zeros in JSON integer values as
+	required by the standard to become compatible with
+	some other JSON tools e.g. the go implementation used
+	by Stork. Now incorrect integer values in Kea config
+	files are still accepted but raise warnings.
+	(Gitlab #4438)
+
+2464.	[func]		fdupont
+	Extended the parser to accepted an empty "client-classes" list
+	in Kea server configuration files.
+	(Gitlab #4453)
+
 2463.	[bug]		razvan
 	Fixed kea-netconf communication over HTTP sockets with the kea
 	dhcp demons. The control socket type is now mandatory for each

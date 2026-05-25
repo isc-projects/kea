@@ -1,4 +1,0 @@
-[func]*		fdupont
-	Added support for the last DHCP RFC 9915 including
-	the deprecation of the unicast option.
-	(Gitlab #4368)
