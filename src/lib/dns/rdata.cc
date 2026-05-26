@@ -333,7 +333,7 @@ Generic::toText() const {
     ostringstream oss;
 
     oss << "\\# " << impl_->data_.size() << " ";
-    (void)oss.fill('0');
+    static_cast<void>(oss.fill('0'));
     oss << right << hex;
     for_each(impl_->data_.begin(), impl_->data_.end(), UnknownRdataDumper(oss));
 

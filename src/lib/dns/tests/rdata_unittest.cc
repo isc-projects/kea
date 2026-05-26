@@ -256,7 +256,7 @@ Rdata_Unknown_Test::getLongestRdataTxt() {
     ostringstream oss;
 
     oss << "\\# " << MAX_RDLENGTH << " ";
-    (void)oss.fill('0');
+    static_cast<void>(oss.fill('0'));
     oss << right << hex;
     for (unsigned i = 0; i < MAX_RDLENGTH; i++) {
         oss << setw(2) << (i & 0xff);
