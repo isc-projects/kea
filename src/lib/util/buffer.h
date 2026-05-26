@@ -557,7 +557,7 @@ public:
     /// @param data A pointer to the data to be copied into the buffer.
     /// @param len The length of the data in bytes.
     void writeData(const void* data, size_t len) {
-        if (len == 0) {
+        if (len == 0 || data == 0) {
             return;
         }
 

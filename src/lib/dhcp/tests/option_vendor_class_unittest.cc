@@ -19,6 +19,10 @@ using namespace isc::util;
 namespace {
 
 struct OptionVendorClassLenientParsing : ::testing::Test {
+
+    /// @brief Constructor.
+    OptionVendorClassLenientParsing() : previous_(true) { }
+
     void SetUp() override {
         // Retain the current setting for future restoration.
         previous_ = Option::lenient_parsing_;

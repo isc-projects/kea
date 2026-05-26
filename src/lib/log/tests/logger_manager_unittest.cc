@@ -354,7 +354,7 @@ public:
         const int rc = regcomp(&regex_, expr, flags);
         if (rc) {
             regfree(&regex_);
-            throw;
+            isc_throw(Exception, "Unable to create regex");
         }
     }
 

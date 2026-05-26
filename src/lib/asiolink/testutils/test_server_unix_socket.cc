@@ -49,7 +49,7 @@ public:
                const std::string custom_response,
                SentResponseCallback sent_response_callback)
         : socket_(unix_socket), custom_response_(custom_response),
-          sent_response_callback_(sent_response_callback) {
+          raw_buf_(), sent_response_callback_(sent_response_callback) {
     }
 
     /// @brief Starts asynchronous read from the socket.

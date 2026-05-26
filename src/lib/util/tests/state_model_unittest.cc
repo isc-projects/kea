@@ -242,7 +242,7 @@ public:
 
     /// @brief  Manually construct the event and state dictionaries.
     /// This allows testing without running startModel.
-    void initDictionaries() {
+    void initTestDictionaries() {
         ASSERT_NO_THROW(defineEvents());
         ASSERT_NO_THROW(verifyEvents());
         ASSERT_NO_THROW(defineStates());
@@ -509,7 +509,7 @@ TEST_F(StateModelTest, runBeforeStart) {
 /// a normal conclusion.
 TEST_F(StateModelTest, transitionWithEnd) {
     // Init dictionaries manually, normally done by startModel.
-    initDictionaries();
+    initTestDictionaries();
 
     // call transition to move from NEW_ST to DUMMY_ST with START_EVT
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
@@ -534,7 +534,7 @@ TEST_F(StateModelTest, transitionWithEnd) {
 /// failed conclusion.
 TEST_F(StateModelTest, transitionWithAbort) {
     // Init dictionaries manually, normally done by startModel.
-    initDictionaries();
+    initTestDictionaries();
 
     // call transition to move from NEW_ST to DUMMY_ST with START_EVT
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
@@ -559,7 +559,7 @@ TEST_F(StateModelTest, transitionWithAbort) {
 /// work properly.
 TEST_F(StateModelTest, doFlags) {
     // Init dictionaries manually, normally done by startModel.
-    initDictionaries();
+    initTestDictionaries();
 
     // Verify that "do" flags are false.
     EXPECT_FALSE(doOnEntry());
@@ -590,7 +590,7 @@ TEST_F(StateModelTest, doFlags) {
 /// the model is running but not after.
 TEST_F(StateModelTest, statusMethods) {
     // Init dictionaries manually, normally done by startModel.
-    initDictionaries();
+    initTestDictionaries();
 
     // After construction, state model is "new", all others should be false.
     EXPECT_TRUE(isModelNew());
