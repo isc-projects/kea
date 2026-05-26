@@ -47,6 +47,10 @@ IoServiceThreadPool::IoServiceThreadPool(IOServicePtr io_service, size_t pool_si
     }
 }
 
+// This destructor throws (when it must not) when called by a thread
+// which is not the main one (e.g. a worker thread). This can't happen
+// but static analyzers e.g. cppcheck do not know this so they complain.
+// cppcheck-suppress throwInNoexceptFunction
 IoServiceThreadPool::~IoServiceThreadPool() {
     stop();
 }

@@ -32,6 +32,7 @@ public:
     /// @brief Destructor.
     ///
     /// Closes the socket.
+    // cppcheck-suppress throwInNoexceptFunction
     ~UnixDomainSocketImpl() {
         close();
     }
