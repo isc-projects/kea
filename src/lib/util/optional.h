@@ -96,6 +96,7 @@ public:
     /// @todo: when C++17 will be required can be solved using "if contexpr"
     /// for type convertible from int or default constructible.
     /// This will fix complains from code checkers e.g. cppcheck CWE 476.
+    // cppcheck-suppress nullPointer
     Optional()
         : default_(T(0)), unspecified_(true) {
     }
@@ -116,6 +117,9 @@ public:
     /// @brief Retrieves the encapsulated value.
     ///
     /// @return the encapsulated value
+    ///
+    /// @note Reference types are explicitely excluded.
+    // cppcheck-suppress returnByReference
     T get() const {
         return (default_);
     }
