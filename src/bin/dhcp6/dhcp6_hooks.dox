@@ -150,7 +150,7 @@ to the end of this list.
    selected for the incoming packet. All parameters, addresses and
    prefixes will be assigned from that subnet. A callout can select a
    different subnet if it wishes so but this subnet MUST be a configured
-   one e.g. returned by a get nmethod. Ihe list of all subnets currently
+   one e.g. returned by a get method. Ihe list of all subnets currently
    configured being provided as "subnet6collection". The list itself must
    not be modified.
 
