@@ -32,9 +32,12 @@ public:
     /// @brief Destructor.
     ///
     /// Lock mutex object on destructor.
-    // cppcheck-suppress throwInNoexceptFunction
     ~UnlockGuard() {
-        lock_.lock();
+        try {
+            lock_.lock();
+        } catch (...) {
+            // catch all exceptions.
+        }
     }
 
 private:

@@ -32,9 +32,12 @@ public:
     /// @brief Destructor.
     ///
     /// Closes the socket.
-    // cppcheck-suppress throwInNoexceptFunction
     ~UnixDomainSocketImpl() {
-        close();
+        try {
+            close();
+        } catch (...) {
+            // catch all exceptions.
+        }
     }
 
     /// @brief Asynchronously connects to an endpoint.
