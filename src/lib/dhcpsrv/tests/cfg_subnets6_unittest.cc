@@ -422,7 +422,7 @@ TEST(CfgSubnets6Test, selectSubnetByInterfaceName) {
 }
 
 // This test checks that the subnet can be selected using an Interface ID
-// option inserted by a relay (TODO: merge with the L2 variant).
+// option inserted by a relay (legacy variant).
 TEST(CfgSubnets6Test, selectSubnetByInterfaceId) {
     CfgSubnets6 cfg;
 
