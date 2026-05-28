@@ -6603,7 +6603,7 @@ GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
 
     // First we'll do concurrent creates with recreate = false;
     auto num_threads = 5;
-    std::vector<bool> rets(num_threads);
+    std::vector<uint8_t> rets(num_threads);
     std::list<ThreadPtr> threads;
     for (int i = 0; i < num_threads; ++i) {
         rets[i] = false;
@@ -6683,7 +6683,7 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
 
     // First we'll do concurrent creates with recreate = false;
     auto num_threads = 5;
-    std::vector<bool> rets(num_threads);
+    std::vector<uint8_t> rets(num_threads);
     std::list<ThreadPtr> threads;
     for (int i = 0; i < num_threads; ++i) {
         rets[i] = false;
