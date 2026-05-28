@@ -276,8 +276,6 @@ public:
     /// updated.
     /// @param ip_address the ip address leased to the given FQDN.
     /// @param dhcid the lease client's unique DHCID.
-    /// @param lease_expires_on a timestamp containing the date/time the lease
-    /// expires.
     /// @param lease_length the amount of time in seconds for which the
     /// lease is valid (TTL).
     /// @param conflict_resolution_mode conflict resolution mode to use, defaults

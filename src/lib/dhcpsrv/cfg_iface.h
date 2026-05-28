@@ -209,8 +209,8 @@ public:
 
     /// @brief Update runtime mutable members.
     ///
-    /// @note Currently supported members are @ref iface_set_,
-    /// @ref address_map_ and @ref wildcard_used_.
+    /// @note Currently supported members are iface_set_, address_map_
+    /// and wildcard_used_.
     ///
     /// @param other The other object to update members from.
     void update(CfgIface& other);
