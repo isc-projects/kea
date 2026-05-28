@@ -286,7 +286,7 @@ LabelSequence::toRawText(bool omit_final_dot) const {
     // use for integrity check
     unsigned int labels = getLabelCount();
     // init with an impossible value to catch error cases in the end:
-    // cppcheck complains this value is never used...
+    // cppcheck-suppress unreadVariable
     unsigned int count = Name::MAX_LABELLEN + 1;
 
     // result string: it will roughly have the same length as the wire format
@@ -341,7 +341,7 @@ LabelSequence::toText(bool omit_final_dot) const {
     // use for integrity check
     unsigned int labels = getLabelCount();
     // init with an impossible value to catch error cases in the end:
-    // cppcheck complains this value is never used...
+    // cppcheck-suppress unreadVariable
     unsigned int count = Name::MAX_LABELLEN + 1;
 
     // result string: it will roughly have the same length as the wire format

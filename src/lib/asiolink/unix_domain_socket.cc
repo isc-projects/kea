@@ -36,7 +36,7 @@ public:
         try {
             close();
         } catch (...) {
-            // catch all exceptions.
+            // Catch and ignore all exceptions.
         }
     }
 

@@ -36,7 +36,7 @@ public:
         try {
             lock_.lock();
         } catch (...) {
-            // catch all exceptions.
+            // Catch and ignore all exceptions.
         }
     }
 
