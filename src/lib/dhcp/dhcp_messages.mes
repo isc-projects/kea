@@ -33,6 +33,7 @@ This warning message indicates that an external socket was deleted but
 it can't be found i.e. adds and deletes are not correctly balanced.
 
 % DHCP_IFACE_OPEN_SOCKET Opened socket on the interface %1 with address %2 and port %3
+Logged at debug log level 40.
 This debug message indicates that a socket has been opened for a
 specific interface. The interface name, address and port are logged.
 
