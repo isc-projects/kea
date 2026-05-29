@@ -32,6 +32,10 @@ The file descriptor and the respective thread ids are included in the message.
 This warning message indicates that an external socket was deleted but
 it can't be found i.e. adds and deletes are not correctly balanced.
 
+% DHCP_IFACE_OPEN_SOCKET Opened socket on the interface %1 with address %2 and port %3
+This debug message indicates that a socket has been opened for a
+specific interface. The interface name, address and port are logged.
+
 % DHCP_IFACE_SOCKET_ERROR Got an error on the interface socket %1 of interface %2: %3
 This error message indicates that an error was raised on an interface socket.
 The file descriptor, interface name and error message are displayed.

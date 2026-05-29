@@ -18,6 +18,7 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
+#include <log/macros.h>
 #include <util/fd_event_handler_factory.h>
 #include <util/io/pktinfo_utilities.h>
 #include <util/multi_threading_mgr.h>
@@ -1037,16 +1038,22 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
     }
+    int status = 0;
     if (addr.isV4()) {
-        return openSocket4(*iface, addr, port, receive_bcast, send_bcast);
+        status = openSocket4(*iface, addr, port, receive_bcast, send_bcast);
 
     } else if (addr.isV6()) {
-        return openSocket6(*iface, addr, port, receive_bcast);
+        status = openSocket6(*iface, addr, port, receive_bcast);
 
     } else {
         isc_throw(BadValue, "Failed to detect family of address: "
                   << addr);
     }
+    LOG_DEBUG(dhcp_logger, isc::log::DBGLVL_TRACE_BASIC, DHCP_IFACE_OPEN_SOCKET)
+        .arg(ifname)
+        .arg(addr.toText())
+        .arg(port);
+    return (status);
 }
 
 int IfaceMgr::openSocketFromIface(const std::string& ifname,
