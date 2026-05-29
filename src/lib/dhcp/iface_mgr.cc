@@ -369,7 +369,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
         isc_throw(BadValue, "Attempted to install callback for invalid socket "
                   << socketfd);
     }
-    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && !isMainThread()) {
         LOG_ERROR(dhcp_logger, DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD)
             .arg(socketfd)
             .arg(std::this_thread::get_id())
@@ -402,7 +402,7 @@ IfaceMgr::deleteExternalSocket(int socketfd) {
 
 void
 IfaceMgr::deleteExternalSocketInternal(int socketfd) {
-    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && !isMainThread()) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD)
             .arg(socketfd)
             .arg(std::this_thread::get_id())
@@ -440,7 +440,7 @@ IfaceMgr::isExternalSocketUnusable(int fd) {
 
 void
 IfaceMgr::deleteAllExternalSockets() {
-    if (check_thread_id_ && std::this_thread::get_id() != id_) {
+    if (check_thread_id_ && !isMainThread()) {
         LOG_ERROR(dhcp_logger, DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD)
             .arg(std::this_thread::get_id())
             .arg(id_);

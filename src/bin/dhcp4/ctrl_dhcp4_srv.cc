@@ -339,6 +339,10 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
                                              ConstElementPtr args) {
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'config-set' on a different thread than main thread"));
+    }
     const int status_code = CONTROL_RESULT_ERROR;
     ConstElementPtr dhcp4;
     string message;
@@ -466,6 +470,10 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
                                               ConstElementPtr args) {
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'config-test' on a different thread than main thread"));
+    }
     const int status_code = CONTROL_RESULT_ERROR; // 1 indicates an error
     ConstElementPtr dhcp4;
     string message;
@@ -690,10 +698,6 @@ ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandInterfaceListHandler(const std::string&,
                                                  ConstElementPtr) {
-    if (!IfaceMgr::instance().isMainThread()) {
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
-            "Illegal operation executing 'interface-list' on a different thread than main thread"));
-    }
     ElementPtr ifaces = Element::createMap();
     std::string message;
     bool error = false;
@@ -1244,6 +1248,10 @@ ControlledDhcpv4Srv::commandServerTagGetHandler(const std::string&,
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigBackendPullHandler(const std::string&,
                                                      ConstElementPtr) {
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'config-backend-pull' on a different thread than main thread"));
+    }
     auto ctl_info = CfgMgr::instance().getCurrentCfg()->getConfigControlInfo();
     if (!ctl_info) {
         return (createAnswer(CONTROL_RESULT_EMPTY, "No config backend."));
