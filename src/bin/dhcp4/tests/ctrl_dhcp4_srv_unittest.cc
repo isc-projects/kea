@@ -33,6 +33,7 @@
 #include <util/chrono_time_utils.h>
 #include <testutils/gtest_utils.h>
 #include <testutils/io_utils.h>
+#include <testutils/multi_threading_utils.h>
 #include <testutils/unix_control_client.h>
 
 #include "marker_file.h"
@@ -105,6 +106,11 @@ public:
     /// Expose internal methods for the sake of testing
     using Dhcpv4Srv::receivePacket;
     using Dhcpv4Srv::network_state_;
+    using ControlledDhcpv4Srv::commandConfigSetHandler;
+    using ControlledDhcpv4Srv::commandConfigTestHandler;
+    using ControlledDhcpv4Srv::commandInterfaceRedetectHandler;
+    using ControlledDhcpv4Srv::commandInterfaceAddHandler;
+    using ControlledDhcpv4Srv::commandConfigBackendPullHandler;
 };
 
 /// @brief Fixture class intended for testing control channel in the DHCPv4Srv
@@ -4563,6 +4569,96 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
     // Check that the server has signalled a timeout.
     EXPECT_EQ("{ \"result\": 1, \"text\": "
               "\"Connection over control channel timed out\" }", response);
+}
+
+/// Check that config-set handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, configSetNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandConfigSetHandler("config-set", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'config-set' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
+}
+
+/// Check that config-test handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, configTestNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandConfigTestHandler("config-test", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'config-test' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
+}
+
+/// Check that interface-redetect handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, interfaceRedetectNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandInterfaceRedetectHandler("interface-redetect", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'interface-redetect' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
+}
+
+/// Check that interface-add handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, InterfaceAddNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandInterfaceAddHandler("interface-add", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'interface-add' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
+}
+
+/// Check that config-backend-pull handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, configBackendPullNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandConfigBackendPullHandler("config-backend-pull", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'config-backend-pull' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
 }
 
 } // End of anonymous namespace
