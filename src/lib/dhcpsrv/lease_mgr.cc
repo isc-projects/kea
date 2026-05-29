@@ -1973,7 +1973,6 @@ SflqPoolInfo::SflqPoolInfo():
     modified_ts_() {
 }
 
-
 data::ElementPtr
 SflqPoolInfo::toElement() const {
     ElementPtr info = Element::createMap();

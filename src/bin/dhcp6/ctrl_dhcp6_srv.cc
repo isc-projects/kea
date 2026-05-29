@@ -126,7 +126,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
 void ControlledDhcpv6Srv::cleanup() {
     signal_set_.reset();
-    getIOService()->poll();
+    getIOService()->stopAndPoll();
 }
 
 ConstElementPtr

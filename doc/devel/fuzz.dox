@@ -137,7 +137,7 @@ You do these preparatory steps one time:
 
 @code
 if test ! -d ~/oss-fuzz; then
-    git clone ~/oss-fuzz
+    git clone git@github.com:google/oss-fuzz.git ~/oss-fuzz
 fi
 cd ~/oss-fuzz
 

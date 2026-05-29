@@ -123,7 +123,7 @@ ControlledDhcpv4Srv::init(const std::string& file_name) {
 
 void ControlledDhcpv4Srv::cleanup() {
     signal_set_.reset();
-    getIOService()->poll();
+    getIOService()->stopAndPoll();
 }
 
 ConstElementPtr
