@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
@@ -37,6 +38,23 @@ TrackingLeaseMgrPtr&
 LeaseMgrFactory::getLeaseMgrPtr() {
     static TrackingLeaseMgrPtr lease_mgr_ptr;
     return (lease_mgr_ptr);
+}
+
+bool LeaseMgrFactory::init_allocators_ = false;
+
+void
+LeaseMgrFactory::initAllocators(bool use_staging /* = false */) {
+    if (!LeaseMgrFactory::init_allocators_) {
+        return;
+    }
+    auto cfg = (use_staging ? CfgMgr::instance().getStagingCfg()
+                            : CfgMgr::instance().getCurrentCfg());
+    if (CfgMgr::instance().getFamily() == AF_INET) {
+        cfg->getCfgSubnets4()->initAllocatorsAfterConfigure();
+    } else {
+        cfg->getCfgSubnets6()->initAllocatorsAfterConfigure();
+    }
+    LeaseMgrFactory::init_allocators_ = false;
 }
 
 void
@@ -107,6 +125,12 @@ LeaseMgrFactory::recreate(const std::string& dbaccess, bool preserve_callbacks) 
     // Re-create the manager.
     destroy();
     create(dbaccess);
+
+    // Init lease allocators. We do this here for allocators which require
+    // the lease manager access (i.e. SFLQ and FLQ) for initialization.
+    // When preserve_callbacks is true are using the a current configuration.
+    // If it is false we are using staging. Pass the inverse to initAllocators().
+    LeaseMgrFactory::initAllocators(!preserve_callbacks);
 
     if (callbacks) {
         // Copy the callbacks to the new instance. It should be fast

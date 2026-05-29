@@ -1406,6 +1406,9 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
+    // Enable allocator initialization prior to creating lease manager.
+    LeaseMgrFactory::init_allocators_ = true;
+
     // Re-open lease and host database with new parameters.
     try {
         DatabaseConnection::db_lost_callback_ =
@@ -1528,18 +1531,6 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     auto notify_libraries = ControlledDhcpv4Srv::finishConfigHookLibraries(config);
     if (notify_libraries) {
         return (notify_libraries);
-    }
-
-    // Initialize the allocators. If the user selected a Free Lease Queue Allocator
-    // for any of the subnets, the server will now populate free leases to the queue.
-    // It may take a while!
-    try {
-        CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->initAllocatorsAfterConfigure();
-
-    } catch (const std::exception& ex) {
-        err << "Error initializing the lease allocators: "
-            << ex.what();
-        return (isc::config::createAnswer(CONTROL_RESULT_ERROR, err.str()));
     }
 
     // Apply multi threading settings.

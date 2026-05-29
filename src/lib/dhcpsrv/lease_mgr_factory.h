@@ -157,6 +157,14 @@ public:
     /// @brief Return extended version info for registered backends.
     static std::list<std::string> getDBVersions();
 
+    /// @brief Initializes the lease allocators for all subnets.
+    /// @param use_staging  Use the staging configuration when true, otherwise
+    /// use the current configuration. Defaults to false.
+    static void initAllocators(bool use_staging = false);
+
+    /// @brief Flag which indicates if allocators must be initialized.
+    static bool init_allocators_;
+
 private:
     /// @brief Hold pointer to lease manager
     ///
