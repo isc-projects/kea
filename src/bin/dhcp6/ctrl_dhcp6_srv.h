@@ -119,7 +119,7 @@ public:
         return (server_);
     }
 
-private:
+protected:
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
@@ -408,6 +408,7 @@ private:
     commandLfcStartHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
 
+private:
     /// @brief Reclaims expired IPv6 leases and reschedules timer.
     ///
     /// This is a wrapper method for @c AllocEngine::reclaimExpiredLeases6.

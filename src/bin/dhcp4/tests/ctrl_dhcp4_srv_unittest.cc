@@ -106,6 +106,7 @@ public:
     /// Expose internal methods for the sake of testing
     using Dhcpv4Srv::receivePacket;
     using Dhcpv4Srv::network_state_;
+    using ControlledDhcpv4Srv::commandConfigReloadHandler;
     using ControlledDhcpv4Srv::commandConfigSetHandler;
     using ControlledDhcpv4Srv::commandConfigTestHandler;
     using ControlledDhcpv4Srv::commandInterfaceRedetectHandler;
@@ -4569,6 +4570,24 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
     // Check that the server has signalled a timeout.
     EXPECT_EQ("{ \"result\": 1, \"text\": "
               "\"Connection over control channel timed out\" }", response);
+}
+
+/// Check that config-reload handler must not be called outside the main thread.
+TEST_F(CtrlChannelDhcpv4SrvTest, configReloadNotMain) {
+    ASSERT_NO_THROW(server_.reset(new NakedControlledDhcpv4Srv()));
+    ASSERT_TRUE(server_);
+    MultiThreadingTest mt;
+
+    ConstElementPtr answer;
+    std::thread th([this, &answer]() {
+        ElementPtr args = Element::createMap();
+        ASSERT_NO_THROW(answer = server_->commandConfigReloadHandler("config-reload", args));
+    });
+    th.join();
+    ASSERT_TRUE(answer);
+    std::string expected = "{ \"result\": 1, \"text\": \"Illegal operation executing";
+    expected += " 'config-reload' on a different thread than main thread\" }";
+    EXPECT_EQ(expected, answer->str());
 }
 
 /// Check that config-set handler must not be called outside the main thread.

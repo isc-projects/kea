@@ -235,6 +235,10 @@ ControlledDhcpv4Srv::commandShutdownHandler(const string&, ConstElementPtr args)
 ConstElementPtr
 ControlledDhcpv4Srv::commandConfigReloadHandler(const string&,
                                                 ConstElementPtr /*args*/) {
+    if (!IfaceMgr::instance().isMainThread()) {
+        return (isc::config::createAnswer(CONTROL_RESULT_ERROR,
+            "Illegal operation executing 'config-reload' on a different thread than main thread"));
+    }
     // Get configuration file name.
     string file = ControlledDhcpv4Srv::getInstance()->getConfigFile();
     try {
