@@ -516,56 +516,67 @@ Examples:
         "response-parser-format": "ifelse(pkt4.msgtype == 5, 'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), '')"
     }
 
+
 Details:
 
-.. raw:: html
+.. container:: collapsible
+    
+    .. raw:: html
 
-    <details><summary>Expand here!</summary>
-    <pre>{
-        "request-parser-format":
-            "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
-                'Address: ' +
-                ifelse(option[50].exists,
-                    addrtotext(option[50].hex),
-                    addrtotext(pkt4.ciaddr)) +
-                ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
-                ifelse(option[61].exists,
-                    ', client-id: ' + hexstring(option[61].hex, ':'),
-                    '') +
-                ifelse(pkt4.giaddr == 0.0.0.0,
-                    '',
-                    ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
-                    ifelse(option[82].option[1].exists,
-                        ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'),
+        <details>
+        <summary>Expand here!</summary>
+
+    .. code-block:: json    
+
+        {
+            "request-parser-format":
+                "ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7,
+                    'Address: ' +
+                    ifelse(option[50].exists,
+                        addrtotext(option[50].hex),
+                        addrtotext(pkt4.ciaddr)) +
+                    ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                    ifelse(option[61].exists,
+                        ', client-id: ' + hexstring(option[61].hex, ':'),
                         '') +
-                    ifelse(option[82].option[2].exists,
-                        ', remote-id: ' + hexstring(option[82].option[2].hex, ':'),
+                    ifelse(pkt4.giaddr == 0.0.0.0,
+                        '',
+                        ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                        ifelse(option[82].option[1].exists,
+                            ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'),
+                            '') +
+                        ifelse(option[82].option[2].exists,
+                            ', remote-id: ' + hexstring(option[82].option[2].hex, ':'),
+                            '') +
+                        ifelse(option[82].option[6].exists,
+                            ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
+                            '')),
+                    '')",
+            "response-parser-format":
+                "ifelse(pkt4.msgtype == 5,
+                    'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
+                    ifelse(option[61].exists,
+                        ', client-id: ' + hexstring(option[61].hex, ':'),
                         '') +
-                    ifelse(option[82].option[6].exists,
-                        ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
-                        '')),
-                '')",
-        "response-parser-format":
-            "ifelse(pkt4.msgtype == 5,
-                'Address: ' + addrtotext(pkt4.yiaddr) + ' has been assigned for ' + uint32totext(option[51].hex) + ' seconds to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') +
-                ifelse(option[61].exists,
-                    ', client-id: ' + hexstring(option[61].hex, ':'),
-                    '') +
-                ifelse(pkt4.giaddr == 0.0.0.0,
-                    '',
-                    ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
-                    ifelse(option[82].option[1].exists,
-                        ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'),
-                        '') +
-                    ifelse(option[82].option[2].exists,
-                        ', remote-id: ' + hexstring(option[82].option[2].hex, ':'),
-                        '') +
-                    ifelse(option[82].option[6].exists,
-                        ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
-                        '')),
-                '')"
-    }</pre>
-    </details><br>
+                    ifelse(pkt4.giaddr == 0.0.0.0,
+                        '',
+                        ' connected via relay at address: ' + addrtotext(pkt4.giaddr) +
+                        ifelse(option[82].option[1].exists,
+                            ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'),
+                            '') +
+                        ifelse(option[82].option[2].exists,
+                            ', remote-id: ' + hexstring(option[82].option[2].hex, ':'),
+                            '') +
+                        ifelse(option[82].option[6].exists,
+                            ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
+                            '')),
+                    '')"
+        }
+    .. raw:: html
+
+        </details>
+        <br />
+
 
 This will log the following data on request and renew:
 
@@ -589,12 +600,19 @@ Examples:
         "request-parser-format": "ifelse(pkt4.msgtype == 3, 'Address: ' + ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been assigned' + ifelse(option[51].exists, ' for ' + uint32totext(option[51].hex) + ' seconds', '') + ' to a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), ifelse(pkt4.msgtype == 4 or pkt4.msgtype == 7, 'Address: ' + ifelse(option[50].exists, addrtotext(option[50].hex), addrtotext(pkt4.ciaddr)) + ' has been released from a device with hardware address: hwtype=' + substring(hexstring(pkt4.htype, ''), 7, 1) + ' ' + hexstring(pkt4.mac, ':') + ifelse(option[61].exists, ', client-id: ' + hexstring(option[61].hex, ':'), '') + ifelse(pkt4.giaddr == 0.0.0.0, '', ' connected via relay at address: ' + addrtotext(pkt4.giaddr) + ifelse(option[82].option[1].exists, ', circuit-id: ' + hexstring(option[82].option[1].hex, ':'), '') + ifelse(option[82].option[2].exists, ', remote-id: ' + hexstring(option[82].option[2].hex, ':'), '') + ifelse(option[82].option[6].exists, ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'), '')), ''))"
     }
 
+
 Details:
 
-.. raw:: html
+.. container:: collapsible
 
-    <details><summary>Expand here!</summary>
-    <pre>{
+    .. raw:: html
+
+        <details>
+        <summary>Expand here!</summary>
+
+    .. code-block:: json
+
+        {
         "request-parser-format":
             "ifelse(pkt4.msgtype == 3,
                 'Address: ' +
@@ -643,8 +661,12 @@ Details:
                             ', subscriber-id: ' + hexstring(option[82].option[6].hex, ':'),
                             '')),
                     ''))"
-    }</pre>
-    </details><br>
+        }
+    .. raw:: html
+
+        </details>
+        <br />
+
 
 DHCPv6 Log Entries
 ~~~~~~~~~~~~~~~~~~
@@ -872,10 +894,16 @@ Examples:
 
 Details:
 
-.. raw:: html
+.. container:: collapsible
 
-    <details><summary>Expand here!</summary>
-    <pre>{
+    .. raw:: html
+
+        <details>
+        <summary>Expand here!</summary>
+    
+    .. code-block:: json
+        
+        {
         "request-parser-format":
             "ifelse(pkt6.msgtype == 8 or pkt6.msgtype == 9,
                 ifelse(option[3].option[5].exists,
@@ -942,8 +970,12 @@ Details:
                             '')),
                     ''),
                 '')"
-    }</pre>
-    </details><br>
+        }
+    
+    .. raw:: html
+
+        </details>
+        <br />
 
 This will log the following data on request, renew, and rebind for NA:
 
@@ -981,10 +1013,16 @@ Examples:
 
 Details:
 
-.. raw:: html
+.. container:: collapsible
 
-    <details><summary>Expand here!</summary>
-    <pre>{
+    .. raw:: html
+
+        <details>
+        <summary>Expand here!</summary>
+
+    .. code-block:: json
+
+        {
         "request-parser-format":
             "ifelse(pkt6.msgtype == 3 or pkt6.msgtype == 5 or pkt6.msgtype == 6,
                 ifelse(option[3].option[5].exists,
@@ -1049,8 +1087,12 @@ Details:
                                 '')),
                         ''),
                     ''))"
-    }</pre>
-    </details><br>
+        }
+
+    .. raw:: html
+        
+        </details>
+        <br />
 
 .. _forensic-log-database:
 
