@@ -3676,8 +3676,8 @@ The default configuration and values would appear as follows:
         "ddns-qualifying-suffix": "",
         "ddns-update-on-renew": false,
         "ddns-conflict-resolution-mode": "check-with-dhcid",
-        "hostname-char-set": "",
-        "hostname-char-replacement": "",
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
         ...
    }
 
@@ -4120,7 +4120,9 @@ accomplished with the following two parameters:
    extended expression syntax. Embedded nulls (0x00) are always
    considered an invalid character to be replaced (or omitted).
    The default is ``"[^A-Za-z0-9.-]"``. This matches any character that is not
-   a letter, digit, dot, hyphen, or null.
+   a letter, digit, dot, or hyphen. It is highly recommended to not
+   set this to an empty string (``""``) as this will allow non printable
+   characters to be used in the hostname component.
 
 -  ``hostname-char-replacement`` - a string of zero or more characters
    with which to replace each invalid character in the host name. An empty
