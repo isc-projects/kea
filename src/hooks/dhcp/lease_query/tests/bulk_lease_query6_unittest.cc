@@ -1620,13 +1620,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // Create some leases.
     Lease6Ptr lease1 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::100"),
-                                      subnet2_, cid1_, now - 300);
+                                subnet2_, cid1_, now - 300);
 
     Lease6Ptr lease2 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::100"),
-                                       subnet3_, cid1_, now - 100);
+                                subnet3_, cid1_, now - 100);
 
     Lease6Ptr lease3 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                        subnet4_, cid1_, now - 200);
+                                subnet4_, cid1_, now - 200);
 
     Lease6Ptr pd_lease = addLease(Lease::TYPE_PD, IOAddress("3001:0:0:0:1::"),
                                   subnet4_, cid1_, now - 400);

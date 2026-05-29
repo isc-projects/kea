@@ -496,6 +496,9 @@ public:
     /// @brief Test makeClientOption with multiple links.
     void testMakeClientOptionMultipleLinks();
 
+    /// @brief Test makeClientOption with multiple links.
+    void testMakeClientOptionMultipleLinksNoSubnet();
+
     /// @brief Test makeClientOption with a single link.
     void testMakeClientOptionSingleLink();
 
@@ -519,6 +522,9 @@ public:
 
     /// @brief Test queryByClientId with multiple links.
     void testQueryByClientIdMultipleLinks();
+
+    /// @brief Test queryByClientId with multiple links but no subnet.
+    void testQueryByClientIdMultipleLinksNoSubnet();
 
     /// @brief Test queryByClientId with active leases.
     void testQueryByClientIdActiveLeases();
@@ -895,6 +901,57 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinks) {
     testMakeClientOptionMultipleLinks();
 }
 
+// Verifies that makeClientOption() creates an D6O_LQ_CLIENT_LINK option
+// when passed a lease collection containing active leases from
+// multiple subnets.
+template <typename TestLeaseMgrType> void
+BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeClientOptionMultipleLinksNoSubnet() {
+    Lease6Collection leases;
+
+    // Create some leases.
+    Lease6Ptr lease1 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::100"),
+                                subnet2_, cid1_, time(0));
+    Lease6Ptr lease2 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::100"),
+                                subnet3_, cid1_, time(0));
+    Lease6Ptr lease3 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::101"),
+                                subnet3_, cid1_, time(0));
+    Lease6Ptr lease4 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::101"),
+                                subnet4_, cid1_, time(0));
+
+    // Add them to lease collection.
+    leases.push_back(lease2);
+    leases.push_back(lease1);
+    leases.push_back(lease4);
+    leases.push_back(lease3);
+
+    // Delete the subnet but keep the lease.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    CfgSubnets6Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets6();
+    subnets->del(subnet4_->getID());
+
+    // Invoke makeClientOption.
+    OptionPtr opt;
+    ASSERT_NO_THROW_LOG(opt = LeaseQueryImpl6::makeClientOption(leases));
+
+    // We should have a non-empty option. That converts to an Option6AddrLst.
+    ASSERT_TRUE(opt);
+    ASSERT_EQ(D6O_LQ_CLIENT_LINK, opt->getType());
+    Option6AddrLstPtr link_opt = boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(link_opt);
+
+    // We should have the addresses for subnet2_, subnet3_, and sunbed4_
+    // in that order.  Note subnet3_ should only be in the list once
+    // despite they're being two of its leases in the collection.
+    Option6AddrLst::AddressContainer links = link_opt->getAddresses();
+    ASSERT_EQ(2U, links.size());
+    EXPECT_EQ(subnet2_->get().first, links[0]);
+    EXPECT_EQ(subnet3_->get().first, links[1]);
+}
+
+TEST_F(MemfileLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinksNoSubnet) {
+    testMakeClientOptionMultipleLinksNoSubnet();
+}
+
 // Verifies that makeClientOption() creates an D6O_CLIENT_DATA option
 // when passed a lease collection containing multiple active leases on a
 // single subnet.
@@ -1200,7 +1257,7 @@ TEST_F(MemfileLeaseQueryImpl6ProcessTest, makeRelayOptionInvalid) {
 
     // Create some leases.
     Lease6Ptr lease = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                subnet4_, cid1_, now - 400);
+                               subnet4_, cid1_, now - 400);
 
     struct Scenario {
         std::string description_;
@@ -1249,7 +1306,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeRelayOptionNoRelayInfo
 
     // Create some leases.
     Lease6Ptr lease = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                subnet4_, cid1_, now - 400);
+                               subnet4_, cid1_, now - 400);
 
     // Invoke makeRelayOption.
     OptionPtr opt;
@@ -1287,7 +1344,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeRelayOptionRelayInfo()
 
     // Create a lease with user-context.
     Lease6Ptr lease = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                subnet4_, cid1_, now - 400, user_context);
+                               subnet4_, cid1_, now - 400, user_context);
     // Invoke makeRelayOption.
     OptionPtr opt;
     ASSERT_NO_THROW_LOG(opt = LeaseQueryImpl6::makeRelayOption(*lease));
@@ -1362,7 +1419,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testOldMakeRelayOptionRelayInf
 
     // Create a lease with user-context.
     Lease6Ptr lease = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                subnet4_, cid1_, now - 400, user_context);
+                               subnet4_, cid1_, now - 400, user_context);
     // Invoke makeRelayOption.
     OptionPtr opt;
     ASSERT_NO_THROW_LOG(opt = LeaseQueryImpl6::makeRelayOption(*lease));
@@ -1744,13 +1801,13 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // Create some leases.
     Lease6Ptr lease1 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::100"),
-                                      subnet2_, cid1_, now - 300);
+                                subnet2_, cid1_, now - 300);
 
     Lease6Ptr lease2 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::100"),
-                                       subnet3_, cid1_, now - 100);
+                                subnet3_, cid1_, now - 100);
 
     Lease6Ptr lease3 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                        subnet4_, cid1_, now - 200);
+                                subnet4_, cid1_, now - 200);
 
     // Make the lease query.
     Pkt6Ptr lq = makeQueryByClientId(cid1_);
@@ -1791,6 +1848,71 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinks) {
     testQueryByClientIdMultipleLinks();
+}
+
+// This test verifies that given a logically valid query by client id
+// for which active leases on multiple subnets exist, the server responds
+// with a DHCPV6_LEASEQUERY_REPLY packet with the proper content.
+template <typename TestLeaseMgrType> void
+BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLinksNoSubnet() {
+    // Create our impl instance.
+    LeaseQueryImpl6Ptr impl;
+    ASSERT_NO_THROW_LOG(impl = createLeaseQueryImpl6());
+    time_t now = time(0);
+
+    // Create some leases.
+    Lease6Ptr lease1 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::100"),
+                                subnet2_, cid1_, now - 300);
+
+    Lease6Ptr lease2 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::100"),
+                                subnet3_, cid1_, now - 100);
+
+    Lease6Ptr lease3 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
+                                subnet4_, cid1_, now - 200);
+
+    // Delete the subnet but keep the lease.
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+    CfgSubnets6Ptr subnets = cfg_mgr.getCurrentCfg()->getCfgSubnets6();
+    subnets->del(subnet4_->getID());
+
+    // Make the lease query.
+    Pkt6Ptr lq = makeQueryByClientId(cid1_);
+
+    // Process the query.
+    bool invalid = false;
+    ASSERT_NO_THROW_LOG(impl->processQuery(lq, invalid));
+    EXPECT_FALSE(invalid);
+
+    // We should have generated a LEASE_QUERY_REPLY with a
+    // status option containing the expected status.
+    Pkt6Ptr rsp = getSentPacket();
+    ASSERT_TRUE(rsp);
+    ASSERT_EQ(DHCPV6_LEASEQUERY_REPLY, rsp->getType());
+    checkStatus(rsp, STATUS_Success, "active lease(s) found");
+
+    // Should not these two any options.
+    EXPECT_FALSE(rsp->getOption(D6O_CLIENT_DATA));
+    EXPECT_FALSE(rsp->getOption(D6O_LQ_RELAY_DATA));
+
+    // Should have client link option.
+    OptionPtr opt;
+    ASSERT_TRUE(opt = rsp->getOption(D6O_LQ_CLIENT_LINK));
+    Option6AddrLstPtr link_opt = boost::dynamic_pointer_cast<Option6AddrLst>(opt);
+    ASSERT_TRUE(link_opt);
+
+    // We should have the addresses for subnet2_, subnet3_, and subnet4_
+    // in that order.
+    Option6AddrLst::AddressContainer links = link_opt->getAddresses();
+    ASSERT_EQ(2U, links.size());
+    EXPECT_EQ(subnet2_->get().first, links[0]);
+    EXPECT_EQ(subnet3_->get().first, links[1]);
+
+    // Make sure there are no left over packets.
+    ASSERT_FALSE(getSentPacket());
+}
+
+TEST_F(MemfileLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinksNoSubnet) {
+    testQueryByClientIdMultipleLinksNoSubnet();
 }
 
 // This test verifies that given a logically valid query by client id
@@ -1937,16 +2059,16 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdLinkAddr() 
 
     // Create some leases.
     Lease6Ptr lease1 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::100"),
-                                       subnet2_, cid1_, now - 300);
+                                subnet2_, cid1_, now - 300);
 
     Lease6Ptr lease2 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:2::101"),
-                                       subnet2_, cid1_, now - 100);
+                                subnet2_, cid1_, now - 100);
 
     Lease6Ptr lease3 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:3::100"),
-                                       subnet3_, cid2_, now - 100);
+                                subnet3_, cid2_, now - 100);
 
     Lease6Ptr lease4 = addLease(Lease::TYPE_NA, IOAddress("2001:db8:4::100"),
-                                       subnet4_, cid1_, now - 200);
+                                subnet4_, cid1_, now - 200);
 
     Lease6Collection leases;
     Option6StatusCodePtr status;
@@ -2194,6 +2316,10 @@ TEST_F(MySQLLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinks) {
     testMakeClientOptionMultipleLinks();
 }
 
+TEST_F(MySQLLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinksNoSubnet) {
+    testMakeClientOptionMultipleLinksNoSubnet();
+}
+
 TEST_F(MySQLLeaseQueryImpl6ProcessTest, makeClientOptionSingleLink) {
     testMakeClientOptionSingleLink();
 }
@@ -2226,6 +2352,10 @@ TEST_F(MySQLLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinks) {
     testQueryByClientIdMultipleLinks();
 }
 
+TEST_F(MySQLLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinksNoSubnet) {
+    testQueryByClientIdMultipleLinksNoSubnet();
+}
+
 TEST_F(MySQLLeaseQueryImpl6ProcessTest, queryByClientIdActiveLeases) {
     testQueryByClientIdActiveLeases();
 }
@@ -2239,6 +2369,10 @@ class PgSQLLeaseQueryImpl6ProcessTest : public
 
 TEST_F(PgSQLLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinks) {
     testMakeClientOptionMultipleLinks();
+}
+
+TEST_F(PgSQLLeaseQueryImpl6ProcessTest, makeClientOptionMultipleLinksNoSubnet) {
+    testMakeClientOptionMultipleLinksNoSubnet();
 }
 
 TEST_F(PgSQLLeaseQueryImpl6ProcessTest, makeClientOptionSingleLink) {
@@ -2271,6 +2405,10 @@ TEST_F(PgSQLLeaseQueryImpl6ProcessTest, queryByClientIdNoActiveLease) {
 
 TEST_F(PgSQLLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinks) {
     testQueryByClientIdMultipleLinks();
+}
+
+TEST_F(PgSQLLeaseQueryImpl6ProcessTest, queryByClientIdMultipleLinksNoSubnet) {
+    testQueryByClientIdMultipleLinksNoSubnet();
 }
 
 TEST_F(PgSQLLeaseQueryImpl6ProcessTest, queryByClientIdActiveLeases) {

@@ -752,6 +752,9 @@ LeaseQueryImpl6::makeClientOption(Lease6Collection& leases) {
         Option6AddrLst::AddressContainer addrs;
         for (auto const& link : links) {
             ConstSubnet6Ptr subnet = subnets->getBySubnetId(link);
+            if (!subnet) {
+                continue;
+            }
             std::pair<isc::asiolink::IOAddress, uint8_t> pair = subnet->get();
             addrs.push_back(pair.first);
         }
