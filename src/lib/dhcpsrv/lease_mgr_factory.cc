@@ -128,8 +128,8 @@ LeaseMgrFactory::recreate(const std::string& dbaccess, bool preserve_callbacks) 
 
     // Init lease allocators. We do this here for allocators which require
     // the lease manager access (i.e. SFLQ and FLQ) for initialization.
-    // When preserve_callbacks is true are using the a current configuration.
-    // If it is false we are using staging. Pass the inverse to initAllocators().
+    // When preserve_callbacks is true the current configuration is used,
+    // if it is false the staging configuration is used.
     LeaseMgrFactory::initAllocators(!preserve_callbacks);
 
     if (callbacks) {
