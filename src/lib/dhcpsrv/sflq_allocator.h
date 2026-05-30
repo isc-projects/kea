@@ -20,7 +20,7 @@ namespace dhcp {
 /// This allocator is part of the Shared Free Lease Queue (SFLQ) Allocation
 /// scheme. The concept is similar to FLQ Allocation but rather than the
 /// creating and maintaining free lease data locally, it is created and
-/// maintained in the lease back end where it can be shared by other 
+/// maintained in the lease back end where it can be shared by other
 /// servers.
 ///
 /// Th allocator relies on stored procedures in the lease back end to

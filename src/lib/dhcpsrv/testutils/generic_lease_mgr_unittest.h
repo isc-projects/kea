@@ -190,13 +190,13 @@ public:
     int countLogs(TrackingLeaseMgr::CallbackType type, SubnetID subnet_id,
                   Lease::Type lease_type) const;
 
-    /// Compare two SflqPoolInfo structures for equality. 
+    /// Compare two SflqPoolInfo structures for equality.
     ///
     /// All members are compared for equality except the timestamps. Those
     /// are considered correct if the lhs timestamps are greater than or
     /// equal to their rhs counterparts.  Asserts if they are not "equal".
-    /// 
-    /// @param lhs left-side instance to compare 
+    ///
+    /// @param lhs left-side instance to compare
     /// @param rhs right-side instance to compare
     /// @param lineno source line of invocation (pass in __LINE__)
     void checkPoolInfos(const SflqPoolInfo& lhs, const SflqPoolInfo& rhs, int lineno);

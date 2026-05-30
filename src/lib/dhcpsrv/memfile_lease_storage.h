@@ -381,7 +381,7 @@ typedef boost::multi_index_container<
                 // than derived class: Lease4.
                 boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
             >
-        >       
+        >
     >
 > Lease4Storage; // Specify the type name for this container.
 

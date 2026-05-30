@@ -241,7 +241,7 @@ public:
     SflqPoolInfo();
 
     ~SflqPoolInfo(){};
-    
+
     Lease::Type lease_type_;
     asiolink::IOAddress start_address_;
     asiolink::IOAddress end_address_;
@@ -1186,7 +1186,7 @@ public:
 
     /// @brief Fetch all SFLQ V4 pools belonging to a subnet.
     ///
-    /// @param subnet_id id of the desired subnet. 
+    /// @param subnet_id id of the desired subnet.
     ///
     /// @return A collection of the SFLQ V4 pools.
     virtual SflqPoolInfoCollectionPtr sflqPool4Get(SubnetID subnet_id);
@@ -1206,13 +1206,13 @@ public:
     /// @brief Delete the SFLQ V4 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool4 entry along with its free_lease4 data.
-    /// Fails If there are multiple pools that overlap the given range 
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.
     /// @param end_address end address of the pool to delete.
     /// @param force overrides check for overlapping pools when true. Defaults
-    /// to false. 
+    /// to false.
     ///
     /// @return True a pool was deleted.
     /// @throw InvalidOperation if force is false and overlapping pools are
@@ -1228,7 +1228,7 @@ public:
 
     /// @brief Fetch all SFLQ V6 pools belonging to a subnet.
     ///
-    /// @param subnet_id id of the desired subnet. 
+    /// @param subnet_id id of the desired subnet.
     ///
     /// @return A collection of the SFLQ V6 pools.
     virtual SflqPoolInfoCollectionPtr sflqPool6Get(SubnetID subnet_id);
@@ -1248,7 +1248,7 @@ public:
     /// @brief Delete the SFLQ V6 pool that matches a start and end address.
     ///
     /// Deletes the flq_pool6 entry along with its free_lease6 data.
-    /// Fails If there are multiple pools that overlap the given range 
+    /// Fails If there are multiple pools that overlap the given range
     /// unless force is true.
     ///
     /// @param start_address start address of the pool to delete.

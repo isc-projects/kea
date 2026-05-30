@@ -1154,7 +1154,7 @@ Memfile_LeaseMgr::handleDbLost() {
 
 bool
 Memfile_LeaseMgr::addLeaseInternal(const Lease4Ptr& lease) {
-    if (getLease4Internal(lease->addr_)) {
+    if (storage4_.count(lease->addr_) != 0) {
         // there is a lease with specified address already
         return (false);
     }
@@ -1203,7 +1203,7 @@ Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
 
 bool
 Memfile_LeaseMgr::addLeaseInternal(const Lease6Ptr& lease) {
-    if (getLease6Internal(lease->type_, lease->addr_)) {
+    if (storage6_.count(lease->addr_) != 0) {
         // there is a lease with specified address already
         return (false);
     }

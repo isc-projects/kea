@@ -664,6 +664,11 @@ GenericLeaseMgrTest::testAddGetDelete6() {
     // should not be allowed to add a second lease with the same address
     EXPECT_FALSE(lmptr_->addLease(lease));
 
+    // even with a different type.
+    Lease6Ptr pd(new Lease6(Lease::TYPE_PD, addr, duid, iaid, 100, 200,
+                            subnet_id, HWAddrPtr(), 64));
+    EXPECT_FALSE(lmptr_->addLease(pd));
+
     Lease6Ptr x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress(addr234));
     EXPECT_EQ(Lease6Ptr(), x);
 
