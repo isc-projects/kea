@@ -97,10 +97,6 @@ Corresponding database configuration parameters for Kea servers are:
    the content of this parameter is described in the OpenSSL ciphers
    manual).
 
-These parameters are similar to the parameters of the secure connections
-with the agent but are interpreted by different backends using database
-configurations too.
-
 Currently the support for each database is:
 
 -  MySQL supports the whole set, except ``ssl-mode``, additional configuration

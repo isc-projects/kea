@@ -214,7 +214,7 @@ as a single entry (JSON map) as follows:
 
 
 These types of errors are possible on systems configured for either basic
-authentication or agents that load :ischooklib:`libdhcp_rbac.so`.
+authentication or servers that load :ischooklib:`libdhcp_rbac.so`.
 
 .. _ctrl-channel-client:
 

@@ -32,12 +32,6 @@ for prefix in '' 'premium/'; do
 done
 
 printf "\
-src/bin/agent/agent_lexer.cc
-src/bin/agent/agent_parser.cc
-src/bin/agent/agent_parser.h
-src/bin/agent/ca_messages.cc
-src/bin/agent/ca_messages.h
-src/bin/agent/location.hh
 src/bin/d2/d2_lexer.cc
 src/bin/d2/d2_parser.cc
 src/bin/d2/d2_parser.h
