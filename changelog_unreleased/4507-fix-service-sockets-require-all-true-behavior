@@ -1,0 +1,4 @@
+[func]		fdupont
+	Made reconfig commands which triggered a fatal error not to
+	return a success answer when the server is shutting down.
+	(Gitlab #4507)

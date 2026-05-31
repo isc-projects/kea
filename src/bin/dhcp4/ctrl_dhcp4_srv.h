@@ -73,6 +73,9 @@ public:
     /// @param exit_value integer value to the process should exit with.
     virtual void shutdownServer(int exit_value);
 
+    /// @brief Return the server shutdown flag value.
+    bool getShutdown() const;
+
     /// @brief Configuration processor
     ///
     /// This is a method for handling incoming configuration updates.

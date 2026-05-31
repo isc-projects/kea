@@ -2602,6 +2602,41 @@ TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAdd) {
     EXPECT_EQ(response, expected);
 }
 
+// Tests if interface-add can trigger a fatal failure.
+TEST_F(CtrlChannelDhcpv4SrvTest, interfaceAddFatal) {
+    interfaces_ = "";
+    IfacePtr eth0 = IfaceMgrTestConfig::createIface("eth0", ETH0_INDEX,
+                                                    "11:22:33:44:55:66");
+    auto detectIfaces = [&](bool update_only) {
+        if (!update_only) {
+            // No IPv4 address: will trigger an error.
+            eth0->addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+            eth0->addAddress(IOAddress("2001:db8:1::1"));
+            IfaceMgr::instance().addInterface(eth0);
+        }
+        return (false);
+    };
+    IfaceMgr::instance().setDetectCallback(detectIfaces);
+    IfaceMgr::instance().clearIfaces();
+    IfaceMgr::instance().closeSockets();
+    IfaceMgr::instance().detectIfaces();
+    createUnixChannelServer();
+    PktFilterPtr filter(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(filter);
+    SKIP_IF(skipped_);
+    // Override the on fail callback to unconditionally make the error fatal.
+    CfgIface::open_sockets_failed_callback_ =
+        [](ReconnectCtlPtr) {
+            ControlledDhcpv4Srv::getInstance()->shutdownServer(EXIT_FAILURE);
+        };
+    std::string response;
+
+    std::string command = "{ \"command\": \"interface-add\", \"arguments\": { \"interfaces\": [ \"eth0\" ] } }";
+
+    sendUnixCommand(command, response);
+    EXPECT_EQ(response, "{ \"result\": 5, \"text\": \"Interface configuration uodate triggered a fatal error: shutting down.\" }");
+}
+
 // This test verifies that disable DHCP service command performs sanity check on
 // parameters.
 TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableBadParam) {

@@ -93,7 +93,7 @@ void signalHandler(int signo) {
 namespace isc {
 namespace dhcp {
 
-ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
+ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = 0;
 
 void
 ControlledDhcpv4Srv::init(const std::string& file_name) {
@@ -196,6 +196,11 @@ ControlledDhcpv4Srv::loadConfigFile(const std::string& file_name) {
         .arg(MultiThreadingMgr::instance().getPacketQueueSize());
 
     return (result);
+}
+
+bool
+ControlledDhcpv4Srv::getShutdown() const {
+    return (Dhcpv4Srv::shutdown_);
 }
 
 ConstElementPtr
@@ -413,6 +418,12 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     // the logging first in case there's a configuration failure.
     int rcode = 0;
     isc::config::parseAnswer(rcode, result);
+    if (getShutdown() && (rcode == CONTROL_RESULT_SUCCESS)) {
+        // Do not return success when a fatal error was triggered.
+        rcode = CONTROL_RESULT_FATAL_ERROR;
+        message = "Reconfiguration triggered a fatal error: shutting down.";
+        result = isc::config::createAnswer(rcode, message);
+    }
     if (rcode == CONTROL_RESULT_SUCCESS) {
         CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
@@ -808,6 +819,9 @@ ControlledDhcpv4Srv::commandInterfaceAddHandler(const std::string&,
 
     ostringstream msg;
     if (!error) {
+        if (getShutdown()) {
+            return (isc::config::createAnswer(CONTROL_RESULT_FATAL_ERROR, "Interface configuration uodate triggered a fatal error: shutting down."));
+        }
         return (isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Interface configuration successfully updated."));
     } else {
         msg << "Updating used interfaces failed: " << message;
