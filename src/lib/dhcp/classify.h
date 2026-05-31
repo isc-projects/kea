@@ -268,10 +268,8 @@ public:
     ///
     /// Valid characters are letters, digits and '!#$%&*+-./:?@^_|~'.
     ///
-    /// @note: if there is no need for an unescape tool does not escape '%' itself.
-    ///
     /// @param name Candidate client class name.
-    /// @return The name using '%xy' escapes for invalid characters.
+    /// @return The name using '%xy' escapes for invalid characters, and doubling '%'.
     static std::string escape(const std::string& name);
 
 private:

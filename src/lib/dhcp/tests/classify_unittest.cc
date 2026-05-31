@@ -359,13 +359,16 @@ TEST(ClassifyTest, escape) {
             "!#$&*+-./:?@^_|~", ""
         },
         {
-            "foo%bar", ""
+            "foo%bar", "foo%%bar"
         },
         {
             "fo\abar", "fo%07bar"
         },
         {
             "foo bar", "foo%20bar"
+        },
+        {
+            "foo%20bar", "foo%%20bar"
         },
         {
             "\"foo\", \"bar\"", "%22foo%22%2c%20%22bar%22"
