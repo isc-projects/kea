@@ -634,7 +634,8 @@ void Dhcpv4Exchange::classifyByVendor(const Pkt4Ptr& pkt) {
         return;
     }
 
-    pkt->addClass(Dhcpv4Srv::VENDOR_CLASS_PREFIX + vendor_class->getValue());
+    string escaped = ClientClasses::escape(vendor_class->getValue());
+    pkt->addClass(Dhcpv4Srv::VENDOR_CLASS_PREFIX + escaped);
 }
 
 void Dhcpv4Exchange::classifyPacket(const Pkt4Ptr& pkt) {

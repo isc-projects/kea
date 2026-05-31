@@ -1745,6 +1745,34 @@ TEST_F(ClassifyTest, vendorClientClassification2) {
     EXPECT_FALSE(sol->inClass("foo"));
 }
 
+// Tests whether a packet with custom vendor-class with to-be-escaped characters
+// is classified properly.
+TEST_F(ClassifyTest, vendorClientClassification3) {
+    // Let's create a SOLICIT.
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now let's add a vendor-class with id=1234 and content "foo bar"
+    OptionVendorClassPtr vendor_class(new OptionVendorClass(Option::V6, 1234));
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple = "foo bar";
+    vendor_class->addTuple(tuple);
+    sol->addOption(vendor_class);
+
+    // Now the server classifies the packet.
+    srv_->classifyPacket(sol);
+
+    // The packet should now belong to VENDOR_CLASS_foo%20bar.
+    EXPECT_TRUE(sol->inClass(srv_->VENDOR_CLASS_PREFIX + "foo%20bar"));
+
+    // It should not belong to "foo bar" or "foo%20bar:
+    EXPECT_FALSE(sol->inClass("foo bar"));
+    EXPECT_FALSE(sol->inClass("foo%20bar"));
+}
+
 // Checks if relay IP address specified in the relay-info structure can be
 // used together with client-classification.
 TEST_F(ClassifyTest, relayOverrideAndClientClass) {

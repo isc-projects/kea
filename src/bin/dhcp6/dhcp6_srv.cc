@@ -4910,7 +4910,8 @@ void Dhcpv6Srv::classifyByVendor(const Pkt6Ptr& pkt) {
             pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
 
         } else {
-            pkt->addClass(VENDOR_CLASS_PREFIX + vclass->getTuple(0).getText());
+            string escaped = ClientClasses::escape(vclass->getTuple(0).getText());
+            pkt->addClass(VENDOR_CLASS_PREFIX + escaped);
         }
     }
 }
