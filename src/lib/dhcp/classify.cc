@@ -144,4 +144,71 @@ size_t hash_value(const ClientClasses& client_classes) {
     return (hasher(client_classes.toText("+")));
 }
 
-}} // end of namespace isc
+/****************
+// Code creating the CLIENT_CLASS_VALID_CHARACTERS value.
+#include <iostream>
+#include <string>
+#include <vector>
+
+std::string valid_s =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&*+-./:?@^_|~";
+std::vector<bool> valid_v(128, false);
+
+void gen() {
+    for (int i = 0; i < 128; ++i) {
+        valid_v[i] = (valid_s.find_first_of(i) != std::string::npos);
+    }
+}
+
+int main() {
+    gen();
+    std::cout << std::boolalpha;
+    for (size_t i = 0; i < valid_v.size(); ++i) {
+        if ((i % 8) == 0) {
+            std::cout << "   ";
+        }
+        std::cout << " " << valid_v[i] << ",";
+        if ((i % 8) == 7) {
+            std::cout << std::endl;
+        }
+    }
+
+    return 0;
+}
+****************/
+
+const std::vector<bool> ClientClasses::CLIENT_CLASS_VALID_CHARACTERS = {
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, false, false, false, false, false, false, false,
+    false, true, false, true, true, true, true, false,
+    false, false, true, true, false, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, false, false, false, false, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, false, false, false, true, true,
+    false, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, true, true, true, true, true,
+    true, true, true, false, true, false, true, false,
+};
+
+std::string
+ClientClasses::escape(const std::string& name) {
+    std::stringstream ss;
+    for (char const& c : name) {
+        unsigned u = static_cast<unsigned>(c);
+        if ((u < 128) && CLIENT_CLASS_VALID_CHARACTERS[u]) {
+            ss << c;
+        } else {
+            ss << '%' << std::hex << std::setfill('0') << std::setw(2) << u;
+        }
+    }
+    return (ss.str());
+}
+
+} // end of namespace dhcp
+} // end of namespace isc

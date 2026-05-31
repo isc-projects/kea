@@ -335,3 +335,49 @@ TEST(ClassifyTest, ClientClassesHash) {
     cclasses4.insert("onetwothree");
     EXPECT_NE(hash(cclasses4), hash(cclasses));
 }
+
+TEST(ClassifyTest, escape) {
+    struct Scenario {
+        std::string input_;
+        std::string output_;
+    };
+
+    std::vector<Scenario> scenarios {
+        {
+            "", ""
+        },
+        {
+            "foobar", ""
+        },
+        {
+            "FooBar", ""
+        },
+        {
+            "f00b19", ""
+        },
+        {
+            "!#$&*+-./:?@^_|~", ""
+        },
+        {
+            "foo%bar", ""
+        },
+        {
+            "fo\abar", "fo%07bar"
+        },
+        {
+            "foo bar", "foo%20bar"
+        },
+        {
+            "\"foo\", \"bar\"", "%22foo%22%2c%20%22bar%22"
+        }
+    };
+
+    for (auto scenario : scenarios) {
+        if (scenario.output_.empty()) {
+            // Empty output means same as input.
+            scenario.output_ = scenario.input_;
+        }
+        SCOPED_TRACE(scenario.output_);
+        EXPECT_EQ(scenario.output_, ClientClasses::escape(scenario.input_));
+    }
+}

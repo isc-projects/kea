@@ -17,8 +17,9 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
-#include <string>
 #include <functional>
+#include <string>
+#include <vector>
 
 /// @file   classify.h
 ///
@@ -259,6 +260,19 @@ public:
         /// @return a hashing result.
         size_t operator()(const ClientClasses& client_classes);
     };
+
+    /// @brief Valid character in a client class name boolean vector.
+    static const std::vector<bool> CLIENT_CLASS_VALID_CHARACTERS;
+
+    /// @brief Escape a client class name.
+    ///
+    /// Valid characters are letters, digits and '!#$%&*+-./:?@^_|~'.
+    ///
+    /// @note: if there is no need for an unescape tool does not escape '%' itself.
+    ///
+    /// @param name Candidate client class name.
+    /// @return The name using '%xy' escapes for invalid characters.
+    static std::string escape(const std::string& name);
 
 private:
     /// @brief container part
