@@ -15,7 +15,6 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <sstream>
-#include <vector>
 
 namespace isc {
 namespace dhcp {
