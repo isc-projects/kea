@@ -48,6 +48,7 @@ extern const isc::log::MessageID DHCPSRV_CFGMGR_UPDATE_SUBNET6;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ADDRESS;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_ALLOCATOR;
 extern const isc::log::MessageID DHCPSRV_CFGMGR_USE_UNICAST;
+extern const isc::log::MessageID DHCPSRV_CLASS_BAD_NAME;
 extern const isc::log::MessageID DHCPSRV_CLASS_WITH_ADDITIONAL_AND_LIFETIMES;
 extern const isc::log::MessageID DHCPSRV_CLIENT_CLASS_DEPRECATED;
 extern const isc::log::MessageID DHCPSRV_CLOSE_DB;

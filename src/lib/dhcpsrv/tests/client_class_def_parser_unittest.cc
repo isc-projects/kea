@@ -587,6 +587,27 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
     ASSERT_FALSE(cclass->getMatchExpr());
 }
 
+// Verifies you can create a class with a space in the name.
+TEST_F(ClientClassDefParserTest, escapedName) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"foo bar\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo bar", cclass->getName());
+
+    // A warning should be in logs.
+    std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo bar' ";
+    warn += "includes problematic characters: ";
+    warn += "its escaped form is 'foo%20bar'";
+    EXPECT_EQ(1, countFile(warn));
+}
+
 // Verifies you can create a class with a name, expression,
 // but no options.
 TEST_F(ClientClassDefParserTest, nameAndExpressionClass4) {
@@ -679,7 +700,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass4) {
 }
 
 // Verifies you can create a class with a name, expression,
-// but no options.
+// but no options. (v4 variant)
 TEST_F(ClientClassDefParserTest, nameAndExpressionClass6) {
 
     std::string test = "option[59].text == 'works right'";
@@ -724,7 +745,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass6) {
 }
 
 // Verifies you can create a class with a name, expression,
-// but no options.
+// but no options. (v6 variant)
 TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass6) {
 
     std::string test = "option[59].text";
@@ -770,7 +791,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass6) {
 }
 
 // Verifies you can create a class with a name and options,
-// but no expression.
+// but no expression. (v4 variant)
 TEST_F(ClientClassDefParserTest, nameAndOptionsClass4) {
 
     std::string cfg_text =
@@ -804,7 +825,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass4) {
 }
 
 // Verifies you can create a class with a name and options,
-// but no expression.
+// but no expression. (v6 variant)
 TEST_F(ClientClassDefParserTest, nameAndOptionsClass6) {
 
     std::string cfg_text =
@@ -838,7 +859,7 @@ TEST_F(ClientClassDefParserTest, nameAndOptionsClass6) {
 }
 
 // Verifies you can create a class with a name, expression,
-// and options.
+// and options. (v4 variant)
 TEST_F(ClientClassDefParserTest, basicValidClass4) {
 
     std::string test = "option[100].text == 'booya'";
@@ -886,8 +907,8 @@ TEST_F(ClientClassDefParserTest, basicValidClass4) {
     EXPECT_TRUE(evaluateBool(*match_expr, *pkt4));
 }
 
-// Verifies you can create a class with a name, expression,
-// and options.
+// Verifies you can create a template class with a name, expression,
+// and options. (v4 variant)
 TEST_F(ClientClassDefParserTest, templateBasicValidClass4) {
 
     std::string test = "option[100].text";
@@ -936,8 +957,8 @@ TEST_F(ClientClassDefParserTest, templateBasicValidClass4) {
     EXPECT_EQ(evaluateString(*match_expr, *pkt4), "booya");
 }
 
-// Verifies you can create a class with a name, expression,
-// and options.
+// Verifies you can create a template class with a name, expression,
+// and options. (v6 variant)
 TEST_F(ClientClassDefParserTest, basicValidClass6) {
 
     std::string test = "option[59].text == 'booya'";
