@@ -577,7 +577,7 @@ ClientClassDictionary::operator=(const ClientClassDictionary& rhs) {
 std::list<std::string>
 builtinNames = {
 
-    // DROP and REJECT ares not in this list because they are special
+    // DROP and REJECT are not in this list because they are special
     // but not built-in.  SKIP_DDNS, used by DDNS-tuning is also
     // omitted from this list so users may assign it a test expression.
     "ALL", "KNOWN", "UNKNOWN", "BOOTP"
