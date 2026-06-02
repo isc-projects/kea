@@ -326,7 +326,7 @@ follows:
    }
 
 The command accepts the ``operation-target`` argument. By default, it gets the
-reservation from both the JSON configuration and the hosts database.
+reservation from both the in memory storage and the hosts database.
 
 .. code-block:: json
 
@@ -444,7 +444,7 @@ may be disruptive; use with caution. For larger deployments, please
 consider using :isccmd:`reservation-get-page` instead.
 
 The command accepts the ``operation-target`` argument. By default, it gets the
-reservation from both the JSON configuration and the hosts database.
+reservation from both the in memory storage and the hosts database.
 
 .. code-block:: json
 
@@ -785,7 +785,7 @@ Response:
    }
 
 The command accepts the ``operation-target`` argument. By default, it gets the
-reservation from both the JSON configuration and the hosts database.
+reservation from both the in memory storage and the hosts database.
 
 .. code-block:: json
 
@@ -878,7 +878,7 @@ The response returned by :isccmd:`reservation-get-by-hostname` can be long,
 particularly when responses are not limited to a subnet.
 
 The command accepts the ``operation-target`` argument. By default, it gets the
-reservation from both the JSON configuration and the hosts database.
+reservation from both the in memory storage and the hosts database.
 
 .. code-block:: json
 
@@ -966,7 +966,7 @@ The response returned by :isccmd:`reservation-get-by-id` can be long,
 particularly when responses are not limited to a subnet.
 
 The command accepts the ``operation-target`` argument. By default, it gets the
-reservation from both the JSON configuration and the hosts database.
+reservation from both the in memory storage and the hosts database.
 
 .. code-block:: json
 
