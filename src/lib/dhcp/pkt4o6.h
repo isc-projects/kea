@@ -13,7 +13,6 @@
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief Represents DHCPv4-over-DHCPv6 packet
@@ -44,7 +43,9 @@ public:
     Pkt4o6(const Pkt4Ptr& pkt4, const Pkt6Ptr& pkt6);
 
     /// @brief Returns encapsulating DHCPv6 message
-    Pkt6Ptr getPkt6() const { return (pkt6_); }
+    Pkt6Ptr getPkt6() const {
+        return (pkt6_);
+    }
 
     /// @brief Prepares on-wire format of DHCPv4-over-DHCPv6 packet.
     ///
@@ -82,7 +83,6 @@ private:
 typedef boost::shared_ptr<Pkt4o6> Pkt4o6Ptr;
 
 } // isc::dhcp namespace
-
 } // isc namespace
 
 #endif

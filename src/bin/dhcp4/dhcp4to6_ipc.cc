@@ -101,8 +101,16 @@ void Dhcp4to6Ipc::handler(int /* fd */) {
         return;
     }
 
-    // Extract the DHCPv4 packet with DHCPv6 packet attached
-    Pkt4Ptr query(new Pkt4o6(msg->getData(), pkt));
+    Pkt4Ptr query;
+    try {
+        // Extract the DHCPv4 packet with DHCPv6 packet attached
+        query.reset(new Pkt4o6(msg->getData(), pkt));
+    } catch (const std::exception& e) {
+        LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
+            .arg(pkt->getLabel())
+            .arg(e.what());
+        return;
+    }
 
     // From Dhcpv4Srv::runOne() processing and after
     Pkt4Ptr rsp;

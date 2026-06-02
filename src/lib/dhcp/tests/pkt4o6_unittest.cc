@@ -43,7 +43,7 @@ protected:
     OptionBuffer buffer4_;             // wire-format data buffer of pkt4_
 };
 
-// This test verifies that the constructors are working as expected.
+/// @brief This test verifies that the constructors are working as expected.
 TEST_F(Pkt4o6Test, construct) {
     // Construct 4o6 packet, unpack the data to examine it
     boost::scoped_ptr<Pkt4o6> pkt4o6(new Pkt4o6(buffer4_, pkt6_));
@@ -64,8 +64,20 @@ TEST_F(Pkt4o6Test, construct) {
     EXPECT_EQ(DHCPDISCOVER, pkt4o6->getType());
 }
 
-// This test verifies that the pack() method handles the building
-// process correctly.
+/// @brief This test verifies that the constructor throws on empty buffer.
+TEST_F(Pkt4o6Test, constructEmptyInner) {
+    OptionBuffer empty;
+    EXPECT_THROW(Pkt4o6(empty, pkt6_), isc::OutOfRange);
+}
+
+/// @brief This test verifies that the constructor throws on empty option.
+TEST_F(Pkt4o6Test, constructTruncatedInner) {
+    OptionBuffer trunc(50, 0);
+    EXPECT_THROW(Pkt4o6(trunc, pkt6_), isc::OutOfRange);
+}
+
+/// @brief This test verifies that the pack() method handles the building
+/// process correctly.
 TEST_F(Pkt4o6Test, pack) {
     // prepare unpacked DHCPv4 packet (see the note in constructor test)
     pkt4_.reset(new Pkt4(&buffer4_[0], buffer4_.size()));
@@ -93,9 +105,9 @@ TEST_F(Pkt4o6Test, pack) {
     EXPECT_EQ(0, memcmp(&cp[8], &buffer4_[0], buffer4_.size()));
 }
 
-// This test verifies that the flag indicating that the retrieved options
-// should be copied is transferred between the DHCPv4 packet and the
-// DHCPv6 packet being a member of Pkt4o6 class.
+/// @brief This test verifies that the flag indicating that the retrieved options
+/// should be copied is transferred between the DHCPv4 packet and the
+/// DHCPv6 packet being a member of Pkt4o6 class.
 TEST_F(Pkt4o6Test, setCopyRetrievedOptions) {
     // Create Pkt4o6 and initially expect that the flag is set to false.
     Pkt4o6 pkt4o6(pkt4_, pkt6_);
