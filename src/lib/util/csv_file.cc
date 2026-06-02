@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <util/csv_file.h>
+#include <util/str.h>
 
 #include <algorithm>
 #include <iostream>
@@ -88,7 +89,7 @@ CSVRow::writeAt(const size_t at, const char* value) {
 
 void
 CSVRow::writeAtEscaped(const size_t at, const std::string& value) {
-    writeAt(at, escapeCharacters(value, separator_));
+    writeAt(at, escapeCharacters(value, separator_.at(0)));
 }
 
 void
@@ -446,44 +447,20 @@ CSVFile::validateHeader(const CSVRow& header) {
 const std::string CSVRow::escape_tag("&#x");
 
 std::string
-CSVRow::escapeCharacters(const std::string& orig_str, const std::string& characters) {
-    size_t char_pos = 0;
-    size_t prev_pos = 0;
-
-    // We add the first character of the escape tag to the list of
-    // characters to escape.  This ensures input which happens to
-    // be valid escape sequences will be escaped.
-    std::string escape_chars(characters + escape_tag[0]);
-
-    // Check for a first occurrence. If none, just return a
-    // copy of the original.
-    char_pos = orig_str.find_first_of(escape_chars, prev_pos);
-    if (char_pos == std::string::npos) {
-        return(orig_str);
-    }
-
+CSVRow::escapeCharacters(const std::string& orig_str, const char separator) {
+    auto org_cstr = orig_str.c_str();
+    auto orgpos = &org_cstr[0];
     std::stringstream ss;
-    while (char_pos < orig_str.size()) {
-        // Copy everything upto the character to escape.
-        ss << orig_str.substr(prev_pos, char_pos - prev_pos);
-
-        // Copy the escape tag followed by the hex digits of the character.
-        ss << escape_tag << std::hex << std::setw(2)
-           << static_cast<uint16_t>(orig_str[char_pos]);
-
-        ++char_pos;
-        prev_pos = char_pos;
-
-        // Find the next character to escape.
-        char_pos = orig_str.find_first_of(escape_chars, prev_pos);
-
-        // If no more, copy the remainder of the string.
-        if (char_pos == std::string::npos) {
-            ss << orig_str.substr(prev_pos, char_pos - prev_pos);
-            break;
+    while (*orgpos) {
+        if (*orgpos & 0x80 || !(*orgpos & 0x60) || *orgpos == separator ||
+            *orgpos == escape_tag[0]) {
+            ss << escape_tag << str::byteToHex(*orgpos);
+        } else {
+           ss << static_cast<uint8_t>(*orgpos);
         }
 
-    };
+        ++orgpos;
+    }
 
     // Return the escaped string.
     return(ss.str());
@@ -515,13 +492,13 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
         if (dig_pos <= escaped_str.size() - 2) {
             for (int i = 0; i < 2; ++i) {
                 uint8_t digit = escaped_str[dig_pos];
-
-                if (digit >= 'a' && digit <= 'f') {
+                if (digit >= '0' && digit <= '9') {
+                    digit -= '0';
+                }
+                else if (digit >= 'a' && digit <= 'f') {
                     digit = digit - 'a' + 10;
                 } else if (digit >= 'A' && digit <= 'F') {
                     digit = digit - 'A' + 10;
-                } else if (digit >= '0' && digit <= '9') {
-                    digit -= '0';
                 } else {
                     converted = false;
                     break;

@@ -308,6 +308,12 @@ std::string dumpDouble(double val, size_t precision = 5);
 std::string
 printOrDump(const std::vector<uint8_t>& data, size_t max_dump);
 
+/// @brief Converts a byte to a two hex digit string.
+///
+/// @param byte byte to convert
+/// @return two hex digit string.
+const std::string& byteToHex(uint8_t byte);
+
 }  // namespace str
 }  // namespace util
 }  // namespace isc

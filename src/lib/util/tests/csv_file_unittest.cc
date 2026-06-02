@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <util/csv_file.h>
+#include <util/str.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <fstream>
@@ -18,29 +19,20 @@ using namespace isc::util;
 
 // This test exercises escaping and unescaping of characters.
 TEST(CSVRowTest, escapeUnescape) {
-    std::string orig(",FO^O\\,B?,AR,");
+    //  Make a string of all characters.
+    std::stringstream ss;
+    for (uint16_t i = 1; i < 256; ++i) {
+        ss << static_cast<uint8_t>(i);
+    }
 
-    // We'll escape commas, question marks, and carets.
-    std::string escaped = CSVRow::escapeCharacters(orig, ",?^");
-    EXPECT_EQ ("&#x2cFO&#x5eO\\&#x2cB&#x3f&#x2cAR&#x2c", escaped);
+    // Create the escaped string. Use comma for a delimiter.
+    auto org = ss.str();
+    auto escaped = CSVRow::escapeCharacters(org, ',');
 
-    // Now make sure we can unescape it correctly.
-    std::string unescaped = CSVRow::unescapeCharacters(escaped);
-    EXPECT_EQ (orig, unescaped);
+    // Unescape it and make sure we get the original back.
+    auto unescaped = CSVRow::unescapeCharacters(escaped);
 
-    // Make sure that an incident occurrence of just the escape tag
-    // is left intact.
-    orig = ("no&#xescape");
-    escaped = CSVRow::escapeCharacters(orig, ",");
-    unescaped = CSVRow::unescapeCharacters(orig);
-    EXPECT_EQ (orig, unescaped);
-
-    // Make sure that an incidental occurrence of a valid
-    // escape tag sequence left intact.
-    orig = ("no&#x2cescape");
-    escaped = CSVRow::escapeCharacters(orig, ",");
-    unescaped = CSVRow::unescapeCharacters(escaped);
-    EXPECT_EQ (orig, unescaped);
+    EXPECT_EQ(unescaped, org);
 }
 
 // This test checks that the single data row is parsed.
@@ -122,21 +114,27 @@ TEST(CSVRow, render) {
 
 // This test checks that the data values can be set for the CSV row.
 TEST(CSVRow, writeAt) {
-    CSVRow row(4);
+    CSVRow row(5);
     row.writeAt(0, 10);
     row.writeAt(1, "foo");
     row.writeAt(2, "bar");
-    row.writeAtEscaped(3, "bar,one,two");
+    row.writeAtEscaped(3, "bar,one,two\nthree");
+    row.writeAt(4, "melon");
 
     EXPECT_EQ("10", row.readAt(0));
     EXPECT_EQ("foo", row.readAt(1));
     EXPECT_EQ("bar", row.readAt(2));
     // Read third column as-is and unescaped
-    EXPECT_EQ("bar&#x2cone&#x2ctwo", row.readAt(3));
-    EXPECT_EQ("bar,one,two", row.readAtEscaped(3));
+    EXPECT_EQ("bar&#x2cone&#x2ctwo&#x0athree", row.readAt(3));
+    EXPECT_EQ("bar,one,two\nthree", row.readAtEscaped(3));
 
-    EXPECT_THROW(row.writeAt(4, 20), CSVFileError);
-    EXPECT_THROW(row.writeAt(4, "foo"), CSVFileError);
+    // Fourth column should be fine even though third column
+    // contains a linefeed.
+    EXPECT_EQ("melon", row.readAt(4));
+
+    // Can't write past row limit.
+    EXPECT_THROW(row.writeAt(5, 20), CSVFileError);
+    EXPECT_THROW(row.writeAt(5, "foo"), CSVFileError);
 }
 
 // Checks whether writeAt() and append() can be mixed together.
