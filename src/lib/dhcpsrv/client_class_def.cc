@@ -177,6 +177,7 @@ TemplateClientClassDef::test(PktPtr pkt, const ExpressionPtr& expr_ptr) {
     try {
         std::string subclass = evaluateString(*expr_ptr, *pkt);
         if (!subclass.empty()) {
+            subclass = ClientClasses::escape(subclass);
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_TEMPLATE_EVAL_RESULT)
                 .arg(pkt->getLabel())
                 .arg(getName())

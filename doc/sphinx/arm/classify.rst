@@ -880,6 +880,21 @@ bottleneck.
        ...
    }
 
+.. note::
+
+   Kea version 3.2.0 introduced an escape mechanism to avoid problematic
+   characters in client class names:
+
+   - the escape character is the per-cent sign ``%``
+   - valid characters are letters, digits and ``!#$%&*+-./:?@^_|~``
+   - invalid characters are escaped into the escape character and
+     the two hexadecimal digits representing the code
+   - the escape character is doubled
+   - generated names (i.e. vendor and spawned classes) are escaped
+   - when a configured name does not match its escaped form (i.e.
+     contains an invalid character or the escape) a warning is
+     emitted. A future version could reject the config.
+
 .. _template-classes:
 
 Template Classes

@@ -605,7 +605,30 @@ TEST_F(ClientClassDefParserTest, escapedName) {
     std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo bar' ";
     warn += "includes problematic characters: ";
     warn += "its escaped form is 'foo%20bar'";
-    EXPECT_EQ(1, countFile(warn));
+    EXPECT_EQ(1U, countFile(warn));
+}
+
+// Verifies you can create a class with a per-cent sign in the name.
+// (the per-cent sign is doubled by escape() to enforce the injection,
+// i.e. to make escape("foo bar") and escape("foo%20bar") different)
+TEST_F(ClientClassDefParserTest, escapedName2) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"foo%bar\" \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("foo%bar", cclass->getName());
+
+    // A warning should be in logs.
+    std::string warn = "DHCPSRV_CLASS_BAD_NAME class name 'foo%bar' ";
+    warn += "includes problematic characters: ";
+    warn += "its escaped form is 'foo%%bar'";
+    EXPECT_EQ(1U, countFile(warn));
 }
 
 // Verifies you can create a class with a name, expression,
@@ -2450,5 +2473,60 @@ TEST_F(ClientClassDefParserTest, negativeLifetimes6) {
     }
 }
 
+// Verifies that spawned class names are escaped. (v4 variant)
+TEST_F(ClientClassDefParserTest, escapeSpawn4) {
+    CfgMgr::instance().setFamily(AF_INET);
+
+    std::string config = R"^({
+        "name": "my_template",
+        "template-test": "option[host-name].text"
+    })^";
+
+    ClientClassDefPtr cclass = parseClientClassDef(config, AF_INET);
+    ASSERT_TRUE(cclass);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+    EXPECT_EQ("my_template", cclass->getName());
+    ExpressionPtr expr = cclass->getMatchExpr();
+    ASSERT_TRUE(expr);
+
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 123));
+    ASSERT_TRUE(pkt);
+    OptionPtr opt(new OptionString(Option::V4, DHO_HOST_NAME, "foo bar"));
+    ASSERT_TRUE(opt);
+    pkt->addOption(opt);
+    cclass->test(pkt, expr);
+    EXPECT_TRUE(pkt->inClass("my_template"));
+    EXPECT_TRUE(pkt->inClass("SPAWN_my_template_foo%20bar"));
+    EXPECT_EQ(1U, countFile("DHCPSRV_TEMPLATE_EVAL_RESULT"));
+    EXPECT_EQ(1U, countFile("Expression 'my_template' evaluated to foo%20bar"));
+}
+
+// Verifies that spawned class names are escaped. (v6 variant)
+TEST_F(ClientClassDefParserTest, escapeSpawn6) {
+    CfgMgr::instance().setFamily(AF_INET6);
+
+    std::string config = R"^({
+        "name": "my_template",
+        "template-test": "option[bootfile-url].text"
+    })^";
+
+    ClientClassDefPtr cclass = parseClientClassDef(config, AF_INET6);
+    ASSERT_TRUE(cclass);
+    ASSERT_TRUE(dynamic_cast<TemplateClientClassDef*>(cclass.get()));
+    EXPECT_EQ("my_template", cclass->getName());
+    ExpressionPtr expr = cclass->getMatchExpr();
+    ASSERT_TRUE(expr);
+
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 123));
+    ASSERT_TRUE(pkt);
+    OptionPtr opt(new OptionString(Option::V6, D6O_BOOTFILE_URL, "foo bar"));
+    ASSERT_TRUE(opt);
+    pkt->addOption(opt);
+    cclass->test(pkt, expr);
+    EXPECT_TRUE(pkt->inClass("my_template"));
+    EXPECT_TRUE(pkt->inClass("SPAWN_my_template_foo%20bar"));
+    EXPECT_EQ(1U, countFile("DHCPSRV_TEMPLATE_EVAL_RESULT"));
+    EXPECT_EQ(1U, countFile("Expression 'my_template' evaluated to foo%20bar"));
+}
 
 } // end of anonymous namespace

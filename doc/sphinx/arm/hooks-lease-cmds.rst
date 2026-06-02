@@ -1296,19 +1296,19 @@ following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 11:16:36.000000",
-	                "delegated-len": 128,
-	                "end-address": "178.0.255.255",
-	                "free-leases": 65535,
-	                "lease-type": "V4",
-	                "modified-ts": "2026-05-05 11:16:36.000000",
-	                "start-address": "178.0.0.1",
-	                "subnet-id": 1
-	            },
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 11:16:36.000000",
+                        "delegated-len": 128,
+                        "end-address": "178.0.255.255",
+                        "free-leases": 65535,
+                        "lease-type": "V4",
+                        "modified-ts": "2026-05-05 11:16:36.000000",
+                        "start-address": "178.0.0.1",
+                        "subnet-id": 1
+                    },
                 {
                     "created-ts": "2026-05-05 11:18:02.000000",
                     "delegated-len": 128,
@@ -1319,11 +1319,11 @@ following format:
                     "start-address": "192.0.2.0",
                     "subnet-id": 2
                 }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "1 pool(s) found."
-	}
+                ]
+            },
+            "result": 0,
+            "text": "1 pool(s) found."
+        }
 
 An example :isccmd:`sflq-pool6-get-all` command for fetching IPv6 SFLQ
 pools:
@@ -1339,34 +1339,34 @@ following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 13:21:10.000000",
-	                "delegated-len": 120,
-	                "end-address": "2001:db8:1::ffff",
-	                "free-leases": 256,
-	                "lease-type": "IA_PD",
-	                "modified-ts": "2026-05-05 13:21:10.000000",
-	                "start-address": "2001:db8:1::",
-	                "subnet-id": 1
-	            },
-	            {
-	                "created-ts": "2026-05-05 08:40:40.000000",
-	                "delegated-len": 128,
-	                "end-address": "3001::ffff",
-	                "free-leases": 65520,
-	                "lease-type": "IA_NA",
-	                "modified-ts": "2026-05-05 08:40:41.000000",
-	                "start-address": "3001::10",
-	                "subnet-id": 2
-	            }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "2 pool(s) found."
-	}
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 13:21:10.000000",
+                        "delegated-len": 120,
+                        "end-address": "2001:db8:1::ffff",
+                        "free-leases": 256,
+                        "lease-type": "IA_PD",
+                        "modified-ts": "2026-05-05 13:21:10.000000",
+                        "start-address": "2001:db8:1::",
+                        "subnet-id": 1
+                    },
+                    {
+                        "created-ts": "2026-05-05 08:40:40.000000",
+                        "delegated-len": 128,
+                        "end-address": "3001::ffff",
+                        "free-leases": 65520,
+                        "lease-type": "IA_NA",
+                        "modified-ts": "2026-05-05 08:40:41.000000",
+                        "start-address": "3001::10",
+                        "subnet-id": 2
+                    }
+                ]
+            },
+            "result": 0,
+            "text": "2 pool(s) found."
+        }
 
 
 .. isccmd:: sflq-pool4-get-by-subnet
@@ -1387,72 +1387,72 @@ pools is shown below:
 
 ::
 
-	{
-	    "command": "sflq-pool4-get-by-subnet",
-	    "arguments": {
-	        "subnet-id" : 1
-	    }
-	}
+        {
+            "command": "sflq-pool4-get-by-subnet",
+            "arguments": {
+                "subnet-id" : 1
+            }
+        }
 
 The returned response contains a detailed list of IPv4 SLFQ pools in
 following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 11:18:02.000000",
-	                "delegated-len": 128,
-	                "end-address": "192.0.2.255",
-	                "free-leases": 256,
-	                "lease-type": "V4",
-	                "modified-ts": "2026-05-05 11:18:02.000000",
-	                "start-address": "192.0.2.0",
-	                "subnet-id": 1
-	            }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "1 pool(s) found."
-	}
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 11:18:02.000000",
+                        "delegated-len": 128,
+                        "end-address": "192.0.2.255",
+                        "free-leases": 256,
+                        "lease-type": "V4",
+                        "modified-ts": "2026-05-05 11:18:02.000000",
+                        "start-address": "192.0.2.0",
+                        "subnet-id": 1
+                    }
+                ]
+            },
+            "result": 0,
+            "text": "1 pool(s) found."
+        }
 
 An example :isccmd:`sflq-pool6-get-by-subnet` command for fetching IPv6 SFLQ
 pools is shown below:
 
 ::
 
-	{
-	    "command": "sflq-pool6-get-by-subnet",
-	    "arguments": {
-	        "subnet-id" : 100
-	    }
-	}
+        {
+            "command": "sflq-pool6-get-by-subnet",
+            "arguments": {
+                "subnet-id" : 100
+            }
+        }
 
 The returned response contains a detailed list of IPv6 SLFQ pools in
 following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 13:21:10.000000",
-	                "delegated-len": 120,
-	                "end-address": "2001:db8:1::ffff",
-	                "free-leases": 256,
-	                "lease-type": "IA_PD",
-	                "modified-ts": "2026-05-05 13:21:10.000000",
-	                "start-address": "2001:db8:1::",
-	                "subnet-id": 100
-	            }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "1 pool(s) found."
-	}
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 13:21:10.000000",
+                        "delegated-len": 120,
+                        "end-address": "2001:db8:1::ffff",
+                        "free-leases": 256,
+                        "lease-type": "IA_PD",
+                        "modified-ts": "2026-05-05 13:21:10.000000",
+                        "start-address": "2001:db8:1::",
+                        "subnet-id": 100
+                    }
+                ]
+            },
+            "result": 0,
+            "text": "1 pool(s) found."
+        }
 
 .. isccmd:: sflq-pool4-get-by-range
 .. _command-sflq-pool4-get-by-range:
@@ -1472,84 +1472,84 @@ pools is shown below:
 
 ::
 
-	{
-	    "command": "sflq-pool4-get-by-range",
-	    "arguments": {
-	        "start-address": "178.0.0.0",
-	        "end-address": "178.255.255.255"
-	    }
-	}
+        {
+            "command": "sflq-pool4-get-by-range",
+            "arguments": {
+                "start-address": "178.0.0.0",
+                "end-address": "178.255.255.255"
+            }
+        }
 
 The returned response contains a detailed list of IPv4 SLFQ pools in
 following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 11:16:36.000000",
-	                "delegated-len": 128,
-	                "end-address": "178.0.255.255",
-	                "free-leases": 65535,
-	                "lease-type": "V4",
-	                "modified-ts": "2026-05-05 11:16:36.000000",
-	                "start-address": "178.0.0.1",
-	                "subnet-id": 1
-	            }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "1 pool(s) found."
-	}
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 11:16:36.000000",
+                        "delegated-len": 128,
+                        "end-address": "178.0.255.255",
+                        "free-leases": 65535,
+                        "lease-type": "V4",
+                        "modified-ts": "2026-05-05 11:16:36.000000",
+                        "start-address": "178.0.0.1",
+                        "subnet-id": 1
+                    }
+                ]
+            },
+            "result": 0,
+            "text": "1 pool(s) found."
+        }
 
 An example :isccmd:`sflq-pool6-get-by-range` command for fetching IPv6 SFLQ
 pools is shown below:
 
 ::
 
-	{
-	    "command": "sflq-pool6-get-by-range",
-	    "arguments": {
-	        "start-address": "3001::",
-	        "end-address": "3002::"
-	    }
-	}
+        {
+            "command": "sflq-pool6-get-by-range",
+            "arguments": {
+                "start-address": "3001::",
+                "end-address": "3002::"
+            }
+        }
 
 The returned response contains a detailed list of IPv6 SLFQ pools in
 following format:
 
 ::
 
-	{
-	    "arguments": {
-	        "pools": [
-	            {
-	                "created-ts": "2026-05-05 08:40:40.000000",
-	                "delegated-len": 128,
-	                "end-address": "3001::ffff",
-	                "free-leases": 65520,
-	                "lease-type": "IA_NA",
-	                "modified-ts": "2026-05-05 08:40:41.000000",
-	                "start-address": "3001::10",
-	                "subnet-id": 3001
-	            },
-	            {
-	                "created-ts": "2026-05-05 08:40:41.000000",
-	                "delegated-len": 64,
-	                "end-address": "3001:20:0:ff:ffff:ffff:ffff:ffff",
-	                "free-leases": 256,
-	                "lease-type": "IA_PD",
-	                "modified-ts": "2026-05-05 08:40:41.000000",
-	                "start-address": "3001:20::",
-	                "subnet-id": 3001
-	            }
-	        ]
-	    },
-	    "result": 0,
-	    "text": "2 pool(s) found."
-	}
+        {
+            "arguments": {
+                "pools": [
+                    {
+                        "created-ts": "2026-05-05 08:40:40.000000",
+                        "delegated-len": 128,
+                        "end-address": "3001::ffff",
+                        "free-leases": 65520,
+                        "lease-type": "IA_NA",
+                        "modified-ts": "2026-05-05 08:40:41.000000",
+                        "start-address": "3001::10",
+                        "subnet-id": 3001
+                    },
+                    {
+                        "created-ts": "2026-05-05 08:40:41.000000",
+                        "delegated-len": 64,
+                        "end-address": "3001:20:0:ff:ffff:ffff:ffff:ffff",
+                        "free-leases": 256,
+                        "lease-type": "IA_PD",
+                        "modified-ts": "2026-05-05 08:40:41.000000",
+                        "start-address": "3001:20::",
+                        "subnet-id": 3001
+                    }
+                ]
+            },
+            "result": 0,
+            "text": "2 pool(s) found."
+        }
 
 
 .. isccmd:: sflq-pool4-del

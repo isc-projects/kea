@@ -264,6 +264,9 @@ public:
     /// @brief Valid character in a client class name boolean vector.
     static const std::vector<bool> CLIENT_CLASS_VALID_CHARACTERS;
 
+    /// @brief Escape character.
+    static constexpr char CLIENT_CLASS_ESCAPE = '%';
+
     /// @brief Escape a client class name.
     ///
     /// Valid characters are letters, digits and '!#$%&*+-./:?@^_|~'.

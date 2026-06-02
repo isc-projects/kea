@@ -202,11 +202,12 @@ ClientClasses::escape(const std::string& name) {
         unsigned u = static_cast<unsigned>(c);
         if ((u < 128) && CLIENT_CLASS_VALID_CHARACTERS[u]) {
             ss << c;
-            if (c == '%') {
+            if (c == CLIENT_CLASS_ESCAPE) {
                 ss << c;
             }
         } else {
-            ss << '%' << std::hex << std::setfill('0') << std::setw(2) << u;
+            ss << CLIENT_CLASS_ESCAPE
+               << std::hex << std::setfill('0') << std::setw(2) << u;
         }
     }
     return (ss.str());
