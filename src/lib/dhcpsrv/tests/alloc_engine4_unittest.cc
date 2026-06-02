@@ -2587,6 +2587,74 @@ TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocation) {
 
 // This test checks that the behavior of the allocation engine in the following
 // scenario:
+// - Client A has an expired lease in the database.
+// - Client B has a reservation for the address in use by client A.
+// - Client B sends a DHCPDISCOVER.
+// - Server determines that the reserved address is in use by a different client
+//   but it is expired and tries to reuse it and fails. It can not allocate a
+//   new lease either as if there is a limit in place.
+TEST_F(AllocEngine4Test, reservedAddressHijackedFakeAllocationSelectLeaseSkip) {
+    // Create a reservation for the client B.
+    HostPtr host(new Host(&hwaddr_->hwaddr_[0], hwaddr_->hwaddr_.size(),
+                          Host::IDENT_HWADDR, subnet_->getID(),
+                          SUBNET_ID_UNUSED, IOAddress("192.0.2.123")));
+    CfgMgr::instance().getStagingCfg()->getCfgHosts()->add(host);
+    CfgMgr::instance().commit();
+
+    // Create a lease for the client A (which is expired).
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.2.123"), hwaddr2_, 0, 0,
+                               100, time(NULL) - 200, subnet_->getID(),
+                               false, false, ""));
+    LeaseMgrFactory::instance().addLease(lease);
+
+    AllocEngine engine(0);
+
+    // Create callout which sets NEXT_STEP_SKIP flag.
+    auto callback = [](CalloutHandle& callout_handle) -> int {
+        callout_handle.setStatus(CalloutHandle::NEXT_STEP_SKIP);
+
+        return (0);
+    };
+
+    // Register the callout for the "lease4_select" hook point.
+    HooksManager::preCalloutsLibraryHandle().registerCallout("lease4_select", callback);
+
+    // Query allocation engine for the lease to be allocated to the client B.
+    // The allocation engine is not able to allocate the lease to the client
+    // B, because the address is in use by client A.
+    AllocEngine::ClientContext4 ctx1(subnet_, clientid_, hwaddr_,
+                                     IOAddress("192.0.2.123"), false, false,
+                                     "", true);
+
+    ctx1.callout_handle_ = HooksManager::createCalloutHandle();
+
+    ctx1.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    AllocEngine::findReservation(ctx1);
+    Lease4Ptr allocated_lease = engine.allocateLease4(ctx1);
+
+    // The allocation engine should not return any address as it
+    // can neither reuse the lease or allocate a new lease.
+    ASSERT_FALSE(allocated_lease);
+    ASSERT_TRUE(ctx1.old_lease_);
+
+    // Do the same test. But, this time do not specify any address to be
+    // allocated.
+    AllocEngine::ClientContext4 ctx2(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"), false, false,
+                                     "", true);
+
+    ctx2.callout_handle_ = HooksManager::createCalloutHandle();
+
+    ctx2.query_.reset(new Pkt4(DHCPREQUEST, 1234));
+    AllocEngine::findReservation(ctx2);
+    allocated_lease = engine.allocateLease4(ctx2);
+
+    ASSERT_FALSE(allocated_lease);
+    ASSERT_TRUE(ctx2.old_lease_);
+}
+
+// This test checks that the behavior of the allocation engine in the following
+// scenario:
 // - Client has a reservation.
 // - Client has a lease in the database for a different address than reserved.
 // - Client sends a DHCPREQUEST and asks for a different address than reserved,
