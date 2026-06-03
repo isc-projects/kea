@@ -21,7 +21,7 @@ namespace isc {
 namespace dhcp {
 
 Pkt4o6::Pkt4o6(const OptionBuffer& pkt4, const Pkt6Ptr& pkt6)
-    : Pkt4(pkt4.data(), pkt4.size()), pkt6_(pkt6) {
+    : Pkt4(pkt4.empty() ? 0 : &pkt4[0], pkt4.size()), pkt6_(pkt6) {
     static_cast<void>(pkt6->delOption(D6O_DHCPV4_MSG));
     setIface(pkt6->getIface());
     setIndex(pkt6->getIndex());
