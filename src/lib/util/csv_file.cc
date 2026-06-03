@@ -450,8 +450,29 @@ std::string
 CSVRow::escapeCharacters(const std::string& orig_str, const char separator) {
     auto org_cstr = orig_str.c_str();
     auto orgpos = &org_cstr[0];
-    std::stringstream ss;
+
+    // Most of time we probably don't need escape to escape anything, so do
+    // a quick scan to see if anything needs escaping. For things like user-context
+    // we'll find a comma pretty quickly.
     while (*orgpos) {
+        // Safe chars have high bit clear and any of two bits in 0x60 set.
+        if (*orgpos & 0x80 || !(*orgpos & 0x60) || *orgpos == separator ||
+            *orgpos == escape_tag[0]) {
+            break;
+        }
+
+        ++orgpos;
+    };
+
+    if (!*orgpos) {
+        // Nothing to escape, return the original.
+        return (orig_str);
+    }
+
+    std::stringstream ss;
+    orgpos = &org_cstr[0];
+    while (*orgpos) {
+        // Safe chars have high bit clear and any of two bits in 0x60 set.
         if (*orgpos & 0x80 || !(*orgpos & 0x60) || *orgpos == separator ||
             *orgpos == escape_tag[0]) {
             ss << escape_tag << str::byteToHex(*orgpos);
