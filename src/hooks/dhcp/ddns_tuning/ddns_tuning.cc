@@ -181,6 +181,10 @@ DdnsTuningImpl::parseExpression(const std::string& expression_str) const {
 
 std::string
 DdnsTuningImpl::calculateHostname(PktPtr query, ConstSubnetPtr subnet) {
+    if (!subnet) {
+        return (std::string(""));
+    }
+
     // Look for a hostname expression first by subnet, then globally.
     auto hostname_expr = fetchScopedHostnameExpression(subnet);
 

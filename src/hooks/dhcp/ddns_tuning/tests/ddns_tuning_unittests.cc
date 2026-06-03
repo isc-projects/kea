@@ -221,6 +221,10 @@ public:
         std::string calculated_name = "orig_text";
         ASSERT_NO_THROW_LOG(calculated_name = impl_->calculateHostname(pkt, (getSubnet(0))));
         EXPECT_EQ(calculated_name, "global");
+
+        calculated_name = "";
+        ASSERT_NO_THROW_LOG(calculated_name = impl_->calculateHostname(pkt, ConstSubnetPtr()));
+        EXPECT_EQ(calculated_name, "");
     }
 
     /// @brief Verify that a subnet expression can be configured and used.
