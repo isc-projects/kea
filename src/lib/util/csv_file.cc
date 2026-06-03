@@ -446,45 +446,43 @@ CSVFile::validateHeader(const CSVRow& header) {
 
 const std::string CSVRow::escape_tag("&#x");
 
+// Macro used in check if a character should be escaped.
+// Safe chars are less than 127 and have any of two bits
+// in 0x60 set. This is faster than isprint().
+#define ESCAPE_IT(c,s,e) (c > 0x7e || !(c & 0x60) || c == s || c == e)
+
 std::string
 CSVRow::escapeCharacters(const std::string& orig_str, const char separator) {
     auto org_cstr = orig_str.c_str();
-    auto orgpos = &org_cstr[0];
+    const char* orgpos;
 
     // Most of time we probably don't need escape to escape anything, so do
     // a quick scan to see if anything needs escaping. For things like user-context
     // we'll find a comma pretty quickly.
-    while (*orgpos) {
-        // Safe chars have high bit clear and any of two bits in 0x60 set.
-        if (*orgpos & 0x80 || !(*orgpos & 0x60) || *orgpos == separator ||
-            *orgpos == escape_tag[0]) {
+    for ( orgpos = &org_cstr[0] ; *orgpos ; ++orgpos) {
+        if (ESCAPE_IT(*orgpos, separator, escape_tag[0])) {
             break;
         }
-
-        ++orgpos;
-    };
+    }
 
     if (!*orgpos) {
         // Nothing to escape, return the original.
         return (orig_str);
     }
 
-    std::stringstream ss;
-    orgpos = &org_cstr[0];
-    while (*orgpos) {
-        // Safe chars have high bit clear and any of two bits in 0x60 set.
-        if (*orgpos & 0x80 || !(*orgpos & 0x60) || *orgpos == separator ||
-            *orgpos == escape_tag[0]) {
-            ss << escape_tag << str::byteToHex(*orgpos);
+    // Iterate over the original string, escaped chars that need it.
+    std::string esc_str;
+    for ( orgpos = &org_cstr[0] ; *orgpos ; ++orgpos) {
+        if (ESCAPE_IT(*orgpos, separator, escape_tag[0])) {
+            esc_str.append(escape_tag);
+            esc_str.append(str::byteToHex(*orgpos));
         } else {
-           ss << static_cast<uint8_t>(*orgpos);
+            esc_str.append(1, *orgpos);
         }
-
-        ++orgpos;
     }
 
-    // Return the escaped string.
-    return(ss.str());
+    // Return the escapd string.
+    return (esc_str);
 }
 
 std::string
@@ -563,7 +561,6 @@ CSVRow::unescapeCharacters(const std::string& escaped_str) {
 
     return(ss.str());
 }
-
 
 } // end of isc::util namespace
 } // end of isc namespace
