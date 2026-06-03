@@ -222,7 +222,7 @@ public:
         ASSERT_NO_THROW_LOG(calculated_name = impl_->calculateHostname(pkt, (getSubnet(0))));
         EXPECT_EQ(calculated_name, "global");
 
-        calculated_name = "";
+        calculated_name = "orig_text";
         ASSERT_NO_THROW_LOG(calculated_name = impl_->calculateHostname(pkt, ConstSubnetPtr()));
         EXPECT_EQ(calculated_name, "");
     }

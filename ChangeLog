@@ -1,3 +1,8 @@
+2478.	[bug]		razvan
+	Fixed an issue that caused kea-dhcp6 to incorrectly emit a
+	DDNS_TUNINT6_PROCESS_ERROR when subnet selection has failed.
+	(Gitlab #4499)
+
 Kea 3.1.9 (development) released on May 27, 2026
 
 2477.	[build]		andrei
