@@ -1,0 +1,4 @@
+[perf]		fdupont
+	Improved efficiency and correctness of the existence check
+	done before adding a new lease in the memory database.
+	(Gitlab #4551)
