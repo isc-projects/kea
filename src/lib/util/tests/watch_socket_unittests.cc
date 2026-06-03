@@ -169,7 +169,7 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
 
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
-    ASSERT_EQ((read (select_fd, &buf, sizeof(buf))),
+    ASSERT_EQ((read(select_fd, &buf, sizeof(buf))),
               static_cast<int>(sizeof(buf)));
     ASSERT_EQ(WatchSocket::MARKER, buf);
 
@@ -211,7 +211,7 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     // Interfere by reading the fd. This should empty the read pipe.
     uint32_t buf = 0;
-    ASSERT_EQ((read (select_fd, &buf, 1)), 1);
+    ASSERT_EQ((read(select_fd, &buf, 1)), 1);
     ASSERT_NE(WatchSocket::MARKER, buf);
 
     // Really nothing that can be done to protect against this, but let's

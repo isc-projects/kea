@@ -252,8 +252,8 @@ TEST_F(FDEventHandlerTest, noLimit) {
             EXPECT_FALSE(handler_->hasError(fds[i]));
             size_t data = 0;
             if (ready) {
-              EXPECT_EQ(static_cast<int>(sizeof(i)),
-                        read(fds[i], &data, sizeof(data)));
+                EXPECT_EQ(static_cast<int>(sizeof(i)),
+                          read(fds[i], &data, sizeof(data)));
             }
             EXPECT_EQ(data, i / 2);
             close(fds[i]);
