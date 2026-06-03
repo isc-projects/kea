@@ -52,7 +52,9 @@ void checkIntStat(PacketQueuePtrType queue, const std::string& name, size_t exp_
 
     int64_t value = 0;
     ASSERT_NO_THROW(value = elem->intValue());
-    EXPECT_EQ(exp_value, value) << "stat: " << name << " is wrong" << std::endl;;
+    int64_t exp_value64 = exp_value;
+    EXPECT_EQ(exp_value64, value)
+        << "stat: " << name << " is wrong" << std::endl;;
 }
 
 extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity, bool enable_queue=true);

@@ -192,9 +192,9 @@ public:
         OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
 
         ASSERT_TRUE(option12);
-        EXPECT_EQ(12, option12->getType());  // this should be option 12
-        ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
-        EXPECT_EQ(5, option12->len()); // total option length 5
+        EXPECT_EQ(12U, option12->getType());  // this should be option 12
+        ASSERT_EQ(3U, option12->getValue().length()); // it should be of length 3
+        EXPECT_EQ(5U, option12->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&option12->getValue()[0], opt_data_ptr + 2, 2)); // data len=3
         opt_data_ptr += x->len();
 
@@ -204,34 +204,34 @@ public:
         // the appropriate conversion.
         OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x);
         ASSERT_TRUE(option14);
-        EXPECT_EQ(14, option14->getType());  // this should be option 14
-        ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
-        EXPECT_EQ(5, option14->len()); // total option length 5
+        EXPECT_EQ(14U, option14->getType());  // this should be option 14
+        ASSERT_EQ(3U, option14->getValue().length()); // it should be of length 3
+        EXPECT_EQ(5U, option14->len()); // total option length 5
 
         EXPECT_EQ(0, memcmp(&option14->getValue()[0], opt_data_ptr + 2, 3)); // data len=3
         opt_data_ptr += x->len();
 
         x = pkt->getOption(60);
         ASSERT_TRUE(x); // option 60 should exist
-        EXPECT_EQ(60, x->getType());  // this should be option 60
-        ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-        EXPECT_EQ(5, x->len()); // total option length 5
+        EXPECT_EQ(60U, x->getType());  // this should be option 60
+        ASSERT_EQ(3U, x->getData().size()); // it should be of length 3
+        EXPECT_EQ(5U, x->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
         opt_data_ptr += x->len();
 
         x = pkt->getOption(128);
         ASSERT_TRUE(x); // option 3 should exist
-        EXPECT_EQ(128, x->getType());  // this should be option 254
-        ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-        EXPECT_EQ(5, x->len()); // total option length 5
+        EXPECT_EQ(128U, x->getType());  // this should be option 254
+        ASSERT_EQ(3U, x->getData().size()); // it should be of length 3
+        EXPECT_EQ(5U, x->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
         opt_data_ptr += x->len();
 
         x = pkt->getOption(254);
         ASSERT_TRUE(x); // option 3 should exist
-        EXPECT_EQ(254, x->getType());  // this should be option 254
-        ASSERT_EQ(3, x->getData().size()); // it should be of length 3
-        EXPECT_EQ(5, x->len()); // total option length 5
+        EXPECT_EQ(254U, x->getType());  // this should be option 254
+        ASSERT_EQ(3U, x->getData().size()); // it should be of length 3
+        EXPECT_EQ(5U, x->len()); // total option length 5
         EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
     }
 
@@ -263,7 +263,7 @@ TEST_F(Pkt4Test, constructor) {
     // Option taking extra 3 bytes it is 239
     EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN) + 3, pkt->len());
     EXPECT_EQ(DHCPDISCOVER, pkt->getType());
-    EXPECT_EQ(0xffffffff, pkt->getTransid());
+    EXPECT_EQ(0xffffffffU, pkt->getTransid());
     EXPECT_NO_THROW(pkt.reset());
 
     // Negative case. Should drop truncated messages.
@@ -624,7 +624,7 @@ TEST_F(Pkt4Test, getOptions) {
 
     // Retrieve options with option code 1.
     OptionCollection options = pkt->getOptions(1);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     OptionCollection::const_iterator opt_it;
 
@@ -641,7 +641,7 @@ TEST_F(Pkt4Test, getOptions) {
 
     // Retrieve options with option code 2.
     options = pkt->getOptions(2);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     // opt3 and opt4 should exist.
     opt_it = std::find(options.begin(), options.end(),
@@ -656,7 +656,7 @@ TEST_F(Pkt4Test, getOptions) {
     pkt->setCopyRetrievedOptions(true);
 
     options = pkt->getOptions(1);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     // Both retrieved options should be copied so an attempt to find them
     // using option pointer should fail. Original pointers should have
@@ -682,7 +682,7 @@ TEST_F(Pkt4Test, getOptions) {
     // Let's check that remaining two options haven't been affected by
     // retrieving the options with option code 1.
     options = pkt->getOptions(2);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     opt_it = std::find(options.begin(), options.end(),
                        std::pair<const unsigned int, OptionPtr>(2, opt3));
@@ -990,7 +990,7 @@ TEST_F(Pkt4Test, isRelayed) {
     Pkt4 pkt(DHCPDISCOVER, 1234);
     // By default, the hops and giaddr should be 0.
     ASSERT_TRUE(pkt.getGiaddr().isV4Zero());
-    ASSERT_EQ(0, pkt.getHops());
+    ASSERT_EQ(0U, pkt.getHops());
     // For zero giaddr the packet is non-relayed.
     EXPECT_FALSE(pkt.isRelayed());
     // Set giaddr but leave hops = 0.
@@ -1047,11 +1047,11 @@ TEST_F(Pkt4Test, additionalClientClasses) {
 
     // Add to the first class
     pkt.addAdditionalClass(DOCSIS3_CLASS_EROUTER);
-    EXPECT_EQ(1, pkt.getAdditionalClasses().size());
+    EXPECT_EQ(1U, pkt.getAdditionalClasses().size());
 
     // Add to a second class
     pkt.addAdditionalClass(DOCSIS3_CLASS_MODEM);
-    EXPECT_EQ(2, pkt.getAdditionalClasses().size());
+    EXPECT_EQ(2U, pkt.getAdditionalClasses().size());
     EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_EROUTER));
     EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_MODEM));
     EXPECT_FALSE(pkt.getAdditionalClasses().contains("foo"));
@@ -1447,7 +1447,7 @@ TEST_F(Pkt4Test, truncatedVendorLength) {
     ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, x->getType());
     OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
     ASSERT_TRUE(vivso);
-    EXPECT_EQ(133+2, vivso->len()); // data + opt code + len
+    EXPECT_EQ(133 + 2U, vivso->len()); // data + opt code + len
 
     // Build a bad discover packet
     pkt = dhcp::test::PktCaptures::discoverWithTruncatedVIVSO();
@@ -1508,22 +1508,22 @@ TEST_F(Pkt4Test, nullTerminatedOptions) {
     // Now let's verify that each text option is as expected.
     ASSERT_TRUE(opt = pkt->getOption(DHO_HOST_NAME));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("two", opstr->getValue());
 
     ASSERT_TRUE(opt = pkt->getOption(DHO_MERIT_DUMP));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("one", opstr->getValue());
 
     ASSERT_TRUE(opt = pkt->getOption(DHO_ROOT_PATH));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(4, opstr->getValue().length());
+    EXPECT_EQ(4U, opstr->getValue().length());
     EXPECT_EQ("none", opstr->getValue());
 
     ASSERT_TRUE(opt = pkt->getOption(DHO_DOMAIN_NAME));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(6, opstr->getValue().length());
+    EXPECT_EQ(6U, opstr->getValue().length());
     std::string embed{"em\0bed", 6};
     EXPECT_EQ(embed, opstr->getValue());
 
@@ -1595,7 +1595,7 @@ TEST_F(Pkt4Test, testSkipThisOptionError) {
     OptionStringPtr opstr;
     ASSERT_TRUE(opt = pkt->getOption(14));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("abc", opstr->getValue());
 
     // We should not have option 12.
@@ -1604,7 +1604,7 @@ TEST_F(Pkt4Test, testSkipThisOptionError) {
     // We should have option 17 = "def".
     ASSERT_TRUE(opt = pkt->getOption(17));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("def", opstr->getValue());
 }
 

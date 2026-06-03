@@ -139,9 +139,8 @@ TEST_F(RootPktFilterBPFTest, send) {
     // Address Family pseudo header contains the address family of the
     // packet (used for local loopback interface instead of the link-layer
     // header such as ethernet frame header).
-    uint32_t af = 0;
-    memcpy(static_cast<void*>(&af),
-           static_cast<void*>(rcv_buf + bpfh_len), 4);
+    int32_t af = 0;
+    memcpy(static_cast<void*>(&af), static_cast<void*>(rcv_buf + bpfh_len), 4);
     // Check the value in the pseudo header. If this is incorrect, something
     // is really broken, so let's exit.
     ASSERT_EQ(AF_INET, af);

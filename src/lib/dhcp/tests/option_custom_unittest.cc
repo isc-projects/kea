@@ -152,7 +152,7 @@ TEST_F(OptionCustomTest, constructor) {
 
     // Check if constructor initialized the universe and type correctly.
     EXPECT_EQ(Option::V6, option->getUniverse());
-    EXPECT_EQ(1000, option->getType());
+    EXPECT_EQ(1000U, option->getType());
 
     // Do another round of testing for DHCPv4 option.
     OptionDefinition opt_def2("OPTION_FOO", 232, "my-space", "boolean");
@@ -163,7 +163,7 @@ TEST_F(OptionCustomTest, constructor) {
     ASSERT_TRUE(option);
 
     EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(232, option->getType());
+    EXPECT_EQ(232U, option->getType());
 
     // Try to create an option using 'empty data' constructor
     OptionDefinition opt_def3("OPTION_FOO", 1000, "my-space", "uint32");
@@ -174,7 +174,7 @@ TEST_F(OptionCustomTest, constructor) {
     ASSERT_TRUE(option);
 
     EXPECT_EQ(Option::V6, option->getUniverse());
-    EXPECT_EQ(1000, option->getType());
+    EXPECT_EQ(1000U, option->getType());
 }
 
 // The purpose of this test is to verify that 'empty' option definition can
@@ -196,7 +196,7 @@ TEST_F(OptionCustomTest, emptyData) {
     ASSERT_TRUE(option);
 
     // Option is 'empty' so no data fields are expected.
-    EXPECT_EQ(0, option->getDataFieldsNum());
+    EXPECT_EQ(0U, option->getDataFieldsNum());
 
     // Check that suboption has been parsed.
     EXPECT_TRUE(hasV4Suboption(option.get()));
@@ -231,7 +231,7 @@ TEST_F(OptionCustomTest, binaryData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // The custom option should hold just one buffer that can be
     // accessed using index 0.
@@ -277,7 +277,7 @@ TEST_F(OptionCustomTest, booleanData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Initialize the value to true because we want to make sure
     // that it is modified to 'false' by readBoolean below.
@@ -322,7 +322,7 @@ TEST_F(OptionCustomTest, tupleData4) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Check it
     std::string value;
@@ -375,7 +375,7 @@ TEST_F(OptionCustomTest, tupleData6) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Check it
     std::string value;
@@ -430,7 +430,7 @@ TEST_F(OptionCustomTest, fqdnData) {
     );
     ASSERT_TRUE(option);
 
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     std::string domain0 = option->readFqdn(0);
     EXPECT_EQ("mydomain.example.com.", domain0);
@@ -479,7 +479,7 @@ TEST_F(OptionCustomTest, int16Data) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Initialize value to 0 explicitly to make sure that is
     // modified by readInteger function to expected -234.
@@ -518,7 +518,7 @@ TEST_F(OptionCustomTest, int32Data) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Initialize value to 0 explicitly to make sure that is
     // modified by readInteger function to expected -234.
@@ -558,7 +558,7 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     IOAddress address("127.0.0.1");
     // Read IPv4 address from using index 0.
@@ -598,7 +598,7 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Custom option should comprise exactly one buffer that represents
     // IPv6 address.
@@ -643,7 +643,7 @@ TEST_F(OptionCustomTest, prefixData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Custom option should comprise exactly one buffer that represents
     // a prefix.
@@ -652,7 +652,7 @@ TEST_F(OptionCustomTest, prefixData) {
     ASSERT_NO_THROW(prefix = option->readPrefix(0));
 
     // The prefix comprises a prefix length and prefix value.
-    EXPECT_EQ(32, prefix.first.asUnsigned());
+    EXPECT_EQ(32U, prefix.first.asUnsigned());
     EXPECT_EQ("3000:1::", prefix.second.toText());
 
     // Parsed option should have one suboption.
@@ -681,7 +681,7 @@ TEST_F(OptionCustomTest, psidData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Custom option should comprise exactly one buffer that represents
     // a PSID length / PSID value tuple.
@@ -690,8 +690,8 @@ TEST_F(OptionCustomTest, psidData) {
     ASSERT_NO_THROW(psid = option->readPsid(0));
 
     // The PSID comprises a PSID length and PSID value.
-    EXPECT_EQ(4, psid.first.asUnsigned());
-    EXPECT_EQ(0x08, psid.second.asUint16());
+    EXPECT_EQ(4U, psid.first.asUnsigned());
+    EXPECT_EQ(0x08U, psid.second.asUint16());
 
     // Parsed option should have one suboption.
     EXPECT_TRUE(hasV6Suboption(option.get()));
@@ -722,7 +722,7 @@ TEST_F(OptionCustomTest, stringData) {
     ASSERT_TRUE(option);
 
     // We should have just one data field.
-    ASSERT_EQ(1, option->getDataFieldsNum());
+    ASSERT_EQ(1U, option->getDataFieldsNum());
 
     // Custom option should now comprise single string value that
     // can be accessed using index 0.
@@ -732,7 +732,7 @@ TEST_F(OptionCustomTest, stringData) {
     // The initial part of the string should contain the actual string.
     // The rest of it is a garbage from an attempt to decode suboption
     // as a string.
-    ASSERT_EQ(20, value.size());
+    ASSERT_EQ(20U, value.size());
     EXPECT_EQ("hello world!", value.substr(0, 12));
 
     // No suboption should be present.
@@ -768,7 +768,7 @@ TEST_F(OptionCustomTest, booleanDataArray) {
     ASSERT_TRUE(option);
 
     // We should have 5 data fields.
-    ASSERT_EQ(5, option->getDataFieldsNum());
+    ASSERT_EQ(5U, option->getDataFieldsNum());
 
     // Read values from custom option using indexes 0..4 and
     // check that they are valid.
@@ -831,7 +831,7 @@ TEST_F(OptionCustomTest, uint32DataArray) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Expect only 3 values.
     for (int i = 0; i < 3; ++i) {
@@ -876,7 +876,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -927,7 +927,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -981,7 +981,7 @@ TEST_F(OptionCustomTest, fqdnDataArray) {
 
     // We expect that two FQDN values have been extracted
     // from a buffer.
-    ASSERT_EQ(2, option->getDataFieldsNum());
+    ASSERT_EQ(2U, option->getDataFieldsNum());
 
     // Validate both values.
     std::string domain0 = option->readFqdn(0);
@@ -1017,7 +1017,7 @@ TEST_F(OptionCustomTest, prefixDataArray) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields with 3 prefixes.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     PrefixTuple prefix0(ZERO_PREFIX_TUPLE);
     PrefixTuple prefix1(ZERO_PREFIX_TUPLE);
@@ -1027,13 +1027,13 @@ TEST_F(OptionCustomTest, prefixDataArray) {
     ASSERT_NO_THROW(prefix1 = option->readPrefix(1));
     ASSERT_NO_THROW(prefix2 = option->readPrefix(2));
 
-    EXPECT_EQ(32, prefix0.first.asUnsigned());
+    EXPECT_EQ(32U, prefix0.first.asUnsigned());
     EXPECT_EQ("3001:1::", prefix0.second.toText());
 
-    EXPECT_EQ(16, prefix1.first.asUnsigned());
+    EXPECT_EQ(16U, prefix1.first.asUnsigned());
     EXPECT_EQ("3000::", prefix1.second.toText());
 
-    EXPECT_EQ(48, prefix2.first.asUnsigned());
+    EXPECT_EQ(48U, prefix2.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", prefix2.second.toText());
 }
 
@@ -1060,7 +1060,7 @@ TEST_F(OptionCustomTest, psidDataArray) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields with 3 PSIDs.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     PSIDTuple psid0;
     PSIDTuple psid1;
@@ -1071,16 +1071,16 @@ TEST_F(OptionCustomTest, psidDataArray) {
     ASSERT_NO_THROW(psid2 = option->readPsid(2));
 
     // PSID value is equal to '1000b' (8).
-    EXPECT_EQ(4, psid0.first.asUnsigned());
-    EXPECT_EQ(0x08, psid0.second.asUint16());
+    EXPECT_EQ(4U, psid0.first.asUnsigned());
+    EXPECT_EQ(0x08U, psid0.second.asUint16());
 
     // PSID value is equal to '110101b' (0x35).
-    EXPECT_EQ(6, psid1.first.asUnsigned());
-    EXPECT_EQ(0x35, psid1.second.asUint16());
+    EXPECT_EQ(6U, psid1.first.asUnsigned());
+    EXPECT_EQ(0x35U, psid1.second.asUint16());
 
     // PSID value is equal to '1b' (1).
-    EXPECT_EQ(1, psid2.first.asUnsigned());
-    EXPECT_EQ(0x01, psid2.second.asUint16());
+    EXPECT_EQ(1U, psid2.first.asUnsigned());
+    EXPECT_EQ(0x01U, psid2.second.asUint16());
 }
 
 // The purpose of this test is to verify that the data from a buffer
@@ -1103,7 +1103,7 @@ TEST_F(OptionCustomTest, tupleDataArray4) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Check them
     std::string value;
@@ -1145,7 +1145,7 @@ TEST_F(OptionCustomTest, tupleDataArray6) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Check them
     std::string value;
@@ -1199,12 +1199,12 @@ TEST_F(OptionCustomTest, recordDataWithSuboption) {
     ASSERT_TRUE(option);
 
     // We should have two data fields parsed.
-    ASSERT_EQ(2, option->getDataFieldsNum());
+    ASSERT_EQ(2U, option->getDataFieldsNum());
 
     // Validate values in fields.
     uint32_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint32_t>(0));
-    EXPECT_EQ(0x01020304, value0);
+    EXPECT_EQ(0x01020304U, value0);
 
     IOAddress value1 = 0;
     ASSERT_NO_THROW(value1 = option->readAddress(1));
@@ -1261,12 +1261,12 @@ TEST_F(OptionCustomTest, recordData) {
     ASSERT_TRUE(option);
 
     // We should have 6 data fields.
-    ASSERT_EQ(7, option->getDataFieldsNum());
+    ASSERT_EQ(7U, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(8712, value0);
+    EXPECT_EQ(8712U, value0);
 
     // Verify value in the field 1.
     bool value1 = false;
@@ -1291,8 +1291,8 @@ TEST_F(OptionCustomTest, recordData) {
     // Verify value in the field 5.
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(6, value5.first.asUnsigned());
-    EXPECT_EQ(0x35, value5.second.asUint16());
+    EXPECT_EQ(6U, value5.first.asUnsigned());
+    EXPECT_EQ(0x35U, value5.second.asUint16());
 
     // Verify value in the field 6.
     std::string value6;
@@ -1347,12 +1347,12 @@ TEST_F(OptionCustomTest, recordArrayData) {
     ASSERT_TRUE(option);
 
     // We should have 7+1 data fields.
-    ASSERT_EQ(8, option->getDataFieldsNum());
+    ASSERT_EQ(8U, option->getDataFieldsNum());
 
     // Verify value in the field 0.
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(8712, value0);
+    EXPECT_EQ(8712U, value0);
 
     // Verify value in the field 1.
     bool value1 = false;
@@ -1377,18 +1377,18 @@ TEST_F(OptionCustomTest, recordArrayData) {
     // Verify value in the field 5.
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(6, value5.first.asUnsigned());
-    EXPECT_EQ(0x35, value5.second.asUint16());
+    EXPECT_EQ(6U, value5.first.asUnsigned());
+    EXPECT_EQ(0x35U, value5.second.asUint16());
 
     // Verify value in the field 6.
     uint32_t value6;
     ASSERT_NO_THROW(value6 = option->readInteger<uint32_t>(6));
-    EXPECT_EQ(12345678, value6);
+    EXPECT_EQ(12345678U, value6);
 
     // Verify value in the extra field 7.
     uint32_t value7;
     ASSERT_NO_THROW(value7 = option->readInteger<uint32_t>(7));
-    EXPECT_EQ(87654321, value7);
+    EXPECT_EQ(87654321U, value7);
 }
 
 // The purpose of this test is to verify that truncated buffer
@@ -1521,7 +1521,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
     // The default value for integer data fields is 0.
     uint32_t value = 0;
     ASSERT_NO_THROW(option->readInteger<uint32_t>());
-    EXPECT_EQ(0, value);
+    EXPECT_EQ(0U, value);
 
     // Try to set the data field value to something different
     // than 0.
@@ -1529,7 +1529,7 @@ TEST_F(OptionCustomTest, setUint32Data) {
 
     // Verify that it has been set.
     ASSERT_NO_THROW(value = option->readInteger<uint32_t>());
-    EXPECT_EQ(1234, value);
+    EXPECT_EQ(1234U, value);
 }
 
 // The purpose of this test is to verify that an option comprising
@@ -1597,7 +1597,7 @@ TEST_F(OptionCustomTest, setPrefixData) {
     // Make sure the default prefix is set.
     PrefixTuple prefix(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(prefix = option->readPrefix());
-    EXPECT_EQ(0, prefix.first.asUnsigned());
+    EXPECT_EQ(0U, prefix.first.asUnsigned());
     EXPECT_EQ("::", prefix.second.toText());
 
     // Write prefix.
@@ -1605,7 +1605,7 @@ TEST_F(OptionCustomTest, setPrefixData) {
 
     // Read prefix back and make sure it is the one we just set.
     ASSERT_NO_THROW(prefix = option->readPrefix());
-    EXPECT_EQ(48, prefix.first.asUnsigned());
+    EXPECT_EQ(48U, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", prefix.second.toText());
 }
 
@@ -1626,16 +1626,16 @@ TEST_F(OptionCustomTest, setPsidData) {
     // Make sure the default PSID is set.
     PSIDTuple psid;
     ASSERT_NO_THROW(psid = option->readPsid());
-    EXPECT_EQ(0, psid.first.asUnsigned());
-    EXPECT_EQ(0, psid.second.asUint16());
+    EXPECT_EQ(0U, psid.first.asUnsigned());
+    EXPECT_EQ(0U, psid.second.asUint16());
 
     // Write PSID.
     ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8)));
 
     // Read PSID back and make sure it is the one we just set.
     ASSERT_NO_THROW(psid = option->readPsid());
-    EXPECT_EQ(4, psid.first.asUnsigned());
-    EXPECT_EQ(8, psid.second.asUint16());
+    EXPECT_EQ(4U, psid.first.asUnsigned());
+    EXPECT_EQ(8U, psid.second.asUint16());
 }
 
 // The purpose of this test is to verify that an option comprising
@@ -1704,7 +1704,7 @@ TEST_F(OptionCustomTest, setBooleanDataArray) {
     ASSERT_TRUE(option);
 
     // Initially, the array should contain no values.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add some boolean values to it.
     ASSERT_NO_THROW(option->addArrayDataField(true));
@@ -1738,7 +1738,7 @@ TEST_F(OptionCustomTest, setUint16DataArray) {
     ASSERT_TRUE(option);
 
     // Initially, the array should contain no values.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new data fields holding integer values.
     ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(67));
@@ -1746,18 +1746,18 @@ TEST_F(OptionCustomTest, setUint16DataArray) {
     ASSERT_NO_THROW(option->addArrayDataField<uint16_t>(32222));
 
     // We should now have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Check that the values have been correctly set.
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(67, value0);
+    EXPECT_EQ(67U, value0);
     uint16_t value1 = 0;
     ASSERT_NO_THROW(value1 = option->readInteger<uint16_t>(1));
-    EXPECT_EQ(876, value1);
+    EXPECT_EQ(876U, value1);
     uint16_t value2 = 0;
     ASSERT_NO_THROW(value2 = option->readInteger<uint16_t>(2));
-    EXPECT_EQ(32222, value2);
+    EXPECT_EQ(32222U, value2);
 }
 
 /// The purpose of this test is to verify that an option comprising
@@ -1776,14 +1776,14 @@ TEST_F(OptionCustomTest, setIpv4AddressDataArray) {
     ASSERT_TRUE(option);
 
     // Expect that the array does not contain any data fields yet.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 IPv4 addresses.
     ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.1")));
     ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.2")));
     ASSERT_NO_THROW(option->addArrayDataField(IOAddress("192.168.0.3")));
 
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Check that all IP addresses have been set correctly.
     IOAddress address0("127.0.0.1");
@@ -1819,7 +1819,7 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
     ASSERT_TRUE(option);
 
     // Initially, the array does not contain any data fields.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new IPv6 addresses into the array.
     ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::1")));
@@ -1827,7 +1827,7 @@ TEST_F(OptionCustomTest, setIpv6AddressDataArray) {
     ASSERT_NO_THROW(option->addArrayDataField(IOAddress("2001:db8:1::3")));
 
     // We should have now 3 addresses added.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Check that they have correct values set.
     IOAddress address0("::1");
@@ -1862,7 +1862,7 @@ TEST_F(OptionCustomTest, setPSIDPrefixArray) {
     ASSERT_TRUE(option);
 
     // Initially, the array does not contain any data fields.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new PSIDs
     ASSERT_NO_THROW(option->addArrayDataField(PSIDLen(4), PSID(1)));
@@ -1872,20 +1872,20 @@ TEST_F(OptionCustomTest, setPSIDPrefixArray) {
     // Verify the stored values.
     ASSERT_NO_THROW({
          PSIDTuple psid0 = option->readPsid(0);
-         EXPECT_EQ(4, psid0.first.asUnsigned());
-         EXPECT_EQ(1, psid0.second.asUint16());
+         EXPECT_EQ(4U, psid0.first.asUnsigned());
+         EXPECT_EQ(1U, psid0.second.asUint16());
     });
 
     ASSERT_NO_THROW({
          PSIDTuple psid1 = option->readPsid(1);
-         EXPECT_EQ(0, psid1.first.asUnsigned());
-         EXPECT_EQ(0, psid1.second.asUint16());
+         EXPECT_EQ(0U, psid1.first.asUnsigned());
+         EXPECT_EQ(0U, psid1.second.asUint16());
     });
 
     ASSERT_NO_THROW({
          PSIDTuple psid2 = option->readPsid(2);
-         EXPECT_EQ(1, psid2.first.asUnsigned());
-         EXPECT_EQ(1, psid2.second.asUint16());
+         EXPECT_EQ(1U, psid2.first.asUnsigned());
+         EXPECT_EQ(1U, psid2.second.asUint16());
     });
 }
 
@@ -1905,7 +1905,7 @@ TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
     ASSERT_TRUE(option);
 
     // Initially, the array does not contain any data fields.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new IPv6 prefixes into the array.
     ASSERT_NO_THROW(option->addArrayDataField(PrefixLen(64),
@@ -1916,24 +1916,24 @@ TEST_F(OptionCustomTest, setIPv6PrefixDataArray) {
                                               IOAddress("3000::")));
 
     // We should have now 3 addresses added.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Verify the stored values.
     ASSERT_NO_THROW({
          PrefixTuple prefix0 = option->readPrefix(0);
-         EXPECT_EQ(64, prefix0.first.asUnsigned());
+         EXPECT_EQ(64U, prefix0.first.asUnsigned());
          EXPECT_EQ("2001:db8:1::", prefix0.second.toText());
     });
 
     ASSERT_NO_THROW({
          PrefixTuple prefix1 = option->readPrefix(1);
-         EXPECT_EQ(32, prefix1.first.asUnsigned());
+         EXPECT_EQ(32U, prefix1.first.asUnsigned());
          EXPECT_EQ("3001:1::", prefix1.second.toText());
     });
 
     ASSERT_NO_THROW({
          PrefixTuple prefix2 = option->readPrefix(2);
-         EXPECT_EQ(16, prefix2.first.asUnsigned());
+         EXPECT_EQ(16U, prefix2.first.asUnsigned());
          EXPECT_EQ("3000::", prefix2.second.toText());
     });
 }
@@ -1953,7 +1953,7 @@ TEST_F(OptionCustomTest, setTupleDataArray4) {
     ASSERT_TRUE(option);
 
     // Initially, the array does not contain any data fields.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new DHCPv4 tuple into the array.
     ASSERT_NO_THROW(option->addArrayDataField(std::string("hello")));
@@ -1963,7 +1963,7 @@ TEST_F(OptionCustomTest, setTupleDataArray4) {
     ASSERT_NO_THROW(option->addArrayDataField(tuple));
 
     // We should have now 3 tuples added.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Verify the stored values.
     ASSERT_NO_THROW({
@@ -1998,7 +1998,7 @@ TEST_F(OptionCustomTest, setTupleDataArray6) {
     ASSERT_TRUE(option);
 
     // Initially, the array does not contain any data fields.
-    ASSERT_EQ(0, option->getDataFieldsNum());
+    ASSERT_EQ(0U, option->getDataFieldsNum());
 
     // Add 3 new DHCPv6 tuple into the array.
     ASSERT_NO_THROW(option->addArrayDataField(std::string("hello")));
@@ -2008,7 +2008,7 @@ TEST_F(OptionCustomTest, setTupleDataArray6) {
     ASSERT_NO_THROW(option->addArrayDataField(tuple));
 
     // We should have now 3 tuples added.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // Verify the stored values.
     ASSERT_NO_THROW({
@@ -2051,12 +2051,12 @@ TEST_F(OptionCustomTest, setRecordData) {
 
     // The number of elements should be equal to number of elements
     // in the record.
-    ASSERT_EQ(9, option->getDataFieldsNum());
+    ASSERT_EQ(9U, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(0, value0);
+    EXPECT_EQ(0U, value0);
     bool value1 = true;
     ASSERT_NO_THROW(value1 = option->readBoolean(1));
     EXPECT_FALSE(value1);
@@ -2071,11 +2071,11 @@ TEST_F(OptionCustomTest, setRecordData) {
     EXPECT_EQ("::", value4.toText());
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(0, value5.first.asUnsigned());
-    EXPECT_EQ(0, value5.second.asUint16());
+    EXPECT_EQ(0U, value5.first.asUnsigned());
+    EXPECT_EQ(0U, value5.second.asUint16());
     PrefixTuple value6(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
-    EXPECT_EQ(0, value6.first.asUnsigned());
+    EXPECT_EQ(0U, value6.first.asUnsigned());
     EXPECT_EQ("::", value6.second.toText());
     std::string value7 = "abc";
     // Tuple has no default value
@@ -2098,7 +2098,7 @@ TEST_F(OptionCustomTest, setRecordData) {
 
     // Check that the new values have been correctly set.
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(1234, value0);
+    EXPECT_EQ(1234U, value0);
     ASSERT_NO_THROW(value1 = option->readBoolean(1));
     EXPECT_TRUE(value1);
     ASSERT_NO_THROW(value2 = option->readFqdn(2));
@@ -2108,10 +2108,10 @@ TEST_F(OptionCustomTest, setRecordData) {
     ASSERT_NO_THROW(value4 = option->readAddress(4));
     EXPECT_EQ("2001:db8:1::100", value4.toText());
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(4, value5.first.asUnsigned());
-    EXPECT_EQ(8, value5.second.asUint16());
+    EXPECT_EQ(4U, value5.first.asUnsigned());
+    EXPECT_EQ(8U, value5.second.asUint16());
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
-    EXPECT_EQ(48, value6.first.asUnsigned());
+    EXPECT_EQ(48U, value6.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", value6.second.toText());
     ASSERT_NO_THROW(value7 = option->readTuple(7));
     EXPECT_EQ(value7, "foobar");
@@ -2142,12 +2142,12 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
 
     // The number of elements should be equal to number of elements
     // in the record.
-    ASSERT_EQ(9, option->getDataFieldsNum());
+    ASSERT_EQ(9U, option->getDataFieldsNum());
 
     // Check that the default values have been correctly set.
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(0, value0);
+    EXPECT_EQ(0U, value0);
     bool value1 = true;
     ASSERT_NO_THROW(value1 = option->readBoolean(1));
     EXPECT_FALSE(value1);
@@ -2162,18 +2162,18 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     EXPECT_EQ("::", value4.toText());
     PSIDTuple value5;
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(0, value5.first.asUnsigned());
-    EXPECT_EQ(0, value5.second.asUint16());
+    EXPECT_EQ(0U, value5.first.asUnsigned());
+    EXPECT_EQ(0U, value5.second.asUint16());
     PrefixTuple value6(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
-    EXPECT_EQ(0, value6.first.asUnsigned());
+    EXPECT_EQ(0U, value6.first.asUnsigned());
     EXPECT_EQ("::", value6.second.toText());
     std::string value7 = "abc";
     // Tuple has no default value
     EXPECT_THROW(option->readTuple(7), BadDataTypeCast);
     uint32_t value8;
     ASSERT_NO_THROW(value8 = option->readInteger<uint32_t>(8));
-    EXPECT_EQ(0, value8);
+    EXPECT_EQ(0U, value8);
 
     // Override each value with a new value.
     ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
@@ -2189,10 +2189,10 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     ASSERT_NO_THROW(option->addArrayDataField<uint32_t>(87654321));
 
     // Check that the new values have been correctly set.
-    ASSERT_EQ(10, option->getDataFieldsNum());
+    ASSERT_EQ(10U, option->getDataFieldsNum());
 
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(1234, value0);
+    EXPECT_EQ(1234U, value0);
     ASSERT_NO_THROW(value1 = option->readBoolean(1));
     EXPECT_TRUE(value1);
     ASSERT_NO_THROW(value2 = option->readFqdn(2));
@@ -2202,18 +2202,18 @@ TEST_F(OptionCustomTest, setRecordArrayData) {
     ASSERT_NO_THROW(value4 = option->readAddress(4));
     EXPECT_EQ("2001:db8:1::100", value4.toText());
     ASSERT_NO_THROW(value5 = option->readPsid(5));
-    EXPECT_EQ(4, value5.first.asUnsigned());
-    EXPECT_EQ(8, value5.second.asUint16());
+    EXPECT_EQ(4U, value5.first.asUnsigned());
+    EXPECT_EQ(8U, value5.second.asUint16());
     ASSERT_NO_THROW(value6 = option->readPrefix(6));
-    EXPECT_EQ(48, value6.first.asUnsigned());
+    EXPECT_EQ(48U, value6.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", value6.second.toText());
     ASSERT_NO_THROW(value7 = option->readTuple(7));
     EXPECT_EQ(value7, "foobar");
     ASSERT_NO_THROW(value8 = option->readInteger<uint32_t>(8));
-    EXPECT_EQ(12345678, value8);
+    EXPECT_EQ(12345678U, value8);
     uint32_t value9;
     ASSERT_NO_THROW(value9 = option->readInteger<uint32_t>(9));
-    EXPECT_EQ(87654321, value9);
+    EXPECT_EQ(87654321U, value9);
 }
 
 // The purpose of this test is to verify that pack function for
@@ -2237,7 +2237,7 @@ TEST_F(OptionCustomTest, pack4) {
 
     util::OutputBuffer buf_out(7);
     ASSERT_NO_THROW(option->pack(buf_out));
-    ASSERT_EQ(9, buf_out.getLength());
+    ASSERT_EQ(9U, buf_out.getLength());
 
     // The original buffer holds the option data but it lacks a header.
     // We append data length and option code so as it can be directly
@@ -2310,7 +2310,7 @@ TEST_F(OptionCustomTest, unpack) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // We expect 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -2337,7 +2337,7 @@ TEST_F(OptionCustomTest, unpack) {
     ASSERT_NO_THROW(option->unpack(buf.begin(), buf.end()));
 
     // Now we should have only 2 data fields.
-    ASSERT_EQ(2, option->getDataFieldsNum());
+    ASSERT_EQ(2U, option->getDataFieldsNum());
 
     // Verify that the addresses have been overwritten.
     for (int i = 0; i < 2; ++i) {
@@ -2377,12 +2377,12 @@ TEST_F(OptionCustomTest, unpackRecordArray) {
     ASSERT_TRUE(option);
 
     // We should have 4 data fields.
-    ASSERT_EQ(4, option->getDataFieldsNum());
+    ASSERT_EQ(4U, option->getDataFieldsNum());
 
     // We expect a 16 bit integer
     uint16_t value0 = 0;
     ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
-    EXPECT_EQ(8712, value0);
+    EXPECT_EQ(8712U, value0);
 
     // ... and 3 IPv4 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -2422,7 +2422,7 @@ TEST_F(OptionCustomTest, initialize) {
     ASSERT_TRUE(option);
 
     // We should have 3 data fields.
-    ASSERT_EQ(3, option->getDataFieldsNum());
+    ASSERT_EQ(3U, option->getDataFieldsNum());
 
     // We expect 3 IPv6 addresses being stored in the option.
     for (int i = 0; i < 3; ++i) {
@@ -2448,7 +2448,7 @@ TEST_F(OptionCustomTest, initialize) {
     ASSERT_NO_THROW(option->initialize(buf.begin(), buf.end()));
 
     // Now we should have only 2 data fields.
-    ASSERT_EQ(2, option->getDataFieldsNum());
+    ASSERT_EQ(2U, option->getDataFieldsNum());
 
     // Check that it has been replaced.
     for (int i = 0; i < 2; ++i) {

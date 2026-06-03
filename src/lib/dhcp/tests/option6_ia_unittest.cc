@@ -66,9 +66,9 @@ public:
 
         EXPECT_EQ(Option::V6, opt->getUniverse());
         EXPECT_EQ(type, opt->getType());
-        EXPECT_EQ(0xa1a2a3a4, opt->getIAID());
-        EXPECT_EQ(0x81020304, opt->getT1());
-        EXPECT_EQ(0x84030201, opt->getT2());
+        EXPECT_EQ(0xa1a2a3a4U, opt->getIAID());
+        EXPECT_EQ(0x81020304U, opt->getT1());
+        EXPECT_EQ(0x84030201U, opt->getT2());
 
         // Pack this option again in the same buffer, but in
         // different place
@@ -80,7 +80,7 @@ public:
         EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
         EXPECT_EQ(type, opt->getType());
 
-        EXPECT_EQ(16, outBuf_.getLength()); // length(IA_NA) = 16
+        EXPECT_EQ(16U, outBuf_.getLength()); // length(IA_NA) = 16
 
         // Check if pack worked properly:
         InputBuffer out(outBuf_.getData(), outBuf_.getLength());
@@ -89,16 +89,16 @@ public:
         EXPECT_EQ(type, out.readUint16());
 
         // - if option length is correct
-        EXPECT_EQ(12, out.readUint16());
+        EXPECT_EQ(12U, out.readUint16());
 
         // - if iaid is correct
-        EXPECT_EQ(0xa1a2a3a4, out.readUint32() );
+        EXPECT_EQ(0xa1a2a3a4U, out.readUint32() );
 
         // - if T1 is correct
-        EXPECT_EQ(0x81020304, out.readUint32() );
+        EXPECT_EQ(0x81020304U, out.readUint32() );
 
         // - if T1 is correct
-        EXPECT_EQ(0x84030201, out.readUint32() );
+        EXPECT_EQ(0x84030201U, out.readUint32() );
 
         EXPECT_NO_THROW(opt.reset());
     }
@@ -121,20 +121,20 @@ TEST_F(Option6IATest, simple) {
 
     // Check that the values are really different than what we are about
     // to set them to.
-    EXPECT_NE(2345, ia->getT1());
-    EXPECT_NE(3456, ia->getT2());
+    EXPECT_NE(2345U, ia->getT1());
+    EXPECT_NE(3456U, ia->getT2());
 
     ia->setT1(2345);
     ia->setT2(3456);
 
     EXPECT_EQ(Option::V6, ia->getUniverse());
     EXPECT_EQ(D6O_IA_NA, ia->getType());
-    EXPECT_EQ(1234, ia->getIAID());
-    EXPECT_EQ(2345, ia->getT1());
-    EXPECT_EQ(3456, ia->getT2());
+    EXPECT_EQ(1234U, ia->getIAID());
+    EXPECT_EQ(2345U, ia->getT1());
+    EXPECT_EQ(3456U, ia->getT2());
 
     ia->setIAID(890);
-    EXPECT_EQ(890, ia->getIAID());
+    EXPECT_EQ(890U, ia->getIAID());
 
     EXPECT_NO_THROW(ia.reset());
 }
@@ -154,9 +154,9 @@ TEST_F(Option6IATest, suboptionsPack) {
     ia->addOption(sub1);
     ia->addOption(addr1);
 
-    ASSERT_EQ(28, addr1->len());
-    ASSERT_EQ(4, sub1->len());
-    ASSERT_EQ(48, ia->len());
+    ASSERT_EQ(28U, addr1->len());
+    ASSERT_EQ(4U, sub1->len());
+    ASSERT_EQ(48U, ia->len());
 
     // This contains expected on-wire format
     uint8_t expected[] = {
@@ -181,7 +181,7 @@ TEST_F(Option6IATest, suboptionsPack) {
 
     ia->pack(outBuf_);
 
-    ASSERT_EQ(48, outBuf_.getLength());
+    ASSERT_EQ(48U, outBuf_.getLength());
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 48));
     EXPECT_NO_THROW(ia.reset());
 }
@@ -206,9 +206,9 @@ TEST_F(Option6IATest, pdSuboptionsPack) {
     ia->addOption(sub1);
     ia->addOption(addr1);
 
-    ASSERT_EQ(29, addr1->len());
-    ASSERT_EQ(4, sub1->len());
-    ASSERT_EQ(49, ia->len());
+    ASSERT_EQ(29U, addr1->len());
+    ASSERT_EQ(4U, sub1->len());
+    ASSERT_EQ(49U, ia->len());
 
     uint8_t expected[] = {
         D6O_IA_PD/256, D6O_IA_PD%256, // type
@@ -232,7 +232,7 @@ TEST_F(Option6IATest, pdSuboptionsPack) {
     };
 
     ia->pack(outBuf_);
-    ASSERT_EQ(49, outBuf_.getLength());
+    ASSERT_EQ(49U, outBuf_.getLength());
 
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 49));
 
@@ -261,7 +261,7 @@ TEST_F(Option6IATest, suboptionsUnpack) {
         0xca, 0xfe, // type
         0, 0 // len
     };
-    ASSERT_EQ(48, sizeof(expected));
+    ASSERT_EQ(48U, sizeof(expected));
 
     memcpy(&buf_[0], expected, sizeof(expected));
 
@@ -273,9 +273,9 @@ TEST_F(Option6IATest, suboptionsUnpack) {
     ASSERT_TRUE(ia);
 
     EXPECT_EQ(D6O_IA_NA, ia->getType());
-    EXPECT_EQ(0x13579ace, ia->getIAID());
-    EXPECT_EQ(0x2345, ia->getT1());
-    EXPECT_EQ(0x3456, ia->getT2());
+    EXPECT_EQ(0x13579aceU, ia->getIAID());
+    EXPECT_EQ(0x2345U, ia->getT1());
+    EXPECT_EQ(0x3456U, ia->getT2());
 
     OptionPtr subopt = ia->getOption(D6O_IAADDR);
     ASSERT_NE(OptionPtr(), subopt); // non-NULL
@@ -286,19 +286,19 @@ TEST_F(Option6IATest, suboptionsUnpack) {
     ASSERT_TRUE(addr);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());
-    EXPECT_EQ(28, addr->len());
-    EXPECT_EQ(0x5000, addr->getPreferred());
-    EXPECT_EQ(0x7000, addr->getValid());
+    EXPECT_EQ(28U, addr->len());
+    EXPECT_EQ(0x5000U, addr->getPreferred());
+    EXPECT_EQ(0x7000U, addr->getValid());
     EXPECT_EQ("2001:db8:1234:5678::abcd", addr->getAddress().toText());
 
     // Checks for dummy option
     subopt = ia->getOption(0xcafe);
     ASSERT_TRUE(subopt); // should be non-NULL
 
-    EXPECT_EQ(0xcafe, subopt->getType());
-    EXPECT_EQ(4, subopt->len());
+    EXPECT_EQ(0xcafeU, subopt->getType());
+    EXPECT_EQ(4U, subopt->len());
     // There should be no data at all
-    EXPECT_EQ(0, subopt->getData().size());
+    EXPECT_EQ(0U, subopt->getData().size());
 
     subopt = ia->getOption(1); // get option 1
     ASSERT_FALSE(subopt); // should be NULL

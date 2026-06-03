@@ -38,7 +38,7 @@ TEST_F(OptionStringTest, constructorFromString) {
     const std::string optv4_value = "some option";
     OptionString optv4(Option::V4, 123, optv4_value);
     EXPECT_EQ(Option::V4, optv4.getUniverse());
-    EXPECT_EQ(123, optv4.getType());
+    EXPECT_EQ(123U, optv4.getType());
     EXPECT_EQ(optv4_value, optv4.getValue());
     EXPECT_EQ(Option::OPTION4_HDR_LEN + optv4_value.size(), optv4.len());
 
@@ -48,7 +48,7 @@ TEST_F(OptionStringTest, constructorFromString) {
     const std::string optv6_value = "other option";
     OptionString optv6(Option::V6, 234, optv6_value);
     EXPECT_EQ(Option::V6, optv6.getUniverse());
-    EXPECT_EQ(234, optv6.getType());
+    EXPECT_EQ(234U, optv6.getType());
     EXPECT_EQ("other option", optv6.getValue());
     EXPECT_EQ(Option::OPTION6_HDR_LEN + optv6_value.size(), optv6.len());
 
@@ -95,7 +95,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     // Test the instance of the created option.
     const std::string optv4_value = "This is a test string";
     EXPECT_EQ(Option::V4, optv4->getUniverse());
-    EXPECT_EQ(234, optv4->getType());
+    EXPECT_EQ(234U, optv4->getType());
     EXPECT_EQ(Option::OPTION4_HDR_LEN + buf_.size(), optv4->len());
     EXPECT_EQ(optv4_value, optv4->getValue());
 
@@ -112,7 +112,7 @@ TEST_F(OptionStringTest, constructorFromBuffer) {
     // Test the instance of the created option.
     const std::string optv6_value = "This is a test strin";
     EXPECT_EQ(Option::V6, optv6->getUniverse());
-    EXPECT_EQ(123, optv6->getType());
+    EXPECT_EQ(123U, optv6->getType());
     EXPECT_EQ(Option::OPTION6_HDR_LEN + buf_.size() - 1, optv6->len());
     EXPECT_EQ(optv6_value, optv6->getValue());
 }
@@ -148,7 +148,7 @@ TEST_F(OptionStringTest, pack) {
     // the latter has API to read data from it.
     InputBuffer test_buf(buf.getData(), buf.getLength());
     // First byte holds option code.
-    EXPECT_EQ(123, test_buf.readUint8());
+    EXPECT_EQ(123U, test_buf.readUint8());
     // Second byte holds option length.
     EXPECT_EQ(option_value.size(), test_buf.readUint8());
     // Read the option data.
@@ -185,22 +185,22 @@ TEST_F(OptionStringTest, setValueNullsHandling) {
 
     // One trailing null should trim off.
     ASSERT_NO_THROW(optv4.setValue(std::string{"one\0", 4}));
-    EXPECT_EQ(3, optv4.getValue().length());
+    EXPECT_EQ(3U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("one"));
 
     // More than one trailing null should trim off.
     ASSERT_NO_THROW(optv4.setValue(std::string{"three\0\0\0", 8}));
-    EXPECT_EQ(5, optv4.getValue().length());
+    EXPECT_EQ(5U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("three"));
 
     // Embedded null should be left in place.
     ASSERT_NO_THROW(optv4.setValue(std::string{"em\0bed", 6}));
-    EXPECT_EQ(6, optv4.getValue().length());
+    EXPECT_EQ(6U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
 
     // Leading null should be left in place.
     ASSERT_NO_THROW(optv4.setValue(std::string{"\0leading", 8}));
-    EXPECT_EQ(8, optv4.getValue().length());
+    EXPECT_EQ(8U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));
 }
 
@@ -216,25 +216,25 @@ TEST_F(OptionStringTest, unpackNullsHandling) {
     // One trailing null should trim off.
     buffer = {'o', 'n', 'e', 0 };
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
-    EXPECT_EQ(3, optv4.getValue().length());
+    EXPECT_EQ(3U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("one"));
 
     // More than one trailing null should trim off.
     buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
-    EXPECT_EQ(5, optv4.getValue().length());
+    EXPECT_EQ(5U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), std::string("three"));
 
     // Embedded null should be left in place.
     buffer = { 'e', 'm', 0, 'b', 'e', 'd' };
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
-    EXPECT_EQ(6, optv4.getValue().length());
+    EXPECT_EQ(6U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"em\0bed", 6}));
 
     // Leading null should be left in place.
     buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
     ASSERT_NO_THROW(optv4.unpack(buffer.begin(), buffer.end()));
-    EXPECT_EQ(8, optv4.getValue().length());
+    EXPECT_EQ(8U, optv4.getValue().length());
     EXPECT_EQ(optv4.getValue(), (std::string{"\0leading", 8}));
 }
 

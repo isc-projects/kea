@@ -86,10 +86,10 @@ TEST_F(Option4AddrLstTest, parse1) {
     EXPECT_EQ(Option::V4, opt1->getUniverse());
 
     EXPECT_EQ(DHO_DOMAIN_NAME_SERVERS, opt1->getType());
-    EXPECT_EQ(6, opt1->len()); // 2 (header) + 4 (1x IPv4 addr)
+    EXPECT_EQ(6U, opt1->len()); // 2 (header) + 4 (1x IPv4 addr)
 
     Option4AddrLst::AddressContainer addrs = opt1->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
 
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
 
@@ -112,11 +112,11 @@ TEST_F(Option4AddrLstTest, parse4) {
 
     EXPECT_EQ(Option::V4, opt4->getUniverse());
 
-    EXPECT_EQ(254, opt4->getType());
-    EXPECT_EQ(18, opt4->len()); // 2 (header) + 16 (4x IPv4 addrs)
+    EXPECT_EQ(254U, opt4->getType());
+    EXPECT_EQ(18U, opt4->len()); // 2 (header) + 16 (4x IPv4 addrs)
 
     Option4AddrLst::AddressContainer addrs = opt4->getAddresses();
-    ASSERT_EQ(4, addrs.size());
+    ASSERT_EQ(4U, addrs.size());
 
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
     EXPECT_EQ("255.255.255.0", addrs[1].toText());
@@ -137,7 +137,7 @@ TEST_F(Option4AddrLstTest, assembly1) {
     EXPECT_EQ(DHO_DOMAIN_NAME_SERVERS, opt->getType());
 
     Option4AddrLst::AddressContainer addrs = opt->getAddresses();
-    ASSERT_EQ(1, addrs.size() );
+    ASSERT_EQ(1U, addrs.size() );
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
 
     OutputBuffer buf(100);
@@ -145,8 +145,8 @@ TEST_F(Option4AddrLstTest, assembly1) {
         opt->pack(buf);
     );
 
-    ASSERT_EQ(6, opt->len());
-    ASSERT_EQ(6, buf.getLength());
+    ASSERT_EQ(6U, opt->len());
+    ASSERT_EQ(6U, buf.getLength());
 
     EXPECT_EQ(0, memcmp(expected1, buf.getData(), 6));
 
@@ -167,10 +167,10 @@ TEST_F(Option4AddrLstTest, assembly4) {
         opt.reset(new Option4AddrLst(254, sampleAddrs_));
     );
     EXPECT_EQ(Option::V4, opt->getUniverse());
-    EXPECT_EQ(254, opt->getType());
+    EXPECT_EQ(254U, opt->getType());
 
     Option4AddrLst::AddressContainer addrs = opt->getAddresses();
-    ASSERT_EQ(4, addrs.size() );
+    ASSERT_EQ(4U, addrs.size() );
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
     EXPECT_EQ("255.255.255.0", addrs[1].toText());
     EXPECT_EQ("0.0.0.0", addrs[2].toText());
@@ -181,8 +181,8 @@ TEST_F(Option4AddrLstTest, assembly4) {
         opt->pack(buf);
     );
 
-    ASSERT_EQ(18, opt->len()); // 2(header) + 4xsizeof(IPv4addr)
-    ASSERT_EQ(18, buf.getLength());
+    ASSERT_EQ(18U, opt->len()); // 2(header) + 4xsizeof(IPv4addr)
+    ASSERT_EQ(18U, buf.getLength());
 
     ASSERT_EQ(0, memcmp(expected4, buf.getData(), 18));
 
@@ -203,7 +203,7 @@ TEST_F(Option4AddrLstTest, empty) {
     // the mobile-ip-home-agent option can be empty
     EXPECT_NO_THROW(opt.reset(new Option4AddrLst(DHO_HOME_AGENT_ADDRS)));
     Option4AddrLst::AddressContainer addrs = opt->getAddresses();
-    ASSERT_EQ(0, addrs.size());
+    ASSERT_EQ(0U, addrs.size());
     EXPECT_NO_THROW(opt.reset());
 }
 
@@ -216,7 +216,7 @@ TEST_F(Option4AddrLstTest, setAddress) {
     opt->setAddress(IOAddress("192.0.255.255"));
 
     Option4AddrLst::AddressContainer addrs = opt->getAddresses();
-    ASSERT_EQ(1, addrs.size() );
+    ASSERT_EQ(1U, addrs.size() );
     EXPECT_EQ("192.0.255.255", addrs[0].toText());
 
     // We should accept IPv4-only addresses.
@@ -239,7 +239,7 @@ TEST_F(Option4AddrLstTest, setAddresses) {
     opt->setAddresses(sampleAddrs_);
 
     Option4AddrLst::AddressContainer addrs = opt->getAddresses();
-    ASSERT_EQ(4, addrs.size() );
+    ASSERT_EQ(4U, addrs.size() );
     EXPECT_EQ("192.0.2.3", addrs[0].toText());
     EXPECT_EQ("255.255.255.0", addrs[1].toText());
     EXPECT_EQ("0.0.0.0", addrs[2].toText());

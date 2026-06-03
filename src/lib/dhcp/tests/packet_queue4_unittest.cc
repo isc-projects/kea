@@ -159,7 +159,7 @@ TEST(PacketQueueRing4, peekPushPopTest) {
     }
 
     // We should have three.
-    ASSERT_EQ(3, q.getSize());
+    ASSERT_EQ(3U, q.getSize());
 
     // We should have transids 1005,1004,1003  (back to front)
 
@@ -167,37 +167,37 @@ TEST(PacketQueueRing4, peekPushPopTest) {
     Pkt4Ptr pkt;
     ASSERT_NO_THROW(pkt = q.peek(QueueEnd::FRONT));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1003, pkt->getTransid());
+    EXPECT_EQ(1003U, pkt->getTransid());
 
     // Peek back should be transid 1005.
     ASSERT_NO_THROW(pkt = q.peek(QueueEnd::BACK));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1005, pkt->getTransid());
+    EXPECT_EQ(1005U, pkt->getTransid());
 
     // Pop front should return transid 1003.
     ASSERT_NO_THROW(pkt = q.popPacket(QueueEnd::FRONT));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1003, pkt->getTransid());
+    EXPECT_EQ(1003U, pkt->getTransid());
 
     // Pop back should return transid 1005.
     ASSERT_NO_THROW(pkt = q.popPacket(QueueEnd::BACK));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1005, pkt->getTransid());
+    EXPECT_EQ(1005U, pkt->getTransid());
 
     // Peek front should be transid 1004.
     ASSERT_NO_THROW(pkt = q.peek(QueueEnd::FRONT));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1004, pkt->getTransid());
+    EXPECT_EQ(1004U, pkt->getTransid());
 
     // Peek back should be transid 1004.
     ASSERT_NO_THROW(pkt = q.peek(QueueEnd::BACK));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1004, pkt->getTransid());
+    EXPECT_EQ(1004U, pkt->getTransid());
 
     // Pop front should return transid 1004.
     ASSERT_NO_THROW(pkt = q.popPacket(QueueEnd::FRONT));
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1004, pkt->getTransid());
+    EXPECT_EQ(1004U, pkt->getTransid());
 
     // Pop front should return an empty pointer.
     ASSERT_NO_THROW(pkt = q.popPacket(QueueEnd::BACK));
@@ -220,12 +220,12 @@ TEST(TestQueue4, shouldDropPacketTest) {
     // We should be able to enqueue a packet with even numbered values.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1002));
     ASSERT_NO_THROW(q.enqueuePacket(pkt, sock_even));
-    ASSERT_EQ(1, q.getSize());
+    ASSERT_EQ(1U, q.getSize());
 
     // We should be able to enqueue a packet with odd numbered values.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1003));
     ASSERT_NO_THROW(q.enqueuePacket(pkt, sock_odd));
-    ASSERT_EQ(2, q.getSize());
+    ASSERT_EQ(2U, q.getSize());
 
     // Enable drop logic.
     q.drop_enabled_ = true;
@@ -233,30 +233,30 @@ TEST(TestQueue4, shouldDropPacketTest) {
     // We should not be able to add one with an even-numbered transid.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1004));
     ASSERT_NO_THROW(q.enqueuePacket(pkt, sock_odd));
-    ASSERT_EQ(2, q.getSize());
+    ASSERT_EQ(2U, q.getSize());
 
     // We should not be able to add one with from even-numbered port.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1005));
     ASSERT_NO_THROW(q.enqueuePacket(pkt, sock_even));
-    EXPECT_EQ(2, q.getSize());
+    EXPECT_EQ(2U, q.getSize());
 
     // We should be able to add one with an odd-numbered values.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1007));
     ASSERT_NO_THROW(q.enqueuePacket(pkt, sock_odd));
-    EXPECT_EQ(3, q.getSize());
+    EXPECT_EQ(3U, q.getSize());
 
     // Dequeue them and make sure they are as expected: 1002,1003, and 1007.
     ASSERT_NO_THROW(pkt = q.dequeuePacket());
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1002, pkt->getTransid());
+    EXPECT_EQ(1002U, pkt->getTransid());
 
     ASSERT_NO_THROW(pkt = q.dequeuePacket());
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1003, pkt->getTransid());
+    EXPECT_EQ(1003U, pkt->getTransid());
 
     ASSERT_NO_THROW(pkt = q.dequeuePacket());
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1007, pkt->getTransid());
+    EXPECT_EQ(1007U, pkt->getTransid());
 
     // Queue should be empty.
     ASSERT_NO_THROW(pkt = q.dequeuePacket());
@@ -287,8 +287,8 @@ TEST(TestQueue4, eatPacketsTest) {
     q.eat_count_ = 2;
     ASSERT_NO_THROW(pkt = q.dequeuePacket());
     ASSERT_TRUE(pkt);
-    EXPECT_EQ(1003, pkt->getTransid());
-    EXPECT_EQ(2, q.getSize());
+    EXPECT_EQ(1003U, pkt->getTransid());
+    EXPECT_EQ(2U, q.getSize());
 }
 
 } // end of anonymous namespace

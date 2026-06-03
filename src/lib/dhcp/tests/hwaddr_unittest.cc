@@ -47,7 +47,7 @@ TEST(HWAddrTest, constructor) {
     EXPECT_TRUE(data2 == hwaddr2->hwaddr_);
     EXPECT_EQ(htype, hwaddr2->htype_);
 
-    EXPECT_EQ(0, hwaddr3->hwaddr_.size());
+    EXPECT_EQ(0U, hwaddr3->hwaddr_.size());
     EXPECT_EQ(htype, hwaddr3->htype_);
 
     // Check that over the limit data length throws exception 

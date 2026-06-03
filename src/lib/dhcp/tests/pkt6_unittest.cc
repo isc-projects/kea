@@ -140,7 +140,7 @@ TEST_F(Pkt6Test, constructor) {
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
     scoped_ptr<Pkt6> pkt1(new Pkt6(data, sizeof(data)));
 
-    EXPECT_EQ(6, pkt1->data_.size());
+    EXPECT_EQ(6U, pkt1->data_.size());
     EXPECT_EQ(0, memcmp( &pkt1->data_[0], data, sizeof(data)));
 }
 
@@ -260,7 +260,7 @@ TEST_F(Pkt6Test, unpack_solicit1) {
     ASSERT_NO_THROW(sol->unpack());
 
     // Check for length
-    EXPECT_EQ(98, sol->len() );
+    EXPECT_EQ(98U, sol->len());
 
     // Check for type
     EXPECT_EQ(DHCPV6_SOLICIT, sol->getType() );
@@ -287,7 +287,7 @@ TEST_F(Pkt6Test, packUnpack) {
     ASSERT_NO_THROW(clone->unpack());
 
     // transid, message-type should be the same as before
-    EXPECT_EQ(0x020304, clone->getTransid());
+    EXPECT_EQ(0x020304U, clone->getTransid());
     EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
 
     EXPECT_TRUE(clone->getOption(1));
@@ -449,41 +449,41 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     parent->addOption(opt3);
 
     OptionCollection options = parent->getOptions(2);
-    EXPECT_EQ(2, options.size()); // there should be 2 instances
+    EXPECT_EQ(2U, options.size()); // there should be 2 instances
 
     // Both options must be of type 2 and there must not be
     // any other type returned
     for (auto const& x : options) {
-        EXPECT_EQ(2, x.second->getType());
+        EXPECT_EQ(2U, x.second->getType());
     }
 
     // Try to get a single option. Normally for singular options
     // it is better to use getOption(), but getOptions() must work
     // as well
     options = parent->getOptions(1);
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
 
-    EXPECT_EQ(1, (*options.begin()).second->getType());
+    EXPECT_EQ(1U, (*options.begin()).second->getType());
     EXPECT_EQ(opt1, options.begin()->second);
 
     // Let's delete one of them
-    EXPECT_EQ(true, parent->delOption(2));
+    EXPECT_TRUE(parent->delOption(2));
 
     // There still should be the other option 2
     EXPECT_NE(OptionPtr(), parent->getOption(2));
 
     // Let's delete the other option 2
-    EXPECT_EQ(true, parent->delOption(2));
+    EXPECT_TRUE(parent->delOption(2));
 
     // No more options with type=2
     EXPECT_EQ(OptionPtr(), parent->getOption(2));
 
     // Let's try to delete - should fail
-    EXPECT_TRUE(false ==  parent->delOption(2));
+    EXPECT_FALSE(parent->delOption(2));
 
     // Finally try to get a non-existent option
     options = parent->getOptions(1234);
-    EXPECT_EQ(0, options.size());
+    EXPECT_EQ(0U, options.size());
 }
 
 // Check that multiple options of the same type may be retrieved by using
@@ -504,7 +504,7 @@ TEST_F(Pkt6Test, getOptions) {
 
     // Retrieve options with option code 1.
     OptionCollection options = pkt.getOptions(1);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     OptionCollection::const_iterator opt_it;
 
@@ -535,7 +535,7 @@ TEST_F(Pkt6Test, getOptions) {
     pkt.setCopyRetrievedOptions(true);
 
     options = pkt.getOptions(1);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     // Both retrieved options should be copied so an attempt to find them
     // using option pointer should fail. Original pointers should have
@@ -560,7 +560,7 @@ TEST_F(Pkt6Test, getOptions) {
     // Let's check that remaining two options haven't been affected by
     // retrieving the options with option code 1.
     options = pkt.getNonCopiedOptions(2);
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     opt_it = std::find(options.begin(), options.end(),
                        std::pair<const unsigned int, OptionPtr>(2, opt3));
@@ -705,34 +705,34 @@ TEST_F(Pkt6Test, relayUnpack) {
     EXPECT_NO_THROW(msg->unpack());
 
     EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
-    EXPECT_EQ(217, msg->len());
+    EXPECT_EQ(217U, msg->len());
 
-    ASSERT_EQ(2, msg->relay_info_.size());
+    ASSERT_EQ(2U, msg->relay_info_.size());
 
     OptionPtr opt;
 
     // Part 1: Check options inserted by the first relay
 
     // There should be 2 options in first relay
-    EXPECT_EQ(2, msg->relay_info_[0].options_.size());
+    EXPECT_EQ(2U, msg->relay_info_[0].options_.size());
 
     // There should be interface-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 0).size());
+    EXPECT_EQ(1U, msg->getRelayOptions(D6O_INTERFACE_ID, 0).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 0));
     OptionBuffer data = opt->getData();
-    EXPECT_EQ(32, opt->len()); // 28 bytes of data + 4 bytes header
-    EXPECT_EQ(data.size(), 28);
+    EXPECT_EQ(32U, opt->len()); // 28 bytes of data + 4 bytes header
+    EXPECT_EQ(data.size(), 28U);
     // That's a strange interface-id, but this is a real life example
     EXPECT_TRUE(0 == memcmp("ISAM144|299|ipv6|nt:vp:1:110", &data[0], 28));
 
     // Get the remote-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 0).size());
+    EXPECT_EQ(1U, msg->getRelayOptions(D6O_REMOTE_ID, 0).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 0));
-    EXPECT_EQ(22, opt->len()); // 18 bytes of data + 4 bytes header
+    EXPECT_EQ(22U, opt->len()); // 18 bytes of data + 4 bytes header
     boost::shared_ptr<OptionCustom> custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
     uint32_t vendor_id = custom->readInteger<uint32_t>(0);
-    EXPECT_EQ(6527, vendor_id); // 6527 = Panthera Networks
+    EXPECT_EQ(6527U, vendor_id); // 6527 = Panthera Networks
 
     uint8_t expected_remote_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
                                      0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
@@ -744,21 +744,21 @@ TEST_F(Pkt6Test, relayUnpack) {
     // Part 2: Check options inserted by the second relay
 
     // Get the interface-id from the second relay
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_INTERFACE_ID, 1).size());
+    EXPECT_EQ(1U, msg->getRelayOptions(D6O_INTERFACE_ID, 1).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_INTERFACE_ID, 1));
     data = opt->getData();
-    EXPECT_EQ(25, opt->len()); // 21 bytes + 4 bytes header
-    EXPECT_EQ(data.size(), 21);
+    EXPECT_EQ(25U, opt->len()); // 21 bytes + 4 bytes header
+    EXPECT_EQ(data.size(), 21U);
     EXPECT_TRUE(0 == memcmp("ISAM144 eth 1/1/05/01", &data[0], 21));
 
     // Get the remote-id option
-    EXPECT_EQ(1, msg->getRelayOptions(D6O_REMOTE_ID, 1).size());
+    EXPECT_EQ(1U, msg->getRelayOptions(D6O_REMOTE_ID, 1).size());
     ASSERT_TRUE(opt = msg->getRelayOption(D6O_REMOTE_ID, 1));
-    EXPECT_EQ(8, opt->len());
+    EXPECT_EQ(8U, opt->len());
     custom = boost::dynamic_pointer_cast<OptionCustom>(opt);
 
     vendor_id = custom->readInteger<uint32_t>(0);
-    EXPECT_EQ(3561, vendor_id); // 3561 = Broadband Forum
+    EXPECT_EQ(3561U, vendor_id); // 3561 = Broadband Forum
     // @todo: See if we can validate empty remote-id field
 
     // Let's check if there is no leak between options stored in
@@ -771,10 +771,10 @@ TEST_F(Pkt6Test, relayUnpack) {
     // This is not redundant compared to other direct messages tests,
     // as we parsed it differently
     EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
-    EXPECT_EQ(0x6b4fe2, msg->getTransid());
+    EXPECT_EQ(0x6b4fe2U, msg->getTransid());
 
     ASSERT_TRUE(opt = msg->getOption(D6O_CLIENTID));
-    EXPECT_EQ(18, opt->len()); // 14 bytes of data + 4 bytes of header
+    EXPECT_EQ(18U, opt->len()); // 14 bytes of data + 4 bytes of header
     uint8_t expected_client_id[] = { 0x00, 0x01, 0x00, 0x01, 0x18, 0xb0,
                                      0x33, 0x41, 0x00, 0x00, 0x21, 0x5c,
                                      0x18, 0xa9 };
@@ -786,25 +786,25 @@ TEST_F(Pkt6Test, relayUnpack) {
     boost::shared_ptr<Option6IA> ia =
         boost::dynamic_pointer_cast<Option6IA>(opt);
     ASSERT_TRUE(ia);
-    EXPECT_EQ(1, ia->getIAID());
-    EXPECT_EQ(0xffffffff, ia->getT1());
-    EXPECT_EQ(0xffffffff, ia->getT2());
+    EXPECT_EQ(1U, ia->getIAID());
+    EXPECT_EQ(0xffffffffU, ia->getT1());
+    EXPECT_EQ(0xffffffffU, ia->getT2());
 
     ASSERT_TRUE(opt = msg->getOption(D6O_ELAPSED_TIME));
-    EXPECT_EQ(6, opt->len()); // 2 bytes of data + 4 bytes of header
+    EXPECT_EQ(6U, opt->len()); // 2 bytes of data + 4 bytes of header
     boost::shared_ptr<OptionInt<uint16_t> > elapsed =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> > (opt);
     ASSERT_TRUE(elapsed);
-    EXPECT_EQ(0, elapsed->getValue());
+    EXPECT_EQ(0U, elapsed->getValue());
 
     ASSERT_TRUE(opt = msg->getOption(D6O_ORO));
     boost::shared_ptr<OptionIntArray<uint16_t> > oro =
         boost::dynamic_pointer_cast<OptionIntArray<uint16_t> > (opt);
     const std::vector<uint16_t> oro_list = oro->getValues();
-    EXPECT_EQ(3, oro_list.size());
-    EXPECT_EQ(23, oro_list[0]);
-    EXPECT_EQ(242, oro_list[1]);
-    EXPECT_EQ(243, oro_list[2]);
+    EXPECT_EQ(3U, oro_list.size());
+    EXPECT_EQ(23U, oro_list[0]);
+    EXPECT_EQ(242U, oro_list[1]);
+    EXPECT_EQ(243U, oro_list[2]);
 }
 
 // This test verified that message with relay information can be
@@ -867,15 +867,15 @@ TEST_F(Pkt6Test, relayPack) {
     EXPECT_FALSE(clone->getOption(103));
 
     // Now check relay info
-    ASSERT_EQ(1, clone->relay_info_.size());
+    ASSERT_EQ(1U, clone->relay_info_.size());
     EXPECT_EQ(DHCPV6_RELAY_REPL, clone->relay_info_[0].msg_type_);
-    EXPECT_EQ(17, clone->relay_info_[0].hop_count_);
+    EXPECT_EQ(17U, clone->relay_info_[0].hop_count_);
     EXPECT_EQ("2001:db8::1", clone->relay_info_[0].linkaddr_.toText());
     EXPECT_EQ("fe80::abcd", clone->relay_info_[0].peeraddr_.toText());
 
     // There should be exactly one option
-    EXPECT_EQ(1, clone->relay_info_[0].options_.size());
-    EXPECT_EQ(1, clone->getRelayOptions(200, 0).size());
+    EXPECT_EQ(1U, clone->relay_info_[0].options_.size());
+    EXPECT_EQ(1U, clone->getRelayOptions(200, 0).size());
     OptionPtr opt = clone->getRelayOption(200, 0);
     EXPECT_TRUE(opt);
     EXPECT_EQ(opt->getType() , optRelay1->getType());
@@ -900,7 +900,7 @@ TEST_F(Pkt6Test, getRelayOption) {
     ASSERT_TRUE(msg);
 
     ASSERT_NO_THROW(msg->unpack());
-    ASSERT_EQ(2, msg->relay_info_.size());
+    ASSERT_EQ(2U, msg->relay_info_.size());
 
     OptionPtr opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
     ASSERT_TRUE(opt_iface_id);
@@ -924,18 +924,18 @@ TEST_F(Pkt6Test, getRelayOptions) {
     ASSERT_TRUE(msg);
 
     ASSERT_NO_THROW(msg->unpack());
-    ASSERT_EQ(2, msg->relay_info_.size());
+    ASSERT_EQ(2U, msg->relay_info_.size());
 
     OptionCollection opts_iface_id =
         msg->getNonCopiedRelayOptions(D6O_INTERFACE_ID, 0);
-    ASSERT_EQ(1, opts_iface_id.size());
+    ASSERT_EQ(1U, opts_iface_id.size());
 
     OptionPtr opt_iface_id = msg->getNonCopiedRelayOption(D6O_INTERFACE_ID, 0);
     ASSERT_TRUE(opt_iface_id);
 
     OptionCollection opts_iface_id_returned =
         msg->getRelayOptions(D6O_INTERFACE_ID, 0);
-    ASSERT_EQ(1, opts_iface_id_returned.size());
+    ASSERT_EQ(1U, opts_iface_id_returned.size());
 
     OptionPtr opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
     ASSERT_TRUE(opt_iface_id_returned);
@@ -948,7 +948,7 @@ TEST_F(Pkt6Test, getRelayOptions) {
     msg->setCopyRetrievedOptions(true);
 
     opts_iface_id_returned = msg->getRelayOptions(D6O_INTERFACE_ID, 0);
-    ASSERT_EQ(1, opts_iface_id_returned.size());
+    ASSERT_EQ(1U, opts_iface_id_returned.size());
     opt_iface_id_returned = msg->getRelayOption(D6O_INTERFACE_ID, 0);
     EXPECT_FALSE(opt_iface_id == opt_iface_id_returned);
     EXPECT_FALSE(opts_iface_id.begin()->second == opt_iface_id_returned);
@@ -1034,12 +1034,12 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     // Check collections.
     OptionCollection opts0 =
         msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(3, opts0.size());
+    EXPECT_EQ(3U, opts0.size());
     vector<OptionPtr> lopts0;
     for (auto const& it : opts0) {
         lopts0.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts0.size());
+    ASSERT_EQ(3U, lopts0.size());
     EXPECT_TRUE(lopts0[0] == opt);
     EXPECT_TRUE(lopts0[0] == relay3_opt1);
     EXPECT_TRUE(lopts0[1] == relay2_opt4);
@@ -1057,12 +1057,12 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 
     // Check collections.
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(3, opts.size());
+    EXPECT_EQ(3U, opts.size());
     vector<OptionPtr> lopts;
     for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts.size());
+    ASSERT_EQ(3U, lopts.size());
     EXPECT_TRUE(lopts[0] == opt);
     EXPECT_TRUE(lopts[0] == relay1_opt1);
     EXPECT_TRUE(lopts[1] == relay2_opt4);
@@ -1083,10 +1083,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(opt->equals(relay3_opt1));
     EXPECT_TRUE(opt == relay3_opt1);
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opt == opts.begin()->second);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opts.begin()->second == relay3_opt1);
 
     // We just want option from the last relay (closest to the server)
@@ -1095,10 +1095,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_TRUE(opt->equals(relay1_opt1));
     EXPECT_TRUE(opt == relay1_opt1);
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opt == opts.begin()->second);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opts.begin()->second == relay1_opt1);
 
     // Enable copying options when they are retrieved and redo the tests
@@ -1124,7 +1124,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts0.size());
+    ASSERT_EQ(3U, lopts0.size());
     EXPECT_TRUE(lopts0[0] == opt);
     EXPECT_TRUE(lopts0[0] == relay3_opt1);
     EXPECT_TRUE(lopts0[1] == relay2_opt4);
@@ -1134,7 +1134,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts.size());
+    ASSERT_EQ(3U, lopts.size());
     EXPECT_TRUE(relay3_opt1->equals(lopts[0]));
     EXPECT_FALSE(lopts[0] == lopts0[0]);
     EXPECT_TRUE(relay2_opt4->equals(lopts[1]));
@@ -1161,7 +1161,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     for (auto const& it : opts) {
         lopts0.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts0.size());
+    ASSERT_EQ(3U, lopts0.size());
     EXPECT_TRUE(lopts0[0] == opt);
     EXPECT_TRUE(lopts0[0] == relay1_opt1);
     EXPECT_TRUE(lopts0[1] == relay2_opt4);
@@ -1171,7 +1171,7 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     for (auto const& it : opts) {
         lopts.push_back(it.second);
     }
-    ASSERT_EQ(3, lopts.size());
+    ASSERT_EQ(3U, lopts.size());
     EXPECT_TRUE(relay1_opt1->equals(lopts[0]));
     EXPECT_FALSE(lopts[0] == lopts0[0]);
     EXPECT_TRUE(relay2_opt4->equals(lopts[1]));
@@ -1188,10 +1188,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(relay3_opt1);
     EXPECT_TRUE(opt == relay3_opt1);
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opt == opts.begin()->second);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_FIRST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_FALSE(opts.begin()->second == relay3_opt1);
     relay3_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
     EXPECT_TRUE(opts.begin()->second == relay3_opt1);
@@ -1205,10 +1205,10 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(relay1_opt1);
     EXPECT_TRUE(opt == relay1_opt1);
     opts = msg->getNonCopiedAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opt == opts.begin()->second);
     opts = msg->getAllRelayOptions(200, Pkt6::RELAY_GET_LAST);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_FALSE(opts.begin()->second == relay1_opt1);
     relay1_opt1 = msg->getNonCopiedAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
     EXPECT_TRUE(opts.begin()->second == relay1_opt1);
@@ -1222,20 +1222,20 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay2_opt1));
     opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opts.begin()->second == relay2_opt1);
     opts = msg->getAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(relay2_opt1->equals(opts.begin()->second));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     ASSERT_TRUE(opt);
     EXPECT_TRUE(opt->equals(relay2_opt1));
     opts = msg->getNonCopiedAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(opts.begin()->second == relay2_opt1);
     opts = msg->getAllRelayOptions(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
     EXPECT_TRUE(relay2_opt1->equals(opts.begin()->second));
 
     opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
@@ -1292,7 +1292,7 @@ TEST_F(Pkt6Test, toText) {
     Pkt6Ptr msg(capture2());
     EXPECT_NO_THROW(msg->unpack());
 
-    ASSERT_EQ(2, msg->relay_info_.size());
+    ASSERT_EQ(2U, msg->relay_info_.size());
 
     string expected =
         "local_address=[ff05::1:3]:547, remote_address=[fe80::1234]:547,\n"
@@ -1354,11 +1354,11 @@ TEST_F(Pkt6Test, additionalClientClasses) {
 
     // Add to the first class
     pkt.addAdditionalClass(DOCSIS3_CLASS_EROUTER);
-    EXPECT_EQ(1, pkt.getAdditionalClasses().size());
+    EXPECT_EQ(1U, pkt.getAdditionalClasses().size());
 
     // Add to a second class
     pkt.addAdditionalClass(DOCSIS3_CLASS_MODEM);
-    EXPECT_EQ(2, pkt.getAdditionalClasses().size());
+    EXPECT_EQ(2U, pkt.getAdditionalClasses().size());
     EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_EROUTER));
     EXPECT_TRUE(pkt.getAdditionalClasses().contains(DOCSIS3_CLASS_MODEM));
     EXPECT_FALSE(pkt.getAdditionalClasses().contains("foo"));
@@ -1519,7 +1519,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_singleRelay) {
     // ... and pretend it was relayed by a single relay.
     Pkt6::RelayInfo info;
     pkt.addRelayInfo(info);
-    ASSERT_EQ(1, pkt.relay_info_.size());
+    ASSERT_EQ(1U, pkt.relay_info_.size());
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
@@ -1586,7 +1586,7 @@ TEST_F(Pkt6Test, getMACFromIPv6LinkLocal_multiRelay) {
     // the client. The method should get that address and build MAC from it.
     info.peeraddr_ = linklocal1;
     pkt.addRelayInfo(info);
-    ASSERT_EQ(3, pkt.relay_info_.size());
+    ASSERT_EQ(3U, pkt.relay_info_.size());
 
     // Let's get the first interface
     IfacePtr iface = IfaceMgr::instance().getIface(1);
@@ -1631,7 +1631,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_singleRelay) {
     info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
 
     pkt.addRelayInfo(info);
-    ASSERT_EQ(1, pkt.relay_info_.size());
+    ASSERT_EQ(1U, pkt.relay_info_.size());
 
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
     ASSERT_TRUE(found);
@@ -1665,7 +1665,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
     // Second relay, closest to the client has not implemented RFC6939
     Pkt6::RelayInfo info2;
     pkt.addRelayInfo(info2);
-    ASSERT_EQ(2, pkt.relay_info_.size());
+    ASSERT_EQ(2U, pkt.relay_info_.size());
 
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION));
 
@@ -1679,7 +1679,7 @@ TEST_F(Pkt6Test, getMACFromIPv6RelayOpt_multipleRelay) {
                             OptionBuffer(opt_data, opt_data + sizeof(opt_data))));
     info3.options_.insert(make_pair(relay_opt3->getType(), relay_opt3));
     pkt.addRelayInfo(info3);
-    ASSERT_EQ(3, pkt.relay_info_.size());
+    ASSERT_EQ(3U, pkt.relay_info_.size());
 
     // Now extract the MAC address from the relayed option
     HWAddrPtr found = pkt.getMAC(HWAddr::HWADDR_SOURCE_CLIENT_ADDR_RELAY_OPTION);
@@ -1836,7 +1836,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     // First simulate relaying message without adding remote-id option
     Pkt6::RelayInfo info;
     pkt.addRelayInfo(info);
-    ASSERT_EQ(1, pkt.relay_info_.size());
+    ASSERT_EQ(1U, pkt.relay_info_.size());
 
     // This should fail as the remote-id option isn't there
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
@@ -1844,7 +1844,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOption) {
     // Now add this option to the relayed message
     info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
     pkt.addRelayInfo(info);
-    ASSERT_EQ(2, pkt.relay_info_.size());
+    ASSERT_EQ(2U, pkt.relay_info_.size());
 
     // This should work now
     HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID);
@@ -1893,7 +1893,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOptionExtendedValue) {
     // First simulate relaying message without adding remote-id option
     Pkt6::RelayInfo info;
     pkt.addRelayInfo(info);
-    ASSERT_EQ(1, pkt.relay_info_.size());
+    ASSERT_EQ(1U, pkt.relay_info_.size());
 
     // This should fail as the remote-id option isn't there
     EXPECT_FALSE(pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID));
@@ -1901,7 +1901,7 @@ TEST_F(Pkt6Test, getMACFromRemoteIdRelayOptionExtendedValue) {
     // Now add this option to the relayed message
     info.options_.insert(make_pair(relay_opt->getType(), relay_opt));
     pkt.addRelayInfo(info);
-    ASSERT_EQ(2, pkt.relay_info_.size());
+    ASSERT_EQ(2U, pkt.relay_info_.size());
 
     // This should work now
     HWAddrPtr mac = pkt.getMAC(HWAddr::HWADDR_SOURCE_REMOTE_ID);
@@ -1925,9 +1925,9 @@ TEST_F(Pkt6Test, rsoo) {
     EXPECT_NO_THROW(msg->unpack());
 
     EXPECT_EQ(DHCPV6_SOLICIT, msg->getType());
-    EXPECT_EQ(217, msg->len());
+    EXPECT_EQ(217U, msg->len());
 
-    ASSERT_EQ(2, msg->relay_info_.size());
+    ASSERT_EQ(2U, msg->relay_info_.size());
 
     // There should be an RSOO option in the outermost relay
     OptionPtr opt = msg->getRelayOption(D6O_RSOO, 1);
@@ -1935,7 +1935,7 @@ TEST_F(Pkt6Test, rsoo) {
 
     EXPECT_EQ(D6O_RSOO, opt->getType());
     const OptionCollection& rsoo = opt->getOptions();
-    ASSERT_EQ(2, rsoo.size());
+    ASSERT_EQ(2U, rsoo.size());
 
     OptionPtr rsoo1 = opt->getOption(255);
     OptionPtr rsoo2 = opt->getOption(256);
@@ -1943,9 +1943,8 @@ TEST_F(Pkt6Test, rsoo) {
     ASSERT_TRUE(rsoo1);
     ASSERT_TRUE(rsoo2);
 
-    EXPECT_EQ(8, rsoo1->len()); // 4 bytes of data + header
-    EXPECT_EQ(13, rsoo2->len()); // 9 bytes of data + header
-
+    EXPECT_EQ(8U, rsoo1->len()); // 4 bytes of data + header
+    EXPECT_EQ(13U, rsoo2->len()); // 9 bytes of data + header
 }
 
 // Verify that the DUID can be extracted from the DHCPv6 packet
@@ -2079,7 +2078,7 @@ TEST_F(Pkt6Test, truncatedVendorLength) {
     ASSERT_EQ(D6O_VENDOR_OPTS, x->getType());
     OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
     ASSERT_TRUE(vivso);
-    EXPECT_EQ(8, vivso->len()); // data + opt code + len
+    EXPECT_EQ(8U, vivso->len()); // data + opt code + len
 
     // Build a bad Solicit packet
     pkt = dhcp::test::PktCaptures::captureSolicitWithTruncatedVIVSO();
@@ -2136,7 +2135,7 @@ TEST_F(Pkt6Test, testSkipThisOptionError) {
     OptionStringPtr opstr;
     ASSERT_TRUE(opt = pkt->getOption(41));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("abc", opstr->getValue());
 
     // We should not have option 59.
@@ -2145,7 +2144,7 @@ TEST_F(Pkt6Test, testSkipThisOptionError) {
     // We should have option 42 = "def".
     ASSERT_TRUE(opt = pkt->getOption(42));
     ASSERT_TRUE(opstr = boost::dynamic_pointer_cast<OptionString>(opt));
-    EXPECT_EQ(3, opstr->getValue().length());
+    EXPECT_EQ(3U, opstr->getValue().length());
     EXPECT_EQ("def", opstr->getValue());
 }
 

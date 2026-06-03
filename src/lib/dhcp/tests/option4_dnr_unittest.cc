@@ -31,21 +31,21 @@ TEST(Option4DnrTest, fromConfigCtorOneAdnOnlyModeInstance) {
     ASSERT_TRUE(option);
 
     // Check if member variables were correctly set inside DNR instances.
-    EXPECT_EQ(1, option->getDnrInstances().size());
-    EXPECT_EQ(1, option->getDnrInstances()[0].getServicePriority());
-    EXPECT_EQ(21, option->getDnrInstances()[0].getAdnLength());
+    EXPECT_EQ(1U, option->getDnrInstances().size());
+    EXPECT_EQ(1U, option->getDnrInstances()[0].getServicePriority());
+    EXPECT_EQ(21U, option->getDnrInstances()[0].getAdnLength());
     EXPECT_EQ("myhost1.example.com.", option->getDnrInstances()[0].getAdnAsText());
 
     // This is ADN only mode, so Addr Length and SvcParams Length
     // are both expected to be zero.
-    EXPECT_EQ(0, option->getDnrInstances()[0].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[0].getSvcParamsLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getSvcParamsLength());
 
     // BTW let's check if len() works ok. In ADN only mode, DNR Instance Data Len
     // is set to ADN Len (21) + 3 = 24.
     // expected len: 1x(24 (ADN+ADN Len+Service priority) + 2 (DNR Instance Data Len)) + 2 (headers)
     // = 28
-    EXPECT_EQ(28, option->len());
+    EXPECT_EQ(28U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -76,31 +76,31 @@ TEST(Option4DnrTest, fromConfigCtorMultipleAdnOnlyModeInstances) {
     EXPECT_EQ(DHO_V4_DNR, option->getType());
 
     // Check if member variables were correctly set inside DNR instances.
-    EXPECT_EQ(3, option->getDnrInstances().size());
-    EXPECT_EQ(1, option->getDnrInstances()[0].getServicePriority());
-    EXPECT_EQ(2, option->getDnrInstances()[1].getServicePriority());
-    EXPECT_EQ(3, option->getDnrInstances()[2].getServicePriority());
-    EXPECT_EQ(21, option->getDnrInstances()[0].getAdnLength());
-    EXPECT_EQ(21, option->getDnrInstances()[1].getAdnLength());
-    EXPECT_EQ(21, option->getDnrInstances()[2].getAdnLength());
+    EXPECT_EQ(3U, option->getDnrInstances().size());
+    EXPECT_EQ(1U, option->getDnrInstances()[0].getServicePriority());
+    EXPECT_EQ(2U, option->getDnrInstances()[1].getServicePriority());
+    EXPECT_EQ(3U, option->getDnrInstances()[2].getServicePriority());
+    EXPECT_EQ(21U, option->getDnrInstances()[0].getAdnLength());
+    EXPECT_EQ(21U, option->getDnrInstances()[1].getAdnLength());
+    EXPECT_EQ(21U, option->getDnrInstances()[2].getAdnLength());
     EXPECT_EQ("myhost1.example.com.", option->getDnrInstances()[0].getAdnAsText());
     EXPECT_EQ("myhost2.example.com.", option->getDnrInstances()[1].getAdnAsText());
     EXPECT_EQ("myhost3.example.com.", option->getDnrInstances()[2].getAdnAsText());
 
     // This is ADN only mode, so Addr Length and SvcParams Length
     // are both expected to be zero.
-    EXPECT_EQ(0, option->getDnrInstances()[0].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[0].getSvcParamsLength());
-    EXPECT_EQ(0, option->getDnrInstances()[1].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[1].getSvcParamsLength());
-    EXPECT_EQ(0, option->getDnrInstances()[2].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[2].getSvcParamsLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getSvcParamsLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[1].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[1].getSvcParamsLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[2].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[2].getSvcParamsLength());
 
     // BTW let's check if len() works ok. In ADN only mode, DNR Instance Data Len
     // is set to ADN Len (21) + 3 = 24.
     // expected len: 3x(24 (ADN+ADN Len+Service priority) + 2 (DNR Instance Data Len)) + 2 (headers)
     // = 78 + 2 = 80
-    EXPECT_EQ(80, option->len());
+    EXPECT_EQ(80U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -133,18 +133,18 @@ TEST(Option4DnrTest, fromConfigCtorMixedDnrInstances) {
     ASSERT_TRUE(option);
 
     // Check if member variables were correctly set inside DNR instances.
-    EXPECT_EQ(2, option->getDnrInstances().size());
-    EXPECT_EQ(1, option->getDnrInstances()[0].getServicePriority());
-    EXPECT_EQ(21, option->getDnrInstances()[0].getAdnLength());
+    EXPECT_EQ(2U, option->getDnrInstances().size());
+    EXPECT_EQ(1U, option->getDnrInstances()[0].getServicePriority());
+    EXPECT_EQ(21U, option->getDnrInstances()[0].getAdnLength());
     EXPECT_EQ("myhost1.example.com.", option->getDnrInstances()[0].getAdnAsText());
-    EXPECT_EQ(2, option->getDnrInstances()[1].getServicePriority());
-    EXPECT_EQ(21, option->getDnrInstances()[1].getAdnLength());
+    EXPECT_EQ(2U, option->getDnrInstances()[1].getServicePriority());
+    EXPECT_EQ(21U, option->getDnrInstances()[1].getAdnLength());
     EXPECT_EQ("myhost2.example.com.", option->getDnrInstances()[1].getAdnAsText());
 
-    EXPECT_EQ(0, option->getDnrInstances()[0].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[0].getSvcParamsLength());
-    EXPECT_EQ(2, option->getDnrInstances()[1].getAddresses().size());
-    EXPECT_EQ(8, option->getDnrInstances()[1].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getSvcParamsLength());
+    EXPECT_EQ(2U, option->getDnrInstances()[1].getAddresses().size());
+    EXPECT_EQ(8U, option->getDnrInstances()[1].getAddrLength());
     EXPECT_EQ("192.168.0.1", option->getDnrInstances()[1].getAddresses()[0].toText());
     EXPECT_EQ("192.168.0.2", option->getDnrInstances()[1].getAddresses()[1].toText());
 
@@ -170,7 +170,7 @@ TEST(Option4DnrTest, fromConfigCtorMixedDnrInstances) {
     // + 24 (ADN+ADN Len+Service priority) + 2 (DNR Instance Data Len) + 1 (Addr Len)
     // + 8 (IP addresses) + 25 (svc params)
     // = 88
-    EXPECT_EQ(88, option->len());
+    EXPECT_EQ(88U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -784,21 +784,21 @@ TEST(Option4DnrTest, unpackOneAdnOnly) {
     EXPECT_EQ(DHO_V4_DNR, option->getType());
 
     // Check if data was unpacked correctly from wire data.
-    EXPECT_EQ(24, option->getDnrInstances()[0].getDnrInstanceDataLength());
-    EXPECT_EQ(1, option->getDnrInstances()[0].getServicePriority());
-    EXPECT_EQ(21, option->getDnrInstances()[0].getAdnLength());
+    EXPECT_EQ(24U, option->getDnrInstances()[0].getDnrInstanceDataLength());
+    EXPECT_EQ(1U, option->getDnrInstances()[0].getServicePriority());
+    EXPECT_EQ(21U, option->getDnrInstances()[0].getAdnLength());
     EXPECT_EQ("myhost1.example.com.", option->getDnrInstances()[0].getAdnAsText());
 
     // This is ADN only mode, so Addr Length and SvcParams Length
     // are both expected to be zero.
-    EXPECT_EQ(0, option->getDnrInstances()[0].getAddrLength());
-    EXPECT_EQ(0, option->getDnrInstances()[0].getSvcParamsLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getAddrLength());
+    EXPECT_EQ(0U, option->getDnrInstances()[0].getSvcParamsLength());
 
     // BTW let's check if len() works ok. In ADN only mode, DNR Instance Data Len
     // is set to ADN Len (21) + 3 = 24.
     // expected len: 1x(24 (ADN+ADN Len+Service priority) + 2 (DNR Instance Data Len)) + 2 (headers)
     // = 28
-    EXPECT_EQ(28, option->len());
+    EXPECT_EQ(28U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -842,12 +842,12 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
 
     // Check if data was unpacked correctly from wire data.
     const DnrInstance& dnr_i = option->getDnrInstances()[0];
-    EXPECT_EQ(45, dnr_i.getDnrInstanceDataLength());
-    EXPECT_EQ(1, dnr_i.getServicePriority());
-    EXPECT_EQ(21, dnr_i.getAdnLength());
+    EXPECT_EQ(45U, dnr_i.getDnrInstanceDataLength());
+    EXPECT_EQ(1U, dnr_i.getServicePriority());
+    EXPECT_EQ(21U, dnr_i.getAdnLength());
     EXPECT_EQ("myhost1.example.com.", dnr_i.getAdnAsText());
-    EXPECT_EQ(8, dnr_i.getAddrLength());
-    EXPECT_EQ(2, dnr_i.getAddresses().size());
+    EXPECT_EQ(8U, dnr_i.getAddrLength());
+    EXPECT_EQ(2U, dnr_i.getAddresses().size());
     EXPECT_EQ("192.168.0.1", dnr_i.getAddresses()[0].toText());
     EXPECT_EQ("192.168.0.2", dnr_i.getAddresses()[1].toText());
 
@@ -861,7 +861,7 @@ TEST(Option4DnrTest, unpackOneDnrInstance) {
 
     EXPECT_EQ(svc_params, dnr_i.getSvcParams());
     EXPECT_EQ(svc_params.size(), dnr_i.getSvcParamsLength());
-    EXPECT_EQ(49, option->len());
+    EXPECT_EQ(49U, option->len());
 }
 
 // This test verifies option constructor from wire data in terms
@@ -910,20 +910,20 @@ TEST(Option4DnrTest, unpackMixedDnrInstances) {
 
     // Check if data was unpacked correctly from wire data.
     const DnrInstance& dnr_1 = option->getDnrInstances()[0];
-    EXPECT_EQ(24, dnr_1.getDnrInstanceDataLength());
-    EXPECT_EQ(1, dnr_1.getServicePriority());
-    EXPECT_EQ(21, dnr_1.getAdnLength());
+    EXPECT_EQ(24U, dnr_1.getDnrInstanceDataLength());
+    EXPECT_EQ(1U, dnr_1.getServicePriority());
+    EXPECT_EQ(21U, dnr_1.getAdnLength());
     EXPECT_EQ("myhost1.example.com.", dnr_1.getAdnAsText());
-    EXPECT_EQ(0, dnr_1.getAddrLength());
-    EXPECT_EQ(0, dnr_1.getSvcParamsLength());
+    EXPECT_EQ(0U, dnr_1.getAddrLength());
+    EXPECT_EQ(0U, dnr_1.getSvcParamsLength());
 
     const DnrInstance& dnr_2 = option->getDnrInstances()[1];
-    EXPECT_EQ(58, dnr_2.getDnrInstanceDataLength());
-    EXPECT_EQ(2, dnr_2.getServicePriority());
-    EXPECT_EQ(21, dnr_2.getAdnLength());
+    EXPECT_EQ(58U, dnr_2.getDnrInstanceDataLength());
+    EXPECT_EQ(2U, dnr_2.getServicePriority());
+    EXPECT_EQ(21U, dnr_2.getAdnLength());
     EXPECT_EQ("myhost2.example.com.", dnr_2.getAdnAsText());
-    EXPECT_EQ(8, dnr_2.getAddrLength());
-    EXPECT_EQ(2, dnr_2.getAddresses().size());
+    EXPECT_EQ(8U, dnr_2.getAddrLength());
+    EXPECT_EQ(2U, dnr_2.getAddresses().size());
     EXPECT_EQ("192.168.0.1", dnr_2.getAddresses()[0].toText());
     EXPECT_EQ("192.168.0.2", dnr_2.getAddresses()[1].toText());
 
@@ -942,7 +942,7 @@ TEST(Option4DnrTest, unpackMixedDnrInstances) {
     EXPECT_EQ(svc_params, dnr_2.getSvcParams());
     EXPECT_EQ(svc_params.size(), dnr_2.getSvcParamsLength());
 
-    EXPECT_EQ(88, option->len());
+    EXPECT_EQ(88U, option->len());
 }
 
 // Test checks that exception is thrown when trying to unpack malformed wire data

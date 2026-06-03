@@ -53,7 +53,7 @@ TEST(DuidTest, constructor) {
 TEST(DuidTest, size) {
 
     // Ensure that our size constant is RFC-compliant.
-    ASSERT_EQ(130, DUID::MAX_DUID_LEN);
+    ASSERT_EQ(130U, DUID::MAX_DUID_LEN);
 
     uint8_t data[DUID::MAX_DUID_LEN + 1];
     vector<uint8_t> data2;
@@ -161,7 +161,7 @@ TEST(DuidTest, empty) {
 
     // Ok, technically empty is not really empty, it's just type 0 (DUID_UNKNOWN)
     // followed by a single byte with value of 0.
-    EXPECT_EQ(empty->getDuid().size(), 3);
+    EXPECT_EQ(empty->getDuid().size(), 3U);
     EXPECT_EQ(empty->getDuid(), std::vector<uint8_t>({0, 0, 0}));
     EXPECT_EQ("00:00:00", empty->toText());
 
@@ -217,7 +217,7 @@ TEST(ClientIdTest, constructor) {
 // Check that client-id sizes are reasonable
 TEST(ClientIdTest, size) {
     // Ensure that our size constant is RFC-compliant.
-    ASSERT_EQ(255, ClientId::MAX_CLIENT_ID_LEN);
+    ASSERT_EQ(255U, ClientId::MAX_CLIENT_ID_LEN);
 
     uint8_t data[ClientId::MAX_CLIENT_ID_LEN + 1];
     vector<uint8_t> data2;

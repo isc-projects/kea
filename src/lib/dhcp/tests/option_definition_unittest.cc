@@ -54,7 +54,7 @@ TEST_F(OptionDefinitionTest, constructor) {
     OptionDefinition opt_def1("OPTION_CLIENTID", D6O_CLIENTID,
                               DHCP6_OPTION_SPACE, "string");
     EXPECT_EQ("OPTION_CLIENTID", opt_def1.getName());
-    EXPECT_EQ(1, opt_def1.getCode());
+    EXPECT_EQ(1U, opt_def1.getCode());
     EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def1.getOptionSpaceName());
     EXPECT_EQ(OPT_STRING_TYPE, opt_def1.getType());
     EXPECT_FALSE(opt_def1.getArrayType());
@@ -65,7 +65,7 @@ TEST_F(OptionDefinitionTest, constructor) {
     OptionDefinition opt_def2("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT,
                               DHCP6_OPTION_SPACE, OPT_EMPTY_TYPE);
     EXPECT_EQ("OPTION_RAPID_COMMIT", opt_def2.getName());
-    EXPECT_EQ(14, opt_def2.getCode());
+    EXPECT_EQ(14U, opt_def2.getCode());
     EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def2.getOptionSpaceName());
     EXPECT_EQ(OPT_EMPTY_TYPE, opt_def2.getType());
     EXPECT_FALSE(opt_def2.getArrayType());
@@ -102,7 +102,7 @@ TEST_F(OptionDefinitionTest, constructor) {
                               OPT_IPV6_ADDRESS_TYPE,
                               true);
     EXPECT_EQ("OPTION_NIS_SERVERS", opt_def5.getName());
-    EXPECT_EQ(27, opt_def5.getCode());
+    EXPECT_EQ(27U, opt_def5.getCode());
     EXPECT_EQ(DHCP6_OPTION_SPACE, opt_def5.getOptionSpaceName());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, opt_def5.getType());
     EXPECT_TRUE(opt_def5.getArrayType());
@@ -127,14 +127,14 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
 
     OptionDefinition opt_def_copy(opt_def);
     EXPECT_EQ("option-foo", opt_def_copy.getName());
-    EXPECT_EQ(27, opt_def_copy.getCode());
+    EXPECT_EQ(27U, opt_def_copy.getCode());
     EXPECT_EQ("my-space", opt_def_copy.getOptionSpaceName());
     EXPECT_TRUE(opt_def_copy.getArrayType());
     EXPECT_TRUE(opt_def_copy.getEncapsulatedSpace().empty());
     ASSERT_EQ(OPT_RECORD_TYPE, opt_def_copy.getType());
     const OptionDefinition::RecordFieldsCollection fields =
         opt_def_copy.getRecordFields();
-    ASSERT_EQ(2, fields.size());
+    ASSERT_EQ(2U, fields.size());
     EXPECT_EQ(OPT_UINT16_TYPE, fields[0]);
     EXPECT_EQ(OPT_STRING_TYPE, fields[1]);
 
@@ -143,7 +143,7 @@ TEST_F(OptionDefinitionTest, copyConstructor) {
     OptionDefinition opt_def2("option-bar", 30, "my-space", "uint32", "isc");
     OptionDefinition opt_def_copy2(opt_def2);
     EXPECT_EQ("option-bar", opt_def_copy2.getName());
-    EXPECT_EQ(30, opt_def_copy2.getCode());
+    EXPECT_EQ(30U, opt_def_copy2.getCode());
     EXPECT_EQ("my-space", opt_def_copy2.getOptionSpaceName());
     EXPECT_FALSE(opt_def_copy2.getArrayType());
     EXPECT_EQ(OPT_UINT32_TYPE, opt_def_copy2.getType());
@@ -158,7 +158,7 @@ TEST_F(OptionDefinitionTest, createStringType) {
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
-    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(123U, def->getCode());
     EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
@@ -173,7 +173,7 @@ TEST_F(OptionDefinitionTest, createEnumType) {
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
-    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(123U, def->getCode());
     EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
@@ -188,7 +188,7 @@ TEST_F(OptionDefinitionTest, createStringTypeArray) {
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
-    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(123U, def->getCode());
     EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
@@ -203,7 +203,7 @@ TEST_F(OptionDefinitionTest, createEnumTypeArray) {
     ASSERT_TRUE(def);
 
     EXPECT_EQ("option-foo", def->getName());
-    EXPECT_EQ(123, def->getCode());
+    EXPECT_EQ(123U, def->getCode());
     EXPECT_EQ("my-space", def->getOptionSpaceName());
     EXPECT_EQ(OPT_UINT16_TYPE, def->getType());
     EXPECT_TRUE(def->getArrayType());
@@ -308,7 +308,7 @@ TEST_F(OptionDefinitionTest, addRecordField) {
 
     // Check what we have actually added.
     OptionDefinition::RecordFieldsCollection fields = opt_def.getRecordFields();
-    ASSERT_EQ(3, fields.size());
+    ASSERT_EQ(3U, fields.size());
     EXPECT_EQ(OPT_IPV6_ADDRESS_TYPE, fields[0]);
     EXPECT_EQ(OPT_UINT32_TYPE, fields[1]);
     EXPECT_EQ(OPT_UINT32_TYPE, fields[2]);
@@ -695,16 +695,16 @@ TEST_F(OptionDefinitionTest, empty) {
     ASSERT_TRUE(typeid(*optptr) == typeid(Option));
     // Expect 'empty' DHCPv6 option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
-    EXPECT_EQ(4, option_v6->getHeaderLen());
-    EXPECT_EQ(0, option_v6->getData().size());
+    EXPECT_EQ(4U, option_v6->getHeaderLen());
+    EXPECT_EQ(0U, option_v6->getData().size());
 
     // Repeat the same test scenario for DHCPv4 option.
     OptionPtr option_v4;
     ASSERT_NO_THROW(option_v4 = opt_def.optionFactory(Option::V4, 214, OptionBuffer()));
     // Expect 'empty' DHCPv4 option.
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
-    EXPECT_EQ(2, option_v4->getHeaderLen());
-    EXPECT_EQ(0, option_v4->getData().size());
+    EXPECT_EQ(2U, option_v4->getHeaderLen());
+    EXPECT_EQ(0U, option_v4->getData().size());
 }
 
 // The purpose of this test is to verify that when the empty option encapsulates
@@ -740,12 +740,12 @@ TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
     ASSERT_TRUE(typeid(*optptr) == typeid(OptionCustom));
     // Sanity-check length, universe etc.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
-    EXPECT_EQ(4, option_v6->getHeaderLen());
+    EXPECT_EQ(4U, option_v6->getHeaderLen());
     // This option should have one suboption with the code of 1025.
     OptionPtr subopt_v6 = option_v6->getOption(1025);
     EXPECT_TRUE(subopt_v6);
     // Check that this suboption holds valid data.
-    EXPECT_EQ(1025, subopt_v6->getType());
+    EXPECT_EQ(1025U, subopt_v6->getType());
     EXPECT_EQ(Option::V6, subopt_v6->getUniverse());
     EXPECT_EQ(0, memcmp(&subopt_v6->getData()[0], subopt_data + 4, 4));
 
@@ -782,7 +782,7 @@ TEST_F(OptionDefinitionTest, binary) {
     // Sanity check on universe, length and size. These are
     // the basic parameters identifying any option.
     EXPECT_EQ(Option::V6, option_v6->getUniverse());
-    EXPECT_EQ(4, option_v6->getHeaderLen());
+    EXPECT_EQ(4U, option_v6->getHeaderLen());
     ASSERT_EQ(buf.size(), option_v6->getData().size());
 
     // Get the server id data from the option and compare
@@ -796,7 +796,7 @@ TEST_F(OptionDefinitionTest, binary) {
     ASSERT_NO_THROW(option_v4 = opt_def.optionFactory(Option::V4, 214, buf));
     // Expect 'empty' DHCPv4 option.
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
-    EXPECT_EQ(2, option_v4->getHeaderLen());
+    EXPECT_EQ(2U, option_v4->getHeaderLen());
     ASSERT_EQ(buf.size(), option_v4->getData().size());
 
     EXPECT_TRUE(std::equal(option_v6->getData().begin(),
@@ -831,9 +831,9 @@ TEST_F(OptionDefinitionTest, recordIA6) {
     ASSERT_TRUE(typeid(*optptr) == typeid(Option6IA));
     boost::shared_ptr<Option6IA> option_cast_v6 =
         boost::static_pointer_cast<Option6IA>(option_v6);
-    EXPECT_EQ(0x00010203, option_cast_v6->getIAID());
-    EXPECT_EQ(0x04050607, option_cast_v6->getT1());
-    EXPECT_EQ(0x08090A0B, option_cast_v6->getT2());
+    EXPECT_EQ(0x00010203U, option_cast_v6->getIAID());
+    EXPECT_EQ(0x04050607U, option_cast_v6->getT1());
+    EXPECT_EQ(0x08090A0BU, option_cast_v6->getT2());
 
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
@@ -878,8 +878,8 @@ TEST_F(OptionDefinitionTest, recordIAAddr6) {
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
     EXPECT_EQ(addr_v6, option_cast_v6->getAddress());
-    EXPECT_EQ(0x00010203, option_cast_v6->getPreferred());
-    EXPECT_EQ(0x04050607, option_cast_v6->getValid());
+    EXPECT_EQ(0x00010203U, option_cast_v6->getPreferred());
+    EXPECT_EQ(0x04050607U, option_cast_v6->getValid());
 
     // The length of the buffer must be at least 12 bytes.
     // Check too short buffer.
@@ -918,8 +918,8 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     boost::shared_ptr<Option6IAAddr> option_cast_v6 =
         boost::static_pointer_cast<Option6IAAddr>(option_v6);
     EXPECT_EQ("2001:db8::ff00:42:8329", option_cast_v6->getAddress().toText());
-    EXPECT_EQ(1234, option_cast_v6->getPreferred());
-    EXPECT_EQ(5678, option_cast_v6->getValid());
+    EXPECT_EQ(1234U, option_cast_v6->getPreferred());
+    EXPECT_EQ(5678U, option_cast_v6->getValid());
 }
 
 // The purpose of this test is to verify that the definition for option
@@ -1058,7 +1058,7 @@ TEST_F(OptionDefinitionTest, uint8) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint8_t> >(option_v6);
-    EXPECT_EQ(1, option_cast_v6->getValue());
+    EXPECT_EQ(1U, option_cast_v6->getValue());
 
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
@@ -1089,7 +1089,7 @@ TEST_F(OptionDefinitionTest, uint8Tokenized) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint8_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint8_t> >(option_v6);
-    EXPECT_EQ(123, option_cast_v6->getValue());
+    EXPECT_EQ(123U, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
 }
@@ -1115,7 +1115,7 @@ TEST_F(OptionDefinitionTest, uint16) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint16_t> >(option_v6);
-    EXPECT_EQ(0x0102, option_cast_v6->getValue());
+    EXPECT_EQ(0x0102U, option_cast_v6->getValue());
 
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
@@ -1147,7 +1147,7 @@ TEST_F(OptionDefinitionTest, uint16Tokenized) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint16_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint16_t> >(option_v6);
-    EXPECT_EQ(1234, option_cast_v6->getValue());
+    EXPECT_EQ(1234U, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
 
@@ -1175,7 +1175,7 @@ TEST_F(OptionDefinitionTest, uint32) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint32_t> >(option_v6);
-    EXPECT_EQ(0x01020304, option_cast_v6->getValue());
+    EXPECT_EQ(0x01020304U, option_cast_v6->getValue());
 
     // Try to provide too short buffer. Expect exception.
     EXPECT_THROW(
@@ -1206,7 +1206,7 @@ TEST_F(OptionDefinitionTest, uint32Tokenized) {
     // Validate the value.
     boost::shared_ptr<OptionInt<uint32_t> > option_cast_v6 =
         boost::static_pointer_cast<OptionInt<uint32_t> >(option_v6);
-    EXPECT_EQ(123456, option_cast_v6->getValue());
+    EXPECT_EQ(123456U, option_cast_v6->getValue());
 
     // @todo Add more cases for DHCPv4
 }
@@ -1284,9 +1284,9 @@ TEST_F(OptionDefinitionTest, uint16ArrayTokenized) {
         boost::static_pointer_cast<OptionIntArray<uint16_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint16_t> values = option_cast_v6->getValues();
-    EXPECT_EQ(12345, values[0]);
-    EXPECT_EQ(5679, values[1]);
-    EXPECT_EQ(12, values[2]);
+    EXPECT_EQ(12345U, values[0]);
+    EXPECT_EQ(5679U, values[1]);
+    EXPECT_EQ(12U, values[2]);
 }
 
 // The purpose of this test is to verify that definition for option that
@@ -1367,10 +1367,10 @@ TEST_F(OptionDefinitionTest, uint32ArrayTokenized) {
         boost::static_pointer_cast<OptionIntArray<uint32_t> >(option_v6);
     // Get the values from the initiated options and validate.
     std::vector<uint32_t> values = option_cast_v6->getValues();
-    EXPECT_EQ(123456, values[0]);
-    EXPECT_EQ(7, values[1]);
-    EXPECT_EQ(256, values[2]);
-    EXPECT_EQ(1111, values[3]);
+    EXPECT_EQ(123456U, values[0]);
+    EXPECT_EQ(7U, values[1]);
+    EXPECT_EQ(256U, values[2]);
+    EXPECT_EQ(1111U, values[3]);
 }
 
 // The purpose of this test is to verify that the definition can be created
@@ -1438,9 +1438,9 @@ TEST_F(OptionDefinitionTest, prefix) {
     // Validate the value.
     OptionCustomPtr option_cast_v6 =
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
-    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast_v6->getDataFieldsNum());
     PrefixTuple prefix = option_cast_v6->readPrefix();
-    EXPECT_EQ(32, prefix.first.asUnsigned());
+    EXPECT_EQ(32U, prefix.first.asUnsigned());
     EXPECT_EQ("3000::", prefix.second.toText());
 }
 
@@ -1467,9 +1467,9 @@ TEST_F(OptionDefinitionTest, prefixTokenized) {
     // Validate the value.
     OptionCustomPtr option_cast_v6 =
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
-    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast_v6->getDataFieldsNum());
     PrefixTuple prefix = option_cast_v6->readPrefix();
-    EXPECT_EQ(64, prefix.first.asUnsigned());
+    EXPECT_EQ(64U, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", prefix.second.toText());
 }
 
@@ -1515,23 +1515,23 @@ TEST_F(OptionDefinitionTest, prefixArrayTokenized) {
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
 
     // There should be 3 prefixes in this option.
-    ASSERT_EQ(3, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(3U, option_cast_v6->getDataFieldsNum());
 
     ASSERT_NO_THROW({
         PrefixTuple prefix0 = option_cast_v6->readPrefix(0);
-        EXPECT_EQ(64, prefix0.first.asUnsigned());
+        EXPECT_EQ(64U, prefix0.first.asUnsigned());
         EXPECT_EQ("2001:db8:1::", prefix0.second.toText());
     });
 
     ASSERT_NO_THROW({
         PrefixTuple prefix1 = option_cast_v6->readPrefix(1);
-        EXPECT_EQ(32, prefix1.first.asUnsigned());
+        EXPECT_EQ(32U, prefix1.first.asUnsigned());
         EXPECT_EQ("3000::", prefix1.second.toText());
     });
 
     ASSERT_NO_THROW({
         PrefixTuple prefix2 = option_cast_v6->readPrefix(2);
-        EXPECT_EQ(48, prefix2.first.asUnsigned());
+        EXPECT_EQ(48U, prefix2.first.asUnsigned());
         EXPECT_EQ("3001:1::", prefix2.second.toText());
     });
 }
@@ -1562,10 +1562,10 @@ TEST_F(OptionDefinitionTest, psid) {
     // Validate the value.
     OptionCustomPtr option_cast_v6 =
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
-    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast_v6->getDataFieldsNum());
     PSIDTuple psid = option_cast_v6->readPsid();
-    EXPECT_EQ(6, psid.first.asUnsigned());
-    EXPECT_EQ(1, psid.second.asUint16());
+    EXPECT_EQ(6U, psid.first.asUnsigned());
+    EXPECT_EQ(1U, psid.second.asUint16());
 }
 
 // This test verifies that a definition of an option with a single PSID
@@ -1591,10 +1591,10 @@ TEST_F(OptionDefinitionTest, psidTokenized) {
     // Validate the value.
     OptionCustomPtr option_cast_v6 =
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
-    ASSERT_EQ(1, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast_v6->getDataFieldsNum());
     PSIDTuple psid = option_cast_v6->readPsid();
-    EXPECT_EQ(6, psid.first.asUnsigned());
-    EXPECT_EQ(3, psid.second.asUint16());
+    EXPECT_EQ(6U, psid.first.asUnsigned());
+    EXPECT_EQ(3U, psid.second.asUint16());
 }
 
 // This test verifies that a definition of an option with an array
@@ -1625,7 +1625,7 @@ TEST_F(OptionDefinitionTest, psidArrayTokenized) {
         boost::dynamic_pointer_cast<OptionCustom>(option_v6);
 
     // There should be 3 PSIDs in this option.
-    ASSERT_EQ(3, option_cast_v6->getDataFieldsNum());
+    ASSERT_EQ(3U, option_cast_v6->getDataFieldsNum());
 
     // Check their values.
     PSIDTuple psid0;
@@ -1633,16 +1633,16 @@ TEST_F(OptionDefinitionTest, psidArrayTokenized) {
     PSIDTuple psid2;
 
     psid0 = option_cast_v6->readPsid(0);
-    EXPECT_EQ(6, psid0.first.asUnsigned());
-    EXPECT_EQ(3, psid0.second.asUint16());
+    EXPECT_EQ(6U, psid0.first.asUnsigned());
+    EXPECT_EQ(3U, psid0.second.asUint16());
 
     psid1 = option_cast_v6->readPsid(1);
-    EXPECT_EQ(1, psid1.first.asUnsigned());
-    EXPECT_EQ(0, psid1.second.asUint16());
+    EXPECT_EQ(1U, psid1.first.asUnsigned());
+    EXPECT_EQ(0U, psid1.second.asUint16());
 
     psid2 = option_cast_v6->readPsid(2);
-    EXPECT_EQ(3, psid2.first.asUnsigned());
-    EXPECT_EQ(7, psid2.second.asUint16());
+    EXPECT_EQ(3U, psid2.first.asUnsigned());
+    EXPECT_EQ(7U, psid2.second.asUint16());
 }
 
 // This test verifies that a definition of an option with a single DHCPv4
@@ -1671,7 +1671,7 @@ TEST_F(OptionDefinitionTest, tuple4) {
     // Validate the value.
     OptionCustomPtr option_cast =
         boost::dynamic_pointer_cast<OptionCustom>(option);
-    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast->getDataFieldsNum());
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
@@ -1703,7 +1703,7 @@ TEST_F(OptionDefinitionTest, tuple6) {
     // Validate the value.
     OptionCustomPtr option_cast =
         boost::dynamic_pointer_cast<OptionCustom>(option);
-    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast->getDataFieldsNum());
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
@@ -1732,7 +1732,7 @@ TEST_F(OptionDefinitionTest, tuple4Tokenized) {
     // Validate the value.
     OptionCustomPtr option_cast =
         boost::dynamic_pointer_cast<OptionCustom>(option);
-    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast->getDataFieldsNum());
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
@@ -1761,7 +1761,7 @@ TEST_F(OptionDefinitionTest, tuple6Tokenized) {
     // Validate the value.
     OptionCustomPtr option_cast =
         boost::dynamic_pointer_cast<OptionCustom>(option);
-    ASSERT_EQ(1, option_cast->getDataFieldsNum());
+    ASSERT_EQ(1U, option_cast->getDataFieldsNum());
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
@@ -1796,7 +1796,7 @@ TEST_F(OptionDefinitionTest, tuple4ArrayTokenized) {
         boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
 
     // There should be 3 tuples in this option.
-    ASSERT_EQ(3, option_cast->getTuplesNum());
+    ASSERT_EQ(3U, option_cast->getTuplesNum());
 
     // Check their values.
     OpaqueDataTuple tuple0 = option_cast->getTuple(0);
@@ -1840,7 +1840,7 @@ TEST_F(OptionDefinitionTest, tuple4ArrayOption143) {
         boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
 
     // There should be 3 tuples in this option.
-    ASSERT_EQ(3, option_cast->getTuplesNum());
+    ASSERT_EQ(3U, option_cast->getTuplesNum());
 
     // Check their values.
     OpaqueDataTuple tuple0 = option_cast->getTuple(0);
@@ -1881,16 +1881,16 @@ TEST_F(OptionDefinitionTest, internalOption4DnrAdnOnly) {
     auto dnr_instances = option_cast->getDnrInstances();
 
     // Only one DNR instance is expected.
-    ASSERT_EQ(1, dnr_instances.size());
+    ASSERT_EQ(1U, dnr_instances.size());
 
     DnrInstance& dnr = dnr_instances[0];
-    ASSERT_EQ(26, dnr.getDnrInstanceDataLength());
-    ASSERT_EQ(1234, dnr.getServicePriority());
+    ASSERT_EQ(26U, dnr.getDnrInstanceDataLength());
+    ASSERT_EQ(1234U, dnr.getServicePriority());
     ASSERT_EQ(true, dnr.isAdnOnlyMode());
     ASSERT_EQ("example.some.host.org.", dnr.getAdnAsText());
-    ASSERT_EQ(23, dnr.getAdnLength());
-    ASSERT_EQ(0, dnr.getAddrLength());
-    ASSERT_EQ(0, dnr.getSvcParamsLength());
+    ASSERT_EQ(23U, dnr.getAdnLength());
+    ASSERT_EQ(0U, dnr.getAddrLength());
+    ASSERT_EQ(0U, dnr.getSvcParamsLength());
 }
 
 // The purpose of this test is to verify that definition can be created
@@ -1928,33 +1928,33 @@ TEST_F(OptionDefinitionTest, internalOption4Dnr) {
     auto dnr_instances = option_cast->getDnrInstances();
 
     // Two DNR instances are expected.
-    ASSERT_EQ(2, dnr_instances.size());
+    ASSERT_EQ(2U, dnr_instances.size());
 
     // Let's check 1st DNR instance.
     DnrInstance& dnr_1 = dnr_instances[0];
-    ASSERT_EQ(53, dnr_1.getDnrInstanceDataLength());
-    ASSERT_EQ(1234, dnr_1.getServicePriority());
+    ASSERT_EQ(53U, dnr_1.getDnrInstanceDataLength());
+    ASSERT_EQ(1234U, dnr_1.getServicePriority());
     ASSERT_EQ(false, dnr_1.isAdnOnlyMode());
-    ASSERT_EQ(23, dnr_1.getAdnLength());
+    ASSERT_EQ(23U, dnr_1.getAdnLength());
     ASSERT_EQ("example.some.host.org.", dnr_1.getAdnAsText());
-    ASSERT_EQ(8, dnr_1.getAddrLength());
-    ASSERT_EQ(18, dnr_1.getSvcParamsLength());
+    ASSERT_EQ(8U, dnr_1.getAddrLength());
+    ASSERT_EQ(18U, dnr_1.getSvcParamsLength());
     auto addresses_1 = dnr_1.getAddresses();
-    ASSERT_EQ(2, addresses_1.size());
+    ASSERT_EQ(2U, addresses_1.size());
     ASSERT_EQ("192.168.0.1", addresses_1[0].toText());
     ASSERT_EQ("192.168.0.2", addresses_1[1].toText());
 
     // Let's check 2nd DNR instance.
     DnrInstance& dnr_2 = dnr_instances[1];
-    ASSERT_EQ(60, dnr_2.getDnrInstanceDataLength());
-    ASSERT_EQ(4321, dnr_2.getServicePriority());
+    ASSERT_EQ(60U, dnr_2.getDnrInstanceDataLength());
+    ASSERT_EQ(4321U, dnr_2.getServicePriority());
     ASSERT_EQ(false, dnr_2.isAdnOnlyMode());
-    ASSERT_EQ(21, dnr_2.getAdnLength());
+    ASSERT_EQ(21U, dnr_2.getAdnLength());
     ASSERT_EQ("myhost1.example.com.", dnr_2.getAdnAsText());
-    ASSERT_EQ(8, dnr_2.getAddrLength());
-    ASSERT_EQ(27, dnr_2.getSvcParamsLength());
+    ASSERT_EQ(8U, dnr_2.getAddrLength());
+    ASSERT_EQ(27U, dnr_2.getSvcParamsLength());
     auto addresses_2 = dnr_2.getAddresses();
-    ASSERT_EQ(2, addresses_2.size());
+    ASSERT_EQ(2U, addresses_2.size());
     ASSERT_EQ("192.169.0.1", addresses_2[0].toText());
     ASSERT_EQ("192.169.0.2", addresses_2[1].toText());
 }
@@ -1984,12 +1984,12 @@ TEST_F(OptionDefinitionTest, internalOption6DnrAdnOnly) {
     // Validate that option's fields were correctly parsed from strings.
     Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
 
-    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(1234U, option_cast->getServicePriority());
     ASSERT_EQ(true, option_cast->isAdnOnlyMode());
     ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
-    ASSERT_EQ(23, option_cast->getAdnLength());
-    ASSERT_EQ(0, option_cast->getAddrLength());
-    ASSERT_EQ(0, option_cast->getSvcParamsLength());
+    ASSERT_EQ(23U, option_cast->getAdnLength());
+    ASSERT_EQ(0U, option_cast->getAddrLength());
+    ASSERT_EQ(0U, option_cast->getSvcParamsLength());
 }
 
 // The purpose of this test is to verify that definition can be created
@@ -2019,14 +2019,14 @@ TEST_F(OptionDefinitionTest, internalOption6Dnr) {
     // Validate that option's fields were correctly parsed from strings.
     Option6DnrPtr option_cast = boost::dynamic_pointer_cast<Option6Dnr>(option);
 
-    ASSERT_EQ(1234, option_cast->getServicePriority());
+    ASSERT_EQ(1234U, option_cast->getServicePriority());
     ASSERT_EQ(false, option_cast->isAdnOnlyMode());
     ASSERT_EQ("example.some.host.org.", option_cast->getAdnAsText());
-    ASSERT_EQ(23, option_cast->getAdnLength());
-    ASSERT_EQ(32, option_cast->getAddrLength());
-    ASSERT_EQ(27, option_cast->getSvcParamsLength());
+    ASSERT_EQ(23U, option_cast->getAdnLength());
+    ASSERT_EQ(32U, option_cast->getAddrLength());
+    ASSERT_EQ(27U, option_cast->getSvcParamsLength());
     auto addresses = option_cast->getAddresses();
-    ASSERT_EQ(2, addresses.size());
+    ASSERT_EQ(2U, addresses.size());
     ASSERT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
     ASSERT_EQ("ff02::face:b00c", addresses[1].toText());
 }
@@ -2060,7 +2060,7 @@ TEST_F(OptionDefinitionTest, tuple6ArrayTokenized) {
         boost::dynamic_pointer_cast<OptionOpaqueDataTuples>(option);
 
     // There should be 3 tuples in this option.
-    ASSERT_EQ(3, option_cast->getTuplesNum());
+    ASSERT_EQ(3U, option_cast->getTuplesNum());
 
     // Check their values.
     OpaqueDataTuple tuple0 = option_cast->getTuple(0);
@@ -2106,7 +2106,7 @@ TEST_F(OptionDefinitionTest, internalOptionTypeString) {
 
     // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
     // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
-    EXPECT_EQ(24, option_cast->len());
+    EXPECT_EQ(24U, option_cast->len());
 
     // Verify toText() is working fine.
     EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "
@@ -2147,7 +2147,7 @@ TEST_F(OptionDefinitionTest, internalOptionTypeBinary) {
 
     // Sanity check on universe and header length.
     EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(2, option->getHeaderLen());
+    EXPECT_EQ(2U, option->getHeaderLen());
 
     // Validate parsed values.
     OptionClasslessStaticRoutePtr option_cast = boost::dynamic_pointer_cast<OptionClasslessStaticRoute>(option);
@@ -2157,7 +2157,7 @@ TEST_F(OptionDefinitionTest, internalOptionTypeBinary) {
 
     // Expected len: 2 (option code + option len headers) + 5 (1 dest descriptor + 4 router addr)
     // + 9 (5 dest descriptor + 4 router addr) + 8 (4 dest descriptor + 4 router addr).
-    EXPECT_EQ(24, option_cast->len());
+    EXPECT_EQ(24U, option_cast->len());
 
     // Verify toText() is working fine.
     EXPECT_EQ("type=121(CLASSLESS_STATIC_ROUTE), len=22, "

@@ -114,16 +114,16 @@ TEST_F(Option6AddrLstTest, basic) {
     EXPECT_EQ(Option::V6, opt1->getUniverse());
 
     EXPECT_EQ(D6O_NAME_SERVERS, opt1->getType());
-    EXPECT_EQ(20, opt1->len());
+    EXPECT_EQ(20U, opt1->len());
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     IOAddress addr = addrs[0];
     EXPECT_EQ("2001:db8:1::dead:beef", addr.toText());
 
     // Pack this option
     opt1->pack(out_buf_);
 
-    EXPECT_EQ(20, out_buf_.getLength());
+    EXPECT_EQ(20U, out_buf_.getLength());
     EXPECT_EQ(0, memcmp(expected1, out_buf_.getData(), 20));
 
     // Two addresses
@@ -133,9 +133,9 @@ TEST_F(Option6AddrLstTest, basic) {
                                       buf_.begin(), buf_.begin() + 32));
     );
     EXPECT_EQ(D6O_SIP_SERVERS_ADDR, opt2->getType());
-    EXPECT_EQ(36, opt2->len());
+    EXPECT_EQ(36U, opt2->len());
     addrs = opt2->getAddresses();
-    ASSERT_EQ(2, addrs.size());
+    ASSERT_EQ(2U, addrs.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addrs[0].toText());
     EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
 
@@ -143,7 +143,7 @@ TEST_F(Option6AddrLstTest, basic) {
     out_buf_.clear();
     opt2->pack(out_buf_);
 
-    EXPECT_EQ(36, out_buf_.getLength() );
+    EXPECT_EQ(36U, out_buf_.getLength() );
     EXPECT_EQ(0, memcmp(expected2, out_buf_.getData(), 36));
 
     // Three addresses
@@ -154,9 +154,9 @@ TEST_F(Option6AddrLstTest, basic) {
     );
 
     EXPECT_EQ(D6O_NIS_SERVERS, opt3->getType());
-    EXPECT_EQ(52, opt3->len());
+    EXPECT_EQ(52U, opt3->len());
     addrs = opt3->getAddresses();
-    ASSERT_EQ(3, addrs.size());
+    ASSERT_EQ(3U, addrs.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addrs[0].toText());
     EXPECT_EQ("ff02::face:b00c", addrs[1].toText());
     EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", addrs[2].toText());
@@ -165,7 +165,7 @@ TEST_F(Option6AddrLstTest, basic) {
     out_buf_.clear();
     opt3->pack(out_buf_);
 
-    EXPECT_EQ(52, out_buf_.getLength());
+    EXPECT_EQ(52U, out_buf_.getLength());
     EXPECT_EQ(0, memcmp(expected3, out_buf_.getData(), 52));
 
     EXPECT_NO_THROW(opt1.reset());
@@ -180,10 +180,10 @@ TEST_F(Option6AddrLstTest, constructors) {
         opt1.reset(new Option6AddrLst(1234, IOAddress("::1")));
     );
     EXPECT_EQ(Option::V6, opt1->getUniverse());
-    EXPECT_EQ(1234, opt1->getType());
+    EXPECT_EQ(1234U, opt1->getType());
 
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
-    ASSERT_EQ(1, addrs.size() );
+    ASSERT_EQ(1U, addrs.size() );
     EXPECT_EQ("::1", addrs[0].toText());
 
     addrs.clear();
@@ -196,7 +196,7 @@ TEST_F(Option6AddrLstTest, constructors) {
     );
 
     Option6AddrLst::AddressContainer check = opt2->getAddresses();
-    ASSERT_EQ(2, check.size() );
+    ASSERT_EQ(2U, check.size());
     EXPECT_EQ("fe80::1234", check[0].toText());
     EXPECT_EQ("2001:db8:1::baca", check[1].toText());
 
@@ -220,7 +220,7 @@ TEST_F(Option6AddrLstTest, setAddress) {
     /// a test for IOAddress)
 
     Option6AddrLst::AddressContainer addrs = opt1->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("2001:db8:1::2", addrs[0].toText());
 
     EXPECT_NO_THROW(opt1.reset());
@@ -251,12 +251,12 @@ checkEmpty(Option6AddrLst& addrs) {
         D6O_DHCPV4_O_DHCPV6_SERVER/256, D6O_DHCPV4_O_DHCPV6_SERVER%256,
         0, 0
     };
-    EXPECT_EQ(4, addrs.len());  // just 2-byte type and 2-byte len fields
+    EXPECT_EQ(4U, addrs.len());  // just 2-byte type and 2-byte len fields
     EXPECT_EQ("type=00088, len=00000:", addrs.toText());
 
     OutputBuffer out_buf(255);
     addrs.pack(out_buf);
-    EXPECT_EQ(4, out_buf.getLength());
+    EXPECT_EQ(4U, out_buf.getLength());
     EXPECT_EQ(0, memcmp(expected, out_buf.getData(), 4));
 }
 

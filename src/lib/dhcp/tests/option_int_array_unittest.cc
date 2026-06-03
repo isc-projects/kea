@@ -52,7 +52,7 @@ public:
         // However, since we allow using uint8_t types with this template
         // class we have to test it here.
         boost::shared_ptr<OptionIntArray<T> > opt;
-        const int opt_len = 10;
+        const unsigned opt_len = 10;
         const uint16_t opt_code = 80;
 
         // Constructor throws exception if provided buffer is empty.
@@ -76,7 +76,7 @@ public:
         // We need to copy values from the buffer to apply sign if signed
         // type is used.
         std::vector<T> reference_values;
-        for (int i = 0; i < opt_len; ++i) {
+        for (unsigned i = 0; i < opt_len; ++i) {
             // Values have been read from the buffer in network
             // byte order. We put them back in the same order here.
             reference_values.push_back(static_cast<T>(buf_[i]));
@@ -99,18 +99,18 @@ public:
 
         if (u == Option::V4) {
             // The total length is 10 bytes for data and 2 bytes for a header.
-            ASSERT_EQ(12, out_buf_.getLength());
+            ASSERT_EQ(12U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint8());
             // if option length is correct
-            EXPECT_EQ(10, out.readUint8());
+            EXPECT_EQ(10U, out.readUint8());
         } else {
             // The total length is 10 bytes for data and 4 bytes for a header.
-            ASSERT_EQ(14, out_buf_.getLength());
+            ASSERT_EQ(14U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(10, out.readUint16());
+            EXPECT_EQ(10U, out.readUint16());
         }
 
         // if data is correct
@@ -131,7 +131,7 @@ public:
     void bufferToIntTest16(const Option::Universe u) {
         // Create option that conveys array of multiple uint16_t or int16_t values.
         boost::shared_ptr<OptionIntArray<T> > opt;
-        const int opt_len = 20;
+        const unsigned opt_len = 20;
         const uint16_t opt_code = 81;
 
         // Constructor throws exception if provided buffer is empty.
@@ -163,7 +163,7 @@ public:
         // Create reference values from the buffer so as we can
         // simply compare two vectors.
         std::vector<T> reference_values;
-        for (int i = 0; i < opt_len; i += 2) {
+        for (unsigned i = 0; i < opt_len; i += 2) {
             reference_values.push_back((buf_[i] << 8) |
                                        buf_[i + 1]);
         }
@@ -182,18 +182,18 @@ public:
 
         if (u == Option::V4) {
             // The total length is 20 bytes for data and 2 bytes for a header.
-            ASSERT_EQ(22, out_buf_.getLength());
+            ASSERT_EQ(22U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint8());
             // if option length is correct
-            EXPECT_EQ(20, out.readUint8());
+            EXPECT_EQ(20U, out.readUint8());
         } else {
             // The total length is 20 bytes for data and 4 bytes for a header.
-            ASSERT_EQ(24, out_buf_.getLength());
+            ASSERT_EQ(24U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(20, out.readUint16());
+            EXPECT_EQ(20U, out.readUint16());
         }
         // if data is correct
         std::vector<uint8_t> out_data;
@@ -213,7 +213,7 @@ public:
     void bufferToIntTest32(const Option::Universe u) {
         // Create option that conveys array of multiple uint16_t values.
         boost::shared_ptr<OptionIntArray<T> > opt;
-        const int opt_len = 40;
+        const unsigned opt_len = 40;
         const uint16_t opt_code = 82;
 
         // Constructor throws exception if provided buffer is empty.
@@ -245,7 +245,7 @@ public:
         // Create reference values from the buffer so as we can
         // simply compare two vectors.
         std::vector<T> reference_values;
-        for (int i = 0; i < opt_len; i += 4) {
+        for (unsigned i = 0; i < opt_len; i += 4) {
             reference_values.push_back((buf_[i] << 24) |
                                        (buf_[i + 1] << 16 & 0x00FF0000) |
                                        (buf_[i + 2] << 8 & 0xFF00) |
@@ -266,18 +266,18 @@ public:
 
         if (u == Option::V4) {
             // The total length is 40 bytes for data and 2 bytes for a header.
-            ASSERT_EQ(42, out_buf_.getLength());
+            ASSERT_EQ(42U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint8());
             // if option length is correct
-            EXPECT_EQ(40, out.readUint8());
+            EXPECT_EQ(40U, out.readUint8());
         } else {
             // The total length is 40 bytes for data and 4 bytes for a header.
-            ASSERT_EQ(44, out_buf_.getLength());
+            ASSERT_EQ(44U, out_buf_.getLength());
             // if option type is correct
             EXPECT_EQ(opt_code, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(40, out.readUint16());
+            EXPECT_EQ(40U, out.readUint16());
         }
 
         // if data is correct
@@ -480,7 +480,5 @@ TEST_F(OptionIntArrayTest, toTextUint8) {
     EXPECT_EQ("type=128, len=003: 1(uint8) 7(uint8) 15(uint8)",
               option.toText());
 }
-
-
 
 } // anonymous namespace

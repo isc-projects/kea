@@ -51,13 +51,13 @@ TEST(ProtocolUtilTest, checksum) {
     // Get the actual checksum.
     uint16_t chksum = ~calcChecksum(hdr, hdr_size);
     // The 0xb1e6 value has been calculated by other means.
-    EXPECT_EQ(0xb1e6, chksum);
+    EXPECT_EQ(0xb1e6U, chksum);
     // Tested function may also take the initial value of the sum.
     // Let's set it to 2 and see whether it is included in the
     // calculation.
     chksum = ~calcChecksum(hdr, hdr_size, 2);
     // The checksum value should change.
-    EXPECT_EQ(0xb1e4, chksum);
+    EXPECT_EQ(0xb1e4U, chksum);
 }
 
 // The purpose of this test is to verify that the Ethernet frame header
@@ -126,7 +126,7 @@ TEST(ProtocolUtilTest, decodeEthernetHeader) {
     ASSERT_EQ(ETHERNET_HEADER_LEN, in_buf.getPosition());
     // And the dummy data should be still readable and correct.
     uint32_t dummy_data = in_buf.readUint32();
-    EXPECT_EQ(0x01020304, dummy_data);
+    EXPECT_EQ(0x01020304U, dummy_data);
 }
 
 /// The purpose of this test is to verify that the IP and UDP header
@@ -180,17 +180,17 @@ TEST(ProtocolUtilTest, decodeIpUdpHeader) {
 
     // Verify the source address and port.
     EXPECT_EQ("192.0.2.99", pkt->getRemoteAddr().toText());
-    EXPECT_EQ(10068, pkt->getRemotePort());
+    EXPECT_EQ(10068U, pkt->getRemotePort());
 
     // Verify the destination address and port.
     EXPECT_EQ("192.0.2.12", pkt->getLocalAddr().toText());
-    EXPECT_EQ(10067, pkt->getLocalPort());
+    EXPECT_EQ(10067U, pkt->getLocalPort());
 
     // Verify that the dummy data has not been corrupted and that the
     // internal read pointer has been moved to the tail of the UDP
     // header.
     ASSERT_EQ(MIN_IP_HEADER_LEN + UDP_HEADER_LEN, in_buf.getPosition());
-    EXPECT_EQ(0x01020304, in_buf.readUint32());
+    EXPECT_EQ(0x01020304U, in_buf.readUint32());
 }
 
 /// The purpose of this test is to verify that the ethernet
@@ -232,7 +232,7 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
     // The resulting ethernet header consists of destination
     // and src HW address (each 6 bytes long) and two bytes
     // of encapsulated protocol type.
-    ASSERT_EQ(14, buf.getLength());
+    ASSERT_EQ(14U, buf.getLength());
 
     // Verify that first 6 bytes comprise valid destination
     // HW address. Instead of using memory comparison functions
@@ -252,8 +252,8 @@ TEST(ProtocolUtilTest, writeEthernetHeader) {
 
     // The last two bytes comprise the encapsulated protocol type.
     // We expect IPv4 protocol type which is specified by 0x0800.
-    EXPECT_EQ(0x08, buf[12]);
-    EXPECT_EQ(0x0, buf[13]);
+    EXPECT_EQ(0x08U, buf[12]);
+    EXPECT_EQ(0U, buf[13]);
 }
 
 /// The purpose of this test is to verify that the ethernet
@@ -288,12 +288,12 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcast) {
     // The resulting ethernet header consists of destination
     // and src HW address (each 6 bytes long) and two bytes
     // of encapsulated protocol type.
-    ASSERT_EQ(14, buf.getLength());
+    ASSERT_EQ(14U, buf.getLength());
 
     // Verify that first 6 bytes comprise broadcast destination
     // HW address.
     for (unsigned i = 0; i < 6; ++i) {
-        EXPECT_EQ(255, buf[i]);
+        EXPECT_EQ(255U, buf[i]);
     }
 
     // Verify that following 6 bytes comprise the valid source
@@ -304,8 +304,8 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcast) {
 
     // The last two bytes comprise the encapsulated protocol type.
     // We expect IPv4 protocol type which is specified by 0x0800.
-    EXPECT_EQ(0x08, buf[12]);
-    EXPECT_EQ(0x0, buf[13]);
+    EXPECT_EQ(0x08U, buf[12]);
+    EXPECT_EQ(0U, buf[13]);
 }
 
 /// The purpose of this test is to verify that the ethernet
@@ -345,7 +345,7 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcastRelayed) {
     // The resulting ethernet header consists of destination
     // and src HW address (each 6 bytes long) and two bytes
     // of encapsulated protocol type.
-    ASSERT_EQ(14, buf.getLength());
+    ASSERT_EQ(14U, buf.getLength());
 
     // Verify that first 6 bytes comprise valid destination
     // HW address. Instead of using memory comparison functions
@@ -365,8 +365,8 @@ TEST(ProtocolUtilTest, writeEthernetHeaderBroadcastRelayed) {
 
     // The last two bytes comprise the encapsulated protocol type.
     // We expect IPv4 protocol type which is specified by 0x0800.
-    EXPECT_EQ(0x08, buf[12]);
-    EXPECT_EQ(0x0, buf[13]);
+    EXPECT_EQ(0x08U, buf[12]);
+    EXPECT_EQ(0U, buf[13]);
 }
 
 TEST(ProtocolUtilTest, writeIpUdpHeader) {
@@ -398,12 +398,12 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     // The resulting size of the buffer must be 30. The 28 bytes are
     // consumed by the IP and UDP headers. The other 2 bytes are dummy
     // data at the beginning of the buffer.
-    ASSERT_EQ(30, buf.getLength());
+    ASSERT_EQ(30U, buf.getLength());
 
     // Make sure that the existing data in the buffer was not corrupted
     // by the function under test.
-    EXPECT_EQ(0x01, buf[0]);
-    EXPECT_EQ(0x02, buf[1]);
+    EXPECT_EQ(0x01U, buf[0]);
+    EXPECT_EQ(0x02U, buf[1]);
 
     // Copy the contents of the buffer to InputBuffer object. This object
     // exposes convenient functions for reading.
@@ -411,16 +411,16 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
 
     // Check dummy data.
     uint16_t dummy_data = in_buf.readUint16();
-    EXPECT_EQ(0x0102, dummy_data);
+    EXPECT_EQ(0x0102U, dummy_data);
 
     // The IP version and IHL are stored in the same octet (4 bits each).
     uint8_t ver_len = in_buf.readUint8();
     // The most significant bits define IP version.
     uint8_t ip_ver = ver_len >> 4;
-    EXPECT_EQ(4, ip_ver);
+    EXPECT_EQ(4U, ip_ver);
     // The least significant bits define header length (in 32-bits chunks).
     uint8_t ip_len = ver_len & 0x0F;
-    EXPECT_EQ(5, ip_len);
+    EXPECT_EQ(5U, ip_len);
 
     // Get Differentiated Services Codepoint and Explicit Congestion
     // Notification field.
@@ -433,17 +433,17 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
 
     // Identification field.
     uint16_t ident = in_buf.readUint16();
-    EXPECT_EQ(0, ident);
+    EXPECT_EQ(0U, ident);
 
     // Fragmentation.
     uint16_t fragment = in_buf.readUint16();
     // Setting second most significant bit means no fragmentation.
-    EXPECT_EQ(0x4000, fragment);
+    EXPECT_EQ(0x4000U, fragment);
 
     // Get TTL
     uint8_t ttl = in_buf.readUint8();
     // Expect non-zero TTL.
-    EXPECT_GE(ttl, 1);
+    EXPECT_GE(ttl, 1U);
 
     // Protocol type is UDP.
     uint8_t proto = in_buf.readUint8();
@@ -452,7 +452,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
     // Check that the checksum is correct. The reference checksum value
     // has been calculated manually.
     uint16_t ip_checksum = in_buf.readUint16();
-    EXPECT_EQ(0x755c, ip_checksum);
+    EXPECT_EQ(0x755cU, ip_checksum);
 
     // Validate source address.
     // Initializing it to IPv6 address guarantees that it is not initialized
@@ -493,7 +493,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
 
     // Verify UDP checksum. The reference checksum has been calculated manually.
     uint16_t udp_checksum = in_buf.readUint16();
-    EXPECT_EQ(0x8817, udp_checksum);
+    EXPECT_EQ(0x8817U, udp_checksum);
 }
 
 /// Test that checks the RAII implementation of ScopedEnableOptionsCopy works
@@ -538,7 +538,7 @@ TEST(ScopedOptionsCopy, pkt4OptionsCopy) {
     pkt->addOption(option);
     OptionCollection options = pkt->options_;
     size_t count = options.size();
-    ASSERT_NE(0, count);
+    ASSERT_NE(0U, count);
     ASSERT_EQ(option, pkt->getOption(DHO_BOOT_FILE_NAME));
     std::string expected = pkt->toText();
     pkt->pack();
@@ -591,7 +591,7 @@ TEST(ScopedOptionsCopy, pkt6OptionsCopy) {
     pkt->addOption(option);
     OptionCollection options = pkt->options_;
     size_t count = options.size();
-    ASSERT_NE(0, count);
+    ASSERT_NE(0U, count);
     ASSERT_EQ(option, pkt->getOption(D6O_BOOTFILE_URL));
     std::string expected = pkt->toText();
     pkt->pack();
@@ -644,7 +644,7 @@ TEST(ScopedOptionsCopy, subOptionsCopy) {
     initial->addOption(option);
     OptionCollection options = initial->getOptions();
     size_t count = options.size();
-    ASSERT_NE(0, count);
+    ASSERT_NE(0U, count);
     ASSERT_EQ(option, initial->getOption(DHO_BOOT_FILE_NAME));
     {
         ScopedSubOptionsCopy oc(initial);

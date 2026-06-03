@@ -40,18 +40,18 @@ TEST(Option6DnrTest, onWireCtorAdnOnlyMode) {
     EXPECT_EQ(D6O_V6_DNR, option->getType());
 
     // Check if data was unpacked correctly from wire data.
-    EXPECT_EQ(0x8001, option->getServicePriority());
-    EXPECT_EQ(20, option->getAdnLength());
+    EXPECT_EQ(0x8001U, option->getServicePriority());
+    EXPECT_EQ(20U, option->getAdnLength());
     EXPECT_EQ("myhost.example.com.", option->getAdnAsText());
 
     // This is ADN only mode, so Addr Length and SvcParams Length
     // are both expected to be zero.
-    EXPECT_EQ(0, option->getAddrLength());
-    EXPECT_EQ(0, option->getSvcParamsLength());
+    EXPECT_EQ(0U, option->getAddrLength());
+    EXPECT_EQ(0U, option->getSvcParamsLength());
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28.
-    EXPECT_EQ(28, option->len());
+    EXPECT_EQ(28U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -220,21 +220,21 @@ TEST(Option6DnrTest, onWireCtorValidIpV6Addresses) {
     EXPECT_EQ(D6O_V6_DNR, option->getType());
 
     // Check if data was unpacked correctly from wire data.
-    EXPECT_EQ(0x8001, option->getServicePriority());
-    EXPECT_EQ(20, option->getAdnLength());
+    EXPECT_EQ(0x8001U, option->getServicePriority());
+    EXPECT_EQ(20U, option->getAdnLength());
     EXPECT_EQ("myhost.example.com.", option->getAdnAsText());
-    EXPECT_EQ(48, option->getAddrLength());
+    EXPECT_EQ(48U, option->getAddrLength());
     const Option6Dnr::AddressContainer& addresses = option->getAddresses();
-    EXPECT_EQ(3, addresses.size());
+    EXPECT_EQ(3U, addresses.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
     EXPECT_EQ("ff02::face:b00c", addresses[1].toText());
     EXPECT_EQ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", addresses[2].toText());
-    EXPECT_EQ(0, option->getSvcParamsLength());
+    EXPECT_EQ(0U, option->getSvcParamsLength());
 
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
     //             + 48 (3 IP addresses) + 2 (Addr Len) = 78.
-    EXPECT_EQ(78, option->len());
+    EXPECT_EQ(78U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.
@@ -301,12 +301,12 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
     EXPECT_EQ(D6O_V6_DNR, option->getType());
 
     // Check if data was unpacked correctly from wire data.
-    EXPECT_EQ(0x8001, option->getServicePriority());
-    EXPECT_EQ(20, option->getAdnLength());
+    EXPECT_EQ(0x8001U, option->getServicePriority());
+    EXPECT_EQ(20U, option->getAdnLength());
     EXPECT_EQ("myhost.example.com.", option->getAdnAsText());
-    EXPECT_EQ(16, option->getAddrLength());
+    EXPECT_EQ(16U, option->getAddrLength());
     const Option6Dnr::AddressContainer& addresses = option->getAddresses();
-    EXPECT_EQ(1, addresses.size());
+    EXPECT_EQ(1U, addresses.size());
     EXPECT_EQ("2001:db8:1::dead:beef", addresses[0].toText());
 
     // Reference SvcParams on-wire data buffer.
@@ -322,7 +322,7 @@ TEST(Option6DnrTest, onWireCtorSvcParamsIncluded) {
     // BTW let's check if len() works ok.
     // expected len: 20 (FQDN) + 2 (ADN Len) + 2 (Service priority) + 4 (headers) = 28
     //             + 16 (IP address) + 2 (Addr Len) + 12 (SvcParams) = 58.
-    EXPECT_EQ(58, option->len());
+    EXPECT_EQ(58U, option->len());
 
     // BTW let's check if toText() works ok.
     // toText() len does not count in headers len.

@@ -97,16 +97,16 @@ TEST(IfaceTest, readBuffer) {
     Iface iface("em0", 0);
     // The size of read buffer should initially be 0 and the returned
     // pointer should be NULL.
-    ASSERT_EQ(0, iface.getReadBufferSize());
-    EXPECT_EQ(NULL, iface.getReadBuffer());
+    ASSERT_EQ(0U, iface.getReadBufferSize());
+    EXPECT_EQ(0, iface.getReadBuffer());
 
     // Let's resize the buffer.
     iface.resizeReadBuffer(256);
     // Check that the buffer has expected size.
-    ASSERT_EQ(256, iface.getReadBufferSize());
+    ASSERT_EQ(256U, iface.getReadBufferSize());
     // The returned pointer should now be non-NULL.
     uint8_t* buf_ptr = iface.getReadBuffer();
-    ASSERT_FALSE(buf_ptr == NULL);
+    ASSERT_FALSE(buf_ptr == 0);
 
     // Use the pointer to set some data.
     for (size_t i = 0; i < iface.getReadBufferSize(); ++i) {
@@ -115,7 +115,7 @@ TEST(IfaceTest, readBuffer) {
 
     // Get the pointer again and validate the data.
     buf_ptr = iface.getReadBuffer();
-    ASSERT_EQ(256, iface.getReadBufferSize());
+    ASSERT_EQ(256U, iface.getReadBufferSize());
     for (size_t i = 0; i < iface.getReadBufferSize(); ++i) {
         // Use assert so as it fails on the first failure, no need
         // to continue further checks.
@@ -127,22 +127,22 @@ TEST(IfaceTest, readBuffer) {
 // works as expected.
 TEST(IfaceTest, countActive4) {
     Iface iface("eth0", 0);
-    ASSERT_EQ(0, iface.countActive4());
+    ASSERT_EQ(0U, iface.countActive4());
 
     iface.addAddress(IOAddress("192.168.0.2"));
-    ASSERT_EQ(1, iface.countActive4());
+    ASSERT_EQ(1U, iface.countActive4());
 
     iface.addAddress(IOAddress("2001:db8:1::1"));
-    ASSERT_EQ(1, iface.countActive4());
+    ASSERT_EQ(1U, iface.countActive4());
 
     iface.addAddress(IOAddress("192.168.0.3"));
-    ASSERT_EQ(2, iface.countActive4());
+    ASSERT_EQ(2U, iface.countActive4());
 
     ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.2"), false));
-    ASSERT_EQ(1, iface.countActive4());
+    ASSERT_EQ(1U, iface.countActive4());
 
     ASSERT_NO_THROW(iface.setActive(IOAddress("192.168.0.3"), false));
-    ASSERT_EQ(0, iface.countActive4());
+    ASSERT_EQ(0U, iface.countActive4());
 }
 
 /// Mock object implementing PktFilter class.  It is used by
@@ -438,12 +438,13 @@ public:
         ASSERT_EQ(unicast_num
                   + (iface.flag_multicast_ ? 2 * link_local_num : 0)
                   + link_local_num,
-                  iface.getSockets().size())
+                  static_cast<int>(iface.getSockets().size()))
             << "invalid number of sockets on interface "
             << iface.getName();
 #else
         // On non-Linux, there is no additional socket.
-        ASSERT_EQ(unicast_num + link_local_num, iface.getSockets().size())
+        ASSERT_EQ(unicast_num + link_local_num,
+                  static_cast<int>(iface.getSockets().size()))
             << "invalid number of sockets on interface "
             << iface.getName();
 
@@ -565,7 +566,7 @@ public:
         sendPkt->setIface(LOOPBACK_NAME);
 
         // Send the packet.
-        EXPECT_EQ(true, ifacemgr->send(sendPkt));
+        EXPECT_TRUE(ifacemgr->send(sendPkt));
 
         // Now, let's try and receive it.
         Pkt6Ptr rcvPkt;
@@ -1167,7 +1168,7 @@ public:
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
         }
         IfaceMgr::instance().openSockets4(9999, true, IfaceMgrErrorMsgCallback(), false);
-        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter4IfaceSocketTest>(filter))->socket_fds_.size(), 250);
+        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter4IfaceSocketTest>(filter))->socket_fds_.size(), 250U);
 
         // Create first pipe and register it as extra socket
         int pipefd[2];
@@ -1309,7 +1310,7 @@ public:
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
         }
         IfaceMgr::instance().openSockets6(9999, IfaceMgrErrorMsgCallback(), false);
-        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter6IfaceSocketTest>(filter))->socket_fds_.size(), 250);
+        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter6IfaceSocketTest>(filter))->socket_fds_.size(), 250U);
 
         // Create first pipe and register it as extra socket
         int pipefd[2];
@@ -1443,7 +1444,7 @@ public:
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ConstElementPtr());
         }
         IfaceMgr::instance().openSockets4(9999, true, IfaceMgrErrorMsgCallback(), false);
-        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter4IfaceSocketTest>(filter))->socket_fds_.size(), 250);
+        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter4IfaceSocketTest>(filter))->socket_fds_.size(), 250U);
         Pkt4Ptr pkt0(new Pkt4(DHCPDISCOVER, 1234));
         pkt0->setIface("eth0");
         pkt0->setIndex(0);
@@ -1527,7 +1528,7 @@ public:
             IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ConstElementPtr());
         }
         IfaceMgr::instance().openSockets6(9999, IfaceMgrErrorMsgCallback(), false);
-        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter6IfaceSocketTest>(filter))->socket_fds_.size(), 250);
+        EXPECT_EQ((boost::dynamic_pointer_cast<PktFilter6IfaceSocketTest>(filter))->socket_fds_.size(), 250U);
         Pkt6Ptr pkt0(new Pkt6(DHCPV6_SOLICIT, 1234));
         pkt0->setIface("eth0");
         pkt0->setIndex(0);
@@ -1849,7 +1850,7 @@ TEST_F(IfaceMgrTest, ifaceClass) {
                      "Interface name must not be empty");
 
     EXPECT_NO_THROW(iface.reset(new Iface("big-index", 66666)));
-    EXPECT_EQ(66666, iface->getIndex());
+    EXPECT_EQ(66666U, iface->getIndex());
 }
 
 // This test checks the getIface by index method.
@@ -2084,14 +2085,14 @@ TEST_F(IfaceMgrTest, getIface) {
     ASSERT_TRUE(tmp);
 
     EXPECT_EQ("en99", tmp->getName());
-    EXPECT_EQ(102, tmp->getIndex());
+    EXPECT_EQ(102U, tmp->getIndex());
 
     // Check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
     ASSERT_TRUE(tmp);
 
     EXPECT_EQ("lo1", tmp->getName());
-    EXPECT_EQ(100, tmp->getIndex());
+    EXPECT_EQ(100U, tmp->getIndex());
 
     // Check that non-existing interfaces are not returned
     EXPECT_FALSE(ifacemgr->getIface("wifi15") );
@@ -2113,7 +2114,7 @@ TEST_F(IfaceMgrTest, clearIfaces) {
 
     ifacemgr.clearIfaces();
 
-    EXPECT_EQ(0, ifacemgr.countIfaces());
+    EXPECT_EQ(0U, ifacemgr.countIfaces());
 }
 
 // Verify that we have the expected default DHCPv4 packet queue.
@@ -2314,7 +2315,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     // be on the list. Here we start to test if all expected sockets
     // are on the list and no other (unexpected) socket is there.
     Iface::SocketCollection sockets = iface_ptr->getSockets();
-    int matched_sockets = 0;
+    size_t matched_sockets = 0;
     for (std::list<uint16_t>::iterator init_sockets_it =
              init_sockets.begin();
          init_sockets_it != init_sockets.end(); ++init_sockets_it) {
@@ -2349,7 +2350,7 @@ TEST_F(IfaceMgrTest, multipleSockets) {
 
     // Closed sockets are supposed to be removed from the list
     sockets = iface_ptr->getSockets();
-    ASSERT_EQ(0, sockets.size());
+    ASSERT_EQ(0U, sockets.size());
 
     // We are still in possession of socket descriptors that we created
     // on the beginning of this test. We can use them to check whether
@@ -2837,10 +2838,10 @@ TEST_F(IfaceMgrTest, openSockets4) {
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // Expect that the sockets are open on both eth0 and eth1.
-    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
     EXPECT_TRUE(ifacemgr.getIface(LO_INDEX)->getSockets().empty());
@@ -2870,12 +2871,12 @@ TEST_F(IfaceMgrTest, openSockets4Loopback) {
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // Expect that the sockets are open on all interfaces.
-    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(LO_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("lo")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(LO_INDEX)->getSockets().size());
 }
 
 // This test verifies that the socket is not open on the interface which is
@@ -2912,11 +2913,11 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
 
     // Expecting that the socket is open on eth1 because it was up, running
     // and active.
-    EXPECT_EQ(2, IfaceMgr::instance().getIface("eth1")->getSockets().size());
-    EXPECT_EQ(2, IfaceMgr::instance().getIface(ETH1_INDEX)->getSockets().size());
+    EXPECT_EQ(2U, IfaceMgr::instance().getIface("eth1")->getSockets().size());
+    EXPECT_EQ(2U, IfaceMgr::instance().getIface(ETH1_INDEX)->getSockets().size());
     // Same for eth1961.
-    EXPECT_EQ(1, IfaceMgr::instance().getIface("eth1961")->getSockets().size());
-    EXPECT_EQ(1, IfaceMgr::instance().getIface(ETH1961_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, IfaceMgr::instance().getIface("eth1961")->getSockets().size());
+    EXPECT_EQ(1U, IfaceMgr::instance().getIface(ETH1961_INDEX)->getSockets().size());
     // Never open socket on loopback interface.
     EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
     EXPECT_TRUE(IfaceMgr::instance().getIface(LO_INDEX)->getSockets().empty());
@@ -2947,8 +2948,8 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
 
     // The socket on eth0 should be open because interface is up, running and
     // active (not disabled through DHCP configuration, for example).
-    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
     // There should be no socket open on eth1 because it was marked inactive.
     EXPECT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
     EXPECT_TRUE(ifacemgr.getIface(ETH1_INDEX)->getSockets().empty());
@@ -3064,10 +3065,10 @@ TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, 0));
 
     // Expect that the sockets are open on both eth0 and eth1.
-    ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
-    ASSERT_EQ(1, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
-    ASSERT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
-    ASSERT_EQ(1, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
+    ASSERT_EQ(1U, ifacemgr.getIface("eth0")->getSockets().size());
+    ASSERT_EQ(1U, ifacemgr.getIface(ETH0_INDEX)->getSockets().size());
+    ASSERT_EQ(1U, ifacemgr.getIface("eth1")->getSockets().size());
+    ASSERT_EQ(1U, ifacemgr.getIface(ETH1_INDEX)->getSockets().size());
     // Socket shouldn't have been opened on loopback.
     ASSERT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
     ASSERT_TRUE(ifacemgr.getIface(LO_INDEX)->getSockets().empty());
@@ -3155,8 +3156,8 @@ TEST_F(IfaceMgrTest, openSockets6Loopback) {
     EXPECT_TRUE(success);
 
     // Check that the loopback interface has at least an open socket.
-    EXPECT_EQ(1, ifacemgr.getIface("lo")->getSockets().size());
-    EXPECT_EQ(1, ifacemgr.getIface(LO_INDEX)->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface("lo")->getSockets().size());
+    EXPECT_EQ(1U, ifacemgr.getIface(LO_INDEX)->getSockets().size());
 
     // This socket should be bound to ::1
     EXPECT_TRUE(ifacemgr.isBound("lo", "::1"));
@@ -3616,19 +3617,19 @@ TEST_F(IfaceMgrTest, iface) {
     EXPECT_NO_THROW(iface.reset(new Iface("eth0",1)));
 
     EXPECT_EQ("eth0", iface->getName());
-    EXPECT_EQ(1, iface->getIndex());
+    EXPECT_EQ(1U, iface->getIndex());
     EXPECT_EQ("eth0/1", iface->getFullName());
 
     // Let's make a copy of this address collection.
     Iface::AddressCollection addrs = iface->getAddresses();
 
-    EXPECT_EQ(0, addrs.size());
+    EXPECT_EQ(0U, addrs.size());
 
     IOAddress addr1("192.0.2.6");
     iface->addAddress(addr1);
 
     addrs = iface->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("192.0.2.6", addrs.begin()->get().toText());
 
     // No such address, should return false.
@@ -3642,7 +3643,7 @@ TEST_F(IfaceMgrTest, iface) {
     // usage code as well.
     addrs = iface->getAddresses();
 
-    EXPECT_EQ(0, addrs.size());
+    EXPECT_EQ(0U, addrs.size());
 
     EXPECT_NO_THROW(iface.reset());
 }
@@ -3651,17 +3652,17 @@ TEST_F(IfaceMgrTest, iface_methods) {
     Iface iface("foo", 1234);
 
     iface.setHWType(42);
-    EXPECT_EQ(42, iface.getHWType());
+    EXPECT_EQ(42U, iface.getHWType());
 
-    ASSERT_LT(Iface::MAX_MAC_LEN + 10, 255);
+    ASSERT_LT(Iface::MAX_MAC_LEN + 10, 255U);
 
-    uint8_t mac[Iface::MAX_MAC_LEN+10];
+    uint8_t mac[Iface::MAX_MAC_LEN + 10];
     for (uint8_t i = 0; i < Iface::MAX_MAC_LEN + 10; i++) {
         mac[i] = 255 - i;
     }
 
     EXPECT_EQ("foo", iface.getName());
-    EXPECT_EQ(1234, iface.getIndex());
+    EXPECT_EQ(1234U, iface.getIndex());
 
     // MAC is too long. Exception should be thrown and
     // MAC length should not be set.
@@ -3671,7 +3672,7 @@ TEST_F(IfaceMgrTest, iface_methods) {
     );
 
     // MAC length should stay not set as exception was thrown.
-    EXPECT_EQ(0, iface.getMacLen());
+    EXPECT_EQ(0U, iface.getMacLen());
 
     // Setting maximum length MAC should be ok.
     iface.setMac(mac, Iface::MAX_MAC_LEN);
@@ -3742,13 +3743,13 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // This will work
     pkt6->setIndex(LOOPBACK_INDEX);
-    EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
+    EXPECT_EQ(9U, ifacemgr->getSocket(pkt6));
 
     bool deleted = false;
     EXPECT_NO_THROW(
         deleted = ifacemgr->getIface(LOOPBACK_NAME)->delSocket(9);
     );
-    EXPECT_EQ(true, deleted);
+    EXPECT_TRUE(deleted);
 
     // It should throw again, there's no usable socket anymore
     EXPECT_THROW(
@@ -4503,9 +4504,9 @@ TEST_F(IfaceMgrLogTest, externalSocketOtherThread) {
     ASSERT_TRUE(ifacemgr_->getCheckThreadId());
 
     testThread();
-    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD"));
-    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD"));
-    EXPECT_EQ(1, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD"));
+    EXPECT_EQ(1U, countFile("DHCP_ADD_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1U, countFile("DHCP_DELETE_EXTERNAL_SOCKET_BAD_THREAD"));
+    EXPECT_EQ(1U, countFile("DHCP_DELETE_ALL_EXTERNAL_SOCKETS_BAD_THREAD"));
 }
 
 // Tests that errors are logged only when enabled.
@@ -4515,16 +4516,16 @@ TEST_F(IfaceMgrLogTest, externalSocketOtherThreadNoLog) {
     ASSERT_FALSE(ifacemgr_->getCheckThreadId());
 
     testThread();
-    EXPECT_EQ(0, countFile("DHCP"));
+    EXPECT_EQ(0U, countFile("DHCP"));
 }
 
 // Tests that calling twice addExternalSocket on the same value warns.
 TEST_F(IfaceMgrLogTest, addExternalSocketAlreadyExists) {
     ASSERT_TRUE(ifacemgr_);
     ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
-    EXPECT_EQ(0, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+    EXPECT_EQ(0U, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
     ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
-    EXPECT_EQ(1, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
+    EXPECT_EQ(1U, countFile("DHCP_ADD_EXTERNAL_SOCKET_ALREADY_EXISTS"));
 }
 
 // Tests that calling twice deleteExternalSocket on the same value warns.
@@ -4533,10 +4534,10 @@ TEST_F(IfaceMgrLogTest, deleteExternalSocketNotFound) {
     ASSERT_NO_THROW(ifacemgr_->addExternalSocket(100, 0));
     EXPECT_TRUE(ifacemgr_->isExternalSocket(100));
     ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
-    EXPECT_EQ(0, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
+    EXPECT_EQ(0U, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
     EXPECT_FALSE(ifacemgr_->isExternalSocket(100));
     ASSERT_NO_THROW(ifacemgr_->deleteExternalSocket(100));
-    EXPECT_EQ(1, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
+    EXPECT_EQ(1U, countFile("DHCP_DELETE_EXTERNAL_SOCKET_NOT_FOUND"));
 }
 
 // Test checks if the unicast sockets can be opened.
@@ -4570,7 +4571,7 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
     EXPECT_TRUE(ifacemgr->openSockets6(PORT1));
 
     const Iface::SocketCollection& sockets = iface->getSockets();
-    ASSERT_GE(2, sockets.size());
+    ASSERT_GE(2U, sockets.size());
 
     // Global unicast should be first
     EXPECT_TRUE(getSocketByAddr(sockets, IOAddress("2001:db8::1")));

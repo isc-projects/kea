@@ -45,25 +45,25 @@ struct OptionVendorClassLenientParsing : ::testing::Test {
 // long field which carries a value of 0).
 TEST(OptionVendorClass, constructor4) {
     OptionVendorClass vendor_class(Option::V4, 1234);
-    EXPECT_EQ(1234, vendor_class.getVendorId());
+    EXPECT_EQ(1234U, vendor_class.getVendorId());
     // Option length is 1 byte for header + 1 byte for option size +
     // 4 bytes of enterprise id + 1 byte for opaque data.
-    EXPECT_EQ(7, vendor_class.len());
+    EXPECT_EQ(7U, vendor_class.len());
     // There should be one empty tuple.
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
-    EXPECT_EQ(0, vendor_class.getTuple(0).getLength());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
+    EXPECT_EQ(0U, vendor_class.getTuple(0).getLength());
 }
 
 // This test checks that the DHCPv6 option constructor sets the default
 // properties to the expected values.
 TEST(OptionVendorClass, constructor6) {
     OptionVendorClass vendor_class(Option::V6, 2345);
-    EXPECT_EQ(2345, vendor_class.getVendorId());
+    EXPECT_EQ(2345U, vendor_class.getVendorId());
     // Option length is 2 bytes for option code + 2 bytes for option size +
     // 4 bytes of enterprise id.
-    EXPECT_EQ(8, vendor_class.len());
+    EXPECT_EQ(8U, vendor_class.len());
     // There should be no tuples.
-    EXPECT_EQ(0, vendor_class.getTuplesNum());
+    EXPECT_EQ(0U, vendor_class.getTuplesNum());
 }
 
 // This test verifies that it is possible to append the opaque data tuple
@@ -71,20 +71,20 @@ TEST(OptionVendorClass, constructor6) {
 TEST(OptionVendorClass, addTuple) {
     OptionVendorClass vendor_class(Option::V6, 2345);
     // Initially there should be no tuples (for DHCPv6).
-    ASSERT_EQ(0, vendor_class.getTuplesNum());
+    ASSERT_EQ(0U, vendor_class.getTuplesNum());
     // Create a new tuple and add it to the option.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     tuple = "xyz";
     vendor_class.addTuple(tuple);
     // The option should now hold one tuple.
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
     EXPECT_EQ("xyz", vendor_class.getTuple(0).getText());
     // Add another tuple.
     tuple = "abc";
     vendor_class.addTuple(tuple);
     // The option should now hold exactly two tuples in the order in which
     // they were added.
-    ASSERT_EQ(2, vendor_class.getTuplesNum());
+    ASSERT_EQ(2U, vendor_class.getTuplesNum());
     EXPECT_EQ("xyz", vendor_class.getTuple(0).getText());
     EXPECT_EQ("abc", vendor_class.getTuple(1).getText());
 
@@ -103,31 +103,31 @@ TEST(OptionVendorClass, addTuple) {
 TEST(OptionVendorClass, setTuple) {
     OptionVendorClass vendor_class(Option::V4, 1234);
     // The DHCPv4 option should carry one empty tuple.
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
     ASSERT_TRUE(vendor_class.getTuple(0).getText().empty());
     // Replace the empty tuple with non-empty one.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     tuple = "xyz";
     ASSERT_NO_THROW(vendor_class.setTuple(0, tuple));
     // There should be one tuple with updated data.
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
     EXPECT_EQ("xyz", vendor_class.getTuple(0).getText());
 
     // Add another one.
     tuple = "abc";
     vendor_class.addTuple(tuple);
-    ASSERT_EQ(2, vendor_class.getTuplesNum());
+    ASSERT_EQ(2U, vendor_class.getTuplesNum());
     ASSERT_EQ("abc", vendor_class.getTuple(1).getText());
 
     // Try to replace them with new tuples.
     tuple = "new_xyz";
     ASSERT_NO_THROW(vendor_class.setTuple(0, tuple));
-    ASSERT_EQ(2, vendor_class.getTuplesNum());
+    ASSERT_EQ(2U, vendor_class.getTuplesNum());
     EXPECT_EQ("new_xyz", vendor_class.getTuple(0).getText());
 
     tuple = "new_abc";
     ASSERT_NO_THROW(vendor_class.setTuple(1, tuple));
-    ASSERT_EQ(2, vendor_class.getTuplesNum());
+    ASSERT_EQ(2U, vendor_class.getTuplesNum());
     EXPECT_EQ("new_abc", vendor_class.getTuple(1).getText());
 
     // For out of range position, exception should be thrown.
@@ -143,42 +143,42 @@ TEST(OptionVendorClass, setTuple) {
 // Check that the returned length of the DHCPv4 option is correct.
 TEST(OptionVendorClass, len4) {
     OptionVendorClass vendor_class(Option::V4, 1234);
-    ASSERT_EQ(7, vendor_class.len());
+    ASSERT_EQ(7U, vendor_class.len());
     // Replace the default empty tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     tuple = "xyz";
     ASSERT_NO_THROW(vendor_class.setTuple(0, tuple));
     // The total length should get increased by the size of 'xyz'.
-    EXPECT_EQ(10, vendor_class.len());
+    EXPECT_EQ(10U, vendor_class.len());
     // Add another tuple.
     tuple = "abc";
     vendor_class.addTuple(tuple);
     // The total size now grows by the additional enterprise id and the
     // 1 byte of the tuple length field and 3 bytes of 'abc'.
-    EXPECT_EQ(18, vendor_class.len());
+    EXPECT_EQ(18U, vendor_class.len());
 }
 
 // Check that the returned length of the DHCPv6 option is correct.
 TEST(OptionVendorClass, len6) {
     OptionVendorClass vendor_class(Option::V6, 1234);
-    ASSERT_EQ(8, vendor_class.len());
+    ASSERT_EQ(8U, vendor_class.len());
     // Add first tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     tuple = "xyz";
     ASSERT_NO_THROW(vendor_class.addTuple(tuple));
     // The total length grows by 2 bytes of the length field and 3 bytes
     // consumed by 'xyz'.
-    EXPECT_EQ(13, vendor_class.len());
+    EXPECT_EQ(13U, vendor_class.len());
     // Add another tuple and check that the total size gets increased.
     tuple = "abc";
     vendor_class.addTuple(tuple);
-    EXPECT_EQ(18, vendor_class.len());
+    EXPECT_EQ(18U, vendor_class.len());
 }
 
 // Check that the option is rendered to the buffer in wire format.
 TEST(OptionVendorClass, pack4) {
     OptionVendorClass vendor_class(Option::V4, 1234);
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
     // By default, there is an empty tuple in the option. Let's replace
     // it with the tuple with some data.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -191,7 +191,7 @@ TEST(OptionVendorClass, pack4) {
     // Render the data to the buffer.
     OutputBuffer buf(10);
     ASSERT_NO_THROW(vendor_class.pack(buf));
-    ASSERT_EQ(26, buf.getLength());
+    ASSERT_EQ(26U, buf.getLength());
 
     // Prepare reference data.
     const uint8_t ref[] = {
@@ -211,7 +211,7 @@ TEST(OptionVendorClass, pack4) {
 // Check that the DHCPv6 option is rendered to the buffer in wire format.
 TEST(OptionVendorClass, pack6) {
     OptionVendorClass vendor_class(Option::V6, 1234);
-    ASSERT_EQ(0, vendor_class.getTuplesNum());
+    ASSERT_EQ(0U, vendor_class.getTuplesNum());
     // Add tuple.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     tuple = "Hello world";
@@ -223,7 +223,7 @@ TEST(OptionVendorClass, pack6) {
     // Render the data to the buffer.
     OutputBuffer buf(10);
     ASSERT_NO_THROW(vendor_class.pack(buf));
-    ASSERT_EQ(26, buf.getLength());
+    ASSERT_EQ(26U, buf.getLength());
 
     // Prepare reference data.
     const uint8_t ref[] = {
@@ -261,8 +261,8 @@ TEST(OptionVendorClass, unpack4) {
                                                                   buf.end()));
     );
     EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 }
@@ -311,8 +311,8 @@ TEST(OptionVendorClass, unpack6) {
                                                                   buf.end()));
     );
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 }
@@ -335,8 +335,8 @@ TEST(OptionVendorClass, unpack4EmptyTuple) {
                                                                   buf.end()));
     );
     EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(1, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(1U, vendor_class->getTuplesNum());
     EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
 }
 
@@ -357,8 +357,8 @@ TEST(OptionVendorClass, unpack6EmptyTuple) {
                                                                   buf.end()));
     );
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(1, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(1U, vendor_class->getTuplesNum());
     EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
 }
 
@@ -378,8 +378,8 @@ TEST(OptionVendorClass, unpack4NoTuple) {
                                                                   buf.end()));
     );
     EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    EXPECT_EQ(0, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    EXPECT_EQ(0U, vendor_class->getTuplesNum());
 }
 
 // This test checks that the DHCPv6 option without opaque data is
@@ -398,8 +398,8 @@ TEST(OptionVendorClass, unpack6NoTuple) {
                                                                   buf.end()));
     );
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    EXPECT_EQ(0, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    EXPECT_EQ(0U, vendor_class->getTuplesNum());
 }
 
 // This test checks that exception is thrown when parsing truncated DHCPv4
@@ -438,7 +438,7 @@ TEST(OptionVendorClass, unpack6Truncated) {
 // Verifies correctness of the text representation of the DHCPv4 option.
 TEST(OptionVendorClass, toText4) {
     OptionVendorClass vendor_class(Option::V4, 1234);
-    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    ASSERT_EQ(1U, vendor_class.getTuplesNum());
     // By default, there is an empty tuple in the option. Let's replace
     // it with the tuple with some data.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
@@ -463,7 +463,7 @@ TEST(OptionVendorClass, toText4) {
 // Verifies correctness of the text representation of the DHCPv6 option.
 TEST(OptionVendorClass, toText6) {
     OptionVendorClass vendor_class(Option::V6, 1234);
-    ASSERT_EQ(0, vendor_class.getTuplesNum());
+    ASSERT_EQ(0U, vendor_class.getTuplesNum());
     // By default, there is an empty tuple in the option. Let's replace
     // it with the tuple with some data.
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
@@ -509,8 +509,8 @@ TEST_F(OptionVendorClassLenientParsing, unpack6WellFormed) {
             new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
 
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     EXPECT_EQ("foo", vendor_class->getTuple(1).getText());
 
@@ -538,8 +538,8 @@ TEST_F(OptionVendorClassLenientParsing, unpack6FirstLengthIsBad) {
             new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
 
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     // The first value will have one extra byte.
     EXPECT_EQ(std::string("Hello world") + '\0',
               vendor_class->getTuple(0).getText());
@@ -569,8 +569,8 @@ TEST_F(OptionVendorClassLenientParsing, unpack6SecondLengthIsBad) {
             new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
 
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     EXPECT_EQ("Hello world", vendor_class->getTuple(0).getText());
     // The length would have internally been interpreted as {0x00, 0x04} == 4,
     // but the parser would have stopped at the end of the option, so the second
@@ -598,8 +598,8 @@ TEST_F(OptionVendorClassLenientParsing, unpack6BothLengthsAreBad) {
             new OptionVendorClass(Option::V6, buf.begin(), buf.end())););
 
     EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    ASSERT_EQ(2, vendor_class->getTuplesNum());
+    EXPECT_EQ(1234U, vendor_class->getVendorId());
+    ASSERT_EQ(2U, vendor_class->getTuplesNum());
     // The first value will have one extra byte.
     EXPECT_EQ(std::string("Hello world") + '\0',
               vendor_class->getTuple(0).getText());

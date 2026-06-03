@@ -37,10 +37,10 @@ TEST_F(Option6AuthTest, basic) {
     scoped_ptr<Option6Auth> auth; 
     ASSERT_NO_THROW(auth.reset(new Option6Auth(1,2,0,0x9000,{'a','b','c','d'})));
 
-    ASSERT_EQ(1, auth->getProtocol());
-    ASSERT_EQ(2, auth->getHashAlgo());
-    ASSERT_EQ(0, auth->getReplyDetectionMethod());
-    ASSERT_EQ(0x9000, auth->getReplyDetectionValue());
+    ASSERT_EQ(1U, auth->getProtocol());
+    ASSERT_EQ(2U, auth->getHashAlgo());
+    ASSERT_EQ(0U, auth->getReplyDetectionMethod());
+    ASSERT_EQ(0x9000U, auth->getReplyDetectionValue());
     
     std::vector<uint8_t> test_buf = {'a','b','c','d'};
     ASSERT_EQ(test_buf, auth->getAuthInfo());
@@ -51,10 +51,10 @@ TEST_F(Option6AuthTest, basic) {
     auth->setReplyDetectionValue(109034830);
     auth->setAuthInfo({1,2,3,4});
 
-    ASSERT_EQ(2, auth->getProtocol());
-    ASSERT_EQ(3, auth->getHashAlgo());
-    ASSERT_EQ(1, auth->getReplyDetectionMethod());
-    ASSERT_EQ(109034830, auth->getReplyDetectionValue());
+    ASSERT_EQ(2U, auth->getProtocol());
+    ASSERT_EQ(3U, auth->getHashAlgo());
+    ASSERT_EQ(1U, auth->getReplyDetectionMethod());
+    ASSERT_EQ(109034830U, auth->getReplyDetectionValue());
     
     test_buf = {1,2,3,4};
     ASSERT_EQ(test_buf, auth->getAuthInfo());
@@ -84,10 +84,10 @@ TEST_F(Option6AuthTest, parseFields) {
     auth->unpack(buff_.begin(), buff_.begin()+27); //26 element is 16 byte offset from 10
     
     std::vector<uint8_t> test_buf(16,0xa8);
-    ASSERT_EQ(0xa1, auth->getProtocol());
-    ASSERT_EQ(0xa2, auth->getHashAlgo());
-    ASSERT_EQ(0xa3, auth->getReplyDetectionMethod());
-    ASSERT_EQ(0xa4a5a6a7a8a9aaab, auth->getReplyDetectionValue());
+    ASSERT_EQ(0xa1U, auth->getProtocol());
+    ASSERT_EQ(0xa2U, auth->getHashAlgo());
+    ASSERT_EQ(0xa3U, auth->getReplyDetectionMethod());
+    ASSERT_EQ(0xa4a5a6a7a8a9aaabU, auth->getReplyDetectionValue());
     ASSERT_EQ(test_buf, auth->getAuthInfo());
 }
 

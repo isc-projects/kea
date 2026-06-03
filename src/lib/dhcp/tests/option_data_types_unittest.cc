@@ -81,12 +81,12 @@ public:
 // correct number of labels in the domain name specified as a string
 // parameter.
 TEST_F(OptionDataTypesTest, getLabelCount) {
-    EXPECT_EQ(0, OptionDataTypeUtil::getLabelCount(""));
-    EXPECT_EQ(1, OptionDataTypeUtil::getLabelCount("."));
-    EXPECT_EQ(2, OptionDataTypeUtil::getLabelCount("example"));
-    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com"));
-    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com."));
-    EXPECT_EQ(4, OptionDataTypeUtil::getLabelCount("myhost.example.com"));
+    EXPECT_EQ(0U, OptionDataTypeUtil::getLabelCount(""));
+    EXPECT_EQ(1U, OptionDataTypeUtil::getLabelCount("."));
+    EXPECT_EQ(2U, OptionDataTypeUtil::getLabelCount("example"));
+    EXPECT_EQ(3U, OptionDataTypeUtil::getLabelCount("example.com"));
+    EXPECT_EQ(3U, OptionDataTypeUtil::getLabelCount("example.com."));
+    EXPECT_EQ(4U, OptionDataTypeUtil::getLabelCount("myhost.example.com"));
     EXPECT_THROW(OptionDataTypeUtil::getLabelCount(".abc."),
                  isc::dhcp::BadDataTypeCast);
 }
@@ -165,12 +165,12 @@ TEST_F(OptionDataTypesTest, writeAddress) {
     // Do similar test for IPv4 address.
     address = asiolink::IOAddress("192.168.0.1");
     ASSERT_NO_THROW(OptionDataTypeUtil::writeAddress(address, buf_out));
-    ASSERT_EQ(4, buf_out.size());
+    ASSERT_EQ(4U, buf_out.size());
     // Verify that the IP address has been written correctly.
-    EXPECT_EQ(192, buf_out[0]);
-    EXPECT_EQ(168, buf_out[1]);
-    EXPECT_EQ(0, buf_out[2]);
-    EXPECT_EQ(1, buf_out[3]);
+    EXPECT_EQ(192U, buf_out[0]);
+    EXPECT_EQ(168U, buf_out[1]);
+    EXPECT_EQ(0U, buf_out[2]);
+    EXPECT_EQ(1U, buf_out[3]);
 }
 
 // The purpose of this test is to verify that binary data represented
@@ -344,16 +344,16 @@ TEST_F(OptionDataTypesTest, writeBool) {
     // Write the 'true' value to the buffer.
     ASSERT_NO_THROW(OptionDataTypeUtil::writeBool(true, buf));
     // We should now have 'true' value stored in a buffer.
-    ASSERT_EQ(1, buf.size());
-    EXPECT_EQ(buf[0], 1);
+    ASSERT_EQ(1U, buf.size());
+    EXPECT_EQ(buf[0], 1U);
     // Let's append another value to make sure that it is not always
     // 'true' value being written.
     ASSERT_NO_THROW(OptionDataTypeUtil::writeBool(false, buf));
-    ASSERT_EQ(2, buf.size());
+    ASSERT_EQ(2U, buf.size());
     // Check that the first value has not changed.
-    EXPECT_EQ(buf[0], 1);
+    EXPECT_EQ(buf[0], 1U);
     // Check the second value is correct.
-    EXPECT_EQ(buf[1], 0);
+    EXPECT_EQ(buf[1], 0U);
 }
 
 // The purpose of this test is to verify that the integer values
@@ -368,7 +368,7 @@ TEST_F(OptionDataTypesTest, readInt) {
     ASSERT_NO_THROW(
         valueUint8 = OptionDataTypeUtil::readInt<uint8_t>(buf);
     );
-    EXPECT_EQ(129, valueUint8);
+    EXPECT_EQ(129U, valueUint8);
 
     // Try to read 16-bit value from a buffer holding 8-bit value.
     // This should result in an exception.
@@ -386,7 +386,7 @@ TEST_F(OptionDataTypesTest, readInt) {
     ASSERT_NO_THROW(
         valueUint16 = OptionDataTypeUtil::readInt<uint16_t>(buf);
     );
-    EXPECT_EQ(1234, valueUint16);
+    EXPECT_EQ(1234U, valueUint16);
 
     // Try to read 32-bit value from a buffer holding 16-bit value.
     // This should result in an exception.
@@ -403,7 +403,7 @@ TEST_F(OptionDataTypesTest, readInt) {
     ASSERT_NO_THROW(
         valueUint32 = OptionDataTypeUtil::readInt<uint32_t>(buf);
     );
-    EXPECT_EQ(56789, valueUint32);
+    EXPECT_EQ(56789U, valueUint32);
     buf.clear();
 
     // Test int8_t value.
@@ -540,13 +540,13 @@ TEST_F(OptionDataTypesTest, writeFqdn) {
     // 7 bytes for "example" label, 3 bytes for "com" label and
     // finally 4 bytes positions between labels where length
     // information is stored.
-    ASSERT_EQ(22, buf.size());
+    ASSERT_EQ(22U, buf.size());
 
     // Verify that length fields between labels hold valid values.
-    EXPECT_EQ(8, buf[0]);  // length of "mydomain"
-    EXPECT_EQ(7, buf[9]);  // length of "example"
-    EXPECT_EQ(3, buf[17]); // length of "com"
-    EXPECT_EQ(0, buf[21]); // zero byte at the end.
+    EXPECT_EQ(8U, buf[0]);  // length of "mydomain"
+    EXPECT_EQ(7U, buf[9]);  // length of "example"
+    EXPECT_EQ(3U, buf[17]); // length of "com"
+    EXPECT_EQ(0U, buf[21]); // zero byte at the end.
 
     // Verify that labels are valid.
     std::string label0(buf.begin() + 1, buf.begin() + 9);
@@ -563,11 +563,11 @@ TEST_F(OptionDataTypesTest, writeFqdn) {
     OptionDataTypeUtil::writeFqdn("hello.net", buf);
 
     // The buffer length should be now longer.
-    ASSERT_EQ(33, buf.size());
+    ASSERT_EQ(33U, buf.size());
 
     // Check the length fields for new labels being appended.
-    EXPECT_EQ(5, buf[22]);
-    EXPECT_EQ(3, buf[28]);
+    EXPECT_EQ(5U, buf[22]);
+    EXPECT_EQ(3U, buf[28]);
 
     // And check that labels are ok.
     std::string label3(buf.begin() + 23, buf.begin() + 28);
@@ -604,7 +604,7 @@ TEST_F(OptionDataTypesTest, readPrefix) {
 
     PrefixTuple prefix(ZERO_PREFIX_TUPLE);
     ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
-    EXPECT_EQ(64, prefix.first.asUnsigned());
+    EXPECT_EQ(64U, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8::", prefix.second.toText());
 
     buf.clear();
@@ -615,7 +615,7 @@ TEST_F(OptionDataTypesTest, readPrefix) {
     writeInt<uint32_t>(0, buf);
 
     ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
-    EXPECT_EQ(63, prefix.first.asUnsigned());
+    EXPECT_EQ(63U, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8::", prefix.second.toText());
 
     buf.clear();
@@ -629,7 +629,7 @@ TEST_F(OptionDataTypesTest, readPrefix) {
     writeInt<uint32_t>(0xFFFFFFFF, buf);
 
     ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
-    EXPECT_EQ(34, prefix.first.asUnsigned());
+    EXPECT_EQ(34U, prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8:c000::", prefix.second.toText());
 
     buf.clear();
@@ -639,7 +639,7 @@ TEST_F(OptionDataTypesTest, readPrefix) {
     writeInt<uint16_t>(0x2001, buf);
 
     ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
-    EXPECT_EQ(0, prefix.first.asUnsigned());
+    EXPECT_EQ(0U, prefix.first.asUnsigned());
     EXPECT_EQ("::", prefix.second.toText());
 
     buf.clear();
@@ -649,7 +649,7 @@ TEST_F(OptionDataTypesTest, readPrefix) {
     buf.insert(buf.end(), 16, 0x11);
 
     ASSERT_NO_THROW(prefix = OptionDataTypeUtil::readPrefix(buf));
-    EXPECT_EQ(128, prefix.first.asUnsigned());
+    EXPECT_EQ(128U, prefix.first.asUnsigned());
     EXPECT_EQ("1111:1111:1111:1111:1111:1111:1111:1111",
               prefix.second.toText());
 
@@ -688,15 +688,15 @@ TEST_F(OptionDataTypesTest, writePrefix) {
     ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(34),
                                                     IOAddress("2001:db8:FFFF::"),
                                                     buf));
-    ASSERT_EQ(7, buf.size());
+    ASSERT_EQ(7U, buf.size());
 
-    EXPECT_EQ(1, static_cast<unsigned>(buf[0]));
-    EXPECT_EQ(34, static_cast<unsigned>(buf[1]));
-    EXPECT_EQ(0x20, static_cast<unsigned>(buf[2]));
-    EXPECT_EQ(0x01, static_cast<unsigned>(buf[3]));
-    EXPECT_EQ(0x0D, static_cast<unsigned>(buf[4]));
-    EXPECT_EQ(0xB8, static_cast<unsigned>(buf[5]));
-    EXPECT_EQ(0xC0, static_cast<unsigned>(buf[6]));
+    EXPECT_EQ(1U, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(34U, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0x20U, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(0x01U, static_cast<unsigned>(buf[3]));
+    EXPECT_EQ(0x0DU, static_cast<unsigned>(buf[4]));
+    EXPECT_EQ(0xB8U, static_cast<unsigned>(buf[5]));
+    EXPECT_EQ(0xC0U, static_cast<unsigned>(buf[6]));
 
     buf.clear();
 
@@ -704,8 +704,8 @@ TEST_F(OptionDataTypesTest, writePrefix) {
     ASSERT_NO_THROW(OptionDataTypeUtil::writePrefix(PrefixLen(0),
                                                     IOAddress("2001:db8:FFFF::"),
                                                     buf));
-    ASSERT_EQ(1, buf.size());
-    EXPECT_EQ(0, static_cast<unsigned>(buf[0]));
+    ASSERT_EQ(1U, buf.size());
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[0]));
 
     buf.clear();
 
@@ -717,7 +717,7 @@ TEST_F(OptionDataTypesTest, writePrefix) {
 
     // We should now have a 17 bytes long buffer. 1 byte goes for a prefix
     // length field, the remaining ones hold the prefix.
-    ASSERT_EQ(17, buf.size());
+    ASSERT_EQ(17U, buf.size());
     // Because the prefix is 16 bytes long, we can simply use the
     // IOAddress convenience function to read it back and compare
     // it with the textual representation. This is simpler than
@@ -746,8 +746,8 @@ TEST_F(OptionDataTypesTest, readPsid) {
 
     PSIDTuple psid;
     ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
-    EXPECT_EQ(6, psid.first.asUnsigned());
-    EXPECT_EQ(0x29, psid.second.asUint16());
+    EXPECT_EQ(6U, psid.first.asUnsigned());
+    EXPECT_EQ(0x29U, psid.second.asUint16());
 
     buf.clear();
 
@@ -758,8 +758,8 @@ TEST_F(OptionDataTypesTest, readPsid) {
     writeInt<uint16_t>(0xF000, buf);
 
     ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
-    EXPECT_EQ(16, psid.first.asUnsigned());
-    EXPECT_EQ(0xF000, psid.second.asUint16());
+    EXPECT_EQ(16U, psid.first.asUnsigned());
+    EXPECT_EQ(0xF000U, psid.second.asUint16());
 
     buf.clear();
 
@@ -769,8 +769,8 @@ TEST_F(OptionDataTypesTest, readPsid) {
     // be ignored.
     writeInt<uint16_t>(0x1234, buf);
     ASSERT_NO_THROW(psid = OptionDataTypeUtil::readPsid(buf));
-    EXPECT_EQ(0, psid.first.asUnsigned());
-    EXPECT_EQ(0, psid.second.asUint16());
+    EXPECT_EQ(0U, psid.first.asUnsigned());
+    EXPECT_EQ(0U, psid.second.asUint16());
 
     buf.clear();
 
@@ -817,20 +817,20 @@ TEST_F(OptionDataTypesTest, writePsid) {
     std::vector<uint8_t> buf(1, 1);
     // PSID length is 4 (bits), PSID value is 8.
     ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(4), PSID(8), buf));
-    ASSERT_EQ(4, buf.size());
+    ASSERT_EQ(4U, buf.size());
     // The byte which existed in the buffer should still hold the
     // same value.
-    EXPECT_EQ(1, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(1U, static_cast<unsigned>(buf[0]));
     // PSID length should be written as specified in the function call.
-    EXPECT_EQ(4, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(4U, static_cast<unsigned>(buf[1]));
     // The PSID structure is as follows:
     // UUUUPPPPPPPPPPPP, where "U" are useful bits on which we code
     // the PSID. "P" are zero padded bits. The PSID value 8 is coded
     // on four useful bits as '1000b'. That means that the PSID value
     // encoded in the PSID field is: '1000000000000000b', which is
     // 0x8000. The next two EXPECT_EQ statements verify that.
-    EXPECT_EQ(0x80, static_cast<unsigned>(buf[2]));
-    EXPECT_EQ(0x00, static_cast<unsigned>(buf[3]));
+    EXPECT_EQ(0x80U, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(0x00U, static_cast<unsigned>(buf[3]));
 
     // Clear the buffer to make sure we don't append to the
     // existing data.
@@ -839,22 +839,22 @@ TEST_F(OptionDataTypesTest, writePsid) {
     // The PSID length of 0 causes the PSID value (of 6) to be ignored.
     // As a result, the buffer should hold only zeros.
     ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(0), PSID(6), buf));
-    ASSERT_EQ(3, buf.size());
-    EXPECT_EQ(0, static_cast<unsigned>(buf[0]));
-    EXPECT_EQ(0, static_cast<unsigned>(buf[1]));
-    EXPECT_EQ(0, static_cast<unsigned>(buf[2]));
+    ASSERT_EQ(3U, buf.size());
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0U, static_cast<unsigned>(buf[2]));
 
     buf.clear();
 
     // Another test case, to verify that we can use the maximum length
     // of PSID (16 bits).
     ASSERT_NO_THROW(OptionDataTypeUtil::writePsid(PSIDLen(16), PSID(5), buf));
-    ASSERT_EQ(3, buf.size());
+    ASSERT_EQ(3U, buf.size());
     // PSID length should be written with no change.
-    EXPECT_EQ(16, static_cast<unsigned>(buf[0]));
+    EXPECT_EQ(16U, static_cast<unsigned>(buf[0]));
     // Check PSID value.
-    EXPECT_EQ(0x00, static_cast<unsigned>(buf[1]));
-    EXPECT_EQ(0x05, static_cast<unsigned>(buf[2]));
+    EXPECT_EQ(0x00U, static_cast<unsigned>(buf[1]));
+    EXPECT_EQ(0x05U, static_cast<unsigned>(buf[2]));
 
     // PSID length of 17 exceeds the maximum allowed value of 16.
     EXPECT_THROW(OptionDataTypeUtil::writePsid(PSIDLen(17), PSID(1), buf),
@@ -890,25 +890,25 @@ TEST_F(OptionDataTypesTest, readString) {
     // One trailing null should trim off.
     buffer = {'o', 'n', 'e', 0 };
     ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
-    EXPECT_EQ(3, value.length());
+    EXPECT_EQ(3U, value.length());
     EXPECT_EQ(value, std::string("one"));
 
     // More than one trailing null should trim off.
     buffer = { 't', 'h', 'r', 'e', 'e', 0, 0, 0 };
     ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
-    EXPECT_EQ(5, value.length());
+    EXPECT_EQ(5U, value.length());
     EXPECT_EQ(value, std::string("three"));
 
     // Embedded null should be left in place.
     buffer = { 'e', 'm', 0, 'b', 'e', 'd' };
     ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
-    EXPECT_EQ(6, value.length());
+    EXPECT_EQ(6U, value.length());
     EXPECT_EQ(value, (std::string{"em\0bed", 6}));
 
     // Leading null should be left in place.
     buffer = { 0, 'l', 'e', 'a', 'd', 'i', 'n', 'g' };
     ASSERT_NO_THROW(value = OptionDataTypeUtil::readString(buffer));
-    EXPECT_EQ(8, value.length());
+    EXPECT_EQ(8U, value.length());
     EXPECT_EQ(value, (std::string{"\0leading", 8}));
 }
 

@@ -87,7 +87,7 @@ public:
         EXPECT_EQ(Option::V6, opt.getUniverse());
         EXPECT_EQ(expected_type, opt.getType());
         EXPECT_EQ(expected_address, opt.getAddress());
-        EXPECT_EQ(1000, opt.getPreferred());
+        EXPECT_EQ(1000U, opt.getPreferred());
         EXPECT_EQ(3000000000U, opt.getValid());
         // uint8_t is often represented as a character type (char). Convert it
         // to integer so as it is logged as a numeric value instead.
@@ -137,7 +137,7 @@ TEST_F(Option6IAPrefixTest, parseShort) {
 
     // Pack this option
     opt->pack(out_buf_);
-    EXPECT_EQ(29, out_buf_.getLength());
+    EXPECT_EQ(29U, out_buf_.getLength());
 
     // The non-significant bits (above 77) of the received prefix should be
     // set to zero.
@@ -168,7 +168,7 @@ TEST_F(Option6IAPrefixTest, parseLong) {
 
     // Pack this option
     opt->pack(out_buf_);
-    EXPECT_EQ(29, out_buf_.getLength());
+    EXPECT_EQ(29U, out_buf_.getLength());
 
     checkOption(*opt, D6O_IAPREFIX, 128,
                 IOAddress("2001:db8:1:0:afaf:0:dead:beef"));
@@ -193,7 +193,7 @@ TEST_F(Option6IAPrefixTest, parseZero) {
 
     // Pack this option
     opt->pack(out_buf_);
-    EXPECT_EQ(29, out_buf_.getLength());
+    EXPECT_EQ(29U, out_buf_.getLength());
 
     checkOption(*opt, D6O_IAPREFIX, 0, IOAddress("::"));
 
@@ -221,7 +221,7 @@ TEST_F(Option6IAPrefixTest, build) {
 
     // Check if we can build it properly
     EXPECT_NO_THROW(opt->pack(out_buf_));
-    EXPECT_EQ(29, out_buf_.getLength());
+    EXPECT_EQ(29U, out_buf_.getLength());
     checkOutputBuffer(12345);
 
     // Check that option can be disposed safely

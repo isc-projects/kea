@@ -232,7 +232,7 @@ DUIDFactoryTest::testLLT(const std::string& expected_htype,
                          DUIDFactory& factory_ref) {
     DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
-    ASSERT_GE(duid->getDuid().size(), 14);
+    ASSERT_GE(duid->getDuid().size(), 14U);
     std::string duid_text = toString(duid->getDuid());
 
     // DUID type LLT
@@ -268,7 +268,7 @@ DUIDFactoryTest::testEN(const std::string& expected_enterprise_id,
                         DUIDFactory& factory_ref) {
     DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
-    ASSERT_GE(duid->getDuid().size(), 8);
+    ASSERT_GE(duid->getDuid().size(), 8U);
     std::string duid_text = toString(duid->getDuid());
 
     // DUID type EN.
@@ -302,7 +302,7 @@ DUIDFactoryTest::testLL(const std::string& expected_htype,
                         DUIDFactory& factory_ref) {
     DuidPtr duid = factory_ref.get();
     ASSERT_TRUE(duid);
-    ASSERT_GE(duid->getDuid().size(), 8);
+    ASSERT_GE(duid->getDuid().size(), 8U);
     std::string duid_text = toString(duid->getDuid());
 
     // DUID type LL

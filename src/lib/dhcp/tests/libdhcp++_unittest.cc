@@ -256,11 +256,11 @@ public:
             ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
             ASSERT_NE(expected, pkt->toText());
 
-            ASSERT_EQ(64, col.size());
+            ASSERT_EQ(64U, col.size());
             uint8_t index = 0;
             for (auto const& opt : col) {
-                ASSERT_EQ(opt.first, 231);
-                ASSERT_EQ(1, opt.second->getData().size());
+                ASSERT_EQ(opt.first, 231U);
+                ASSERT_EQ(1U, opt.second->getData().size());
                 ASSERT_EQ(index, opt.second->getData()[0]);
                 index++;
             }
@@ -302,9 +302,9 @@ public:
                       top_opt->getHeaderLen() + bottom_size + middle_size + top_size,
                       buf.getLength());
 
-            ASSERT_EQ(3, col.size());
+            ASSERT_EQ(3U, col.size());
             for (auto const& bottom_subopt : col) {
-                ASSERT_EQ(bottom_subopt.second->getType(), 170);
+                ASSERT_EQ(bottom_subopt.second->getType(), 170U);
                 if (opt_count == 0) {
                     // First option contains only data (0..127) and no suboptions.
                     ASSERT_EQ(bottom_subopt.second->getData().size(), bottom_size);
@@ -313,12 +313,12 @@ public:
                         ASSERT_EQ(value, static_cast<uint8_t>(index));
                         index++;
                     }
-                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 0);
+                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 0U);
                 } else {
                     // All other options contain no data and suboption 171.
-                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 1);
+                    ASSERT_EQ(bottom_subopt.second->getOptions().size(), 1U);
                     for (auto const& middle_subopt : bottom_subopt.second->getOptions()) {
-                        ASSERT_EQ(middle_subopt.first, 171);
+                        ASSERT_EQ(middle_subopt.first, 171U);
                         if (opt_count == 1) {
                             // First suboption 171 contains only data (0) and no suboptions.
                             ASSERT_EQ(middle_subopt.second->getData().size(), middle_size);
@@ -327,14 +327,14 @@ public:
                                 ASSERT_EQ(value, static_cast<uint8_t>(index));
                                 index++;
                             }
-                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 0);
+                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 0U);
                         } else {
                             // Second suboption 171 contains no data and suboption 172.
-                            ASSERT_EQ(middle_subopt.second->getData().size(), 0);
-                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 1);
+                            ASSERT_EQ(middle_subopt.second->getData().size(), 0U);
+                            ASSERT_EQ(middle_subopt.second->getOptions().size(), 1U);
                             auto const& top_subopt = middle_subopt.second->getOptions().find(172);
                             ASSERT_NE(top_subopt, middle_subopt.second->getOptions().end());
-                            ASSERT_EQ(top_subopt->second->getType(), 172);
+                            ASSERT_EQ(top_subopt->second->getType(), 172U);
                             // Suboption 172 contains only data (0..248) and no suboptions.
                             ASSERT_EQ(top_subopt->second->getData().size(), top_size);
                             index = 0;
@@ -342,7 +342,7 @@ public:
                                 ASSERT_EQ(value, static_cast<uint8_t>(index));
                                 index++;
                             }
-                            ASSERT_EQ(top_subopt->second->getOptions().size(), 0);
+                            ASSERT_EQ(top_subopt->second->getOptions().size(), 0U);
                         }
                     }
                 }
@@ -364,14 +364,14 @@ public:
         ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                         col_back, deferred_options));
 
-        ASSERT_EQ(1, col_back.size());
-        EXPECT_EQ(170, col_back.begin()->first);
+        ASSERT_EQ(1U, col_back.size());
+        EXPECT_EQ(170U, col_back.begin()->first);
         OptionPtr opt_back = col_back.begin()->second;
         ASSERT_TRUE(opt_back);
 
         // Using unpackOptions4 will not create suboptions, so entire
         // data is serialized in the option buffer.
-        ASSERT_EQ(opt_back->getOptions().size(), 0);
+        ASSERT_EQ(opt_back->getOptions().size(), 0U);
         OptionBuffer opt_data;
         // Data 0..127
         index = 0;
@@ -416,8 +416,8 @@ public:
             ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
             ASSERT_NE(expected, pkt->toText());
 
-            ASSERT_EQ(11, col.size());
-            ASSERT_EQ(2560 + 11 * option->getHeaderLen(), buf.getLength());
+            ASSERT_EQ(11U, col.size());
+            ASSERT_EQ(2560U + 11 * option->getHeaderLen(), buf.getLength());
         }
         ASSERT_EQ(expected, pkt->toText());
 
@@ -434,8 +434,8 @@ public:
         ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                         col_back, deferred_options));
 
-        ASSERT_EQ(1, col_back.size());
-        EXPECT_EQ(231, col_back.begin()->first);
+        ASSERT_EQ(1U, col_back.size());
+        EXPECT_EQ(231U, col_back.begin()->first);
         OptionPtr opt_back = col_back.begin()->second;
         ASSERT_TRUE(opt_back);
         EXPECT_TRUE(option->equals(*opt_back));
@@ -466,10 +466,10 @@ public:
             ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
             ASSERT_NE(expected, pkt->toText());
 
-            ASSERT_EQ(3, col.size());
+            ASSERT_EQ(3U, col.size());
             ASSERT_EQ(3 * rai->getHeaderLen() + circuit_id_opt->getHeaderLen() +
                       remote_id_opt->getHeaderLen() + subscriber_id_opt->getHeaderLen() +
-                      3 * 128, buf.getLength());
+                      3 * 128, static_cast<long>(buf.getLength()));
         }
         ASSERT_EQ(expected, pkt->toText());
 
@@ -486,7 +486,7 @@ public:
         ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                         col_back, deferred_options));
 
-        ASSERT_EQ(1, col_back.size());
+        ASSERT_EQ(1U, col_back.size());
         EXPECT_EQ(DHO_DHCP_AGENT_OPTIONS, col_back.begin()->first);
         OptionPtr opt_back = col_back.begin()->second;
         ASSERT_TRUE(opt_back);
@@ -495,7 +495,7 @@ public:
         uint8_t opt_number = 0;
         uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
         OptionCollection subs_back = opt_back->getOptions();
-        ASSERT_EQ(3, subs_back.size());
+        ASSERT_EQ(3U, subs_back.size());
         for (auto const& sub_option : subs_back) {
             if (sub_option.first != opt_type) {
                 opt_type = sub_option.first;
@@ -515,7 +515,7 @@ public:
                 index++;
             }
         }
-        ASSERT_EQ(index, 128);
+        ASSERT_EQ(index, 128U);
     }
 
     /// @brief Test which verifies that split options for v4 is working correctly.
@@ -541,10 +541,10 @@ public:
             ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
             ASSERT_NE(expected, pkt->toText());
 
-            ASSERT_EQ(23, col.size());
+            ASSERT_EQ(23U, col.size());
             ASSERT_EQ((11 + 1 + 11) * rai->getHeaderLen() + 11 * circuit_id_opt->getHeaderLen() +
                       remote_id_opt->getHeaderLen() + 11 * subscriber_id_opt->getHeaderLen() +
-                      2560 + 64 + 2560, buf.getLength());
+                      2560 + 64 + 2560U, buf.getLength());
         }
         ASSERT_EQ(expected, pkt->toText());
 
@@ -561,7 +561,7 @@ public:
         ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                         col_back, deferred_options));
 
-        ASSERT_EQ(1, col_back.size());
+        ASSERT_EQ(1U, col_back.size());
         EXPECT_EQ(DHO_DHCP_AGENT_OPTIONS, col_back.begin()->first);
         OptionPtr opt_back = col_back.begin()->second;
         ASSERT_TRUE(opt_back);
@@ -570,16 +570,16 @@ public:
         uint8_t opt_number = 0;
         uint32_t opt_type = RAI_OPTION_AGENT_CIRCUIT_ID;
         OptionCollection subs_back = opt_back->getOptions();
-        ASSERT_EQ(3, subs_back.size());
+        ASSERT_EQ(3U, subs_back.size());
         for (auto const& sub_option : subs_back) {
             if (sub_option.first != opt_type) {
                 opt_type = sub_option.first;
                 if (opt_number == 0) {
-                    ASSERT_EQ(index, 2560);
+                    ASSERT_EQ(index, 2560U);
                 } else if (opt_number == 1) {
-                    ASSERT_EQ(index, 64);
+                    ASSERT_EQ(index, 64U);
                 } else if (opt_number == 2){
-                    ASSERT_EQ(index, 2560);
+                    ASSERT_EQ(index, 2560U);
                 }
                 index = 0;
                 opt_number++;
@@ -596,7 +596,7 @@ public:
                 index++;
             }
         }
-        ASSERT_EQ(index, 2560);
+        ASSERT_EQ(index, 2560U);
     }
 
 private:
@@ -738,7 +738,7 @@ TEST_F(LibDhcpTest, optionFactory) {
     // Validate if option length, type and universe is correct.
     EXPECT_EQ(Option::V4, opt_time_offset->getUniverse());
     EXPECT_EQ(DHO_TIME_OFFSET, opt_time_offset->getType());
-    EXPECT_EQ(time_offset_buf.size(),
+    EXPECT_EQ(static_cast<long>(time_offset_buf.size()),
               opt_time_offset->len() - opt_time_offset->getHeaderLen());
     // Validate data in the option.
     EXPECT_TRUE(std::equal(time_offset_buf.begin(), time_offset_buf.end(),
@@ -755,7 +755,8 @@ TEST_F(LibDhcpTest, optionFactory) {
     // Validate if option length, type and universe is correct.
     EXPECT_EQ(Option::V6, opt_clientid->getUniverse());
     EXPECT_EQ(D6O_CLIENTID, opt_clientid->getType());
-    EXPECT_EQ(clientid_buf.size(), opt_clientid->len() - opt_clientid->getHeaderLen());
+    EXPECT_EQ(static_cast<int>(clientid_buf.size()),
+              opt_clientid->len() - opt_clientid->getHeaderLen());
     // Validate data in the option.
     EXPECT_TRUE(std::equal(clientid_buf.begin(), clientid_buf.end(),
                            opt_clientid->getData().begin()));
@@ -817,32 +818,32 @@ TEST_F(LibDhcpTest, unpackOptions6) {
                                     DHCP6_OPTION_SPACE, options);
     });
 
-    EXPECT_EQ(options.size(), 6); // there should be 5 options
+    EXPECT_EQ(options.size(), 6U); // there should be 5 options
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(1);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
-    EXPECT_EQ(1, x->second->getType());  // this should be option 1
-    ASSERT_EQ(9, x->second->len()); // it should be of length 9
-    ASSERT_EQ(5, x->second->getData().size());
+    EXPECT_EQ(1U, x->second->getType());  // this should be option 1
+    ASSERT_EQ(9U, x->second->len()); // it should be of length 9
+    ASSERT_EQ(5U, x->second->getData().size());
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 4, 5)); // data len=5
 
     x = options.find(2);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
-    EXPECT_EQ(2, x->second->getType());  // this should be option 2
-    ASSERT_EQ(7, x->second->len()); // it should be of length 7
-    ASSERT_EQ(3, x->second->getData().size());
+    EXPECT_EQ(2U, x->second->getType());  // this should be option 2
+    ASSERT_EQ(7U, x->second->len()); // it should be of length 7
+    ASSERT_EQ(3U, x->second->getData().size());
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v6packed + 13, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 14 should exist
-    EXPECT_EQ(14, x->second->getType());  // this should be option 14
-    ASSERT_EQ(4, x->second->len()); // it should be of length 4
-    EXPECT_EQ(0, x->second->getData().size()); // data len = 0
+    EXPECT_EQ(14U, x->second->getType());  // this should be option 14
+    ASSERT_EQ(4U, x->second->len()); // it should be of length 4
+    EXPECT_EQ(0U, x->second->getData().size()); // data len = 0
 
     x = options.find(6);
     ASSERT_FALSE(x == options.end()); // option 6 should exist
-    EXPECT_EQ(6, x->second->getType());  // this should be option 6
-    ASSERT_EQ(8, x->second->len()); // it should be of length 8
+    EXPECT_EQ(6U, x->second->getType());  // this should be option 6
+    ASSERT_EQ(8U, x->second->len()); // it should be of length 8
     // Option with code 6 is the OPTION_ORO. This option is
     // represented by the OptionIntArray<uint16_t> class which
     // comprises the set of uint16_t values. We need to cast the
@@ -865,8 +866,8 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     x = options.find(8);
     ASSERT_FALSE(x == options.end()); // option 8 should exist
-    EXPECT_EQ(8, x->second->getType());  // this should be option 8
-    ASSERT_EQ(6, x->second->len()); // it should be of length 9
+    EXPECT_EQ(8U, x->second->getType());  // this should be option 8
+    ASSERT_EQ(6U, x->second->len()); // it should be of length 9
     // Option with code 8 is OPTION_ELAPSED_TIME. This option is
     // represented by Option6Int<uint16_t> value that holds single
     // uint16_t value.
@@ -876,14 +877,14 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     // when returned option has different type than expected.
     ASSERT_TRUE(opt_elapsed_time);
     // Returned value should be equivalent to two byte values: 112, 113
-    EXPECT_EQ(0x7071, opt_elapsed_time->getValue());
+    EXPECT_EQ(0x7071U, opt_elapsed_time->getValue());
 
     // Check if Vendor Specific Information Option along with suboptions
     // have been parsed correctly.
     x = options.find(D6O_VENDOR_OPTS);
     EXPECT_FALSE(x == options.end());
     EXPECT_EQ(D6O_VENDOR_OPTS, x->second->getType());
-    EXPECT_EQ(26, x->second->len());
+    EXPECT_EQ(26U, x->second->len());
 
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(x->second);
     ASSERT_TRUE(vendor);
@@ -893,14 +894,14 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     OptionPtr cm_mac = vendor->getOption(OPTION_CM_MAC);
     ASSERT_TRUE(cm_mac);
     EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
-    ASSERT_EQ(10, cm_mac->len());
+    ASSERT_EQ(10U, cm_mac->len());
     EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
 
     // CMTS Capabilities
     OptionPtr cmts_caps = vendor->getOption(OPTION_CMTS_CAPS);
     ASSERT_TRUE(cmts_caps);
     EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
-    ASSERT_EQ(8, cmts_caps->len());
+    ASSERT_EQ(8U, cmts_caps->len());
     EXPECT_EQ(0, memcmp(&cmts_caps->getData()[0], v6packed + 46, 4));
 
     x = options.find(0);
@@ -944,11 +945,11 @@ TEST_F(LibDhcpTest, unpackEmptyOption6) {
                                             options));
 
     // There should be one option.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
     OptionPtr option_empty = options.begin()->second;
     ASSERT_TRUE(option_empty);
-    EXPECT_EQ(1024, option_empty->getType());
-    EXPECT_EQ(4, option_empty->len());
+    EXPECT_EQ(1024U, option_empty->getType());
+    EXPECT_EQ(4U, option_empty->len());
     EXPECT_TRUE(option_empty->getEncapsulatedSpace().empty());
 }
 
@@ -1005,26 +1006,26 @@ TEST_F(LibDhcpTest, unpackSubOptions6) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, "space-foobar", options, 0, 0));
 
     // There should be one top level option.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
     boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
                                                           second);
     ASSERT_TRUE(option_foobar);
-    EXPECT_EQ(1, option_foobar->getType());
-    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    EXPECT_EQ(1U, option_foobar->getType());
+    EXPECT_EQ(0x00010203U, option_foobar->getValue());
     // There should be a middle level option held in option_foobar.
     boost::shared_ptr<OptionInt<uint16_t> > option_foo =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
                                                           getOption(1));
     ASSERT_TRUE(option_foo);
-    EXPECT_EQ(1, option_foo->getType());
-    EXPECT_EQ(0x0102, option_foo->getValue());
+    EXPECT_EQ(1U, option_foo->getType());
+    EXPECT_EQ(0x0102U, option_foo->getValue());
     // Finally, there should be a low level option under option_foo.
     boost::shared_ptr<OptionInt<uint8_t> > option_bar =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
     ASSERT_TRUE(option_bar);
-    EXPECT_EQ(1, option_bar->getType());
-    EXPECT_EQ(0x0, option_bar->getValue());
+    EXPECT_EQ(1U, option_bar->getType());
+    EXPECT_EQ(0U, option_bar->getValue());
 }
 
 /// V4 Options being used to test pack/unpack operations.
@@ -1536,7 +1537,7 @@ TEST_F(LibDhcpTest, fuseLongOption) {
         ASSERT_TRUE(option);
         col.insert(std::make_pair(231, option));
     }
-    ASSERT_EQ(256, col.size());
+    ASSERT_EQ(256U, col.size());
     isc::util::OutputBuffer buf(0);
     ASSERT_NO_THROW(LibDHCP::packOptions4(buf, col, true));
 
@@ -1552,10 +1553,10 @@ TEST_F(LibDhcpTest, fuseLongOption) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                                             col_back, deferred_options));
 
-    ASSERT_EQ(1, col_back.size());
+    ASSERT_EQ(1U, col_back.size());
     uint8_t index = 0;
     for (auto const& option : col_back) {
-        EXPECT_EQ(231, option.first);
+        EXPECT_EQ(231U, option.first);
         for (auto const& value : option.second->getData()) {
             EXPECT_EQ(index, value);
             index++;
@@ -1589,8 +1590,8 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
         rai->addOption(circuit_id_opt);
     }
     col.insert(std::make_pair(213, rai));
-    ASSERT_EQ(1, col.size());
-    ASSERT_EQ(256, col.begin()->second->getOptions().size());
+    ASSERT_EQ(1U, col.size());
+    ASSERT_EQ(256U, col.begin()->second->getOptions().size());
     isc::util::OutputBuffer buf(0);
     ManagedScopedOptionsCopyContainer scoped_options;
     ASSERT_NO_THROW(LibDHCP::splitOptions4(col, scoped_options.scoped_options_, 0));
@@ -1608,8 +1609,8 @@ TEST_F(LibDhcpTest, fuseLongOptionWithLongSuboption) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                                             col_back, deferred_options));
 
-    ASSERT_EQ(1, col_back.size());
-    ASSERT_EQ(1, col_back.begin()->second->getOptions().size());
+    ASSERT_EQ(1U, col_back.size());
+    ASSERT_EQ(1U, col_back.begin()->second->getOptions().size());
     uint8_t index = 0;
     auto const& options = col_back.begin()->second->getOptions();
     for (auto const& option : options) {
@@ -1644,7 +1645,7 @@ TEST_F(LibDhcpTest, fuseNotAligned) {
     std::list<uint16_t> deferred_options;
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
                                             deferred_options));
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
     bool seen_subnet(false);
     bool seen_vci(false);
     for (auto const& option : options) {
@@ -1711,7 +1712,7 @@ TEST_F(LibDhcpTest, extendVivco) {
     options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt1));
     options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt2));
     options.insert(make_pair(DHO_VIVCO_SUBOPTIONS, opt3));
-    EXPECT_EQ(options.size(), 3);
+    EXPECT_EQ(options.size(), 3U);
 
     // Fuse options.
     isc::util::OutputBuffer buf(0);
@@ -1727,32 +1728,32 @@ TEST_F(LibDhcpTest, extendVivco) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                                             options, deferred_options));
 
-    EXPECT_EQ(options.size(), 1);
+    EXPECT_EQ(options.size(), 1U);
     EXPECT_NO_THROW(LibDHCP::extendVendorOptions4(options));
-    EXPECT_EQ(options.size(), 2);
-    EXPECT_EQ(options.count(DHO_VIVCO_SUBOPTIONS), 2);
+    EXPECT_EQ(options.size(), 2U);
+    EXPECT_EQ(options.count(DHO_VIVCO_SUBOPTIONS), 2U);
     for (auto const& option : options) {
         ASSERT_EQ(option.second->getType(), DHO_VIVCO_SUBOPTIONS);
         OptionVendorClassPtr vendor =
             boost::dynamic_pointer_cast<OptionVendorClass>(option.second);
         ASSERT_TRUE(vendor);
         if (vendor->getVendorId() == 1) {
-            ASSERT_EQ(vendor->getTuplesNum(), 3);
+            ASSERT_EQ(vendor->getTuplesNum(), 3U);
             OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
             ASSERT_NO_THROW(tuple = vendor->getTuple(0));
-            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ(5U, tuple.getLength());
             EXPECT_EQ("first", tuple.getText());
             ASSERT_NO_THROW(tuple = vendor->getTuple(1));
-            EXPECT_EQ(6, tuple.getLength());
+            EXPECT_EQ(6U, tuple.getLength());
             EXPECT_EQ("second", tuple.getText());
             ASSERT_NO_THROW(tuple = vendor->getTuple(2));
-            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ(5U, tuple.getLength());
             EXPECT_EQ("third",  tuple.getText());
         } else if (vendor->getVendorId() == 2) {
-            ASSERT_EQ(vendor->getTuplesNum(), 1);
+            ASSERT_EQ(vendor->getTuplesNum(), 1U);
             OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
             ASSERT_NO_THROW(tuple = vendor->getTuple(0));
-            EXPECT_EQ(5, tuple.getLength());
+            EXPECT_EQ(5U, tuple.getLength());
             EXPECT_EQ("extra", tuple.getText());
         } else {
             FAIL() << "unexpected vendor type: " << vendor->getVendorId();
@@ -1809,14 +1810,14 @@ TEST_F(LibDhcpTest, extendVivso) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(opts_buffer, DHCP4_OPTION_SPACE,
                                             options, deferred_options));
 
-    ASSERT_EQ(options.size(), 1);
-    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 1);
+    ASSERT_EQ(options.size(), 1U);
+    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 1U);
     ASSERT_EQ(options.find(DHO_VIVSO_SUBOPTIONS)->second->getType(), DHO_VIVSO_SUBOPTIONS);
     container.clear();
     container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, options.begin()->second));
     container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt3));
     container.insert(make_pair(DHO_VIVSO_SUBOPTIONS, opt4));
-    ASSERT_EQ(container.size(), 3);
+    ASSERT_EQ(container.size(), 3U);
     options.clear();
     for (auto const& option : container) {
         const OptionBuffer& buffer = option.second->toBinary();
@@ -1825,10 +1826,10 @@ TEST_F(LibDhcpTest, extendVivso) {
                                                       option.second->getType(),
                                                       buffer))));
     }
-    ASSERT_EQ(options.size(), 3);
+    ASSERT_EQ(options.size(), 3U);
     LibDHCP::extendVendorOptions4(options);
-    ASSERT_EQ(options.size(), 2);
-    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 2);
+    ASSERT_EQ(options.size(), 2U);
+    ASSERT_EQ(options.count(DHO_VIVSO_SUBOPTIONS), 2U);
     for (auto const& option : options) {
         ASSERT_EQ(option.second->getType(), DHO_VIVSO_SUBOPTIONS);
         OptionCollection suboptions = option.second->getOptions();
@@ -1836,7 +1837,7 @@ TEST_F(LibDhcpTest, extendVivso) {
         OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(option.second);
         ASSERT_TRUE(vendor);
         if (vendor->getVendorId() == 1) {
-            ASSERT_EQ(suboptions.size(), 3);
+            ASSERT_EQ(suboptions.size(), 3U);
             subopt = option.second->getOption(16);
             ASSERT_TRUE(subopt);
             subopt = option.second->getOption(32);
@@ -1844,7 +1845,7 @@ TEST_F(LibDhcpTest, extendVivso) {
             subopt = option.second->getOption(64);
             ASSERT_TRUE(subopt);
         } else if (vendor->getVendorId() == 2) {
-            ASSERT_EQ(suboptions.size(), 1);
+            ASSERT_EQ(suboptions.size(), 1U);
             subopt = option.second->getOption(128);
             ASSERT_TRUE(subopt);
         } else {
@@ -1978,39 +1979,39 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     // Option 12 holds a string so let's cast it to an appropriate type.
     OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x->second);
     ASSERT_TRUE(option12);
-    EXPECT_EQ(12, option12->getType());  // this should be option 12
-    ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
-    EXPECT_EQ(5, option12->len()); // total option length 5
+    EXPECT_EQ(12U, option12->getType());  // this should be option 12
+    ASSERT_EQ(3U, option12->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5U, option12->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4_opts + 2, 3)); // data len=3
 
     x = options.find(60);
     ASSERT_FALSE(x == options.end()); // option 2 should exist
-    EXPECT_EQ(60, x->second->getType());  // this should be option 60
-    ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->second->len()); // total option length 5
+    EXPECT_EQ(60U, x->second->getType());  // this should be option 60
+    ASSERT_EQ(3U, x->second->getData().size()); // it should be of length 3
+    EXPECT_EQ(5U, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 7, 3)); // data len=3
 
     x = options.find(14);
     ASSERT_FALSE(x == options.end()); // option 3 should exist
     OptionStringPtr option14 = boost::static_pointer_cast<OptionString>(x->second);
     ASSERT_TRUE(option14);
-    EXPECT_EQ(14, option14->getType());  // this should be option 14
-    ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
-    EXPECT_EQ(5, option14->len()); // total option length 5
+    EXPECT_EQ(14U, option14->getType());  // this should be option 14
+    ASSERT_EQ(3U, option14->getValue().length()); // it should be of length 3
+    EXPECT_EQ(5U, option14->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 12, 3)); // data len=3
 
     x = options.find(254);
     ASSERT_FALSE(x == options.end()); // option 4 should exist
-    EXPECT_EQ(254, x->second->getType());  // this should be option 254
-    ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->second->len()); // total option length 5
+    EXPECT_EQ(254U, x->second->getType());  // this should be option 254
+    ASSERT_EQ(3U, x->second->getData().size()); // it should be of length 3
+    EXPECT_EQ(5U, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 17, 3)); // data len=3
 
     x = options.find(128);
     ASSERT_FALSE(x == options.end()); // option 5 should exist
-    EXPECT_EQ(128, x->second->getType());  // this should be option 128
-    ASSERT_EQ(3, x->second->getData().size()); // it should be of length 3
-    EXPECT_EQ(5, x->second->len()); // total option length 5
+    EXPECT_EQ(128U, x->second->getType());  // this should be option 128
+    ASSERT_EQ(3U, x->second->getData().size()); // it should be of length 3
+    EXPECT_EQ(5U, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 22, 3)); // data len=3
 
     // Verify that V-I Vendor Specific Information option is parsed correctly.
@@ -2023,7 +2024,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionCollection suboptions = vivsi->getOptions();
 
     // There should be one suboption of V-I VSI.
-    ASSERT_EQ(1, suboptions.size());
+    ASSERT_EQ(1U, suboptions.size());
     // This vendor option has a standard definition and thus should be
     // converted to appropriate class, i.e. Option4AddrLst. If this cast
     // fails, it means that its definition was not used while it was
@@ -2032,9 +2033,9 @@ TEST_F(LibDhcpTest, unpackOptions4) {
         boost::dynamic_pointer_cast<Option4AddrLst>(suboptions.begin()->second);
     ASSERT_TRUE(tftp);
     EXPECT_EQ(DOCSIS3_V4_TFTP_SERVERS, tftp->getType());
-    EXPECT_EQ(6, tftp->len());
+    EXPECT_EQ(6U, tftp->len());
     Option4AddrLst::AddressContainer addresses = tftp->getAddresses();
-    ASSERT_EQ(1, addresses.size());
+    ASSERT_EQ(1U, addresses.size());
     EXPECT_EQ("10.0.0.10", addresses[0].toText());
 
     // Checking DHCP Relay Agent Information Option.
@@ -2055,21 +2056,21 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
-    ASSERT_EQ(6, rai_option->len());
+    ASSERT_EQ(6U, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 46, 4));
 
     // Check that Remote ID option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
-    ASSERT_EQ(8, rai_option->len());
+    ASSERT_EQ(8U, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 52, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
     rai_option = rai->getOption(RAI_OPTION_VSI);
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
-    ASSERT_EQ(11, rai_option->len());
+    ASSERT_EQ(11U, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 60, 9));
 
     // Make sure, that option other than those above is not present.
@@ -2116,11 +2117,11 @@ TEST_F(LibDhcpTest, unpackEmptyOption4) {
                                             options, deferred, false));
 
     // There should be one option.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
     OptionPtr option_empty = options.begin()->second;
     ASSERT_TRUE(option_empty);
-    EXPECT_EQ(254, option_empty->getType());
-    EXPECT_EQ(2, option_empty->len());
+    EXPECT_EQ(254U, option_empty->getType());
+    EXPECT_EQ(2U, option_empty->len());
     EXPECT_TRUE(option_empty->getEncapsulatedSpace().empty());
 }
 
@@ -2181,26 +2182,26 @@ TEST_F(LibDhcpTest, unpackSubOptions4) {
                                             options, deferred, false));
 
     // There should be one top level option.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
     boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
         boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
                                                           second);
     ASSERT_TRUE(option_foobar);
-    EXPECT_EQ(1, option_foobar->getType());
-    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    EXPECT_EQ(1U, option_foobar->getType());
+    EXPECT_EQ(0x00010203U, option_foobar->getValue());
     // There should be a middle level option held in option_foobar.
     boost::shared_ptr<OptionInt<uint16_t> > option_foo =
         boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
                                                           getOption(1));
     ASSERT_TRUE(option_foo);
-    EXPECT_EQ(1, option_foo->getType());
-    EXPECT_EQ(0x0102, option_foo->getValue());
+    EXPECT_EQ(1U, option_foo->getType());
+    EXPECT_EQ(0x0102U, option_foo->getValue());
     // Finally, there should be a low level option under option_foo.
     boost::shared_ptr<OptionInt<uint8_t> > option_bar =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
     ASSERT_TRUE(option_bar);
-    EXPECT_EQ(1, option_bar->getType());
-    EXPECT_EQ(0x0, option_bar->getValue());
+    EXPECT_EQ(1U, option_bar->getType());
+    EXPECT_EQ(0U, option_bar->getValue());
 }
 
 // Verifies that options 0 (PAD) and 255 (END) are handled as PAD and END
@@ -2258,40 +2259,40 @@ TEST_F(LibDhcpTest, unpackPadEnd) {
                                                      options, deferred, false));
 
     // Returned offset should point to the END.
-    EXPECT_EQ(0xff, buf[offset]);
+    EXPECT_EQ(0xffU, buf[offset]);
 
     // There should be one top level option.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
 
     // Get it.
     OptionPtr option = options.begin()->second;
     ASSERT_TRUE(option);
-    EXPECT_EQ(200, option->getType());
+    EXPECT_EQ(200U, option->getType());
 
     // There should be 3 suboptions.
-    ASSERT_EQ(3, option->getOptions().size());
+    ASSERT_EQ(3U, option->getOptions().size());
 
     // Get suboption 0.
     boost::shared_ptr<OptionInt<uint8_t> > sub0 =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (option->getOption(0));
     ASSERT_TRUE(sub0);
-    EXPECT_EQ(0, sub0->getType());
-    EXPECT_EQ(0, sub0->getValue());
+    EXPECT_EQ(0U, sub0->getType());
+    EXPECT_EQ(0U, sub0->getValue());
 
     // Get suboption 255.
     boost::shared_ptr<OptionInt<uint8_t> > sub255 =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (option->getOption(255));
     ASSERT_TRUE(sub255);
-    EXPECT_EQ(255, sub255->getType());
-    EXPECT_EQ(255, sub255->getValue());
+    EXPECT_EQ(255U, sub255->getType());
+    EXPECT_EQ(255U, sub255->getValue());
 
     // Get suboption 1.
     boost::shared_ptr<OptionString> sub =
         boost::dynamic_pointer_cast<OptionString>(option->getOption(1));
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     EXPECT_EQ("foo", sub->getValue());
 }
 
@@ -2330,12 +2331,12 @@ TEST_F(LibDhcpTest, option43Pad) {
 
     // There should be 2 suboptions (1 and 2) because no sub-option 0
     // was defined so code 0 means PAD.
-    ASSERT_EQ(2, options.size());
+    ASSERT_EQ(2U, options.size());
 
     // Get suboption 1.
     OptionPtr sub1 = options.begin()->second;
     ASSERT_TRUE(sub1);
-    EXPECT_EQ(1, sub1->getType());
+    EXPECT_EQ(1U, sub1->getType());
     EXPECT_EQ(0, sub1->len() - sub1->getHeaderLen());
 
     // Get suboption 2.
@@ -2343,8 +2344,8 @@ TEST_F(LibDhcpTest, option43Pad) {
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (options.rbegin()->second);
     ASSERT_TRUE(sub2);
-    EXPECT_EQ(2, sub2->getType());
-    EXPECT_EQ(1, sub2->getValue());
+    EXPECT_EQ(2U, sub2->getType());
+    EXPECT_EQ(1U, sub2->getValue());
 
     // Create option definition for option 0 and register it.
     OptionDefinitionPtr opt_def0(new OptionDefinition("zero", 0, space, "uint8"));
@@ -2357,23 +2358,23 @@ TEST_F(LibDhcpTest, option43Pad) {
     ASSERT_NO_THROW(LibDHCP::unpackOptions4(buf, space, options, deferred, true));
 
     // There should be 2 suboptions (0 and 1).
-    EXPECT_EQ(2, options.size());
+    EXPECT_EQ(2U, options.size());
 
     // Get suboption 0
     boost::shared_ptr<OptionInt<uint8_t> > sub0 =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (options.begin()->second);
     ASSERT_TRUE(sub0);
-    EXPECT_EQ(0, sub0->getType());
-    EXPECT_EQ(0, sub0->getValue());
+    EXPECT_EQ(0U, sub0->getType());
+    EXPECT_EQ(0U, sub0->getValue());
 
     // Get suboption 2.
     sub2 =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (options.rbegin()->second);
     ASSERT_TRUE(sub2);
-    EXPECT_EQ(2, sub2->getType());
-    EXPECT_EQ(1, sub2->getValue());
+    EXPECT_EQ(2U, sub2->getType());
+    EXPECT_EQ(1U, sub2->getValue());
 }
 
 // Verifies that option 255 (END) is handled as END in option 43 (so when
@@ -2395,10 +2396,10 @@ TEST_F(LibDhcpTest, option43End) {
                                                      options, deferred, true));
 
     // Parsing should stop at the first byte.
-    EXPECT_EQ(0, offset);
+    EXPECT_EQ(0U, offset);
 
     // There should be 0 suboptions.
-    EXPECT_EQ(0, options.size());
+    EXPECT_EQ(0U, options.size());
 
     // Create option definition for option 255.
     OptionDefinitionPtr opt_def255(new OptionDefinition("max", 255, space, "uint8"));
@@ -2414,15 +2415,15 @@ TEST_F(LibDhcpTest, option43End) {
                                                      options, deferred, true));
 
     // There should be 1 suboption.
-    ASSERT_EQ(1, options.size());
+    ASSERT_EQ(1U, options.size());
 
     // Get suboption 255.
     boost::shared_ptr<OptionInt<uint8_t> > sub255 =
         boost::dynamic_pointer_cast<OptionInt<uint8_t> >
             (options.begin()->second);
     ASSERT_TRUE(sub255);
-    EXPECT_EQ(255, sub255->getType());
-    EXPECT_EQ(2, sub255->getValue());
+    EXPECT_EQ(255U, sub255->getType());
+    EXPECT_EQ(2U, sub255->getValue());
 }
 
 // Verify the option 43 END bug is fixed (#950: option code 255 was not
@@ -2450,12 +2451,12 @@ TEST_F(LibDhcpTest, option43Factory) {
     EXPECT_EQ(def->getEncapsulatedSpace(), option->getEncapsulatedSpace());
 
     // There should be 1 suboption.
-    EXPECT_EQ(1, option->getOptions().size());
+    EXPECT_EQ(1U, option->getOptions().size());
 
     // Get suboption 1.
     OptionPtr sub1 = option->getOption(1);
     ASSERT_TRUE(sub1);
-    EXPECT_EQ(1, sub1->getType());
+    EXPECT_EQ(1U, sub1->getType());
     EXPECT_EQ(0, sub1->len() - sub1->getHeaderLen());
 
     // Of course no suboption 255.
@@ -2485,9 +2486,9 @@ TEST_F(LibDhcpTest, emptyHostName) {
     // Verify Option 60 exists correctly
     x = options.find(60);
     ASSERT_FALSE(x == options.end());
-    EXPECT_EQ(60, x->second->getType());
-    ASSERT_EQ(3, x->second->getData().size());
-    EXPECT_EQ(5, x->second->len());
+    EXPECT_EQ(60U, x->second->getType());
+    ASSERT_EQ(3U, x->second->getData().size());
+    EXPECT_EQ(5U, x->second->len());
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], opts + 4, 3));
 };
 
@@ -3442,8 +3443,9 @@ TEST_F(LibDhcpTest, fqdnList) {
     ASSERT_TRUE(option);
     OptionCustomPtr names = boost::dynamic_pointer_cast<OptionCustom>(option);
     ASSERT_TRUE(names);
-    EXPECT_EQ(sizeof(fqdn), names->len() - names->getHeaderLen());
-    ASSERT_EQ(3, names->getDataFieldsNum());
+    EXPECT_EQ(static_cast<long>(sizeof(fqdn)),
+              names->len() - names->getHeaderLen());
+    ASSERT_EQ(3U, names->getDataFieldsNum());
     EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
     EXPECT_EQ("example.com.", names->readFqdn(1));
     EXPECT_EQ("com.", names->readFqdn(2));
@@ -3477,7 +3479,7 @@ TEST_F(LibDhcpTest, fqdnListCompressed) {
     ASSERT_TRUE(names);
     /* Use the uncompress length here (cf fqdnList) */
     EXPECT_EQ(40, names->len() - names->getHeaderLen());
-    ASSERT_EQ(3, names->getDataFieldsNum());
+    ASSERT_EQ(3U, names->getDataFieldsNum());
     EXPECT_EQ("mydomain.example.com.", names->readFqdn(0));
     EXPECT_EQ("example.com.", names->readFqdn(1));
     EXPECT_EQ("com.", names->readFqdn(2));
@@ -3537,7 +3539,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
             LibDHCP::unpackOptions6(bin, DHCP6_OPTION_SPACE, options);
         });
 
-    EXPECT_EQ(options.size(), 1); // There should be 1 option.
+    EXPECT_EQ(options.size(), 1U); // There should be 1 option.
 
     // Option vendor-class should be there
     ASSERT_FALSE(options.find(D6O_VENDOR_CLASS) == options.end());
@@ -3551,8 +3553,8 @@ TEST_F(LibDhcpTest, vendorClass6) {
 
     // 3 fields expected: vendor-id, data-len and data
     EXPECT_EQ(VENDOR_ID_CABLE_LABS, vclass->getVendorId());
-    EXPECT_EQ(20, vclass->len());
-    ASSERT_EQ(1, vclass->getTuplesNum());
+    EXPECT_EQ(20U, vclass->len());
+    ASSERT_EQ(1U, vclass->getTuplesNum());
     EXPECT_EQ("eRouter1.0", vclass->getTuple(0).getText());
 }
 
@@ -3596,10 +3598,10 @@ TEST_F(LibDhcpTest, option43) {
     def = LibDHCP::getLastResortOptionDef(DHCP4_OPTION_SPACE, 43);
     ASSERT_TRUE(def);
     EXPECT_FALSE(def->getArrayType());
-    EXPECT_EQ(43, def->getCode());
+    EXPECT_EQ(43U, def->getCode());
     EXPECT_EQ(VENDOR_ENCAPSULATED_OPTION_SPACE, def->getEncapsulatedSpace());
     EXPECT_EQ("vendor-encapsulated-options", def->getName());
-    EXPECT_EQ(0, def->getRecordFields().size());
+    EXPECT_EQ(0U, def->getRecordFields().size());
     EXPECT_EQ(OptionDataType::OPT_EMPTY_TYPE, def->getType());
 
     OptionDefinitionPtr def_by_name =
@@ -3658,7 +3660,7 @@ TEST_F(LibDhcpTest, sw46options) {
 
     // We expect to have exactly one option (with tons of suboptions, but we'll
     // get to that in a minute)
-    EXPECT_EQ(1, options.size());
+    EXPECT_EQ(1U, options.size());
     auto opt = options.find(D6O_S46_CONT_MAPE);
     ASSERT_FALSE(opt == options.end());
 
@@ -3667,8 +3669,8 @@ TEST_F(LibDhcpTest, sw46options) {
     shared_ptr<OptionCustom> mape = dynamic_pointer_cast<OptionCustom>(opt->second);
     ASSERT_TRUE(mape);
     EXPECT_EQ(D6O_S46_CONT_MAPE, mape->getType());
-    EXPECT_EQ(68, mape->len());
-    EXPECT_EQ(64, mape->getData().size());
+    EXPECT_EQ(68U, mape->len());
+    EXPECT_EQ(64U, mape->getData().size());
 
     // Let's check if there's a border router option.
     ASSERT_TRUE(mape->getOption(D6O_S46_BR));
@@ -3681,9 +3683,9 @@ TEST_F(LibDhcpTest, sw46options) {
 
     // Now let's check the suboptions. There should be 3 (BR, 2x rule)
     const OptionCollection& subopts = mape->getOptions();
-    ASSERT_EQ(3, subopts.size());
-    EXPECT_EQ(1, subopts.count(D6O_S46_BR));
-    EXPECT_EQ(2, subopts.count(D6O_S46_RULE));
+    ASSERT_EQ(3U, subopts.size());
+    EXPECT_EQ(1U, subopts.count(D6O_S46_BR));
+    EXPECT_EQ(2U, subopts.count(D6O_S46_RULE));
 
     // Let's check the rules. There should be two of them.
     auto range = subopts.equal_range(D6O_S46_RULE);
@@ -3733,7 +3735,7 @@ TEST_F(LibDhcpTest, unpackOptions4LenientFqdn) {
     ASSERT_THROW(LibDHCP::unpackOptions4(buf, DHCP4_OPTION_SPACE, options,
                                         deferred_options), OptionParseError);
     // There should be no parsed options.
-    EXPECT_EQ(0, options.size());
+    EXPECT_EQ(0U, options.size());
 
     // Now parse with lenient parsing enabled.
     Option::lenient_parsing_ = true;
@@ -3742,7 +3744,7 @@ TEST_F(LibDhcpTest, unpackOptions4LenientFqdn) {
 
     // We should have skipped DHO_V4_LOST and DHO_DOMAIN_SEARCH
     // and parsed DHO_TIME_OFFSET.
-    EXPECT_EQ(1, options.size());
+    EXPECT_EQ(1U, options.size());
     auto opt = options.find(DHO_TIME_OFFSET);
     ASSERT_FALSE(opt == options.end());
 
@@ -3772,14 +3774,14 @@ TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
     // Parse with lenient parsing disabled.
     ASSERT_FALSE(Option::lenient_parsing_);
     EXPECT_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options), OptionParseError);
-    EXPECT_EQ(0, options.size());
+    EXPECT_EQ(0U, options.size());
 
     // There should be no parsed options.
     Option::lenient_parsing_ = true;
     ASSERT_NO_THROW(LibDHCP::unpackOptions6(buf, DHCP6_OPTION_SPACE, options));
 
     // Now parse with lenient parsing enabled.
-    EXPECT_EQ(1, options.size());
+    EXPECT_EQ(1U, options.size());
     auto opt = options.find(D6O_ELAPSED_TIME);
     ASSERT_FALSE(opt == options.end());
 
@@ -3787,7 +3789,7 @@ TEST_F(LibDhcpTest, unpackOptions6LenientFqdn) {
     // and parsed D6O_ELAPSED_TIME.
     auto elapsed = boost::dynamic_pointer_cast<OptionInt<uint16_t>>(opt->second);
     ASSERT_TRUE(elapsed);
-    EXPECT_EQ(77, elapsed->getValue());
+    EXPECT_EQ(77U, elapsed->getValue());
 }
 
 // RFC 5908 v6 NTP server option and suboptions.
@@ -3815,7 +3817,7 @@ TEST_F(LibDhcpTest, v6NtpServer) {
     EXPECT_EQ(bin.size(), parsed);
 
     // We expect to have exactly one option with 3 suboptions.
-    EXPECT_EQ(1, options.size());
+    EXPECT_EQ(1U, options.size());
     auto opt = options.find(D6O_NTP_SERVER);
     ASSERT_FALSE(opt == options.end());
 
@@ -3824,8 +3826,8 @@ TEST_F(LibDhcpTest, v6NtpServer) {
         boost::dynamic_pointer_cast<OptionCustom>(opt->second);
     ASSERT_TRUE(option);
     EXPECT_EQ(D6O_NTP_SERVER, option->getType());
-    EXPECT_EQ(57, option->len());
-    EXPECT_EQ(53, option->getData().size());
+    EXPECT_EQ(57U, option->len());
+    EXPECT_EQ(53U, option->getData().size());
 
     // Check the address suboption.
     ASSERT_TRUE(option->getOption(NTP_SUBOPTION_SRV_ADDR));
@@ -3942,9 +3944,9 @@ TEST_F(LibDhcpTest, splitNtpServerOptions6) {
     col.insert(make_pair(D6O_BOOTFILE_URL, opts));
 
     // Split them: expect 5 options (opt1 -> 3, opt2 -> 0, opt3 -> 1 and opts).
-    ASSERT_EQ(4, col.size());
+    ASSERT_EQ(4U, col.size());
     ASSERT_NO_THROW(LibDHCP::splitNtpServerOptions6(col));
-    EXPECT_EQ(5, col.size());
+    EXPECT_EQ(5U, col.size());
 
     // Expected output.
     string expected = "type=00056, len=00020:,\noptions:\n";

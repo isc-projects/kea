@@ -111,7 +111,8 @@ PktFilterTest::sendMessage(const IOAddress& dest) {
     ASSERT_EQ(sendto(send_msg_sock_, test_message_->getBuffer().getData(),
                      test_message_->getBuffer().getLength(), 0,
                      reinterpret_cast<struct sockaddr*>(&dest_addr4),
-                     sizeof(sockaddr)), test_message_->getBuffer().getLength());
+                     sizeof(sockaddr)),
+              static_cast<ssize_t>(test_message_->getBuffer().getLength()));
     close(send_msg_sock_);
     send_msg_sock_ = -1;
 

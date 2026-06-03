@@ -75,9 +75,9 @@ public:
         // The total length is 1 byte for data and 2 bytes or 4 bytes
         // for option code and option length.
         if (u == Option::V4) {
-            EXPECT_EQ(3, out_buf_.getLength());
+            EXPECT_EQ(3U, out_buf_.getLength());
         } else {
-            EXPECT_EQ(5, out_buf_.getLength());
+            EXPECT_EQ(5U, out_buf_.getLength());
         }
 
         // Check if pack worked properly:
@@ -91,10 +91,10 @@ public:
             // if option type is correct
             EXPECT_EQ(TEST_OPT_CODE, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(1, out.readUint16());
+            EXPECT_EQ(1U, out.readUint16());
         }
         // if data is correct
-        EXPECT_EQ(0xa1, out.readUint8() );
+        EXPECT_EQ(0xa1U, out.readUint8() );
     }
 
     /// @brief Basic test for int16 and uint16 types.
@@ -133,9 +133,9 @@ public:
         EXPECT_EQ(TEST_OPT_CODE, opt->getType());
         // The total length is 2 bytes for data and 2 or 4 bytes for a header.
         if (u == Option::V4) {
-            EXPECT_EQ(4, out_buf_.getLength());
+            EXPECT_EQ(4U, out_buf_.getLength());
         } else {
-            EXPECT_EQ(6, out_buf_.getLength());
+            EXPECT_EQ(6U, out_buf_.getLength());
         }
 
         // Check if pack worked properly:
@@ -144,15 +144,15 @@ public:
             // if option type is correct
             EXPECT_EQ(TEST_OPT_CODE, out.readUint8());
             // if option length is correct
-            EXPECT_EQ(2, out.readUint8());
+            EXPECT_EQ(2U, out.readUint8());
         } else {
             // if option type is correct
             EXPECT_EQ(TEST_OPT_CODE, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(2, out.readUint16());
+            EXPECT_EQ(2U, out.readUint16());
         }
         // if data is correct
-        EXPECT_EQ(0xa1a2, out.readUint16() );
+        EXPECT_EQ(0xa1a2U, out.readUint16() );
     }
 
     /// @brief Basic test for int32 and uint32 types.
@@ -193,9 +193,9 @@ public:
         EXPECT_EQ(TEST_OPT_CODE, opt->getType());
         // The total length is 4 bytes for data and 2 or 4 bytes for a header.
         if (u == Option::V4) {
-            EXPECT_EQ(6, out_buf_.getLength());
+            EXPECT_EQ(6U, out_buf_.getLength());
         } else {
-            EXPECT_EQ(8, out_buf_.getLength());
+            EXPECT_EQ(8U, out_buf_.getLength());
         }
 
         // Check if pack worked properly:
@@ -204,15 +204,15 @@ public:
             // if option type is correct
             EXPECT_EQ(TEST_OPT_CODE, out.readUint8());
             // if option length is correct
-            EXPECT_EQ(4, out.readUint8());
+            EXPECT_EQ(4U, out.readUint8());
         } else {
             // if option type is correct
             EXPECT_EQ(TEST_OPT_CODE, out.readUint16());
             // if option length is correct
-            EXPECT_EQ(4, out.readUint16());
+            EXPECT_EQ(4U, out.readUint16());
         }
         // if data is correct
-        EXPECT_EQ(0xa1a2a3a4, out.readUint32());
+        EXPECT_EQ(0xa1a2a3a4U, out.readUint32());
     }
 
     OptionBuffer buf_;     ///< Option buffer
@@ -290,14 +290,14 @@ TEST_F(OptionIntTest, setValueUint8) {
     boost::shared_ptr<OptionInt<uint8_t> > opt(new OptionInt<uint8_t>(Option::V6,
                                                                       D6O_PREFERENCE, 123));
     // Check if constructor initialized the option value correctly.
-    EXPECT_EQ(123, opt->getValue());
+    EXPECT_EQ(123U, opt->getValue());
     // Override the value.
     opt->setValue(111);
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_PREFERENCE, opt->getType());
     // Check if the value has been overridden.
-    EXPECT_EQ(111, opt->getValue());
+    EXPECT_EQ(111U, opt->getValue());
 }
 
 TEST_F(OptionIntTest, setValueInt8) {
@@ -319,14 +319,14 @@ TEST_F(OptionIntTest, setValueUint16) {
     boost::shared_ptr<OptionInt<uint16_t> > opt(new OptionInt<uint16_t>(Option::V6,
                                                                         D6O_ELAPSED_TIME, 123));
     // Check if constructor initialized the option value correctly.
-    EXPECT_EQ(123, opt->getValue());
+    EXPECT_EQ(123U, opt->getValue());
     // Override the value.
     opt->setValue(0x0102);
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_ELAPSED_TIME, opt->getType());
     // Check if the value has been overridden.
-    EXPECT_EQ(0x0102, opt->getValue());
+    EXPECT_EQ(0x0102U, opt->getValue());
 }
 
 TEST_F(OptionIntTest, setValueInt16) {
@@ -347,14 +347,14 @@ TEST_F(OptionIntTest, setValueUint32) {
     boost::shared_ptr<OptionInt<uint32_t> > opt(new OptionInt<uint32_t>(Option::V6,
                                                                         D6O_CLT_TIME, 123));
     // Check if constructor initialized the option value correctly.
-    EXPECT_EQ(123, opt->getValue());
+    EXPECT_EQ(123U, opt->getValue());
     // Override the value.
     opt->setValue(0x01020304);
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
     EXPECT_EQ(D6O_CLT_TIME, opt->getType());
     // Check if the value has been overridden.
-    EXPECT_EQ(0x01020304, opt->getValue());
+    EXPECT_EQ(0x01020304U, opt->getValue());
 }
 
 TEST_F(OptionIntTest, setValueInt32) {
@@ -414,9 +414,9 @@ TEST_F(OptionIntTest, packSuboptions6) {
     opt->addOption(sub1);
     opt->addOption(addr1);
 
-    ASSERT_EQ(28, addr1->len());
-    ASSERT_EQ(4, sub1->len());
-    ASSERT_EQ(40, opt->len());
+    ASSERT_EQ(28U, addr1->len());
+    ASSERT_EQ(4U, sub1->len());
+    ASSERT_EQ(40U, opt->len());
 
     uint8_t expected[] = {
         0, opt_code, // type
@@ -439,7 +439,7 @@ TEST_F(OptionIntTest, packSuboptions6) {
     // Create on-wire format of option and suboptions.
     opt->pack(out_buf_);
     // Compare the on-wire data with the reference buffer.
-    ASSERT_EQ(40, out_buf_.getLength());
+    ASSERT_EQ(40U, out_buf_.getLength());
     EXPECT_EQ(0, memcmp(out_buf_.getData(), expected, 40));
 }
 
@@ -469,7 +469,7 @@ TEST_F(OptionIntTest, unpackSuboptions4) {
 
     // Verify that it has expected type and data.
     EXPECT_EQ(TEST_OPT_CODE, opt->getType());
-    EXPECT_EQ(0x01020304, opt->getValue());
+    EXPECT_EQ(0x01020304U, opt->getValue());
 
     // Expect that there is the sub option with the particular
     // option code added.
@@ -480,7 +480,7 @@ TEST_F(OptionIntTest, unpackSuboptions4) {
     EXPECT_EQ(TEST_OPT_CODE + 1, subopt->getType());
     // Check the sub option's data.
     OptionBuffer subopt_buf = subopt->getData();
-    ASSERT_EQ(4, subopt_buf.size());
+    ASSERT_EQ(4U, subopt_buf.size());
     // The data in the input buffer starts at offset 8.
     EXPECT_TRUE(std::equal(subopt_buf.begin(), subopt_buf.end(), buf_.begin() + 8));
 }
@@ -507,7 +507,7 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
         0xca, 0xfe, // type
         0, 0 // len
     };
-    ASSERT_EQ(38, sizeof(expected));
+    ASSERT_EQ(38U, sizeof(expected));
 
     // Make sure that the buffer's size is sufficient to
     // copy the elements from the array.
@@ -524,7 +524,7 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
     ASSERT_TRUE(opt);
 
     EXPECT_EQ(opt_code, opt->getType());
-    EXPECT_EQ(0x0102, opt->getValue());
+    EXPECT_EQ(0x0102U, opt->getValue());
 
     // Checks for address option
     OptionPtr subopt = opt->getOption(D6O_IAADDR);
@@ -533,19 +533,19 @@ TEST_F(OptionIntTest, unpackSuboptions6) {
     ASSERT_TRUE(addr);
 
     EXPECT_EQ(D6O_IAADDR, addr->getType());
-    EXPECT_EQ(28, addr->len());
-    EXPECT_EQ(0x5000, addr->getPreferred());
-    EXPECT_EQ(0x7000, addr->getValid());
+    EXPECT_EQ(28U, addr->len());
+    EXPECT_EQ(0x5000U, addr->getPreferred());
+    EXPECT_EQ(0x7000U, addr->getValid());
     EXPECT_EQ("2001:db8:1234:5678::abcd", addr->getAddress().toText());
 
     // Checks for dummy option
     subopt = opt->getOption(0xcafe);
     ASSERT_TRUE(subopt); // should be non-NULL
 
-    EXPECT_EQ(0xcafe, subopt->getType());
-    EXPECT_EQ(4, subopt->len());
+    EXPECT_EQ(0xcafeU, subopt->getType());
+    EXPECT_EQ(4U, subopt->len());
     // There should be no data at all
-    EXPECT_EQ(0, subopt->getData().size());
+    EXPECT_EQ(0U, subopt->getData().size());
 
     // Try to get non-existent option.
     subopt = opt->getOption(1);

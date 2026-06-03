@@ -107,7 +107,7 @@ TEST(OptionSpace6Test, constructor) {
     OptionSpace6 space2("abcd", 2145);
     EXPECT_EQ("abcd", space2.getName());
     EXPECT_TRUE(space2.isVendorSpace());
-    EXPECT_EQ(2145, space2.getEnterpriseNumber());
+    EXPECT_EQ(2145U, space2.getEnterpriseNumber());
 
     // Verify that constructors throw an exception when invalid option
     // space name has been specified.
@@ -125,13 +125,13 @@ TEST(OptionSpace6Test, setVendorSpace) {
     // Mark it vendor option space and set enterprise id.
     space.setVendorSpace(1234);
     EXPECT_TRUE(space.isVendorSpace());
-    EXPECT_EQ(1234, space.getEnterpriseNumber());
+    EXPECT_EQ(1234U, space.getEnterpriseNumber());
 
     // Override the enterprise number to make sure and make sure that
     // the new number is returned by the object.
     space.setVendorSpace(2345);
     EXPECT_TRUE(space.isVendorSpace());
-    EXPECT_EQ(2345, space.getEnterpriseNumber());
+    EXPECT_EQ(2345U, space.getEnterpriseNumber());
 
     // Clear the vendor option space flag.
     space.clearVendorSpace();

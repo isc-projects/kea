@@ -206,7 +206,7 @@ void testOptionInt(const OpType& op_type) {
     option->setValue(9);
 
     // The value in the copy should not be affected.
-    EXPECT_EQ(12345, option_copy->getValue());
+    EXPECT_EQ(12345U, option_copy->getValue());
 }
 
 TEST(OptionCopyTest, optionIntConstructor) {
@@ -241,9 +241,9 @@ void testOptionIntArray(const OpType& op_type) {
 
     // The values in the copy should not be affected.
     std::vector<uint32_t> values_copy = option_copy->getValues();
-    ASSERT_EQ(2, values_copy.size());
-    EXPECT_EQ(2345, values_copy[0]);
-    EXPECT_EQ(3456, values_copy[1]);
+    ASSERT_EQ(2U, values_copy.size());
+    EXPECT_EQ(2345U, values_copy[0]);
+    EXPECT_EQ(3456U, values_copy[1]);
 }
 
 TEST(OptionCopyTest, optionIntArrayConstructor) {
@@ -286,7 +286,7 @@ void testOptionAddrLst(const OpType& op_type,
 
     // The address in the copy should not be affected.
     typename OptionType::AddressContainer addrs_copy = option_copy->getAddresses();
-    ASSERT_EQ(1, addrs_copy.size());
+    ASSERT_EQ(1U, addrs_copy.size());
     EXPECT_EQ(option_address.toText(), addrs_copy[0].toText());
 }
 
@@ -355,9 +355,9 @@ void testOption6IA(const OpType& op_type) {
     option->setIAID(5678);
 
     // The values in the copy should not be affected.
-    EXPECT_EQ(1000, option_copy->getT1());
-    EXPECT_EQ(2000, option_copy->getT2());
-    EXPECT_EQ(1234, option_copy->getIAID());
+    EXPECT_EQ(1000U, option_copy->getT1());
+    EXPECT_EQ(2000U, option_copy->getT2());
+    EXPECT_EQ(1234U, option_copy->getIAID());
 }
 
 TEST(OptionCopyTest, option6IAConstructor) {
@@ -394,8 +394,8 @@ void testOption6IAAddr(const OpType& op_type) {
 
     // The values in the copy should not be affected.
     EXPECT_EQ("2001:db8:1::1", option_copy->getAddress().toText());
-    EXPECT_EQ(60, option_copy->getPreferred());
-    EXPECT_EQ(90, option_copy->getValid());
+    EXPECT_EQ(60U, option_copy->getPreferred());
+    EXPECT_EQ(90U, option_copy->getValid());
 }
 
 TEST(OptionCopyTest, option6IAAddrConstructor) {
@@ -432,9 +432,9 @@ void testOption6IAPrefix(const OpType& op_type) {
 
     // The values in the copy should not be affected.
     EXPECT_EQ("3000::", option_copy->getAddress().toText());
-    EXPECT_EQ(64, option_copy->getLength());
-    EXPECT_EQ(60, option_copy->getPreferred());
-    EXPECT_EQ(90, option_copy->getValid());
+    EXPECT_EQ(64U, option_copy->getLength());
+    EXPECT_EQ(60U, option_copy->getPreferred());
+    EXPECT_EQ(90U, option_copy->getValid());
 }
 
 TEST(OptionCopyTest, option6IAPrefixConstructor) {
@@ -529,7 +529,7 @@ void testOptionVendor(const OpType& op_type) {
     option->setVendorId(2222);
 
     // The vendor id in the copy should not be affected.
-    EXPECT_EQ(2986, option_copy->getVendorId());
+    EXPECT_EQ(2986U, option_copy->getVendorId());
 }
 
 TEST(OptionCopyTest, optionVendorConstructor) {
@@ -573,7 +573,7 @@ void testOptionVendorClass(const OpType& op_type) {
 
     // That change shouldn't affect the original option. It should still
     // contain a single tuple with the original value.
-    ASSERT_EQ(1, option_copy->getTuplesNum());
+    ASSERT_EQ(1U, option_copy->getTuplesNum());
     tuple = option_copy->getTuple(0);
     EXPECT_TRUE(tuple.equals("vendor-class-value"));
 }
@@ -639,8 +639,8 @@ void testOptionClientFqdn(const OpType& op_type,
     Option4ClientFqdnPtr option_copy4 =
         boost::dynamic_pointer_cast<Option4ClientFqdn>(option_copy);
     if (option_copy4) {
-        EXPECT_EQ(255, option_copy4->getRcode().first.getCode());
-        EXPECT_EQ(255, option_copy4->getRcode().second.getCode());
+        EXPECT_EQ(255U, option_copy4->getRcode().first.getCode());
+        EXPECT_EQ(255U, option_copy4->getRcode().second.getCode());
     }
 }
 
@@ -728,8 +728,8 @@ void testOptionCustom(const OpType& op_type) {
     option->writeInteger<uint16_t>(1000);
 
     // The copied option should not be affected.
-    ASSERT_EQ(1, option_copy->getDataFieldsNum());
-    EXPECT_EQ(5555, option_copy->readInteger<uint16_t>());
+    ASSERT_EQ(1U, option_copy->getDataFieldsNum());
+    EXPECT_EQ(5555U, option_copy->readInteger<uint16_t>());
 }
 
 TEST(OptionCopyTest, optionCustomConstructor) {
@@ -770,7 +770,7 @@ void testOptionOpaqueDataTuples(const OpType& op_type) {
     option->setTuple(1, tuple);
 
     // This should not affect the values in the original option.
-    ASSERT_EQ(2, option_copy->getTuplesNum());
+    ASSERT_EQ(2U, option_copy->getTuplesNum());
     EXPECT_TRUE(option_copy->getTuple(0).equals("a string"));
     EXPECT_TRUE(option_copy->getTuple(1).equals("another string"));
 }

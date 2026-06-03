@@ -63,9 +63,9 @@ TEST_F(OptionTest, v4_basic) {
     EXPECT_NO_THROW(opt.reset(new Option(Option::V4, 17)));
 
     EXPECT_EQ(Option::V4, opt->getUniverse());
-    EXPECT_EQ(17, opt->getType());
-    EXPECT_EQ(0, opt->getData().size());
-    EXPECT_EQ(2, opt->len()); // just v4 header
+    EXPECT_EQ(17U, opt->getType());
+    EXPECT_EQ(0U, opt->getData().size());
+    EXPECT_EQ(2U, opt->len()); // just v4 header
 
     EXPECT_NO_THROW(opt.reset());
 
@@ -90,12 +90,12 @@ TEST_F(OptionTest, v4_data1) {
     ASSERT_NO_THROW(opt.reset(new Option(Option::V4, 123, data)));
 
     // Check that content is reported properly
-    EXPECT_EQ(123, opt->getType());
+    EXPECT_EQ(123U, opt->getType());
     vector<uint8_t> optData = opt->getData();
     ASSERT_EQ(optData.size(), data.size());
     EXPECT_TRUE(optData == data);
-    EXPECT_EQ(2, opt->getHeaderLen());
-    EXPECT_EQ(6, opt->len());
+    EXPECT_EQ(2U, opt->getHeaderLen());
+    EXPECT_EQ(6U, opt->len());
 
     // Now store that option into a buffer
     OutputBuffer buf(100);
@@ -103,7 +103,7 @@ TEST_F(OptionTest, v4_data1) {
 
     // Check content of that buffer:
     // 2 byte header + 4 bytes data
-    ASSERT_EQ(6, buf.getLength());
+    ASSERT_EQ(6U, buf.getLength());
 
     // That's how this option is supposed to look like
     uint8_t exp[] = { 123, 4, 1, 2, 3, 4 };
@@ -142,12 +142,12 @@ TEST_F(OptionTest, v4_data2) {
     );
 
     // Check that content is reported properly
-    EXPECT_EQ(123, opt->getType());
+    EXPECT_EQ(123U, opt->getType());
     vector<uint8_t> optData = opt->getData();
     ASSERT_EQ(optData.size(), expData.size());
     EXPECT_TRUE(optData == expData);
-    EXPECT_EQ(2, opt->getHeaderLen());
-    EXPECT_EQ(6, opt->len());
+    EXPECT_EQ(2U, opt->getHeaderLen());
+    EXPECT_EQ(6U, opt->len());
 
     // Now store that option into a buffer
     OutputBuffer buf(100);
@@ -156,7 +156,7 @@ TEST_F(OptionTest, v4_data2) {
     // Check content of that buffer
 
     // 2 byte header + 4 bytes data
-    ASSERT_EQ(6, buf.getLength());
+    ASSERT_EQ(6U, buf.getLength());
 
     // That's how this option is supposed to look like
     uint8_t exp[] = { 123, 4, 1, 2, 3, 4 };
@@ -218,9 +218,9 @@ TEST_F(OptionTest, v6_basic) {
     scoped_ptr<Option> opt(new Option(Option::V6, 1));
 
     EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(1, opt->getType());
-    EXPECT_EQ(0, opt->getData().size());
-    EXPECT_EQ(4, opt->len()); // Just v6 header
+    EXPECT_EQ(1U, opt->getType());
+    EXPECT_EQ(0U, opt->getData().size());
+    EXPECT_EQ(4U, opt->len()); // Just v6 header
 
     EXPECT_NO_THROW(opt.reset());
 }
@@ -235,14 +235,14 @@ TEST_F(OptionTest, v6_data1) {
     scoped_ptr<Option> opt(new Option(Option::V6, 333,   // Type
                                       buf_.begin() + 3,  // Begin offset
                                       buf_.begin() + 10)); // End offset
-    EXPECT_EQ(333, opt->getType());
+    EXPECT_EQ(333U, opt->getType());
 
-    ASSERT_EQ(11, opt->len());
-    ASSERT_EQ(7, opt->getData().size());
+    ASSERT_EQ(11U, opt->len());
+    ASSERT_EQ(7U, opt->getData().size());
     EXPECT_EQ(0, memcmp(&buf_[3], &opt->getData()[0], 7) );
 
     opt->pack(outBuf_);
-    EXPECT_EQ(11, outBuf_.getLength());
+    EXPECT_EQ(11U, outBuf_.getLength());
 
     const uint8_t* out = outBuf_.getData();
     EXPECT_EQ(out[0], 333 / 256); // Type
@@ -273,10 +273,10 @@ TEST_F(OptionTest, v6_data2) {
     opt->pack(outBuf_);
 
     // 4 bytes header + 4 bytes content
-    EXPECT_EQ(8, opt->len());
+    EXPECT_EQ(8U, opt->len());
     EXPECT_EQ(D6O_CLIENTID, opt->getType());
 
-    EXPECT_EQ(8, outBuf_.getLength());
+    EXPECT_EQ(8U, outBuf_.getLength());
 
     // Check if pack worked properly:
     // If option type is correct
@@ -317,9 +317,9 @@ TEST_F(OptionTest, v6_suboptions1) {
     // opt3 len = 9 4(header)+5(data)
     // opt1 len = 7 + suboptions() = 7 + 4 + 9 = 20
 
-    EXPECT_EQ(4, opt2->len());
-    EXPECT_EQ(9, opt3->len());
-    EXPECT_EQ(20, opt1->len());
+    EXPECT_EQ(4U, opt2->len());
+    EXPECT_EQ(9U, opt3->len());
+    EXPECT_EQ(20U, opt1->len());
 
     uint8_t expected[] = {
         0xff, 0xff, 0, 16, 100, 101, 102,
@@ -328,7 +328,7 @@ TEST_F(OptionTest, v6_suboptions1) {
     };
 
     opt1->pack(outBuf_);
-    EXPECT_EQ(20, outBuf_.getLength());
+    EXPECT_EQ(20U, outBuf_.getLength());
 
     // Payload
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 20) );
@@ -366,7 +366,7 @@ TEST_F(OptionTest, v6_suboptions2) {
     };
 
     opt1->pack(outBuf_);
-    EXPECT_EQ(20, outBuf_.getLength());
+    EXPECT_EQ(20U, outBuf_.getLength());
 
     // Payload
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 20) );
@@ -398,19 +398,19 @@ TEST_F(OptionTest, v6_addgetdel) {
     parent->addOption(opt3);
 
     // Let's delete one of them
-    EXPECT_EQ(true, parent->delOption(2));
+    EXPECT_TRUE(parent->delOption(2));
 
     // There still should be the other option 2
     EXPECT_NE(OptionPtr(), parent->getOption(2));
 
     // Let's delete the other option 2
-    EXPECT_EQ(true, parent->delOption(2));
+    EXPECT_TRUE(parent->delOption(2));
 
     // No more options with type=2
     EXPECT_EQ(OptionPtr(), parent->getOption(2));
 
     // Let's try to delete - should fail
-    EXPECT_TRUE(false ==  parent->delOption(2));
+    EXPECT_FALSE(parent->delOption(2));
 }
 
 TEST_F(OptionTest, v6_toText) {
@@ -454,26 +454,26 @@ TEST_F(OptionTest, getUintX) {
     OptionPtr opt4(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 4));
     OptionPtr opt5(new Option(Option::V6, 258, buf_.begin(), buf_.begin() + 5));
 
-    EXPECT_EQ(5, opt1->getUint8());
+    EXPECT_EQ(5U, opt1->getUint8());
     EXPECT_THROW(opt1->getUint16(), OutOfRange);
     EXPECT_THROW(opt1->getUint32(), OutOfRange);
 
-    EXPECT_EQ(5, opt2->getUint8());
-    EXPECT_EQ(0x0504, opt2->getUint16());
+    EXPECT_EQ(5U, opt2->getUint8());
+    EXPECT_EQ(0x0504U, opt2->getUint16());
     EXPECT_THROW(opt2->getUint32(), OutOfRange);
 
-    EXPECT_EQ(5, opt3->getUint8());
-    EXPECT_EQ(0x0504, opt3->getUint16());
+    EXPECT_EQ(5U, opt3->getUint8());
+    EXPECT_EQ(0x0504U, opt3->getUint16());
     EXPECT_THROW(opt3->getUint32(), OutOfRange);
 
-    EXPECT_EQ(5, opt4->getUint8());
-    EXPECT_EQ(0x0504, opt4->getUint16());
-    EXPECT_EQ(0x05040302, opt4->getUint32());
+    EXPECT_EQ(5U, opt4->getUint8());
+    EXPECT_EQ(0x0504U, opt4->getUint16());
+    EXPECT_EQ(0x05040302U, opt4->getUint32());
 
     // The same as for 4-byte long, just get first 1,2 or 4 bytes
-    EXPECT_EQ(5, opt5->getUint8());
-    EXPECT_EQ(0x0504, opt5->getUint16());
-    EXPECT_EQ(0x05040302, opt5->getUint32());
+    EXPECT_EQ(5U, opt5->getUint8());
+    EXPECT_EQ(0x0504U, opt5->getUint16());
+    EXPECT_EQ(0x05040302U, opt5->getUint32());
 
 }
 
@@ -484,32 +484,32 @@ TEST_F(OptionTest, setUintX) {
 
     // Verify setUint8
     opt1->setUint8(255);
-    EXPECT_EQ(255, opt1->getUint8());
+    EXPECT_EQ(255U, opt1->getUint8());
     opt1->pack(outBuf_);
-    EXPECT_EQ(3, opt1->len());
-    EXPECT_EQ(3, outBuf_.getLength());
+    EXPECT_EQ(3U, opt1->len());
+    EXPECT_EQ(3U, outBuf_.getLength());
     uint8_t exp1[] = {125, 1, 255};
-    EXPECT_TRUE(0 == memcmp(exp1, outBuf_.getData(), 3));
+    EXPECT_EQ(0, memcmp(exp1, outBuf_.getData(), 3));
 
     // Verify getUint16
     outBuf_.clear();
     opt2->setUint16(12345);
     opt2->pack(outBuf_);
-    EXPECT_EQ(12345, opt2->getUint16());
-    EXPECT_EQ(4, opt2->len());
-    EXPECT_EQ(4, outBuf_.getLength());
+    EXPECT_EQ(12345U, opt2->getUint16());
+    EXPECT_EQ(4U, opt2->len());
+    EXPECT_EQ(4U, outBuf_.getLength());
     uint8_t exp2[] = {125, 2, 12345/256, 12345%256};
-    EXPECT_TRUE(0 == memcmp(exp2, outBuf_.getData(), 4));
+    EXPECT_EQ(0, memcmp(exp2, outBuf_.getData(), 4));
 
     // Verify getUint32
     outBuf_.clear();
     opt4->setUint32(0x12345678);
     opt4->pack(outBuf_);
-    EXPECT_EQ(0x12345678, opt4->getUint32());
-    EXPECT_EQ(6, opt4->len());
-    EXPECT_EQ(6, outBuf_.getLength());
+    EXPECT_EQ(0x12345678U, opt4->getUint32());
+    EXPECT_EQ(6U, opt4->len());
+    EXPECT_EQ(6U, outBuf_.getLength());
     uint8_t exp4[] = {125, 4, 0x12, 0x34, 0x56, 0x78};
-    EXPECT_TRUE(0 == memcmp(exp4, outBuf_.getData(), 6));
+    EXPECT_EQ(0, memcmp(exp4, outBuf_.getData(), 6));
 }
 
 TEST_F(OptionTest, setData) {
@@ -522,8 +522,7 @@ TEST_F(OptionTest, setData) {
     opt1->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
     const uint8_t* test_data = outBuf_.getData();
-    EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
-                            buf_.size()));
+    EXPECT_EQ(0, memcmp(&buf_[0], test_data + opt1->getHeaderLen(), buf_.size()));
 
     // Verify data override with new buffer shorter than initial option buffer
     // size.
@@ -535,8 +534,7 @@ TEST_F(OptionTest, setData) {
     opt2->pack(outBuf_);
     ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
     test_data = outBuf_.getData();
-    EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
-                            buf_.size()));
+    EXPECT_EQ(0, memcmp(&buf_[0], test_data + opt1->getHeaderLen(), buf_.size()));
 }
 
 // This test verifies that options can be compared using equals(OptionPtr)
@@ -622,7 +620,7 @@ TEST_F(OptionTest, create) {
     auto option = Option::create(Option::V4, 123);
     ASSERT_TRUE(option);
     EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(123, option->getType());
+    EXPECT_EQ(123U, option->getType());
 }
 
 // This test verifies that option factory function creates a
@@ -631,7 +629,7 @@ TEST_F(OptionTest, createPayload) {
     auto option = Option::create(Option::V4, 123, buf_);
     ASSERT_TRUE(option);
     EXPECT_EQ(Option::V4, option->getUniverse());
-    EXPECT_EQ(123, option->getType());
+    EXPECT_EQ(123U, option->getType());
     EXPECT_EQ(buf_, option->getData());
 }
 

@@ -128,7 +128,7 @@ PktFilter6Test::sendMessage() {
     // return the number of bytes sent, which is equal to the size of our
     // message.
     ASSERT_EQ(sendmsg(send_msg_sock_, &m, 0),
-              test_message_->getBuffer().getLength());
+              static_cast<ssize_t>(test_message_->getBuffer().getLength()));
     close(send_msg_sock_);
     send_msg_sock_ = -1;
 

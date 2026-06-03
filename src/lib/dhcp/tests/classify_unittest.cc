@@ -79,7 +79,7 @@ TEST(ClassifyTest, ClientClasses) {
 TEST(ClassifyTest, ClientClassesFromString) {
     {
         ClientClasses classes("alpha, beta, gamma");
-        EXPECT_EQ(3, classes.size());
+        EXPECT_EQ(3U, classes.size());
         EXPECT_FALSE(classes.contains(""));
         EXPECT_TRUE(classes.contains("alpha"));
         EXPECT_TRUE(classes.contains("beta"));
@@ -88,7 +88,7 @@ TEST(ClassifyTest, ClientClassesFromString) {
 
     {
         ClientClasses classes("alpha, , beta ,");
-        EXPECT_EQ(2, classes.size());
+        EXPECT_EQ(2U, classes.size());
         EXPECT_TRUE(classes.contains("alpha"));
         EXPECT_FALSE(classes.contains(""));
         EXPECT_TRUE(classes.contains("beta"));
@@ -261,7 +261,7 @@ TEST(ClassifyTest, ClientClassesFromElement) {
     cclasses_element->add(Element::create("bar"));
 
     ASSERT_NO_THROW(classes.fromElement(cclasses_element));
-    ASSERT_EQ(classes.size(), 2);
+    ASSERT_EQ(classes.size(), 2U);
     auto cclass = classes.begin();
     EXPECT_EQ(*cclass, "foo");
     ++cclass;
@@ -311,7 +311,7 @@ TEST(ClassifyTest, ClientClassesHash) {
     results.insert(hash(cclasses));
 
     // Should have all four entries.
-    EXPECT_EQ(4, results.size());
+    EXPECT_EQ(4U, results.size());
 
     // Check that empty containers make equal hashes.
     ClientClasses empty1;
