@@ -148,13 +148,13 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
@@ -181,13 +181,13 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("01:01:01:01:0a:01:02:03:04:05", lease->duid_->toText());
-    EXPECT_EQ(300, lease->valid_lft_);
+    EXPECT_EQ(300U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(6, lease->subnet_id_);
-    EXPECT_EQ(150, lease->preferred_lft_);
+    EXPECT_EQ(6U, lease->subnet_id_);
+    EXPECT_EQ(150U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(8, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(8U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
@@ -206,13 +206,13 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_EQ("3000:1::", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
-    EXPECT_EQ(0, lease->valid_lft_);
+    EXPECT_EQ(0U, lease->valid_lft_);
     EXPECT_EQ(200, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(0, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(0U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_PD, lease->type_);
-    EXPECT_EQ(16, lease->iaid_);
-    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_EQ(16U, lease->iaid_);
+    EXPECT_EQ(64U, lease->prefixlen_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
@@ -376,13 +376,13 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:01", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("one.example.com", lease->hostname_);
@@ -402,13 +402,13 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ("2001:db8:1::2", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:02", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("two.example.com", lease->hostname_);
@@ -428,13 +428,13 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -453,13 +453,13 @@ TEST_F(CSVLeaseFile6Test, mixedSchemaLoad) {
     EXPECT_EQ("2001:db8:1::4", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -527,13 +527,13 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ("2001:db8:1::3", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:03", lease->duid_->toText());
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
-    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(8U, lease->subnet_id_);
+    EXPECT_EQ(100U, lease->preferred_lft_);
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(7, lease->iaid_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(7U, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -542,8 +542,8 @@ TEST_F(CSVLeaseFile6Test, downGrade) {
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     ASSERT_TRUE(lease->getContext());
     EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
-    EXPECT_EQ(1, lease->hwaddr_->htype_);
-    EXPECT_EQ(0, lease->hwaddr_->source_);
+    EXPECT_EQ(1U, lease->hwaddr_->htype_);
+    EXPECT_EQ(0U, lease->hwaddr_->source_);
     }
 }
 
@@ -572,7 +572,7 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     SCOPED_TRACE("\"Empty\" DUID and not declined, invalid");
     EXPECT_FALSE(lf.next(lease));
     EXPECT_FALSE(lease);
-    EXPECT_EQ(lf.getReadErrs(), 1);
+    EXPECT_EQ(lf.getReadErrs(), 1U);
     EXPECT_EQ(lf.getReadMsg(),
               "The Empty DUID is only valid for declined leases");
     }
@@ -581,7 +581,7 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     SCOPED_TRACE("Missing (blank) DUID and not declined, invalid");
     EXPECT_FALSE(lf.next(lease));
     EXPECT_FALSE(lease);
-    EXPECT_EQ(lf.getReadErrs(), 2);
+    EXPECT_EQ(lf.getReadErrs(), 2U);
     EXPECT_EQ(lf.getReadMsg(), "identifier is too short (0), at least 3 is required");
     }
 
@@ -589,7 +589,7 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     SCOPED_TRACE("Empty DUID and declined, valid");
     EXPECT_TRUE(lf.next(lease));
     EXPECT_TRUE(lease);
-    EXPECT_EQ(lf.getReadErrs(), 2);
+    EXPECT_EQ(lf.getReadErrs(), 2U);
     EXPECT_EQ(lf.getReadMsg(), "validation not started");
     }
 }

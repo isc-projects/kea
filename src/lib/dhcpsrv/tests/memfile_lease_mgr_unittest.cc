@@ -487,8 +487,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
     auto recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
     EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 
     pmap["on-fail"] = "stop-retry-exit";
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
@@ -496,8 +496,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
     recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
     EXPECT_EQ(recon->onFailAction(), OnFailAction::STOP_RETRY_EXIT);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 
     pmap["on-fail"] = "serve-retry-exit";
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
@@ -505,8 +505,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
     recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
     EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_EXIT);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 
     pmap["on-fail"] = "serve-retry-continue";
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
@@ -514,8 +514,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
     recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
     EXPECT_EQ(recon->onFailAction(), OnFailAction::SERVE_RETRY_CONTINUE);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 
     pmap["max-reconnect-tries"] = "5";
     EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
@@ -527,8 +527,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
 
     recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 
     pmap["reconnect-wait-time"] = "5";
     EXPECT_THROW_MSG(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), BadValue,
@@ -540,8 +540,8 @@ TEST_F(MemfileLeaseMgrTest, constructorReconnectParams) {
 
     recon = lease_mgr->reconnectCtl();
     ASSERT_TRUE(recon);
-    EXPECT_EQ(recon->maxRetries(), 0);
-    EXPECT_EQ(recon->retryInterval(), 0);
+    EXPECT_EQ(recon->maxRetries(), 0U);
+    EXPECT_EQ(recon->retryInterval(), 0U);
 }
 
 /// @brief Verifies that the supported path is the enforced.
@@ -2393,12 +2393,12 @@ TEST_F(MemfileLeaseMgrTest, lease4ContainerIndexUpdate) {
 
         // Retrieve lease by HW address.
         Lease4Collection leases_by_hwaddr = lmptr_->getLease4(*tested->hwaddr_);
-        ASSERT_EQ(1, leases_by_hwaddr.size());
+        ASSERT_EQ(1U, leases_by_hwaddr.size());
         detailCompareLease(tested, leases_by_hwaddr[0]);
 
         // Retrieve lease by client identifier.
         Lease4Collection leases_by_client_id = lmptr_->getLease4(*tested->client_id_);
-        ASSERT_EQ(1, leases_by_client_id.size());
+        ASSERT_EQ(1U, leases_by_client_id.size());
         detailCompareLease(tested, leases_by_client_id[0]);
     }
 }
@@ -2510,7 +2510,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
         Lease6Collection leases_by_duid_iaid = lmptr_->getLeases6(tested->type_,
                                                                   *tested->duid_,
                                                                   tested->iaid_);
-        ASSERT_EQ(1, leases_by_duid_iaid.size());
+        ASSERT_EQ(1U, leases_by_duid_iaid.size());
         ASSERT_TRUE(leases_by_duid_iaid[0])
             << "Lease " << tested->addr_.toText()
             << " not found by getLease6(type, duid, iaid)"
@@ -2521,7 +2521,7 @@ TEST_F(MemfileLeaseMgrTest, lease6ContainerIndexUpdate) {
         Lease6Collection leases_by_duid_iaid_subnet =
             lmptr_->getLeases6(tested->type_, *tested->duid_,
                                tested->iaid_, tested->subnet_id_);
-        ASSERT_EQ(1, leases_by_duid_iaid_subnet.size());
+        ASSERT_EQ(1U, leases_by_duid_iaid_subnet.size());
         ASSERT_TRUE(leases_by_duid_iaid_subnet[0])
             << "Lease " << tested->addr_.toText()
             << " not found by getLease6(type, duid, iaid, subnet_id)"
@@ -2983,9 +2983,9 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
     ASSERT_TRUE(memfile_mgr);
 
     // Verify class lease counts are zero.
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice"));
 
     // Structure that describes a recipe for a lease.
     struct Recipe {
@@ -3008,25 +3008,25 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount4) {
     }
 
     // Verify counts are as expected.
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice"));
 
     // Clear counts
     ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
 
     // Verify counts are zero.
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water"));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon"));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice"));
 
     // Recount
     ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases4());
 
     // Verify counts are recounted correctly.
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water"));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon"));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice"));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("water"));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("melon"));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice"));
 }
 
 // Verifies that v6 class lease counts can be recounted.
@@ -3052,13 +3052,13 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
     ASSERT_TRUE(memfile_mgr);
 
     // Verify class lease counts are zero.
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
 
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 
     // Structure that describes a recipe for a lease.
     struct Recipe {
@@ -3087,37 +3087,37 @@ TEST_F(MemfileLeaseMgrTest, classLeaseRecount6) {
     }
 
     // Verify counts are as expected.
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
 
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 
     // Clear counts
     ASSERT_NO_THROW_LOG(memfile_mgr->clearClassLeaseCounts());
 
     // Verify counts are zero.
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
 
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
-    EXPECT_EQ(0, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(0U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 
     // Recount
     ASSERT_NO_THROW_LOG(memfile_mgr->recountClassLeases6());
 
     // Verify counts are recounted correctly.
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("water", Lease::TYPE_NA));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("melon", Lease::TYPE_NA));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_NA));
 
-    EXPECT_EQ(1, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
-    EXPECT_EQ(2, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
+    EXPECT_EQ(1U, memfile_mgr->getClassLeaseCount("grapes", Lease::TYPE_PD));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("wrath", Lease::TYPE_PD));
+    EXPECT_EQ(2U, memfile_mgr->getClassLeaseCount("slice", Lease::TYPE_PD));
 }
 
 /// @brief Class derived from @c Memfile_LeaseMgr to test write to file.
@@ -3874,7 +3874,7 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4) {
     ConstElementPtr rai = isc->get("relay-agent-info");
     ASSERT_TRUE(rai);
     ASSERT_EQ(Element::map, rai->getType());
-    EXPECT_EQ(3, rai->size());
+    EXPECT_EQ(3U, rai->size());
     ConstElementPtr sub_options = rai->get("sub-options");
     ASSERT_TRUE(sub_options);
     EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
@@ -3897,12 +3897,12 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4) {
     EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
                                                             zero,
                                                             LeasePageSize(100)));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*lease, *leases[0]);
     EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
                                                              zero,
                                                              LeasePageSize(100)));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*lease, *leases[0]);
 }
 
@@ -4022,7 +4022,7 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
     // Now run extractExtendedInfo4 with update set to true.
     size_t updated = 0;
     EXPECT_NO_THROW(updated = lease_mgr->extractExtendedInfo4(true, true));
-    EXPECT_EQ(2, updated);
+    EXPECT_EQ(2U, updated);
 
     // Check the lease with empty user context was updated.
     lease = lease_mgr->getLease4(IOAddress("192.0.2.2"));
@@ -4041,7 +4041,7 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
     rai = isc->get("relay-agent-info");
     ASSERT_TRUE(rai);
     ASSERT_EQ(Element::map, rai->getType());
-    EXPECT_EQ(3, rai->size());
+    EXPECT_EQ(3U, rai->size());
     ConstElementPtr sub_options = rai->get("sub-options");
     ASSERT_TRUE(sub_options);
     EXPECT_EQ("\"0x02030102030C03AABBCC\"", sub_options->str());
@@ -4065,12 +4065,12 @@ TEST_F(MemfileLeaseMgrTest, extractExtendedInfo4ExplicitSanitize) {
     EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRelayId(relay,
                                                             zero,
                                                             LeasePageSize(100)));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*lease, *leases[0]);
     EXPECT_NO_THROW(leases = lease_mgr->getLeases4ByRemoteId(remote,
                                                              zero,
                                                              LeasePageSize(100)));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*lease, *leases[0]);
     // Check the lease file was updated.
     string new_content =
@@ -4136,7 +4136,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
     EXPECT_TRUE(isc->contains("relay-info"));
 
     // Check that extended info tables were updated.
-    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->relay_id6_.size());
     auto relay_id_it = lease_mgr->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -4145,7 +4145,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
-    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->remote_id6_.size());
     auto remote_id_it = lease_mgr->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -4267,7 +4267,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
     EXPECT_TRUE(user_context->empty());
 
     // Check that extended info tables were updated.
-    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->relay_id6_.size());
     auto relay_id_it = lease_mgr->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -4276,7 +4276,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6enabled) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
-    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->remote_id6_.size());
     auto remote_id_it = lease_mgr->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -4453,8 +4453,8 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     EXPECT_NO_THROW(lease_mgr.reset(new NakedMemfileLeaseMgr(pmap)));
 
     // Check that extended info tables were updated.
-    EXPECT_EQ(1, lease_mgr->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr->remote_id6_.size());
 
     // Add a junk entry in each table.
     IOAddress lease_addr("2001:db8:1::10");
@@ -4468,14 +4468,14 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     lease_mgr->remote_id6_.insert(remote);
 
     // Check that tables grown.
-    EXPECT_EQ(2, lease_mgr->relay_id6_.size());
-    EXPECT_EQ(2, lease_mgr->remote_id6_.size());
+    EXPECT_EQ(2U, lease_mgr->relay_id6_.size());
+    EXPECT_EQ(2U, lease_mgr->remote_id6_.size());
 
     // Rebuild the tables.
     EXPECT_NO_THROW(lease_mgr->buildExtendedInfoTables6());
 
     // Check tables.
-    ASSERT_EQ(1, lease_mgr->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->relay_id6_.size());
     auto relay_id_it = lease_mgr->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -4484,7 +4484,7 @@ TEST_F(MemfileLeaseMgrTest, buildExtendedInfoTables6rebuild) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, ex_info->id_);
 
-    ASSERT_EQ(1, lease_mgr->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr->remote_id6_.size());
     auto remote_id_it = lease_mgr->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -4754,7 +4754,7 @@ TEST_F(MemfileLeaseMgrLogTest, warnWhenSecurityDisabled) {
         << " invalid path specified: '/tmp', supported path is '"
         << CfgMgr::instance().getDataDir() << "'";
 
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
 
 /// @brief Verifies that lfcStartHandler requires persist true.
@@ -4780,12 +4780,12 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPersistFalse) {
     // Verify that LFC reschedule was not logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(0, countFile(msg));
+    EXPECT_EQ(0U, countFile(msg));
 
     // Verify that LFC start was not logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(0, countFile(msg));
+    EXPECT_EQ(0U, countFile(msg));
 }
 
 /// @brief Verifies that lfcStartHandler does not requires lfc-interval > 0.
@@ -4821,12 +4821,12 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLfcInterval0) {
     // Verify that LFC reschedule was not logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(0, countFile(msg));
+    EXPECT_EQ(0U, countFile(msg));
 
     // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 }
 
 /// @brief Verifies that lfcStartHandler reschedules and starts LFC.
@@ -4862,12 +4862,12 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandler) {
     // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 }
 
 /// @brief Verifies that lfcStartHandler reschedules and but does not start
@@ -4899,17 +4899,17 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerLocked) {
     // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Locked: verify that LFC running was logged.
     msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
     msg += "Lease File Cleanup instance already running";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 }
 
 /// @brief Verifies that lfcStartHandler reschedules and but does not start
@@ -4944,17 +4944,17 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerAlreadyRunning) {
     // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Verify that LFC running was logged.
     msg = "DHCPSRV_MEMFILE_LFC_RUNNING ";
     msg += "Lease File Cleanup instance already running";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 }
 
 /// @brief Verifies that lfcStartHandler reschedules and but does not start
@@ -4994,12 +4994,12 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     // Verify that LFC reschedule was logged.
     string msg = "DHCPSRV_MEMFILE_LFC_RESCHEDULED ";
     msg += "rescheduled Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // Verify that LFC start was logged.
     msg = "DHCPSRV_MEMFILE_LFC_START ";
     msg += "starting Lease File Cleanup";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 
     // PID file is not writable: verify that PID create failure was logged.
     msg = "DHCPSRV_MEMFILE_LFC_FAIL_PID_CREATE ";
@@ -5007,7 +5007,7 @@ TEST_F(MemfileLeaseMgrLogTest, lfcStartHandlerPidNotWritable) {
     msg += "Unable to open PID file '";
     msg += pid_file_->getFilename();
     msg += "' for write";
-    EXPECT_EQ(1, countFile(msg));
+    EXPECT_EQ(1U, countFile(msg));
 }
 
 /// Check ProcessSpawnError (no known way to trigger it).

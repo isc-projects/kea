@@ -174,13 +174,13 @@ CfgHostsTest::testGetAllNonRepeatingHosts() {
 
     // Try to retrieve each added reservation using HW address and DUID. Do it
     // in the reverse order to make sure that the order doesn't matter.
-    for (int i = 24; i >= 0; --i) {
+    for (unsigned i = 24; i < 25; --i) {
         // Get host identified by HW address.
         HostCollection hosts = cfg.getAll(Host::IDENT_HWADDR,
                                           &hwaddrs_[i]->hwaddr_[0],
                                           hwaddrs_[i]->hwaddr_.size());
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(i % 10 + 1, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(i % 10 + 1U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesa_[i].toText(),
                   hosts[0]->getIPv4Reservation().toText());
 
@@ -188,15 +188,15 @@ CfgHostsTest::testGetAllNonRepeatingHosts() {
         hosts = cfg.getAll(Host::IDENT_DUID,
                            &duids_[i]->getDuid()[0],
                            duids_[i]->getDuid().size());
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(i % 5 + 1, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(i % 5 + 1U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesb_[i].toText(),
                   hosts[0]->getIPv4Reservation().toText());
     }
 
     // Make sure that the reservations do not exist for the hardware addresses
     // and DUIDs from the range of 25 to 49.
-    for (int i = 49; i >= 25; --i) {
+    for (unsigned i = 49; i >= 25; --i) {
         EXPECT_TRUE(cfg.getAll(Host::IDENT_HWADDR, &hwaddrs_[i]->hwaddr_[0],
                                hwaddrs_[i]->hwaddr_.size()).empty());
         EXPECT_TRUE(cfg.getAll(Host::IDENT_DUID, &duids_[i]->getDuid()[0],
@@ -245,10 +245,10 @@ CfgHostsTest::testGetAllRepeatingHosts() {
         HostCollection hosts = cfg.getAll(Host::IDENT_HWADDR,
                                           &hwaddrs_[i]->hwaddr_[0],
                                           hwaddrs_[i]->hwaddr_.size());
-        ASSERT_EQ(2, hosts.size());
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(2U, hosts.size());
+        EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ(addressesa_[i], hosts[0]->getIPv4Reservation().toText());
-        EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ(2U, hosts[1]->getIPv4SubnetID());
         EXPECT_EQ(addressesb_[i], hosts[1]->getIPv4Reservation().toText());
 
         // The HW address is non-null but there are no reservations
@@ -296,13 +296,13 @@ CfgHostsTest::testGetAll4BySubnet() {
 
     // Check that other subnets are empty.
     HostCollection hosts = cfg.getAll4(SubnetID(100));
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 
     // Try to retrieve all added reservations.
     hosts = cfg.getAll4(SubnetID(1));
-    ASSERT_EQ(25, hosts.size());
+    ASSERT_EQ(25U, hosts.size());
     for (unsigned i = 0; i < 25; ++i) {
-        EXPECT_EQ(1, hosts[i]->getIPv4SubnetID());
+        EXPECT_EQ(1U, hosts[i]->getIPv4SubnetID());
         EXPECT_EQ(addressesa_[i].toText(),
                   hosts[i]->getIPv4Reservation().toText());
     }
@@ -335,13 +335,13 @@ CfgHostsTest::testGetAll6BySubnet() {
 
     // Check that other subnets are empty.
     HostCollection hosts = cfg.getAll6(SubnetID(100));
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 
     // Try to retrieve all added reservations.
     hosts = cfg.getAll6(SubnetID(1));
-    ASSERT_EQ(25, hosts.size());
+    ASSERT_EQ(25U, hosts.size());
     for (unsigned i = 0; i < 25; ++i) {
-        EXPECT_EQ(1, hosts[i]->getIPv6SubnetID());
+        EXPECT_EQ(1U, hosts[i]->getIPv6SubnetID());
         IPv6ResrvRange reservations =
             hosts[i]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
@@ -377,9 +377,9 @@ CfgHostsTest::testGetAll6ByAddress() {
 
     // Try to retrieve all added reservations with IP equals 2001:db8:1::1.
     auto hosts = cfg.getAll6(IOAddress("2001:db8:1::1"));
-    EXPECT_EQ(5, hosts.size());
+    EXPECT_EQ(5U, hosts.size());
     for (unsigned i = 0; i < 5; ++i) {
-        EXPECT_EQ(1 + 5 * i, hosts[i]->getIPv6SubnetID());
+        EXPECT_EQ(1U + 5 * i, hosts[i]->getIPv6SubnetID());
         IPv6ResrvRange reservations =
             hosts[i]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
@@ -414,25 +414,25 @@ CfgHostsTest::testGetPage4() {
 
     // Check that other subnets are empty.
     HostCollection page = cfg.getPage4(SubnetID(100), idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 
     // Try to retrieve all added reservations.
     // Get first page.
     page = cfg.getPage4(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
 
     // Get second and last pages.
     page = cfg.getPage4(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     page = cfg.getPage4(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(5, page.size());
+    EXPECT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     page = cfg.getPage4(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 }
 
 TEST_F(CfgHostsTest, getPage4) {
@@ -466,25 +466,25 @@ CfgHostsTest::testGetPage6() {
 
     // Check that other subnets are empty.
     HostCollection page = cfg.getPage6(SubnetID(100), idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 
     // Try to retrieve all added reservations.
     // Get first page.
     page = cfg.getPage6(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
 
     // Get second and last pages.
     page = cfg.getPage6(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     page = cfg.getPage6(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(5, page.size());
+    EXPECT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     page = cfg.getPage6(SubnetID(1), idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 }
 
 TEST_F(CfgHostsTest, getPage6) {
@@ -514,20 +514,20 @@ CfgHostsTest::testGetPage4All() {
     // Try to retrieve all added reservations.
     // Get first page.
     HostCollection page = cfg.getPage4(idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
 
     // Get second and last pages.
     page = cfg.getPage4(idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     page = cfg.getPage4(idx, host_id, page_size);
-    EXPECT_EQ(5, page.size());
+    EXPECT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     page = cfg.getPage4(idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 }
 
 TEST_F(CfgHostsTest, getPage4All) {
@@ -562,20 +562,20 @@ CfgHostsTest::testGetPage6All() {
     // Try to retrieve all added reservations.
     // Get first page.
     HostCollection page = cfg.getPage6(idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
 
     // Get second and last pages.
     page = cfg.getPage6(idx, host_id, page_size);
-    EXPECT_EQ(10, page.size());
+    EXPECT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     page = cfg.getPage6(idx, host_id, page_size);
-    EXPECT_EQ(5, page.size());
+    EXPECT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     page = cfg.getPage6(idx, host_id, page_size);
-    EXPECT_EQ(0, page.size());
+    EXPECT_EQ(0U, page.size());
 }
 
 TEST_F(CfgHostsTest, getPage6All) {
@@ -611,9 +611,9 @@ CfgHostsTest::testGetAll4ByAddress() {
     for (auto const& host : hosts) {
         subnet_ids.insert(host->getIPv4SubnetID());
     }
-    ASSERT_EQ(25, subnet_ids.size());
-    EXPECT_EQ(1, *subnet_ids.begin());
-    EXPECT_EQ(25, *subnet_ids.rbegin());
+    ASSERT_EQ(25U, subnet_ids.size());
+    EXPECT_EQ(1U, *subnet_ids.begin());
+    EXPECT_EQ(25U, *subnet_ids.rbegin());
 }
 
 TEST_F(CfgHostsTest, getAll4ByAddress) {
@@ -648,7 +648,7 @@ CfgHostsTest::testDeleteForIPv4() {
     HostCollection hosts_by_address = cfg.getAll4(address);
     // Make sure the hosts and IP reservations were added.
     ASSERT_EQ(host_count, hosts_by_subnet.size());
-    ASSERT_EQ(1, hosts_by_address.size());
+    ASSERT_EQ(1U, hosts_by_address.size());
 
     // Delete one host.
     EXPECT_TRUE(cfg.del(subnet_id, address));
@@ -657,7 +657,7 @@ CfgHostsTest::testDeleteForIPv4() {
     hosts_by_subnet = cfg.getAll4(subnet_id);
     hosts_by_address = cfg.getAll4(address);
     EXPECT_EQ(host_count-1, hosts_by_subnet.size());
-    EXPECT_EQ(0, hosts_by_address.size());
+    EXPECT_EQ(0U, hosts_by_address.size());
 }
 
 TEST_F(CfgHostsTest, deleteForIPv4) {
@@ -694,7 +694,7 @@ CfgHostsTest::testDeleteForIPv6() {
     auto hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
     auto hosts_by_subnet = cfg.getAll6(subnet_id);
     // Make sure the hosts and IP reservations were added.
-    ASSERT_EQ(1, hosts_by_subnet_and_address.size());
+    ASSERT_EQ(1U, hosts_by_subnet_and_address.size());
     ASSERT_EQ(host_count, hosts_by_subnet.size());
 
     // Delete one host.
@@ -703,8 +703,8 @@ CfgHostsTest::testDeleteForIPv6() {
     // Check if the host is actually deleted.
     hosts_by_subnet_and_address = cfg.getAll6(subnet_id, address);
     hosts_by_subnet = cfg.getAll6(subnet_id);
-    EXPECT_EQ(0, hosts_by_subnet_and_address.size());
-    EXPECT_EQ(host_count-1, hosts_by_subnet.size());
+    EXPECT_EQ(0U, hosts_by_subnet_and_address.size());
+    EXPECT_EQ(host_count - 1, hosts_by_subnet.size());
 }
 
 TEST_F(CfgHostsTest, deleteForIPv6) {
@@ -859,7 +859,7 @@ CfgHostsTest::testDel4() {
     host = cfg.get4(subnet_id, Host::IdentifierType::IDENT_DUID,
                                              &duids_[host_id]->getDuid()[0],
                                              duids_[host_id]->getDuid().size());
-    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ((host_count / 2) - 1, hosts_by_subnet.size());
     EXPECT_EQ(host_count / 2, hosts_by_address.size());
     EXPECT_FALSE(host);
 }
@@ -928,7 +928,7 @@ CfgHostsTest::testDel6() {
     host = cfg.get6(subnet_id, Host::IdentifierType::IDENT_DUID,
                                              &duids_[host_id]->getDuid()[0],
                                              duids_[host_id]->getDuid().size());
-    EXPECT_EQ((host_count / 2)-1, hosts_by_subnet.size());
+    EXPECT_EQ((host_count / 2) - 1, hosts_by_subnet.size());
     EXPECT_EQ(host_count / 2, hosts_by_address.size());
     EXPECT_FALSE(host);
 }
@@ -992,12 +992,12 @@ CfgHostsTest::testDeleteAll4() {
         subnet_ids.insert(host->getIPv4SubnetID());
     }
     // Make sure there are two unique subnets: 1 and 2.
-    ASSERT_EQ(2, subnet_ids.size());
-    EXPECT_EQ(1, *subnet_ids.begin());
-    EXPECT_EQ(2, *subnet_ids.rbegin());
+    ASSERT_EQ(2U, subnet_ids.size());
+    EXPECT_EQ(1U, *subnet_ids.begin());
+    EXPECT_EQ(2U, *subnet_ids.rbegin());
 
     // Delete all hosts for subnet id 2. There should be 12 of them.
-    EXPECT_EQ(12, cfg.delAll4(SubnetID(2)));
+    EXPECT_EQ(12U, cfg.delAll4(SubnetID(2)));
 
     // Gather the host counts again.
     subnet_ids.clear();
@@ -1007,8 +1007,8 @@ CfgHostsTest::testDeleteAll4() {
     }
     // We should only have hosts for one subnet and it should be the subnet
     // with ID of 1.
-    ASSERT_EQ(1, subnet_ids.size());
-    EXPECT_EQ(1, *subnet_ids.begin());
+    ASSERT_EQ(1U, subnet_ids.size());
+    EXPECT_EQ(1U, *subnet_ids.begin());
 }
 
 TEST_F(CfgHostsTest, deleteAll4) {
@@ -1097,8 +1097,8 @@ CfgHostsTest::testUnparsed4() {
         ConstElementPtr unparsed = list.get(SubnetID(1 + i));
         ASSERT_TRUE(unparsed);
         ASSERT_EQ(Element::list, unparsed->getType());
-        EXPECT_EQ(2, unparsed->size());
-        ASSERT_NE(0, unparsed->size());
+        EXPECT_EQ(2U, unparsed->size());
+        ASSERT_NE(0U, unparsed->size());
 
         // Check by HW address entries
         bool checked_hw = false;
@@ -1196,7 +1196,7 @@ CfgHostsTest::testGet6() {
                                 &hwaddrs_[i]->hwaddr_[0],
                                 hwaddrs_[i]->hwaddr_.size());
         ASSERT_TRUE(host);
-        EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        EXPECT_EQ(1U + i % 2, host->getIPv6SubnetID());
         IPv6ResrvRange reservations =
             host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
@@ -1207,7 +1207,7 @@ CfgHostsTest::testGet6() {
         host = cfg.get6(SubnetID(1 + i % 2), Host::IDENT_DUID,
                         &duids_[i]->getDuid()[0], duids_[i]->getDuid().size());
         ASSERT_TRUE(host);
-        EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        EXPECT_EQ(1U + i % 2, host->getIPv6SubnetID());
         reservations = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
         EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
@@ -1245,7 +1245,7 @@ CfgHostsTest::testDeleteAll6() {
     }
 
     // Delete all hosts for subnet id. There should be 13 of them.
-    EXPECT_EQ(13, cfg.delAll6(SubnetID(1)));
+    EXPECT_EQ(13U, cfg.delAll6(SubnetID(1)));
 
     for (unsigned i = 0; i < 25; ++i) {
         // Calculate subnet id for the given i.
@@ -1317,8 +1317,8 @@ CfgHostsTest::testUnparse6() {
         ConstElementPtr unparsed = list.get(SubnetID(1 + i));
         ASSERT_TRUE(unparsed);
         ASSERT_EQ(Element::list, unparsed->getType());
-        EXPECT_EQ(2, unparsed->size());
-        ASSERT_NE(0, unparsed->size());
+        EXPECT_EQ(2U, unparsed->size());
+        ASSERT_NE(0U, unparsed->size());
 
         // Check by HW address entries
         bool checked_hw = false;
@@ -1341,8 +1341,8 @@ CfgHostsTest::testUnparse6() {
             ConstElementPtr resvs = host->get("ip-addresses");
             ASSERT_TRUE(resvs);
             ASSERT_EQ(Element::list, resvs->getType());
-            EXPECT_EQ(1, resvs->size());
-            ASSERT_GE(1, resvs->size());
+            EXPECT_EQ(1U, resvs->size());
+            ASSERT_GE(1U, resvs->size());
             ConstElementPtr resv = resvs->get(0);
             ASSERT_TRUE(resv);
             ASSERT_EQ(Element::string, resv->getType());
@@ -1372,8 +1372,8 @@ CfgHostsTest::testUnparse6() {
             ConstElementPtr resvs = host->get("ip-addresses");
             ASSERT_TRUE(resvs);
             ASSERT_EQ(Element::list, resvs->getType());
-            EXPECT_EQ(1, resvs->size());
-            ASSERT_GE(1, resvs->size());
+            EXPECT_EQ(1U, resvs->size());
+            ASSERT_GE(1U, resvs->size());
             ConstElementPtr resv = resvs->get(0);
             ASSERT_TRUE(resv);
             ASSERT_EQ(Element::string, resv->getType());
@@ -1417,7 +1417,7 @@ CfgHostsTest::testGet6ByAddr() {
                                 increase(IOAddress("2001:db8:2::1"), i));
         ASSERT_TRUE(host);
 
-        EXPECT_EQ(1 + i % 2, host->getIPv6SubnetID());
+        EXPECT_EQ(1U + i % 2, host->getIPv6SubnetID());
         IPv6ResrvRange reservations =
             host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
@@ -1556,7 +1556,7 @@ CfgHostsTest::testAllow4AlreadyReserved() {
     // Get both hosts.
     ConstHostCollection returned;
     ASSERT_NO_THROW(returned = cfg.getAll4(host1->getIPv4SubnetID(), IOAddress("192.0.2.1")));
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
 
     // Make sure the address is the same but the identifiers are different.
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
@@ -1638,7 +1638,7 @@ CfgHostsTest::testAllowAddress6AlreadyReserved() {
 
     ConstHostCollection returned;
     ASSERT_NO_THROW(returned = cfg.getAll6(host1->getIPv6SubnetID(), IOAddress("2001:db8::1")));
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
 
     // Make sure the address is the same but the identifiers are different.
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
@@ -1689,7 +1689,7 @@ CfgHostsTest::testAllowPrefix6AlreadyReserved() {
 
     ConstHostCollection returned;
     ASSERT_NO_THROW(returned = cfg.getAll6(host1->getIPv6SubnetID(), IOAddress("3000::")));
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
 
     // Make sure the prefix is the same but the identifiers are different.
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
@@ -1918,14 +1918,14 @@ CfgHostsTest::testUpdate() {
 
     // There should be no hosts.
     HostCollection hosts(cfg.getAll6(SubnetID(1)));
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 
     // Add a host.
     EXPECT_NO_THROW(cfg.add(host));
 
     // The host should be in the config.
     hosts = cfg.getAll6(SubnetID(1));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
               "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
               "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
@@ -1935,7 +1935,7 @@ CfgHostsTest::testUpdate() {
 
     // The same host should be in the config.
     hosts = cfg.getAll6(SubnetID(1));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=foo.example.com "
               "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
               "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
@@ -1946,7 +1946,7 @@ CfgHostsTest::testUpdate() {
 
     // The change should be reflected in the config.
     hosts = cfg.getAll6(SubnetID(1));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=bar.example.com "
               "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
               "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());
@@ -1957,7 +1957,7 @@ CfgHostsTest::testUpdate() {
 
     // The change should be reflected in the config.
     hosts = cfg.getAll6(SubnetID(1));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ("duid=010203040500 ipv6_subnet_id=1 hostname=(empty) "
               "ipv4_reservation=(no) siaddr=(no) sname=(empty) file=(empty) "
               "key=(empty) ipv6_reservations=(none)", hosts[0]->toText());

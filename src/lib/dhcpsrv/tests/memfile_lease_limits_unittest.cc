@@ -142,11 +142,11 @@ public:
 
         // Add a lease with no classes.  Should create no counts.
         ASSERT_NO_THROW_LOG(clc_.addLease(lease));
-        EXPECT_EQ(0, clc_.size(ltype));
+        EXPECT_EQ(0U, clc_.size(ltype));
 
         // Remove the lease with no classes.  Should create no counts.
         ASSERT_NO_THROW_LOG(clc_.removeLease(lease));
-        EXPECT_EQ(0, clc_.size(ltype));
+        EXPECT_EQ(0U, clc_.size(ltype));
 
         // Add user-context with class list to lease.
         lease->setContext(ctx1_);
@@ -352,44 +352,44 @@ TEST_F(ClassLeaseCounterTest, basicCountingTests4) {
 
     // Fetching the count for a non-existent class
     // should return 0.
-    ASSERT_EQ(0, clc_.size());
+    ASSERT_EQ(0U, clc_.size());
     size_t count = 0;
     ASSERT_NO_THROW(count = clc_.getClassCount(melon));
-    EXPECT_EQ(0, count);
+    EXPECT_EQ(0U, count);
 
     // Calling adjustClassCount() for non-existent class
     // should result in an entry with the adjustment value.
-    ASSERT_EQ(0, clc_.size());
+    ASSERT_EQ(0U, clc_.size());
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, 1));
-    EXPECT_EQ(1, clc_.size());
+    EXPECT_EQ(1U, clc_.size());
     ASSERT_NO_THROW_LOG(count = clc_.getClassCount(melon));
-    EXPECT_EQ(1, count);
+    EXPECT_EQ(1U, count);
 
     // Calling adjust() again to add 1 should work.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, 1));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon));
-    EXPECT_EQ(2, count);
+    EXPECT_EQ(2U, count);
 
     // Calling adjust() to subtract 1 should work.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -1));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon));
-    EXPECT_EQ(1, count);
+    EXPECT_EQ(1U, count);
 
     // Calling adjust() to subtract 2 should not rollover.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -2));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon));
-    EXPECT_EQ(0, count);
+    EXPECT_EQ(0U, count);
 
     // Set class value for a new class.
     ASSERT_NO_THROW(clc_.setClassCount(water, 40));
-    EXPECT_EQ(2, clc_.size());
+    EXPECT_EQ(2U, clc_.size());
     ASSERT_NO_THROW(count = clc_.getClassCount(water));
-    EXPECT_EQ(40, count);
+    EXPECT_EQ(40U, count);
 
     // Should be able to adjust the new class entry.
     ASSERT_NO_THROW(clc_.adjustClassCount(water, -1));
     ASSERT_NO_THROW(count = clc_.getClassCount(water));
-    EXPECT_EQ(39, count);
+    EXPECT_EQ(39U, count);
 }
 
 // Tests getting and adjusting basic class counts for
@@ -414,59 +414,59 @@ TEST_F(ClassLeaseCounterTest, basicCountingTests6) {
 
     // Fetching the count for a non-existent class
     // should return 0.
-    ASSERT_EQ(0, clc_.size(Lease::TYPE_NA));
+    ASSERT_EQ(0U, clc_.size(Lease::TYPE_NA));
     size_t count = 0;
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_NA));
-    EXPECT_EQ(0, count);
+    EXPECT_EQ(0U, count);
 
     // Calling adjustClassCount() for non-existent class
     // should result in an entry with the adjustment value.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, 1, Lease::TYPE_NA));
-    EXPECT_EQ(1, clc_.size(Lease::TYPE_NA));
+    EXPECT_EQ(1U, clc_.size(Lease::TYPE_NA));
     ASSERT_NO_THROW_LOG(count = clc_.getClassCount(melon, Lease::TYPE_NA));
-    EXPECT_EQ(1, count);
+    EXPECT_EQ(1U, count);
 
     // Calling adjust() again to add 1 should work.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, 1, Lease::TYPE_NA));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_NA));
-    EXPECT_EQ(2, count);
+    EXPECT_EQ(2U, count);
 
     // Calling adjust() to subtract 1 should work.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -1, Lease::TYPE_NA));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_NA));
-    EXPECT_EQ(1, count);
+    EXPECT_EQ(1U, count);
 
     // Calling adjust() to subtract 2 should not rollover.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -2, Lease::TYPE_NA));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_NA));
-    EXPECT_EQ(0, count);
+    EXPECT_EQ(0U, count);
 
     // Set class value for a new class.
     ASSERT_NO_THROW(clc_.setClassCount(water, 40, Lease::TYPE_NA));
-    EXPECT_EQ(2, clc_.size(Lease::TYPE_NA));
+    EXPECT_EQ(2U, clc_.size(Lease::TYPE_NA));
     ASSERT_NO_THROW(count = clc_.getClassCount(water, Lease::TYPE_NA));
-    EXPECT_EQ(40, count);
+    EXPECT_EQ(40U, count);
 
     // Should be able to adjust the new class entry.
     ASSERT_NO_THROW(clc_.adjustClassCount(water, -1, Lease::TYPE_NA));
     ASSERT_NO_THROW(count = clc_.getClassCount(water, Lease::TYPE_NA));
-    EXPECT_EQ(39, count);
+    EXPECT_EQ(39U, count);
 
     // Existing class should be able to count prefixes independently.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, 5, Lease::TYPE_PD));
-    EXPECT_EQ(1, clc_.size(Lease::TYPE_PD));
+    EXPECT_EQ(1U, clc_.size(Lease::TYPE_PD));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_PD));
-    EXPECT_EQ(5, count);
+    EXPECT_EQ(5U, count);
 
     // Should be able to adjust the new class prefix entry.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -2, Lease::TYPE_PD));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_PD));
-    EXPECT_EQ(3, count);
+    EXPECT_EQ(3U, count);
 
     // Calling adjust() to subtract 4 should not rollover.
     ASSERT_NO_THROW(clc_.adjustClassCount(melon, -4, Lease::TYPE_PD));
     ASSERT_NO_THROW(count = clc_.getClassCount(melon, Lease::TYPE_PD));
-    EXPECT_EQ(0, count);
+    EXPECT_EQ(0U, count);
 }
 
 // Exercises ClassLeaseCounter::getLeaseClientClasses()

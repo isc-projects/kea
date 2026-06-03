@@ -581,7 +581,7 @@ TEST_F(ClientClassDefParserTest, nameOnlyValid) {
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
     ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
-    EXPECT_EQ(0, oc->size());
+    EXPECT_EQ(0U, oc->size());
 
     // Verify we have no expression.
     ASSERT_FALSE(cclass->getMatchExpr());
@@ -613,7 +613,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass4) {
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
     ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
-    EXPECT_EQ(0, oc->size());
+    EXPECT_EQ(0U, oc->size());
 
     // Verify we can retrieve the expression
     ExpressionPtr match_expr = cclass->getMatchExpr();
@@ -659,7 +659,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass4) {
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
     ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP4_OPTION_SPACE));
-    EXPECT_EQ(0, oc->size());
+    EXPECT_EQ(0U, oc->size());
 
     // Verify we can retrieve the expression
     ExpressionPtr match_expr = cclass->getMatchExpr();
@@ -704,7 +704,7 @@ TEST_F(ClientClassDefParserTest, nameAndExpressionClass6) {
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
     ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP6_OPTION_SPACE));
-    EXPECT_EQ(0, oc->size());
+    EXPECT_EQ(0U, oc->size());
 
     // Verify we can retrieve the expression
     ExpressionPtr match_expr = cclass->getMatchExpr();
@@ -750,7 +750,7 @@ TEST_F(ClientClassDefParserTest, templateNameAndExpressionClass6) {
     ASSERT_TRUE(cfg_option);
     OptionContainerPtr oc;
     ASSERT_TRUE(oc = cclass->getCfgOption()->getAll(DHCP6_OPTION_SPACE));
-    EXPECT_EQ(0, oc->size());
+    EXPECT_EQ(0U, oc->size());
 
     // Verify we can retrieve the expression
     ExpressionPtr match_expr = cclass->getMatchExpr();
@@ -1197,7 +1197,7 @@ TEST_F(ClientClassDefListParserTest, simpleValidList) {
     ASSERT_TRUE(dictionary);
 
     // We should have three classes in the dictionary.
-    EXPECT_EQ(3, dictionary->getClasses()->size());
+    EXPECT_EQ(3U, dictionary->getClasses()->size());
 
     // Make sure we can find all three.
     ClientClassDefPtr cclass;
@@ -1242,7 +1242,7 @@ TEST_F(ClientClassDefListParserTest, templateSimpleValidList) {
     ASSERT_TRUE(dictionary);
 
     // We should have three classes in the dictionary.
-    EXPECT_EQ(3, dictionary->getClasses()->size());
+    EXPECT_EQ(3U, dictionary->getClasses()->size());
 
     // Make sure we can find all three.
     ClientClassDefPtr cclass;
@@ -1334,8 +1334,8 @@ TEST_F(ClientClassDefParserTest, noFixedFields4) {
 
     // And it should not have any fixed fields set
     EXPECT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
-    EXPECT_EQ(0, cclass->getSname().size());
-    EXPECT_EQ(0, cclass->getFilename().size());
+    EXPECT_EQ(0U, cclass->getSname().size());
+    EXPECT_EQ(0U, cclass->getFilename().size());
     EXPECT_TRUE(cclass->getOfferLft().unspecified());
 
     // Nor option definitions
@@ -1365,9 +1365,9 @@ TEST_F(ClientClassDefParserTest, noFixedFields6) {
     ASSERT_TRUE(cclass);
 
     // And it should not have any fixed fields set
-    EXPECT_EQ(0, cclass->getPreferred().get());
-    EXPECT_EQ(0, cclass->getPreferred().getMin());
-    EXPECT_EQ(0, cclass->getPreferred().getMax());
+    EXPECT_EQ(0U, cclass->getPreferred().get());
+    EXPECT_EQ(0U, cclass->getPreferred().getMin());
+    EXPECT_EQ(0U, cclass->getPreferred().getMax());
 
     // Nor option definitions
     CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
@@ -1465,11 +1465,11 @@ TEST_F(ClientClassDefParserTest, option43Def) {
     ASSERT_TRUE(od.option_);
     EXPECT_EQ(43, od.option_->getType());
     const OptionCollection& oc = od.option_->getOptions();
-    ASSERT_EQ(1, oc.size());
+    ASSERT_EQ(1U, oc.size());
     OptionPtr opt = od.option_->getOption(1);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(1, opt->getType());
-    ASSERT_EQ(4, opt->getData().size());
+    EXPECT_EQ(1U, opt->getType());
+    ASSERT_EQ(4U, opt->getData().size());
     const uint8_t expected[4] = { 0xc0, 0x00, 0x02, 0x00 };
     EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
 }
@@ -1523,7 +1523,7 @@ TEST_F(ClientClassDefParserTest, option43DefString) {
     auto const& option_data = unparsed->get("option-data");
     ASSERT_TRUE(option_data);
     ASSERT_EQ(option_data->getType(), Element::list);
-    ASSERT_EQ(1, option_data->size());
+    ASSERT_EQ(1U, option_data->size());
     auto const& option = option_data->get(0);
     ASSERT_TRUE(option);
     ASSERT_EQ(option->getType(), Element::map);
@@ -1558,8 +1558,8 @@ TEST_F(ClientClassDefParserTest, nextServer) {
 
     // And it should have next-server set, but everything else not set.
     EXPECT_EQ(IOAddress("192.0.2.254"), cclass->getNextServer());
-    EXPECT_EQ(0, cclass->getSname().size());
-    EXPECT_EQ(0, cclass->getFilename().size());
+    EXPECT_EQ(0U, cclass->getSname().size());
+    EXPECT_EQ(0U, cclass->getFilename().size());
     EXPECT_TRUE(cclass->getOfferLft().unspecified());
 }
 
@@ -1727,7 +1727,7 @@ TEST_F(ClientClassDefListParserTest, dependentList) {
     ASSERT_TRUE(dictionary);
 
     // We should have three classes in the dictionary.
-    EXPECT_EQ(3, dictionary->getClasses()->size());
+    EXPECT_EQ(3U, dictionary->getClasses()->size());
 
     // Make sure we can find all three.
     ClientClassDefPtr cclass;
@@ -1839,7 +1839,7 @@ TEST_F(ClientClassDefListParserTest, dependOnKnown) {
     ASSERT_TRUE(dictionary);
 
     // We should have five classes in the dictionary.
-    EXPECT_EQ(5, dictionary->getClasses()->size());
+    EXPECT_EQ(5U, dictionary->getClasses()->size());
 
     // Check alpha.
     ClientClassDefPtr cclass;
@@ -2134,7 +2134,7 @@ TEST_F(ClientClassDefParserTest, offerLft) {
 
     auto offer_lft = cclass->getOfferLft();
     ASSERT_FALSE(offer_lft.unspecified());
-    EXPECT_EQ(99, offer_lft.get());
+    EXPECT_EQ(99U, offer_lft.get());
 }
 
 // Test verifies that the parser rejects bogus offer-lifetime value.

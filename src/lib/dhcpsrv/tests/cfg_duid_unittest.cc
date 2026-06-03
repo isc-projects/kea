@@ -91,9 +91,9 @@ TEST_F(CfgDUIDTest, defaults) {
         << "expected empty identifier, found: "
         << toString(cfg_duid.getIdentifier());
 
-    EXPECT_EQ(0, cfg_duid.getHType());
-    EXPECT_EQ(0, cfg_duid.getTime());
-    EXPECT_EQ(0, cfg_duid.getEnterpriseId());
+    EXPECT_EQ(0U, cfg_duid.getHType());
+    EXPECT_EQ(0U, cfg_duid.getTime());
+    EXPECT_EQ(0U, cfg_duid.getEnterpriseId());
     EXPECT_TRUE(cfg_duid.persist());
     EXPECT_FALSE(cfg_duid.getContext());
 
@@ -122,9 +122,9 @@ TEST_F(CfgDUIDTest, setValues) {
     // Check that values have been set correctly.
     EXPECT_EQ(DUID::DUID_EN, cfg_duid.getType());
     EXPECT_EQ("ABCDEF", toString(cfg_duid.getIdentifier()));
-    EXPECT_EQ(100, cfg_duid.getHType());
-    EXPECT_EQ(32100, cfg_duid.getTime());
-    EXPECT_EQ(10, cfg_duid.getEnterpriseId());
+    EXPECT_EQ(100U, cfg_duid.getHType());
+    EXPECT_EQ(32100U, cfg_duid.getTime());
+    EXPECT_EQ(10U, cfg_duid.getEnterpriseId());
     EXPECT_FALSE(cfg_duid.persist());
     ASSERT_TRUE(cfg_duid.getContext());
     EXPECT_EQ(user_context, cfg_duid.getContext()->str());

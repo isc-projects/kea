@@ -35,14 +35,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseV4) {
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
     // A new state lacks free leases until we add them.
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
     EXPECT_FALSE(state->isFreeLease(IOAddress("192.0.2.1")));
     state->addFreeLease(IOAddress("192.0.2.1"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     EXPECT_TRUE(state->isFreeLease(IOAddress("192.0.2.1")));
     // The same lease is always offered.
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
@@ -52,7 +52,7 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseV4) {
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("192.0.2.3"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     // The new free lease is appended at the end of the queue. Thus, our
     // first lease should be offered now.
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
@@ -66,14 +66,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseV4) {
     EXPECT_FALSE(state->isFreeLease(IOAddress("192.0.2.2")));
     state->deleteFreeLease(IOAddress("192.0.2.2"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
     EXPECT_EQ("192.0.2.3", state->offerFreeLease().toText());
 
     // Delete one of the free leases.
     state->deleteFreeLease(IOAddress("192.0.2.1"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     // The sole lease should be now offered.
     EXPECT_EQ("192.0.2.3", state->offerFreeLease().toText());
     EXPECT_EQ("192.0.2.3", state->offerFreeLease().toText());
@@ -89,25 +89,25 @@ TEST(PoolFreeLeaseAllocationState, addFreeLeaseV4SeveralTimes) {
     auto pool = boost::make_shared<Pool4>(IOAddress("192.0.2.1"), IOAddress("192.0.2.10"));
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the free lease for the first time.
     state->addFreeLease(IOAddress("192.0.2.1"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Add the same lease the second time. The second lease instance should
     // not be inserted.
     state->addFreeLease(IOAddress("192.0.2.1"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("192.0.2.1", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Delete the sole lease and ensure there are no more leases.
     state->deleteFreeLease(IOAddress("192.0.2.1"));
     EXPECT_TRUE(state->exhausted());
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 }
 
 
@@ -128,14 +128,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
     // A new state lacks free leases until we add them.
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
     EXPECT_FALSE(state->isFreeLease(IOAddress("2001:db8:1::1")));
     state->addFreeLease(IOAddress("2001:db8:1::1"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     EXPECT_TRUE(state->isFreeLease(IOAddress("2001:db8:1::1")));
     // The same lease is always offered.
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
@@ -145,7 +145,7 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("2001:db8:1::3"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     // The new free lease is appended at the end of the queue. Thus, our
     // first lease should be offered now.
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
@@ -159,14 +159,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeaseNA) {
     EXPECT_FALSE(state->isFreeLease(IOAddress("2001:db8:1::2")));
     state->deleteFreeLease(IOAddress("2001:db8:1::2"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     EXPECT_EQ("2001:db8:1::1", state->offerFreeLease().toText());
     EXPECT_EQ("2001:db8:1::3", state->offerFreeLease().toText());
 
     // Delete one of the free leases.
     state->deleteFreeLease(IOAddress("2001:db8:1::1"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     // The sole lease should be now offered.
     EXPECT_EQ("2001:db8:1::3", state->offerFreeLease().toText());
     EXPECT_EQ("2001:db8:1::3", state->offerFreeLease().toText());
@@ -183,20 +183,20 @@ TEST(PoolFreeLeaseAllocationState, addFreeLeaseNASeveralTimes) {
                                           IOAddress("2001:db8:1::10"));
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the free lease for the first time.
     state->addFreeLease(IOAddress("2001:db8:1::5"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("2001:db8:1::5", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Add the same lease the second time. The second lease instance should
     // not be inserted.
     state->addFreeLease(IOAddress("2001:db8:1::5"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("2001:db8:1::5", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Delete the sole lease and ensure there are no more leases.
     state->deleteFreeLease(IOAddress("2001:db8:1::5"));
@@ -219,14 +219,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeasePD) {
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
     // A new state lacks free leases until we add them.
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the first free lease. The pool should now have one free lease
     // that is always offered.
     EXPECT_FALSE(state->isFreeLease(IOAddress("3000::5600")));
     state->addFreeLease(IOAddress("3000::5600"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     EXPECT_TRUE(state->isFreeLease(IOAddress("3000::5600")));
     // The same lease is always offered.
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
@@ -236,7 +236,7 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeasePD) {
     // Add another free lease. We should now have two free leases.
     state->addFreeLease(IOAddress("3000::7800"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     // The new free lease is appended at the end of the queue. Thus, our
     // first lease should be offered now.
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
@@ -250,14 +250,14 @@ TEST(PoolFreeLeaseAllocationState, addDeleteFreeLeasePD) {
     EXPECT_FALSE(state->isFreeLease(IOAddress("3000::6400")));
     state->deleteFreeLease(IOAddress("3000::6400"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(2, state->getFreeLeaseCount());
+    EXPECT_EQ(2U, state->getFreeLeaseCount());
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
     EXPECT_EQ("3000::7800", state->offerFreeLease().toText());
 
     // Delete one of the free leases.
     state->deleteFreeLease(IOAddress("3000::5600"));
     EXPECT_FALSE(state->exhausted());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
     // The sole lease should be now offered.
     EXPECT_EQ("3000::7800", state->offerFreeLease().toText());
     EXPECT_EQ("3000::7800", state->offerFreeLease().toText());
@@ -273,20 +273,20 @@ TEST(PoolFreeLeaseAllocationState, addFreeLeasPDSeveralTimes) {
     auto pool = boost::make_shared<Pool6>(Lease::TYPE_PD, IOAddress("3000::"), 112, 120);
     auto state = PoolFreeLeaseQueueAllocationState::create(pool);
     ASSERT_TRUE(state);
-    EXPECT_EQ(0, state->getFreeLeaseCount());
+    EXPECT_EQ(0U, state->getFreeLeaseCount());
 
     // Add the free lease for the first time.
     state->addFreeLease(IOAddress("3000::5600"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Add the same lease the second time. The second lease instance should
     // not be inserted.
     state->addFreeLease(IOAddress("3000::5600"));
     EXPECT_FALSE(state->exhausted());
     EXPECT_EQ("3000::5600", state->offerFreeLease().toText());
-    EXPECT_EQ(1, state->getFreeLeaseCount());
+    EXPECT_EQ(1U, state->getFreeLeaseCount());
 
     // Delete the sole lease and ensure there are no more leases.
     state->deleteFreeLease(IOAddress("3000::5600"));

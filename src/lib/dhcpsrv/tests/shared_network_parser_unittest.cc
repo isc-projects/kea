@@ -186,13 +186,13 @@ public:
             EXPECT_EQ(network->getDdnsTtlPercent().unspecified(), (scenario.ddns_ttl_percent_ == 0.0));
             EXPECT_EQ(network->getDdnsTtlPercent(), scenario.ddns_ttl_percent_);
 
-            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0));
+            EXPECT_EQ(network->getDdnsTtl().unspecified(), (scenario.ddns_ttl_ == 0U));
             EXPECT_EQ(network->getDdnsTtl(), scenario.ddns_ttl_);
 
-            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMin().unspecified(), (scenario.ddns_ttl_min_ == 0U));
             EXPECT_EQ(network->getDdnsTtlMin(), scenario.ddns_ttl_min_);
 
-            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0));
+            EXPECT_EQ(network->getDdnsTtlMax().unspecified(), (scenario.ddns_ttl_max_ == 0U));
             EXPECT_EQ(network->getDdnsTtlMax(), scenario.ddns_ttl_max_);
         }
     }
@@ -407,11 +407,11 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(99, network->getT1().get());
-    EXPECT_EQ(199, network->getT2().get());
-    EXPECT_EQ(399, network->getValid().get());
-    EXPECT_EQ(299, network->getValid().getMin());
-    EXPECT_EQ(499, network->getValid().getMax());
+    EXPECT_EQ(99U, network->getT1().get());
+    EXPECT_EQ(199U, network->getT2().get());
+    EXPECT_EQ(399U, network->getValid().get());
+    EXPECT_EQ(299U, network->getValid().getMin());
+    EXPECT_EQ(499U, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
@@ -431,20 +431,20 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge().get());
-    EXPECT_EQ(777, network->getOfferLft().get());
+    EXPECT_EQ(123U, network->getCacheMaxAge().get());
+    EXPECT_EQ(777U, network->getOfferLft().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
     EXPECT_EQ("iterative", network->getAllocatorType().get());
     EXPECT_EQ(.90, network->getAdaptiveLeaseTimeThreshold().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
-    EXPECT_EQ(1, relay_info.getAddresses().size());
+    EXPECT_EQ(1U, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("10.1.1.1")));
 
     // Additional client classes.
     auto additional = network->getAdditionalClasses();
-    ASSERT_EQ(1, additional.size());
+    ASSERT_EQ(1U, additional.size());
     EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
@@ -456,9 +456,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     Subnet4Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.1.2.0", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getValid().get());
-    EXPECT_EQ(200, subnet->getValid().getMin());
-    EXPECT_EQ(400, subnet->getValid().getMax());
+    EXPECT_EQ(300U, subnet->getValid().get());
+    EXPECT_EQ(200U, subnet->getValid().getMin());
+    EXPECT_EQ(400U, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
     EXPECT_EQ("random", subnet->getAllocatorType().get());
@@ -467,9 +467,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getValid().get());
-    EXPECT_EQ(30, subnet->getValid().getMin());
-    EXPECT_EQ(30, subnet->getValid().getMax());
+    EXPECT_EQ(30U, subnet->getValid().get());
+    EXPECT_EQ(30U, subnet->getValid().getMin());
+    EXPECT_EQ(30U, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
     EXPECT_EQ("iterative", subnet->getAllocatorType().get());
@@ -484,7 +484,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
         Option4AddrLst>(opt_dns_servers.option_);
     ASSERT_TRUE(dns_servers);
     Option4AddrLst::AddressContainer addresses = dns_servers->getAddresses();
-    ASSERT_EQ(1, addresses.size());
+    ASSERT_EQ(1U, addresses.size());
     EXPECT_EQ("192.0.2.3", addresses[0].toText());
 }
 
@@ -824,15 +824,15 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_TRUE(network->getClientClasses().contains("srv1"));
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1961", network->getIface().get());
-    EXPECT_EQ(211, network->getPreferred().get());
-    EXPECT_EQ(111, network->getPreferred().getMin());
-    EXPECT_EQ(311, network->getPreferred().getMax());
+    EXPECT_EQ(211U, network->getPreferred().get());
+    EXPECT_EQ(111U, network->getPreferred().getMin());
+    EXPECT_EQ(311U, network->getPreferred().getMax());
     EXPECT_TRUE(network->getRapidCommit());
-    EXPECT_EQ(99, network->getT1().get());
-    EXPECT_EQ(199, network->getT2().get());
-    EXPECT_EQ(399, network->getValid().get());
-    EXPECT_EQ(299, network->getValid().getMin());
-    EXPECT_EQ(499, network->getValid().getMax());
+    EXPECT_EQ(99U, network->getT1().get());
+    EXPECT_EQ(199U, network->getT2().get());
+    EXPECT_EQ(399U, network->getValid().get());
+    EXPECT_EQ(299U, network->getValid().getMin());
+    EXPECT_EQ(499U, network->getValid().getMax());
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
@@ -846,7 +846,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     EXPECT_EQ("x", network->getHostnameCharReplacement().get());
     EXPECT_TRUE(network->getStoreExtendedInfo().get());
     EXPECT_EQ(0.123, network->getCacheThreshold());
-    EXPECT_EQ(123, network->getCacheMaxAge().get());
+    EXPECT_EQ(123U, network->getCacheMaxAge().get());
     EXPECT_TRUE(network->getDdnsUpdateOnRenew().get());
     EXPECT_EQ("random", network->getAllocatorType().get());
     EXPECT_EQ("iterative", network->getPdAllocatorType().get());
@@ -854,29 +854,29 @@ TEST_F(SharedNetwork6ParserTest, parse) {
 
     // Relay information.
     auto relay_info = network->getRelayInfo();
-    EXPECT_EQ(1, relay_info.getAddresses().size());
+    EXPECT_EQ(1U, relay_info.getAddresses().size());
     EXPECT_TRUE(relay_info.containsAddress(IOAddress("2001:db8:1::1")));
 
     // Additional client classes.
     auto additional = network->getAdditionalClasses();
-    ASSERT_EQ(1, additional.size());
+    ASSERT_EQ(1U, additional.size());
     EXPECT_EQ("runner", *additional.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
     ASSERT_TRUE(context);
-    EXPECT_EQ(0, context->size());
+    EXPECT_EQ(0U, context->size());
 
     // Subnet with id 1
     Subnet6Ptr subnet = network->getSubnet(SubnetID(1));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("3000::", subnet->get().first.toText());
-    EXPECT_EQ(300, subnet->getPreferred().get());
-    EXPECT_EQ(200, subnet->getPreferred().getMin());
-    EXPECT_EQ(400, subnet->getPreferred().getMax());
-    EXPECT_EQ(400, subnet->getValid().get());
-    EXPECT_EQ(300, subnet->getValid().getMin());
-    EXPECT_EQ(500, subnet->getValid().getMax());
+    EXPECT_EQ(300U, subnet->getPreferred().get());
+    EXPECT_EQ(200U, subnet->getPreferred().getMin());
+    EXPECT_EQ(400U, subnet->getPreferred().getMax());
+    EXPECT_EQ(400U, subnet->getValid().get());
+    EXPECT_EQ(300U, subnet->getValid().getMin());
+    EXPECT_EQ(500U, subnet->getValid().getMax());
     EXPECT_FALSE(subnet->getHostnameCharSet().unspecified());
     EXPECT_EQ("", subnet->getHostnameCharSet().get());
     EXPECT_EQ("iterative", subnet->getAllocatorType().get());
@@ -886,12 +886,12 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     subnet = network->getSubnet(SubnetID(2));
     ASSERT_TRUE(subnet);
     EXPECT_EQ("2001:db8:1::", subnet->get().first.toText());
-    EXPECT_EQ(30, subnet->getPreferred().get());
-    EXPECT_EQ(30, subnet->getPreferred().getMin());
-    EXPECT_EQ(30, subnet->getPreferred().getMax());
-    EXPECT_EQ(40, subnet->getValid().get());
-    EXPECT_EQ(40, subnet->getValid().getMin());
-    EXPECT_EQ(40, subnet->getValid().getMax());
+    EXPECT_EQ(30U, subnet->getPreferred().get());
+    EXPECT_EQ(30U, subnet->getPreferred().getMin());
+    EXPECT_EQ(30U, subnet->getPreferred().getMax());
+    EXPECT_EQ(40U, subnet->getValid().get());
+    EXPECT_EQ(40U, subnet->getValid().getMin());
+    EXPECT_EQ(40U, subnet->getValid().getMax());
     EXPECT_EQ("[^A-Z]", subnet->getHostnameCharSet().get());
     EXPECT_EQ("x", subnet->getHostnameCharReplacement().get());
     EXPECT_EQ("random", subnet->getAllocatorType().get());
@@ -907,7 +907,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
         Option6AddrLst>(opt_dns_servers.option_);
     ASSERT_TRUE(dns_servers);
     Option6AddrLst::AddressContainer addresses = dns_servers->getAddresses();
-    ASSERT_EQ(1, addresses.size());
+    ASSERT_EQ(1U, addresses.size());
     EXPECT_EQ("2001:db8:1::cafe", addresses[0].toText());
 }
 
@@ -1043,7 +1043,7 @@ TEST_F(SharedNetwork6ParserTest, evalClientClasses) {
     ASSERT_TRUE(network);
 
     const ClientClasses& classes = network->getAdditionalClasses();
-    EXPECT_EQ(2, classes.size());
+    EXPECT_EQ(2U, classes.size());
     EXPECT_EQ("alpha, beta", classes.toText());
 }
 
@@ -1216,7 +1216,7 @@ TEST_F(SharedNetwork4ParserTest, deprecatedRequireClientClasses) {
     ASSERT_TRUE(network);
 
     const auto cclasses = network->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -1260,7 +1260,7 @@ TEST_F(SharedNetwork6ParserTest, deprecatedRequireClientClasses) {
     ASSERT_TRUE(network);
 
     const auto cclasses = network->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -1304,7 +1304,7 @@ TEST_F(SharedNetwork4ParserTest, deprecatedClientClass) {
     ASSERT_TRUE(network);
 
     const auto cclasses = network->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 
@@ -1346,7 +1346,7 @@ TEST_F(SharedNetwork6ParserTest, deprecatedClientClass) {
     ASSERT_TRUE(network);
 
     const auto cclasses = network->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 

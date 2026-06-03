@@ -491,15 +491,15 @@ TEST_F(Lease4Test, fromElement) {
     ASSERT_TRUE(lease);
 
     EXPECT_EQ("192.0.2.3", lease->addr_.toText());
-    EXPECT_EQ(789, static_cast<uint32_t>(lease->subnet_id_));
-    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
+    EXPECT_EQ(789U, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5U, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     ASSERT_TRUE(lease->client_id_);
     EXPECT_EQ("17:34:e2:ff:09:92:54", lease->client_id_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
     EXPECT_EQ(lease->cltt_, lease->current_cltt_);
-    EXPECT_EQ(3600, lease->valid_lft_);
+    EXPECT_EQ(3600U, lease->valid_lft_);
     EXPECT_EQ(lease->valid_lft_, lease->current_valid_lft_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
@@ -609,7 +609,7 @@ TEST_F(Lease4Test, decline) {
     EXPECT_FALSE(lease.fqdn_fwd_);
     EXPECT_FALSE(lease.fqdn_rev_);
     EXPECT_EQ(Lease::STATE_DECLINED, lease.state_);
-    EXPECT_EQ(123, lease.valid_lft_);
+    EXPECT_EQ(123U, lease.valid_lft_);
     EXPECT_FALSE(lease.getContext());
 }
 
@@ -668,8 +668,8 @@ TEST(Lease6Test, constructorDefault) {
         EXPECT_TRUE(lease->iaid_ == iaid);
         EXPECT_TRUE(lease->subnet_id_ == subnet_id);
         EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
-        EXPECT_TRUE(lease->preferred_lft_ == 100);
-        EXPECT_TRUE(lease->valid_lft_ == 200);
+        EXPECT_TRUE(lease->preferred_lft_ == 100U);
+        EXPECT_TRUE(lease->valid_lft_ == 200U);
         EXPECT_FALSE(lease->fqdn_fwd_);
         EXPECT_FALSE(lease->fqdn_rev_);
         EXPECT_TRUE(lease->hostname_.empty());
@@ -731,8 +731,8 @@ TEST(Lease6Test, constructorWithFQDN) {
         EXPECT_TRUE(lease->iaid_ == iaid);
         EXPECT_TRUE(lease->subnet_id_ == subnet_id);
         EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
-        EXPECT_TRUE(lease->preferred_lft_ == 100);
-        EXPECT_TRUE(lease->valid_lft_ == 200);
+        EXPECT_TRUE(lease->preferred_lft_ == 100U);
+        EXPECT_TRUE(lease->valid_lft_ == 200U);
         EXPECT_TRUE(lease->fqdn_fwd_);
         EXPECT_TRUE(lease->fqdn_rev_);
         EXPECT_EQ("host.example.com.", lease->hostname_);
@@ -962,7 +962,7 @@ TEST(Lease6Test, decline) {
     ASSERT_TRUE(lease.duid_);
     ASSERT_EQ("00:00:00", lease.duid_->toText());
     ASSERT_FALSE(lease.hwaddr_);
-    EXPECT_EQ(0, lease.preferred_lft_);
+    EXPECT_EQ(0U, lease.preferred_lft_);
 
     EXPECT_TRUE(now <= lease.cltt_);
     EXPECT_TRUE(lease.cltt_ <= now + 1);
@@ -970,7 +970,7 @@ TEST(Lease6Test, decline) {
     EXPECT_FALSE(lease.fqdn_fwd_);
     EXPECT_FALSE(lease.fqdn_rev_);
     EXPECT_EQ(Lease::STATE_DECLINED, lease.state_);
-    EXPECT_EQ(123, lease.valid_lft_);
+    EXPECT_EQ(123U, lease.valid_lft_);
     EXPECT_FALSE(lease.getContext());
 }
 
@@ -1212,7 +1212,7 @@ TEST(Lease6Test, toElementPrefix) {
     ConstElementPtr ctx = l->get("user-context");
     ASSERT_TRUE(ctx);
     ASSERT_EQ(Element::map, ctx->getType());
-    EXPECT_EQ(1, ctx->size());
+    EXPECT_EQ(1U, ctx->size());
     ASSERT_TRUE(ctx->contains("comment"));
     EXPECT_EQ("a comment", ctx->get("comment")->stringValue());
 
@@ -1246,13 +1246,13 @@ TEST(Lease6Test, fromElementNA) {
     ASSERT_TRUE(lease);
 
     EXPECT_EQ("2001:db8::1", lease->addr_.toText());
-    EXPECT_EQ(5678, static_cast<uint32_t>(lease->subnet_id_));
-    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
+    EXPECT_EQ(5678U, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5U, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
     EXPECT_EQ(lease->cltt_, lease->current_cltt_);
-    EXPECT_EQ(800, lease->valid_lft_);
+    EXPECT_EQ(800U, lease->valid_lft_);
     EXPECT_EQ(lease->valid_lft_, lease->current_valid_lft_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
@@ -1263,11 +1263,11 @@ TEST(Lease6Test, fromElementNA) {
 
     // IPv6 specific properties.
     EXPECT_EQ(Lease::TYPE_NA, lease->type_);
-    EXPECT_EQ(128, lease->prefixlen_);
-    EXPECT_EQ(123456, lease->iaid_);
+    EXPECT_EQ(128U, lease->prefixlen_);
+    EXPECT_EQ(123456U, lease->iaid_);
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
-    EXPECT_EQ(400, lease->preferred_lft_);
+    EXPECT_EQ(400U, lease->preferred_lft_);
 }
 
 // Verify that the IA_PD can be created from JSON.
@@ -1296,13 +1296,13 @@ TEST(Lease6Test, fromElementPD) {
     ASSERT_TRUE(lease);
 
     EXPECT_EQ("3000::", lease->addr_.toText());
-    EXPECT_EQ(1234, static_cast<uint32_t>(lease->subnet_id_));
-    EXPECT_EQ(5, static_cast<uint32_t>(lease->pool_id_));
+    EXPECT_EQ(1234U, static_cast<uint32_t>(lease->subnet_id_));
+    EXPECT_EQ(5U, static_cast<uint32_t>(lease->pool_id_));
     ASSERT_TRUE(lease->hwaddr_);
     EXPECT_EQ("hwtype=1 08:00:2b:02:3f:4e", lease->hwaddr_->toText());
     EXPECT_EQ(12345678, lease->cltt_);
     EXPECT_EQ(lease->cltt_, lease->current_cltt_);
-    EXPECT_EQ(600, lease->valid_lft_);
+    EXPECT_EQ(600U, lease->valid_lft_);
     EXPECT_EQ(lease->valid_lft_, lease->current_valid_lft_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
@@ -1313,10 +1313,10 @@ TEST(Lease6Test, fromElementPD) {
     // IPv6 specific properties.
     EXPECT_EQ(Lease::TYPE_PD, lease->type_);
     EXPECT_EQ(32, static_cast<int>(lease->prefixlen_));
-    EXPECT_EQ(123456, lease->iaid_);
+    EXPECT_EQ(123456U, lease->iaid_);
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
-    EXPECT_EQ(400, lease->preferred_lft_);
+    EXPECT_EQ(400U, lease->preferred_lft_);
 }
 
   // Verify that a registered Lease6 can be created from JSON.

@@ -88,7 +88,7 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
     // Sanity check that all 10 option definitions are there.
     OptionDefContainerPtr option_defs1 = cfg.getAll("isc");
     ASSERT_TRUE(option_defs1);
-    ASSERT_EQ(10, option_defs1->size());
+    ASSERT_EQ(10U, option_defs1->size());
 
     // Iterate over all option definitions and check that they have
     // valid codes. Also, their order should be the same as they
@@ -104,7 +104,7 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
     // Sanity check that all 10 option definitions are there.
     OptionDefContainerPtr option_defs2 = cfg.getAll("abcde");
     ASSERT_TRUE(option_defs2);
-    ASSERT_EQ(10, option_defs2->size());
+    ASSERT_EQ(10U, option_defs2->size());
 
     // Check that the option codes are valid.
     code = 105;
@@ -124,28 +124,28 @@ TEST(CfgOptionDefTest, getAllThenDelete) {
     // Check that we can delete option definitions by id.
     uint64_t num_deleted = 0;
     ASSERT_NO_THROW(num_deleted = cfg.del(123));
-    EXPECT_EQ(10, num_deleted);
+    EXPECT_EQ(10U, num_deleted);
 
     option_defs1 = cfg.getAll("isc");
     ASSERT_TRUE(option_defs1);
-    ASSERT_EQ(0, option_defs1->size());
+    ASSERT_EQ(0U, option_defs1->size());
 
     option_defs2 = cfg.getAll("abcde");
     ASSERT_TRUE(option_defs2);
-    ASSERT_EQ(10, option_defs2->size());
+    ASSERT_EQ(10U, option_defs2->size());
 
     // Second attempt to delete the same option definitions should
     // result in 0 deletions.
     ASSERT_NO_THROW(num_deleted = cfg.del(123));
-    EXPECT_EQ(0, num_deleted);
+    EXPECT_EQ(0U, num_deleted);
 
     // Delete all other option definitions.
     ASSERT_NO_THROW(num_deleted = cfg.del(234));
-    EXPECT_EQ(10, num_deleted);
+    EXPECT_EQ(10U, num_deleted);
 
     option_defs2 = cfg.getAll("abcde");
     ASSERT_TRUE(option_defs2);
-    ASSERT_EQ(0, option_defs2->size());
+    ASSERT_EQ(0U, option_defs2->size());
 }
 
 // This test verifies that single option definition is correctly

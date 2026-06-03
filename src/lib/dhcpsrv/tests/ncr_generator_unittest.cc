@@ -206,7 +206,7 @@ public:
     void testNoUpdate(const NameChangeType chg_type, const bool fwd, const bool rev,
                       const std::string& fqdn) {
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
-        ASSERT_EQ(0, d2_mgr_.getQueueSize());
+        ASSERT_EQ(0U, d2_mgr_.getQueueSize());
     }
 
     /// @brief Test that sending an NCR while DNS updates would not throw.
@@ -237,7 +237,7 @@ public:
         // Queue NCR.
         ASSERT_NO_FATAL_FAILURE(sendNCR(chg_type, fwd, rev, fqdn));
         // Expecting one NCR be generated.
-        ASSERT_EQ(1, d2_mgr_.getQueueSize());
+        ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
         // Calculate expected ttl.
         uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_, ddns_ttl_percent,
@@ -255,7 +255,7 @@ public:
     void testNullLease(const NameChangeType chg_type) {
         lease_.reset();
         ASSERT_NO_FATAL_FAILURE(queueNCR(chg_type, lease_));
-        EXPECT_EQ(0, d2_mgr_.getQueueSize());
+        EXPECT_EQ(0U, d2_mgr_.getQueueSize());
     }
 };
 
@@ -647,7 +647,7 @@ TEST_F(NCRGenerator4Test, useClientId) {
     lease_->client_id_ = ClientId::fromText("01:01:01:01");
 
     ASSERT_NO_FATAL_FAILURE(queueRemovalNCR(true, true, "myhost.example.com."));
-    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    ASSERT_EQ(1U, d2_mgr_.getQueueSize());
 
     uint32_t ttl = calculateDdnsTtl(lease_->valid_lft_);
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,

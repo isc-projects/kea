@@ -68,8 +68,8 @@ TEST_F(CfgMultiThreadingTest, extract) {
     ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
                                                queue_size));
     EXPECT_EQ(enabled, true);
-    EXPECT_EQ(thread_count, 4);
-    EXPECT_EQ(queue_size, 64);
+    EXPECT_EQ(thread_count, 4U);
+    EXPECT_EQ(queue_size, 64U);
 
     content_json = "{}";
     ASSERT_NO_THROW(param = Element::fromJSON(content_json))
@@ -78,8 +78,8 @@ TEST_F(CfgMultiThreadingTest, extract) {
     ASSERT_NO_THROW(CfgMultiThreading::extract(param, enabled, thread_count,
                     queue_size));
     EXPECT_EQ(enabled, true);
-    EXPECT_EQ(thread_count, 0);
-    EXPECT_EQ(queue_size, 0);
+    EXPECT_EQ(thread_count, 0U);
+    EXPECT_EQ(queue_size, 0U);
 
     enabled = true;
     thread_count = 4;
@@ -88,16 +88,16 @@ TEST_F(CfgMultiThreadingTest, extract) {
     ASSERT_NO_THROW(CfgMultiThreading::extract(ConstElementPtr(), enabled,
                     thread_count, queue_size));
     EXPECT_EQ(enabled, true);
-    EXPECT_EQ(thread_count, 0);
-    EXPECT_EQ(queue_size, 0);
+    EXPECT_EQ(thread_count, 0U);
+    EXPECT_EQ(queue_size, 0U);
 }
 
 /// @brief Verifies that applying multi threading settings works
 TEST_F(CfgMultiThreadingTest, apply) {
     EXPECT_FALSE(MultiThreadingMgr::instance().getMode());
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0);
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 0);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 0U);
+    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 0U);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 0U);
     std::string content_json =
         "{"
         "    \"enable-multi-threading\": true,\n"
@@ -109,9 +109,9 @@ TEST_F(CfgMultiThreadingTest, apply) {
                             << "invalid context_json, test is broken";
     CfgMultiThreading::apply(param);
     EXPECT_TRUE(MultiThreadingMgr::instance().getMode());
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 4);
-    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 64);
-    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 64);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPoolSize(), 4U);
+    EXPECT_EQ(MultiThreadingMgr::instance().getPacketQueueSize(), 64U);
+    EXPECT_EQ(MultiThreadingMgr::instance().getThreadPool().getMaxQueueSize(), 64U);
 }
 
 }  // namespace

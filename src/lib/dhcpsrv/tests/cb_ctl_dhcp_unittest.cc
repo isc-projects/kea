@@ -629,7 +629,7 @@ public:
             (getTimestamp("dhcp4_client_class") > lb_modification_time)) {
             ASSERT_TRUE(found_class);
             ASSERT_TRUE(found_class->getMatchExpr());
-            EXPECT_GT(found_class->getMatchExpr()->size(), 0);
+            EXPECT_GT(found_class->getMatchExpr()->size(), 0U);
             EXPECT_EQ("first-class", found_class->getName());
 
             // Check for the standard class option, make sure it has been "created".
@@ -1550,7 +1550,7 @@ public:
             (getTimestamp("dhcp6_client_class") > lb_modification_time)) {
             ASSERT_TRUE(found_class);
             ASSERT_TRUE(found_class->getMatchExpr());
-            EXPECT_GT(found_class->getMatchExpr()->size(), 0);
+            EXPECT_GT(found_class->getMatchExpr()->size(), 0U);
             EXPECT_EQ("first-class", found_class->getName());
 
             // Check for class option, make sure it has been "created".

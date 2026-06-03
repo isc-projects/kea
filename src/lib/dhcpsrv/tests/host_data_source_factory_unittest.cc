@@ -143,7 +143,7 @@ TEST_F(HostDataSourceFactoryTest, deregisterFactory) {
 TEST_F(HostDataSourceFactoryTest, add) {
     EXPECT_TRUE(registerFactory());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem"));
-    ASSERT_EQ(1, sources_.size());
+    ASSERT_EQ(1U, sources_.size());
     EXPECT_EQ("mem", sources_[0]->getType());
 }
 
@@ -170,7 +170,7 @@ TEST_F(HostDataSourceFactoryTest, del) {
     // Add mem
     EXPECT_TRUE(registerFactory());
     EXPECT_NO_THROW(HostDataSourceFactory::add(sources_, "type=mem"));
-    ASSERT_EQ(1, sources_.size());
+    ASSERT_EQ(1U, sources_.size());
 
     // Delete another
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "another"));
@@ -211,7 +211,7 @@ TEST_F(HostDataSourceFactoryTest, multiple) {
     EXPECT_TRUE(HostDataSourceFactory::del(sources_, "mem1"));
 
     // No more sources
-    EXPECT_EQ(0, sources_.size());
+    EXPECT_EQ(0U, sources_.size());
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem1"));
     EXPECT_FALSE(HostDataSourceFactory::del(sources_, "mem2"));
 }

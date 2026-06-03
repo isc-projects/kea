@@ -37,7 +37,7 @@ const Host::IdentifierType LAST_IDENTIFIER_TYPE = Host::IDENT_CLIENT_ID;
 TEST(IPv6ResrvTest, constructorAddress) {
     IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::cafe"));
     EXPECT_EQ("2001:db8:1::cafe", resrv.getPrefix().toText());
-    EXPECT_EQ(128, resrv.getPrefixLen());
+    EXPECT_EQ(128U, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
 }
 
@@ -46,7 +46,7 @@ TEST(IPv6ResrvTest, constructorAddress) {
 TEST(IPv6ResrvTest, constructorPrefix) {
     IPv6Resrv resrv(IPv6Resrv::TYPE_PD, IOAddress("2001:db8:1::"), 64);
     EXPECT_EQ("2001:db8:1::", resrv.getPrefix().toText());
-    EXPECT_EQ(64, resrv.getPrefixLen());
+    EXPECT_EQ(64U, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 }
 
@@ -95,13 +95,13 @@ TEST(IPv6ResrvTest, setPrefix) {
     // Create a reservation using an address and prefix length 128.
     IPv6Resrv resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_EQ("2001:db8:1::1", resrv.getPrefix().toText());
-    ASSERT_EQ(128, resrv.getPrefixLen());
+    ASSERT_EQ(128U, resrv.getPrefixLen());
     ASSERT_EQ(IPv6Resrv::TYPE_NA, resrv.getType());
 
     // Modify the reservation to use a prefix having a length of 48.
     ASSERT_NO_THROW(resrv.set(IPv6Resrv::TYPE_PD, IOAddress("2001:db8::"), 48));
     EXPECT_EQ("2001:db8::", resrv.getPrefix().toText());
-    EXPECT_EQ(48, resrv.getPrefixLen());
+    EXPECT_EQ(48U, resrv.getPrefixLen());
     EXPECT_EQ(IPv6Resrv::TYPE_PD, resrv.getType());
 
     // IPv4 address is invalid for IPv6 reservation.
@@ -131,7 +131,7 @@ TEST(IPv6ResrvTest, setPrefixExcludeOption) {
     EXPECT_EQ("2001:db8:0:1::",
               opt->getExcludedPrefix(resrv.getPrefix(),
                                      resrv.getPrefixLen()).toText());
-    EXPECT_EQ(64, opt->getExcludedPrefixLength());
+    EXPECT_EQ(64U, opt->getExcludedPrefixLength());
     string expected = "2001:db8::/48 (excluded_prefix=2001:db8:0:1::/64)";
     EXPECT_EQ(expected, resrv.toText());
 
@@ -234,11 +234,11 @@ public:
 
 // This test verifies that expected identifier max length is returned.
 TEST_F(HostTest, getIdentifierMaxLength) {
-    EXPECT_EQ(20, Host::getIdentifierMaxLength(Host::IDENT_HWADDR));
-    EXPECT_EQ(130, Host::getIdentifierMaxLength(Host::IDENT_DUID));
-    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_CIRCUIT_ID));
-    EXPECT_EQ(255, Host::getIdentifierMaxLength(Host::IDENT_CLIENT_ID));
-    EXPECT_EQ(128, Host::getIdentifierMaxLength(Host::IDENT_FLEX));
+    EXPECT_EQ(20U, Host::getIdentifierMaxLength(Host::IDENT_HWADDR));
+    EXPECT_EQ(130U, Host::getIdentifierMaxLength(Host::IDENT_DUID));
+    EXPECT_EQ(128U, Host::getIdentifierMaxLength(Host::IDENT_CIRCUIT_ID));
+    EXPECT_EQ(255U, Host::getIdentifierMaxLength(Host::IDENT_CLIENT_ID));
+    EXPECT_EQ(128U, Host::getIdentifierMaxLength(Host::IDENT_FLEX));
 }
 
 // This test verifies that correct identifier name is returned for
@@ -276,8 +276,8 @@ TEST_F(HostTest, createFromHWAddrString) {
 
     // DUID should be null if hardware address is in use.
     EXPECT_FALSE(host->getDuid());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     EXPECT_EQ("somehost.example.org", host->getHostname());
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
@@ -327,8 +327,8 @@ TEST_F(HostTest, createFromDUIDString) {
     // Hardware address must be null if DUID is in use.
     EXPECT_FALSE(host->getHWAddress());
 
-    EXPECT_EQ(10, host->getIPv4SubnetID());
-    EXPECT_EQ(20, host->getIPv6SubnetID());
+    EXPECT_EQ(10U, host->getIPv4SubnetID());
+    EXPECT_EQ(20U, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_EQ("me.example.org", host->getHostname());
     EXPECT_FALSE(host->getContext());
@@ -396,8 +396,8 @@ TEST_F(HostTest, createFromHWAddrBinary) {
 
     // DUID should be null if hardware address is in use.
     EXPECT_FALSE(host->getDuid());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     EXPECT_EQ("somehost.example.org", host->getHostname());
     EXPECT_EQ("192.0.0.2", host->getNextServer().toText());
@@ -444,8 +444,8 @@ TEST_F(HostTest, createFromDuidBinary) {
 
     // Hardware address should be null if DUID is in use.
     EXPECT_FALSE(host->getHWAddress());
-    EXPECT_EQ(10, host->getIPv4SubnetID());
-    EXPECT_EQ(20, host->getIPv6SubnetID());
+    EXPECT_EQ(10U, host->getIPv4SubnetID());
+    EXPECT_EQ(20U, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_EQ("me.example.org", host->getHostname());
     EXPECT_FALSE(host->getContext());
@@ -486,8 +486,8 @@ TEST_F(HostTest, createFromIdentifierBinary) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -532,8 +532,8 @@ TEST_F(HostTest, createFromIdentifierHex) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -577,8 +577,8 @@ TEST_F(HostTest, createFromIdentifierString) {
         EXPECT_EQ(identifier_without_quotes.str(), identifier_returned_str);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -632,8 +632,8 @@ TEST_F(HostTest, setIdentifierHex) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -665,8 +665,8 @@ TEST_F(HostTest, setIdentifierHex) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -704,8 +704,8 @@ TEST_F(HostTest, setIdentifierBinary) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -724,8 +724,8 @@ TEST_F(HostTest, setIdentifierBinary) {
         EXPECT_TRUE(identifier_returned == identifier);
         EXPECT_EQ(type, host->getIdentifierType());
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(20, host->getIPv6SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
+        EXPECT_EQ(20U, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
         EXPECT_EQ("me.example.org", host->getHostname());
         EXPECT_FALSE(host->getContext());
@@ -799,8 +799,8 @@ TEST_F(HostTest, setValues) {
                                         IOAddress("192.0.2.3"),
                                         "some-host.eXAMple.org")));
 
-    ASSERT_EQ(1, host->getIPv4SubnetID());
-    ASSERT_EQ(2, host->getIPv6SubnetID());
+    ASSERT_EQ(1U, host->getIPv4SubnetID());
+    ASSERT_EQ(2U, host->getIPv6SubnetID());
     ASSERT_EQ("192.0.2.3", host->getIPv4Reservation().toText());
     ASSERT_EQ("some-host.eXAMple.org", host->getHostname());
     ASSERT_EQ("some-host.example.org", host->getLowerHostname());
@@ -820,8 +820,8 @@ TEST_F(HostTest, setValues) {
     host->setContext(Element::fromJSON(user_context));
     host->setNegative(true);
 
-    EXPECT_EQ(123, host->getIPv4SubnetID());
-    EXPECT_EQ(234, host->getIPv6SubnetID());
+    EXPECT_EQ(123U, host->getIPv4SubnetID());
+    EXPECT_EQ(234U, host->getIPv6SubnetID());
     EXPECT_EQ("10.0.0.1", host->getIPv4Reservation().toText());
     EXPECT_EQ("other-host.eXAMple.org", host->getHostname());
     ASSERT_EQ("other-host.example.org", host->getLowerHostname());
@@ -950,7 +950,7 @@ TEST_F(HostTest, addOptions4) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = host.getCfgOption4()->getAll(DHCP4_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // It should be possible to retrieve DHCPv6 options but the container
     // should be empty.
@@ -975,7 +975,7 @@ TEST_F(HostTest, addOptions4) {
 
     options = host.getCfgOption4()->getAll("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -1036,7 +1036,7 @@ TEST_F(HostTest, addOptions6) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = host.getCfgOption6()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // It should be possible to retrieve DHCPv4 options but the container
     // should be empty.
@@ -1061,7 +1061,7 @@ TEST_F(HostTest, addOptions6) {
 
     options = host.getCfgOption6()->getAll("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -1128,7 +1128,6 @@ TEST_F(HostTest, getIdentifierAsText) {
 // name works correctly.
 TEST_F(HostTest, getIdentifierName) {
     EXPECT_EQ("hw-address", Host::getIdentifierName(Host::IDENT_HWADDR));
-
 }
 
 // This test checks that Host object is correctly described in the
@@ -1420,11 +1419,11 @@ TEST_F(HostTest, hostId) {
                                         SubnetID(1), SubnetID(2),
                                         IOAddress("192.0.2.3"),
                                         "myhost.example.com")));
-    EXPECT_EQ(0, host->getHostId());
+    EXPECT_EQ(0U, host->getHostId());
 
     EXPECT_NO_THROW(host->setHostId(12345));
 
-    EXPECT_EQ(12345, host->getHostId());
+    EXPECT_EQ(12345U, host->getHostId());
 }
 
 // Test verifies if we can modify the host keys.
@@ -1435,7 +1434,7 @@ TEST_F(HostTest, keys) {
                                         IOAddress("192.0.2.3"),
                                         "myhost.example.com")));
     // Key must be empty
-    EXPECT_EQ(0, host->getKey().getAuthKey().size());
+    EXPECT_EQ(0U, host->getKey().getAuthKey().size());
     EXPECT_EQ("", host->getKey().toText());
 
     // now set to random value
@@ -1475,10 +1474,10 @@ TEST(AuthKeyTest, basicTest) {
     // Call the constructor with default argument
     // Default constructor should generate random string of 16 bytes
     AuthKey defaultKey;
-    ASSERT_EQ(16, defaultKey.getAuthKey().size());
+    ASSERT_EQ(16U, defaultKey.getAuthKey().size());
 
     AuthKey longKey("0123456789abcdef1122334455667788");
-    ASSERT_EQ(16, longKey.getAuthKey().size());
+    ASSERT_EQ(16U, longKey.getAuthKey().size());
 
     // Check the setters for valid and invalid string
     string key16ByteStr = "000102030405060708090A0B0C0D0E0F";
@@ -1490,7 +1489,7 @@ TEST(AuthKeyTest, basicTest) {
     AuthKey defaultTestKey;
 
     defaultTestKey.setAuthKey(key16ByteStr);
-    ASSERT_EQ(16, defaultTestKey.getAuthKey().size());
+    ASSERT_EQ(16U, defaultTestKey.getAuthKey().size());
     ASSERT_EQ(key16ByteStr, defaultTestKey.toText());
     ASSERT_EQ(key16ByteBin, defaultTestKey.getAuthKey());
 

@@ -58,12 +58,12 @@ TEST(ValueStorageTest, BooleanTesting) {
     EXPECT_FALSE(testStore.getParam("firstBool"));
     EXPECT_TRUE(testStore.getParam("secondBool"));
 
-    EXPECT_EQ(123, testStore.getPosition("firstBool").line_);
-    EXPECT_EQ(234, testStore.getPosition("firstBool").pos_);
+    EXPECT_EQ(123U, testStore.getPosition("firstBool").line_);
+    EXPECT_EQ(234U, testStore.getPosition("firstBool").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("firstBool").file_);
 
-    EXPECT_EQ(10, testStore.getPosition("secondBool").line_);
-    EXPECT_EQ(20, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ(10U, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(20U, testStore.getPosition("secondBool").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("secondBool").file_);
 
     // Verify that we can update parameters.
@@ -73,12 +73,12 @@ TEST(ValueStorageTest, BooleanTesting) {
     EXPECT_TRUE(testStore.getParam("firstBool"));
     EXPECT_FALSE(testStore.getParam("secondBool"));
 
-    EXPECT_EQ(555, testStore.getPosition("firstBool").line_);
-    EXPECT_EQ(111, testStore.getPosition("firstBool").pos_);
+    EXPECT_EQ(555U, testStore.getPosition("firstBool").line_);
+    EXPECT_EQ(111U, testStore.getPosition("firstBool").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("firstBool").file_);
 
-    EXPECT_EQ(1, testStore.getPosition("secondBool").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondBool").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("secondBool").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
@@ -91,8 +91,8 @@ TEST(ValueStorageTest, BooleanTesting) {
     // Verify that the delete was safe and the store still operates.
     EXPECT_FALSE(testStore.getParam("secondBool"));
 
-    EXPECT_EQ(1, testStore.getPosition("secondBool").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondBool").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondBool").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondBool").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("secondBool").file_);
 
     // Verify that looking for a parameter that never existed throws.
@@ -126,12 +126,12 @@ TEST(ValueStorageTest, Uint32Testing) {
     EXPECT_EQ(testStore.getParam("firstInt"), int_one);
     EXPECT_EQ(testStore.getParam("secondInt"), int_two);
 
-    EXPECT_EQ(123, testStore.getPosition("firstInt").line_);
-    EXPECT_EQ(234, testStore.getPosition("firstInt").pos_);
+    EXPECT_EQ(123U, testStore.getPosition("firstInt").line_);
+    EXPECT_EQ(234U, testStore.getPosition("firstInt").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("firstInt").file_);
 
-    EXPECT_EQ(10, testStore.getPosition("secondInt").line_);
-    EXPECT_EQ(20, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ(10U, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(20U, testStore.getPosition("secondInt").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that we can update parameters.
@@ -141,12 +141,12 @@ TEST(ValueStorageTest, Uint32Testing) {
     EXPECT_EQ(testStore.getParam("firstInt"), int_one);
     EXPECT_EQ(testStore.getParam("secondInt"), int_two);
 
-    EXPECT_EQ(555, testStore.getPosition("firstInt").line_);
-    EXPECT_EQ(111, testStore.getPosition("firstInt").pos_);
+    EXPECT_EQ(555U, testStore.getPosition("firstInt").line_);
+    EXPECT_EQ(111U, testStore.getPosition("firstInt").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("firstInt").file_);
 
-    EXPECT_EQ(1, testStore.getPosition("secondInt").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondInt").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
@@ -159,8 +159,8 @@ TEST(ValueStorageTest, Uint32Testing) {
     // Verify that the delete was safe and the store still operates.
     EXPECT_EQ(testStore.getParam("secondInt"), int_two);
 
-    EXPECT_EQ(1, testStore.getPosition("secondInt").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondInt").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondInt").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondInt").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("secondInt").file_);
 
     // Verify that looking for a parameter that never existed throws.
@@ -196,12 +196,12 @@ TEST(ValueStorageTest, StringTesting) {
     EXPECT_EQ(testStore.getParam("firstString"), string_one);
     EXPECT_EQ(testStore.getParam("secondString"), string_two);
 
-    EXPECT_EQ(123, testStore.getPosition("firstString").line_);
-    EXPECT_EQ(234, testStore.getPosition("firstString").pos_);
+    EXPECT_EQ(123U, testStore.getPosition("firstString").line_);
+    EXPECT_EQ(234U, testStore.getPosition("firstString").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("firstString").file_);
 
-    EXPECT_EQ(10, testStore.getPosition("secondString").line_);
-    EXPECT_EQ(20, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ(10U, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(20U, testStore.getPosition("secondString").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that we can update parameters.
@@ -216,12 +216,12 @@ TEST(ValueStorageTest, StringTesting) {
     EXPECT_EQ(testStore.getParam("firstString"), string_one);
     EXPECT_EQ(testStore.getParam("secondString"), string_two);
 
-    EXPECT_EQ(555, testStore.getPosition("firstString").line_);
-    EXPECT_EQ(111, testStore.getPosition("firstString").pos_);
+    EXPECT_EQ(555U, testStore.getPosition("firstString").line_);
+    EXPECT_EQ(111U, testStore.getPosition("firstString").pos_);
     EXPECT_EQ("kea.conf", testStore.getPosition("firstString").file_);
 
-    EXPECT_EQ(1, testStore.getPosition("secondString").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondString").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that we can delete a parameter and it will no longer be found.
@@ -234,8 +234,8 @@ TEST(ValueStorageTest, StringTesting) {
     // Verify that the delete was safe and the store still operates.
     EXPECT_EQ(testStore.getParam("secondString"), string_two);
 
-    EXPECT_EQ(1, testStore.getPosition("secondString").line_);
-    EXPECT_EQ(3, testStore.getPosition("secondString").pos_);
+    EXPECT_EQ(1U, testStore.getPosition("secondString").line_);
+    EXPECT_EQ(3U, testStore.getPosition("secondString").pos_);
     EXPECT_EQ("keax.conf", testStore.getPosition("secondString").file_);
 
     // Verify that looking for a parameter that never existed throws.
@@ -406,7 +406,7 @@ TEST_F(CfgMgrTest, staging) {
         const_config = cfg_mgr.getCurrentCfg();
         ASSERT_TRUE(const_config) << "Returned NULL current configuration"
             " for iteration " << i;
-        EXPECT_EQ(0, const_config->getSequence())
+        EXPECT_EQ(0U, const_config->getSequence())
             << "Returned invalid sequence number "
             << const_config->getSequence() << " for iteration " << i;
     }
@@ -422,7 +422,7 @@ TEST_F(CfgMgrTest, staging) {
             " iteration " << i;
         // The sequence id is 1 for staging because it is ahead of current
         // configuration having sequence number 0.
-        EXPECT_EQ(1, config->getSequence()) << "Returned invalid sequence"
+        EXPECT_EQ(1U, config->getSequence()) << "Returned invalid sequence"
             " number " << config->getSequence() << " for iteration " << i;
     }
 
@@ -435,7 +435,7 @@ TEST_F(CfgMgrTest, staging) {
     ASSERT_TRUE(const_config);
     // Sequence id equal to 1 indicates that the current configuration points
     // to the configuration that used to be a staging configuration previously.
-    EXPECT_EQ(1, const_config->getSequence());
+    EXPECT_EQ(1U, const_config->getSequence());
     // Last commit timestamp should be between before and after.
     auto reload = const_config->getLastCommitTime();
     ASSERT_FALSE(reload.is_not_a_date_time());
@@ -446,7 +446,7 @@ TEST_F(CfgMgrTest, staging) {
     // sequence id.
     config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(config);
-    EXPECT_EQ(2, config->getSequence());
+    EXPECT_EQ(2U, config->getSequence());
 
     // Let's execute commit a couple of times. The first invocation to commit
     // changes the configuration having sequence 2 to current configuration.
@@ -458,7 +458,7 @@ TEST_F(CfgMgrTest, staging) {
     // The current configuration now have sequence number 2.
     const_config = cfg_mgr.getCurrentCfg();
     ASSERT_TRUE(const_config);
-    EXPECT_EQ(2, const_config->getSequence());
+    EXPECT_EQ(2U, const_config->getSequence());
 
     // Clear configuration along with a history.
     cfg_mgr.clear();
@@ -467,13 +467,13 @@ TEST_F(CfgMgrTest, staging) {
     // new staging configuration.
     config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(config);
-    EXPECT_EQ(1, config->getSequence());
+    EXPECT_EQ(1U, config->getSequence());
 
     // Modify the staging configuration.
     config->addLoggingInfo(LoggingInfo());
     ASSERT_TRUE(config);
     // The modified staging configuration should have one logger configured.
-    ASSERT_EQ(1, config->getLoggingInfo().size());
+    ASSERT_EQ(1U, config->getLoggingInfo().size());
 
     // Remove the staging configuration, including the logger.
     ASSERT_NO_THROW(cfg_mgr.clearStagingConfiguration());
@@ -482,7 +482,7 @@ TEST_F(CfgMgrTest, staging) {
     // rollback worked.
     config = cfg_mgr.getStagingCfg();
     ASSERT_TRUE(config);
-    EXPECT_EQ(0, config->getLoggingInfo().size());
+    EXPECT_EQ(0U, config->getLoggingInfo().size());
 }
 
 // This test verifies that the address family can be set and obtained
@@ -536,7 +536,7 @@ TEST_F(CfgMgrTest, commitStats4) {
     // Let's commit it
     cfg_mgr.commit();
 
-    EXPECT_EQ(15, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ(15U, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:02", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-addresses"));
@@ -549,7 +549,7 @@ TEST_F(CfgMgrTest, commitStats4) {
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(128, total_addrs->getInteger().first);
     EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
-    EXPECT_EQ(15, total_addrs->getMaxSampleCount().second);
+    EXPECT_EQ(15U, total_addrs->getMaxSampleCount().second);
     EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
     EXPECT_EQ("00:00:02", durationToText(total_addrs->getMaxSampleAge().second, 0));
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].total-addresses"));
@@ -607,7 +607,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentStats4) {
 
     // The stats should have been updated and so we should be able to get
     // observations for subnet 42.
-    EXPECT_EQ(16, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ(16U, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:03", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-addresses"));
@@ -705,7 +705,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     // Let's commit it
     cfg_mgr.commit();
 
-    EXPECT_EQ(14, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ(14U, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:10", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-nas"));
@@ -723,7 +723,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     ASSERT_TRUE(total_addrs);
     EXPECT_EQ(128, total_addrs->getBigInteger().first);
     EXPECT_TRUE(total_addrs->getMaxSampleCount().first);
-    EXPECT_EQ(14, total_addrs->getMaxSampleCount().second);
+    EXPECT_EQ(14U, total_addrs->getMaxSampleCount().second);
     EXPECT_FALSE(total_addrs->getMaxSampleAge().first);
     EXPECT_EQ("00:00:10", durationToText(total_addrs->getMaxSampleAge().second, 0));
     EXPECT_NO_THROW(total_addrs = stats_mgr.getObservation("subnet[42].pool[0].total-nas"));
@@ -741,7 +741,7 @@ TEST_F(CfgMgrTest, commitStats6) {
     ASSERT_TRUE(total_prfx);
     EXPECT_EQ(65536, total_prfx->getBigInteger().first);
     EXPECT_TRUE(total_prfx->getMaxSampleCount().first);
-    EXPECT_EQ(14, total_prfx->getMaxSampleCount().second);
+    EXPECT_EQ(14U, total_prfx->getMaxSampleCount().second);
     EXPECT_FALSE(total_prfx->getMaxSampleAge().first);
     EXPECT_EQ("00:00:10", durationToText(total_prfx->getMaxSampleAge().second, 0));
     EXPECT_NO_THROW(total_prfx = stats_mgr.getObservation("subnet[42].pd-pool[0].total-pds"));
@@ -806,7 +806,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentStats6) {
 
     // The stats should have been updated and so we should be able to get
     // observations for subnet 42.
-    EXPECT_EQ(17, stats_mgr.getMaxSampleCountDefault());
+    EXPECT_EQ(17U, stats_mgr.getMaxSampleCountDefault());
     EXPECT_EQ("00:00:04", durationToText(stats_mgr.getMaxSampleAgeDefault(), 0));
 
     EXPECT_TRUE(stats_mgr.getObservation("subnet[42].total-nas"));
@@ -889,14 +889,14 @@ TEST_F(CfgMgrTest, mergeIntoStagingCfg) {
     ASSERT_NO_THROW(ext_cfg1 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg1);
     // It should pick the first available sequence number.
-    EXPECT_EQ(0, ext_cfg1->getSequence());
+    EXPECT_EQ(0U, ext_cfg1->getSequence());
 
     // Create second external configuration.
     SrvConfigPtr ext_cfg2;
     ASSERT_NO_THROW(ext_cfg2 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg2);
     // It should pick the next available sequence number.
-    EXPECT_EQ(1, ext_cfg2->getSequence());
+    EXPECT_EQ(1U, ext_cfg2->getSequence());
 
     // Those must be two separate instances.
     ASSERT_FALSE(ext_cfg1 == ext_cfg2);
@@ -925,7 +925,7 @@ TEST_F(CfgMgrTest, mergeIntoStagingCfg) {
     SrvConfigPtr ext_cfg3;
     ASSERT_NO_THROW(ext_cfg3 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg3);
-    EXPECT_EQ(2, ext_cfg3->getSequence());
+    EXPECT_EQ(2U, ext_cfg3->getSequence());
 
     // Merge the second and third (empty) configuration.
     ASSERT_NO_THROW(cfg_mgr.mergeIntoStagingCfg(ext_cfg2->getSequence()));
@@ -940,7 +940,7 @@ TEST_F(CfgMgrTest, mergeIntoStagingCfg) {
     SrvConfigPtr ext_cfg4;
     ASSERT_NO_THROW(ext_cfg4 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg4);
-    EXPECT_EQ(0, ext_cfg4->getSequence());
+    EXPECT_EQ(0U, ext_cfg4->getSequence());
 
     // Try to commit the staging configuration.
     ASSERT_NO_THROW(cfg_mgr.commit());
@@ -964,14 +964,14 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     ASSERT_NO_THROW(ext_cfg1 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg1);
     // It should pick the first available sequence number.
-    EXPECT_EQ(0, ext_cfg1->getSequence());
+    EXPECT_EQ(0U, ext_cfg1->getSequence());
 
     // Create second external configuration.
     SrvConfigPtr ext_cfg2;
     ASSERT_NO_THROW(ext_cfg2 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg2);
     // It should pick the next available sequence number.
-    EXPECT_EQ(1, ext_cfg2->getSequence());
+    EXPECT_EQ(1U, ext_cfg2->getSequence());
 
     // Those must be two separate instances.
     ASSERT_FALSE(ext_cfg1 == ext_cfg2);
@@ -1011,7 +1011,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     SrvConfigPtr ext_cfg3;
     ASSERT_NO_THROW(ext_cfg3 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg3);
-    EXPECT_EQ(2, ext_cfg3->getSequence());
+    EXPECT_EQ(2U, ext_cfg3->getSequence());
 
     // Merge the second and third (empty) configuration.
     ASSERT_NO_THROW(cfg_mgr.mergeIntoCurrentCfg(ext_cfg2->getSequence()));
@@ -1026,7 +1026,7 @@ TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
     SrvConfigPtr ext_cfg4;
     ASSERT_NO_THROW(ext_cfg4 = cfg_mgr.createExternalCfg());
     ASSERT_TRUE(ext_cfg4);
-    EXPECT_EQ(0, ext_cfg4->getSequence());
+    EXPECT_EQ(0U, ext_cfg4->getSequence());
 }
 
 /// @todo Add unit-tests for testing:

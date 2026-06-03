@@ -153,12 +153,12 @@ TEST_F(ExpirationConfigParserTest, allParameters) {
 
     CfgExpirationPtr cfg;
     ASSERT_NO_THROW(cfg = renderConfig());
-    EXPECT_EQ(20, cfg->getReclaimTimerWaitTime());
-    EXPECT_EQ(35, cfg->getFlushReclaimedTimerWaitTime());
-    EXPECT_EQ(1800, cfg->getHoldReclaimedTime());
-    EXPECT_EQ(50, cfg->getMaxReclaimLeases());
-    EXPECT_EQ(100, cfg->getMaxReclaimTime());
-    EXPECT_EQ(10, cfg->getUnwarnedReclaimCycles());
+    EXPECT_EQ(20U, cfg->getReclaimTimerWaitTime());
+    EXPECT_EQ(35U, cfg->getFlushReclaimedTimerWaitTime());
+    EXPECT_EQ(1800U, cfg->getHoldReclaimedTime());
+    EXPECT_EQ(50U, cfg->getMaxReclaimLeases());
+    EXPECT_EQ(100U, cfg->getMaxReclaimTime());
+    EXPECT_EQ(10U, cfg->getUnwarnedReclaimCycles());
 }
 
 // This test verifies that default values are used if no parameter is
@@ -189,13 +189,13 @@ TEST_F(ExpirationConfigParserTest, someParameters) {
 
     CfgExpirationPtr cfg;
     ASSERT_NO_THROW(cfg = renderConfig());
-    EXPECT_EQ(15, cfg->getReclaimTimerWaitTime());
+    EXPECT_EQ(15U, cfg->getReclaimTimerWaitTime());
     EXPECT_EQ(CfgExpiration::DEFAULT_FLUSH_RECLAIMED_TIMER_WAIT_TIME,
               cfg->getFlushReclaimedTimerWaitTime());
-    EXPECT_EQ(2000, cfg->getHoldReclaimedTime());
+    EXPECT_EQ(2000U, cfg->getHoldReclaimedTime());
     EXPECT_EQ(CfgExpiration::DEFAULT_MAX_RECLAIM_LEASES,
               cfg->getMaxReclaimLeases());
-    EXPECT_EQ(200, cfg->getMaxReclaimTime());
+    EXPECT_EQ(200U, cfg->getMaxReclaimTime());
     EXPECT_EQ(CfgExpiration::DEFAULT_UNWARNED_RECLAIM_CYCLES,
               cfg->getUnwarnedReclaimCycles());
 }
@@ -212,13 +212,13 @@ TEST_F(ExpirationConfigParserTest, otherParameters) {
 
     EXPECT_EQ(CfgExpiration::DEFAULT_RECLAIM_TIMER_WAIT_TIME,
               cfg->getReclaimTimerWaitTime());
-    EXPECT_EQ(50, cfg->getFlushReclaimedTimerWaitTime());
+    EXPECT_EQ(50U, cfg->getFlushReclaimedTimerWaitTime());
     EXPECT_EQ(CfgExpiration::DEFAULT_HOLD_RECLAIMED_TIME,
               cfg->getHoldReclaimedTime());
-    EXPECT_EQ(60, cfg->getMaxReclaimLeases());
+    EXPECT_EQ(60U, cfg->getMaxReclaimLeases());
     EXPECT_EQ(CfgExpiration::DEFAULT_MAX_RECLAIM_TIME,
               cfg->getMaxReclaimTime());
-    EXPECT_EQ(20, cfg->getUnwarnedReclaimCycles());
+    EXPECT_EQ(20U, cfg->getUnwarnedReclaimCycles());
 }
 
 // This test verifies that negative parameter values are not allowed.

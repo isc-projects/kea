@@ -103,7 +103,7 @@ TEST(CfgDbAccessTest, pushHostDbAccessString) {
 
     // Check access strings
     std::list<std::string> hal = cfg.getHostDbAccessStringList();
-    ASSERT_EQ(3, hal.size());
+    ASSERT_EQ(3U, hal.size());
     std::list<std::string>::const_iterator it = hal.cbegin();
     ASSERT_NE(hal.cend(), it);
     EXPECT_EQ("type=mysql", *it);
@@ -120,7 +120,7 @@ TEST(CfgDbAccessTest, pushHostDbAccessString) {
     expected = "[ { \"type\": \"foo\" }, { \"type\": \"bar\" } ]";
     runToElementTest<CfgHostDbAccess>(expected, CfgHostDbAccess(cfg1));
     hal = cfg1.getHostDbAccessStringList();
-    ASSERT_EQ(2, hal.size());
+    ASSERT_EQ(2U, hal.size());
     EXPECT_EQ("type=foo", hal.front());
     EXPECT_EQ("type=bar", hal.back());
 }

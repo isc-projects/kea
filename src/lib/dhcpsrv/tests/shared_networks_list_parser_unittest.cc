@@ -55,7 +55,7 @@ TEST(SharedNetworkListParserTest, parse) {
     EXPECT_EQ("monkey", network2->getName());
     EXPECT_EQ("eth1", network2->getIface().get());
     ASSERT_TRUE(network2->getContext());
-    EXPECT_EQ(1, network2->getContext()->size());
+    EXPECT_EQ(1U, network2->getContext()->size());
     EXPECT_TRUE(network2->getContext()->get("comment"));
 }
 

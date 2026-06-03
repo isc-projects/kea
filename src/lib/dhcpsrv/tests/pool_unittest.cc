@@ -204,16 +204,16 @@ TEST(Pool4Test, in_range) {
 // Checks if the number of possible leases in range is reported correctly.
 TEST(Pool4Test, leasesCount) {
     Pool4 pool1(IOAddress("192.0.2.10"), IOAddress("192.0.2.20"));
-    EXPECT_EQ(11, pool1.getCapacity());
+    EXPECT_EQ(11U, pool1.getCapacity());
 
     Pool4 pool2(IOAddress("192.0.2.0"), IOAddress("192.0.2.255"));
-    EXPECT_EQ(256, pool2.getCapacity());
+    EXPECT_EQ(256U, pool2.getCapacity());
 
     Pool4 pool3(IOAddress("192.168.0.0"), IOAddress("192.168.255.255"));
-    EXPECT_EQ(65536, pool3.getCapacity());
+    EXPECT_EQ(65536U, pool3.getCapacity());
 
     Pool4 pool4(IOAddress("10.0.0.0"), IOAddress("10.255.255.255"));
-    EXPECT_EQ(16777216, pool4.getCapacity());
+    EXPECT_EQ(16777216U, pool4.getCapacity());
 }
 
 // Simple check if toText returns reasonable values
@@ -316,7 +316,7 @@ TEST(Pool4Test, addOptions) {
     // Get options from the pool and check if all 10 are there.
     OptionContainerPtr options = pool->getCfgOption()->getAll("dhcp4");
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp4 option space.
     uint16_t expected_code = 100;
@@ -328,7 +328,7 @@ TEST(Pool4Test, addOptions) {
 
     options = pool->getCfgOption()->getAll("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -411,11 +411,11 @@ TEST(Pool4Test, additionalClasses) {
 
     // Add the first class
     pool->addAdditionalClass("router");
-    EXPECT_EQ(1, pool->getAdditionalClasses().size());
+    EXPECT_EQ(1U, pool->getAdditionalClasses().size());
 
     // Add a second class
     pool->addAdditionalClass("modem");
-    EXPECT_EQ(2, pool->getAdditionalClasses().size());
+    EXPECT_EQ(2U, pool->getAdditionalClasses().size());
     EXPECT_TRUE(pool->getAdditionalClasses().contains("router"));
     EXPECT_TRUE(pool->getAdditionalClasses().contains("modem"));
     EXPECT_FALSE(pool->getAdditionalClasses().contains("foo"));
@@ -497,7 +497,7 @@ TEST(Pool6Test, PD) {
     Pool6 pool1(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
 
     EXPECT_EQ(Lease::TYPE_PD, pool1.getType());
-    EXPECT_EQ(112, pool1.getLength());
+    EXPECT_EQ(112U, pool1.getLength());
     EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
 
@@ -534,7 +534,7 @@ TEST(Pool6Test, PDExclude) {
 
     // Verify pool properties.
     EXPECT_EQ(Lease::TYPE_PD, pool->getType());
-    EXPECT_EQ(112, pool->getLength());
+    EXPECT_EQ(112U, pool->getLength());
     EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
 
@@ -543,7 +543,8 @@ TEST(Pool6Test, PDExclude) {
     ASSERT_TRUE(pd_exclude_option);
     EXPECT_EQ("2001:db8:1::2:2000", pd_exclude_option->
               getExcludedPrefix(IOAddress("2001:db8:1:0:0:0:2::"), 112).toText());
-    EXPECT_EQ(120, static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
+    EXPECT_EQ(120U,
+              static_cast<unsigned>(pd_exclude_option->getExcludedPrefixLength()));
 
     // Create another pool instance, but with the excluded prefix being
     // "unspecified".
@@ -551,7 +552,7 @@ TEST(Pool6Test, PDExclude) {
                                          IOAddress::IPV6_ZERO_ADDRESS(), 0)));
 
     EXPECT_EQ(Lease::TYPE_PD, pool->getType());
-    EXPECT_EQ(112, pool->getLength());
+    EXPECT_EQ(112U, pool->getLength());
     EXPECT_EQ("2001:db8:1::", pool->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool->getLastAddress().toText());
 
@@ -659,10 +660,10 @@ TEST(Pool6Test, toElement) {
 TEST(Pool6Test, leasesCount) {
     Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                 IOAddress("2001:db8::2"));
-    EXPECT_EQ(2, pool1.getCapacity());
+    EXPECT_EQ(2U, pool1.getCapacity());
 
     Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
-    EXPECT_EQ(65536, pool2.getCapacity());
+    EXPECT_EQ(65536U, pool2.getCapacity());
 }
 
 // This test checks that it is possible to specify pool specific options.
@@ -687,7 +688,7 @@ TEST(Pool6Test, addOptions) {
     // Get options from the pool and check if all 10 are there.
     OptionContainerPtr options = pool->getCfgOption()->getAll("dhcp6");
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
@@ -699,7 +700,7 @@ TEST(Pool6Test, addOptions) {
 
     options = pool->getCfgOption()->getAll("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -782,11 +783,11 @@ TEST(Pool6Test, additionalClasses) {
 
     // Add the first class
     pool.addAdditionalClass("router");
-    EXPECT_EQ(1, pool.getAdditionalClasses().size());
+    EXPECT_EQ(1U, pool.getAdditionalClasses().size());
 
     // Add a second class
     pool.addAdditionalClass("modem");
-    EXPECT_EQ(2, pool.getAdditionalClasses().size());
+    EXPECT_EQ(2U, pool.getAdditionalClasses().size());
     EXPECT_TRUE(pool.getAdditionalClasses().contains("router"));
     EXPECT_TRUE(pool.getAdditionalClasses().contains("modem"));
     EXPECT_FALSE(pool.getAdditionalClasses().contains("foo"));

@@ -328,7 +328,7 @@ TEST(ClientClassDictionary, basics) {
     // that we start with no classes defined
     const ClientClassDefListPtr classes = dictionary->getClasses();
     ASSERT_TRUE(classes);
-    EXPECT_EQ(0, classes->size());
+    EXPECT_EQ(0U, classes->size());
     EXPECT_TRUE(classes->empty());
 
     // Verify that we can add classes with both addClass variants
@@ -368,12 +368,12 @@ TEST(ClientClassDictionary, basics) {
     ASSERT_THROW(dictionary->addClass(cclass), BadValue);
 
     // Map should show 3 entries.
-    EXPECT_EQ(3, classes->size());
+    EXPECT_EQ(3U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Removing client class by id of 0 should be no-op.
     ASSERT_NO_THROW(dictionary->removeClass(0));
-    EXPECT_EQ(3, classes->size());
+    EXPECT_EQ(3U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Verify we can find them all.
@@ -398,7 +398,7 @@ TEST(ClientClassDictionary, basics) {
 
     // Verify that we can remove a class
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
-    EXPECT_EQ(2, classes->size());
+    EXPECT_EQ(2U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Shouldn't be able to find anymore
@@ -408,12 +408,12 @@ TEST(ClientClassDictionary, basics) {
     // Verify that we can attempt to remove a non-existing class
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
-    EXPECT_EQ(2, classes->size());
+    EXPECT_EQ(2U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Verify that we can remove client class by id.
     ASSERT_NO_THROW(dictionary->removeClass(2));
-    EXPECT_EQ(1, classes->size());
+    EXPECT_EQ(1U, classes->size());
     EXPECT_FALSE(classes->empty());
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc2"));
     EXPECT_FALSE(cclass);
@@ -577,10 +577,10 @@ TEST(ClientClassDictionary, initMatchExpr) {
     EXPECT_FALSE(classes[0]->getMatchExpr());
 
     EXPECT_TRUE(classes[1]->getMatchExpr());
-    EXPECT_EQ(4, classes[1]->getMatchExpr()->size());
+    EXPECT_EQ(4U, classes[1]->getMatchExpr()->size());
 
     EXPECT_TRUE(classes[2]->getMatchExpr());
-    EXPECT_EQ(6, classes[2]->getMatchExpr()->size());
+    EXPECT_EQ(6U, classes[2]->getMatchExpr()->size());
 }
 
 // Tests that an error is returned when any of the test expressions is
@@ -1111,7 +1111,7 @@ TEST(ClientClassDictionary, templateBasics) {
     // that we start with no classes defined
     const ClientClassDefListPtr classes = dictionary->getClasses();
     ASSERT_TRUE(classes);
-    EXPECT_EQ(0, classes->size());
+    EXPECT_EQ(0U, classes->size());
     EXPECT_TRUE(classes->empty());
 
     // Verify that we can add classes with both addClass variants
@@ -1160,12 +1160,12 @@ TEST(ClientClassDictionary, templateBasics) {
     ASSERT_THROW(dictionary->addClass(cclass), BadValue);
 
     // Map should show 3 entries.
-    EXPECT_EQ(3, classes->size());
+    EXPECT_EQ(3U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Removing client class by id of 0 should be no-op.
     ASSERT_NO_THROW(dictionary->removeClass(0));
-    EXPECT_EQ(3, classes->size());
+    EXPECT_EQ(3U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Verify we can find them all.
@@ -1193,7 +1193,7 @@ TEST(ClientClassDictionary, templateBasics) {
 
     // Verify that we can remove a class
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
-    EXPECT_EQ(2, classes->size());
+    EXPECT_EQ(2U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Shouldn't be able to find anymore
@@ -1203,12 +1203,12 @@ TEST(ClientClassDictionary, templateBasics) {
     // Verify that we can attempt to remove a non-existing class
     // without harm.
     ASSERT_NO_THROW(dictionary->removeClass("cc3"));
-    EXPECT_EQ(2, classes->size());
+    EXPECT_EQ(2U, classes->size());
     EXPECT_FALSE(classes->empty());
 
     // Verify that we can remove client class by id.
     ASSERT_NO_THROW(dictionary->removeClass(2));
-    EXPECT_EQ(1, classes->size());
+    EXPECT_EQ(1U, classes->size());
     EXPECT_FALSE(classes->empty());
     ASSERT_NO_THROW(cclass = dictionary->findClass("cc2"));
     EXPECT_FALSE(cclass);
@@ -1414,10 +1414,10 @@ TEST(ClientClassDictionary, templateInitMatchExpr) {
     EXPECT_FALSE(classes[0]->getMatchExpr());
 
     EXPECT_TRUE(classes[1]->getMatchExpr());
-    EXPECT_EQ(1, classes[1]->getMatchExpr()->size());
+    EXPECT_EQ(1U, classes[1]->getMatchExpr()->size());
 
     EXPECT_TRUE(classes[2]->getMatchExpr());
-    EXPECT_EQ(3, classes[2]->getMatchExpr()->size());
+    EXPECT_EQ(3U, classes[2]->getMatchExpr()->size());
 }
 
 // Tests that an error is returned when any of the test expressions is

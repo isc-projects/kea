@@ -64,10 +64,10 @@ TEST(Subnet4Test, create) {
     ASSERT_TRUE(subnet);
 
     EXPECT_EQ("192.0.2.2/16", subnet->toText());
-    EXPECT_EQ(1, subnet->getT1().get());
-    EXPECT_EQ(2, subnet->getT2().get());
-    EXPECT_EQ(3, subnet->getValid().get());
-    EXPECT_EQ(10, subnet->getID());
+    EXPECT_EQ(1U, subnet->getT1().get());
+    EXPECT_EQ(2U, subnet->getT2().get());
+    EXPECT_EQ(3U, subnet->getValid().get());
+    EXPECT_EQ(10U, subnet->getID());
 }
 
 // This test verifies the default values set for the subnets and verifies
@@ -85,13 +85,13 @@ TEST(Subnet4Test, defaults) {
     EXPECT_TRUE(subnet.getClientClasses().empty());
 
     EXPECT_TRUE(subnet.getValid().unspecified());
-    EXPECT_EQ(0, subnet.getValid().get());
+    EXPECT_EQ(0U, subnet.getValid().get());
 
     EXPECT_TRUE(subnet.getT1().unspecified());
-    EXPECT_EQ(0, subnet.getT1().get());
+    EXPECT_EQ(0U, subnet.getT1().get());
 
     EXPECT_TRUE(subnet.getT2().unspecified());
-    EXPECT_EQ(0, subnet.getT2().get());
+    EXPECT_EQ(0U, subnet.getT2().get());
 
     EXPECT_TRUE(subnet.getReservationsGlobal().unspecified());
     EXPECT_FALSE(subnet.getReservationsGlobal().get());
@@ -133,7 +133,7 @@ TEST(Subnet4Test, defaults) {
 
     EXPECT_TRUE(subnet.get4o6().getSubnet4o6().unspecified());
     EXPECT_TRUE(subnet.get4o6().getSubnet4o6().get().first.isV6Zero());
-    EXPECT_EQ(128, subnet.get4o6().getSubnet4o6().get().second);
+    EXPECT_EQ(128U, subnet.get4o6().getSubnet4o6().get().second);
 
     EXPECT_TRUE(subnet.getDdnsSendUpdates().unspecified());
     EXPECT_FALSE(subnet.getDdnsSendUpdates().get());
@@ -163,15 +163,15 @@ TEST(Subnet4Test, defaults) {
     EXPECT_FALSE(subnet.getDdnsUpdateOnRenew().get());
 
     EXPECT_TRUE(subnet.getOfferLft().unspecified());
-    EXPECT_EQ(0, subnet.getOfferLft().get());
+    EXPECT_EQ(0U, subnet.getOfferLft().get());
 }
 
 TEST(Subnet4Test, inRange) {
   Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000, SubnetID(1));
 
-    EXPECT_EQ(1000, subnet.getT1().get());
-    EXPECT_EQ(2000, subnet.getT2().get());
-    EXPECT_EQ(3000, subnet.getValid().get());
+    EXPECT_EQ(1000U, subnet.getT1().get());
+    EXPECT_EQ(2000U, subnet.getT2().get());
+    EXPECT_EQ(3000U, subnet.getValid().get());
 
     EXPECT_FALSE(subnet.hasRelays());
 
@@ -191,7 +191,7 @@ TEST(Subnet4Test, relay) {
 
     // Should be empty.
     EXPECT_FALSE(subnet.hasRelays());
-    EXPECT_EQ(0, subnet.getRelayAddresses().size());
+    EXPECT_EQ(0U, subnet.getRelayAddresses().size());
 
     // Matching should fail.
     EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("192.0.123.45")));
@@ -204,7 +204,7 @@ TEST(Subnet4Test, relay) {
     EXPECT_TRUE(subnet.hasRelays());
 
     // Should be two in the list.
-    EXPECT_EQ(2, subnet.getRelayAddresses().size());
+    EXPECT_EQ(2U, subnet.getRelayAddresses().size());
 
     // Should be able to match them if they are there.
     EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("192.0.123.45")));
@@ -393,27 +393,27 @@ TEST(Subnet4Test, getCapacity) {
                                   24, 1, 2, 3, SubnetID(1));
 
     // There are no pools defined, so the total number of available addrs is 0.
-    EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_V4));
+    EXPECT_EQ(0U, subnet->getPoolCapacity(Lease::TYPE_V4));
 
     // Let's add a /25 pool. That's 128 addresses.
     PoolPtr pool1(new Pool4(IOAddress("192.1.2.0"), 25));
     subnet->addPool(pool1);
-    EXPECT_EQ(128, subnet->getPoolCapacity(Lease::TYPE_V4));
+    EXPECT_EQ(128U, subnet->getPoolCapacity(Lease::TYPE_V4));
 
     // Let's add another /26 pool. That's extra 64 addresses.
     PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
     subnet->addPool(pool2);
-    EXPECT_EQ(192, subnet->getPoolCapacity(Lease::TYPE_V4));
+    EXPECT_EQ(192U, subnet->getPoolCapacity(Lease::TYPE_V4));
 
     // Let's add a third pool /30. This one has 4 addresses.
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
     subnet->addPool(pool3);
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4));
+    EXPECT_EQ(196U, subnet->getPoolCapacity(Lease::TYPE_V4));
 
     // Let's add a forth pool /30. This one has 4 addresses.
     PoolPtr pool4(new Pool4(IOAddress("192.1.2.200"), 30));
     subnet->addPool(pool4);
-    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4));
+    EXPECT_EQ(200U, subnet->getPoolCapacity(Lease::TYPE_V4));
 
     // Now play with classes
 
@@ -437,10 +437,10 @@ TEST(Subnet4Test, getCapacity) {
     pool3->allowClientClass("bar");
 
     // Pool3 requires a member of bar
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, no_class));
-    EXPECT_EQ(196, subnet->getPoolCapacity(Lease::TYPE_V4, foo_class));
-    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class));
-    EXPECT_EQ(200, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes));
+    EXPECT_EQ(196U, subnet->getPoolCapacity(Lease::TYPE_V4, no_class));
+    EXPECT_EQ(196U, subnet->getPoolCapacity(Lease::TYPE_V4, foo_class));
+    EXPECT_EQ(200U, subnet->getPoolCapacity(Lease::TYPE_V4, bar_class));
+    EXPECT_EQ(200U, subnet->getPoolCapacity(Lease::TYPE_V4, three_classes));
 }
 
 // Checks that it is not allowed to add invalid pools.
@@ -687,7 +687,7 @@ TEST(Subnet4Test, get) {
     auto subnet = Subnet4::create(IOAddress("192.0.2.0"),
                                   28, 1, 2, 3, SubnetID(1));
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
-    EXPECT_EQ(28, subnet->get().second);
+    EXPECT_EQ(28U, subnet->get().second);
 }
 
 // Checks if the V4 is the only allowed type for Pool4 and if getPool()
@@ -858,11 +858,11 @@ TEST(Subnet6Test, create) {
     ASSERT_TRUE(subnet);
 
     EXPECT_EQ("2001:db8:1::/64", subnet->toText());
-    EXPECT_EQ(1, subnet->getT1().get());
-    EXPECT_EQ(2, subnet->getT2().get());
-    EXPECT_EQ(3, subnet->getPreferred().get());
-    EXPECT_EQ(4, subnet->getValid().get());
-    EXPECT_EQ(10, subnet->getID());
+    EXPECT_EQ(1U, subnet->getT1().get());
+    EXPECT_EQ(2U, subnet->getT2().get());
+    EXPECT_EQ(3U, subnet->getPreferred().get());
+    EXPECT_EQ(4U, subnet->getValid().get());
+    EXPECT_EQ(10U, subnet->getID());
 }
 
 // This test verifies the default values set for the shared
@@ -881,13 +881,13 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_TRUE(subnet.getClientClasses().empty());
 
     EXPECT_TRUE(subnet.getValid().unspecified());
-    EXPECT_EQ(0, subnet.getValid().get());
+    EXPECT_EQ(0U, subnet.getValid().get());
 
     EXPECT_TRUE(subnet.getT1().unspecified());
-    EXPECT_EQ(0, subnet.getT1().get());
+    EXPECT_EQ(0U, subnet.getT1().get());
 
     EXPECT_TRUE(subnet.getT2().unspecified());
-    EXPECT_EQ(0, subnet.getT2().get());
+    EXPECT_EQ(0U, subnet.getT2().get());
 
     EXPECT_TRUE(subnet.getReservationsGlobal().unspecified());
     EXPECT_FALSE(subnet.getReservationsGlobal().get());
@@ -908,7 +908,7 @@ TEST(SharedNetwork6Test, defaults) {
     EXPECT_EQ(0.0, subnet.getT2Percent().get());
 
     EXPECT_TRUE(subnet.getPreferred().unspecified());
-    EXPECT_EQ(0, subnet.getPreferred().get());
+    EXPECT_EQ(0U, subnet.getPreferred().get());
 
     EXPECT_TRUE(subnet.getRapidCommit().unspecified());
     EXPECT_FALSE(subnet.getRapidCommit().get());
@@ -945,10 +945,10 @@ TEST(Subnet6Test, inRange) {
     Subnet6 subnet(IOAddress("2001:db8:1::"),
                    64, 1000, 2000, 3000, 4000, SubnetID(1));
 
-    EXPECT_EQ(1000, subnet.getT1().get());
-    EXPECT_EQ(2000, subnet.getT2().get());
-    EXPECT_EQ(3000, subnet.getPreferred().get());
-    EXPECT_EQ(4000, subnet.getValid().get());
+    EXPECT_EQ(1000U, subnet.getT1().get());
+    EXPECT_EQ(2000U, subnet.getT2().get());
+    EXPECT_EQ(3000U, subnet.getPreferred().get());
+    EXPECT_EQ(4000U, subnet.getValid().get());
 
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:0:ffff:ffff:ffff:ffff:ffff")));
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::")));
@@ -966,7 +966,7 @@ TEST(Subnet6Test, relay) {
 
     // Should be empty.
     EXPECT_FALSE(subnet.hasRelays());
-    EXPECT_EQ(0, subnet.getRelayAddresses().size());
+    EXPECT_EQ(0U, subnet.getRelayAddresses().size());
 
     // Matching should fail.
     EXPECT_FALSE(subnet.hasRelayAddress(IOAddress("2001:ffff::45")));
@@ -979,7 +979,7 @@ TEST(Subnet6Test, relay) {
     EXPECT_TRUE(subnet.hasRelays());
 
     // Should be two in the list.
-    EXPECT_EQ(2, subnet.getRelayAddresses().size());
+    EXPECT_EQ(2U, subnet.getRelayAddresses().size());
 
     // Should be able to match them if they are there.
     EXPECT_TRUE(subnet.hasRelayAddress(IOAddress("2001:ffff::45")));
@@ -1007,7 +1007,7 @@ TEST(Subnet6Test, Pool6getCapacity) {
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool1);
-    EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_NA));
+    EXPECT_EQ(65536U, subnet->getPoolCapacity(Lease::TYPE_NA));
 
     subnet->addPool(pool2);
     EXPECT_EQ(uint64_t(4294967296ull + 65536), subnet->getPoolCapacity(Lease::TYPE_NA));
@@ -1066,7 +1066,7 @@ TEST(Subnet6Test, Pool6PdgetPoolCapacity) {
     EXPECT_EQ(0, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool1);
-    EXPECT_EQ(65536, subnet->getPoolCapacity(Lease::TYPE_PD));
+    EXPECT_EQ(65536U, subnet->getPoolCapacity(Lease::TYPE_PD));
 
     subnet->addPool(pool2);
     EXPECT_EQ(uint64_t(4294967296ull + 65536), subnet->getPoolCapacity(Lease::TYPE_PD));
@@ -1380,7 +1380,7 @@ TEST(Subnet6Test, addOptions) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
@@ -1392,7 +1392,7 @@ TEST(Subnet6Test, addOptions) {
 
     options = subnet->getCfgOption()->getAll("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -1425,7 +1425,7 @@ TEST(Subnet6Test, addNonUniqueOptions) {
 
     // Sanity check that all options are there.
     OptionContainerPtr options = subnet->getCfgOption()->getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(20, options->size());
+    ASSERT_EQ(20U, options->size());
 
     // Use container index #1 to get the options by their codes.
     OptionContainerTypeIndex& idx = options->get<1>();
@@ -1541,7 +1541,7 @@ TEST(Subnet6Test, addVendorOption) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = subnet->getCfgOption()->getAll(12345678);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
@@ -1553,7 +1553,7 @@ TEST(Subnet6Test, addVendorOption) {
 
     options = subnet->getCfgOption()->getAll(87654321);
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -1705,7 +1705,7 @@ TEST(Subnet6Test, parsePrefix) {
 TEST(Subnet6Test, get) {
     Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4, SubnetID(1));
     EXPECT_EQ("2001:db8::", subnet.get().first.toText());
-    EXPECT_EQ(32, subnet.get().second);
+    EXPECT_EQ(32U, subnet.get().second);
 }
 
 // This trivial test checks if interface name is stored properly
@@ -1892,12 +1892,12 @@ TEST(SubnetFetcherTest, getSubnet4ById) {
 
     subnet = SubnetFetcher4::get(collection, SubnetID(1024));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ(1024U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 
     subnet = SubnetFetcher4::get(collection, SubnetID(2048));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ(2048U, subnet->getID());
     EXPECT_EQ("192.0.3.0/24", subnet->toText());
 }
 
@@ -1918,12 +1918,12 @@ TEST(SubnetFetcherTest, getSubnet6ById) {
 
     subnet = SubnetFetcher6::get(collection, SubnetID(1024));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1024, subnet->getID());
+    EXPECT_EQ(1024U, subnet->getID());
     EXPECT_EQ("2001:db8:1::/64", subnet->toText());
 
     subnet = SubnetFetcher6::get(collection, SubnetID(2048));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(2048, subnet->getID());
+    EXPECT_EQ(2048U, subnet->getID());
     EXPECT_EQ("2001:db8:2::/64", subnet->toText());
 }
 

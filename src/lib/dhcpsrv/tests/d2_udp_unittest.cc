@@ -218,7 +218,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
     ASSERT_FALSE(handle_->amSending());
 
     // Queue should be empty.
-    EXPECT_EQ(0, handle_->getQueueSize());
+    EXPECT_EQ(0U, handle_->getQueueSize());
 
     // Trying to peek past the end of the queue should throw.
     EXPECT_THROW(handle_->peekAt(1), dhcp_ddns::NcrSenderError);
@@ -235,7 +235,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
     ASSERT_NO_THROW(handle_->sendRequest(ncr));
 
     // Queue should have 1 entry.
-    EXPECT_EQ(1, handle_->getQueueSize());
+    EXPECT_EQ(1U, handle_->getQueueSize());
 
     // Attempt to fetch the entry we just queued.
     dhcp_ddns::NameChangeRequestPtr ncr2;
@@ -248,7 +248,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
     ASSERT_THROW(handle_->clearQueue(), dhcp_ddns::NcrSenderError);
 
     // We should still have 1 in the queue.
-    EXPECT_EQ(1, handle_->getQueueSize());
+    EXPECT_EQ(1U, handle_->getQueueSize());
 
     // Get out of send mode.
     ASSERT_NO_THROW(handle_->stopSender());
@@ -256,7 +256,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
 
     // Clear queue should succeed now.
     ASSERT_NO_THROW(handle_->clearQueue());
-    EXPECT_EQ(0, handle_->getQueueSize());
+    EXPECT_EQ(0U, handle_->getQueueSize());
 }
 
 /// @brief Checks that D2ClientMgr can send with a UDP sender and
@@ -424,7 +424,7 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     }
 
     // Make sure queue count is correct.
-    EXPECT_EQ(3, handle_->getQueueSize());
+    EXPECT_EQ(3U, handle_->getQueueSize());
 
     // select_fd should evaluate to ready to read.
     selectCheck(true);
@@ -433,20 +433,20 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     IfaceMgr::instance().receive4(0, 0);
 
     // Verify the callback handler was invoked, no errors counted.
-    EXPECT_EQ(2, handle_->getQueueSize());
+    EXPECT_EQ(2U, handle_->getQueueSize());
     ASSERT_EQ(1, handle_->callback_count_);
     ASSERT_EQ(0, error_handler_count_);
 
     // Stop the sender.  This should complete the second message but leave
     // the third in the queue.
     ASSERT_NO_THROW(handle_->stopSender());
-    EXPECT_EQ(1, handle_->getQueueSize());
+    EXPECT_EQ(1U, handle_->getQueueSize());
     ASSERT_EQ(2, handle_->callback_count_);
     ASSERT_EQ(0, error_handler_count_);
 
     // Calling receive again should have no affect.
     IfaceMgr::instance().receive4(0, 0);
-    EXPECT_EQ(1, handle_->getQueueSize());
+    EXPECT_EQ(1U, handle_->getQueueSize());
     ASSERT_EQ(2, handle_->callback_count_);
     ASSERT_EQ(0, error_handler_count_);
 }
@@ -463,14 +463,14 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
         dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
         ASSERT_NO_THROW(handle_->sendRequest(ncr));
     }
-    ASSERT_EQ(3, handle_->getQueueSize());
+    ASSERT_EQ(3U, handle_->getQueueSize());
 
     // Call the ready handler. This should complete the first message
     // and initiate sending the second message.
     ASSERT_NO_THROW(handle_->runReadyIO());
 
     // Queue count should have gone down by 1.
-    ASSERT_EQ(2, handle_->getQueueSize());
+    ASSERT_EQ(2U, handle_->getQueueSize());
 
     // Suspend updates. This should disable updates and stop the sender.
     ASSERT_NO_THROW(handle_->suspendUpdates());
@@ -480,7 +480,7 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
 
     // Stopping the sender should have completed the second message's
     // in-progress send, so queue size should be 1.
-    ASSERT_EQ(1, handle_->getQueueSize());
+    ASSERT_EQ(1U, handle_->getQueueSize());
 }
 
 /// @brief Tests that invokeErrorHandler does not fail if there is no handler.

@@ -155,8 +155,8 @@ TEST_F(HostCacheTest, identifier4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -177,8 +177,8 @@ TEST_F(HostCacheTest, identifier4) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify it was cached.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv4SubnetID(), address));
@@ -197,8 +197,8 @@ TEST_F(HostCacheTest, identifier4) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 }
 
 // Check basic cache feature for IPv6.
@@ -206,8 +206,8 @@ TEST_F(HostCacheTest, identifier6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -234,8 +234,8 @@ TEST_F(HostCacheTest, identifier6) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify it was cached.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv6SubnetID(), address));
@@ -254,8 +254,8 @@ TEST_F(HostCacheTest, identifier6) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 }
 
 // Check by address caching for IPv4.
@@ -263,8 +263,8 @@ TEST_F(HostCacheTest, address4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -283,8 +283,8 @@ TEST_F(HostCacheTest, address4) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify it was cached.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv4SubnetID(), address));
@@ -303,8 +303,8 @@ TEST_F(HostCacheTest, address4) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 }
 
 // Check by address caching for IPv6.
@@ -312,8 +312,8 @@ TEST_F(HostCacheTest, address6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->inserts_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -338,8 +338,8 @@ TEST_F(HostCacheTest, address6) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify it was cached.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv6SubnetID(), address));
@@ -358,8 +358,8 @@ TEST_F(HostCacheTest, address6) {
     HostDataSourceUtils::compareHosts(got, host);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->inserts_);
 }
 
 // Check negative cache feature for IPv4.
@@ -367,8 +367,8 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
     ASSERT_FALSE(HostMgr::instance().getNegativeCaching());
 
@@ -401,8 +401,8 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
                                    &host->getIdentifier()[0],
                                    host->getIdentifier().size());
     ASSERT_FALSE(got);
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->adds_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->adds_);
     got = HostMgr::instance().get4Any(host->getIPv4SubnetID(),
                                       host->getIdentifierType(),
                                       &host->getIdentifier()[0],
@@ -427,9 +427,9 @@ TEST_F(HostCacheTest, negativeIdentifier4) {
     EXPECT_FALSE(got);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->adds_);
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->inserts_);
 
     // We can verify other overloads of get4() but the hwaddr/duid is
     // not implemented by the memory test backend and the negative cache
@@ -441,8 +441,8 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -477,8 +477,8 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
                                       &host->getIdentifier()[0],
                                       host->getIdentifier().size());
     ASSERT_FALSE(got);
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
 
     got = HostMgr::instance().get6(host->getIPv6SubnetID(),
                                    host->getIdentifierType(),
@@ -487,8 +487,8 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     ASSERT_FALSE(got);
 
     // There is a negative cached value now.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->adds_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->adds_);
     got = HostMgr::instance().get6Any(host->getIPv6SubnetID(),
                                       host->getIdentifierType(),
                                       &host->getIdentifier()[0],
@@ -513,9 +513,9 @@ TEST_F(HostCacheTest, negativeIdentifier6) {
     EXPECT_FALSE(got);
 
     // Verify cache status.
-    EXPECT_EQ(1, hcptr_->size());
-    EXPECT_EQ(1, hcptr_->adds_);
-    EXPECT_EQ(0, hcptr_->inserts_);
+    EXPECT_EQ(1U, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->inserts_);
 
     // No other tests, cf negativeIdentifier4 end comment.
 }
@@ -525,8 +525,8 @@ TEST_F(HostCacheTest, negativeAddress4) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -546,8 +546,8 @@ TEST_F(HostCacheTest, negativeAddress4) {
     ConstHostPtr got = HostMgr::instance().get4(host->getIPv4SubnetID(),
                                                 address);
     ASSERT_FALSE(got);
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
 }
 
 // Check that negative caching by address is not done for IPv6.
@@ -555,8 +555,8 @@ TEST_F(HostCacheTest, negativeAddress6) {
     // Check we have what we need.
     ASSERT_TRUE(hcptr_);
     EXPECT_TRUE(HostMgr::checkCacheBackend());
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
     ASSERT_TRUE(memptr_);
 
     // Create a host reservation.
@@ -582,8 +582,8 @@ TEST_F(HostCacheTest, negativeAddress6) {
     ConstHostPtr got = HostMgr::instance().get6(host->getIPv6SubnetID(),
                                                 address);
     ASSERT_FALSE(got);
-    EXPECT_EQ(0, hcptr_->size());
-    EXPECT_EQ(0, hcptr_->adds_);
+    EXPECT_EQ(0U, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->adds_);
 }
 
 /// @brief Test one backend class.
@@ -863,12 +863,12 @@ void NegativeCacheTest::testGetAll() {
         HostMgr::instance().getAll(host->getIdentifierType(),
                                    &host->getIdentifier()[0],
                                    host->getIdentifier().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ(host, hosts[0]);
 
     ASSERT_NO_THROW(hosts =
                     HostMgr::instance().getAll4(host->getIPv4Reservation()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
     EXPECT_EQ(host, hosts[0]);
 }
 

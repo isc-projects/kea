@@ -406,7 +406,7 @@ GenericLeaseMgrTest::createLeases4() {
     for (size_t i = 0; i < straddress4_.size(); ++i) {
         leases.push_back(initializeLease4(straddress4_[i]));
     }
-    EXPECT_EQ(8, leases.size());
+    EXPECT_EQ(8U, leases.size());
 
     // Check all were created and that they are different.
     checkLeasesDifferent(leases);
@@ -422,7 +422,7 @@ GenericLeaseMgrTest::createLeases6() {
     for (size_t i = 0; i < straddress6_.size(); ++i) {
         leases.push_back(initializeLease6(straddress6_[i]));
     }
-    EXPECT_EQ(8, leases.size());
+    EXPECT_EQ(8U, leases.size());
 
     // Check all were created and that they are different.
     checkLeasesDifferent(leases);
@@ -455,13 +455,13 @@ GenericLeaseMgrTest::testGetLease4ClientId() {
     EXPECT_TRUE(lmptr_->addLease(lease));
     Lease4Collection returned = lmptr_->getLease4(*lease->client_id_);
 
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     // We should retrieve our lease...
     detailCompareLease(lease, *returned.begin());
     lease = initializeLease4(straddress4_[2]);
     returned = lmptr_->getLease4(*lease->client_id_);
 
-    ASSERT_EQ(0, returned.size());
+    ASSERT_EQ(0U, returned.size());
 }
 
 void
@@ -497,7 +497,7 @@ GenericLeaseMgrTest::testGetLease4NullClientId() {
 
     // But getting the lease with non-NULL client id should be successful.
     returned = lmptr_->getLease4(*leaseB->client_id_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
 }
 
 void
@@ -538,7 +538,7 @@ GenericLeaseMgrTest::testLease4NullClientId() {
     // Check that we can get the lease by HWAddr
     HWAddr tmp(*leases[2]->hwaddr_);
     Lease4Collection returned = lmptr_->getLease4(tmp);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
     l_returned = lmptr_->getLease4(tmp, leases[2]->subnet_id_);
@@ -580,11 +580,11 @@ GenericLeaseMgrTest::testGetLease4HWAddr1() {
 
     // we should not have a lease, with this MAC Addr
     Lease4Collection returned = lmptr_->getLease4(hwaddrB);
-    ASSERT_EQ(0, returned.size());
+    ASSERT_EQ(0U, returned.size());
 
     // But with this one
     returned = lmptr_->getLease4(hwaddrA);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
 }
 
 void
@@ -601,7 +601,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
     Lease4Collection returned = lmptr_->getLease4(tmp);
 
     // Should be three leases, matching leases[1], [3] and [5].
-    ASSERT_EQ(3, returned.size());
+    ASSERT_EQ(3U, returned.size());
 
     // Check the lease[5] (and only this one) has an user context.
     size_t contexts = 0;
@@ -611,7 +611,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
             EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
         }
     }
-    EXPECT_EQ(1, contexts);
+    EXPECT_EQ(1U, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -625,21 +625,21 @@ GenericLeaseMgrTest::testGetLease4HWAddr2() {
 
     // Repeat test with just one expected match
     returned = lmptr_->getLease4(*leases[2]->hwaddr_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
     // Check that an empty vector is valid
     EXPECT_TRUE(leases[7]->hwaddr_->hwaddr_.empty());
     EXPECT_FALSE(leases[7]->client_id_->getClientId().empty());
     returned = lmptr_->getLease4(*leases[7]->hwaddr_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[7], *returned.begin());
 
     // Try to get something with invalid hardware address
     HWAddr hwaddr(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
     hwaddr.hwaddr_ = vector<uint8_t>(6, 0);
     returned = lmptr_->getLease4(hwaddr);
-    EXPECT_EQ(0, returned.size());
+    EXPECT_EQ(0U, returned.size());
 }
 
 void
@@ -678,8 +678,8 @@ GenericLeaseMgrTest::testAddGetDelete6() {
     // These are not important from lease management perspective, but
     // let's check them anyway.
     EXPECT_EQ(Lease::TYPE_NA, x->type_);
-    EXPECT_EQ(100, x->preferred_lft_);
-    EXPECT_EQ(200, x->valid_lft_);
+    EXPECT_EQ(100U, x->preferred_lft_);
+    EXPECT_EQ(200U, x->valid_lft_);
 
     // Test getLease6(duid, iaid, subnet_id) - positive case
     Lease6Ptr y = lmptr_->getLease6(Lease::TYPE_NA, *duid, iaid, subnet_id);
@@ -1023,14 +1023,14 @@ GenericLeaseMgrTest::testLease6HWTypeAndSource() {
     Lease6Ptr stored1 = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(stored1);
     ASSERT_TRUE(stored1->hwaddr_);
-    EXPECT_EQ(123, stored1->hwaddr_->htype_);
+    EXPECT_EQ(123U, stored1->hwaddr_->htype_);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_RAW, stored1->hwaddr_->source_);
 
     // Second lease should have a hardware address in it
     Lease6Ptr stored2 = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(stored2);
     ASSERT_TRUE(stored2->hwaddr_);
-    EXPECT_EQ(456, stored2->hwaddr_->htype_);
+    EXPECT_EQ(456U, stored2->hwaddr_->htype_);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, stored2->hwaddr_->source_);
 
     // Third lease should NOT have any hardware address.
@@ -1050,11 +1050,11 @@ GenericLeaseMgrTest::testGetLease6HWAddr1() {
 
     // we should not have a lease, with this HWAddr
     Lease6Collection returned = lmptr_->getLease6(hwaddrB);
-    ASSERT_EQ(0, returned.size());
+    ASSERT_EQ(0U, returned.size());
 
     // But with this one
     returned = lmptr_->getLease6(hwaddrA);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
 }
 
 void
@@ -1070,7 +1070,7 @@ GenericLeaseMgrTest::testGetLease6HWAddr2() {
     Lease6Collection returned = lmptr_->getLease6(tmp);
 
     // Should be three leases, matching leases[1], [3] and [5].
-    ASSERT_EQ(3, returned.size());
+    ASSERT_EQ(3U, returned.size());
 
     // Check the lease[5] (and only this one) has an user context.
     size_t contexts = 0;
@@ -1080,7 +1080,7 @@ GenericLeaseMgrTest::testGetLease6HWAddr2() {
             EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
         }
     }
-    EXPECT_EQ(1, contexts);
+    EXPECT_EQ(1U, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -1094,20 +1094,20 @@ GenericLeaseMgrTest::testGetLease6HWAddr2() {
 
     // Repeat test with just one expected match
     returned = lmptr_->getLease6(*leases[2]->hwaddr_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
     // Check that an empty vector is valid
     EXPECT_TRUE(leases[7]->hwaddr_->hwaddr_.empty());
     returned = lmptr_->getLease6(*leases[7]->hwaddr_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[7], *returned.begin());
 
     // Try to get something with invalid hardware address
     HWAddr hwaddr(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
     hwaddr.hwaddr_ = vector<uint8_t>(6, 0);
     returned = lmptr_->getLease6(hwaddr);
-    EXPECT_EQ(0, returned.size());
+    EXPECT_EQ(0U, returned.size());
 }
 
 void
@@ -1168,7 +1168,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
         Lease4Collection returned =
             lmptr_->getLease4(*leases[1]->hwaddr_);
 
-        ASSERT_EQ(1, returned.size());
+        ASSERT_EQ(1U, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
@@ -1191,7 +1191,7 @@ GenericLeaseMgrTest::testGetLease6HWAddrSize() {
         Lease6Collection returned =
             lmptr_->getLease6(*leases[1]->hwaddr_);
 
-        ASSERT_EQ(1, returned.size());
+        ASSERT_EQ(1U, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
@@ -1291,7 +1291,7 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
     Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
 
     // Should be four leases, matching leases[1], [4], [5] and [6].
-    ASSERT_EQ(4, returned.size());
+    ASSERT_EQ(4U, returned.size());
 
     // Check the lease[5] (and only this one) has an user context.
     size_t contexts = 0;
@@ -1301,7 +1301,7 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
             EXPECT_EQ("{ \"foo\": true }", i->getContext()->str());
         }
     }
-    EXPECT_EQ(1, contexts);
+    EXPECT_EQ(1U, contexts);
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -1316,14 +1316,14 @@ GenericLeaseMgrTest::testGetLease4ClientId2() {
 
     // Repeat test with just one expected match
     returned = lmptr_->getLease4(*leases[3]->client_id_);
-    ASSERT_EQ(1, returned.size());
+    ASSERT_EQ(1U, returned.size());
     detailCompareLease(leases[3], *returned.begin());
 
     // Try to get something with invalid client ID
     const uint8_t invalid_data[] = {0, 0, 0};
     ClientId invalid(invalid_data, sizeof(invalid_data));
     returned = lmptr_->getLease4(invalid);
-    EXPECT_EQ(0, returned.size());
+    EXPECT_EQ(0U, returned.size());
 }
 
 void
@@ -1402,7 +1402,7 @@ GenericLeaseMgrTest::testGetLeases4SubnetId() {
     // There should be exactly two leases for the subnet id that the second
     // lease belongs to.
     Lease4Collection returned = lmptr_->getLeases4(leases[1]->subnet_id_);
-    ASSERT_EQ(2, returned.size());
+    ASSERT_EQ(2U, returned.size());
 }
 
 void
@@ -1420,12 +1420,12 @@ GenericLeaseMgrTest::testGetLeases4Hostname() {
     // There should be exactly 4 leases for the hostname of the second lease.
     ASSERT_FALSE(leases[1]->hostname_.empty());
     returned = lmptr_->getLeases4(leases[1]->hostname_);
-    EXPECT_EQ(4, returned.size());
+    EXPECT_EQ(4U, returned.size());
 
     // And 3 for the forth lease.
     ASSERT_FALSE(leases[3]->hostname_.empty());
     returned = lmptr_->getLeases4(leases[3]->hostname_);
-    EXPECT_EQ(3, returned.size());
+    EXPECT_EQ(3U, returned.size());
 }
 
 void
@@ -1518,14 +1518,14 @@ GenericLeaseMgrTest::testGetLeases4State() {
     Lease4Collection got = lmptr_->getLeases4(Lease::STATE_DECLINED, 0);
 
     // Easy check: got 4 leases in declined state.
-    EXPECT_EQ(4, got.size());
+    EXPECT_EQ(4U, got.size());
     for (auto const& lease : got) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     }
 
     // Try again with leases[2] subnet.
     got = lmptr_->getLeases4(Lease::STATE_DECLINED, leases[2]->subnet_id_);
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     EXPECT_TRUE(*leases[2] == *got[0]);
 }
 
@@ -1540,7 +1540,7 @@ GenericLeaseMgrTest::testGetLeases6SubnetId() {
     // There should be exactly two leases for the subnet id that the second
     // lease belongs to.
     Lease6Collection returned = lmptr_->getLeases6(leases[1]->subnet_id_);
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
 }
 
 void
@@ -1623,17 +1623,17 @@ GenericLeaseMgrTest::testGetLeases6Hostname() {
     // There should be exactly 4 leases for the hostname of the second lease.
     ASSERT_FALSE(leases[1]->hostname_.empty());
     returned = lmptr_->getLeases6(leases[1]->hostname_);
-    EXPECT_EQ(4, returned.size());
+    EXPECT_EQ(4U, returned.size());
 
     // One for the fifth lease.
     ASSERT_FALSE(leases[4]->hostname_.empty());
     returned = lmptr_->getLeases6(leases[4]->hostname_);
-    EXPECT_EQ(1, returned.size());
+    EXPECT_EQ(1U, returned.size());
 
     // And 3 for the sixth lease.
     ASSERT_FALSE(leases[5]->hostname_.empty());
     returned = lmptr_->getLeases6(leases[5]->hostname_);
-    EXPECT_EQ(3, returned.size());
+    EXPECT_EQ(3U, returned.size());
 }
 
 void
@@ -1717,14 +1717,14 @@ GenericLeaseMgrTest::testGetLeases6State() {
     Lease6Collection got = lmptr_->getLeases6(Lease::STATE_DECLINED, 0);
 
     // Easy check: got 4 leases in declined state.
-    EXPECT_EQ(4, got.size());
+    EXPECT_EQ(4U, got.size());
     for (auto const& lease : got) {
         EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
     }
 
     // Try again with leases[2] subnet.
     got = lmptr_->getLeases6(Lease::STATE_DECLINED, leases[2]->subnet_id_);
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     EXPECT_TRUE(*leases[2] == *got[0]);
 }
 
@@ -1732,7 +1732,7 @@ void
 GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
+    ASSERT_LE(6U, leases.size());    // Expect to access leases 0 through 5
 
     // Add them to the database
     for (size_t i = 0; i < leases.size(); ++i) {
@@ -1745,7 +1745,7 @@ GenericLeaseMgrTest::testGetLeases6DuidIaid() {
                                                    leases[1]->iaid_);
 
     // Should be two leases, matching leases[1] and [4].
-    ASSERT_EQ(2, returned.size());
+    ASSERT_EQ(2U, returned.size());
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -1760,14 +1760,14 @@ GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     // nothing.
     returned = lmptr_->getLeases6(leasetype6_[1], *leases[1]->duid_,
                                   leases[1]->iaid_ + 1);
-    EXPECT_EQ(0, returned.size());
+    EXPECT_EQ(0U, returned.size());
 
     // Alter the leases[1] DUID to match nothing in the database.
     vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
     ++duid_vector[0];
     DUID new_duid(duid_vector);
     returned = lmptr_->getLeases6(leasetype6_[1], new_duid, leases[1]->iaid_);
-    EXPECT_EQ(0, returned.size());
+    EXPECT_EQ(0U, returned.size());
 }
 
 void
@@ -1790,7 +1790,7 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
                                                        *leases[1]->duid_,
                                                        leases[1]->iaid_);
-        ASSERT_EQ(1, returned.size());
+        ASSERT_EQ(1U, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         ASSERT_TRUE(lmptr_->deleteLease(leases[1]));
     }
@@ -1861,7 +1861,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
         std::sort(returned.begin(), returned.end(), compare);
 
         // We should match two per lease type.
-        ASSERT_EQ(2, returned.size());
+        ASSERT_EQ(2U, returned.size());
 
         // Collection order returned is not guaranteed.
         // Easiest way to check is to look at the addresses.
@@ -1886,7 +1886,7 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     for (int i = 0; i < 2; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i], *duid, 142, 23);
         // We should match one per lease type.
-        ASSERT_EQ(1, returned.size());
+        ASSERT_EQ(1U, returned.size());
         EXPECT_TRUE(*(returned[0]) == *leases[i * 2]);
     }
 
@@ -1928,7 +1928,7 @@ GenericLeaseMgrTest::testLease6LargeIaidCheck() {
     Lease6Collection found_leases = lmptr_->getLeases6(Lease::TYPE_NA,
                                                        *duid, large_iaid);
     // We should match the lease.
-    ASSERT_EQ(1, found_leases.size());
+    ASSERT_EQ(1U, found_leases.size());
     EXPECT_TRUE(*(found_leases[0]) == *lease);
 }
 
@@ -1999,9 +1999,9 @@ GenericLeaseMgrTest::testGetLeases6Duid() {
     Lease6Collection returned3 = lmptr_->getLeases6(*(lease3->duid_));
 
     //verify if the returned lease mathces
-    ASSERT_EQ(returned1.size(), 1);
-    ASSERT_EQ(returned2.size(), 1);
-    ASSERT_EQ(returned3.size(), 1);
+    ASSERT_EQ(returned1.size(), 1U);
+    ASSERT_EQ(returned2.size(), 1U);
+    ASSERT_EQ(returned3.size(), 1U);
 
     //verify that the returned lease are same
     EXPECT_TRUE(returned1[0]->addr_ == lease1->addr_);
@@ -2149,7 +2149,7 @@ void
 GenericLeaseMgrTest::testUpdateLease6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
+    ASSERT_LE(3U, leases.size());    // Expect to access leases 0 through 2
 
     // Add a lease to the database and check that the lease is there.
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
@@ -2208,7 +2208,7 @@ void
 GenericLeaseMgrTest::testConcurrentUpdateLease6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
+    ASSERT_LE(3U, leases.size());    // Expect to access leases 0 through 2
 
     // Add a lease to the database and check that the lease is there.
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
@@ -2335,7 +2335,7 @@ GenericLeaseMgrTest::testNullDuid() {
 }
 
 void
-GenericLeaseMgrTest::testVersion(int major, int minor) {
+GenericLeaseMgrTest::testVersion(uint32_t major, uint32_t minor) {
     EXPECT_EQ(major, lmptr_->getVersion().first);
     EXPECT_EQ(minor, lmptr_->getVersion().second);
 }
@@ -2345,7 +2345,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
     // Make sure we have at least 6 leases there.
-    ASSERT_GE(leases.size(), 6);
+    ASSERT_GE(leases.size(), 6U);
 
     // Use the same current time for all leases.
     time_t current_time = time(NULL);
@@ -2378,7 +2378,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     // This matches the reverse order to which they have been added.
     size_t count = 0;
     for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
-        int index = count++;
+        size_t index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
         ASSERT_LE(2 * index, leases.size());
@@ -2412,7 +2412,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     // This time leases should be returned in the non-reverse order.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
@@ -2427,12 +2427,12 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
-    ASSERT_EQ(2, expired_leases.size());
+    ASSERT_EQ(2U, expired_leases.size());
 
     // Test that most expired leases have been returned.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         ASSERT_LE(2 * index, leases.size());
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
@@ -2457,7 +2457,7 @@ GenericLeaseMgrTest::testGetExpiredLeases4() {
     // those that have even index.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(saved_expired_leases[2 * index]->addr_, lease->addr_);
     }
 }
@@ -2467,7 +2467,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     // Make sure we have at least 6 leases there.
-    ASSERT_GE(leases.size(), 6);
+    ASSERT_GE(leases.size(), 6U);
 
     // Use the same current time for all leases.
     time_t current_time = time(NULL);
@@ -2500,7 +2500,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     // This matches the reverse order to which they have been added.
     size_t count = 0;
     for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
-        int index = count++;
+        size_t index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
@@ -2534,7 +2534,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     // This time leases should be returned in the non-reverse order.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
@@ -2548,12 +2548,12 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
-    ASSERT_EQ(2, expired_leases.size());
+    ASSERT_EQ(2U, expired_leases.size());
 
     // Test that most expired leases have been returned.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 
@@ -2577,7 +2577,7 @@ GenericLeaseMgrTest::testGetExpiredLeases6() {
     // those that have even index.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(saved_expired_leases[2 * index]->addr_, lease->addr_);
     }
 }
@@ -2600,7 +2600,7 @@ GenericLeaseMgrTest::testInfiniteAreNotExpired4() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 10));
 
     // No lease should be returned.
-    EXPECT_EQ(0, expired_leases.size());
+    EXPECT_EQ(0U, expired_leases.size());
 }
 
 void
@@ -2621,7 +2621,7 @@ GenericLeaseMgrTest::testInfiniteAreNotExpired6() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 10));
 
     // No lease should be returned.
-    EXPECT_EQ(0, expired_leases.size());
+    EXPECT_EQ(0U, expired_leases.size());
 }
 
 void
@@ -2629,7 +2629,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
     // Get the leases to be used for the test.
     vector<Lease4Ptr> leases = createLeases4();
     // Make sure we have at least 6 leases there.
-    ASSERT_GE(leases.size(), 6);
+    ASSERT_GE(leases.size(), 6U);
 
     time_t current_time = time(NULL);
 
@@ -2692,7 +2692,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases4() {
         deleted_num = lmptr_->deleteExpiredReclaimedLeases4(lease_affinity_time)
     );
     // No lease should have been deleted.
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     // Reopen the database. This to ensure that the leases have been deleted
     // from the persistent storage.
@@ -2729,7 +2729,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     // Make sure we have at least 6 leases there.
-    ASSERT_GE(leases.size(), 6);
+    ASSERT_GE(leases.size(), 6U);
 
     time_t current_time = time(NULL);
 
@@ -2792,7 +2792,7 @@ GenericLeaseMgrTest::testDeleteExpiredReclaimedLeases6() {
         deleted_num = lmptr_->deleteExpiredReclaimedLeases6(lease_affinity_time)
     );
     // No lease should have been deleted.
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     // Reopen the database. This to ensure that the leases have been deleted
     // from the persistent storage.
@@ -2824,7 +2824,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     vector<Lease4Ptr> leases = createLeases4();
 
     // Make sure we have at least 8 leases there.
-    ASSERT_GE(leases.size(), 8);
+    ASSERT_GE(leases.size(), 8U);
 
     // Use the same current time for all leases.
     time_t current_time = time(NULL);
@@ -2881,7 +2881,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     // This matches the reverse order to which they have been added.
     size_t count = 0;
     for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
-        int index = count++;
+        size_t index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
@@ -2895,8 +2895,8 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     }
 
     // LeaseMgr is supposed to return both default and declined leases
-    EXPECT_NE(0, declined_state);
-    EXPECT_NE(0, default_state);
+    EXPECT_NE(0U, declined_state);
+    EXPECT_NE(0U, default_state);
 
     // Update current time for the next test.
     current_time = time(NULL);
@@ -2936,7 +2936,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     default_state = 0;
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
@@ -2948,8 +2948,8 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     }
 
     // Check that both declined and default state leases were returned.
-    EXPECT_NE(0, declined_state);
-    EXPECT_NE(0, default_state);
+    EXPECT_NE(0U, declined_state);
+    EXPECT_NE(0U, default_state);
 
     // Remove expired leases again.
     expired_leases.clear();
@@ -2958,12 +2958,12 @@ GenericLeaseMgrTest::testGetDeclinedLeases4() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases4(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
-    ASSERT_EQ(2, expired_leases.size());
+    ASSERT_EQ(2U, expired_leases.size());
 
     // Test that most expired leases have been returned.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 }
@@ -2974,7 +2974,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     vector<Lease6Ptr> leases = createLeases6();
 
     // Make sure we have at least 8 leases there.
-    ASSERT_GE(leases.size(), 8);
+    ASSERT_GE(leases.size(), 8U);
 
     // Use the same current time for all leases.
     time_t current_time = time(NULL);
@@ -3031,7 +3031,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     // This matches the reverse order to which they have been added.
     size_t count = 0;
     for (auto const& lease : boost::adaptors::reverse(expired_leases)) {
-        int index = count++;
+        size_t index = count++;
         // Multiple current index by two, because only leases with even indexes
         // should have been returned.
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
@@ -3045,8 +3045,8 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     }
 
     // LeaseMgr is supposed to return both default and declined leases
-    EXPECT_NE(0, declined_state);
-    EXPECT_NE(0, default_state);
+    EXPECT_NE(0U, declined_state);
+    EXPECT_NE(0U, default_state);
 
     // Update current time for the next test.
     current_time = time(NULL);
@@ -3086,7 +3086,7 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     default_state = 0;
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
 
         // Count leases in default and declined states
@@ -3098,8 +3098,8 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     }
 
     // Check that both declined and default state leases were returned.
-    EXPECT_NE(0, declined_state);
-    EXPECT_NE(0, default_state);
+    EXPECT_NE(0U, declined_state);
+    EXPECT_NE(0U, default_state);
 
     // Remove expired leases again.
     expired_leases.clear();
@@ -3108,12 +3108,12 @@ GenericLeaseMgrTest::testGetDeclinedLeases6() {
     ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 2));
 
     // Make sure we have exactly 2 leases returned.
-    ASSERT_EQ(2, expired_leases.size());
+    ASSERT_EQ(2U, expired_leases.size());
 
     // Test that most expired leases have been returned.
     count = 0;
     for (auto const& lease : expired_leases) {
-        int index = count++;
+        size_t index = count++;
         EXPECT_EQ(leases[2 * index]->addr_, lease->addr_);
     }
 }
@@ -3548,16 +3548,16 @@ GenericLeaseMgrTest::testWipeLeases6() {
     // Let's try something simple. There shouldn't be any leases in
     // subnet 2. The keep deleting the leases, perhaps in a different
     // order they were added.
-    EXPECT_EQ(0, lmptr_->wipeLeases6(2));
-    EXPECT_EQ(4, lmptr_->wipeLeases6(333));
-    EXPECT_EQ(3, lmptr_->wipeLeases6(1));
-    EXPECT_EQ(1, lmptr_->wipeLeases6(22));
+    EXPECT_EQ(0U, lmptr_->wipeLeases6(2));
+    EXPECT_EQ(4U, lmptr_->wipeLeases6(333));
+    EXPECT_EQ(3U, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(1U, lmptr_->wipeLeases6(22));
 
     // All the leases should be gone now. Check that that repeated
     // attempt to delete them will not result in any additional removals.
-    EXPECT_EQ(0, lmptr_->wipeLeases6(1));
-    EXPECT_EQ(0, lmptr_->wipeLeases6(22));
-    EXPECT_EQ(0, lmptr_->wipeLeases6(333));
+    EXPECT_EQ(0U, lmptr_->wipeLeases6(1));
+    EXPECT_EQ(0U, lmptr_->wipeLeases6(22));
+    EXPECT_EQ(0U, lmptr_->wipeLeases6(333));
 }
 
 void
@@ -3580,16 +3580,16 @@ GenericLeaseMgrTest::testWipeLeases4() {
     // Let's try something simple. There shouldn't be any leases in
     // subnet 2. The keep deleting the leases, perhaps in a different
     // order they were added.
-    EXPECT_EQ(0, lmptr_->wipeLeases4(2));
-    EXPECT_EQ(4, lmptr_->wipeLeases4(333));
-    EXPECT_EQ(3, lmptr_->wipeLeases4(1));
-    EXPECT_EQ(1, lmptr_->wipeLeases4(22));
+    EXPECT_EQ(0U, lmptr_->wipeLeases4(2));
+    EXPECT_EQ(4U, lmptr_->wipeLeases4(333));
+    EXPECT_EQ(3U, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(1U, lmptr_->wipeLeases4(22));
 
     // All the leases should be gone now. Check that that repeated
     // attempt to delete them will not result in any additional removals.
-    EXPECT_EQ(0, lmptr_->wipeLeases4(1));
-    EXPECT_EQ(0, lmptr_->wipeLeases4(22));
-    EXPECT_EQ(0, lmptr_->wipeLeases4(333));
+    EXPECT_EQ(0U, lmptr_->wipeLeases4(1));
+    EXPECT_EQ(0U, lmptr_->wipeLeases4(22));
+    EXPECT_EQ(0U, lmptr_->wipeLeases4(333));
 }
 
 void
@@ -3639,9 +3639,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LeaseMgrFactory::haveInstance());
 }
@@ -3676,9 +3676,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LeaseMgrFactory::haveInstance());
 }
@@ -3714,9 +3714,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback(
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectString();
     access += extra;
@@ -3727,9 +3727,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback(
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LeaseMgrFactory::haveInstance());
 
@@ -3738,9 +3738,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback(
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LeaseMgrFactory::haveInstance());
 }
@@ -3776,18 +3776,18 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LeaseMgrFactory::haveInstance());
 
@@ -3796,9 +3796,9 @@ LeaseMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LeaseMgrFactory::haveInstance());
 }
@@ -3821,9 +3821,9 @@ LeaseMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 
     io_service_->poll();
 
-    EXPECT_EQ(0, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(0U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -3874,9 +3874,9 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -3932,9 +3932,9 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }
 
 void
@@ -3993,9 +3993,9 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectString();
     access += extra;
@@ -4006,18 +4006,18 @@ LeaseMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -4076,27 +4076,27 @@ LeaseMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }
 
 void
@@ -4115,7 +4115,7 @@ GenericLeaseMgrTest::checkQueryAgainstRowSet(const LeaseStatsQueryPtr& query,
                                              const RowSet& expected_rows) {
     ASSERT_TRUE(query) << "query is null";
 
-    int rows_matched = 0;
+    size_t rows_matched = 0;
     LeaseStatsRow row;
     while (query->getNextRow(row)) {
         auto found_row = expected_rows.find(row);
@@ -4623,8 +4623,8 @@ GenericLeaseMgrTest::testClassLeaseCount4() {
     ElementPtr ctx2 = makeContextWithClasses(classes2);
 
     // Counts should be 0.
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon"));
 
     // Create a lease to add to the lease store.
     vector<Lease4Ptr> leases = createLeases4();
@@ -4638,8 +4638,8 @@ GenericLeaseMgrTest::testClassLeaseCount4() {
 
     // Add the lease to the lease store and verify class lease counts.
     ASSERT_NO_THROW_LOG(lmptr_->addLease(lease));
-    EXPECT_EQ(1, lmptr_->getClassLeaseCount("water"));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+    EXPECT_EQ(1U, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon"));
 
     // Re-fetch lease. This returns a copy of the persisted lease, which is
     // what Kea logic always does. Fetches a copy.  Otherwise we're changing
@@ -4652,16 +4652,16 @@ GenericLeaseMgrTest::testClassLeaseCount4() {
 
     // Update the lease in the lease store and verify class lease counts.
     ASSERT_NO_THROW_LOG(lmptr_->updateLease4(lease));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
-    EXPECT_EQ(1, lmptr_->getClassLeaseCount("melon"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(1U, lmptr_->getClassLeaseCount("melon"));
 
     lease = lmptr_->getLease4(lease->addr_);
     ASSERT_TRUE(lease);
 
     // Now delete the lease from the store and verify counts.
     ASSERT_NO_THROW_LOG(lmptr_->deleteLease(lease));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water"));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water"));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon"));
 
     lease = lmptr_->getLease4(lease->addr_);
     ASSERT_FALSE(lease);
@@ -4679,8 +4679,8 @@ GenericLeaseMgrTest::testClassLeaseCount6(Lease::Type ltype) {
     ElementPtr ctx2 = makeContextWithClasses(classes2);
 
     // Counts should be 0.
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", ltype));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon", ltype));
 
     // Create a lease to add to the lease store.
     vector<Lease6Ptr> leases = createLeases6();
@@ -4695,8 +4695,8 @@ GenericLeaseMgrTest::testClassLeaseCount6(Lease::Type ltype) {
 
     // Add the lease to the lease store and verify class lease counts.
     ASSERT_NO_THROW_LOG(lmptr_->addLease(lease));
-    EXPECT_EQ(1, lmptr_->getClassLeaseCount("water", ltype));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", ltype));
+    EXPECT_EQ(1U, lmptr_->getClassLeaseCount("water", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon", ltype));
 
     // Re-fetch lease. This returns a copy of the persisted lease, which is
     // what Kea logic always does. Fetches a copy.  Otherwise we're changing
@@ -4709,16 +4709,16 @@ GenericLeaseMgrTest::testClassLeaseCount6(Lease::Type ltype) {
 
     // Update the lease in the lease store and verify class lease counts.
     ASSERT_NO_THROW_LOG(lmptr_->updateLease6(lease));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", ltype));
-    EXPECT_EQ(1, lmptr_->getClassLeaseCount("melon", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water", ltype));
+    EXPECT_EQ(1U, lmptr_->getClassLeaseCount("melon", ltype));
 
     lease = lmptr_->getLease6(ltype, lease->addr_);
     ASSERT_TRUE(lease);
 
     // Now delete the lease from the store and verify counts.
     ASSERT_NO_THROW_LOG(lmptr_->deleteLease(lease));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("water", ltype));
-    EXPECT_EQ(0, lmptr_->getClassLeaseCount("melon", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("water", ltype));
+    EXPECT_EQ(0U, lmptr_->getClassLeaseCount("melon", ltype));
 
     lease = lmptr_->getLease6(ltype, lease->addr_);
     ASSERT_FALSE(lease);
@@ -4738,7 +4738,7 @@ GenericLeaseMgrTest::testTrackAddLease4(bool expect_locked) {
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4766,7 +4766,7 @@ GenericLeaseMgrTest::testTrackAddLeaseNA(bool expect_locked) {
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4794,7 +4794,7 @@ GenericLeaseMgrTest::testTrackAddLeasePD(bool expect_locked) {
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4826,7 +4826,7 @@ GenericLeaseMgrTest::testTrackUpdateLease4(bool expect_locked) {
     lmptr_->updateLease4(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4857,7 +4857,7 @@ GenericLeaseMgrTest::testTrackUpdateLeaseNA(bool expect_locked) {
     lmptr_->updateLease6(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4888,7 +4888,7 @@ GenericLeaseMgrTest::testTrackUpdateLeasePD(bool expect_locked) {
     lmptr_->updateLease6(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4919,7 +4919,7 @@ GenericLeaseMgrTest::testTrackDeleteLease4(bool expect_locked) {
     lmptr_->deleteLease(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4950,7 +4950,7 @@ GenericLeaseMgrTest::testTrackDeleteLeaseNA(bool expect_locked) {
     lmptr_->deleteLease(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -4981,7 +4981,7 @@ GenericLeaseMgrTest::testTrackDeleteLeasePD(bool expect_locked) {
     lmptr_->deleteLease(lease);
 
     // Make sure that the callback has been invoked.
-    ASSERT_EQ(1, logs_.size());
+    ASSERT_EQ(1U, logs_.size());
 
     // This flag should be false for the Memfile backend and true
     // for the SQL backends.
@@ -5014,7 +5014,7 @@ GenericLeaseMgrTest::testRecreateWithCallbacks(const std::string& access) {
     EXPECT_TRUE(lmptr_->addLease(lease));
 
     // Make sure that the callback has been invoked.
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
 }
 
 void
@@ -5806,7 +5806,7 @@ GenericLeaseMgrTest::testSflqCreateAndPick4(bool exp_not_implemented /* = false 
             picked.emplace(picked_address);
         }
 
-        ASSERT_EQ(picked.size(), 4);
+        ASSERT_EQ(picked.size(), 4U);
     }
 }
 
@@ -5981,7 +5981,7 @@ GenericLeaseMgrTest::testSflqCreateAndPick6(bool exp_not_implemented /* = false 
             picked.emplace(picked_address);
         }
 
-        ASSERT_EQ(picked.size(), 4);
+        ASSERT_EQ(picked.size(), 4U);
     }
 }
 
@@ -6128,7 +6128,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
 
     // Fetching all pools should find none.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     auto test_start = boost::posix_time::second_clock::local_time();
 
@@ -6172,7 +6172,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
     // Fetching all pools should find all three.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
 
     // Should get them back ordered by subnet and start address.
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
@@ -6183,7 +6183,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(1));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
 
@@ -6191,28 +6191,28 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(2));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(1U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
 
     // Fetch by subnet id for subnet_id = 99
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(99));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that excludes them all.
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(IOAddress("1.2.3.4"),
                                                           IOAddress("1.2.3.4")));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that includes them all.
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(IOAddress("192.0.0.0"),
                                                           IOAddress("192.0.4.0")));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
@@ -6223,7 +6223,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pool->start_address_,
                                                               test_pool->end_address_));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6234,7 +6234,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
         auto end_address = IOAddress::increase(test_pool->end_address_);
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6246,7 +6246,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
         auto end_address = IOAddress(test_pool->end_address_.toUint32() - 1);
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6268,7 +6268,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs4() {
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pool->start_address_,
                                                               test_pool->end_address_));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(0, pool_infos->size());
+        ASSERT_EQ(0U, pool_infos->size());
     }
 }
 
@@ -6278,7 +6278,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
 
     // Fetching all pools should find none.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     auto test_start = boost::posix_time::second_clock::local_time();
 
@@ -6327,7 +6327,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
     // Fetching all pools should find all three.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
 
     // Should get them back ordered by subnet and start address.
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
@@ -6338,7 +6338,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(1));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
 
@@ -6346,28 +6346,28 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(2));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(1U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
 
     // Fetch by subnet id for subnet_id = 99
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(99));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that excludes them all.
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(IOAddress("2001::1"),
                                                           IOAddress("2001::2")));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that includes them all.
     pool_infos.reset();
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(IOAddress("3001::"),
                                                           IOAddress("3001::FF")));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[2], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[1], __LINE__);
@@ -6380,7 +6380,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address.toText(),
                                                               end_address.toText()));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size()) << start_address.toText() << " - " << end_address.toText();
+        ASSERT_EQ(1U, pool_infos->size()) << start_address.toText() << " - " << end_address.toText();
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6391,7 +6391,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
         auto end_address = IOAddress::increase(test_pool->end_address_);
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6404,7 +6404,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
         auto end_address = IOAddress::subtract(test_pool->end_address_, one);
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -6426,7 +6426,7 @@ GenericLeaseMgrTest::testSflqAPIFuncs6(Lease::Type lease_type) {
         ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pool->start_address_,
                                                               test_pool->end_address_));
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(0, pool_infos->size());
+        ASSERT_EQ(0U, pool_infos->size());
     }
 }
 
@@ -6436,7 +6436,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools4() {
 
     // Fetching all pools should find none.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4GetAll());
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     auto test_start = boost::posix_time::second_clock::local_time();
 
@@ -6481,7 +6481,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools4() {
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pools[1]->start_address_,
                                                           test_pools[1]->end_address_));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
@@ -6499,7 +6499,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools4() {
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(test_pools[1]->start_address_,
                                                           test_pools[1]->end_address_));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     // Deleting the middle pool affects free_lease count for the other two.
     // Users would need to fix them by calling create with recreate = true.
     test_pools[0]->free_leases_ = 5;
@@ -6514,7 +6514,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
 
     // Fetching all pools should find none.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6GetAll());
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     auto test_start = boost::posix_time::second_clock::local_time();
 
@@ -6564,7 +6564,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pools[1]->start_address_,
                                                           test_pools[1]->end_address_));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
@@ -6582,7 +6582,7 @@ GenericLeaseMgrTest::testSflqAPIOverlappingPools6(Lease::Type lease_type) {
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(test_pools[1]->start_address_,
                                                           test_pools[1]->end_address_));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     // Deleting the middle pool affects free_lease count for the other two.
     // Users would need to fix them by calling create with recreate = true.
     test_pools[0]->free_leases_ = 5;
@@ -6634,8 +6634,8 @@ GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
     SflqPoolInfoCollectionPtr pool_infos;
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
-    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(1U, pool_infos->size());
+    ASSERT_EQ(65536U, (*pool_infos)[0]->free_leases_);
 
     // Now let's do concurrent recreates.
     threads.clear();
@@ -6667,8 +6667,8 @@ GenericLeaseMgrTest::sflqCreateFlqPool4Concurrent() {
     // Verify the pool and free leases are correct.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool4Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
-    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(1U, pool_infos->size());
+    ASSERT_EQ(65536U, (*pool_infos)[0]->free_leases_);
 }
 
 
@@ -6715,8 +6715,8 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
     SflqPoolInfoCollectionPtr pool_infos;
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
-    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(1U, pool_infos->size());
+    ASSERT_EQ(65536U, (*pool_infos)[0]->free_leases_);
     ASSERT_EQ(Lease::TYPE_PD, (*pool_infos)[0]->lease_type_);
 
     // Now let's do concurrent recreates.
@@ -6749,8 +6749,8 @@ GenericLeaseMgrTest::sflqCreateFlqPool6Concurrent() {
     // Verify the pool and free leases are correct.
     ASSERT_NO_THROW_LOG(pool_infos = lmptr_->sflqPool6Get(start_address, end_address));
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
-    ASSERT_EQ(65536, (*pool_infos)[0]->free_leases_);
+    ASSERT_EQ(1U, pool_infos->size());
+    ASSERT_EQ(65536U, (*pool_infos)[0]->free_leases_);
     ASSERT_EQ(Lease::TYPE_PD, (*pool_infos)[0]->lease_type_);
 
     // Now let's try creates with a different delegated_len.

@@ -428,7 +428,7 @@ public:
     /// @brief Verifies that the backend reports expected version numbers.
     /// @param major Expected major version to be reported.
     /// @param minor Expected minor version to be reported.
-    void testVersion(int major, int minor);
+    void testVersion(uint32_t major, uint32_t minor);
 
     /// @brief Checks that the expired DHCPv4 leases can be retrieved.
     ///

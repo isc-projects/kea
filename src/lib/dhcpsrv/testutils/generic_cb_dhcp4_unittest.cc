@@ -498,7 +498,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteServerTest() {
 
     // Try to delete non-existing server.
     ASSERT_NO_THROW_LOG(servers_deleted = cbptr_->deleteServer4(ServerTag("server2")));
-    EXPECT_EQ(0, servers_deleted);
+    EXPECT_EQ(0U, servers_deleted);
 
     // Make sure that the server1 wasn't deleted.
     ASSERT_NO_THROW_LOG(returned_server = cbptr_->getServer4(ServerTag("server1")));
@@ -509,7 +509,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteServerTest() {
 
     // Delete the existing server.
     ASSERT_NO_THROW_LOG(servers_deleted = cbptr_->deleteServer4(ServerTag("server1")));
-    EXPECT_EQ(1, servers_deleted);
+    EXPECT_EQ(1U, servers_deleted);
 
     {
         SCOPED_TRACE("DELETE audit entry for server");
@@ -558,7 +558,7 @@ GenericConfigBackendDHCPv4Test::getAndDeleteAllServersTest() {
     // inserted servers. The logical 'all' server should be excluded.
     EXPECT_EQ(test_servers_.size() - 1, deleted_servers);
 
-    EXPECT_EQ(1, countRows("dhcp4_server"));
+    EXPECT_EQ(1U, countRows("dhcp4_server"));
 }
 
 void
@@ -586,7 +586,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteGlobalParameter4Test() {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    ASSERT_EQ(1U, returned_global_parameter->getServerTags().size());
     EXPECT_EQ("all", returned_global_parameter->getServerTags().begin()->get());
 
     // Because we have added the global parameter for all servers, it
@@ -598,7 +598,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteGlobalParameter4Test() {
     EXPECT_EQ("whale", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    ASSERT_EQ(1U, returned_global_parameter->getServerTags().size());
     EXPECT_EQ("all", returned_global_parameter->getServerTags().begin()->get());
 
     // Check that the parameter is updated when selector is specified correctly.
@@ -612,7 +612,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteGlobalParameter4Test() {
     EXPECT_EQ("fish", returned_global_parameter->getValue());
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
-    ASSERT_EQ(1, returned_global_parameter->getServerTags().size());
+    ASSERT_EQ(1U, returned_global_parameter->getServerTags().size());
     EXPECT_EQ("all", returned_global_parameter->getServerTags().begin()->get());
 
     {
@@ -624,8 +624,9 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteGlobalParameter4Test() {
 
     // Should not delete parameter specified for all servers if explicit
     // server name is provided.
-    EXPECT_EQ(0, cbptr_->deleteGlobalParameter4(ServerSelector::ONE("server1"),
-                                                "global"));
+    EXPECT_EQ(0U,
+              cbptr_->deleteGlobalParameter4(ServerSelector::ONE("server1"),
+                                             "global"));
 
     // Delete parameter and make sure it is gone.
     cbptr_->deleteGlobalParameter4(ServerSelector::ALL(), "global");
@@ -723,7 +724,7 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags().begin()->get());
 
     // Try to fetch the value specified for the server1. This should override the
@@ -735,7 +736,7 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter1->getValue(), returned_global->getValue());
 
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("server1", returned_global->getServerTags().begin()->get());
 
     // The same in case of the server2.
@@ -745,7 +746,7 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     );
     ASSERT_TRUE(returned_global);
     EXPECT_EQ(global_parameter2->getValue(), returned_global->getValue());
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("server2", returned_global->getServerTags().begin()->get());
 
     StampedValueCollection returned_globals;
@@ -758,17 +759,17 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
                                                            MULTIPLE({ "server1", "server2",
                                                                       "server3" }));
     );
-    ASSERT_EQ(3, returned_globals.size());
+    ASSERT_EQ(3U, returned_globals.size());
 
     // Capture the returned values into the map so as we can check the
     // values against the servers.
     std::map<std::string, std::string> values;
     for (auto const& g : returned_globals) {
-        ASSERT_EQ(1, g->getServerTags().size());
+        ASSERT_EQ(1U, g->getServerTags().size());
         values[g->getServerTags().begin()->get()] = g->getValue();
     }
 
-    ASSERT_EQ(3, values.size());
+    ASSERT_EQ(3U, values.size());
     EXPECT_EQ(global_parameter1->getValue(), values["server1"]);
     EXPECT_EQ(global_parameter2->getValue(), values["server2"]);
     EXPECT_EQ(global_parameter3->getValue(), values["all"]);
@@ -779,10 +780,10 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_globals = cbptr_->getAllGlobalParameters4(ServerSelector::ALL())
     );
-    ASSERT_EQ(1, returned_globals.size());
+    ASSERT_EQ(1U, returned_globals.size());
     returned_global = *returned_globals.begin();
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags().begin()->get());
 
     // Delete the server1. It should remove associations of this server with the
@@ -791,13 +792,13 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_globals = cbptr_->getAllGlobalParameters4(ServerSelector::ONE("server1"))
     );
-    ASSERT_EQ(1, returned_globals.size());
+    ASSERT_EQ(1U, returned_globals.size());
     returned_global = *returned_globals.begin();
     // As a result, the value fetched for the server1 should be the one available for
     // all servers, rather than the one dedicated for server1. The association of
     // the server1 specific value with the server1 should be gone.
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags().begin()->get());
 
     {
@@ -817,12 +818,12 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
                                                                      "global"));
     // No parameters should be deleted. In particular, the parameter for the logical
     // server 'all' should not be deleted.
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     // Deleting the existing value for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteGlobalParameter4(ServerSelector::ONE("server2"),
                                                                      "global"));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // Create it again to test that deletion of all server removes this too.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateGlobalParameter4(ServerSelector::ONE("server2"),
@@ -833,13 +834,13 @@ GenericConfigBackendDHCPv4Test::globalParameters4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_globals = cbptr_->getAllGlobalParameters4(ServerSelector::ALL())
     );
-    EXPECT_EQ(1, deleted_num);
-    ASSERT_EQ(1, returned_globals.size());
+    EXPECT_EQ(1U, deleted_num);
+    ASSERT_EQ(1U, returned_globals.size());
     returned_global = *returned_globals.begin();
     // The common value for all servers should still be available because 'all'
     // logical server should not be deleted.
     EXPECT_EQ(global_parameter3->getValue(), returned_global->getValue());
-    ASSERT_EQ(1, returned_global->getServerTags().size());
+    ASSERT_EQ(1U, returned_global->getServerTags().size());
     EXPECT_EQ("all", returned_global->getServerTags().begin()->get());
 
     {
@@ -871,7 +872,7 @@ GenericConfigBackendDHCPv4Test::getAllGlobalParameters4Test() {
 
     // Fetch all parameters.
     auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
-    ASSERT_EQ(5, parameters.size());
+    ASSERT_EQ(5U, parameters.size());
 
     auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
@@ -883,21 +884,22 @@ GenericConfigBackendDHCPv4Test::getAllGlobalParameters4Test() {
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
 
     for (auto const& param : parameters_index) {
-        ASSERT_EQ(1, param->getServerTags().size());
+        ASSERT_EQ(1U, param->getServerTags().size());
         EXPECT_EQ("all", param->getServerTags().begin()->get());
     }
 
     // Should be able to fetch these parameters when explicitly providing
     // the server tag.
     parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ONE("server1"));
-    EXPECT_EQ(5, parameters.size());
+    EXPECT_EQ(5U, parameters.size());
 
     // Deleting global parameters with non-matching server selector
     // should fail.
-    EXPECT_EQ(0, cbptr_->deleteAllGlobalParameters4(ServerSelector::ONE("server1")));
+    EXPECT_EQ(0U,
+              cbptr_->deleteAllGlobalParameters4(ServerSelector::ONE("server1")));
 
     // Delete all parameters and make sure they are gone.
-    EXPECT_EQ(5, cbptr_->deleteAllGlobalParameters4(ServerSelector::ALL()));
+    EXPECT_EQ(5U, cbptr_->deleteAllGlobalParameters4(ServerSelector::ALL()));
     parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     EXPECT_TRUE(parameters.empty());
 }
@@ -928,7 +930,7 @@ GenericConfigBackendDHCPv4Test::getModifiedGlobalParameters4Test() {
     auto const& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
     // It should be the one modified "tomorrow".
-    ASSERT_EQ(1, parameters_index.size());
+    ASSERT_EQ(1U, parameters_index.size());
 
     auto parameter = parameters_index.find("name3");
     ASSERT_FALSE(parameter == parameters_index.end());
@@ -940,7 +942,7 @@ GenericConfigBackendDHCPv4Test::getModifiedGlobalParameters4Test() {
     // the server tag.
     parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ONE("server1"),
                                                       timestamps_["after today"]);
-    EXPECT_EQ(1, parameters.size());
+    EXPECT_EQ(1U, parameters.size());
 }
 
 void
@@ -1052,7 +1054,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
             returned_subnet_2 = cbptr_->getSubnet4(server_selector, subnet->getID()));
         ASSERT_TRUE(returned_subnet_2);
 
-        ASSERT_EQ(1, returned_subnet_2->getServerTags().size());
+        ASSERT_EQ(1U, returned_subnet_2->getServerTags().size());
         EXPECT_TRUE(returned_subnet_2->hasServerTag(ServerTag(expected_tag)));
 
         ASSERT_EQ(subnet->toElement()->str(), returned_subnet_2->toElement()->str());
@@ -1062,7 +1064,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4Test() {
             returned_subnet_2 = cbptr_->getSubnet4(server_selector, subnet->toText()));
         ASSERT_TRUE(returned_subnet_2);
 
-        ASSERT_EQ(1, returned_subnet_2->getServerTags().size());
+        ASSERT_EQ(1U, returned_subnet_2->getServerTags().size());
         EXPECT_TRUE(returned_subnet_2->hasServerTag(ServerTag(expected_tag)));
 
         EXPECT_EQ(subnet->toElement()->str(), returned_subnet_2->toElement()->str());
@@ -1166,13 +1168,13 @@ GenericConfigBackendDHCPv4Test::getSubnet4WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_subnet->getClientClasses().empty());
 
     EXPECT_TRUE(returned_subnet->getValid().unspecified());
-    EXPECT_EQ(0, returned_subnet->getValid().get());
+    EXPECT_EQ(0U, returned_subnet->getValid().get());
 
     EXPECT_TRUE(returned_subnet->getT1().unspecified());
-    EXPECT_EQ(0, returned_subnet->getT1().get());
+    EXPECT_EQ(0U, returned_subnet->getT1().get());
 
     EXPECT_TRUE(returned_subnet->getT2().unspecified());
-    EXPECT_EQ(0, returned_subnet->getT2().get());
+    EXPECT_EQ(0U, returned_subnet->getT2().get());
 
     EXPECT_TRUE(returned_subnet->getReservationsGlobal().unspecified());
     EXPECT_FALSE(returned_subnet->getReservationsGlobal().get());
@@ -1259,7 +1261,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4SharedNetworkTest() {
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
-    ASSERT_EQ(1, returned_subnet->getServerTags().size());
+    ASSERT_EQ(1U, returned_subnet->getServerTags().size());
     EXPECT_EQ("all", returned_subnet->getServerTags().begin()->get());
 
     // The easiest way to verify whether the returned subnet matches the inserted
@@ -1281,7 +1283,7 @@ GenericConfigBackendDHCPv4Test::getSubnet4ByPrefixTest() {
     Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     "192.0.2.0/24");
     ASSERT_TRUE(returned_subnet);
-    ASSERT_EQ(1, returned_subnet->getServerTags().size());
+    ASSERT_EQ(1U, returned_subnet->getServerTags().size());
     EXPECT_EQ("all", returned_subnet->getServerTags().begin()->get());
 
     // Verify subnet contents.
@@ -1342,34 +1344,34 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
     // See if the subnets are returned ok.
     auto subnet_it = subnets.begin();
     for (unsigned i = 0; i < subnets.size(); ++i, ++subnet_it) {
-        ASSERT_EQ(1, (*subnet_it)->getServerTags().size());
+        ASSERT_EQ(1U, (*subnet_it)->getServerTags().size());
         EXPECT_EQ("all", (*subnet_it)->getServerTags().begin()->get());
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
                   (*subnet_it)->toElement()->str());
     }
 
     // Attempt to remove the non existing subnet should return 0.
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(), 22));
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(),
-                                       "155.0.3.0/24"));
+    EXPECT_EQ(0U, cbptr_->deleteSubnet4(ServerSelector::ALL(), 22));
+    EXPECT_EQ(0U, cbptr_->deleteSubnet4(ServerSelector::ALL(),
+                                        "155.0.3.0/24"));
     // All subnets should be still there.
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
     // Should not delete the subnet for explicit server tag because
     // our subnet is for all servers.
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
-                                       test_subnets_[1]->getID()));
+    EXPECT_EQ(0U, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
+                                        test_subnets_[1]->getID()));
 
     // Also, verify that behavior when deleting by prefix.
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
-                                       test_subnets_[2]->toText()));
+    EXPECT_EQ(0U, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
+                                        test_subnets_[2]->toText()));
 
     // Same for all subnets.
-    EXPECT_EQ(0, cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1")));
+    EXPECT_EQ(0U, cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1")));
 
     // Delete first subnet by id and verify that it is gone.
-    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
-                                       test_subnets_[1]->getID()));
+    EXPECT_EQ(1U, cbptr_->deleteSubnet4(ServerSelector::ALL(),
+                                        test_subnets_[1]->getID()));
 
     {
         SCOPED_TRACE("DELETE first subnet audit entry");
@@ -1382,8 +1384,8 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
     ASSERT_EQ(test_subnets_.size() - 2, subnets.size());
 
     // Delete second subnet by prefix and verify it is gone.
-    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
-                                       test_subnets_[2]->toText()));
+    EXPECT_EQ(1U, cbptr_->deleteSubnet4(ServerSelector::ALL(),
+                                        test_subnets_[2]->toText()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 3, subnets.size());
 
@@ -1395,7 +1397,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4Test() {
     }
 
     // Delete all.
-    EXPECT_EQ(1, cbptr_->deleteAllSubnets4(ServerSelector::ALL()));
+    EXPECT_EQ(1U, cbptr_->deleteAllSubnets4(ServerSelector::ALL()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_TRUE(subnets.empty());
 
@@ -1439,7 +1441,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4WithServerTagsTest() {
 
     // All three subnets are associated with the server1.
     ASSERT_NO_THROW_LOG(subnets = cbptr_->getAllSubnets4(ServerSelector::ONE("server1")));
-    EXPECT_EQ(3, subnets.size());
+    EXPECT_EQ(3U, subnets.size());
 
     // First subnet is associated with all servers.
     auto returned_subnet = SubnetFetcher4::get(subnets, SubnetID(1024));
@@ -1464,7 +1466,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4WithServerTagsTest() {
 
     // For server2 we should only get two subnets, i.e. first and last.
     ASSERT_NO_THROW_LOG(subnets = cbptr_->getAllSubnets4(ServerSelector::ONE("server2")));
-    EXPECT_EQ(2, subnets.size());
+    EXPECT_EQ(2U, subnets.size());
 
     // First subnet is associated with all servers.
     returned_subnet = SubnetFetcher4::get(subnets, SubnetID(1024));
@@ -1482,7 +1484,7 @@ GenericConfigBackendDHCPv4Test::getAllSubnets4WithServerTagsTest() {
 
     // Only the first subnet is associated with all servers.
     ASSERT_NO_THROW_LOG(subnets = cbptr_->getAllSubnets4(ServerSelector::ALL()));
-    EXPECT_EQ(1, subnets.size());
+    EXPECT_EQ(1U, subnets.size());
 
     returned_subnet = SubnetFetcher4::get(subnets, SubnetID(1024));
     ASSERT_TRUE(returned_subnet);
@@ -1558,13 +1560,13 @@ GenericConfigBackendDHCPv4Test::deleteSubnet4Test() {
         ASSERT_NO_THROW_LOG(
             deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->getID())
         );
-        EXPECT_EQ(0, deleted_count);
+        EXPECT_EQ(0U, deleted_count);
 
         deleted_count = 0;
         ASSERT_NO_THROW_LOG(
             deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->toText())
         );
-        EXPECT_EQ(0, deleted_count);
+        EXPECT_EQ(0U, deleted_count);
     };
 
     {
@@ -1586,7 +1588,7 @@ GenericConfigBackendDHCPv4Test::deleteSubnet4Test() {
         ASSERT_NO_THROW_LOG(
             deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->getID())
         );
-        EXPECT_EQ(1, deleted_count);
+        EXPECT_EQ(1U, deleted_count);
 
         EXPECT_FALSE(cbptr_->getSubnet4(server_selector, subnet->getID()));
     };
@@ -1607,7 +1609,7 @@ GenericConfigBackendDHCPv4Test::deleteSubnet4Test() {
         ASSERT_NO_THROW_LOG(
             deleted_count = cbptr_->deleteSubnet4(server_selector, subnet->toText())
         );
-        EXPECT_EQ(1, deleted_count);
+        EXPECT_EQ(1U, deleted_count);
 
         EXPECT_FALSE(cbptr_->getSubnet4(server_selector, subnet->toText()));
     };
@@ -1684,7 +1686,7 @@ GenericConfigBackendDHCPv4Test::unassignedSubnet4Test() {
     // i.e. do not belong to any server.
     uint64_t deleted_count = 0;
     ASSERT_NO_THROW_LOG(deleted_count = cbptr_->deleteServer4(ServerTag("server1")));
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 
     // Trying to fetch the subnet by server tag should return no result.
     Subnet4Ptr returned_subnet;
@@ -1718,14 +1720,14 @@ GenericConfigBackendDHCPv4Test::unassignedSubnet4Test() {
 
     // Also if we ask for all unassigned subnets it should be returned.
     ASSERT_NO_THROW_LOG(returned_subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED()));
-    ASSERT_EQ(2, returned_subnets.size());
+    ASSERT_EQ(2U, returned_subnets.size());
 
     // Same for modified subnets.
     ASSERT_NO_THROW_LOG(
         returned_subnets = cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
                                                        timestamps_["two days ago"])
     );
-    ASSERT_EQ(2, returned_subnets.size());
+    ASSERT_EQ(2U, returned_subnets.size());
 
     // If we ask for any subnet by subnet id, it should be returned too.
     ASSERT_NO_THROW_LOG(returned_subnet = cbptr_->getSubnet4(ServerSelector::ANY(),
@@ -1742,25 +1744,25 @@ GenericConfigBackendDHCPv4Test::unassignedSubnet4Test() {
         deleted_count = cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
                                               subnet->getID())
     );
-    EXPECT_EQ(0, deleted_count);
+    EXPECT_EQ(0U, deleted_count);
 
     // Also, if we delete all subnets for server1.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1"))
     );
-    EXPECT_EQ(0, deleted_count);
+    EXPECT_EQ(0U, deleted_count);
 
     // We can delete this subnet when we specify ANY and the matching id.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteSubnet4(ServerSelector::ANY(), subnet->getID())
     );
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 
     // We can delete all subnets using UNASSIGNED selector.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED());
     );
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 }
 
 void
@@ -1784,18 +1786,18 @@ GenericConfigBackendDHCPv4Test::getModifiedSubnets4Test() {
     Subnet4Collection
         subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                               timestamps_["after today"]);
-    ASSERT_EQ(1, subnets.size());
+    ASSERT_EQ(1U, subnets.size());
 
     // All subnets should also be returned for explicitly specified server tag.
     subnets = cbptr_->getModifiedSubnets4(ServerSelector::ONE("server1"),
                                           timestamps_["after today"]);
-    ASSERT_EQ(1, subnets.size());
+    ASSERT_EQ(1U, subnets.size());
 
     // Fetch subnets with timestamp later than yesterday. We should get
     // two subnets.
     subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                           timestamps_["after yesterday"]);
-    ASSERT_EQ(2, subnets.size());
+    ASSERT_EQ(2U, subnets.size());
 
     // Fetch subnets with timestamp later than tomorrow. Nothing should
     // be returned.
@@ -1851,7 +1853,7 @@ GenericConfigBackendDHCPv4Test::getSharedNetworkSubnets4Test() {
     // Fetch all subnets belonging to shared network level1.
     Subnet4Collection subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ALL(),
                                                                  "level1");
-    ASSERT_EQ(1, subnets.size());
+    ASSERT_EQ(1U, subnets.size());
 
     // Returned subnet should match test subnet #1.
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
@@ -1859,19 +1861,19 @@ GenericConfigBackendDHCPv4Test::getSharedNetworkSubnets4Test() {
 
     // All subnets should also be returned for ANY server.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ANY(), "level1");
-    ASSERT_EQ(1, subnets.size());
+    ASSERT_EQ(1U, subnets.size());
 
     // Returned subnet should match test subnet #1.
     EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
                              (*subnets.begin())->toElement()));
 
     // Check server tag
-    ASSERT_EQ(1, (*subnets.begin())->getServerTags().size());
+    ASSERT_EQ(1U, (*subnets.begin())->getServerTags().size());
     EXPECT_EQ("all", (*subnets.begin())->getServerTags().begin()->get());
 
     // Fetch all subnets belonging to shared network level2.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ALL(), "level2");
-    ASSERT_EQ(2, subnets.size());
+    ASSERT_EQ(2U, subnets.size());
 
     ElementPtr test_list = Element::createList();
     test_list->add(test_subnets_[2]->toElement());
@@ -1886,7 +1888,7 @@ GenericConfigBackendDHCPv4Test::getSharedNetworkSubnets4Test() {
 
     // All subnets should also be returned for explicitly specified server tag.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ONE("server1"), "level2");
-    ASSERT_EQ(2, subnets.size());
+    ASSERT_EQ(2U, subnets.size());
 
     returned_list = Element::createList();
     subnet = subnets.begin();
@@ -1905,7 +1907,7 @@ GenericConfigBackendDHCPv4Test::subnetUpdatePoolsTest() {
         ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),
                                                         test_subnets_[0]));
         // Make sure that the pools have been added to the database.
-        EXPECT_EQ(2, countRows("dhcp4_pool"));
+        EXPECT_EQ(2U, countRows("dhcp4_pool"));
 
         // Create the subnet without options which updates the existing
         // subnet.
@@ -1913,7 +1915,7 @@ GenericConfigBackendDHCPv4Test::subnetUpdatePoolsTest() {
                                       subnet_id));
         ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet));
         // Check that options are gone.
-        EXPECT_EQ(0, countRows("dhcp4_pool"));
+        EXPECT_EQ(0U, countRows("dhcp4_pool"));
     };
 
     {
@@ -1938,41 +1940,41 @@ void
 GenericConfigBackendDHCPv4Test::subnetOptionsTest() {
     // Add the subnet with two pools and three options.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(3U, countRows("dhcp4_options"));
 
     // The second subnet uses the same subnet id, so this operation should replace
     // the existing subnet and its options. The new instance has two pools, each
     // including one option, so we should end up with two options.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[1]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(2, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(2U, countRows("dhcp4_options"));
 
     // Add third subnet with a single option. The number of options in the database
     // should now be 3.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(3U, countRows("dhcp4_options"));
 
     // Delete the subnet. All options and pools it contains should also be removed, leaving
     // the last added subnet and its sole option.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[1]->getID()));
-    EXPECT_EQ(1, countRows("dhcp4_subnet"));
-    EXPECT_EQ(0, countRows("dhcp4_pool"));
-    EXPECT_EQ(1, countRows("dhcp4_options"));
+    EXPECT_EQ(1U, countRows("dhcp4_subnet"));
+    EXPECT_EQ(0U, countRows("dhcp4_pool"));
+    EXPECT_EQ(1U, countRows("dhcp4_options"));
 
     // Add the first subnet again. We should now have 4 options: 3 options from the
     // newly added subnet and one option from the existing subnet.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(4, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(4U, countRows("dhcp4_options"));
 
     // Delete the subnet including 3 options. The option from the other subnet should not
     // be affected.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSubnet4(ServerSelector::ALL(), test_subnets_[0]->getID()));
-    EXPECT_EQ(1, countRows("dhcp4_subnet"));
-    EXPECT_EQ(0, countRows("dhcp4_pool"));
-    EXPECT_EQ(1, countRows("dhcp4_options"));
+    EXPECT_EQ(1U, countRows("dhcp4_subnet"));
+    EXPECT_EQ(0U, countRows("dhcp4_pool"));
+    EXPECT_EQ(1U, countRows("dhcp4_options"));
 }
 
 void
@@ -2010,8 +2012,8 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4Test() {
                                                                 shared_network->getName()));
         ASSERT_TRUE(network);
 
-        EXPECT_GT(network->getId(), 0);
-        ASSERT_EQ(1, network->getServerTags().size());
+        EXPECT_GT(network->getId(), 0U);
+        ASSERT_EQ(1U, network->getServerTags().size());
         EXPECT_EQ(expected_tag, network->getServerTags().begin()->get());
 
         // The easiest way to verify whether the returned shared network matches the
@@ -2179,13 +2181,13 @@ GenericConfigBackendDHCPv4Test::getSharedNetwork4WithOptionalUnspecifiedTest() {
     EXPECT_TRUE(returned_network->getClientClasses().empty());
 
     EXPECT_TRUE(returned_network->getValid().unspecified());
-    EXPECT_EQ(0, returned_network->getValid().get());
+    EXPECT_EQ(0U, returned_network->getValid().get());
 
     EXPECT_TRUE(returned_network->getT1().unspecified());
-    EXPECT_EQ(0, returned_network->getT1().get());
+    EXPECT_EQ(0U, returned_network->getT1().get());
 
     EXPECT_TRUE(returned_network->getT2().unspecified());
-    EXPECT_EQ(0, returned_network->getT2().get());
+    EXPECT_EQ(0U, returned_network->getT2().get());
 
     EXPECT_TRUE(returned_network->getReservationsGlobal().unspecified());
     EXPECT_FALSE(returned_network->getReservationsGlobal().get());
@@ -2286,7 +2288,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     for (unsigned i = 0; i < networks.size(); ++i) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
                   networks[i]->toElement()->str());
-        ASSERT_EQ(1, networks[i]->getServerTags().size());
+        ASSERT_EQ(1U, networks[i]->getServerTags().size());
         EXPECT_EQ("all", networks[i]->getServerTags().begin()->get());
     }
 
@@ -2312,23 +2314,23 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     }
 
     // Deleting non-existing shared network should return 0.
-    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
-                                              "big-fish"));
+    EXPECT_EQ(0U, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
+                                               "big-fish"));
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
     // Should not delete the shared network for explicit server tag
     // because our shared network is for all servers.
-    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
-                                              test_networks_[1]->getName()));
+    EXPECT_EQ(0U, cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
+                                               test_networks_[1]->getName()));
 
     // Same for all shared networks.
-    EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
+    EXPECT_EQ(0U, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
 
     // Delete first shared network with it subnets and verify it is gone.
     // Begin by its subnet.
-    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ANY(),
-                                                     test_networks_[1]->getName()));
+    EXPECT_EQ(1U, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ANY(),
+                                                      test_networks_[1]->getName()));
 
     {
         SCOPED_TRACE("DELETE audit entry for subnets of the first shared network");
@@ -2343,8 +2345,8 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     EXPECT_FALSE(subnet);
 
     // And after the shared network itself.
-    EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
-                                              test_networks_[1]->getName()));
+    EXPECT_EQ(1U, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
+                                               test_networks_[1]->getName()));
 
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
@@ -2357,7 +2359,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4Test() {
     }
 
     // Delete all.
-    EXPECT_EQ(2, cbptr_->deleteAllSharedNetworks4(ServerSelector::ALL()));
+    EXPECT_EQ(2U, cbptr_->deleteAllSharedNetworks4(ServerSelector::ALL()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_TRUE(networks.empty());
 
@@ -2431,7 +2433,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4WithServerTagsTest() {
 
     // All three networks are associated with the server1.
     ASSERT_NO_THROW_LOG(networks = cbptr_->getAllSharedNetworks4(ServerSelector::ONE("server1")));
-    EXPECT_EQ(3, networks.size());
+    EXPECT_EQ(3U, networks.size());
 
     // First network is associated with all servers.
     auto returned_network = SharedNetworkFetcher4::get(networks, "level1");
@@ -2456,7 +2458,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4WithServerTagsTest() {
 
     // For server2 we should only get two shared networks, i.e. first and last.
     ASSERT_NO_THROW_LOG(networks = cbptr_->getAllSharedNetworks4(ServerSelector::ONE("server2")));
-    EXPECT_EQ(2, networks.size());
+    EXPECT_EQ(2U, networks.size());
 
     // First shared network is associated with all servers.
     returned_network = SharedNetworkFetcher4::get(networks, "level1");
@@ -2474,7 +2476,7 @@ GenericConfigBackendDHCPv4Test::getAllSharedNetworks4WithServerTagsTest() {
 
     // Only the first shared network is associated with all servers.
     ASSERT_NO_THROW_LOG(networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL()));
-    EXPECT_EQ(1, networks.size());
+    EXPECT_EQ(1U, networks.size());
 
     returned_network = SharedNetworkFetcher4::get(networks, "level1");
     ASSERT_TRUE(returned_network);
@@ -2505,13 +2507,13 @@ GenericConfigBackendDHCPv4Test::getModifiedSharedNetworks4Test() {
     SharedNetwork4Collection
         networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                       timestamps_["after today"]);
-    ASSERT_EQ(1, networks.size());
+    ASSERT_EQ(1U, networks.size());
 
     // Fetch shared networks with timestamp later than yesterday. We
     // should get two shared networks.
     networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                   timestamps_["after yesterday"]);
-    ASSERT_EQ(2, networks.size());
+    ASSERT_EQ(2U, networks.size());
 
     // Fetch shared networks with timestamp later than tomorrow. Nothing
     // should be returned.
@@ -2583,7 +2585,7 @@ GenericConfigBackendDHCPv4Test::deleteSharedNetwork4Test() {
             deleted_count = cbptr_->deleteSharedNetwork4(server_selector,
                                                          shared_network->getName())
         );
-        EXPECT_EQ(0, deleted_count);
+        EXPECT_EQ(0U, deleted_count);
     };
 
     {
@@ -2617,7 +2619,7 @@ GenericConfigBackendDHCPv4Test::deleteSharedNetwork4Test() {
             deleted_count = cbptr_->deleteSharedNetwork4(server_selector,
                                                          shared_network->getName())
         );
-        EXPECT_EQ(1, deleted_count);
+        EXPECT_EQ(1U, deleted_count);
 
         EXPECT_FALSE(cbptr_->getSharedNetwork4(server_selector,
                                                shared_network->getName()));
@@ -2678,7 +2680,7 @@ GenericConfigBackendDHCPv4Test::unassignedSharedNetworkTest() {
     // considered orphaned, i.e. do not belong to any server.
     uint64_t deleted_count = 0;
     ASSERT_NO_THROW_LOG(deleted_count = cbptr_->deleteServer4(ServerTag("server1")));
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 
     // Trying to fetch this shared network by server tag should return no result.
     SharedNetwork4Ptr returned_network;
@@ -2706,14 +2708,14 @@ GenericConfigBackendDHCPv4Test::unassignedSharedNetworkTest() {
 
     // Also if we ask for all unassigned networks it should be returned.
     ASSERT_NO_THROW_LOG(returned_networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED()));
-    ASSERT_EQ(2, returned_networks.size());
+    ASSERT_EQ(2U, returned_networks.size());
 
     // And all modified.
     ASSERT_NO_THROW_LOG(
         returned_networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
                                                                timestamps_["two days ago"])
     );
-    ASSERT_EQ(2, returned_networks.size());
+    ASSERT_EQ(2U, returned_networks.size());
 
     // If we ask for any network by name, it should be returned too.
     ASSERT_NO_THROW_LOG(returned_network = cbptr_->getSharedNetwork4(ServerSelector::ANY(),
@@ -2726,25 +2728,25 @@ GenericConfigBackendDHCPv4Test::unassignedSharedNetworkTest() {
         deleted_count = cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
                                                      "level1")
     );
-    EXPECT_EQ(0, deleted_count);
+    EXPECT_EQ(0U, deleted_count);
 
     // Also, if we delete all shared networks for server1.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1"))
     );
-    EXPECT_EQ(0, deleted_count);
+    EXPECT_EQ(0U, deleted_count);
 
     // We can delete this shared network when we specify ANY and the matching name.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteSharedNetwork4(ServerSelector::ANY(), "level1")
     );
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 
     // We can delete all networks using UNASSIGNED selector.
     ASSERT_NO_THROW_LOG(
         deleted_count = cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED());
     );
-    EXPECT_EQ(1, deleted_count);
+    EXPECT_EQ(1U, deleted_count);
 }
 
 void
@@ -2780,36 +2782,36 @@ void
 GenericConfigBackendDHCPv4Test::sharedNetworkOptionsTest() {
     // Add shared network with three options.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[0]));
-    EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(3U, countRows("dhcp4_options"));
 
     // Add another shared network with a single option. The numnber of options in the
     // database should now be 4.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[2]));
-    EXPECT_EQ(4, countRows("dhcp4_options"));
+    EXPECT_EQ(4U, countRows("dhcp4_options"));
 
     // The second shared network uses the same name as the first shared network, so
     // this operation should replace the existing shared network and its options.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[1]));
-    EXPECT_EQ(1, countRows("dhcp4_options"));
+    EXPECT_EQ(1U, countRows("dhcp4_options"));
 
     // Remove the shared network. This should not affect options assigned to the
     // other shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                                      test_networks_[1]->getName()));
-    EXPECT_EQ(1, countRows("dhcp4_shared_network"));
-    EXPECT_EQ(1, countRows("dhcp4_options"));
+    EXPECT_EQ(1U, countRows("dhcp4_shared_network"));
+    EXPECT_EQ(1U, countRows("dhcp4_options"));
 
     // Create the first option again. The number of options should be equal to the
     // sum of options associated with both shared networks.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), test_networks_[0]));
-    EXPECT_EQ(4, countRows("dhcp4_options"));
+    EXPECT_EQ(4U, countRows("dhcp4_options"));
 
     // Delete this shared network. This should not affect the option associated
     // with the remaining shared network.
     ASSERT_NO_THROW_LOG(cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                                      test_networks_[0]->getName()));
-    EXPECT_EQ(1, countRows("dhcp4_shared_network"));
-    EXPECT_EQ(1, countRows("dhcp4_options"));
+    EXPECT_EQ(1U, countRows("dhcp4_shared_network"));
+    EXPECT_EQ(1U, countRows("dhcp4_options"));
 }
 
 void
@@ -2824,8 +2826,8 @@ GenericConfigBackendDHCPv4Test::getOptionDef4Test() {
                               test_option_defs_[0]->getCode(),
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
-    EXPECT_GT(returned_option_def->getId(), 0);
-    ASSERT_EQ(1, returned_option_def->getServerTags().size());
+    EXPECT_GT(returned_option_def->getId(), 0U);
+    ASSERT_EQ(1U, returned_option_def->getServerTags().size());
     EXPECT_EQ("all", returned_option_def->getServerTags().begin()->get());
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
@@ -2976,7 +2978,7 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
                                                          MULTIPLE({ "server1", "server2",
                                                                     "server3" }));
     );
-    ASSERT_EQ(3, returned_option_defs.size());
+    ASSERT_EQ(3U, returned_option_defs.size());
 
     // Check that expected option definitions have been returned.
     auto current_option = returned_option_defs.begin();
@@ -2991,7 +2993,7 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
         returned_option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
 
     );
-    ASSERT_EQ(1, returned_option_defs.size());
+    ASSERT_EQ(1U, returned_option_defs.size());
     EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
 
     // Delete the server1. It should remove associations of this server with the
@@ -3001,7 +3003,7 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
         returned_option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ONE("server1"));
 
     );
-    ASSERT_EQ(1, returned_option_defs.size());
+    ASSERT_EQ(1U, returned_option_defs.size());
     EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
 
     {
@@ -3017,13 +3019,13 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ONE("server1"),
                                                                option1->getCode(),
                                                                option1->getOptionSpaceName()));
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     // Deleting the existing option definition for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ONE("server2"),
                                                                option2->getCode(),
                                                                option2->getOptionSpaceName()));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // Create this option definition again to test that deletion of all servers
     // removes it too.
@@ -3035,8 +3037,8 @@ GenericConfigBackendDHCPv4Test::optionDefs4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
     );
-    EXPECT_EQ(1, deleted_num);
-    EXPECT_EQ(1, returned_option_defs.size());
+    EXPECT_EQ(1U, deleted_num);
+    EXPECT_EQ(1U, returned_option_defs.size());
     EXPECT_TRUE((*returned_option_defs.begin())->equals(*option3));
 
     {
@@ -3145,7 +3147,7 @@ GenericConfigBackendDHCPv4Test::allOptionDefDataTypes4Test() {
     ASSERT_NO_THROW_LOG(parser.parse(storage, defs_elem));
 
     auto test_defs = storage->getAll("dhcp4");
-    ASSERT_EQ(test_defs->size(), 18);
+    ASSERT_EQ(test_defs->size(), 18U);
 
     // Insert each option definition into the database.
     for (auto const& test_def : *test_defs) {
@@ -3196,7 +3198,7 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
 
     // See if option definitions are returned ok.
     for (auto const& def : option_defs) {
-        ASSERT_EQ(1, def->getServerTags().size());
+        ASSERT_EQ(1U, def->getServerTags().size());
         EXPECT_EQ("all", def->getServerTags().begin()->get());
         bool success = false;
         for (unsigned i = 1; i < test_option_defs_.size(); ++i) {
@@ -3209,24 +3211,24 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
     }
 
     // Deleting non-existing option definition should return 0.
-    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
-                                          99, "non-exiting-space"));
+    EXPECT_EQ(0U, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
+                                           99, "non-exiting-space"));
     // All option definitions should be still there.
     ASSERT_EQ(test_option_defs_.size() - updates_num, option_defs.size());
 
     // Should not delete option definition for explicit server tag
     // because our option definition is for all servers.
-    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::ONE("server1"),
-                                          test_option_defs_[1]->getCode(),
-                                          test_option_defs_[1]->getOptionSpaceName()));
+    EXPECT_EQ(0U, cbptr_->deleteOptionDef4(ServerSelector::ONE("server1"),
+                                           test_option_defs_[1]->getCode(),
+                                           test_option_defs_[1]->getOptionSpaceName()));
 
     // Same for all option definitions.
-    EXPECT_EQ(0, cbptr_->deleteAllOptionDefs4(ServerSelector::ONE("server1")));
+    EXPECT_EQ(0U, cbptr_->deleteAllOptionDefs4(ServerSelector::ONE("server1")));
 
     // Delete one of the option definitions and see if it is gone.
-    EXPECT_EQ(1, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
-                                          test_option_defs_[2]->getCode(),
-                                          test_option_defs_[2]->getOptionSpaceName()));
+    EXPECT_EQ(1U, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
+                                           test_option_defs_[2]->getCode(),
+                                           test_option_defs_[2]->getOptionSpaceName()));
     ASSERT_FALSE(cbptr_->getOptionDef4(ServerSelector::ALL(),
                                        test_option_defs_[2]->getCode(),
                                        test_option_defs_[2]->getOptionSpaceName()));
@@ -3239,7 +3241,7 @@ GenericConfigBackendDHCPv4Test::getAllOptionDefs4Test() {
     }
 
     // Delete all remaining option definitions.
-    EXPECT_EQ(2, cbptr_->deleteAllOptionDefs4(ServerSelector::ALL()));
+    EXPECT_EQ(2U, cbptr_->deleteAllOptionDefs4(ServerSelector::ALL()));
     option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
     ASSERT_TRUE(option_defs.empty());
 
@@ -3275,13 +3277,13 @@ GenericConfigBackendDHCPv4Test::getModifiedOptionDefs4Test() {
     OptionDefContainer
         option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
                                                      timestamps_["after today"]);
-    ASSERT_EQ(1, option_defs.size());
+    ASSERT_EQ(1U, option_defs.size());
 
     // Fetch option definitions with timestamp later than yesterday. We
     // should get two option definitions.
     option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
                                                  timestamps_["after yesterday"]);
-    ASSERT_EQ(2, option_defs.size());
+    ASSERT_EQ(2U, option_defs.size());
 
     // Fetch option definitions with timestamp later than tomorrow. Nothing
     // should be returned.
@@ -3346,14 +3348,14 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteOption4Test() {
     }
 
     // Deleting an option with explicitly specified server tag should fail.
-    EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
-                                       opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_));
+    EXPECT_EQ(0U, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
+                                        opt_boot_file_name->option_->getType(),
+                                        opt_boot_file_name->space_name_));
 
     // Deleting option for all servers should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
-                                       opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_));
+    EXPECT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                        opt_boot_file_name->option_->getType(),
+                                        opt_boot_file_name->space_name_));
 
     EXPECT_FALSE(cbptr_->getOption4(ServerSelector::ALL(),
                                     opt_boot_file_name->option_->getType(),
@@ -3482,7 +3484,7 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
                                                   MULTIPLE({ "server1", "server2",
                                                              "server3" }));
     );
-    ASSERT_EQ(3, returned_options.size());
+    ASSERT_EQ(3U, returned_options.size());
 
     // Check that expected options have been returned.
     auto current_option = returned_options.begin();
@@ -3496,7 +3498,7 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_options = cbptr_->getAllOptions4(ServerSelector::ALL());
     );
-    ASSERT_EQ(1, returned_options.size());
+    ASSERT_EQ(1U, returned_options.size());
     testOptionsEquivalent(*opt_boot_file_name3, *returned_options.begin());
 
     // Delete the server1. It should remove associations of this server with the
@@ -3505,7 +3507,7 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_options = cbptr_->getAllOptions4(ServerSelector::ONE("server1"));
     );
-    ASSERT_EQ(1, returned_options.size());
+    ASSERT_EQ(1U, returned_options.size());
     testOptionsEquivalent(*opt_boot_file_name3, *returned_options.begin());
 
     {
@@ -3521,13 +3523,13 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOption4(ServerSelector::ONE("server1"),
                                                             opt_boot_file_name1->option_->getType(),
                                                             opt_boot_file_name1->space_name_));
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     // Deleting the existing option for server2 should succeed.
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOption4(ServerSelector::ONE("server2"),
                                                             opt_boot_file_name2->option_->getType(),
                                                             opt_boot_file_name2->space_name_));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // Create this option again to test that deletion of all servers removes it too.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateOption4(ServerSelector::ONE("server2"),
@@ -3538,8 +3540,8 @@ GenericConfigBackendDHCPv4Test::globalOptions4WithServerTagsTest() {
     ASSERT_NO_THROW_LOG(
         returned_options = cbptr_->getAllOptions4(ServerSelector::ALL());
     );
-    EXPECT_EQ(1, deleted_num);
-    ASSERT_EQ(1, returned_options.size());
+    EXPECT_EQ(1U, deleted_num);
+    ASSERT_EQ(1U, returned_options.size());
     testOptionsEquivalent(*opt_boot_file_name3, *returned_options.begin());
 
     {
@@ -3564,12 +3566,12 @@ GenericConfigBackendDHCPv4Test::getAllOptions4Test() {
 
     // Retrieve all these options.
     OptionContainer returned_options = cbptr_->getAllOptions4(ServerSelector::ALL());
-    ASSERT_EQ(3, returned_options.size());
+    ASSERT_EQ(3U, returned_options.size());
 
     // Fetching global options with explicitly specified server tag should return
     // the same result.
     returned_options = cbptr_->getAllOptions4(ServerSelector::ONE("server1"));
-    ASSERT_EQ(3, returned_options.size());
+    ASSERT_EQ(3U, returned_options.size());
 
     // Get the container index used to search options by option code.
     const OptionContainerTypeIndex& index = returned_options.get<1>();
@@ -3581,8 +3583,8 @@ GenericConfigBackendDHCPv4Test::getAllOptions4Test() {
         auto option0 = index.find(test_options_[0]->option_->getType());
         ASSERT_FALSE(option0 == index.end());
         testOptionsEquivalent(*test_options_[0], *option0);
-        EXPECT_GT(option0->getId(), 0);
-        ASSERT_EQ(1, option0->getServerTags().size());
+        EXPECT_GT(option0->getId(), 0U);
+        ASSERT_EQ(1U, option0->getServerTags().size());
         EXPECT_EQ("all", option0->getServerTags().begin()->get());
     }
 
@@ -3591,8 +3593,8 @@ GenericConfigBackendDHCPv4Test::getAllOptions4Test() {
         auto option1 = index.find(test_options_[1]->option_->getType());
         ASSERT_FALSE(option1 == index.end());
         testOptionsEquivalent(*test_options_[1], *option1);
-        EXPECT_GT(option1->getId(), 0);
-        ASSERT_EQ(1, option1->getServerTags().size());
+        EXPECT_GT(option1->getId(), 0U);
+        ASSERT_EQ(1U, option1->getServerTags().size());
         EXPECT_EQ("all", option1->getServerTags().begin()->get());
     }
 
@@ -3601,8 +3603,8 @@ GenericConfigBackendDHCPv4Test::getAllOptions4Test() {
         auto option5 = index.find(test_options_[5]->option_->getType());
         ASSERT_FALSE(option5 == index.end());
         testOptionsEquivalent(*test_options_[5], *option5);
-        EXPECT_GT(option5->getId(), 0);
-        ASSERT_EQ(1, option5->getServerTags().size());
+        EXPECT_GT(option5->getId(), 0U);
+        ASSERT_EQ(1U, option5->getServerTags().size());
         EXPECT_EQ("all", option5->getServerTags().begin()->get());
     }
 }
@@ -3628,13 +3630,13 @@ GenericConfigBackendDHCPv4Test::getModifiedOptions4Test() {
     OptionContainer returned_options =
         cbptr_->getModifiedOptions4(ServerSelector::ALL(),
                                     timestamps_["after today"]);
-    ASSERT_EQ(1, returned_options.size());
+    ASSERT_EQ(1U, returned_options.size());
 
     // Fetching modified options with explicitly specified server selector
     // should return the same result.
     returned_options = cbptr_->getModifiedOptions4(ServerSelector::ONE("server1"),
                                                    timestamps_["after today"]);
-    ASSERT_EQ(1, returned_options.size());
+    ASSERT_EQ(1U, returned_options.size());
 
     // The returned option should be the one with the timestamp
     // set to tomorrow.
@@ -3748,10 +3750,10 @@ GenericConfigBackendDHCPv4Test::globalOption4WithClientClassesTest() {
         ClientClassesPtr cclasses = ref_option->copyClientClasses();
 
         // Delete the option by code and client_classes.
-        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
-                                           ref_option->option_->getType(),
-                                           DHCP4_OPTION_SPACE,
-                                           cclasses));
+        ASSERT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                            ref_option->option_->getType(),
+                                            DHCP4_OPTION_SPACE,
+                                            cclasses));
 
         // Finding the option by code and client_classes should fail.
         found_option = cbptr_->getOption4(ServerSelector::ALL(),
@@ -3871,7 +3873,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
     }
 
     // The inserted subnet contains two options.
-    ASSERT_EQ(2, countRows("dhcp4_options"));
+    ASSERT_EQ(2U, countRows("dhcp4_options"));
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ANY(), subnet->getID(),
@@ -3888,7 +3890,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
-        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0U);
     }
 
     {
@@ -3904,7 +3906,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
 
     // We have added one option to the existing subnet. We should now have
     // three options.
-    ASSERT_EQ(3, countRows("dhcp4_options"));
+    ASSERT_EQ(3U, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
@@ -3932,12 +3934,12 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
 
     // Updating the option should replace the existing instance with the new
     // instance. Therefore, we should still have three options.
-    ASSERT_EQ(3, countRows("dhcp4_options"));
+    ASSERT_EQ(3U, countRows("dhcp4_options"));
 
     // It should succeed for any server.
-    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(), subnet->getID(),
-                                       opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_));
+    EXPECT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(), subnet->getID(),
+                                        opt_boot_file_name->option_->getType(),
+                                        opt_boot_file_name->space_name_));
 
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
@@ -3953,7 +3955,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSubnetOption4Test() {
     }
 
     // We should have only two options after deleting one of them.
-    ASSERT_EQ(2, countRows("dhcp4_options"));
+    ASSERT_EQ(2U, countRows("dhcp4_options"));
 }
 
 void
@@ -3970,7 +3972,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
     }
 
     // Inserted subnet has two options.
-    ASSERT_EQ(2, countRows("dhcp4_options"));
+    ASSERT_EQ(2U, countRows("dhcp4_options"));
 
     // Add an option into the pool.
     const PoolPtr pool = subnet->getPool(Lease::TYPE_V4,
@@ -4000,7 +4002,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
     {
         SCOPED_TRACE("verify returned pool option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
-        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0U);
     }
 
     {
@@ -4012,7 +4014,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
     }
 
     // With the newly inserted option we should now have three options.
-    ASSERT_EQ(3, countRows("dhcp4_options"));
+    ASSERT_EQ(3U, countRows("dhcp4_options"));
 
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
@@ -4050,14 +4052,14 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
 
     // The new option instance should replace the existing one, so we should
     // still have three options.
-    ASSERT_EQ(3, countRows("dhcp4_options"));
+    ASSERT_EQ(3U, countRows("dhcp4_options"));
 
     // Delete option for any server should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
-                                       pool->getFirstAddress(),
-                                       pool->getLastAddress(),
-                                       opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_));
+    EXPECT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(),
+                                        pool->getFirstAddress(),
+                                        pool->getLastAddress(),
+                                        opt_boot_file_name->option_->getType(),
+                                        opt_boot_file_name->space_name_));
 
     // Fetch the subnet and the pool from the database again to make sure
     // that the option is really gone.
@@ -4082,7 +4084,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeletePoolOption4Test() {
 
     // The option has been deleted so the number of options should now
     // be down to 2.
-    EXPECT_EQ(2, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_options"));
 }
 
 void
@@ -4106,7 +4108,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     }
 
     // The inserted shared network has no options.
-    ASSERT_EQ(0, countRows("dhcp4_options"));
+    ASSERT_EQ(0U, countRows("dhcp4_options"));
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ANY(),
@@ -4124,7 +4126,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     {
         SCOPED_TRACE("verify returned option");
         testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
-        EXPECT_GT(returned_opt_boot_file_name.getId(), 0);
+        EXPECT_GT(returned_opt_boot_file_name.getId(), 0U);
     }
 
     {
@@ -4139,7 +4141,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     }
 
     // One option should now be stored in the database.
-    ASSERT_EQ(1, countRows("dhcp4_options"));
+    ASSERT_EQ(1U, countRows("dhcp4_options"));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     opt_boot_file_name->cancelled_ = !opt_boot_file_name->cancelled_;
@@ -4168,14 +4170,14 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
 
     // The new option instance should replace the existing option instance,
     // so we should still have one option.
-    ASSERT_EQ(1, countRows("dhcp4_options"));
+    ASSERT_EQ(1U, countRows("dhcp4_options"));
 
     // Deleting an option for any server should succeed.
-    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
-                                       shared_network->getName(),
-                                       opt_boot_file_name->option_->getType(),
-                                       opt_boot_file_name->space_name_,
-                                       opt_boot_file_name->copyClientClasses()));
+    EXPECT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(),
+                                        shared_network->getName(),
+                                        opt_boot_file_name->option_->getType(),
+                                        opt_boot_file_name->space_name_,
+                                        opt_boot_file_name->copyClientClasses()));
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);
@@ -4189,7 +4191,7 @@ GenericConfigBackendDHCPv4Test::createUpdateDeleteSharedNetworkOption4Test() {
     }
 
     // After deleting the option we should be back to 0.
-    EXPECT_EQ(0, countRows("dhcp4_options"));
+    EXPECT_EQ(0U, countRows("dhcp4_options"));
 }
 
 void
@@ -4197,30 +4199,30 @@ GenericConfigBackendDHCPv4Test::subnetOptionIdOrderTest() {
 
     // Add a subnet with two pools with one option each.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[1]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(2, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(2U, countRows("dhcp4_options"));
 
     // Add a second subnet with a single option. The number of options in the database
     // should now be 3.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(3, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(3U, countRows("dhcp4_options"));
 
     // Now replace the first subnet with three options and two pools.  This will cause
     // the option id values for this subnet to be larger than those in the second
     // subnet.
     ASSERT_NO_THROW_LOG(cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]));
-    EXPECT_EQ(2, countRows("dhcp4_pool"));
-    EXPECT_EQ(4, countRows("dhcp4_options"));
+    EXPECT_EQ(2U, countRows("dhcp4_pool"));
+    EXPECT_EQ(4U, countRows("dhcp4_options"));
 
     // Now fetch all subnets.
     Subnet4Collection subnets;
     ASSERT_NO_THROW_LOG(subnets = cbptr_->getAllSubnets4(ServerSelector::ALL()));
-    ASSERT_EQ(2, subnets.size());
+    ASSERT_EQ(2U, subnets.size());
 
     // Verify that the subnets returned are as expected.
     for (auto const& subnet : subnets) {
-        ASSERT_EQ(1, subnet->getServerTags().size());
+        ASSERT_EQ(1U, subnet->getServerTags().size());
         EXPECT_EQ("all", subnet->getServerTags().begin()->get());
         if (subnet->getID() == 1024) {
             EXPECT_EQ(test_subnets_[0]->toElement()->str(), subnet->toElement()->str());
@@ -4249,7 +4251,7 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOptionIdOrderTest() {
     SharedNetwork4Collection networks =
         cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
 
-    ASSERT_EQ(2, networks.size());
+    ASSERT_EQ(2U, networks.size());
 
     // See if shared networks are returned ok.
     for (unsigned i = 0; i < networks.size(); ++i) {
@@ -4269,7 +4271,7 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOptionIdOrderTest() {
 
     // Fetch all shared networks.
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
-    ASSERT_EQ(2, networks.size());
+    ASSERT_EQ(2U, networks.size());
 
     // See if shared networks are returned ok.
     for (unsigned i = 0; i < networks.size(); ++i) {
@@ -4341,12 +4343,12 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
 
     // Only the first class should be returned for the server selector ALL.
     auto client_classes = cbptr_->getAllClientClasses4(ServerSelector::ALL());
-    ASSERT_EQ(1, client_classes.getClasses()->size());
+    ASSERT_EQ(1U, client_classes.getClasses()->size());
 
     // All three classes should be returned for the server1.
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     auto classes_list = client_classes.getClasses();
-    ASSERT_EQ(3, classes_list->size());
+    ASSERT_EQ(3U, classes_list->size());
 
     auto fetched_class = classes_list->begin();
     ASSERT_EQ("foo", (*fetched_class)->getName());
@@ -4369,7 +4371,7 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
     // Ensure that the classes order has changed.
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     classes_list = client_classes.getClasses();
-    ASSERT_EQ(3, classes_list->size());
+    ASSERT_EQ(3U, classes_list->size());
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
     EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
@@ -4383,7 +4385,7 @@ GenericConfigBackendDHCPv4Test::setAndGetAllClientClasses4Test() {
 
     client_classes = cbptr_->getAllClientClasses4(ServerSelector::ONE("server1"));
     classes_list = client_classes.getClasses();
-    ASSERT_EQ(3, classes_list->size());
+    ASSERT_EQ(3U, classes_list->size());
     EXPECT_EQ("foo", (*classes_list->begin())->getName());
     EXPECT_FALSE((*classes_list->begin())->getMatchExpr());
     EXPECT_EQ("foobar", (*(classes_list->begin() + 1))->getName());
@@ -4421,9 +4423,9 @@ GenericConfigBackendDHCPv4Test::getClientClass4Test() {
     EXPECT_EQ("1.2.3.4", client_class->getNextServer().toText());
     EXPECT_EQ("cool", client_class->getSname());
     EXPECT_EQ("epc.cfg", client_class->getFilename());
-    EXPECT_EQ(30, client_class->getValid().getMin());
-    EXPECT_EQ(60, client_class->getValid().get());
-    EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(30U, client_class->getValid().getMin());
+    EXPECT_EQ(60U, client_class->getValid().get());
+    EXPECT_EQ(90U, client_class->getValid().getMax());
 
     // Validate options belonging to this class.
     ASSERT_TRUE(client_class->getCfgOption());
@@ -4492,9 +4494,9 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     ASSERT_TRUE(client_class);
 
     // Verify lifetime values.
-    EXPECT_EQ(30, client_class->getValid().getMin());
-    EXPECT_EQ(60, client_class->getValid().get());
-    EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(30U, client_class->getValid().getMin());
+    EXPECT_EQ(60U, client_class->getValid().get());
+    EXPECT_EQ(90U, client_class->getValid().getMax());
 
     // Validate options belonging to the class.
     ASSERT_TRUE(client_class->getCfgOption());
@@ -4511,7 +4513,7 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     auto returned_def_foo = client_class->getCfgOptionDef()->get(test_option_defs_[0]->getOptionSpaceName(),
                                                                  test_option_defs_[0]->getCode());
     ASSERT_TRUE(returned_def_foo);
-    EXPECT_EQ(234, returned_def_foo->getCode());
+    EXPECT_EQ(234U, returned_def_foo->getCode());
     EXPECT_EQ("foo", returned_def_foo->getName());
     EXPECT_EQ(DHCP4_OPTION_SPACE, returned_def_foo->getOptionSpaceName());
     EXPECT_EQ("espace", returned_def_foo->getEncapsulatedSpace());
@@ -4521,7 +4523,7 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     auto returned_def_fish = client_class->getCfgOptionDef()->get(test_option_defs_[2]->getOptionSpaceName(),
                                                                   test_option_defs_[2]->getCode());
     ASSERT_TRUE(returned_def_fish);
-    EXPECT_EQ(235, returned_def_fish->getCode());
+    EXPECT_EQ(235U, returned_def_fish->getCode());
     EXPECT_EQ("fish", returned_def_fish->getName());
     EXPECT_EQ(DHCP4_OPTION_SPACE, returned_def_fish->getOptionSpaceName());
     EXPECT_TRUE(returned_def_fish->getEncapsulatedSpace().empty());
@@ -4542,9 +4544,9 @@ GenericConfigBackendDHCPv4Test::createUpdateClientClass4OptionsTest() {
     ASSERT_TRUE(client_class);
 
     // Re-check lifetime values. This ensure bindings line up.
-    EXPECT_EQ(30, client_class->getValid().getMin());
-    EXPECT_EQ(60, client_class->getValid().get());
-    EXPECT_EQ(90, client_class->getValid().getMax());
+    EXPECT_EQ(30U, client_class->getValid().getMin());
+    EXPECT_EQ(60U, client_class->getValid().get());
+    EXPECT_EQ(90U, client_class->getValid().getMax());
 
     // Ensure that the first option definition is gone.
     ASSERT_TRUE(client_class->getCfgOptionDef());
@@ -4590,29 +4592,29 @@ GenericConfigBackendDHCPv4Test::getModifiedClientClasses4Test() {
     // Get modified client classes configured for all servers.
     auto client_classes = cbptr_->getModifiedClientClasses4(ServerSelector::ALL(),
                                                             timestamps_["two days ago"]);
-    EXPECT_EQ(2, client_classes.getClasses()->size());
+    EXPECT_EQ(2U, client_classes.getClasses()->size());
 
     // Get modified client classes appropriate for server1. It includes classes
     // for all servers and for the server1.
     client_classes = cbptr_->getModifiedClientClasses4(ServerSelector::ONE("server1"),
                                                        timestamps_["two days ago"]);
-    EXPECT_EQ(3, client_classes.getClasses()->size());
+    EXPECT_EQ(3U, client_classes.getClasses()->size());
 
     // Get the classes again but use the timestamp equal to the modification
     // time of the first class.
     client_classes = cbptr_->getModifiedClientClasses4(ServerSelector::ONE("server1"),
                                                        timestamps_["yesterday"]);
-    EXPECT_EQ(3, client_classes.getClasses()->size());
+    EXPECT_EQ(3U, client_classes.getClasses()->size());
 
     // Get modified classes starting from today. It should return only two.
     client_classes = cbptr_->getModifiedClientClasses4(ServerSelector::ONE("server1"),
                                                        timestamps_["today"]);
-    EXPECT_EQ(2, client_classes.getClasses()->size());
+    EXPECT_EQ(2U, client_classes.getClasses()->size());
 
     // Get client classes modified in the future. It should return none.
     client_classes = cbptr_->getModifiedClientClasses4(ServerSelector::ONE("server1"),
                                                        timestamps_["after tomorrow"]);
-    EXPECT_EQ(0, client_classes.getClasses()->size());
+    EXPECT_EQ(0U, client_classes.getClasses()->size());
 
     // Getting modified client classes for any server is unsupported.
     ASSERT_THROW(cbptr_->getModifiedClientClasses4(ServerSelector::ANY(),
@@ -4695,7 +4697,7 @@ GenericConfigBackendDHCPv4Test::deleteClientClass4Test() {
     uint64_t result;
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass4(ServerSelector::ONE("server1"),
                                                             class2->getName()));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client class bar is deleted");
         testNewAuditEntry("dhcp4_client_class",
@@ -4706,7 +4708,7 @@ GenericConfigBackendDHCPv4Test::deleteClientClass4Test() {
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass4(ServerSelector::ONE("server2"),
                                                             class3->getName()));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client class foobar is deleted");
         testNewAuditEntry("dhcp4_client_class",
@@ -4717,7 +4719,7 @@ GenericConfigBackendDHCPv4Test::deleteClientClass4Test() {
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteClientClass4(ServerSelector::ANY(),
                                                             class1->getName()));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client class foo is deleted and no longer available for the server1");
         testNewAuditEntry("dhcp4_client_class",
@@ -4809,10 +4811,10 @@ GenericConfigBackendDHCPv4Test::deleteAllClientClasses4Test() {
     uint64_t result;
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::UNASSIGNED()));
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(0U, result);
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ONE("server2")));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client classes for server2 deleted");
         testNewAuditEntry("dhcp4_client_class",
@@ -4822,10 +4824,10 @@ GenericConfigBackendDHCPv4Test::deleteAllClientClasses4Test() {
     }
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ONE("server2")));
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(0U, result);
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ONE("server1")));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client classes for server1 deleted");
         testNewAuditEntry("dhcp4_client_class",
@@ -4835,10 +4837,10 @@ GenericConfigBackendDHCPv4Test::deleteAllClientClasses4Test() {
     }
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ONE("server1")));
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(0U, result);
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ALL()));
-    EXPECT_EQ(1, result);
+    EXPECT_EQ(1U, result);
     {
         SCOPED_TRACE("client classes for all deleted");
         testNewAuditEntry("dhcp4_client_class",
@@ -4848,7 +4850,7 @@ GenericConfigBackendDHCPv4Test::deleteAllClientClasses4Test() {
     }
 
     ASSERT_NO_THROW_LOG(result = cbptr_->deleteAllClientClasses4(ServerSelector::ALL()));
-    EXPECT_EQ(0, result);
+    EXPECT_EQ(0U, result);
 
     // Deleting multiple objects using ANY server tag is unsupported.
     ASSERT_THROW(cbptr_->deleteAllClientClasses4(ServerSelector::ANY()), InvalidOperation);
@@ -4982,11 +4984,11 @@ GenericConfigBackendDHCPv4Test::sharedNetworkOption4WithClientClassesTest() {
 
     // Now make sure that we can delete the options individually.
     for (auto const& ref_option : ref_options) {
-        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
-                                           network->getName(),
-                                           ref_option->option_->getType(),
-                                           DHCP4_OPTION_SPACE,
-                                           ref_option->copyClientClasses()));
+        ASSERT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(),
+                                            network->getName(),
+                                            ref_option->option_->getType(),
+                                            DHCP4_OPTION_SPACE,
+                                            ref_option->copyClientClasses()));
     }
 
     // Re-fetch the network.
@@ -5045,11 +5047,11 @@ GenericConfigBackendDHCPv4Test::subnetOption4WithClientClassesTest() {
 
     // Now make sure that we can delete the options individually.
     for (auto const& ref_option : ref_options) {
-        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
-                                           subnet->getID(),
-                                           ref_option->option_->getType(),
-                                           DHCP4_OPTION_SPACE,
-                                           ref_option->copyClientClasses()));
+        ASSERT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(),
+                                            subnet->getID(),
+                                            ref_option->option_->getType(),
+                                            DHCP4_OPTION_SPACE,
+                                            ref_option->copyClientClasses()));
     }
 
     // Re-fetch the subnet.
@@ -5123,12 +5125,12 @@ GenericConfigBackendDHCPv4Test::poolOption4WithClientClassesTest() {
 
     // Now make sure that we can delete the options individually.
     for (auto const& ref_option : ref_options) {
-        ASSERT_EQ(1, cbptr_->deleteOption4(ServerSelector::ANY(),
-                                           pool->getFirstAddress(),
-                                           pool->getLastAddress(),
-                                           ref_option->option_->getType(),
-                                           DHCP4_OPTION_SPACE,
-                                           ref_option->copyClientClasses()));
+        ASSERT_EQ(1U, cbptr_->deleteOption4(ServerSelector::ANY(),
+                                            pool->getFirstAddress(),
+                                            pool->getLastAddress(),
+                                            ref_option->option_->getType(),
+                                            DHCP4_OPTION_SPACE,
+                                            ref_option->copyClientClasses()));
     }
 
     // Re-fetch the subnet.
@@ -5173,14 +5175,14 @@ GenericConfigBackendDHCPv4Test::optionDef4DeleteForceTest() {
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                                             234, DHCP4_OPTION_SPACE),
                      InvalidOperation, "option exists for option definition: dhcp4.234");
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     ASSERT_THROW_MSG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                                             234, DHCP4_OPTION_SPACE, false),
                      InvalidOperation, "option exists for option definition: dhcp4.234");
-    EXPECT_EQ(0, deleted_num);
+    EXPECT_EQ(0U, deleted_num);
 
     ASSERT_NO_THROW_LOG(deleted_num = cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                                                234, DHCP4_OPTION_SPACE, true));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 }

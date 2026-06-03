@@ -274,7 +274,7 @@ public:
         ASSERT_NO_THROW_LOG(parser.parse(pools, config_element));
 
         // Should have two pools.
-        ASSERT_EQ(pools->size(), 2);
+        ASSERT_EQ(pools->size(), 2U);
 
         // First pool specifies all but ddns-ttl.
         PoolPtr pool  = (*pools)[0];
@@ -317,10 +317,10 @@ public:
         ASSERT_TRUE(pool->getDdnsTtl().unspecified());
 
         ASSERT_FALSE(pool->getDdnsTtlMin().unspecified());
-        EXPECT_EQ(pool->getDdnsTtlMin().get(), 200);
+        EXPECT_EQ(pool->getDdnsTtlMin().get(), 200U);
 
         ASSERT_FALSE(pool->getDdnsTtlMax().unspecified());
-        EXPECT_EQ(pool->getDdnsTtlMax().get(), 500);
+        EXPECT_EQ(pool->getDdnsTtlMax().get(), 500U);
 
         // Second pool only specifies ddns-ttl.
         pool = (*pools)[1];
@@ -340,7 +340,7 @@ public:
         ASSERT_TRUE(pool->getDdnsTtlMin().unspecified());
 
         ASSERT_FALSE(pool->getDdnsTtl().unspecified());
-        EXPECT_EQ(pool->getDdnsTtl().get(), 300);
+        EXPECT_EQ(pool->getDdnsTtl().get(), 300U);
 
         ASSERT_TRUE(pool->getDdnsTtlMax().unspecified());
     }
@@ -366,7 +366,7 @@ TEST_F(DhcpParserTest, MacSources) {
 
     // Finally, check the sources that were configured
     CfgMACSources configured_sources = cfg->getMACSources().get();
-    ASSERT_EQ(2, configured_sources.size());
+    ASSERT_EQ(2U, configured_sources.size());
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_DUID, configured_sources[0]);
     EXPECT_EQ(HWAddr::HWADDR_SOURCE_IPV6_LINK_LOCAL, configured_sources[1]);
 }
@@ -1487,7 +1487,7 @@ TEST_F(ParseConfigTest, escapedOptionDataTest) {
     uint8_t exp[] = { DHO_BOOT_FILE_NAME, 23, '\\', 'S', 'M', 'S', 'B', 'o', 'o',
                       't', '\\', 'x', '6', '4', '\\', 'w', 'd', 's', 'n', 'b',
                       'p', '.', 'c', 'o', 'm' };
-    ASSERT_EQ(25, sizeof(exp));
+    ASSERT_EQ(25U, sizeof(exp));
 
     opt->pack(buf);
     EXPECT_EQ(Option::OPTION4_HDR_LEN + 23, buf.getLength());
@@ -1612,11 +1612,11 @@ TEST_F(ParseConfigTest, encapsulatedOptionData) {
         ipv6_prefix = s46_rule->readPrefix(4);
     });
 
-    EXPECT_EQ(1, flags);
-    EXPECT_EQ(0, ea_len);
-    EXPECT_EQ(24, prefix4_len);
+    EXPECT_EQ(1U, flags);
+    EXPECT_EQ(0U, ea_len);
+    EXPECT_EQ(24U, prefix4_len);
     EXPECT_EQ("192.0.2.0", ipv4_prefix.toText());
-    EXPECT_EQ(64, ipv6_prefix.first.asUnsigned());
+    EXPECT_EQ(64U, ipv6_prefix.first.asUnsigned());
     EXPECT_EQ("2001:db8:1::", ipv6_prefix.second.toText());
 
     ElementPtr expected = Element::fromJSON(config);
@@ -1678,7 +1678,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
     ASSERT_EQ(0, rcode);
     OptionPtr opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
-    ASSERT_EQ(1, opt->getData().size());
+    ASSERT_EQ(1U, opt->getData().size());
     EXPECT_EQ(0, opt->getData()[0]);
 
     ElementPtr expected = Element::fromJSON(config);
@@ -1705,7 +1705,7 @@ TEST_F(ParseConfigTest, optionDataCSVFormatNoOptionDef) {
     EXPECT_EQ(0, rcode);
     opt = getOptionPtr(DHCP6_OPTION_SPACE, 25000);
     ASSERT_TRUE(opt);
-    ASSERT_EQ(3, opt->getData().size());
+    ASSERT_EQ(3U, opt->getData().size());
     EXPECT_EQ(0x12, opt->getData()[0]);
     EXPECT_EQ(0x34, opt->getData()[1]);
     EXPECT_EQ(0x56, opt->getData()[2]);
@@ -1733,7 +1733,7 @@ TEST_F(ParseConfigTest, optionDataNoName) {
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(1, opt->getAddresses().size());
+    ASSERT_EQ(1U, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
 
     ElementPtr expected = Element::fromJSON(config);
@@ -1759,7 +1759,7 @@ TEST_F(ParseConfigTest, optionDataNoCode) {
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(1, opt->getAddresses().size());
+    ASSERT_EQ(1U, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::1", opt->getAddresses()[0].toText());
 
     ElementPtr expected = Element::fromJSON(config);
@@ -1784,7 +1784,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 23));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(1, opt->getAddresses().size());
+    ASSERT_EQ(1U, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::10", opt->getAddresses()[0].toText());
 
     ElementPtr expected = Element::fromJSON(config);
@@ -1808,7 +1808,7 @@ TEST_F(ParseConfigTest, optionDataMinimal) {
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    23));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(1, opt->getAddresses().size());
+    ASSERT_EQ(1U, opt->getAddresses().size());
     EXPECT_EQ( "2001:db8:1::20", opt->getAddresses()[0].toText());
 
     expected = Element::fromJSON(config);
@@ -1844,7 +1844,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, 2345));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(2, opt->getAddresses().size());
+    ASSERT_EQ(2U, opt->getAddresses().size());
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
 
@@ -1877,7 +1877,7 @@ TEST_F(ParseConfigTest, optionDataMinimalWithOptionDef) {
     opt = boost::dynamic_pointer_cast<Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE,
                                                                    2345));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(2, opt->getAddresses().size());
+    ASSERT_EQ(2U, opt->getAddresses().size());
     EXPECT_EQ("2001:db8:1::10", opt->getAddresses()[0].toText());
     EXPECT_EQ("2001:db8:1::123", opt->getAddresses()[1].toText());
 
@@ -1904,7 +1904,7 @@ TEST_F(ParseConfigTest, emptyOptionData) {
     const Option6AddrLstPtr opt = boost::dynamic_pointer_cast<
         Option6AddrLst>(getOptionPtr(DHCP6_OPTION_SPACE, D6O_DHCPV4_O_DHCPV6_SERVER));
     ASSERT_TRUE(opt);
-    ASSERT_EQ(0, opt->getAddresses().size());
+    ASSERT_EQ(0U, opt->getAddresses().size());
 
     ElementPtr expected = Element::fromJSON(config);
     ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
@@ -1940,7 +1940,7 @@ TEST_F(ParseConfigTest, optionDataNoSubOption) {
     EXPECT_EQ(0, rcode);
     const OptionPtr opt = getOptionPtr(DHCP4_OPTION_SPACE, DHO_VENDOR_ENCAPSULATED_OPTIONS);
     ASSERT_TRUE(opt);
-    ASSERT_EQ(0, opt->getOptions().size());
+    ASSERT_EQ(0U, opt->getOptions().size());
 
     ElementPtr expected = Element::fromJSON(config);
     ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
@@ -2026,7 +2026,7 @@ TEST_F(ParseConfigTest, hexOptionData) {
         Option4AddrLstPtr opt = boost::dynamic_pointer_cast<Option4AddrLst>
                                 (getOptionPtr(DHCP4_OPTION_SPACE, 6));
         ASSERT_TRUE(opt);
-        ASSERT_EQ(2, opt->getAddresses().size());
+        ASSERT_EQ(2U, opt->getAddresses().size());
         EXPECT_EQ("12.0.3.1", opt->getAddresses()[0].toText());
         EXPECT_EQ("192.0.3.2", opt->getAddresses()[1].toText());
     }
@@ -2401,13 +2401,13 @@ TEST_F(ParseConfigTest, oneHooksLibrary) {
 
     // Check that the parser recorded a single library.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(1, libraries.size());
+    ASSERT_EQ(1U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ("libco1.so", libraries[0].cfgname_);
 
     // Check that the change was propagated to the hooks manager.
     hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(1, hooks_libraries.size());
+    ASSERT_EQ(1U, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
@@ -2438,7 +2438,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
 
     // Check that the parser recorded two libraries in the expected order.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(2, libraries.size());
+    ASSERT_EQ(2U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].cfgname_);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
@@ -2446,7 +2446,7 @@ TEST_F(ParseConfigTest, twoHooksLibraries) {
 
     // Verify that the change was propagated to the hooks manager.
     hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(2, hooks_libraries.size());
+    ASSERT_EQ(2U, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[1]);
 }
@@ -2490,14 +2490,14 @@ TEST_F(ParseConfigTest, reconfigureSameHooksLibraries) {
         CfgMgr::instance().getStagingCfg()->getHooksConfig();
     runToElementTest<HooksConfig>(expected, cfg2);
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(2, libraries.size());
+    ASSERT_EQ(2U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
 
     // ... and check that the same two libraries are still loaded in the
     // HooksManager.
     hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(2, hooks_libraries.size());
+    ASSERT_EQ(2U, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[1]);
 }
@@ -2530,13 +2530,13 @@ TEST_F(ParseConfigTest, reconfigureReverseHooksLibraries) {
 
     // The list has changed, and this is what we should see.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(2, libraries.size());
+    ASSERT_EQ(2U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[0].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[1].libname_);
 
     // ... and check that this was propagated to the HooksManager.
     hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(2, hooks_libraries.size());
+    ASSERT_EQ(2U, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_2, hooks_libraries[0]);
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[1]);
 }
@@ -2610,7 +2610,7 @@ TEST_F(ParseConfigTest, invalidHooksLibraries) {
     // Check that the parser recorded the names but, as they were in error,
     // does not flag them as changed.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(3, libraries.size());
+    ASSERT_EQ(3U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].libname_);
@@ -2653,7 +2653,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     // Check that the parser recorded the names but, as the library set was
     // incorrect, did not mark the configuration as changed.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(3, libraries.size());
+    ASSERT_EQ(3U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ(NOT_PRESENT_LIBRARY, libraries[1].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[2].libname_);
@@ -2662,7 +2662,7 @@ TEST_F(ParseConfigTest, reconfigureInvalidHooksLibraries) {
     // names.
     hooks_libraries.clear();
     hooks_libraries = HooksManager::getLibraryNames();
-    ASSERT_EQ(1, hooks_libraries.size());
+    ASSERT_EQ(1U, hooks_libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, hooks_libraries[0]);
 }
 
@@ -2771,7 +2771,7 @@ TEST_F(ParseConfigTest, HooksLibrariesParameters) {
 
     // Check that the parser recorded the names.
     isc::hooks::HookLibsCollection libraries = getLibraries();
-    ASSERT_EQ(3, libraries.size());
+    ASSERT_EQ(3U, libraries.size());
     EXPECT_EQ(CALLOUT_LIBRARY_1, libraries[0].libname_);
     EXPECT_EQ(CALLOUT_LIBRARY_2, libraries[1].libname_);
     EXPECT_EQ(CALLOUT_PARAMS_LIBRARY, libraries[2].libname_);
@@ -2846,7 +2846,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     // Verify that the configuration values are as expected.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("192.0.2.0", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(3432, d2_client_config->getServerPort());
+    EXPECT_EQ(3432U, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     ASSERT_TRUE(d2_client_config->getContext());
@@ -2888,7 +2888,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     // Verify that the configuration values are as expected.
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(43567, d2_client_config->getServerPort());
+    EXPECT_EQ(43567U, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     ASSERT_TRUE(d2_client_config->getContext());
@@ -3208,13 +3208,13 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(subnet->getClientClasses().empty());
 
     EXPECT_TRUE(subnet->getValid().unspecified());
-    EXPECT_EQ(0, subnet->getValid().get());
+    EXPECT_EQ(0U, subnet->getValid().get());
 
     EXPECT_TRUE(subnet->getT1().unspecified());
-    EXPECT_EQ(0, subnet->getT1().get());
+    EXPECT_EQ(0U, subnet->getT1().get());
 
     EXPECT_TRUE(subnet->getT2().unspecified());
-    EXPECT_EQ(0, subnet->getT2().get());
+    EXPECT_EQ(0U, subnet->getT2().get());
 
     EXPECT_TRUE(subnet->getReservationsGlobal().unspecified());
     EXPECT_FALSE(subnet->getReservationsGlobal().get());
@@ -3298,10 +3298,10 @@ TEST_F(ParseConfigTest, defaultSubnet4) {
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 
     EXPECT_TRUE(subnet->getOfferLft().unspecified());
-    EXPECT_EQ(0, subnet->getOfferLft().get());
+    EXPECT_EQ(0U, subnet->getOfferLft().get());
 
     EXPECT_TRUE(subnet->getCacheMaxAge().unspecified());
-    EXPECT_EQ(0, subnet->getCacheMaxAge().get());
+    EXPECT_EQ(0U, subnet->getCacheMaxAge().get());
 
     EXPECT_TRUE(subnet->getCacheThreshold().unspecified());
     EXPECT_EQ(0.0, subnet->getCacheThreshold().get());
@@ -3332,13 +3332,13 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(subnet->getClientClasses().empty());
 
     EXPECT_TRUE(subnet->getValid().unspecified());
-    EXPECT_EQ(0, subnet->getValid().get());
+    EXPECT_EQ(0U, subnet->getValid().get());
 
     EXPECT_TRUE(subnet->getT1().unspecified());
-    EXPECT_EQ(0, subnet->getT1().get());
+    EXPECT_EQ(0U, subnet->getT1().get());
 
     EXPECT_TRUE(subnet->getT2().unspecified());
-    EXPECT_EQ(0, subnet->getT2().get());
+    EXPECT_EQ(0U, subnet->getT2().get());
 
     EXPECT_TRUE(subnet->getReservationsGlobal().unspecified());
     EXPECT_FALSE(subnet->getReservationsGlobal().get());
@@ -3359,7 +3359,7 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_EQ(0.0, subnet->getT2Percent().get());
 
     EXPECT_TRUE(subnet->getPreferred().unspecified());
-    EXPECT_EQ(0, subnet->getPreferred().get());
+    EXPECT_EQ(0U, subnet->getPreferred().get());
 
     EXPECT_TRUE(subnet->getRapidCommit().unspecified());
     EXPECT_FALSE(subnet->getRapidCommit().get());
@@ -3407,7 +3407,7 @@ TEST_F(ParseConfigTest, defaultSubnet6) {
     EXPECT_TRUE(boost::dynamic_pointer_cast<IterativeAllocator>(allocator));
 
     EXPECT_TRUE(subnet->getCacheMaxAge().unspecified());
-    EXPECT_EQ(0, subnet->getCacheMaxAge().get());
+    EXPECT_EQ(0U, subnet->getCacheMaxAge().get());
 
     EXPECT_TRUE(subnet->getCacheThreshold().unspecified());
     EXPECT_EQ(0.0, subnet->getCacheThreshold().get());
@@ -3438,13 +3438,13 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
-    EXPECT_EQ(0, network->getValid().get());
+    EXPECT_EQ(0U, network->getValid().get());
 
     EXPECT_TRUE(network->getT1().unspecified());
-    EXPECT_EQ(0, network->getT1().get());
+    EXPECT_EQ(0U, network->getT1().get());
 
     EXPECT_TRUE(network->getT2().unspecified());
-    EXPECT_EQ(0, network->getT2().get());
+    EXPECT_EQ(0U, network->getT2().get());
 
     EXPECT_TRUE(network->getReservationsGlobal().unspecified());
     EXPECT_FALSE(network->getReservationsGlobal().get());
@@ -3501,10 +3501,10 @@ TEST_F(ParseConfigTest, defaultSharedNetwork4) {
     EXPECT_TRUE(network->getAllocatorType().get().empty());
 
     EXPECT_TRUE(network->getOfferLft().unspecified());
-    EXPECT_EQ(0, network->getOfferLft().get());
+    EXPECT_EQ(0U, network->getOfferLft().get());
 
     EXPECT_TRUE(network->getCacheMaxAge().unspecified());
-    EXPECT_EQ(0, network->getCacheMaxAge().get());
+    EXPECT_EQ(0U, network->getCacheMaxAge().get());
 
     EXPECT_TRUE(network->getCacheThreshold().unspecified());
     EXPECT_EQ(0.0, network->getCacheThreshold().get());
@@ -3536,13 +3536,13 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_TRUE(network->getClientClasses().empty());
 
     EXPECT_TRUE(network->getValid().unspecified());
-    EXPECT_EQ(0, network->getValid().get());
+    EXPECT_EQ(0U, network->getValid().get());
 
     EXPECT_TRUE(network->getT1().unspecified());
-    EXPECT_EQ(0, network->getT1().get());
+    EXPECT_EQ(0U, network->getT1().get());
 
     EXPECT_TRUE(network->getT2().unspecified());
-    EXPECT_EQ(0, network->getT2().get());
+    EXPECT_EQ(0U, network->getT2().get());
 
     EXPECT_TRUE(network->getReservationsGlobal().unspecified());
     EXPECT_FALSE(network->getReservationsGlobal().get());
@@ -3563,7 +3563,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_EQ(0.0, network->getT2Percent().get());
 
     EXPECT_TRUE(network->getPreferred().unspecified());
-    EXPECT_EQ(0, network->getPreferred().get());
+    EXPECT_EQ(0U, network->getPreferred().get());
 
     EXPECT_TRUE(network->getRapidCommit().unspecified());
     EXPECT_FALSE(network->getRapidCommit().get());
@@ -3602,7 +3602,7 @@ TEST_F(ParseConfigTest, defaultSharedNetwork6) {
     EXPECT_TRUE(network->getPdAllocatorType().get().empty());
 
     EXPECT_TRUE(network->getCacheMaxAge().unspecified());
-    EXPECT_EQ(0, network->getCacheMaxAge().get());
+    EXPECT_EQ(0U, network->getCacheMaxAge().get());
 
     EXPECT_TRUE(network->getCacheThreshold().unspecified());
     EXPECT_EQ(0.0, network->getCacheThreshold().get());
@@ -4033,7 +4033,7 @@ TEST_F(ParseConfigTest, subnet4OfferLft) {
     ASSERT_TRUE(subnet);
 
     EXPECT_FALSE(subnet->getOfferLft().unspecified());
-    EXPECT_EQ(888, subnet->getOfferLft().get());
+    EXPECT_EQ(888U, subnet->getOfferLft().get());
 }
 
 // This test verifies parsing invalid offer-lifetime for Subnet4.
@@ -4072,7 +4072,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet4) {
     ASSERT_TRUE(subnet);
 
     const auto cclasses = subnet->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -4118,7 +4118,7 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesSubnet6) {
     ASSERT_TRUE(subnet);
 
     const auto cclasses = subnet->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -4160,10 +4160,10 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool4) {
     PoolStoragePtr pools(new PoolStorage());
 
     ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET));
-    EXPECT_EQ(1, pools->size());
+    EXPECT_EQ(1U, pools->size());
 
     const auto cclasses = (*pools)[0]->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -4204,10 +4204,10 @@ TEST_F(DhcpParserTest, deprecatedRequireClientClassesPool6) {
     PoolStoragePtr pools(new PoolStorage());
 
     ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET6, Lease::TYPE_NA));
-    EXPECT_EQ(1, pools->size());
+    EXPECT_EQ(1U, pools->size());
 
     const auto cclasses = (*pools)[0]->getAdditionalClasses();
-    EXPECT_EQ(cclasses.size(), 2);
+    EXPECT_EQ(cclasses.size(), 2U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
     ++cclass;
@@ -4250,7 +4250,7 @@ TEST_F(DhcpParserTest, deprecatedClientClassSubnet4) {
     ASSERT_NO_THROW(subnet = parser.parse(config_element));
     ASSERT_TRUE(subnet);
 
-    EXPECT_EQ(subnet->getClientClasses().size(), 0);
+    EXPECT_EQ(subnet->getClientClasses().size(), 0U);
 
     // Valid entry.
     config =
@@ -4267,7 +4267,7 @@ TEST_F(DhcpParserTest, deprecatedClientClassSubnet4) {
     ASSERT_TRUE(subnet);
 
     const auto cclasses = subnet->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 
@@ -4310,7 +4310,7 @@ TEST_F(DhcpParserTest, deprecatedClientClassSubnet6) {
     ASSERT_NO_THROW(subnet = parser.parse(config_element));
     ASSERT_TRUE(subnet);
 
-    EXPECT_EQ(subnet->getClientClasses().size(), 0);
+    EXPECT_EQ(subnet->getClientClasses().size(), 0U);
 
     // Valid entry.
     config =
@@ -4327,7 +4327,7 @@ TEST_F(DhcpParserTest, deprecatedClientClassSubnet6) {
     ASSERT_TRUE(subnet);
 
     const auto cclasses = subnet->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 
@@ -4367,10 +4367,10 @@ TEST_F(DhcpParserTest, deprecatedClientClassPool4) {
     PoolStoragePtr pools(new PoolStorage());
 
     ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET));
-    EXPECT_EQ(1, pools->size());
+    EXPECT_EQ(1U, pools->size());
 
     const auto cclasses = (*pools)[0]->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 
@@ -4409,10 +4409,10 @@ TEST_F(DhcpParserTest, deprecatedClientClassPool6) {
     PoolStoragePtr pools(new PoolStorage());
 
     ASSERT_NO_THROW(parser.parse(pools, config_element, AF_INET6, Lease::TYPE_NA));
-    EXPECT_EQ(1, pools->size());
+    EXPECT_EQ(1U, pools->size());
 
     const auto cclasses = (*pools)[0]->getClientClasses();
-    EXPECT_EQ(cclasses.size(), 1);
+    EXPECT_EQ(cclasses.size(), 1U);
     auto cclass = cclasses.begin();
     EXPECT_EQ(*cclass, "one");
 

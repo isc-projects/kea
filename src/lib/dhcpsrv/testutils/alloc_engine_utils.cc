@@ -608,7 +608,7 @@ AllocEngine6Test::testReuseLease6(const AllocEnginePtr& engine,
     switch (exp_result) {
     case SHOULD_PASS:
         ASSERT_FALSE(leases.empty());
-        ASSERT_EQ(1, leases.size());
+        ASSERT_EQ(1U, leases.size());
         result = leases[0];
 
         checkLease6(duid_, result, Lease::TYPE_NA, 128);

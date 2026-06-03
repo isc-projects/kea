@@ -43,12 +43,12 @@ TEST(ClientContext6Test, addHint) {
     ctx.currentIA().addHint(IOAddress("3000:1::"), 64);
     ctx.currentIA().addHint(IOAddress("3001:2::"), 64, 100, 200);
 
-    ASSERT_EQ(3, ctx.currentIA().hints_.size());
+    ASSERT_EQ(3U, ctx.currentIA().hints_.size());
     EXPECT_EQ("2001:db8:1::1", ctx.currentIA().hints_[0].getAddress().toText());
     EXPECT_EQ("3000:1::", ctx.currentIA().hints_[1].getAddress().toText());
     EXPECT_EQ("3001:2::", ctx.currentIA().hints_[2].getAddress().toText());
-    EXPECT_EQ(100, ctx.currentIA().hints_[2].getPreferred());
-    EXPECT_EQ(200, ctx.currentIA().hints_[2].getValid());
+    EXPECT_EQ(100U, ctx.currentIA().hints_[2].getPreferred());
+    EXPECT_EQ(200U, ctx.currentIA().hints_[2].getValid());
 }
 
 // Test convenience method adding allocated prefixes and addresses to
@@ -58,7 +58,7 @@ TEST(ClientContext6Test, addAllocatedResource) {
     ctx.addAllocatedResource(IOAddress("2001:db8:1::1"));
     ctx.addAllocatedResource(IOAddress("3000:1::"), 64);
 
-    ASSERT_EQ(2, ctx.allocated_resources_.size());
+    ASSERT_EQ(2U, ctx.allocated_resources_.size());
     EXPECT_TRUE(ctx.isAllocated(IOAddress("2001:db8:1::1")));
     EXPECT_TRUE(ctx.isAllocated(IOAddress("3000:1::"), 64));
 }
@@ -521,8 +521,8 @@ TEST_F(AllocEngine6Test, defaultReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Check lifetimes: defaults are expected.
-    EXPECT_EQ(300, lease->preferred_lft_);
-    EXPECT_EQ(400, lease->valid_lft_);
+    EXPECT_EQ(300U, lease->preferred_lft_);
+    EXPECT_EQ(400U, lease->valid_lft_);
 }
 
 // This test checks if an expired lease can be reused using specified lifetimes.
@@ -566,8 +566,8 @@ TEST_F(AllocEngine6Test, hintReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Check lifetimes: specified values are expected.
-    EXPECT_EQ(299, lease->preferred_lft_);
-    EXPECT_EQ(401, lease->valid_lft_);
+    EXPECT_EQ(299U, lease->preferred_lft_);
+    EXPECT_EQ(401U, lease->valid_lft_);
 }
 
 // This test checks if an expired lease can be reused using min lifetimes.
@@ -611,8 +611,8 @@ TEST_F(AllocEngine6Test, minReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Check lifetimes: min values are expected.
-    EXPECT_EQ(200, lease->preferred_lft_);
-    EXPECT_EQ(300, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->preferred_lft_);
+    EXPECT_EQ(300U, lease->valid_lft_);
 }
 
 // This test checks if an expired lease can be reused using max lifetimes.
@@ -656,8 +656,8 @@ TEST_F(AllocEngine6Test, maxReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Check lifetimes: max values are expected.
-    EXPECT_EQ(400, lease->preferred_lft_);
-    EXPECT_EQ(500, lease->valid_lft_);
+    EXPECT_EQ(400U, lease->preferred_lft_);
+    EXPECT_EQ(500U, lease->valid_lft_);
 }
 
 // This test checks if an expired lease can be reused using class lifetimes.
@@ -713,8 +713,8 @@ TEST_F(AllocEngine6Test, classReuseExpiredLease6) {
     EXPECT_EQ(addr, lease->addr_);
 
     // Check lifetimes: specified values are expected.
-    EXPECT_EQ(200, lease->preferred_lft_);
-    EXPECT_EQ(700, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->preferred_lft_);
+    EXPECT_EQ(700U, lease->valid_lft_);
 }
 
 // This test checks an expired registered lease can't be reused in SOLICT.
@@ -1159,7 +1159,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetime) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
@@ -1191,7 +1191,7 @@ TEST_F(AllocEngine6Test, renewRegisteredLease6) {
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
     for (auto const& l : renewed) {
         // Not registered.
-        EXPECT_EQ(0, l->state_);
+        EXPECT_EQ(0U, l->state_);
         // Another address.
         EXPECT_NE(addr, l->addr_);
     }
@@ -1221,15 +1221,15 @@ TEST_F(AllocEngine6Test, defaultRenewLeaseLifetime) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
     // Checks that default values are used for lifetimes.
-    EXPECT_EQ(300, renewed[0]->preferred_lft_);
-    EXPECT_EQ(400, renewed[0]->valid_lft_);
+    EXPECT_EQ(300U, renewed[0]->preferred_lft_);
+    EXPECT_EQ(400U, renewed[0]->valid_lft_);
 }
 
 // Checks that a renewed lease uses specified lifetimes.
@@ -1256,15 +1256,15 @@ TEST_F(AllocEngine6Test, hintRenewLeaseLifetime) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
     // Checks that specified values are used for lifetimes.
-    EXPECT_EQ(301, renewed[0]->preferred_lft_);
-    EXPECT_EQ(399, renewed[0]->valid_lft_);
+    EXPECT_EQ(301U, renewed[0]->preferred_lft_);
+    EXPECT_EQ(399U, renewed[0]->valid_lft_);
 }
 
 // Checks that a renewed lease uses min lifetimes.
@@ -1291,15 +1291,15 @@ TEST_F(AllocEngine6Test, minRenewLeaseLifetime) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
     // Checks that min values are used for lifetimes.
-    EXPECT_EQ(200, renewed[0]->preferred_lft_);
-    EXPECT_EQ(300, renewed[0]->valid_lft_);
+    EXPECT_EQ(200U, renewed[0]->preferred_lft_);
+    EXPECT_EQ(300U, renewed[0]->valid_lft_);
 }
 
 // Checks that a renewed lease uses max lifetimes.
@@ -1326,15 +1326,15 @@ TEST_F(AllocEngine6Test, maxRenewLeaseLifetime) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
     // Checks that max values are used for lifetimes.
-    EXPECT_EQ(400, renewed[0]->preferred_lft_);
-    EXPECT_EQ(500, renewed[0]->valid_lft_);
+    EXPECT_EQ(400U, renewed[0]->preferred_lft_);
+    EXPECT_EQ(500U, renewed[0]->valid_lft_);
 }
 
 // Verifies renewal uses class life times via getLifetimes() in invoked by
@@ -1377,15 +1377,15 @@ TEST_F(AllocEngine6Test, renewClassLeaseLifetime) {
 
     findReservation(engine, ctx);
     Lease6Collection renewed = engine.renewLeases6(ctx);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
         << "Lease lifetime was not extended, but it should";
 
     // Verify life times came from the class. Preferred should get adjusted.
-    EXPECT_EQ(renewed[0]->preferred_lft_, 437);
-    EXPECT_EQ(renewed[0]->valid_lft_, 700);
+    EXPECT_EQ(renewed[0]->preferred_lft_, 437U);
+    EXPECT_EQ(renewed[0]->valid_lft_, 700U);
 }
 
 // Checks if a released lease is renewed and that its state is set to default.
@@ -1410,7 +1410,7 @@ TEST_F(AllocEngine6Test, renewReleasedLease) {
 
     // Client should renew the lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
@@ -1473,7 +1473,7 @@ TEST_F(AllocEngine6Test, renewExtendLeaseLifetimeForReservation) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease_cltt)
@@ -2221,7 +2221,7 @@ TEST_F(AllocEngine6Test, reservedAddress) {
 
     findReservation(engine, ctx);
     Lease6Collection leases = engine.allocateLeases6(ctx);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ("2001:db8:1::12", leases[0]->addr_.toText());
 }
 
@@ -2294,7 +2294,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 
     // Assigned count should be one.
     EXPECT_TRUE(testStatistics("assigned-nas", 1, subnet_->getID()));
@@ -2311,7 +2311,7 @@ TEST_F(AllocEngine6Test, addressRenewal) {
     hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // Check that the lease was indeed renewed and hasn't changed
     // (i.e. the same address, preferred and valid lifetimes)
@@ -2352,7 +2352,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // Assigned count should be one.
@@ -2370,7 +2370,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewal) {
     hints.push_back(AllocEngine::Resource(leases[0]->addr_, 128));
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // Assigned count should still be one.
@@ -2413,7 +2413,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     Lease6Collection leases1;
     findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
-    ASSERT_EQ(1, leases1.size());
+    ASSERT_EQ(1U, leases1.size());
     EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
 
     // Double check that repeating the same duid/type/iaid will end up with
@@ -2426,7 +2426,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     Lease6Collection leases2;
     findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
-    EXPECT_EQ(1, leases2.size());
+    EXPECT_EQ(1U, leases2.size());
     EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
 
     // Ok, now the tricky part. Request allocation for the same duid and type, but
@@ -2439,7 +2439,7 @@ TEST_F(AllocEngine6Test, DISABLED_reserved2AddressesSolicit) {
     Lease6Collection leases3;
     findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
-    ASSERT_EQ(1, leases3.size());
+    ASSERT_EQ(1U, leases3.size());
     EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());
 }
 
@@ -2466,7 +2466,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     Lease6Collection leases1;
     findReservation(engine, ctx1);
     EXPECT_NO_THROW(leases1 = engine.allocateLeases6(ctx1));
-    ASSERT_EQ(1, leases1.size());
+    ASSERT_EQ(1U, leases1.size());
     EXPECT_EQ("2001:db8:1::babe", leases1[0]->addr_.toText());
 
     // Double check that repeating the same duid/type/iaid will end up with
@@ -2479,7 +2479,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     Lease6Collection leases2;
     findReservation(engine, ctx2);
     EXPECT_NO_THROW(leases2 = engine.allocateLeases6(ctx2));
-    EXPECT_EQ(1, leases2.size());
+    EXPECT_EQ(1U, leases2.size());
     EXPECT_EQ("2001:db8:1::babe", leases2[0]->addr_.toText());
 
     // Ok, now the tricky part. Request allocation for the same duid and type, but
@@ -2492,7 +2492,7 @@ TEST_F(AllocEngine6Test, reserved2Addresses) {
     Lease6Collection leases3;
     findReservation(engine, ctx3);
     EXPECT_NO_THROW(leases3 = engine.allocateLeases6(ctx3));
-    ASSERT_EQ(1, leases3.size());
+    ASSERT_EQ(1U, leases3.size());
     EXPECT_EQ("2001:db8:1::cafe", leases3[0]->addr_.toText());
 }
 
@@ -2505,7 +2505,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     ASSERT_NE("2001:db8:1::1c", leases[0]->addr_.toText());
 
     // This is what the client will send in his renew message.
@@ -2517,7 +2517,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewChange) {
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::1c"), 128);
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
     ASSERT_EQ("2001:db8:1::1c", renewed[0]->addr_.toText());
 }
 
@@ -2530,7 +2530,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     Lease6Collection leases;
 
     leases = allocateTest(engine, pool_, IOAddress("::"), false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 
     // This is what the client will send in his renew message.
     AllocEngine::HintContainer hints;
@@ -2548,7 +2548,7 @@ TEST_F(AllocEngine6Test, reservedAddressRenewReserved) {
     CfgMgr::instance().commit();
 
     Lease6Collection renewed = renewTest(engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // Check that we no longer have the reserved address.
     ASSERT_NE(leases[0]->addr_.toText(), renewed[0]->addr_.toText());
@@ -2686,7 +2686,7 @@ TEST_F(AllocEngine6Test, largePdPool) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
                                            false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has smaller
@@ -2709,7 +2709,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferLower) {
     // Even though the hint is from the first pool, the second pool is preferred.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 92);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has smaller
@@ -2739,7 +2739,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfLower) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 92);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has exact
@@ -2762,7 +2762,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferEqual) {
     // Even though the hint is from the first pool, the second pool is preferred.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:2::"),
                                            false, true, 80);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has exact
@@ -2792,7 +2792,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfEqual) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 80);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has greater
@@ -2816,7 +2816,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferHigher) {
     // the second pool is preferred.
     Lease6Collection leases = allocateTest(engine, pool2, IOAddress("2001:db8:1:3::"),
                                            false, true, 64);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can pick a pool which has greater
@@ -2846,7 +2846,7 @@ TEST_F(AllocEngine6Test, largePdPoolPreferExistingInsteadOfHigher) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("2001:db8:1:3::"),
                                            false, true, 64);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks that the allocation engine can delegate addresses
@@ -2869,7 +2869,7 @@ TEST_F(AllocEngine6Test, largePoolOver32bits) {
     // We should have got exactly one lease.
     Lease6Collection leases = allocateTest(engine, pool, IOAddress("::"),
                                            false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test verifies that it is possible to override the number of allocation
@@ -2926,7 +2926,7 @@ TEST_F(AllocEngine6Test, largeAllocationAttemptsOverride) {
     // be successful.
     AllocEngine engine2(6);
     leases = allocateTest(engine2, pool_, IOAddress("::"), false, true);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
 }
 
 // This test checks if an expired declined lease can be reused in SOLICIT (fake allocation)
@@ -3618,7 +3618,7 @@ TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkExistingLeases) {
     EXPECT_EQ("2001:db8:1::1", lease2->addr_.toText());
 
     // The previous lease should have been removed.
-    ASSERT_EQ(1, ctx.currentIA().old_leases_.size());
+    ASSERT_EQ(1U, ctx.currentIA().old_leases_.size());
     EXPECT_EQ("2001:db8:2::1", ctx.currentIA().old_leases_[0]->addr_.toText());
 }
 
@@ -3727,7 +3727,7 @@ TEST_F(AllocEngine6Test, hostDynamicAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     Lease6Ptr renewed_lease = renewed[0];
     EXPECT_EQ("2001:db8:1::10", renewed_lease->addr_.toText());
@@ -3817,7 +3817,7 @@ TEST_F(AllocEngine6Test, globalHostDynamicAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     ASSERT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -3906,7 +3906,7 @@ TEST_F(AllocEngine6Test, globalHostReservedAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -3968,7 +3968,7 @@ TEST_F(AllocEngine6Test, globalHostReservedMatchingAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, !IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4030,7 +4030,7 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, !IN_SUBNET, !IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4095,7 +4095,7 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefixDifferentPrefixLen) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, !IN_SUBNET, !IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4155,7 +4155,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4221,7 +4221,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedPrefix) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4284,7 +4284,7 @@ TEST_F(AllocEngine6Test, mixedHostReservedPrefixDifferentPrefixLen) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4353,7 +4353,7 @@ TEST_F(AllocEngine6Test, bothHostReservedAddress) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, pool_, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4425,7 +4425,7 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefix) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -4500,7 +4500,7 @@ TEST_F(AllocEngine6Test, bothHostReservedPrefixDifferentPrefixLen) {
 
     // Client should receive a lease.
     Lease6Collection renewed = renewTest(*engine, dummy_pool, hints, IN_SUBNET, IN_POOL);
-    ASSERT_EQ(1, renewed.size());
+    ASSERT_EQ(1U, renewed.size());
 
     // And the lease lifetime should be extended.
     EXPECT_GT(renewed[0]->cltt_, lease->cltt_)
@@ -5030,10 +5030,10 @@ TEST_F(AllocEngine6Test, solicitNoCache) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was not updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5072,14 +5072,14 @@ TEST_F(AllocEngine6Test, requestCacheThreshold6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was reused.
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5131,8 +5131,8 @@ TEST_F(AllocEngine6Test, renewCacheThreshold6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5175,14 +5175,14 @@ TEST_F(AllocEngine6Test, requestCacheMaxAge6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was reused.
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5234,8 +5234,8 @@ TEST_F(AllocEngine6Test, renewCacheMaxAge6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5282,14 +5282,14 @@ TEST_F(AllocEngine6Test, requestCacheBoth6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was reused.
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5345,8 +5345,8 @@ TEST_F(AllocEngine6Test, renewCacheBoth6) {
     time_t age = lease->cltt_ - now;
     EXPECT_GE(age, 100);
     EXPECT_LE(age, 110);
-    EXPECT_EQ(400 - age, lease->reuseable_valid_lft_);
-    EXPECT_EQ(300 - age, lease->reuseable_preferred_lft_);
+    EXPECT_EQ(400U - age, lease->reuseable_valid_lft_);
+    EXPECT_EQ(300U - age, lease->reuseable_preferred_lft_);
 
     // Check other lease parameters.
     EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -5391,10 +5391,10 @@ TEST_F(AllocEngine6Test, requestCacheBadThreshold6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5441,7 +5441,7 @@ TEST_F(AllocEngine6Test, renewCacheBadThreshold6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5482,10 +5482,10 @@ TEST_F(AllocEngine6Test, requestCacheBadMaxAge6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5532,7 +5532,7 @@ TEST_F(AllocEngine6Test, renewCacheBadMaxAge6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5574,10 +5574,10 @@ TEST_F(AllocEngine6Test, renewCacheReducedValid6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->renewLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5625,7 +5625,7 @@ TEST_F(AllocEngine6Test, renewCacheReducedPreferred6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5662,10 +5662,10 @@ TEST_F(AllocEngine6Test, requestCacheFwdDDNS6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5708,7 +5708,7 @@ TEST_F(AllocEngine6Test, renewCacheFwdDDNS6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5745,10 +5745,10 @@ TEST_F(AllocEngine6Test, requestCacheRevDDNS6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5791,7 +5791,7 @@ TEST_F(AllocEngine6Test, renewCacheRevDDNS6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -5829,10 +5829,10 @@ TEST_F(AllocEngine6Test, requestCacheHostname6) {
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(ctx)));
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(128, lease->prefixlen_);
+    EXPECT_EQ(128U, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.
@@ -5877,7 +5877,7 @@ TEST_F(AllocEngine6Test, renewCacheHostname6) {
     EXPECT_EQ(prefixlen, lease->prefixlen_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.
@@ -6753,8 +6753,8 @@ TEST_F(AllocEngine6Test, getRemaining) {
     uint32_t preferred(1);
     Lease6Ptr lease;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
+    EXPECT_EQ(0U, valid);
+    EXPECT_EQ(0U, preferred);
 
     // Unexpected state.
     valid = 1;
@@ -6766,8 +6766,8 @@ TEST_F(AllocEngine6Test, getRemaining) {
                            iaid, 30, 50, 1));
     lease->state_ = Lease::STATE_DECLINED;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
+    EXPECT_EQ(0U, valid);
+    EXPECT_EQ(0U, preferred);
 
     // Time going backward.
     valid = 1;
@@ -6776,30 +6776,30 @@ TEST_F(AllocEngine6Test, getRemaining) {
     lease->cltt_ = lease->current_cltt_ = now + 100;
     lease->valid_lft_ = lease->current_valid_lft_ = 50;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
+    EXPECT_EQ(0U, valid);
+    EXPECT_EQ(0U, preferred);
 
     // Already expired.
     valid = 1;
     preferred = 1;
     lease->cltt_ = lease->current_cltt_ = now - 100;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_EQ(0, valid);
-    EXPECT_EQ(0, preferred);
+    EXPECT_EQ(0U, valid);
+    EXPECT_EQ(0U, preferred);
 
     // Valid case.
     now = time(0);
     lease->cltt_ = lease->current_cltt_ = now - 10;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_NEAR(40, valid, 1);
-    EXPECT_NEAR(20, preferred, 1);
+    EXPECT_NEAR(40U, valid, 1);
+    EXPECT_NEAR(20U, preferred, 1);
 
     // No longer preferred.
     now = time(0);
     lease->cltt_ = lease->current_cltt_ = now - 40;
     AllocEngine::getRemaining(lease, preferred, valid);
-    EXPECT_NEAR(10, valid, 1);
-    EXPECT_EQ(0, preferred);
+    EXPECT_NEAR(10U, valid, 1);
+    EXPECT_EQ(0U, preferred);
 }
 
 TEST_F(AllocEngine6Test, useReleasedReservedLease) {
@@ -6823,7 +6823,7 @@ TEST_F(AllocEngine6Test, useReleasedReservedLease) {
     // Client should receive a lease.
     Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(new_lease);
-    EXPECT_EQ(new_lease->valid_lft_, 400);
+    EXPECT_EQ(new_lease->valid_lft_, 400U);
 }
 
 TEST_F(AllocEngine6Test, useReclaimedReservedLease) {
@@ -6847,7 +6847,7 @@ TEST_F(AllocEngine6Test, useReclaimedReservedLease) {
     // Client should receive a lease.
     Lease6Ptr new_lease = simpleAlloc6Test(pool_, IOAddress("::"), false);
     ASSERT_TRUE(new_lease);
-    EXPECT_EQ(new_lease->valid_lft_, 400);
+    EXPECT_EQ(new_lease->valid_lft_, 400U);
 }
 
 }  // namespace test

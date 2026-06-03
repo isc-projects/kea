@@ -630,8 +630,8 @@ TEST_F(NetworkTest, getPropertyNoParentChild) {
     EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
     EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ(12345, net_child->getValid(Network::Inheritance::NONE).get());
-    EXPECT_EQ(12345, net_child->getValid().get());
+    EXPECT_EQ(12345U, net_child->getValid(Network::Inheritance::NONE).get());
+    EXPECT_EQ(12345U, net_child->getValid().get());
 }
 
 // Test that parent specific value is returned when the value
@@ -642,7 +642,7 @@ TEST_F(NetworkTest, getPropertyParentNoChild) {
 
     TestNetworkPtr net_parent(new TestNetwork());
     net_parent->setValid(23456);
-    EXPECT_EQ(23456, net_parent->getValid().get());
+    EXPECT_EQ(23456U, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
@@ -651,7 +651,7 @@ TEST_F(NetworkTest, getPropertyParentNoChild) {
     EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
     EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ(23456, net_child->getValid().get());
+    EXPECT_EQ(23456U, net_child->getValid().get());
 }
 
 // Test that value specified for the child network takes
@@ -659,11 +659,11 @@ TEST_F(NetworkTest, getPropertyParentNoChild) {
 TEST_F(NetworkTest, getPropertyParentChild) {
     TestNetworkPtr net_child(new TestNetwork());
     net_child->setValid(12345);
-    EXPECT_EQ(12345, net_child->getValid().get());
+    EXPECT_EQ(12345U, net_child->getValid().get());
 
     TestNetworkPtr net_parent(new TestNetwork());
     net_parent->setValid(23456);
-    EXPECT_EQ(23456, net_parent->getValid().get());
+    EXPECT_EQ(23456U, net_parent->getValid().get());
 
     ASSERT_NO_THROW(net_child->setParent(net_parent));
 
@@ -672,7 +672,7 @@ TEST_F(NetworkTest, getPropertyParentChild) {
     EXPECT_FALSE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
     EXPECT_TRUE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ(12345, net_child->getValid().get());
+    EXPECT_EQ(12345U, net_child->getValid().get());
 }
 
 // Test that global value is inherited if there is no network
@@ -689,7 +689,7 @@ TEST_F(NetworkTest, getPropertyGlobalNoParentNoChild) {
     EXPECT_TRUE(net_child->getValid(Network::Inheritance::PARENT_NETWORK).unspecified());
     EXPECT_FALSE(net_child->getValid(Network::Inheritance::GLOBAL).unspecified());
 
-    EXPECT_EQ(34567, net_child->getValid().get());
+    EXPECT_EQ(34567U, net_child->getValid().get());
 }
 
 // Test that getSiaddr() never fails.
@@ -721,15 +721,15 @@ TEST_F(NetworkTest, inheritanceTriplet) {
     EXPECT_FALSE(net->getValid().unspecified());
     EXPECT_FALSE(net->getValid(Network::Inheritance::ALL).unspecified());
     EXPECT_FALSE(net->getValid(Network::Inheritance::GLOBAL).unspecified());
-    EXPECT_EQ(200, net->getValid().get());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).get());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).get());
-    EXPECT_EQ(200, net->getValid().getMin());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).getMin());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).getMin());
-    EXPECT_EQ(200, net->getValid().getMax());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).getMax());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).getMax());
+    EXPECT_EQ(200U, net->getValid().get());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::ALL).get());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(200U, net->getValid().getMin());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::ALL).getMin());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::GLOBAL).getMin());
+    EXPECT_EQ(200U, net->getValid().getMax());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::ALL).getMax());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::GLOBAL).getMax());
 
     // Set all valid lifetime global parameters.
     globals_->set("min-valid-lifetime", Element::create(100));
@@ -737,15 +737,15 @@ TEST_F(NetworkTest, inheritanceTriplet) {
     EXPECT_FALSE(net->getValid().unspecified());
     EXPECT_FALSE(net->getValid(Network::Inheritance::ALL).unspecified());
     EXPECT_FALSE(net->getValid(Network::Inheritance::GLOBAL).unspecified());
-    EXPECT_EQ(200, net->getValid().get());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::ALL).get());
-    EXPECT_EQ(200, net->getValid(Network::Inheritance::GLOBAL).get());
-    EXPECT_EQ(100, net->getValid().getMin());
-    EXPECT_EQ(100, net->getValid(Network::Inheritance::ALL).getMin());
-    EXPECT_EQ(100, net->getValid(Network::Inheritance::GLOBAL).getMin());
-    EXPECT_EQ(300, net->getValid().getMax());
-    EXPECT_EQ(300, net->getValid(Network::Inheritance::ALL).getMax());
-    EXPECT_EQ(300, net->getValid(Network::Inheritance::GLOBAL).getMax());
+    EXPECT_EQ(200U, net->getValid().get());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::ALL).get());
+    EXPECT_EQ(200U, net->getValid(Network::Inheritance::GLOBAL).get());
+    EXPECT_EQ(100U, net->getValid().getMin());
+    EXPECT_EQ(100U, net->getValid(Network::Inheritance::ALL).getMin());
+    EXPECT_EQ(100U, net->getValid(Network::Inheritance::GLOBAL).getMin());
+    EXPECT_EQ(300U, net->getValid().getMax());
+    EXPECT_EQ(300U, net->getValid(Network::Inheritance::ALL).getMax());
+    EXPECT_EQ(300U, net->getValid(Network::Inheritance::GLOBAL).getMax());
 }
 
 }

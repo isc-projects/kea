@@ -137,14 +137,14 @@ TEST_F(TrackingLeaseMgrTest, registerCallbacks) {
 
     // This call should trigger the lease add callbacks for subnet id 0 and 1.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1")));
-    EXPECT_EQ(2, logs_.size());
+    EXPECT_EQ(2U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, 1, Lease::TYPE_V4));
 
     // This call should trigger the lease add callback for subnet id 0 only. That's
     // because we have no callback for the subnet id 3.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(3, "192.0.2.1")));
-    EXPECT_EQ(3, logs_.size());
+    EXPECT_EQ(3U, logs_.size());
     EXPECT_EQ(2, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 }
 
@@ -233,15 +233,15 @@ TEST_F(TrackingLeaseMgrTest, trackAddLeaseDifferentLeaseTypes) {
                                                    SUBNET_ID_GLOBAL, ph::_1)));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1")));
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, Lease::TYPE_NA, "2001:db8:1::1")));
-    EXPECT_EQ(2, logs_.size());
+    EXPECT_EQ(2U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_NA));
 
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, Lease::TYPE_PD, "3000::")));
-    EXPECT_EQ(3, logs_.size());
+    EXPECT_EQ(3U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_PD));
 }
 
@@ -270,7 +270,7 @@ TEST_F(TrackingLeaseMgrTest, trackUpdateLease) {
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
                                                    SUBNET_ID_GLOBAL, ph::_1)));
     EXPECT_NO_THROW(mgr.trackUpdateLease(initializeLease(1, "192.0.2.1")));
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_UPDATE_LEASE, 0, Lease::TYPE_V4));
 }
 
@@ -298,7 +298,7 @@ TEST_F(TrackingLeaseMgrTest, trackDeleteLease) {
                                                    TrackingLeaseMgr::TRACK_DELETE_LEASE,
                                                    SUBNET_ID_GLOBAL, ph::_1)));
     EXPECT_NO_THROW(mgr.trackDeleteLease(initializeLease(1, "192.0.2.1")));
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_DELETE_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 }
 
@@ -361,7 +361,7 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
 
     // It should only run the callback for the global subnet id that is still
     // registered.
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
     EXPECT_EQ(1, countLogs(TrackingLeaseMgr::TRACK_ADD_LEASE, SUBNET_ID_GLOBAL, Lease::TYPE_V4));
 
     // Unregister this callback.
@@ -369,7 +369,7 @@ TEST_F(TrackingLeaseMgrTest, unregisterCallbacksBySubnetID) {
 
     // Make sure it is no longer invoked.
     EXPECT_NO_THROW(mgr.trackAddLease(initializeLease(1, "192.0.2.1")));
-    EXPECT_EQ(1, logs_.size());
+    EXPECT_EQ(1U, logs_.size());
 
     // Unregistering it again should be no-op.
     EXPECT_NO_THROW(mgr.unregisterCallbacks(SUBNET_ID_GLOBAL, Lease::TYPE_V4));

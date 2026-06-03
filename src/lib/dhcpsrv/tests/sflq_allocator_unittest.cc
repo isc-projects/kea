@@ -126,7 +126,7 @@ TEST_F(SharedFlqAllocatorTest4, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 6);
+    ASSERT_EQ(picked.size(), 6U);
     ASSERT_TRUE(picked.count(IOAddress("192.0.1.0")));
     ASSERT_TRUE(picked.count(IOAddress("192.0.1.1")));
     ASSERT_TRUE(picked.count(IOAddress("192.0.2.0")));
@@ -153,7 +153,7 @@ TEST_F(SharedFlqAllocatorTest4, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 2);
+    ASSERT_EQ(picked.size(), 2U);
     ASSERT_TRUE(picked.count(IOAddress("192.0.2.0")));
     ASSERT_TRUE(picked.count(IOAddress("192.0.2.1")));
 
@@ -177,7 +177,7 @@ TEST_F(SharedFlqAllocatorTest4, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 4);
+    ASSERT_EQ(picked.size(), 4U);
     ASSERT_TRUE(picked.count(IOAddress("192.0.1.0")));
     ASSERT_TRUE(picked.count(IOAddress("192.0.1.1")));
     ASSERT_TRUE(picked.count(IOAddress("192.0.3.0")));
@@ -333,7 +333,7 @@ TEST_F(SharedFlqAllocatorTest6, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 6);
+    ASSERT_EQ(picked.size(), 6U);
     ASSERT_TRUE(picked.count(IOAddress("3001::10")));
     ASSERT_TRUE(picked.count(IOAddress("3001::11")));
     ASSERT_TRUE(picked.count(IOAddress("3001::20")));
@@ -360,7 +360,7 @@ TEST_F(SharedFlqAllocatorTest6, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 2);
+    ASSERT_EQ(picked.size(), 2U);
     ASSERT_TRUE(picked.count(IOAddress("3001::20")));
     ASSERT_TRUE(picked.count(IOAddress("3001::21")));
 
@@ -384,7 +384,7 @@ TEST_F(SharedFlqAllocatorTest6, pickAddress) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 4);
+    ASSERT_EQ(picked.size(), 4U);
     ASSERT_TRUE(picked.count(IOAddress("3001::10")));
     ASSERT_TRUE(picked.count(IOAddress("3001::11")));
     ASSERT_TRUE(picked.count(IOAddress("3001::30")));
@@ -457,7 +457,7 @@ TEST_F(SharedFlqAllocatorTest6, pickPrefix) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 6);
+    ASSERT_EQ(picked.size(), 6U);
     ASSERT_TRUE(picked.count(IOAddress("2001::10")));
     ASSERT_TRUE(picked.count(IOAddress("2001::11")));
     ASSERT_TRUE(picked.count(IOAddress("2001::20")));
@@ -488,7 +488,7 @@ TEST_F(SharedFlqAllocatorTest6, pickPrefix) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 2);
+    ASSERT_EQ(picked.size(), 2U);
     ASSERT_TRUE(picked.count(IOAddress("2001::20")));
     ASSERT_TRUE(picked.count(IOAddress("2001::21")));
 
@@ -515,7 +515,7 @@ TEST_F(SharedFlqAllocatorTest6, pickPrefix) {
         picked.emplace(picked_address);
     }
 
-    ASSERT_EQ(picked.size(), 4);
+    ASSERT_EQ(picked.size(), 4U);
     ASSERT_TRUE(picked.count(IOAddress("2001::10")));
     ASSERT_TRUE(picked.count(IOAddress("2001::11")));
     ASSERT_TRUE(picked.count(IOAddress("2001::30")));

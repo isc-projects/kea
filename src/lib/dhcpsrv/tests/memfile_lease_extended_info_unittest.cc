@@ -216,7 +216,7 @@ void
 MemfileExtendedInfoTest::testInitLease4() {
     start(Memfile_LeaseMgr::V4);
     initLease4();
-    EXPECT_EQ(8, leases4.size());
+    EXPECT_EQ(8U, leases4.size());
     Lease4Collection got;
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4());
     ASSERT_EQ(leases4.size(), got.size());
@@ -311,7 +311,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id2,
                                                           zero,
                                                           LeasePageSize(100)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Unknown relay id #2, now - 1000, now + 1000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id2,
@@ -319,7 +319,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(100),
                                                           now_ - 1000,
                                                           now_ + 1000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Relay id #0, now - 2000, now - 1000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
@@ -327,7 +327,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(100),
                                                           now_ - 2000,
                                                           now_ - 1000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Relay id #0, now + 1000, now + 2000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
@@ -335,13 +335,13 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(100),
                                                           now_ + 1000,
                                                           now_ + 2000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Relay id #0: 3 entries (0, 2, 3, 4).
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
                                                           zero,
                                                           LeasePageSize(100)));
-    ASSERT_EQ(4, got.size());
+    ASSERT_EQ(4U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -363,7 +363,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
                                                           zero,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -377,7 +377,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
                                                           addr2,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[3]);
@@ -391,14 +391,14 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
                                                           addr4,
                                                           LeasePageSize(2)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Relay id #0, from now - 500: 3 entries (0, 2, 4).
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRelayId(relay_id0,
                                                           zero,
                                                           LeasePageSize(100),
                                                           now_ - 500));
-    ASSERT_EQ(3, got.size());
+    ASSERT_EQ(3U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -417,7 +417,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           zero,
                                                           LeasePageSize(100),
                                                           0, now_ - 200));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[2]);
@@ -433,7 +433,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[2]);
@@ -445,7 +445,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[4]);
@@ -457,7 +457,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRelayId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 }
 
 TEST_F(MemfileExtendedInfoTest, getLeases4ByRelayId) {
@@ -547,7 +547,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id2,
                                                           zero,
                                                           LeasePageSize(100)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Unknown remote id #2, now - 1000, now + 1000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id2,
@@ -555,7 +555,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(100),
                                                           now_ - 1000,
                                                           now_ + 1000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Remote id #0, now - 2000, now - 1000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
@@ -563,7 +563,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(100),
                                                           now_ - 2000,
                                                           now_ - 1000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Remote id #0, now + 1000, now + 2000: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
@@ -571,13 +571,13 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(100),
                                                           now_ + 1000,
                                                           now_ + 2000));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Remote id #0: 3 entries (0, 2, 3, 4).
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
                                                           zero,
                                                           LeasePageSize(100)));
-    ASSERT_EQ(4, got.size());
+    ASSERT_EQ(4U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -599,7 +599,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
                                                           zero,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -613,7 +613,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
                                                           addr2,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[3]);
@@ -627,14 +627,14 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
                                                           addr4,
                                                           LeasePageSize(2)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Remote id #0, from now - 500: 3 entries (0, 2, 4).
     EXPECT_NO_THROW(got = lease_mgr_->getLeases4ByRemoteId(remote_id0,
                                                           zero,
                                                           LeasePageSize(100),
                                                           now_ - 500));
-    ASSERT_EQ(3, got.size());
+    ASSERT_EQ(3U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[0]);
@@ -653,7 +653,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           zero,
                                                           LeasePageSize(100),
                                                           0, now_ - 200));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[2]);
@@ -669,7 +669,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[2]);
@@ -681,7 +681,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(*lease, *leases4[4]);
@@ -693,7 +693,7 @@ MemfileExtendedInfoTest::testGetLeases4ByRemoteId() {
                                                           LeasePageSize(1),
                                                           now_ - 500,
                                                           now_ - 100));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 }
 
 TEST_F(MemfileExtendedInfoTest, getLeases4ByRemoteId) {
@@ -721,7 +721,7 @@ void
 MemfileExtendedInfoTest::testInitLease6() {
     start(Memfile_LeaseMgr::V6);
     initLease6();
-    EXPECT_EQ(8, leases6.size());
+    EXPECT_EQ(8U, leases6.size());
     Lease6Collection got;
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6());
     ASSERT_EQ(leases6.size(), got.size());
@@ -748,7 +748,7 @@ TEST_F(MemfileExtendedInfoTest, initLease6MultiThreading) {
 TEST_F(MemfileExtendedInfoTest, relayIdTable6) {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
-    EXPECT_EQ(0, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->relay_id6_.size());
 
     // Create parameter values.
     IOAddress lease_addr0(ADDRESS6[0]);
@@ -767,32 +767,32 @@ TEST_F(MemfileExtendedInfoTest, relayIdTable6) {
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr2, relay_id1));
 
     // Check delete.
-    EXPECT_EQ(6, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->relay_id6_.size());
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(other_lease_addr));
     // No match so doing nothing.
-    EXPECT_EQ(6, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->relay_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr0));
     // Removed 3 entries.
-    EXPECT_EQ(3, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(3U, lease_mgr_->relay_id6_.size());
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr0));
     // Already removed: doing nothing again.
-    EXPECT_EQ(3, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(3U, lease_mgr_->relay_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr1));
     // Removed 2 entries.
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr2));
     // Removed last entry.
-    EXPECT_EQ(0, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->relay_id6_.size());
 }
 
 /// @brief Verifies that add and delete work on the by remote id table.
 TEST_F(MemfileExtendedInfoTest, remoteIdTable6) {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
-    EXPECT_EQ(0, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->remote_id6_.size());
 
     // Create parameter values.
     IOAddress lease_addr0(ADDRESS6[0]);
@@ -811,25 +811,25 @@ TEST_F(MemfileExtendedInfoTest, remoteIdTable6) {
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr2, remote_id1));
 
     // Check delete.
-    EXPECT_EQ(6, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->remote_id6_.size());
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(other_lease_addr));
     // No match so doing nothing.
-    EXPECT_EQ(6, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->remote_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr0));
     // Removed 3 entries.
-    EXPECT_EQ(3, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(3U, lease_mgr_->remote_id6_.size());
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr0));
     // Already removed: doing nothing again.
-    EXPECT_EQ(3, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(3U, lease_mgr_->remote_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr1));
     // Removed 2 entries.
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 
     EXPECT_NO_THROW(lease_mgr_->deleteExtendedInfo6(lease_addr2));
     // Removed last entry.
-    EXPECT_EQ(0, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->remote_id6_.size());
 }
 
 /// @brief Verifies that getLeases6ByRelayId works as expected.
@@ -838,7 +838,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRelayId() {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
     initLease6();
-    EXPECT_EQ(0, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->relay_id6_.size());
 
     // Create parameter values.
     IOAddress lease_addr0(ADDRESS6[0]);
@@ -859,20 +859,20 @@ MemfileExtendedInfoTest::testGetLeases6ByRelayId() {
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr1, relay_id_data0));
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr1, relay_id_data1));
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr2, relay_id_data1));
-    EXPECT_EQ(6, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->relay_id6_.size());
 
     Lease6Collection got;
     // Unknown relay id #2: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id2,
                                                           zero,
                                                           LeasePageSize(100)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Relay id #0: 3 entries but 2 addresses.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id0,
                                                           zero,
                                                           LeasePageSize(100)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     Lease6Ptr lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr0, lease->addr_);
@@ -884,7 +884,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
                                                           zero,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr0, lease->addr_);
@@ -896,7 +896,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRelayId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRelayId(relay_id1,
                                                           lease->addr_,
                                                           LeasePageSize(2)));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr2, lease->addr_);
@@ -917,7 +917,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRemoteId() {
     // Lease manager is created with empty tables.
     start(Memfile_LeaseMgr::V6);
     initLease6();
-    EXPECT_EQ(0, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(0U, lease_mgr_->remote_id6_.size());
 
     // Create parameter values.
     IOAddress lease_addr0(ADDRESS6[0]);
@@ -935,20 +935,20 @@ MemfileExtendedInfoTest::testGetLeases6ByRemoteId() {
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr1, remote_id0));
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr1, remote_id1));
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr2, remote_id1));
-    EXPECT_EQ(6, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(6U, lease_mgr_->remote_id6_.size());
 
     Lease6Collection got;
     // Unknown remote id #2: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id2,
                                                            zero,
                                                            LeasePageSize(10)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Remote id #0: 3 entries but 2 addresses.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id0,
                                                            zero,
                                                            LeasePageSize(10)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     Lease6Ptr lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr0, lease->addr_);
@@ -960,7 +960,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
                                                            zero,
                                                            LeasePageSize(2)));
-    ASSERT_EQ(2, got.size());
+    ASSERT_EQ(2U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr0, lease->addr_);
@@ -972,7 +972,7 @@ MemfileExtendedInfoTest::testGetLeases6ByRemoteId() {
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6ByRemoteId(remote_id1,
                                                            lease->addr_,
                                                            LeasePageSize(2)));
-    ASSERT_EQ(1, got.size());
+    ASSERT_EQ(1U, got.size());
     lease = got[0];
     ASSERT_TRUE(lease);
     EXPECT_EQ(lease_addr2, lease->addr_);
@@ -1009,12 +1009,12 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     // Other link: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(10, zero,
                                                  LeasePageSize(10)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 
     // Link: 8 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
                                                  LeasePageSize(10)));
-    ASSERT_EQ(8, got.size());
+    ASSERT_EQ(8U, got.size());
     Lease6Ptr lease;
     for (size_t i = 0; i < 8; ++i) {
         lease = got[i];
@@ -1025,7 +1025,7 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     // Link: initial partial: 4 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, zero,
                                                  LeasePageSize(4)));
-    ASSERT_EQ(4, got.size());
+    ASSERT_EQ(4U, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
         ASSERT_TRUE(lease);
@@ -1035,7 +1035,7 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     // Link: next partial: 4 entries.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
                                                  LeasePageSize(4)));
-    ASSERT_EQ(4, got.size());
+    ASSERT_EQ(4U, got.size());
     for (size_t i = 0; i < 4; ++i) {
         lease = got[i];
         ASSERT_TRUE(lease);
@@ -1045,7 +1045,7 @@ MemfileExtendedInfoTest::testGetLeases6ByLink() {
     // Link: further partial: nothing.
     EXPECT_NO_THROW(got = lease_mgr_->getLeases6(1, lease->addr_,
                                                  LeasePageSize(4)));
-    EXPECT_EQ(0, got.size());
+    EXPECT_EQ(0U, got.size());
 }
 
 TEST_F(MemfileExtendedInfoTest, getLeases6ByLink) {
@@ -1077,8 +1077,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id2));
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id2));
 
-    EXPECT_EQ(2, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(2, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(2U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(2U, lease_mgr_->remote_id6_.size());
 
     // Delete the second lease: no side effect on tables.
     Lease6Ptr lease = leases6[1];
@@ -1090,8 +1090,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6) {
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
-    EXPECT_EQ(2, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(2, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(2U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(2U, lease_mgr_->remote_id6_.size());
 
     // Delete the first lease: tables are cleared.
     lease = leases6[0];
@@ -1119,8 +1119,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     EXPECT_NO_THROW(lease_mgr_->addRelayId6(lease_addr, relay_id));
     EXPECT_NO_THROW(lease_mgr_->addRemoteId6(lease_addr, remote_id));
 
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 
     // Delete the first lease: tables are no longer cleared.
     Lease6Ptr lease = leases6[0];
@@ -1132,8 +1132,8 @@ TEST_F(MemfileExtendedInfoTest, deleteLease6disabled) {
     EXPECT_NO_THROW(ret = lease_mgr_->deleteLease(lease));
     EXPECT_TRUE(ret);
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 }
 
 /// @brief Verifies that v6 addLease adds references to extended info tables.
@@ -1167,7 +1167,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Check extended info tables.
-    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->relay_id6_.size());
     auto relay_id_it =  lease_mgr_->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -1177,7 +1177,7 @@ TEST_F(MemfileExtendedInfoTest, addLease6) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->remote_id6_.size());
     auto remote_id_it = lease_mgr_->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -1292,8 +1292,8 @@ TEST_F(MemfileExtendedInfoTest, updateLease6delete) {
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 
     // Set action and call updateLease6.
     lease.reset(new Lease6(*lease));
@@ -1333,8 +1333,8 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     bool ret = false;
     EXPECT_NO_THROW(ret = lease_mgr_->addLease(lease));
     EXPECT_TRUE(ret);
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 
     // Disable on the fly extended info tables.
     // Note it is a priori an illegal operation so this could have to be
@@ -1348,8 +1348,8 @@ TEST_F(MemfileExtendedInfoTest, updateLease6deleteDisabled) {
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were not touched.
-    EXPECT_EQ(1, lease_mgr_->relay_id6_.size());
-    EXPECT_EQ(1, lease_mgr_->remote_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->relay_id6_.size());
+    EXPECT_EQ(1U, lease_mgr_->remote_id6_.size());
 }
 
 /// @brief Verifies that updateLease6 adds references to extended
@@ -1391,7 +1391,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were updated.
-    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->relay_id6_.size());
     auto relay_id_it =  lease_mgr_->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -1401,7 +1401,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->remote_id6_.size());
     auto remote_id_it = lease_mgr_->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -1484,7 +1484,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     EXPECT_TRUE(ret);
 
     // Verify updated extended info tables.
-    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->relay_id6_.size());
     auto relay_id_it =  lease_mgr_->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
     Lease6ExtendedInfoPtr ex_info = *relay_id_it;
@@ -1494,7 +1494,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->remote_id6_.size());
     auto remote_id_it = lease_mgr_->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
     ex_info = *remote_id_it;
@@ -1521,7 +1521,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     EXPECT_EQ(Lease6::ACTION_IGNORE, lease->extended_info_action_);
 
     // Tables were updated.
-    ASSERT_EQ(1, lease_mgr_->relay_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->relay_id6_.size());
     relay_id_it = lease_mgr_->relay_id6_.cbegin();
     ASSERT_NE(relay_id_it, lease_mgr_->relay_id6_.cend());
     ex_info = *relay_id_it;
@@ -1532,7 +1532,7 @@ TEST_F(MemfileExtendedInfoTest, updateLease6update2) {
     EXPECT_NE(exp_relay_id, relay_id2);
     EXPECT_EQ(exp_relay_id2, relay_id2);
 
-    ASSERT_EQ(1, lease_mgr_->remote_id6_.size());
+    ASSERT_EQ(1U, lease_mgr_->remote_id6_.size());
     remote_id_it = lease_mgr_->remote_id6_.cbegin();
     ASSERT_NE(remote_id_it, lease_mgr_->remote_id6_.cend());
     ex_info = *remote_id_it;

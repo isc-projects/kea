@@ -4034,9 +4034,9 @@ TEST_F(AllocEngine4Test, updateExtendedInfo4) {
             ASSERT_NO_THROW(util::str::decodeFormattedHexString(scenario.rai_data_, opt_data))
                             << "scenario.rai_data_ is invalid, test is broken";
             const OptionDefinition& rai_def = LibDHCP::DHO_DHCP_AGENT_OPTIONS_DEF();
-            ASSERT_GT(opt_data.size(), 2);
+            ASSERT_GT(opt_data.size(), 2U);
             ASSERT_EQ(DHO_DHCP_AGENT_OPTIONS, opt_data[0]);
-            ASSERT_EQ(opt_data[1] + 2, opt_data.size());
+            ASSERT_EQ(opt_data[1] + 2U, opt_data.size());
             std::vector<uint8_t> rai_data(opt_data.cbegin() + 2,
                                           opt_data.cend());
             OptionCustomPtr rai;
@@ -4555,7 +4555,7 @@ TEST_F(AllocEngine4Test, discoverCacheBadThreshold4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4592,7 +4592,7 @@ TEST_F(AllocEngine4Test, requestCacheBadMaxAge4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
@@ -4633,7 +4633,7 @@ TEST_F(AllocEngine4Test, discoverCacheReducedValid4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4667,7 +4667,7 @@ TEST_F(AllocEngine4Test, requestCacheFwdDDNS4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 
     // Check the lease was updated in the database.
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
@@ -4711,7 +4711,7 @@ TEST_F(AllocEngine4Test, discoverCacheRevDDNS4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
 }
 
 // This test checks if a lease can't be reused in DHCPREQUEST (real allocation)
@@ -4746,7 +4746,7 @@ TEST_F(AllocEngine4Test, requestCacheHostname4) {
     EXPECT_EQ(addr, lease->addr_);
 
     // The lease was not reused.
-    EXPECT_EQ(0, lease->reuseable_valid_lft_);
+    EXPECT_EQ(0U, lease->reuseable_valid_lft_);
     EXPECT_EQ("bar", lease->hostname_);
 
     // Check the lease was updated in the database.
@@ -5205,7 +5205,7 @@ TEST_F(AllocEngine4Test, getRemaining) {
     uint32_t valid(1);
     Lease4Ptr lease;
     AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0U, valid);
 
     // Unexpected state.
     valid = 1;
@@ -5217,7 +5217,7 @@ TEST_F(AllocEngine4Test, getRemaining) {
                            sizeof(clientid), 100, now, 1));
     lease->state_ = Lease::STATE_DECLINED;
     AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0U, valid);
 
     // Infinite lifetime.
     lease->state_ = Lease::STATE_DEFAULT;
@@ -5230,19 +5230,19 @@ TEST_F(AllocEngine4Test, getRemaining) {
     lease->cltt_ = lease->current_cltt_ = now + 100;
     lease->valid_lft_ = lease->current_valid_lft_ = 50;
     AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0U, valid);
 
     // Already expired.
     valid = 1;
     lease->cltt_ = lease->current_cltt_ = now - 100;
     AllocEngine::getRemaining(lease, valid);
-    EXPECT_EQ(0, valid);
+    EXPECT_EQ(0U, valid);
 
     // Valid case.
     now = time(0);
     lease->cltt_ = lease->current_cltt_ = now - 10;
     AllocEngine::getRemaining(lease, valid);
-    EXPECT_NEAR(40, valid, 1);
+    EXPECT_NEAR(40U, valid, 1);
 }
 
 // This test checks that deleteRelease handles BOOTP leases.
@@ -5331,17 +5331,17 @@ TEST_F(AllocEngine4Test, fullPool) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(10, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(1, addr[2]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(10U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(1U, addr[2]);
         EXPECT_FALSE(found[addr[3]]);
         found[addr[3]] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(256, cnt);
+    EXPECT_EQ(256U, cnt);
     EXPECT_EQ(found, vector<bool>(256, true));
 }
 
@@ -5386,17 +5386,17 @@ TEST_F(AllocEngine4Test, fullSubnet24) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(192, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(2, addr[2]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(192U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(2U, addr[2]);
         EXPECT_FALSE(found[addr[3]]);
         found[addr[3]] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(256, cnt);
+    EXPECT_EQ(256U, cnt);
     EXPECT_EQ(found, vector<bool>(256, true));
 }
 
@@ -5441,17 +5441,17 @@ TEST_F(AllocEngine4Test, excludeFirstLast) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(10, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(1, addr[2]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(10U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(1U, addr[2]);
         EXPECT_FALSE(found[addr[3]]);
         found[addr[3]] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(254, cnt);
+    EXPECT_EQ(254U, cnt);
     vector<bool> expected(256, true);
     expected[0] = false;
     expected[255] = false;
@@ -5500,17 +5500,17 @@ TEST_F(AllocEngine4Test, excludeFirstLast24) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(192, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(2, addr[2]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(192U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(2U, addr[2]);
         EXPECT_FALSE(found[addr[3]]);
         found[addr[3]] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(254, cnt);
+    EXPECT_EQ(254U, cnt);
     vector<bool> expected(256, true);
     expected[0] = false;
     expected[255] = false;
@@ -5559,18 +5559,18 @@ TEST_F(AllocEngine4Test, excludeFirst25) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(192, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(2, addr[2]);
-        ASSERT_GT(128, addr[3]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(192U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(2U, addr[2]);
+        ASSERT_GT(128U, addr[3]);
         EXPECT_FALSE(found[addr[3]]);
         found[addr[3]] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(128, cnt);
+    EXPECT_EQ(128U, cnt);
     EXPECT_EQ(found, vector<bool>(128, true));
 }
 
@@ -5616,18 +5616,18 @@ TEST_F(AllocEngine4Test, excludeLast25) {
             break;
         }
         const vector<uint8_t>& addr = lease->addr_.toBytes();
-        ASSERT_EQ(4, addr.size());
-        EXPECT_EQ(192, addr[0]);
-        EXPECT_EQ(0, addr[1]);
-        EXPECT_EQ(2, addr[2]);
-        ASSERT_LE(128, addr[3]);
+        ASSERT_EQ(4U, addr.size());
+        EXPECT_EQ(192U, addr[0]);
+        EXPECT_EQ(0U, addr[1]);
+        EXPECT_EQ(2U, addr[2]);
+        ASSERT_LE(128U, addr[3]);
         EXPECT_FALSE(found[addr[3] - 128]);
         found[addr[3] - 128] = true;
         ++cnt;
         // Catch unbound loop.
-        ASSERT_LT(cnt, 1000);
+        ASSERT_LT(cnt, 1000U);
     }
-    EXPECT_EQ(128, cnt);
+    EXPECT_EQ(128U, cnt);
     EXPECT_EQ(found, vector<bool>(128, true));
 }
 
@@ -5834,7 +5834,7 @@ TEST_F(AllocEngine4Test, discoverOfferLftUseExistingLease4) {
     // Lease was assigned 5 seconds ago, its valid lifetime is 300, its
     // remaining lifetime is still larger than offer_lft.
     ASSERT_FALSE(lease->expired());
-    ASSERT_EQ(300, lease->valid_lft_);
+    ASSERT_EQ(300U, lease->valid_lft_);
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // CASE 1: Asking for any address
@@ -5846,7 +5846,7 @@ TEST_F(AllocEngine4Test, discoverOfferLftUseExistingLease4) {
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
-    EXPECT_EQ(300, lease->valid_lft_);
+    EXPECT_EQ(300U, lease->valid_lft_);
 
     // We are reusing the existing lease, the old instance should be
     // returned. The returned instance should be the same as the original

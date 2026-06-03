@@ -43,7 +43,7 @@ TEST_F(RandomAllocatorTest4, singlePool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
     }
     // The pool comprises 10 addresses. All should be returned.
-    EXPECT_EQ(10, addresses.size());
+    EXPECT_EQ(10U, addresses.size());
 }
 
 // Test allocating IPv4 addresses from multiple pools.
@@ -61,7 +61,7 @@ TEST_F(RandomAllocatorTest4, manyPools) {
     }
 
     // There are ten pools with 10 addresses each.
-    int total = 100;
+    size_t total = 100;
 
     // Repeat allocation of all addresses several times. Make sure that
     // the same addresses are returned when all pools are exhausted.
@@ -72,7 +72,7 @@ TEST_F(RandomAllocatorTest4, manyPools) {
 
         // Pick random addresses the number of times equal to the
         // subnet capacity to ensure that all addresses are returned.
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
             addresses_set.insert(candidate);
             addresses_vector.push_back(candidate);
@@ -176,7 +176,7 @@ TEST_F(RandomAllocatorTest4, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(pool1->inRange(candidate) || pool3->inRange(candidate));
    }
-   EXPECT_EQ(20, addresses_set.size());
+   EXPECT_EQ(20U, addresses_set.size());
 
    addresses_set.clear();
 
@@ -188,7 +188,7 @@ TEST_F(RandomAllocatorTest4, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(subnet_->inRange(candidate));
    }
-   EXPECT_EQ(40, addresses_set.size());
+   EXPECT_EQ(40U, addresses_set.size());
 
    // When the client does not belong to any client class the allocator
    // can't offer any address to the client.
@@ -222,7 +222,7 @@ TEST_F(RandomAllocatorTest6, singlePool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
     }
     // The pool comprises 17 addresses. All should be returned.
-    EXPECT_EQ(17, addresses.size());
+    EXPECT_EQ(17U, addresses.size());
 }
 
 // Test allocating IPv6 addresses from multiple pools.
@@ -242,7 +242,7 @@ TEST_F(RandomAllocatorTest6, manyPools) {
 
     // First pool (::10 - ::20) has 17 addresses.
     // There are 8 extra pools with 16 addresses in each.
-    int total = 17 + 8 * 16;
+    size_t total = 17 + 8 * 16;
 
     // Repeat allocation of all addresses several times. Make sure that
     // the same addresses are returned when all pools are exhausted.
@@ -253,7 +253,7 @@ TEST_F(RandomAllocatorTest6, manyPools) {
 
         // Pick random addresses the number of times equal to the
         // subnet capacity to ensure that all addresses are returned.
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
             addresses_set.insert(candidate);
             addresses_vector.push_back(candidate);
@@ -346,7 +346,7 @@ TEST_F(RandomAllocatorTest6, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(pool1->inRange(candidate) || pool3->inRange(candidate));
    }
-   EXPECT_EQ(20, addresses_set.size());
+   EXPECT_EQ(20U, addresses_set.size());
 
    addresses_set.clear();
 
@@ -358,7 +358,7 @@ TEST_F(RandomAllocatorTest6, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(subnet_->inRange(candidate));
    }
-   EXPECT_EQ(47, addresses_set.size());
+   EXPECT_EQ(47U, addresses_set.size());
 
    // When the client does not belong to any client class the allocator
    // can't offer any address to the client.
@@ -383,7 +383,7 @@ TEST_F(RandomAllocatorTest6, singlePdPool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
     }
     // The pool comprises 65536 prefixes. All should be returned.
-    EXPECT_EQ(65536, prefixes.size());
+    EXPECT_EQ(65536U, prefixes.size());
 }
 
 // Test that the allocator still works with a single pd pool of a single prefix.

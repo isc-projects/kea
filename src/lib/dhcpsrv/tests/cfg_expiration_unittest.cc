@@ -70,7 +70,7 @@ testAccessModify(const int64_t limit, const ModifierFun& modifier,
 
     // Setting the value to 0 should pass.
     ASSERT_NO_THROW(modifier(&cfg, 0));
-    EXPECT_EQ(0, accessor(&cfg));
+    EXPECT_EQ(0U, accessor(&cfg));
 }
 
 /// @brief Tests that modifier and the accessor returning uint16_t value
@@ -378,16 +378,16 @@ TEST_F(CfgExpirationTimersTest, reclamationParameters) {
     // Make sure we had more than one call to the reclamation routine.
     ASSERT_GT(stub_->reclaim_calls_count_, 1);
     // Make sure it was called with appropriate arguments.
-    EXPECT_EQ(1000, stub_->reclaim_params_.max_leases);
-    EXPECT_EQ(1500, stub_->reclaim_params_.timeout);
+    EXPECT_EQ(1000U, stub_->reclaim_params_.max_leases);
+    EXPECT_EQ(1500U, stub_->reclaim_params_.timeout);
     EXPECT_FALSE(stub_->reclaim_params_.remove_lease);
-    EXPECT_EQ(13, stub_->reclaim_params_.max_unwarned_cycles);
+    EXPECT_EQ(13U, stub_->reclaim_params_.max_unwarned_cycles);
 
     // Make sure we had more than one call to the routine which flushes
     // expired reclaimed leases.
     ASSERT_GT(stub_->delete_calls_count_, 1);
     // Make sure that the argument was correct.
-    EXPECT_EQ(1800, stub_->secs_param_);
+    EXPECT_EQ(1800U, stub_->secs_param_);
 }
 
 // This test verifies that if the value of "flush-reclaimed-timer-wait-time"

@@ -238,7 +238,7 @@ void
 TimerMgrTest::testUnregisterTimer() {
     // Register a timer and start it.
     ASSERT_NO_FATAL_FAILURE(registerTimer("timer1", 1));
-    ASSERT_EQ(1, timer_mgr_->timersCount());
+    ASSERT_EQ(1U, timer_mgr_->timersCount());
     ASSERT_NO_THROW(timer_mgr_->setup("timer1"));
 
     // Wait for the timer to execute several times.
@@ -246,17 +246,17 @@ TimerMgrTest::testUnregisterTimer() {
 
     // Remember how many times the timer's callback was executed.
     const unsigned int calls_count = calls_count_["timer1"];
-    ASSERT_GT(calls_count, 0);
+    ASSERT_GT(calls_count, 0U);
 
     // Check that an attempt to unregister a non-existing timer would
     // result in exception.
     ASSERT_THROW(timer_mgr_->unregisterTimer("timer2"), BadValue);
     // Number of timers shouldn't have changed.
-    ASSERT_EQ(1, timer_mgr_->timersCount());
+    ASSERT_EQ(1U, timer_mgr_->timersCount());
 
     // Now unregister the correct one.
     ASSERT_NO_THROW(timer_mgr_->unregisterTimer("timer1"));
-    ASSERT_EQ(0, timer_mgr_->timersCount());
+    ASSERT_EQ(0U, timer_mgr_->timersCount());
     EXPECT_FALSE(timer_mgr_->isTimerRegistered("timer1"));
 
     doWait(100);
@@ -281,7 +281,7 @@ TEST_F(TimerMgrTest, unregisterTimerMultiThreading) {
 void
 TimerMgrTest::testUnregisterTimers() {
     // Register 10 timers.
-    for (int i = 1; i <= 20; ++i) {
+    for (size_t i = 1; i <= 20; ++i) {
         std::ostringstream s;
         s << "timer" << i;
         ASSERT_NO_FATAL_FAILURE(registerTimer(s.str(), 1))
@@ -300,7 +300,7 @@ TimerMgrTest::testUnregisterTimers() {
     size_t count = 0;
     for (auto const& it : calls_count_) {
         unsigned int calls_count = it.second;
-        ASSERT_GT(calls_count, 0)
+        ASSERT_GT(calls_count, 0U)
             << "expected calls counter for timer "
             << ++count
             << " greater than 0";
@@ -313,7 +313,7 @@ TimerMgrTest::testUnregisterTimers() {
     ASSERT_NO_THROW(timer_mgr_->unregisterTimers());
 
     // Make sure there are no timers registered.
-    ASSERT_EQ(0, timer_mgr_->timersCount());
+    ASSERT_EQ(0U, timer_mgr_->timersCount());
 
     doWait(500);
 
@@ -409,9 +409,9 @@ TimerMgrTest::testScheduleTimers() {
     // So, the real number differs significantly. We don't know
     // exactly how many have been executed. It should be more
     // than 10 for sure. But we really made up the numbers here.
-    EXPECT_GT(calls_count_["timer1"], 10);
+    EXPECT_GT(calls_count_["timer1"], 10U);
     // For the second timer it should be more than 5.
-    EXPECT_GT(calls_count_["timer2"], 5);
+    EXPECT_GT(calls_count_["timer2"], 5U);
 
     // Because the interval of the 'timer1' is lower than the
     // interval of the 'timer2' the number of calls should

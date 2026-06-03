@@ -307,7 +307,7 @@ TEST_F(CfgOptionTest, add) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
@@ -320,7 +320,7 @@ TEST_F(CfgOptionTest, add) {
     // Try another function variant.
     options = cfg.getAllCombined("isc");
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -441,7 +441,7 @@ TEST_F(CfgOptionTest, mergeTo) {
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get(DHCP6_OPTION_SPACE, code);
         ASSERT_TRUE(desc.option_);
-        ASSERT_EQ(1, desc.option_->getData().size());
+        ASSERT_EQ(1U, desc.option_->getData().size());
         // The options with even option codes should hold one byte of data
         // equal to 0x1. These are the ones that we have initially added to
         // the destination configuration. The other options should hold the
@@ -458,7 +458,7 @@ TEST_F(CfgOptionTest, mergeTo) {
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get(123, code);
         ASSERT_TRUE(desc.option_);
-        ASSERT_EQ(1, desc.option_->getData().size());
+        ASSERT_EQ(1U, desc.option_->getData().size());
         // This time, the options with even option codes should hold a byte
         // of data equal to 0xFF. The other options should hold the byte of
         // data equal to 0x01.
@@ -495,7 +495,7 @@ TEST_F(CfgOptionTest, copy) {
     for (uint16_t code = 100; code < 110; ++code) {
         OptionDescriptor desc = cfg_dst.get("foo", code);
         ASSERT_TRUE(desc.option_);
-        ASSERT_EQ(1, desc.option_->getData().size());
+        ASSERT_EQ(1U, desc.option_->getData().size());
         EXPECT_EQ(0x01, desc.option_->getData()[0]);
     }
 
@@ -507,7 +507,7 @@ TEST_F(CfgOptionTest, copy) {
     // The option space "foo" should contain exactly 10 options.
     container = cfg_dst.getAll("foo");
     ASSERT_TRUE(container);
-    EXPECT_EQ(10, container->size());
+    EXPECT_EQ(10U, container->size());
 
     // Source config wasn't encapsulated, so the destination shouldn't be too.
     EXPECT_FALSE(cfg_dst.isEncapsulated());
@@ -627,7 +627,7 @@ TEST_F(CfgOptionTest, mergeInvalid) {
     ASSERT_NO_THROW_LOG(this_cfg.merge(defs, other_cfg));
     EXPECT_EQ(countFile("DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to "
               "create option: option: isc.2 has a formatted value: "
-              "'one,two,three' but no option definition"), 1);
+              "'one,two,three' but no option definition"), 1U);
 
     // Now let's add an option definition that will force data truncated
     // error for option 1.
@@ -638,7 +638,7 @@ TEST_F(CfgOptionTest, mergeInvalid) {
     ASSERT_NO_THROW_LOG(this_cfg.merge(defs, other_cfg));
     EXPECT_EQ(countFile("DHCPSRV_CFGMGR_OPTION_DEFINITION_MISMATCH failed to "
                         "create option: could not create option: isc.1 from data"
-                        " specified, reason: OptionInt 1 truncated"), 1);
+                        " specified, reason: OptionInt 1 truncated"), 1U);
 }
 
 // This test verifies the all of the valid option cases
@@ -723,7 +723,7 @@ TEST_F(CfgOptionTest, createDescriptorOptionValid) {
 
     ASSERT_NO_THROW(updated = CfgOption::createDescriptorOption(defs, space, *desc));
     ASSERT_FALSE(updated);
-    ASSERT_EQ(1, desc->option_->getData().size());
+    ASSERT_EQ(1U, desc->option_->getData().size());
     EXPECT_EQ(0x77, desc->option_->getData()[0]);
 }
 
@@ -745,7 +745,7 @@ TEST_F(CfgOptionTest, encapsulate) {
 
     // Verify that we have 40 top-level options.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(40, options->size());
+    ASSERT_EQ(40U, options->size());
 
     // Iterate over top level options.
     for (uint16_t code = 1000; code < 1040; ++code) {
@@ -757,7 +757,7 @@ TEST_F(CfgOptionTest, encapsulate) {
         // First level sub options. There are 19 sub-options for each top
         // level option.
         const OptionCollection& first_level = option->getOptions();
-        ASSERT_EQ(19, first_level.size());
+        ASSERT_EQ(19U, first_level.size());
 
         // Iterate over all first level sub-options.
         for (auto const& first_level_opt : first_level) {
@@ -771,15 +771,15 @@ TEST_F(CfgOptionTest, encapsulate) {
             // There are two sets of first level sub-options. Those that include
             // a value of 1 and those that include a value of 2.
             if (first_level_uint8->getType() < 20) {
-                EXPECT_EQ(1, value);
+                EXPECT_EQ(1U, value);
             } else {
-                EXPECT_EQ(2, value);
+                EXPECT_EQ(2U, value);
             }
 
             // Each first level sub-option should include 9 second level
             // sub options.
             const OptionCollection& second_level = first_level_uint8->getOptions();
-            ASSERT_EQ(9, second_level.size());
+            ASSERT_EQ(9U, second_level.size());
 
             // Iterate over sub-options and make sure they include the expected
             // values.
@@ -792,9 +792,9 @@ TEST_F(CfgOptionTest, encapsulate) {
                 // Certain sub-options should have a value of 3, other the values
                 // of 4.
                 if (second_level_uint8->getType() < 20) {
-                    EXPECT_EQ(3, value2);
+                    EXPECT_EQ(3U, value2);
                 } else {
-                    EXPECT_EQ(4, value2);
+                    EXPECT_EQ(4U, value2);
                 }
             }
         }
@@ -837,7 +837,7 @@ TEST_F(CfgOptionTest, deleteOptions) {
     // Delete option with the code 5 and belonging to option space "foo".
     uint64_t deleted_num;
     ASSERT_NO_THROW(deleted_num = cfg.del("foo", 5));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // The option should now be gone from options config.
     EXPECT_FALSE(cfg.get("foo", 5).option_);
@@ -893,7 +893,7 @@ TEST_F(CfgOptionTest, deleteOptionsById) {
 
     // Delete options with id of 100. It includes both regular options and
     // the vendor options. There are two options with id of 100.
-    EXPECT_EQ(2, cfg.del(100));
+    EXPECT_EQ(2U, cfg.del(100));
 
     // Make sure that the option 100 was deleted but another option
     // in the same option space was not.
@@ -943,7 +943,7 @@ TEST_F(CfgOptionTest, delVendorOption) {
     // Delete the option for vendor id 123.
     uint64_t deleted_num;
     ASSERT_NO_THROW(deleted_num = cfg.del(123, 105));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // Make sure the option is gone.
     EXPECT_FALSE(cfg.get(123, 105).option_);
@@ -1004,19 +1004,19 @@ TEST_F(CfgOptionTest, getList) {
         // Now, try the valid option space.
         list = cfg.getList(DHCP4_OPTION_SPACE, code);
         // Test that the option code matches the expected code.
-        ASSERT_EQ(2, list.size());
+        ASSERT_EQ(2U, list.size());
         OptionDescriptor desc = list[0];
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
         OptionBuffer content = desc.option_->getData();
-        ASSERT_EQ(10, content.size());
+        ASSERT_EQ(10U, content.size());
         uint8_t val = content[8];
         EXPECT_TRUE((val == 0xFF) || (val == 0xEE));
         desc =  list[1];
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
         content = desc.option_->getData();
-        ASSERT_EQ(10, content.size());
+        ASSERT_EQ(10U, content.size());
         if (val == 0xFF) {
             EXPECT_EQ(0xEE, content[4]);
         } else {
@@ -1049,19 +1049,19 @@ TEST_F(CfgOptionTest, getListVendor) {
         // Now, try the valid option space.
         list = cfg.getList(12345678, code);
         // Test that the option code matches the expected code.
-        ASSERT_EQ(2, list.size());
+        ASSERT_EQ(2U, list.size());
         OptionDescriptor desc = list[0];
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
         OptionBuffer content = desc.option_->getData();
-        ASSERT_EQ(10, content.size());
+        ASSERT_EQ(10U, content.size());
         uint8_t val = content[8];
         EXPECT_TRUE((val == 0xFF) || (val == 0xEE));
         desc =  list[1];
         ASSERT_TRUE(desc.option_);
         EXPECT_EQ(code, desc.option_->getType());
         content = desc.option_->getData();
-        ASSERT_EQ(10, content.size());
+        ASSERT_EQ(10U, content.size());
         if (val == 0xFF) {
             EXPECT_EQ(0xEE, content[4]);
         } else {
@@ -1086,7 +1086,7 @@ TEST_F(CfgOptionTest, addNonUniqueOptions) {
 
     // Sanity check that all options are there.
     OptionContainerPtr options = cfg.getAll(DHCP6_OPTION_SPACE);
-    ASSERT_EQ(20, options->size());
+    ASSERT_EQ(20U, options->size());
 
     // Use container index #1 to get the options by their codes.
     OptionContainerTypeIndex& idx = options->get<1>();
@@ -1214,12 +1214,12 @@ TEST_F(CfgOptionTest, addVendorOptions) {
     // Get options from the Subnet and check if all 10 are there.
     OptionContainerPtr options = cfg.getAll(12345678);
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Make sure we can get vendor options by option space.
     options = cfg.getAllCombined("vendor-12345678");
     ASSERT_TRUE(options);
-    ASSERT_EQ(10, options->size());
+    ASSERT_EQ(10U, options->size());
 
     // Validate codes of options added to dhcp6 option space.
     uint16_t expected_code = 100;
@@ -1231,7 +1231,7 @@ TEST_F(CfgOptionTest, addVendorOptions) {
 
     options = cfg.getAll(vendor_id);
     ASSERT_TRUE(options);
-    ASSERT_EQ(7, options->size());
+    ASSERT_EQ(7U, options->size());
 
     // Validate codes of options added to isc option space.
     expected_code = 105;
@@ -1268,7 +1268,7 @@ TEST_F(CfgOptionTest, getVendorIdsSpaceNames) {
 
     // We should now have 10 different vendor ids.
     std::list<std::string> space_names = cfg.getVendorIdsSpaceNames();
-    ASSERT_EQ(10, space_names.size());
+    ASSERT_EQ(10U, space_names.size());
 
     // Check that the option space names for those vendor ids are correct.
     size_t id = 0;

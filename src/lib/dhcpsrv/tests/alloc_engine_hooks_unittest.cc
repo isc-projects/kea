@@ -328,7 +328,7 @@ TEST_F(HookAllocEngine6Test, skipLease6Select) {
     EXPECT_FALSE(lease);
 
     // Check no retry was attempted
-    EXPECT_EQ(1, callback_skip_);
+    EXPECT_EQ(1U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -382,7 +382,7 @@ TEST_F(HookAllocEngine6Test, skipLease6SelectGlobalHost) {
     EXPECT_FALSE(lease);
 
     // Check that retry was attempted by doing dynamic allocation.
-    EXPECT_EQ(2, callback_skip_);
+    EXPECT_EQ(2U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -436,7 +436,7 @@ TEST_F(HookAllocEngine6Test, skipLease6SelectSubnetHost) {
     EXPECT_FALSE(lease);
 
     // Check that retry was attempted by doing dynamic allocation.
-    EXPECT_EQ(2, callback_skip_);
+    EXPECT_EQ(2U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -754,7 +754,7 @@ TEST_F(HookAllocEngine4Test, skipLease4Select) {
     EXPECT_FALSE(lease);
 
     // Check no retry was attempted
-    EXPECT_EQ(1, callback_skip_);
+    EXPECT_EQ(1U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -808,7 +808,7 @@ TEST_F(HookAllocEngine4Test, skipLease4SelectGlobalHost) {
     EXPECT_FALSE(lease);
 
     // Check no retry was attempted
-    EXPECT_EQ(1, callback_skip_);
+    EXPECT_EQ(1U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);
@@ -862,7 +862,7 @@ TEST_F(HookAllocEngine4Test, skipLease4SelectSubnetHost) {
     EXPECT_FALSE(lease);
 
     // Check no retry was attempted
-    EXPECT_EQ(1, callback_skip_);
+    EXPECT_EQ(1U, callback_skip_);
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(ctx.query_);

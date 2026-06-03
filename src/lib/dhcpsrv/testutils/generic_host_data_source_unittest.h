@@ -343,7 +343,7 @@ public:
     ///
     /// @param subnets number of subnets to test
     /// @param id Host identifier type.
-    void testMultipleSubnets(int subnets, const Host::IdentifierType& id);
+    void testMultipleSubnets(size_t subnets, const Host::IdentifierType& id);
 
     /// @brief Test inserts several hosts with unique IPv6 addresses and
     ///        checks that they can be retrieved properly.
@@ -387,7 +387,7 @@ public:
     ///
     /// @param subnets number of subnets to test
     /// @param id identifier type (IDENT_HWADDR or IDENT_DUID)
-    void testSubnetId6(int subnets, Host::IdentifierType id);
+    void testSubnetId6(size_t subnets, Host::IdentifierType id);
 
     /// @brief Test if the duplicate host with same DUID can't be inserted.
     ///

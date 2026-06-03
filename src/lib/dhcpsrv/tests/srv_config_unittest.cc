@@ -207,7 +207,7 @@ TEST_F(SrvConfigTest, loggingInfo) {
 
     EXPECT_EQ("some-logfile.txt", conf_.getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_EQ(5, conf_.getLoggingInfo()[0].destinations_[0].maxver_);
-    EXPECT_EQ(2097152, conf_.getLoggingInfo()[0].destinations_[0].maxsize_);
+    EXPECT_EQ(2097152U, conf_.getLoggingInfo()[0].destinations_[0].maxsize_);
 }
 
 // Check that the configuration summary including information about the status
@@ -280,7 +280,7 @@ TEST_F(SrvConfigTest, classDictionaryBasics) {
 
     // Upon construction the dictionary should be empty.
     ASSERT_TRUE(d1 = conf.getClientClassDictionary());
-    EXPECT_EQ(0, d1->getClasses()->size());
+    EXPECT_EQ(0U, d1->getClasses()->size());
 
     // Verify we can replace it with a new dictionary.
     ASSERT_NO_THROW(conf.setClientClassDictionary(ref_dictionary_));
@@ -496,7 +496,7 @@ TEST_F(SrvConfigTest, hooksLibraries) {
     isc::hooks::HooksConfig& libraries = conf.getHooksConfig();
 
     // Upon construction configured hooks libraries should be empty.
-    EXPECT_EQ(0, libraries.get().size());
+    EXPECT_EQ(0U, libraries.get().size());
 
     // Verify we can update it.
     ConstElementPtr elem0;
@@ -504,15 +504,15 @@ TEST_F(SrvConfigTest, hooksLibraries) {
     std::string config = "{ \"library\": \"bar\" }";
     ConstElementPtr elem1 = Element::fromJSON(config);
     libraries.add("bar", elem1);
-    EXPECT_EQ(2, libraries.get().size());
-    EXPECT_EQ(2, conf.getHooksConfig().get().size());
+    EXPECT_EQ(2U, libraries.get().size());
+    EXPECT_EQ(2U, conf.getHooksConfig().get().size());
 
     // Try to copy
     SrvConfig copied(64);
     ASSERT_TRUE(conf != copied);
     ASSERT_NO_THROW(conf.copy(copied));
     ASSERT_TRUE(conf == copied);
-    EXPECT_EQ(2, copied.getHooksConfig().get().size());
+    EXPECT_EQ(2U, copied.getHooksConfig().get().size());
 
     EXPECT_TRUE(copied.getHooksConfig().equal(conf.getHooksConfig()));
 }
@@ -733,7 +733,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp4->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the global host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -750,7 +750,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp4->get("subnet4"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the plain subnet
     ASSERT_NO_THROW(check = check->get(0));
@@ -768,7 +768,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the plain host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -785,7 +785,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp4->get("shared-networks"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared network
     ASSERT_NO_THROW(check = check->get(0));
@@ -802,7 +802,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("subnet4"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared subnet
     ASSERT_NO_THROW(check = check->get(0));
@@ -819,7 +819,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -884,7 +884,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp6->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the global host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -901,7 +901,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp6->get("subnet6"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the plain subnet
     ASSERT_NO_THROW(check = check->get(0));
@@ -918,7 +918,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the plain host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -935,7 +935,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = dhcp6->get("shared-networks"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared network
     ASSERT_NO_THROW(check = check->get(0));
@@ -952,7 +952,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("subnet6"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared subnet
     ASSERT_NO_THROW(check = check->get(0));
@@ -969,7 +969,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_NO_THROW(check = check->get("reservations"));
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::list, check->getType());
-    EXPECT_EQ(1, check->size());
+    EXPECT_EQ(1U, check->size());
 
     // Get the shared host reservation
     ASSERT_NO_THROW(check = check->get(0));
@@ -1134,13 +1134,13 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     // Make sure the explicit values are set correctly.
 
     // decline-probation-period should be the "to" configured value.
-    EXPECT_EQ(300, cfg_to.getDeclinePeriod());
+    EXPECT_EQ(300U, cfg_to.getDeclinePeriod());
 
     // echo-client-id should be the preserved "to" member value.
     EXPECT_FALSE(cfg_to.getEchoClientId());
 
     // dhcp4o6-port should be the "from" configured value.
-    EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
+    EXPECT_EQ(999U, cfg_to.getDhcp4o6Port());
 
     // server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
@@ -1156,7 +1156,7 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
 
     // host-reservation-identifiers
     auto const& ex_hr_i = cfg_to.getCfgHostOperations4()->getIdentifierTypes();
-    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.size(), 2U);
     EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
     EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 
@@ -1238,10 +1238,10 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
     // Make sure the explicit values are set correctly.
 
     // decline-probation-period should be the "to" configured value.
-    EXPECT_EQ(300, cfg_to.getDeclinePeriod());
+    EXPECT_EQ(300U, cfg_to.getDeclinePeriod());
 
     // dhcp4o6-port should be the "from" configured value.
-    EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
+    EXPECT_EQ(999U, cfg_to.getDhcp4o6Port());
 
     // server-tag port should be the "from" configured value.
     EXPECT_EQ("use_this_server", cfg_to.getServerTag().get());
@@ -1257,7 +1257,7 @@ TEST_F(SrvConfigTest, mergeGlobals6) {
 
     // host-reservation-identifiers
     auto const& ex_hr_i = cfg_to.getCfgHostOperations6()->getIdentifierTypes();
-    EXPECT_EQ(ex_hr_i.size(), 2);
+    EXPECT_EQ(ex_hr_i.size(), 2U);
     EXPECT_EQ(ex_hr_i.front(), Host::IDENT_HWADDR);
     EXPECT_EQ(ex_hr_i.back(), Host::IDENT_FLEX);
 

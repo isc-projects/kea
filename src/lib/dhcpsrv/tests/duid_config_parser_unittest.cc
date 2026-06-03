@@ -129,9 +129,9 @@ DUIDConfigParserTest::testTypeOnly(const DUID::DUIDType& duid_type,
     ASSERT_TRUE(cfg_duid_);
     EXPECT_EQ(duid_type, cfg_duid_->getType());
     EXPECT_TRUE(cfg_duid_->getIdentifier().empty());
-    EXPECT_EQ(0, cfg_duid_->getHType());
-    EXPECT_EQ(0, cfg_duid_->getTime());
-    EXPECT_EQ(0, cfg_duid_->getEnterpriseId());
+    EXPECT_EQ(0U, cfg_duid_->getHType());
+    EXPECT_EQ(0U, cfg_duid_->getTime());
+    EXPECT_EQ(0U, cfg_duid_->getEnterpriseId());
 }
 
 void
@@ -197,9 +197,9 @@ TEST_F(DUIDConfigParserTest, allParameters) {
     ASSERT_TRUE(cfg_duid_);
     EXPECT_EQ(DUID::DUID_EN, cfg_duid_->getType());
     EXPECT_EQ("ABCDEF", toString(cfg_duid_->getIdentifier()));
-    EXPECT_EQ(8, cfg_duid_->getHType());
-    EXPECT_EQ(100, cfg_duid_->getTime());
-    EXPECT_EQ(2024, cfg_duid_->getEnterpriseId());
+    EXPECT_EQ(8U, cfg_duid_->getHType());
+    EXPECT_EQ(100U, cfg_duid_->getTime());
+    EXPECT_EQ(2024U, cfg_duid_->getEnterpriseId());
     EXPECT_FALSE(cfg_duid_->persist());
 
     // Check the config can be got back.

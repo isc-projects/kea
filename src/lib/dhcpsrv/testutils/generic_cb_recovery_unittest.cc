@@ -115,9 +115,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback(
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     // Verify we can execute a query.  We don't care about the answer.
     ASSERT_NO_THROW_LOG(servers = getAllServers());
@@ -162,9 +162,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
@@ -210,9 +210,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectionString();
     access += extra;
@@ -226,9 +226,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     // Verify we can execute a query.  We don't care about the answer.
     ASSERT_NO_THROW_LOG(servers = getAllServers());
@@ -238,9 +238,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTime
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     // Verify we can execute a query.  We don't care about the answer.
     ASSERT_NO_THROW_LOG(servers = getAllServers());
@@ -286,9 +286,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
@@ -298,9 +298,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
@@ -310,9 +310,9 @@ GenericConfigBackendDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeout
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     // A query should fail with NoSuchDatabase.
     ASSERT_THROW(servers = getAllServers(), NoSuchDatabase);
@@ -338,9 +338,9 @@ GenericConfigBackendDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 
     io_service_->poll();
 
-    EXPECT_EQ(0, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(0U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -390,9 +390,9 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -453,9 +453,9 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }
 
 void
@@ -519,9 +519,9 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallba
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectionString();
     access += extra;
@@ -535,18 +535,18 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallba
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -610,25 +610,25 @@ GenericConfigBackendDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback(
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }

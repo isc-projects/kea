@@ -159,7 +159,7 @@ protected:
         ASSERT_NO_THROW(host = parser.parse(SubnetID(10), config_element));
         ASSERT_TRUE(host);
 
-        EXPECT_EQ(10, host->getIPv4SubnetID());
+        EXPECT_EQ(10U, host->getIPv4SubnetID());
         EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.112", host->getIPv4Reservation().toText());
         EXPECT_TRUE(host->getHostname().empty());
@@ -377,9 +377,9 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
-    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
@@ -418,10 +418,10 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     const ClientClasses& classes = hosts[0]->getClientClasses4();
-    ASSERT_EQ(2, classes.size());
+    ASSERT_EQ(2U, classes.size());
     EXPECT_TRUE(classes.contains("foo"));
     EXPECT_TRUE(classes.contains("bar"));
 
@@ -462,9 +462,9 @@ TEST_F(HostReservationParserTest, dhcp4MessageFields) {
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
 
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
-    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.11", hosts[0]->getNextServer().toText());
     EXPECT_EQ("some-name.example.org", hosts[0]->getServerHostname());
     EXPECT_EQ("/tmp/some-file.efi", hosts[0]->getBootFileName());
@@ -576,9 +576,9 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
-    EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
@@ -701,10 +701,10 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(10, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(10U, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
     IPv6ResrvRange addresses = hosts[0]->
@@ -771,10 +771,10 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(12U, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
     IPv6ResrvRange addresses = hosts[0]->
@@ -852,10 +852,10 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(12U, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 
     IPv6ResrvRange addresses = hosts[0]->
@@ -910,10 +910,10 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     const ClientClasses& classes = hosts[0]->getClientClasses6();
-    ASSERT_EQ(2, classes.size());
+    ASSERT_EQ(2U, classes.size());
     EXPECT_TRUE(classes.contains("foo"));
     EXPECT_TRUE(classes.contains("bar"));
 
@@ -1199,14 +1199,14 @@ TEST_F(HostReservationParserTest, options4) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // Retrieve and sanity check name servers.
     Option4AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
         Option4AddrLst>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_NAME_SERVERS));
     ASSERT_TRUE(opt_dns);
     Option4AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(2, dns_addrs.size());
+    ASSERT_EQ(2U, dns_addrs.size());
     EXPECT_EQ("172.16.15.10", dns_addrs[0].toText());
     EXPECT_EQ("172.16.15.20", dns_addrs[1].toText());
 
@@ -1215,14 +1215,14 @@ TEST_F(HostReservationParserTest, options4) {
         Option4AddrLst>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_LOG_SERVERS));
     ASSERT_TRUE(opt_log);
     Option4AddrLst::AddressContainer log_addrs = opt_log->getAddresses();
-    ASSERT_EQ(1, log_addrs.size());
+    ASSERT_EQ(1U, log_addrs.size());
     EXPECT_EQ("172.16.15.23", log_addrs[0].toText());
 
     // Retrieve and sanity check default IP TTL.
     OptionUint8Ptr opt_ttl = boost::dynamic_pointer_cast<
         OptionUint8>(retrieveOption(*hosts[0], DHCP4_OPTION_SPACE, DHO_DEFAULT_IP_TTL));
     ASSERT_TRUE(opt_ttl);
-    EXPECT_EQ(64, opt_ttl->getValue());
+    EXPECT_EQ(64U, opt_ttl->getValue());
 
     // Canonize the config
     ElementPtr option = config_element->get("option-data")->getNonConst(0);
@@ -1295,14 +1295,14 @@ TEST_F(HostReservationParserTest, options6) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // Retrieve and sanity check DNS servers option.
     Option6AddrLstPtr opt_dns = boost::dynamic_pointer_cast<
         Option6AddrLst>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_NAME_SERVERS));
     ASSERT_TRUE(opt_dns);
     Option6AddrLst::AddressContainer dns_addrs = opt_dns->getAddresses();
-    ASSERT_EQ(2, dns_addrs.size());
+    ASSERT_EQ(2U, dns_addrs.size());
     EXPECT_EQ("2001:db8:1::1", dns_addrs[0].toText());
     EXPECT_EQ("2001:db8:1::2", dns_addrs[1].toText());
 
@@ -1311,14 +1311,14 @@ TEST_F(HostReservationParserTest, options6) {
         Option6AddrLst>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_NIS_SERVERS));
     ASSERT_TRUE(opt_nis);
     Option6AddrLst::AddressContainer nis_addrs = opt_nis->getAddresses();
-    ASSERT_EQ(1, nis_addrs.size());
+    ASSERT_EQ(1U, nis_addrs.size());
     EXPECT_EQ("2001:db8:1::1204", nis_addrs[0].toText());
 
     // Retrieve and sanity check preference option.
     OptionUint8Ptr opt_prf = boost::dynamic_pointer_cast<
         OptionUint8>(retrieveOption(*hosts[0], DHCP6_OPTION_SPACE, D6O_PREFERENCE));
     ASSERT_TRUE(opt_prf);
-    EXPECT_EQ(11, opt_prf->getValue());
+    EXPECT_EQ(11U, opt_prf->getValue());
 
     // Canonize the config
     ElementPtr option = config_element->get("option-data")->getNonConst(0);
@@ -1493,7 +1493,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4Identifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(4, ids.size());
+    ASSERT_EQ(4U, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_CIRCUIT_ID);
@@ -1517,7 +1517,7 @@ TEST_F(HostReservationIdsParserTest, dhcp6Identifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(2, ids.size());
+    ASSERT_EQ(2U, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_DUID);
@@ -1553,7 +1553,7 @@ TEST_F(HostReservationIdsParserTest, dhcp4AutoIdentifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations4();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(5, ids.size());
+    ASSERT_EQ(5U, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);
@@ -1597,7 +1597,7 @@ TEST_F(HostReservationIdsParserTest, dhcp6AutoIdentifiers) {
     ConstCfgHostOperationsPtr cfg = CfgMgr::instance().getStagingCfg()->
         getCfgHostOperations6();
     const CfgHostOperations::IdentifierTypes& ids = cfg->getIdentifierTypes();
-    ASSERT_EQ(3, ids.size());
+    ASSERT_EQ(3U, ids.size());
 
     CfgHostOperations::IdentifierTypes::const_iterator id = ids.begin();
     EXPECT_EQ(*id++, Host::IDENT_HWADDR);

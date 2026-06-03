@@ -187,9 +187,9 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.134", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
@@ -198,9 +198,9 @@ TEST_F(HostReservationsListParserTest, ipv4Reservations) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.110", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("bar.example.com", hosts[0]->getHostname());
@@ -299,11 +299,11 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // Make sure it belongs to a valid subnet.
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
 
     // Get the reserved addresses for the host. There should be exactly one
     // address reserved for this host.
@@ -313,16 +313,16 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
 
     EXPECT_EQ(IPv6Resrv::TYPE_NA, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8:1::123", prefixes.first->second.getPrefix().toText());
-    EXPECT_EQ(128, prefixes.first->second.getPrefixLen());
+    EXPECT_EQ(128U, prefixes.first->second.getPrefixLen());
 
     // Validate the second reservation.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
 
     // This reservation was for a prefix, instead of an IPv6 address.
     prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
@@ -330,7 +330,7 @@ TEST_F(HostReservationsListParserTest, ipv6Reservations) {
 
     EXPECT_EQ(IPv6Resrv::TYPE_PD, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8:1:2::", prefixes.first->second.getPrefix().toText());
-    EXPECT_EQ(80, prefixes.first->second.getPrefixLen());
+    EXPECT_EQ(80U, prefixes.first->second.getPrefixLen());
 
     // Get back the config from cfg_hosts
     ElementPtr resv = config_element->getNonConst(0);
@@ -385,11 +385,11 @@ TEST_F(HostReservationsListParserTest, prefixExclude) {
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
                                               &hwaddr_->hwaddr_[0],
                                               hwaddr_->hwaddr_.size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // Make sure it belongs to a valid subnet.
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
 
     // Get the reserved addresses for the host. There should be exactly one
     // address reserved for this host.
@@ -399,16 +399,16 @@ TEST_F(HostReservationsListParserTest, prefixExclude) {
 
     EXPECT_EQ(IPv6Resrv::TYPE_NA, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8:1::123", prefixes.first->second.getPrefix().toText());
-    EXPECT_EQ(128, prefixes.first->second.getPrefixLen());
+    EXPECT_EQ(128U, prefixes.first->second.getPrefixLen());
 
     // Validate the second reservation.
     ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
                                               &duid_->getDuid()[0],
                                               duid_->getDuid().size()));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
 
     // This reservation was for a prefix, instead of an IPv6 address.
     prefixes = hosts[0]->getIPv6Reservations(IPv6Resrv::TYPE_PD);
@@ -416,7 +416,7 @@ TEST_F(HostReservationsListParserTest, prefixExclude) {
 
     EXPECT_EQ(IPv6Resrv::TYPE_PD, prefixes.first->second.getType());
     EXPECT_EQ("2001:db8::", prefixes.first->second.getPrefix().toText());
-    EXPECT_EQ(48, prefixes.first->second.getPrefixLen());
+    EXPECT_EQ(48U, prefixes.first->second.getPrefixLen());
     EXPECT_TRUE(prefixes.first->second.getPDExclude());
     EXPECT_EQ("2001:db8:0:1::/64", prefixes.first->second.PDExcludetoText());
 

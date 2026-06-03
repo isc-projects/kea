@@ -433,7 +433,7 @@ GenericHostDataSourceTest::testGetAll4() {
     ConstHostCollection from_hds = hdsptr_->getAll4(subnet4);
 
     // Make sure we got something back.
-    ASSERT_EQ(4, from_hds.size());
+    ASSERT_EQ(4U, from_hds.size());
 
     HostDataSourceUtils::compareHosts(host1, from_hds[0]);
     HostDataSourceUtils::compareHosts(host2, from_hds[1]);
@@ -473,7 +473,7 @@ GenericHostDataSourceTest::testGetAll6() {
     ConstHostCollection from_hds = hdsptr_->getAll6(subnet6);
 
     // Make sure we got something back.
-    ASSERT_EQ(4, from_hds.size());
+    ASSERT_EQ(4U, from_hds.size());
 
     HostDataSourceUtils::compareHosts(host1, from_hds[0]);
     HostDataSourceUtils::compareHosts(host2, from_hds[1]);
@@ -513,12 +513,12 @@ GenericHostDataSourceTest::testGetAllbyHostname() {
 
     // Retrieve one reservation.
     from_hds = hdsptr_->getAllbyHostname("host.example.com");
-    ASSERT_EQ(1, from_hds.size());
+    ASSERT_EQ(1U, from_hds.size());
     HostDataSourceUtils::compareHosts(host4, from_hds[0]);
 
     // Retrieve all reservations with host hostname.
     from_hds = hdsptr_->getAllbyHostname("host");
-    EXPECT_EQ(3, from_hds.size());
+    EXPECT_EQ(3U, from_hds.size());
     bool got1 = false;
     bool got2 = false;
     bool got3 = false;
@@ -592,7 +592,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet4() {
 
     // Retrieve one reservation.
     from_hds = hdsptr_->getAllbyHostname4("host.example.com", subnet4);
-    ASSERT_EQ(1, from_hds.size());
+    ASSERT_EQ(1U, from_hds.size());
     HostDataSourceUtils::compareHosts(host4, from_hds[0]);
 
     // Check that the subnet is checked.
@@ -601,7 +601,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet4() {
 
     // Retrieve all reservations with host hostname.
     from_hds = hdsptr_->getAllbyHostname4("host", subnet4);
-    EXPECT_EQ(3, from_hds.size());
+    EXPECT_EQ(3U, from_hds.size());
     bool got1 = false;
     bool got2 = false;
     bool got3 = false;
@@ -675,7 +675,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet6() {
 
     // Retrieve one reservation.
     from_hds = hdsptr_->getAllbyHostname6("host.example.com", subnet6);
-    ASSERT_EQ(1, from_hds.size());
+    ASSERT_EQ(1U, from_hds.size());
     HostDataSourceUtils::compareHosts(host4, from_hds[0]);
 
     // Check that the subnet is checked.
@@ -684,7 +684,7 @@ GenericHostDataSourceTest::testGetAllbyHostnameSubnet6() {
 
     // Retrieve all reservations with host hostname.
     from_hds = hdsptr_->getAllbyHostname6("host", subnet6);
-    EXPECT_EQ(3, from_hds.size());
+    EXPECT_EQ(3U, from_hds.size());
     bool got1 = false;
     bool got2 = false;
     bool got3 = false;
@@ -734,26 +734,26 @@ GenericHostDataSourceTest::testGetPage4() {
     HostPageSize page_size(10);
     ConstHostCollection page;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(10, page.size());
+    ASSERT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(10, page.size());
+    ASSERT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(5, page.size());
+    ASSERT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
     host_id = 0;
 
     // Other subnets are empty.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 }
 
 void
@@ -782,26 +782,26 @@ GenericHostDataSourceTest::testGetPage6() {
     HostPageSize page_size(10);
     ConstHostCollection page;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(10, page.size());
+    ASSERT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(10, page.size());
+    ASSERT_EQ(10U, page.size());
     host_id = page[9]->getHostId();
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(5, page.size());
+    ASSERT_EQ(5U, page.size());
     host_id = page[4]->getHostId();
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
     host_id = 0;
 
     // Other subnets are empty.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 }
 
 void
@@ -845,18 +845,18 @@ GenericHostDataSourceTest::testGetPageLimit4(const Host::IdentifierType& id) {
     HostPageSize page_size(4);
     ConstHostCollection page;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(4, page.size());
+    ASSERT_EQ(4U, page.size());
     host_id = page[3]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(1, page.size());
+    ASSERT_EQ(1U, page.size());
     host_id = page[0]->getHostId();
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 }
 
 void
@@ -919,22 +919,22 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
     ConstHostCollection page;
     ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(4, page.size());
+    ASSERT_EQ(4U, page.size());
     host_id = page[3]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(1, page.size());
+    ASSERT_EQ(1U, page.size());
     host_id = page[0]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -982,22 +982,22 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     ConstHostCollection page;
     ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1017,22 +1017,22 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     idx = 0;
     host_id = 0;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1080,22 +1080,22 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     ConstHostCollection page;
     ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1115,22 +1115,22 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     idx = 0;
     host_id = 0;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1176,29 +1176,29 @@ GenericHostDataSourceTest::testGetPage4All() {
     ConstHostCollection page;
     ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second page.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get last page.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1244,29 +1244,29 @@ GenericHostDataSourceTest::testGetPage6All() {
     ConstHostCollection page;
     ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
-    ASSERT_NE(0, host_id);
+    ASSERT_NE(0U, host_id);
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second page.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(idx, host_id, page_size));
-    ASSERT_EQ(3, page.size());
+    ASSERT_EQ(3U, page.size());
     host_id = page[2]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get last page.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(idx, host_id, page_size));
-    ASSERT_EQ(2, page.size());
+    ASSERT_EQ(2U, page.size());
     host_id = page[1]->getHostId();
 
     std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(idx, host_id, page_size));
-    ASSERT_EQ(0, page.size());
+    ASSERT_EQ(0U, page.size());
 
     // hosts are sorted by generated host_id (which is an auto increment for
     // MySql and PostgreSql) so the hosts must be sorted by host identifier
@@ -1538,7 +1538,7 @@ GenericHostDataSourceTest::testPrefixExclude(std::string prefix,
 }
 
 void
-GenericHostDataSourceTest::testMultipleSubnets(int subnets,
+GenericHostDataSourceTest::testMultipleSubnets(size_t subnets,
                                                const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -1546,14 +1546,14 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
     host->setIPv6SubnetID(SUBNET_ID_UNUSED);
 
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         host->setIPv4SubnetID(i + 1000);
         ASSERT_NO_THROW(hdsptr_->add(host));
     }
 
     // Now check that the reservations can be retrieved by IPv4 address from
     // each subnet separately.
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Try to retrieve the host by IPv4 address.
         ConstHostPtr from_hds =
             hdsptr_->get4(i + 1000, host->getIPv4Reservation());
@@ -1573,7 +1573,7 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     ASSERT_EQ(subnets, all_by_addr.size());
 
     // Verify that the values returned are proper.
-    int i = 0;
+    unsigned i = 0;
     for (auto const& it : all_by_addr) {
         EXPECT_EQ(IOAddress("192.0.2.1"), it->getIPv4Reservation());
         EXPECT_EQ(1000 + i++, it->getIPv4SubnetID());
@@ -1667,14 +1667,15 @@ GenericHostDataSourceTest::testGet6ByClientId() {
 }
 
 void
-GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
+GenericHostDataSourceTest::testSubnetId6(size_t subnets,
+                                         Host::IdentifierType id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host;
     IOAddress current_address("2001:db8::");
     ASSERT_LT(subnets, std::numeric_limits<uint16_t>::max()) << "Too many subnets. Broken test?";
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
         host = HostDataSourceUtils::initializeHost6(current_address.toText(),
@@ -1692,13 +1693,13 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     }
 
     // Check that the reservations can be retrieved from each subnet separately.
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Try to retrieve the host
         ConstHostPtr from_hds = hdsptr_->get6(i + 1000, id, &host->getIdentifier()[0],
                                               host->getIdentifier().size());
 
         ASSERT_TRUE(from_hds) << "failed for i=" << i;
-        EXPECT_EQ(i + 1000, from_hds->getIPv6SubnetID());
+        EXPECT_EQ(i + 1000U, from_hds->getIPv6SubnetID());
     }
 
     // Check that the hosts can all be retrieved by HW address or DUID
@@ -1707,10 +1708,10 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     ASSERT_EQ(subnets, all_by_id.size());
 
     // Check that the returned values are as expected.
-    int i = 0;
+    unsigned i = 0;
     for (auto const& it : all_by_id) {
         EXPECT_EQ(IOAddress("0.0.0.0"), it->getIPv4Reservation());
-        EXPECT_EQ(1000 + i++, it->getIPv6SubnetID());
+        EXPECT_EQ(1000U + i++, it->getIPv6SubnetID());
     }
 }
 
@@ -1884,7 +1885,7 @@ GenericHostDataSourceTest::testAllowDuplicateIPv6() {
 
     ConstHostCollection returned;
     ASSERT_NO_THROW(returned = hdsptr_->getAll6(host->getIPv6SubnetID(), IOAddress("2001:db8:1::")));
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 
     // Let's now try to delete the hosts by subnet_id and address.
@@ -1953,7 +1954,7 @@ GenericHostDataSourceTest::testAllowDuplicateIPv4() {
 
     ConstHostCollection returned;
     ASSERT_NO_THROW(returned = hdsptr_->getAll4(host->getIPv4SubnetID(), IOAddress("192.0.2.1")));
-    EXPECT_EQ(2, returned.size());
+    EXPECT_EQ(2U, returned.size());
     EXPECT_NE(returned[0]->getIdentifierAsText(), returned[1]->getIdentifierAsText());
 
     // Let's now try to delete the hosts by subnet_id and address.
@@ -2079,7 +2080,7 @@ GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
 
     // getAll4(subnet_id)
     ConstHostCollection hosts_by_subnet = hdsptr_->getAll4(subnet_id);
-    ASSERT_EQ(1, hosts_by_subnet.size());
+    ASSERT_EQ(1U, hosts_by_subnet.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_subnet.begin()));
 
     auto returned_host = *hosts_by_subnet.begin();
@@ -2098,7 +2099,7 @@ GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     // getAll4(address)
     ConstHostCollection hosts_by_addr =
         hdsptr_->getAll4(host->getIPv4Reservation());
-    ASSERT_EQ(1, hosts_by_addr.size());
+    ASSERT_EQ(1U, hosts_by_addr.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_addr.begin()));
 
     // get4(subnet_id, identifier_type, identifier, identifier_size)
@@ -2148,14 +2149,14 @@ GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
 
     // getAll6(subnet_id)
     ConstHostCollection hosts_by_subnet = hdsptr_->getAll6(subnet_id);
-    EXPECT_EQ(1, hosts_by_subnet.size());
+    EXPECT_EQ(1U, hosts_by_subnet.size());
     // Don't compare as getAll6() returns the v6 part only.
 
     // getAll(identifier_type, identifier, identifier_size)
     ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 }
 
@@ -2185,13 +2186,13 @@ GenericHostDataSourceTest::testMultipleClientClasses4() {
     ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // getAll4(const asiolink::IOAddress& address) const;
     hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
@@ -2237,7 +2238,7 @@ GenericHostDataSourceTest::testMultipleClientClasses6() {
     ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via:
@@ -2322,13 +2323,13 @@ GenericHostDataSourceTest::testMessageFields4() {
     ConstHostCollection hosts_by_id =
         hdsptr_->getAll(host->getIdentifierType(), &host->getIdentifier()[0],
                         host->getIdentifier().size());
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
     // getAll4(const asiolink::IOAddress& address) const;
     hosts_by_id = hdsptr_->getAll4(IOAddress("192.0.2.5"));
-    ASSERT_EQ(1, hosts_by_id.size());
+    ASSERT_EQ(1U, hosts_by_id.size());
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_id.begin()));
 
     // Fetch the host via
@@ -2794,9 +2795,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(HostMgr::instance().getHostDataSource());
 }
@@ -2833,9 +2834,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(HostMgr::instance().getHostDataSource());
 }
@@ -2873,9 +2874,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback()
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectString();
     access += extra;
@@ -2887,9 +2888,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback()
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(HostMgr::instance().getHostDataSource());
 
@@ -2898,9 +2899,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCallback()
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(HostMgr::instance().getHostDataSource());
 }
@@ -2938,9 +2939,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(HostMgr::instance().getHostDataSource());
 
@@ -2949,9 +2950,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(HostMgr::instance().getHostDataSource());
 
@@ -2960,9 +2961,9 @@ HostMgrDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(HostMgr::instance().getHostDataSource());
 }
@@ -2985,9 +2986,9 @@ HostMgrDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 
     io_service_->poll();
 
-    EXPECT_EQ(0, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(0U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -3038,9 +3039,9 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -3097,9 +3098,9 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }
 
 void
@@ -3159,9 +3160,9 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     access = validConnectString();
     access += extra;
@@ -3173,18 +3174,18 @@ HostMgrDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 }
 
 void
@@ -3244,27 +3245,27 @@ HostMgrDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     sleep(1);
 
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 }
 
 void
@@ -3372,7 +3373,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     hosts = HostMgr::instance().getAll(Host::IDENT_HWADDR,
                                        &hwaddrs_[0]->hwaddr_[0],
                                        hwaddrs_[0]->hwaddr_.size());
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // We don't know the order in which the reservations are returned so
     // we have to match with any of the two reservations returned.
@@ -3381,7 +3382,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     bool found = false;
     for (unsigned i = 0; i < 2; ++i) {
         if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
-            ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
+            ASSERT_EQ(1U, hosts[i]->getIPv4SubnetID());
             found = true;
         }
     }
@@ -3394,7 +3395,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
     found = false;
     for (unsigned i = 0; i < 2; ++i) {
         if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
-            ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
+            ASSERT_EQ(10U, hosts[i]->getIPv4SubnetID());
             found = true;
         }
     }
@@ -3418,7 +3419,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
         found = false;
         for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
-                ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
+                ASSERT_EQ(1U, hosts[i]->getIPv4SubnetID());
                 found = true;
             }
         }
@@ -3432,7 +3433,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
         found = false;
         for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
-                ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
+                ASSERT_EQ(10U, hosts[i]->getIPv4SubnetID());
                 found = true;
             }
         }
@@ -3454,7 +3455,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
         found = false;
         for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.2.5")) {
-                ASSERT_EQ(1, hosts[i]->getIPv4SubnetID());
+                ASSERT_EQ(1U, hosts[i]->getIPv4SubnetID());
                 found = true;
             }
         }
@@ -3468,7 +3469,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
         found = false;
         for (unsigned i = 0; i < hosts.size(); ++i) {
             if (hosts[i]->getIPv4Reservation() == IOAddress("192.0.3.10")) {
-                ASSERT_EQ(10, hosts[i]->getIPv4SubnetID());
+                ASSERT_EQ(10U, hosts[i]->getIPv4SubnetID());
                 found = true;
             }
         }
@@ -3484,7 +3485,7 @@ HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
                                        &hwaddrs_[0]->hwaddr_[0],
                                        hwaddrs_[0]->hwaddr_.size(),
                                        HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3506,11 +3507,11 @@ HostMgrTest::testGetAll4BySubnet(BaseHostDataSource& data_source1,
 
     // For the correct subnet, there should be two reservations.
     hosts = HostMgr::instance().getAll4(SubnetID(1));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv4SubnetID());
 
     // Make sure that two different hosts were returned.
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
@@ -3543,7 +3544,7 @@ HostMgrTest::testGetAll4BySubnet(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3565,11 +3566,11 @@ HostMgrTest::testGetAll6BySubnet(BaseHostDataSource& data_source1,
 
     // For the correct subnet, there should be two reservations.
     hosts = HostMgr::instance().getAll6(SubnetID(1));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
 
     // Make sure that two different hosts were returned.
     EXPECT_TRUE(hosts[0]->hasReservation(
@@ -3608,7 +3609,7 @@ HostMgrTest::testGetAll6BySubnet(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll6(SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3640,11 +3641,11 @@ HostMgrTest::testGetAllbyHostname(BaseHostDataSource& data_source1,
 
     // For the correct hostname, there should be two reservations.
     hosts = HostMgr::instance().getAllbyHostname("host");
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(10, hosts[1]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(10U, hosts[1]->getIPv4SubnetID());
 
     // Make sure that hostname is correct including its case.
     EXPECT_EQ("Host", hosts[0]->getHostname());
@@ -3659,25 +3660,25 @@ HostMgrTest::testGetAllbyHostname(BaseHostDataSource& data_source1,
     hosts = HostMgr::instance().getAllbyHostname("host", HostMgrOperationTarget::PRIMARY_SOURCE);
     EXPECT_EQ(hosts_in_primary_source, hosts.size());
     if (is_first_source_primary) {
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     }
     if (is_second_source_primary) {
-        EXPECT_EQ(10, hosts[hosts_in_primary_source-1]->getIPv4SubnetID());
+        EXPECT_EQ(10U, hosts[hosts_in_primary_source-1]->getIPv4SubnetID());
     }
 
     // Select hosts only from the alternate sources.
     hosts = HostMgr::instance().getAllbyHostname("host", HostMgrOperationTarget::ALTERNATE_SOURCES);
     EXPECT_EQ(2 - hosts_in_primary_source, hosts.size());
     if (!is_first_source_primary) {
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     }
     if (!is_second_source_primary) {
-        EXPECT_EQ(10, hosts[2 - hosts_in_primary_source - 1]->getIPv4SubnetID());
+        EXPECT_EQ(10U, hosts[2 - hosts_in_primary_source - 1]->getIPv4SubnetID());
     }
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAllbyHostname("host", HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3714,11 +3715,11 @@ HostMgrTest::testGetAllbyHostnameSubnet4(BaseHostDataSource& data_source1,
 
     // For the correct hostname, there should be two reservations.
     hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv4SubnetID());
 
     // Make sure that two different hosts were returned.
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
@@ -3755,7 +3756,7 @@ HostMgrTest::testGetAllbyHostnameSubnet4(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAllbyHostname4("host", SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3796,11 +3797,11 @@ HostMgrTest::testGetAllbyHostnameSubnet6(BaseHostDataSource& data_source1,
 
     // For the correct hostname, there should be two reservations.
     hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(1));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
 
     // Make sure that two different hosts were returned.
     EXPECT_TRUE(hosts[0]->hasReservation(
@@ -3843,7 +3844,7 @@ HostMgrTest::testGetAllbyHostnameSubnet6(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAllbyHostname6("host", SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -3858,9 +3859,9 @@ HostMgrTest::testGetPage4(bool use_database) {
         HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
     ASSERT_TRUE(hosts.empty());
     if (use_database) {
-        EXPECT_EQ(2, idx);
+        EXPECT_EQ(2U, idx);
     } else {
-        EXPECT_EQ(1, idx);
+        EXPECT_EQ(1U, idx);
     }
 
     // Add two reservations for the same subnet.
@@ -3879,52 +3880,52 @@ HostMgrTest::testGetPage4(bool use_database) {
     idx = 0;
     hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
     if (use_database) {
-        ASSERT_EQ(1, hosts.size());
+        ASSERT_EQ(1U, hosts.size());
     } else {
-        ASSERT_EQ(2, hosts.size());
+        ASSERT_EQ(2U, hosts.size());
     }
 
     // Make sure that returned values are correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
     if (!use_database) {
-        EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ(1U, hosts[1]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
 
         // Check it was the last page.
         uint64_t hid = hosts[1]->getHostId();
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 1;
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 
     if (use_database) {
         uint64_t hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
-        ASSERT_EQ(0, idx);
+        ASSERT_NE(0U, hid);
+        ASSERT_EQ(0U, idx);
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(1, hosts.size());
-        ASSERT_NE(0, idx);
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        ASSERT_NE(0U, idx);
+        EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
 
         // Alternate way to use the database.
         idx = 1;
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
 
         // Check it was the last page.
         hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
+        ASSERT_NE(0U, hid);
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 2;
         hosts = HostMgr::instance().getPage4(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 }
 
@@ -3940,9 +3941,9 @@ HostMgrTest::testGetPage6(bool use_database) {
         HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
     ASSERT_TRUE(hosts.empty());
     if (use_database) {
-        EXPECT_EQ(2, idx);
+        EXPECT_EQ(2U, idx);
     } else {
-        EXPECT_EQ(1, idx);
+        EXPECT_EQ(1U, idx);
     }
 
     // Add two reservations for the same subnet.
@@ -3961,56 +3962,56 @@ HostMgrTest::testGetPage6(bool use_database) {
     idx = 0;
     hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
     if (use_database) {
-        ASSERT_EQ(1, hosts.size());
+        ASSERT_EQ(1U, hosts.size());
     } else {
-        ASSERT_EQ(2, hosts.size());
+        ASSERT_EQ(2U, hosts.size());
     }
 
     // Make sure that returned values are correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     if (!use_database) {
-        EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+        EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[1]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Check it was the last page.
         uint64_t hid = hosts[1]->getHostId();
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 1;
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 
     if (use_database) {
         uint64_t hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
-        ASSERT_EQ(0, idx);
+        ASSERT_NE(0U, hid);
+        ASSERT_EQ(0U, idx);
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(1, hosts.size());
-        ASSERT_NE(0, idx);
-        EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        ASSERT_NE(0U, idx);
+        EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[0]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Alternate way to use the database.
         idx = 1;
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[0]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Check it was the last page.
         hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
+        ASSERT_NE(0U, hid);
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 2;
         hosts = HostMgr::instance().getPage6(SubnetID(1), idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 }
 
@@ -4026,9 +4027,9 @@ HostMgrTest::testGetPage4All(bool use_database) {
         HostMgr::instance().getPage4(idx, 0, page_size);
     ASSERT_TRUE(hosts.empty());
     if (use_database) {
-        EXPECT_EQ(2, idx);
+        EXPECT_EQ(2U, idx);
     } else {
-        EXPECT_EQ(1, idx);
+        EXPECT_EQ(1U, idx);
     }
 
     // Add two reservations.
@@ -4042,52 +4043,52 @@ HostMgrTest::testGetPage4All(bool use_database) {
     idx = 0;
     hosts = HostMgr::instance().getPage4(idx, 0, page_size);
     if (use_database) {
-        ASSERT_EQ(1, hosts.size());
+        ASSERT_EQ(1U, hosts.size());
     } else {
-        ASSERT_EQ(2, hosts.size());
+        ASSERT_EQ(2U, hosts.size());
     }
 
     // Make sure that returned values are correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
     if (!use_database) {
-        EXPECT_EQ(2, hosts[1]->getIPv4SubnetID());
+        EXPECT_EQ(2U, hosts[1]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[1]->getIPv4Reservation().toText());
 
         // Check it was the last page.
         uint64_t hid = hosts[1]->getHostId();
         hosts = HostMgr::instance().getPage4(idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 1;
         hosts = HostMgr::instance().getPage4(idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 
     if (use_database) {
         uint64_t hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
-        ASSERT_EQ(0, idx);
+        ASSERT_NE(0U, hid);
+        ASSERT_EQ(0U, idx);
         hosts = HostMgr::instance().getPage4(idx, hid, page_size);
-        ASSERT_EQ(1, hosts.size());
-        ASSERT_NE(0, idx);
-        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        ASSERT_NE(0U, idx);
+        EXPECT_EQ(2U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
 
         // Alternate way to use the database.
         idx = 1;
         hosts = HostMgr::instance().getPage4(idx, 0, page_size);
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(2, hosts[0]->getIPv4SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(2U, hosts[0]->getIPv4SubnetID());
         EXPECT_EQ("192.0.2.6", hosts[0]->getIPv4Reservation().toText());
 
         // Check it was the last page.
         hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
+        ASSERT_NE(0U, hid);
         hosts = HostMgr::instance().getPage4(idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 2;
         hosts = HostMgr::instance().getPage4(idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 }
 
@@ -4103,9 +4104,9 @@ HostMgrTest::testGetPage6All(bool use_database) {
         HostMgr::instance().getPage6(idx, 0, page_size);
     ASSERT_TRUE(hosts.empty());
     if (use_database) {
-        EXPECT_EQ(2, idx);
+        EXPECT_EQ(2U, idx);
     } else {
-        EXPECT_EQ(1, idx);
+        EXPECT_EQ(1U, idx);
     }
 
     // Add two reservations.
@@ -4119,56 +4120,56 @@ HostMgrTest::testGetPage6All(bool use_database) {
     idx = 0;
     hosts = HostMgr::instance().getPage6(idx, 0, page_size);
     if (use_database) {
-        ASSERT_EQ(1, hosts.size());
+        ASSERT_EQ(1U, hosts.size());
     } else {
-        ASSERT_EQ(2, hosts.size());
+        ASSERT_EQ(2U, hosts.size());
     }
 
     // Make sure that returned values are correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->hasReservation(
                 IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::5"))));
     if (!use_database) {
-        EXPECT_EQ(2, hosts[1]->getIPv6SubnetID());
+        EXPECT_EQ(2U, hosts[1]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[1]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Check it was the last page.
         uint64_t hid = hosts[1]->getHostId();
         hosts = HostMgr::instance().getPage6(idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 1;
         hosts = HostMgr::instance().getPage6(idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 
     if (use_database) {
         uint64_t hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
-        ASSERT_EQ(0, idx);
+        ASSERT_NE(0U, hid);
+        ASSERT_EQ(0U, idx);
         hosts = HostMgr::instance().getPage6(idx, hid, page_size);
-        ASSERT_EQ(1, hosts.size());
-        ASSERT_NE(0, idx);
-        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        ASSERT_NE(0U, idx);
+        EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[0]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Alternate way to use the database.
         idx = 1;
         hosts = HostMgr::instance().getPage6(idx, 0, page_size);
-        ASSERT_EQ(1, hosts.size());
-        EXPECT_EQ(2, hosts[0]->getIPv6SubnetID());
+        ASSERT_EQ(1U, hosts.size());
+        EXPECT_EQ(2U, hosts[0]->getIPv6SubnetID());
         EXPECT_TRUE(hosts[0]->hasReservation(
                     IPv6Resrv(IPv6Resrv::TYPE_NA, IOAddress("2001:db8:1::6"))));
 
         // Check it was the last page.
         hid = hosts[0]->getHostId();
-        ASSERT_NE(0, hid);
+        ASSERT_NE(0U, hid);
         hosts = HostMgr::instance().getPage6(idx, hid, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
         idx = 2;
         hosts = HostMgr::instance().getPage6(idx, 0, page_size);
-        ASSERT_EQ(0, hosts.size());
+        ASSERT_EQ(0U, hosts.size());
     }
 }
 
@@ -4189,7 +4190,7 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
     // Retrieve all hosts, This should return hosts from both sources
     // in a single container.
     hosts = HostMgr::instance().getAll4(IOAddress("192.0.2.5"));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that IPv4 address is correct.
     EXPECT_EQ("192.0.2.5", hosts[0]->getIPv4Reservation().toText());
@@ -4225,7 +4226,7 @@ HostMgrTest::testGetAll4(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -4247,7 +4248,7 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
                                     &hwaddrs_[0]->hwaddr_[0],
                                     hwaddrs_[0]->hwaddr_.size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
 
     // Make sure that the operation target is supported.
@@ -4260,7 +4261,7 @@ HostMgrTest::testGet4(BaseHostDataSource& data_source) {
                                     hwaddrs_[0]->hwaddr_.size(),
                                     operation_target);
     ASSERT_TRUE(host);
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
 
     // Select host by explicit but unmatched operation target.
@@ -4306,7 +4307,7 @@ HostMgrTest::testGet4Any() {
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
 
     // Set the negative cache flag on the host.
@@ -4323,7 +4324,7 @@ HostMgrTest::testGet4Any() {
                                        &duids_[0]->getDuid()[0],
                                        duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_TRUE(host->getNegative());
 
@@ -4341,7 +4342,7 @@ HostMgrTest::testGet4Any() {
                                        duids_[0]->getDuid().size(),
                                        HostMgrOperationTarget::PRIMARY_SOURCE);
     ASSERT_TRUE(host);
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ("192.0.2.5", host->getIPv4Reservation().toText());
     EXPECT_TRUE(host->getNegative());
 
@@ -4379,7 +4380,7 @@ HostMgrTest::testGet6(BaseHostDataSource& data_source) {
                                     &duids_[0]->getDuid()[0],
                                     duids_[0]->getDuid().size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 
@@ -4393,7 +4394,7 @@ HostMgrTest::testGet6(BaseHostDataSource& data_source) {
                                     duids_[0]->getDuid().size(),
                                     operation_target);
     ASSERT_TRUE(host);
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 
@@ -4444,7 +4445,7 @@ HostMgrTest::testGet6Any() {
                                     &hwaddrs_[0]->hwaddr_[0],
                                     hwaddrs_[0]->hwaddr_.size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 
@@ -4462,7 +4463,7 @@ HostMgrTest::testGet6Any() {
                                        &hwaddrs_[0]->hwaddr_[0],
                                        hwaddrs_[0]->hwaddr_.size());
     ASSERT_TRUE(host);
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
     EXPECT_TRUE(host->getNegative());
@@ -4481,7 +4482,7 @@ HostMgrTest::testGet6Any() {
                                        hwaddrs_[0]->hwaddr_.size(),
                                        HostMgrOperationTarget::PRIMARY_SOURCE);
     ASSERT_TRUE(host);
-    EXPECT_EQ(2, host->getIPv6SubnetID());
+    EXPECT_EQ(2U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->hasReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                                IOAddress("2001:db8:1::1"))));
 
@@ -4608,11 +4609,11 @@ HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
 
     // For the correct subnet, there should be two reservations.
     hosts = HostMgr::instance().getAll4(SubnetID(1), IOAddress("192.0.2.5"));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv4SubnetID());
 
     // Make sure that two hosts were returned with different identifiers
     // but the same address.
@@ -4647,7 +4648,7 @@ HostMgrTest::testGetAll4BySubnetIP(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(SubnetID(1), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -4675,11 +4676,11 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
 
     // For the correct subnet, there should be two reservations.
     hosts = HostMgr::instance().getAll6(SubnetID(1), IOAddress("2001:db8:1::5"));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
 
     // Make sure that two hosts were returned with different identifiers
     // but the same address.
@@ -4720,7 +4721,7 @@ HostMgrTest::testGetAll6BySubnetIP(BaseHostDataSource& data_source1,
 
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -4755,19 +4756,19 @@ HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1, BaseHostDataSourc
 
     // For given IP there should be one reservation.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::5"));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // For given IP there should be one reservation.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::6"));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // For given IP there should be two reservations.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1::10"));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
 
     // Make sure that all hosts were returned with different identifiers, and
     // they have expected reservations.
@@ -4823,7 +4824,7 @@ HostMgrTest::testGetAll6ByIP(BaseHostDataSource& data_source1, BaseHostDataSourc
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(IOAddress("2001:db8:1::10"),
                                         HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -4859,19 +4860,19 @@ HostMgrTest::testGetAll6ByIpPrefix(BaseHostDataSource& data_source1,
 
     // For given IP prefix there should be one reservation.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1:11::"));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // For given IP prefix there should be one reservation.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1:12::"));
-    ASSERT_EQ(1, hosts.size());
+    ASSERT_EQ(1U, hosts.size());
 
     // For given IP prefix there should be two reservations.
     hosts = HostMgr::instance().getAll6(IOAddress("2001:db8:1:10::"));
-    ASSERT_EQ(2, hosts.size());
+    ASSERT_EQ(2U, hosts.size());
 
     // Make sure that subnet is correct.
-    EXPECT_EQ(1, hosts[0]->getIPv6SubnetID());
-    EXPECT_EQ(1, hosts[1]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(1U, hosts[1]->getIPv6SubnetID());
 
     // Make sure that all hosts were returned with different identifiers, and
     // they have expected reservations.
@@ -4927,7 +4928,7 @@ HostMgrTest::testGetAll6ByIpPrefix(BaseHostDataSource& data_source1,
     // Select hosts for an unspecified source.
     hosts = HostMgr::instance().getAll4(IOAddress("2001:db8:1:10::"),
                                         HostMgrOperationTarget::UNSPECIFIED_SOURCE);
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 }
 
 void
@@ -5086,9 +5087,9 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
     addHost6(data_source2, duids_[1], SubnetID(1), IOAddress("2001:db8:1::5"));
     CfgMgr::instance().commit();
     // 4 IPv4 reservations - 2 sources * 2 addresses.
-    ASSERT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+    ASSERT_EQ(4U, HostMgr::instance().getAll4(SubnetID(1)).size());
     // 2 IPv6 reservations - each with 2 reserved addresses.
-    ASSERT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    ASSERT_EQ(2U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES));
     EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES));
@@ -5102,8 +5103,8 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
     addHost6(data_source1, duids_[2], SubnetID(1), IOAddress("2001:db8:1::5"));
     addHost6(data_source2, duids_[3], SubnetID(1), IOAddress("2001:db8:1::5"));
     CfgMgr::instance().commit();
-    ASSERT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
-    ASSERT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    ASSERT_EQ(4U, HostMgr::instance().getAll4(SubnetID(1)).size());
+    ASSERT_EQ(2U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     if (has_alternate_source) {
         EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5")));
@@ -5181,8 +5182,8 @@ HostMgrTest::testDeleteByIDAndAddress(BaseHostDataSource& data_source1,
     EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE));
     EXPECT_FALSE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::UNSPECIFIED_SOURCE));
 
-    EXPECT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
-    EXPECT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(4U, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(2U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
     HostMgr::instance().del(SubnetID(1), IOAddress("192.0.2.5"), HostMgrOperationTarget::ALL_SOURCES);
     HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::5"), HostMgrOperationTarget::ALL_SOURCES);
@@ -5214,10 +5215,10 @@ HostMgrTest::testDeleteOneHostByIDAndAddress(BaseHostDataSource& data_source) {
     EXPECT_TRUE(HostMgr::instance().del(SubnetID(1), IOAddress("2001:db8:1::4")));
 
     // Expect other two IPv4 hosts still in reservations.
-    EXPECT_EQ(4, HostMgr::instance().getAll4(SubnetID(1)).size());
+    EXPECT_EQ(4U, HostMgr::instance().getAll4(SubnetID(1)).size());
 
     // Expect other two IPv6 hosts still in reservations.
-    EXPECT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+    EXPECT_EQ(2U, HostMgr::instance().getAll6(SubnetID(1)).size());
 }
 
 void
@@ -5250,7 +5251,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               &hwaddrs_[0]->hwaddr_[0],
                                               hwaddrs_[0]->hwaddr_.size()),
                      NoHostDataSourceManager);
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
 
         // Delete from explicit alternate sources.
         EXPECT_THROW(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
@@ -5258,14 +5259,14 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               hwaddrs_[0]->hwaddr_.size(),
                                               HostMgrOperationTarget::ALTERNATE_SOURCES),
                      NoHostDataSourceManager);
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
 
         // Delete from unspecified source.
         EXPECT_FALSE(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                                               &hwaddrs_[0]->hwaddr_[0],
                                               hwaddrs_[0]->hwaddr_.size(),
                                               HostMgrOperationTarget::UNSPECIFIED_SOURCE));
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
 
         // Delete from primary source.
         EXPECT_TRUE(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
@@ -5294,7 +5295,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              &hwaddrs_[0]->hwaddr_[0],
                                              hwaddrs_[0]->hwaddr_.size()));
         // The host reservation in the primary source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                                  &hwaddrs_[0]->hwaddr_[0],
@@ -5309,7 +5310,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              hwaddrs_[0]->hwaddr_.size(),
                                              HostMgrOperationTarget::ALTERNATE_SOURCES));
         // The host reservation in the primary source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                                  &hwaddrs_[0]->hwaddr_[0],
@@ -5323,7 +5324,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               &hwaddrs_[0]->hwaddr_[0],
                                               hwaddrs_[0]->hwaddr_.size(),
                                               HostMgrOperationTarget::UNSPECIFIED_SOURCE));
-        EXPECT_EQ(2, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(2U, HostMgr::instance().getAll4(SubnetID(1)).size());
 
         // Delete from primary source.
         EXPECT_TRUE(HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
@@ -5331,7 +5332,7 @@ HostMgrTest::testDelete4ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              hwaddrs_[0]->hwaddr_.size(),
                                              HostMgrOperationTarget::PRIMARY_SOURCE));
         // The host reservation in the alternate source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll4(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll4(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del4(SubnetID(1), Host::IDENT_HWADDR,
                                  &hwaddrs_[0]->hwaddr_[0],
@@ -5373,7 +5374,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               &duids_[0]->getDuid()[0],
                                               duids_[0]->getDuid().size()),
                      NoHostDataSourceManager);
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
         // Delete from explicit alternate sources.
         EXPECT_THROW(HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
@@ -5381,14 +5382,14 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               duids_[0]->getDuid().size(),
                                               HostMgrOperationTarget::ALTERNATE_SOURCES),
                      NoHostDataSourceManager);
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
         // Delete from unspecified source.
         EXPECT_FALSE(HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                                               &duids_[0]->getDuid()[0],
                                               duids_[0]->getDuid().size(),
                                               HostMgrOperationTarget::UNSPECIFIED_SOURCE));
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
         // Delete from primary source.
         EXPECT_TRUE(HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
@@ -5417,7 +5418,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              &duids_[0]->getDuid()[0],
                                              duids_[0]->getDuid().size()));
         // The host reservation in the primary source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                                  &duids_[0]->getDuid()[0],
@@ -5432,7 +5433,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              duids_[0]->getDuid().size(),
                                              HostMgrOperationTarget::ALTERNATE_SOURCES));
         // The host reservation in the primary source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                                  &duids_[0]->getDuid()[0],
@@ -5446,7 +5447,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                               &duids_[0]->getDuid()[0],
                                               duids_[0]->getDuid().size(),
                                               HostMgrOperationTarget::UNSPECIFIED_SOURCE));
-        EXPECT_EQ(2, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(2U, HostMgr::instance().getAll6(SubnetID(1)).size());
 
         // Delete from primary source.
         EXPECT_TRUE(HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
@@ -5454,7 +5455,7 @@ HostMgrTest::testDelete6ByIDAndIdentifier(BaseHostDataSource& data_source1,
                                              duids_[0]->getDuid().size(),
                                              HostMgrOperationTarget::PRIMARY_SOURCE));
         // The host reservation in the alternate source still exists.
-        EXPECT_EQ(1, HostMgr::instance().getAll6(SubnetID(1)).size());
+        EXPECT_EQ(1U, HostMgr::instance().getAll6(SubnetID(1)).size());
         // Clean the host reservations.
         HostMgr::instance().del6(SubnetID(1), Host::IDENT_DUID,
                                  &duids_[0]->getDuid()[0],
@@ -5489,14 +5490,14 @@ GenericHostDataSourceTest::testUpdate() {
 
     // There should be no hosts.
     ConstHostCollection hosts(hdsptr_->getAll4(v4_subnet));
-    EXPECT_EQ(0, hosts.size());
+    EXPECT_EQ(0U, hosts.size());
 
     // Add the host.
     EXPECT_NO_THROW(hdsptr_->add(host));
 
     // The host should be there.
     hosts = hdsptr_->getAll4(v4_subnet);
-    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ(1U, hosts.size());
     EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
                   " ipv6_subnet_id=" + to_string(v6_subnet) +
                   " hostname=(empty) "
@@ -5509,7 +5510,7 @@ GenericHostDataSourceTest::testUpdate() {
 
     // The same host should be in the data source.
     hosts = hdsptr_->getAll4(v4_subnet);
-    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ(1U, hosts.size());
     EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
                   " ipv6_subnet_id=" + to_string(v6_subnet) +
                   " hostname=(empty) "
@@ -5523,7 +5524,7 @@ GenericHostDataSourceTest::testUpdate() {
 
     // The change should be reflected in the data source.
     hosts = hdsptr_->getAll4(v4_subnet);
-    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ(1U, hosts.size());
     EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
                   " ipv6_subnet_id=" + to_string(v6_subnet) +
                   " hostname=foo.example.com "
@@ -5537,7 +5538,7 @@ GenericHostDataSourceTest::testUpdate() {
 
     // The change should be reflected in the data source.
     hosts = hdsptr_->getAll4(v4_subnet);
-    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ(1U, hosts.size());
     EXPECT_EQ("hwaddr=" + hwaddr + " ipv4_subnet_id=" + to_string(v4_subnet) +
                   " ipv6_subnet_id=" + to_string(v6_subnet) +
                   " hostname=(empty) "

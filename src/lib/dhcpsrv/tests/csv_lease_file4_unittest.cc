@@ -140,9 +140,9 @@ TEST_F(CSVLeaseFile4Test, parse) {
     HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:0a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(8U, lease->subnet_id_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
@@ -173,9 +173,9 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_EQ("dd:de:ba:0d:1b:2e:3e:4f", hwaddr3.toText(false));
     ASSERT_TRUE(lease->client_id_);
     EXPECT_EQ("0a:00:01:04", lease->client_id_->toText());
-    EXPECT_EQ(100, lease->valid_lft_);
+    EXPECT_EQ(100U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(7, lease->subnet_id_);
+    EXPECT_EQ(7U, lease->subnet_id_);
     EXPECT_FALSE(lease->fqdn_fwd_);
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
@@ -312,9 +312,9 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:1a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(8U, lease->subnet_id_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("one.example.com", lease->hostname_);
@@ -333,9 +333,9 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:2a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(8U, lease->subnet_id_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("two.example.com", lease->hostname_);
@@ -353,9 +353,9 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:3a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(8U, lease->subnet_id_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -417,9 +417,9 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
     HWAddr hwaddr1(*lease->hwaddr_);
     EXPECT_EQ("06:07:08:09:3a:bc", hwaddr1.toText(false));
     EXPECT_FALSE(lease->client_id_);
-    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(200U, lease->valid_lft_);
     EXPECT_EQ(0, lease->cltt_);
-    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(8U, lease->subnet_id_);
     EXPECT_TRUE(lease->fqdn_fwd_);
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
@@ -446,14 +446,14 @@ TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     SCOPED_TRACE("No hardware and not declined, invalid");
     EXPECT_FALSE(lf.next(lease));
     ASSERT_FALSE(lease);
-    EXPECT_EQ(lf.getReadErrs(),1);
+    EXPECT_EQ(lf.getReadErrs(), 1U);
     }
 
     {
     SCOPED_TRACE("No hardware and declined, valid");
     EXPECT_TRUE(lf.next(lease));
     ASSERT_TRUE(lease);
-    EXPECT_EQ(lf.getReadErrs(),1);
+    EXPECT_EQ(lf.getReadErrs(), 1U);
     }
 }
 

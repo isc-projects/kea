@@ -76,12 +76,12 @@ TEST_F(FreeLeaseQueueAllocatorTest4, populateFreeAddressLeases) {
         ASSERT_FALSE(lease.isV4Zero());
         addresses.insert(lease);
     }
-    ASSERT_EQ(5, addresses.size());
-    EXPECT_EQ(1, addresses.count(IOAddress("192.0.2.101")));
-    EXPECT_EQ(1, addresses.count(IOAddress("192.0.2.103")));
-    EXPECT_EQ(1, addresses.count(IOAddress("192.0.2.105")));
-    EXPECT_EQ(1, addresses.count(IOAddress("192.0.2.107")));
-    EXPECT_EQ(1, addresses.count(IOAddress("192.0.2.109")));
+    ASSERT_EQ(5U, addresses.size());
+    EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.101")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.103")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.105")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.107")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("192.0.2.109")));
 }
 
 // Test allocating IPv4 addresses when a subnet has a single pool.
@@ -100,7 +100,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate, cc_));
     }
     // The pool comprises 10 addresses. All should be returned.
-    EXPECT_EQ(10, addresses.size());
+    EXPECT_EQ(10U, addresses.size());
 }
 
 // Test allocating IPv4 addresses and re-allocating these that are
@@ -124,7 +124,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithAllocations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 10 addresses. All should be returned.
-    EXPECT_EQ(10, leases.size());
+    EXPECT_EQ(10U, leases.size());
 
     IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
@@ -179,7 +179,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, singlePoolWithReclamations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 10 addresses. All should be returned.
-    EXPECT_EQ(10, leases.size());
+    EXPECT_EQ(10U, leases.size());
 
     IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
     EXPECT_TRUE(candidate.isV4Zero());
@@ -229,7 +229,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
     }
 
     // There are ten pools with 10 addresses each.
-    int total = 100;
+    size_t total = 100;
 
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
@@ -245,7 +245,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, manyPools) {
 
     // Pick random addresses the number of times equal to the
     // subnet capacity to ensure that all addresses are returned.
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickAddress(cc_, clientid_, IOAddress("0.0.0.0"));
         addresses_set.insert(candidate);
         addresses_vector.push_back(candidate);
@@ -377,7 +377,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(pool1->inRange(candidate) || pool3->inRange(candidate));
    }
-   EXPECT_EQ(20, addresses_set.size());
+   EXPECT_EQ(20U, addresses_set.size());
 
    r = alloc.getOccupancyRate(IOAddress("192.0.2.120"), cc_);
    EXPECT_EQ(1., r);
@@ -396,7 +396,7 @@ TEST_F(FreeLeaseQueueAllocatorTest4, clientClasses) {
        EXPECT_TRUE(lease_mgr.addLease(createLease4(candidate, i+100)));
        EXPECT_TRUE(subnet_->inRange(candidate));
    }
-   EXPECT_EQ(20, addresses_set.size());
+   EXPECT_EQ(20U, addresses_set.size());
    r = alloc.getOccupancyRate(IOAddress("192.0.2.100"), cc_);
    EXPECT_EQ(1., r);
 
@@ -470,19 +470,19 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreeAddressLeases) {
         ASSERT_FALSE(lease.isV6Zero());
         addresses.insert(lease);
     }
-    ASSERT_EQ(12, addresses.size());
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::11")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::13")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::15")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::17")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::19")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1a")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1b")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1c")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1d")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1e")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::1f")));
-    EXPECT_EQ(1, addresses.count(IOAddress("2001:db8:1::20")));
+    ASSERT_EQ(12U, addresses.size());
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::11")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::13")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::15")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::17")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::19")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1a")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1b")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1c")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1d")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1e")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::1f")));
+    EXPECT_EQ(1U, addresses.count(IOAddress("2001:db8:1::20")));
 }
 
 // Test allocating IPv6 addresses when a subnet has a single pool.
@@ -501,7 +501,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate, cc_));
     }
     // The pool comprises 17 addresses. All should be returned.
-    EXPECT_EQ(17, addresses.size());
+    EXPECT_EQ(17U, addresses.size());
 }
 
 // Test allocating IPv6 addresses and re-allocating these that are
@@ -525,7 +525,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithAllocations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 17 addresses. All should be returned.
-    EXPECT_EQ(17, leases.size());
+    EXPECT_EQ(17U, leases.size());
 
     IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
     EXPECT_TRUE(candidate.isV6Zero());
@@ -571,7 +571,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePoolWithReclamations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 17 addresses. All should be returned.
-    EXPECT_EQ(17, leases.size());
+    EXPECT_EQ(17U, leases.size());
 
     IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
     EXPECT_TRUE(candidate.isV6Zero());
@@ -616,7 +616,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
 
     // First pool (::10 - ::20) has 17 addresses.
     // There are 8 extra pools with 16 addresses in each.
-    int total = 17 + 8 * 16;
+    size_t total = 17 + 8 * 16;
 
     ASSERT_NO_THROW(alloc.initAfterConfigure());
 
@@ -628,7 +628,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, manyPools) {
 
     // Pick random addresses the number of times equal to the
     // subnet capacity to ensure that all addresses are returned.
-    for (auto i = 0; i < total; ++i) {
+    for (size_t i = 0; i < total; ++i) {
         IOAddress candidate = alloc.pickAddress(cc_, duid_, IOAddress("::"));
         addresses_set.insert(candidate);
         addresses_vector.push_back(candidate);
@@ -752,7 +752,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
        addresses_set.insert(candidate);
        EXPECT_TRUE(pool1->inRange(candidate) || pool3->inRange(candidate));
    }
-   EXPECT_EQ(20, addresses_set.size());
+   EXPECT_EQ(20U, addresses_set.size());
 
    // Simulate the case that the client also belongs to the class foo.
    // All pools should now be available.
@@ -763,7 +763,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, clientClasses) {
        EXPECT_TRUE(lease_mgr.addLease(createLease6(Lease::TYPE_NA, candidate, i+100)));
        EXPECT_TRUE(subnet_->inRange(candidate));
    }
-   EXPECT_EQ(47, addresses_set.size());
+   EXPECT_EQ(47U, addresses_set.size());
 }
 
 // Test populating free DHCPv6 prefix leases to the queue.
@@ -798,12 +798,12 @@ TEST_F(FreeLeaseQueueAllocatorTest6, populateFreePrefixDelegationLeases) {
         ASSERT_FALSE(lease.isV6Zero());
         addresses.insert(lease);
     }
-    ASSERT_EQ(251, addresses.size());
-    EXPECT_EQ(0, addresses.count(IOAddress("2001:db8:2::")));
-    EXPECT_EQ(0, addresses.count(IOAddress("2001:db8:2::1000")));
-    EXPECT_EQ(0, addresses.count(IOAddress("2001:db8:2::2000")));
-    EXPECT_EQ(0, addresses.count(IOAddress("2001:db8:2::3000")));
-    EXPECT_EQ(0, addresses.count(IOAddress("2001:db8:2::4000")));
+    ASSERT_EQ(251U, addresses.size());
+    EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::")));
+    EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::1000")));
+    EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::2000")));
+    EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::3000")));
+    EXPECT_EQ(0U, addresses.count(IOAddress("2001:db8:2::4000")));
 }
 
 // Test allocating delegated prefixes when a subnet has a single pool.
@@ -826,7 +826,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPool) {
         EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, candidate, cc_));
     }
     // The pool comprises 65536 prefixes. All should be returned.
-    EXPECT_EQ(65536, prefixes.size());
+    EXPECT_EQ(65536U, prefixes.size());
 
     double r = alloc.getOccupancyRate(IOAddress("2001:db8:1:2::"), 128, cc_);
     EXPECT_EQ(1., r);
@@ -862,7 +862,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithAllocations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 256 delegated prefixes. All should be returned.
-    EXPECT_EQ(256, leases.size());
+    EXPECT_EQ(256U, leases.size());
 
     IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());
@@ -924,7 +924,7 @@ TEST_F(FreeLeaseQueueAllocatorTest6, singlePdPoolWithReclamations) {
         EXPECT_TRUE(lease_mgr.addLease(lease));
     }
     // The pool comprises 256 delegated prefixes. All should be returned.
-    EXPECT_EQ(256, leases.size());
+    EXPECT_EQ(256U, leases.size());
 
     IOAddress candidate = alloc.pickPrefix(cc_, pool, duid_, Allocator::PREFIX_LEN_HIGHER, IOAddress("::"), 0);
     EXPECT_TRUE(candidate.isV6Zero());

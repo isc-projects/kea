@@ -223,7 +223,7 @@ public:
         }
 
         // Check how many leases were actually loaded.
-        ASSERT_EQ((exp_present ? 1 : 0), storage4_.size());
+        ASSERT_EQ((exp_present ? 1U : 0U), storage4_.size());
 
         Lease4Ptr l = getLease<Lease4Ptr>(lease, storage4_);
 
@@ -287,7 +287,7 @@ public:
         }
 
         // Check how many leases were actually loaded.
-        ASSERT_EQ((exp_present ? 1 : 0), storage6_.size());
+        ASSERT_EQ((exp_present ? 1U : 0U), storage6_.size());
 
         Lease6Ptr l = getLease<Lease6Ptr>(lease, storage6_);
 
@@ -371,7 +371,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     }
 
     // There are two unique leases.
-    ASSERT_EQ(2, storage.size());
+    ASSERT_EQ(2U, storage.size());
 
     // The lease for 192.0.2.1 should exist and the cltt should be
     // set to the expire-valid_lifetime for the second entry for
@@ -444,7 +444,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 
     // There should only be one lease. The one with the valid_lifetime
     // of 0 should be removed.
-    ASSERT_EQ(1, storage.size());
+    ASSERT_EQ(1U, storage.size());
 
     Lease4Ptr lease = getLease<Lease4Ptr>("192.0.3.15", storage);
     ASSERT_TRUE(lease);
@@ -566,7 +566,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     }
 
     // There should be 3 unique leases.
-    ASSERT_EQ(3, storage.size());
+    ASSERT_EQ(3U, storage.size());
 
     // The 2001:db8:1::1 should be present and its cltt should be
     // calculated according to the expiration time and the valid
@@ -646,7 +646,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
 
     // There should be only one lease for 2001:db8:2::10. The other one
     // should have been deleted (or rather not loaded).
-    ASSERT_EQ(1, storage.size());
+    ASSERT_EQ(1U, storage.size());
 
     Lease6Ptr lease = getLease<Lease6Ptr>("2001:db8:2::10", storage);
     ASSERT_TRUE(lease);

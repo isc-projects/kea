@@ -46,7 +46,7 @@ TEST(PoolRandomAllocationStateTest, ipv4Pool) {
         addresses.insert(next);
     }
     // Make sure that unique addresses were returned.
-    EXPECT_EQ(10, addresses.size());
+    EXPECT_EQ(10U, addresses.size());
 }
 
 // Test creating the random allocation state for an IPv6 pool.
@@ -74,7 +74,7 @@ TEST(PoolRandomAllocationStateTest, ipv6AddressPool) {
         addresses.insert(next);
     }
     // Make sure that unique addresses were returned.
-    EXPECT_EQ(10, addresses.size());
+    EXPECT_EQ(10U, addresses.size());
 }
 
 // Test creating the random allocation state for an IPv6 prefix pool.
@@ -100,7 +100,7 @@ TEST(PoolRandomAllocationStateTest, ipv6PrefixPool) {
         prefixes.insert(next);
     }
     // Make sure that unique prefixes were returned.
-    EXPECT_EQ(10, prefixes.size());
+    EXPECT_EQ(10U, prefixes.size());
 }
 
 } // end of anonymous namespace

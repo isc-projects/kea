@@ -142,9 +142,9 @@ TEST(CfgSharedNetworks6Test, deleteNetworksById) {
 
     // Verify that we have two networks with a default identifier and one
     // with a unique identifier.
-    EXPECT_EQ(0, network1->getId());
-    EXPECT_EQ(123, network2->getId());
-    EXPECT_EQ(0, network3->getId());
+    EXPECT_EQ(0U, network1->getId());
+    EXPECT_EQ(123U, network2->getId());
+    EXPECT_EQ(0U, network3->getId());
 
     // Add our networks to the configuration.
     cfg.add(network1);
@@ -154,7 +154,7 @@ TEST(CfgSharedNetworks6Test, deleteNetworksById) {
     // Delete second network by id.
     uint64_t deleted_num = 0;
     ASSERT_NO_THROW(deleted_num = cfg.del(network2->getId()));
-    EXPECT_EQ(1, deleted_num);
+    EXPECT_EQ(1U, deleted_num);
 
     // Make sure that the subnet no longer points to the deleted network.
     SharedNetwork6Ptr returned_network;
@@ -164,7 +164,7 @@ TEST(CfgSharedNetworks6Test, deleteNetworksById) {
 
     // Delete the remaining two shared network using id of 0.
     ASSERT_NO_THROW(deleted_num = cfg.del(network1->getId()));
-    EXPECT_EQ(2, deleted_num);
+    EXPECT_EQ(2U, deleted_num);
 
     // The subnets should no longer point to the deleted networks and
     // the shared networks should no longer exist in the configuration.
@@ -176,7 +176,7 @@ TEST(CfgSharedNetworks6Test, deleteNetworksById) {
     EXPECT_FALSE(returned_network);
     EXPECT_FALSE(cfg.getByName("fly"));
 
-    EXPECT_EQ(0, cfg.del(network1->getId()));
+    EXPECT_EQ(0U, cfg.del(network1->getId()));
 }
 
 // This test verifies that shared networks must have unique names.
@@ -328,7 +328,7 @@ TEST(CfgSharedNetworks6Test, mergeNetworks) {
     CfgSharedNetworks6 cfg_from;
     ASSERT_NO_THROW(cfg_to.merge(cfg_def, cfg_from));
 
-    ASSERT_EQ(3, cfg_to.getAll()->size());
+    ASSERT_EQ(3U, cfg_to.getAll()->size());
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(100),
                                                std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
@@ -367,7 +367,7 @@ TEST(CfgSharedNetworks6Test, mergeNetworks) {
     // Network1 should have doubled its valid lifetime but still only have
     // the orignal two subnets.  Merge should discard associations on CB
     // subnets and preserve the associations from existing config.
-    ASSERT_EQ(3, cfg_to.getAll()->size());
+    ASSERT_EQ(3U, cfg_to.getAll()->size());
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(200),
                                                std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
 

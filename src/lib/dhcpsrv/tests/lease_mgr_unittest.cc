@@ -103,8 +103,8 @@ TEST (LeaseStatsQueryTest, defaultCtor) {
 
     // Valid construction, verifiy member values.
     ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery()));
-    ASSERT_EQ(0, qry->getFirstSubnetID());
-    ASSERT_EQ(0, qry->getLastSubnetID());
+    ASSERT_EQ(0U, qry->getFirstSubnetID());
+    ASSERT_EQ(0U, qry->getLastSubnetID());
     ASSERT_EQ(LeaseStatsQuery::ALL_SUBNETS, qry->getSelectMode());
 }
 
@@ -117,8 +117,8 @@ TEST (LeaseStatsQueryTest, singleSubnetCtor) {
 
     // Valid values should work and set mode accordingly.
     ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery(77)));
-    ASSERT_EQ(77, qry->getFirstSubnetID());
-    ASSERT_EQ(0, qry->getLastSubnetID());
+    ASSERT_EQ(77U, qry->getFirstSubnetID());
+    ASSERT_EQ(0U, qry->getLastSubnetID());
     ASSERT_EQ(LeaseStatsQuery::SINGLE_SUBNET, qry->getSelectMode());
 }
 
@@ -133,8 +133,8 @@ TEST (LeaseStatsQueryTest, subnetRangeCtor) {
 
     // Valid values should work and set mode accordingly.
     ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery(1,2)));
-    ASSERT_EQ(1, qry->getFirstSubnetID());
-    ASSERT_EQ(2, qry->getLastSubnetID());
+    ASSERT_EQ(1U, qry->getFirstSubnetID());
+    ASSERT_EQ(2U, qry->getLastSubnetID());
     ASSERT_EQ(LeaseStatsQuery::SUBNET_RANGE, qry->getSelectMode());
 }
 
@@ -952,7 +952,7 @@ TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoTablesEnabled) {
     lease->setContext(user_context);
     EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
 
-    EXPECT_EQ(1, mgr->relay_id6_.size());
+    EXPECT_EQ(1U, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
@@ -960,7 +960,7 @@ TEST(Lease6ExtendedInfoTest, idsSetExtendedInfoTablesEnabled) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    EXPECT_EQ(1, mgr->remote_id6_.size());
+    EXPECT_EQ(1U, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
@@ -990,7 +990,7 @@ TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoTablesEnabled) {
     lease->setContext(user_context);
     EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
 
-    EXPECT_EQ(1, mgr->relay_id6_.size());
+    EXPECT_EQ(1U, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
@@ -998,7 +998,7 @@ TEST(Lease6ExtendedInfoTest, linkZeroSetExtendedInfoTablesEnabled) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    EXPECT_EQ(1, mgr->remote_id6_.size());
+    EXPECT_EQ(1U, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
@@ -1029,7 +1029,7 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     lease->setContext(user_context);
     EXPECT_NO_THROW(mgr->addExtendedInfo6(lease));
 
-    EXPECT_EQ(1, mgr->relay_id6_.size());
+    EXPECT_EQ(1U, mgr->relay_id6_.size());
     Lease6ExtendedInfoPtr ex_info = mgr->relay_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
@@ -1037,7 +1037,7 @@ TEST(Lease6ExtendedInfoTest, twoSetExtendedInfoTablesEnabled) {
     const vector<uint8_t>& exp_relay_id = vector<uint8_t>(8, 0x64);
     EXPECT_EQ(exp_relay_id, relay_id);
 
-    EXPECT_EQ(1, mgr->remote_id6_.size());
+    EXPECT_EQ(1U, mgr->remote_id6_.size());
     ex_info = mgr->remote_id6_.front();
     ASSERT_TRUE(ex_info);
     EXPECT_EQ("2001:db8::100", ex_info->lease_addr_.toText());
