@@ -1,3 +1,16 @@
+2480.	[bug]		razvan
+	Fixed ARM documentation examples related to "hostname-char-set"
+	and "hostname-char-replacement".
+	(Gitlab #4486)
+
+2479.	[bug]		razvan
+	Fixed a crash on server exit when database and interface
+	reconnect mechanism is enabled and neither the database of
+	interface can be recovered. Also added DHCP_IFACE_OPEN_SOCKET
+	debug message which logs the interface name, address and port
+	opened.
+	(Gitlab #4527)
+
 2478.	[bug]		razvan
 	Fixed an issue that caused kea-dhcp6 to incorrectly emit a
 	DDNS_TUNINT6_PROCESS_ERROR when subnet selection has failed.

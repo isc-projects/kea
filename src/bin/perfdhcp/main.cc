@@ -6,12 +6,12 @@
 
 #include <config.h>
 
-#include <util/filesystem.h>
+#include <exceptions/exceptions.h>
+#include <log/logger_support.h>
 #include <perfdhcp/avalanche_scen.h>
 #include <perfdhcp/basic_scen.h>
 #include <perfdhcp/command_options.h>
-
-#include <exceptions/exceptions.h>
+#include <util/filesystem.h>
 
 #include <iostream>
 #include <stdint.h>
@@ -38,6 +38,7 @@ main(int argc, char* argv[]) {
         if (command_options.parse(argc, argv, true)) {
             return (ret_code);
         }
+        isc::log::initLogger("perfdhcp");
         parser_error = false;
         auto scenario = command_options.getScenario();
         PerfSocket socket(command_options);
