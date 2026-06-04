@@ -559,7 +559,7 @@ public:
 
         // We should have had the expected number of pauses.
         if (!num_pauses) {
-            ASSERT_EQ(pause_cnt_, 0);
+            ASSERT_EQ(pause_cnt_, 0U);
         } else {
             // We allow a range on pauses of +-1.
             ASSERT_TRUE((num_pauses - 1) <= pause_cnt_ &&
@@ -621,10 +621,6 @@ public:
 
     /// @brief Number of times client has been paused during the test.
     size_t pause_cnt_;
-
-    /// @brief Number of clients that have completed their assignment or
-    /// failed
-    size_t clients_done_;
 
     /// @brief Convenience values.</font>
     DuidPtr server_id_;

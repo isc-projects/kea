@@ -59,7 +59,7 @@ TEST(HARelationshipMapper, mapGetAll) {
     EXPECT_NO_THROW(mapper.map("server4", rel2));
 
     auto const& all = mapper.getAll();
-    EXPECT_EQ(2, all.size());
+    EXPECT_EQ(2U, all.size());
     EXPECT_EQ(rel1, all[0]);
     EXPECT_EQ(rel2, all[1]);
 }

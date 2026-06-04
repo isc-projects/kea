@@ -332,7 +332,7 @@ TEST_F(AcceptFilter4Test, oneRequester) {
             rejected_counter0_ + 1);
 
     // Only 2 should be usable.
-    EXPECT_EQ(2, countUsable());
+    EXPECT_EQ(2U, countUsable());
 }
 
 /// @brief Verify that acceptFilter with more than one configured requesters
@@ -356,7 +356,7 @@ TEST_F(AcceptFilter4Test, twoRequesters) {
             rejected_counter0_ + 1);
 
     // Only 2 should be usable.
-    EXPECT_EQ(2, countUsable());
+    EXPECT_EQ(2U, countUsable());
 }
 
 /// @brief Verify that acceptFilter with more than one configured requesters
@@ -380,7 +380,7 @@ TEST_F(AcceptFilter4Test, differentRequesters) {
             rejected_counter0_ + 1);
 
     // Clients should be usable.
-    EXPECT_EQ(2, countUsable());
+    EXPECT_EQ(2U, countUsable());
 
     // Reduce the number of allowed connections to 2.
     blq_srv_->setMaxRequesterConnections(2);
@@ -414,7 +414,7 @@ TEST_F(AcceptFilter4Test, oneConnection) {
             rejected_counter0_ + 1);
 
     // One client should be usable.
-    EXPECT_EQ(1, countUsable());
+    EXPECT_EQ(1U, countUsable());
 }
 
 } // end of anonymous namespace

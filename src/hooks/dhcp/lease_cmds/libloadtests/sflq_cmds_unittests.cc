@@ -595,7 +595,7 @@ SflqCmds4Test::testSflqCommands() {
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "2 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
 
@@ -606,7 +606,7 @@ SflqCmds4Test::testSflqCommands() {
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "1 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(1U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
 
     // Fetch by subnet id for subnet_id = 99
@@ -617,7 +617,7 @@ SflqCmds4Test::testSflqCommands() {
     cmd_rsp = testCommand(command, CONTROL_RESULT_EMPTY, "0 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that excludes them all.
     pool_infos.reset();
@@ -627,7 +627,7 @@ SflqCmds4Test::testSflqCommands() {
     cmd_rsp = testCommand(command, CONTROL_RESULT_EMPTY, "0 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that includes them all.
     pool_infos.reset();
@@ -638,7 +638,7 @@ SflqCmds4Test::testSflqCommands() {
     pool_infos = extractPools(cmd_rsp);
 
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
@@ -653,7 +653,7 @@ SflqCmds4Test::testSflqCommands() {
         cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "1 pool(s) found.");
         pool_infos = extractPools(cmd_rsp);
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 
@@ -994,7 +994,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     auto cmd_rsp = testCommand(command, CONTROL_RESULT_EMPTY, "0 pool(s) found.");
     auto pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Create three test pool infos.
     SflqPoolInfoCollection test_pools;
@@ -1072,7 +1072,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "2 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(2, pool_infos->size());
+    ASSERT_EQ(2U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[2], __LINE__);
 
@@ -1083,7 +1083,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "1 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(1, pool_infos->size());
+    ASSERT_EQ(1U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[1], __LINE__);
 
     // Fetch by subnet id for subnet_id = 99
@@ -1093,7 +1093,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     cmd_rsp = testCommand(command, CONTROL_RESULT_EMPTY, "0 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that excludes them all.
     pool_infos.reset();
@@ -1103,7 +1103,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     cmd_rsp = testCommand(command, CONTROL_RESULT_EMPTY, "0 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(0, pool_infos->size());
+    ASSERT_EQ(0U, pool_infos->size());
 
     // Fetch by a range that includes them all.
     pool_infos.reset();
@@ -1113,7 +1113,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
     cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "3 pool(s) found.");
     pool_infos = extractPools(cmd_rsp);
     ASSERT_TRUE(pool_infos);
-    ASSERT_EQ(3, pool_infos->size());
+    ASSERT_EQ(3U, pool_infos->size());
     checkPoolInfos(*(*pool_infos)[0], *test_pools[0], __LINE__);
     checkPoolInfos(*(*pool_infos)[1], *test_pools[1], __LINE__);
     checkPoolInfos(*(*pool_infos)[2], *test_pools[2], __LINE__);
@@ -1128,7 +1128,7 @@ SflqCmds6Test::testSflqCommands(Lease::Type lease_type) {
         cmd_rsp = testCommand(command, CONTROL_RESULT_SUCCESS, "1 pool(s) found.");
         pool_infos = extractPools(cmd_rsp);
         ASSERT_TRUE(pool_infos);
-        ASSERT_EQ(1, pool_infos->size());
+        ASSERT_EQ(1U, pool_infos->size());
         checkPoolInfos(*(*pool_infos)[0], *test_pool, __LINE__);
     }
 

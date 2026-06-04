@@ -276,7 +276,7 @@ TEST_F(MySqlTest, version) {
     vector<string> output;
     EXPECT_TRUE(getOutput(output));
     ASSERT_FALSE(output.empty());
-    EXPECT_EQ(1, output.size());
+    EXPECT_EQ(1U, output.size());
     ostringstream s;
     s << version.first << "\t" << version.second;
     EXPECT_EQ(s.str(), output[0]);
@@ -603,9 +603,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
@@ -640,9 +640,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
@@ -681,9 +681,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -698,9 +698,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -709,9 +709,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndRecoveredAfterTimeoutCall
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
@@ -750,9 +750,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -761,9 +761,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -772,9 +772,9 @@ MySqlLegalLogDbLostCallbackTest::testRetryOpenDbLostAndFailedAfterTimeoutCallbac
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
@@ -800,9 +800,9 @@ MySqlLegalLogDbLostCallbackTest::testNoCallbackOnOpenFailure() {
 
     io_service_->poll();
 
-    EXPECT_EQ(0, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(0U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
@@ -854,9 +854,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
@@ -911,9 +911,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 }
@@ -974,9 +974,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -990,9 +990,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and recovered connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 
@@ -1001,9 +1001,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndRecoveredAfterTimeoutCallback() {
     io_service_->poll();
 
     // No callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(1, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(1U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_TRUE(LegalLogMgrFactory::instance());
 }
@@ -1064,9 +1064,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(1, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(1U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -1075,9 +1075,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost connectivity callback should have been invoked.
-    EXPECT_EQ(2, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(0, db_failed_callback_called_);
+    EXPECT_EQ(2U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(0U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 
@@ -1086,9 +1086,9 @@ MySqlLegalLogDbLostCallbackTest::testDbLostAndFailedAfterTimeoutCallback() {
     io_service_->poll();
 
     // Our lost and failed connectivity callback should have been invoked.
-    EXPECT_EQ(3, db_lost_callback_called_);
-    EXPECT_EQ(0, db_recovered_callback_called_);
-    EXPECT_EQ(1, db_failed_callback_called_);
+    EXPECT_EQ(3U, db_lost_callback_called_);
+    EXPECT_EQ(0U, db_recovered_callback_called_);
+    EXPECT_EQ(1U, db_failed_callback_called_);
 
     ASSERT_FALSE(LegalLogMgrFactory::instance());
 }

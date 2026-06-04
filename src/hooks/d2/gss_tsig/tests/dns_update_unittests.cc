@@ -150,7 +150,7 @@ public:
             // We should have received a signed response.
             ASSERT_TRUE(response_);
             EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
-            ASSERT_EQ(1, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
+            ASSERT_EQ(1U, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
             D2ZonePtr zone = response_->getZone();
             ASSERT_TRUE(zone);
             EXPECT_EQ("example.com.", zone->getName().toText());
@@ -162,7 +162,7 @@ public:
             // We should have received an unsigned response.
             ASSERT_TRUE(response_);
             EXPECT_EQ(D2UpdateMessage::RESPONSE, response_->getQRFlag());
-            ASSERT_EQ(1, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
+            ASSERT_EQ(1U, response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
             D2ZonePtr zone = response_->getZone();
             ASSERT_FALSE(zone);
         }

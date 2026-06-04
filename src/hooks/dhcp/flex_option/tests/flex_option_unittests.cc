@@ -280,9 +280,9 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeNoCSVFormat) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto opt_lst = map[109];
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
 }
 
 // Verify that the definition is not required when csv-format is false.
@@ -300,9 +300,9 @@ TEST_F(FlexOptionTest, optionConfigUnknownCodeDisableCSVFormat) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto opt_lst = map[109];
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
 }
 
 // Verify that the code must be a known option when csv-format is true.
@@ -333,9 +333,9 @@ TEST_F(FlexOptionTest, optionConfigStandardName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_HOST_NAME));
+    EXPECT_EQ(1U, map.count(DHO_HOST_NAME));
     auto opt_lst = map[DHO_HOST_NAME];
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
 }
 
 // Verify that the name can be an user defined option.
@@ -357,9 +357,9 @@ TEST_F(FlexOptionTest, optionConfigDefinedName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(222));
+    EXPECT_EQ(1U, map.count(222));
     auto opt_lst = map[222];
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
 }
 
 // Verify that the name can be an user defined option in a custom space.
@@ -383,9 +383,9 @@ TEST_F(FlexOptionTest, optionConfigDefinedSpace) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(222));
+    EXPECT_EQ(1U, map.count(222));
     auto opt_lst = map[222];
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
 }
 
 // Last resort is only option 43...
@@ -436,9 +436,9 @@ TEST_F(FlexOptionTest, optionConfigTwice) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_HOST_NAME));
+    EXPECT_EQ(1U, map.count(DHO_HOST_NAME));
     auto opt_lst = map[DHO_HOST_NAME];
-    EXPECT_EQ(2, opt_lst.size());
+    EXPECT_EQ(2U, opt_lst.size());
 }
 
 // Verify that the add value must be a string.
@@ -499,7 +499,7 @@ TEST_F(FlexOptionTest, optionConfigAdd4) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -510,11 +510,11 @@ TEST_F(FlexOptionTest, optionConfigAdd4) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt4, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
 }
 
@@ -536,7 +536,7 @@ TEST_F(FlexOptionTest, optionConfigAdd6) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -547,11 +547,11 @@ TEST_F(FlexOptionTest, optionConfigAdd6) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt6, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
 }
 
@@ -613,7 +613,7 @@ TEST_F(FlexOptionTest, optionConfigSupersede4) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -624,11 +624,11 @@ TEST_F(FlexOptionTest, optionConfigSupersede4) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt4, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
 }
 
@@ -650,7 +650,7 @@ TEST_F(FlexOptionTest, optionConfigSupersede6) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -661,11 +661,11 @@ TEST_F(FlexOptionTest, optionConfigSupersede6) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt6, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
 }
 
@@ -727,7 +727,7 @@ TEST_F(FlexOptionTest, optionConfigRemove4) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -738,16 +738,16 @@ TEST_F(FlexOptionTest, optionConfigRemove4) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(3, expr->size());
+    ASSERT_EQ(3U, expr->size());
     Pkt4Ptr pkt4(new Pkt4(DHCPDISCOVER, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt4, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
     EXPECT_NO_THROW(expr->at(1)->evaluate(*pkt4, values));
-    ASSERT_EQ(2, values.size());
+    ASSERT_EQ(2U, values.size());
     EXPECT_NO_THROW(expr->at(2)->evaluate(*pkt4, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("true", values.top());
 }
 
@@ -769,7 +769,7 @@ TEST_F(FlexOptionTest, optionConfigRemove6) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(D6O_BOOTFILE_URL));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 
@@ -780,16 +780,16 @@ TEST_F(FlexOptionTest, optionConfigRemove6) {
 
     ExpressionPtr expr = opt_cfg->getExpr();
     ASSERT_TRUE(expr);
-    ASSERT_EQ(3, expr->size());
+    ASSERT_EQ(3U, expr->size());
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_SOLICIT, 12345));
     ValueStack values;
     EXPECT_NO_THROW(expr->at(0)->evaluate(*pkt6, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("abc", values.top());
     EXPECT_NO_THROW(expr->at(1)->evaluate(*pkt6, values));
-    ASSERT_EQ(2, values.size());
+    ASSERT_EQ(2U, values.size());
     EXPECT_NO_THROW(expr->at(2)->evaluate(*pkt6, values));
-    ASSERT_EQ(1, values.size());
+    ASSERT_EQ(1U, values.size());
     EXPECT_EQ("true", values.top());
 }
 
@@ -851,12 +851,12 @@ TEST_F(FlexOptionTest, optionConfigList) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getOptionConfigMap();
-    EXPECT_EQ(2, map.size());
+    EXPECT_EQ(2U, map.size());
 
     FlexOptionImpl::OptionConfigList opt1_lst;
     ASSERT_NO_THROW(opt1_lst = map.at(DHO_HOST_NAME));
     ASSERT_FALSE(opt1_lst.empty());
-    EXPECT_EQ(1, opt1_lst.size());
+    EXPECT_EQ(1U, opt1_lst.size());
     FlexOptionImpl::OptionConfigPtr opt1_cfg;
     ASSERT_NO_THROW(opt1_cfg = opt1_lst.front());
 
@@ -868,7 +868,7 @@ TEST_F(FlexOptionTest, optionConfigList) {
     FlexOptionImpl::OptionConfigList opt2_lst;
     ASSERT_NO_THROW(opt2_lst = map.at(DHO_ROOT_PATH));
     ASSERT_FALSE(opt2_lst.empty());
-    EXPECT_EQ(1, opt2_lst.size());
+    EXPECT_EQ(1U, opt2_lst.size());
     FlexOptionImpl::OptionConfigPtr opt2_cfg;
     ASSERT_NO_THROW(opt2_cfg = opt2_lst.front());
 
@@ -943,19 +943,19 @@ TEST_F(FlexOptionTest, processAddEnableCSVFormat) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     opt = response->getOption(DHO_DOMAIN_SEARCH);
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
     const OptionBuffer& buffer_fqdn = opt->getData();
-    ASSERT_EQ(13, buffer_fqdn.size());
-    EXPECT_EQ(7, buffer_fqdn[0]);
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
-    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
-    EXPECT_EQ(0, buffer_fqdn[12]);
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 // Verify that ADD action adds the specified option in raw format.
@@ -991,19 +991,19 @@ TEST_F(FlexOptionTest, processAddDisableCSVFormat) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     opt = response->getOption(DHO_DOMAIN_SEARCH);
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
     const OptionBuffer& buffer_fqdn = opt->getData();
-    ASSERT_EQ(13, buffer_fqdn.size());
-    EXPECT_EQ(7, buffer_fqdn[0]);
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
-    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
-    EXPECT_EQ(0, buffer_fqdn[12]);
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 // Verify that ADD action does not add an already existing option.
@@ -1089,19 +1089,19 @@ TEST_F(FlexOptionTest, processSupersedeEnableCSVFormat) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     opt = response->getOption(DHO_DOMAIN_SEARCH);
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
     const OptionBuffer& buffer_fqdn = opt->getData();
-    ASSERT_EQ(13, buffer_fqdn.size());
-    EXPECT_EQ(7, buffer_fqdn[0]);
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
-    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
-    EXPECT_EQ(0, buffer_fqdn[12]);
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 // Verify that SUPERSEDE action supersedes the specified option in raw format.
@@ -1137,19 +1137,19 @@ TEST_F(FlexOptionTest, processSupersedeDisableCSVFormat) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     opt = response->getOption(DHO_DOMAIN_SEARCH);
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_DOMAIN_SEARCH, opt->getType());
     const OptionBuffer& buffer_fqdn = opt->getData();
-    ASSERT_EQ(13, buffer_fqdn.size());
-    EXPECT_EQ(7, buffer_fqdn[0]);
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
-    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
-    EXPECT_EQ(0, buffer_fqdn[12]);
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 // Verify that SUPERSEDE action supersedes an already existing option.
@@ -1192,7 +1192,7 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     uint8_t expected[] = { 0xab, 0xcd, 0xef };
     EXPECT_EQ(0, memcmp(&buffer[0], expected, 3));
 
@@ -1200,12 +1200,12 @@ TEST_F(FlexOptionTest, processSupersedeExisting) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_DOMAIN_SEARCH, opt->getType());
     const OptionBuffer& buffer_fqdn = opt->getData();
-    ASSERT_EQ(13, buffer_fqdn.size());
-    EXPECT_EQ(7, buffer_fqdn[0]);
+    ASSERT_EQ(13U, buffer_fqdn.size());
+    EXPECT_EQ(7U, buffer_fqdn[0]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[1], "example", 7));
-    EXPECT_EQ(3, buffer_fqdn[8]);
+    EXPECT_EQ(3U, buffer_fqdn[8]);
     EXPECT_EQ(0, memcmp(&buffer_fqdn[9], "com", 3));
-    EXPECT_EQ(0, buffer_fqdn[12]);
+    EXPECT_EQ(0U, buffer_fqdn[12]);
 }
 
 // Verify that SUPERSEDE action does not supersede an empty value.
@@ -1240,7 +1240,7 @@ TEST_F(FlexOptionTest, processSupersedeEmpty) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
@@ -1275,7 +1275,7 @@ TEST_F(FlexOptionTest, processSupersedeAddNotExisting) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "add", 3));
 }
 
@@ -1311,7 +1311,7 @@ TEST_F(FlexOptionTest, processSupersedeAddExisting) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(9, buffer.size());
+    ASSERT_EQ(9U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "supersede", 9));
 }
 
@@ -1414,7 +1414,7 @@ TEST_F(FlexOptionTest, processFullTest) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_BOOT_FILE_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(8, buffer.size());
+    ASSERT_EQ(8U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foo.boot", 8));
 }
 
@@ -1448,7 +1448,7 @@ TEST_F(FlexOptionTest, processFullAddWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(35, buffer.size());
+    EXPECT_EQ(35U, buffer.size());
     std::string data("EST5EDT4,M3.2.0/02:00,M11.1.0/02:00");
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
@@ -1483,7 +1483,7 @@ TEST_F(FlexOptionTest, processFullSupersedeWithComplexString) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_NEW_POSIX_TIMEZONE, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    EXPECT_EQ(35, buffer.size());
+    EXPECT_EQ(35U, buffer.size());
     std::string data("EST5EDT4,M3.2.0/02:00,M11.1.0/02:00");
     EXPECT_EQ(0, memcmp(&buffer[0], &data[0], buffer.size()));
 }
@@ -1519,7 +1519,7 @@ TEST_F(FlexOptionTest, optionConfigGuardValid) {
     FlexOptionImpl::OptionConfigList opt_lst;
     ASSERT_NO_THROW(opt_lst = map.at(DHO_HOST_NAME));
     ASSERT_FALSE(opt_lst.empty());
-    EXPECT_EQ(1, opt_lst.size());
+    EXPECT_EQ(1U, opt_lst.size());
     FlexOptionImpl::OptionConfigPtr opt_cfg;
     ASSERT_NO_THROW(opt_cfg = opt_lst.front());
 

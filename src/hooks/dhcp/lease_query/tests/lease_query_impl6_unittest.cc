@@ -891,7 +891,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeClientOptionMultipleLi
     // in that order.  Note subnet3_ should only be in the list once
     // despite they're being two of its leases in the collection.
     Option6AddrLst::AddressContainer links = link_opt->getAddresses();
-    ASSERT_EQ(3, links.size());
+    ASSERT_EQ(3U, links.size());
     EXPECT_EQ(subnet2_->get().first, links[0]);
     EXPECT_EQ(subnet3_->get().first, links[1]);
     EXPECT_EQ(subnet4_->get().first, links[2]);
@@ -993,7 +993,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeClientOptionSingleLink
     ASSERT_TRUE(data_option);
 
     auto options = data_option->getOptions();
-    EXPECT_EQ(8, options.size());
+    EXPECT_EQ(8U, options.size());
 
     // Verify client id.
     auto opt_iter = options.find(D6O_CLIENTID);
@@ -1135,12 +1135,12 @@ TEST(LeaseQueryImpl6Test, parseRelayInfoValid) {
     ASSERT_TRUE(relay_info);
 
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_info->hop_count_, 1);
+    ASSERT_EQ(relay_info->hop_count_, 1U);
     ASSERT_EQ(relay_info->peeraddr_, IOAddress("2001:db8:1::1"));
     ASSERT_EQ(relay_info->linkaddr_, IOAddress("2001:db8:1::2"));
 
     // Make sure there are no options.
-    ASSERT_EQ(0, relay_info->options_.size());
+    ASSERT_EQ(0U, relay_info->options_.size());
 
     // Now Add a valid options member: D6O_INTERFACE_ID = "eth0"
     relay_elem->set("options", Element::create("0x0012000465746830"));
@@ -1148,7 +1148,7 @@ TEST(LeaseQueryImpl6Test, parseRelayInfoValid) {
     ASSERT_TRUE(relay_info);
 
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_info->hop_count_, 1);
+    ASSERT_EQ(relay_info->hop_count_, 1U);
     ASSERT_EQ(relay_info->peeraddr_, IOAddress("2001:db8:1::1"));
     ASSERT_EQ(relay_info->linkaddr_, IOAddress("2001:db8:1::2"));
 
@@ -1156,7 +1156,7 @@ TEST(LeaseQueryImpl6Test, parseRelayInfoValid) {
     // Under the covers this relies on LibDHCP::unpackOptions6()
     // which is tested pretty exhaustively elsewhere, so we're not
     // going to go nuts with testing here.
-    ASSERT_EQ(1, relay_info->options_.size());
+    ASSERT_EQ(1U, relay_info->options_.size());
     auto x = relay_info->options_.find(0x12);
     ASSERT_TRUE(x != relay_info->options_.end());
     ASSERT_EQ(std::string("type=00018, len=00004: 65:74:68:30 'eth0'"), x->second->toString());
@@ -1210,34 +1210,34 @@ TEST(LeaseQueryImpl6Test, parseRelayInfoListValid) {
     ASSERT_NO_THROW_LOG(LeaseQueryImpl6::parseRelayInfoList(relay_list, relay_infos));
 
     // We should have three instances.
-    ASSERT_EQ(3, relay_infos.size());
+    ASSERT_EQ(3U, relay_infos.size());
 
     // Verify the first instance.
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_infos[0]->hop_count_, 3);
+    ASSERT_EQ(relay_infos[0]->hop_count_, 3U);
     ASSERT_EQ(relay_infos[0]->peeraddr_, IOAddress("2001:db8:3::1"));
     ASSERT_EQ(relay_infos[0]->linkaddr_, IOAddress("2001:db8:3::2"));
     // It should have no options.
-    ASSERT_EQ(0, relay_infos[0]->options_.size());
+    ASSERT_EQ(0U, relay_infos[0]->options_.size());
 
     // Verify the second instance.
-    ASSERT_EQ(relay_infos[1]->hop_count_, 2);
+    ASSERT_EQ(relay_infos[1]->hop_count_, 2U);
     ASSERT_EQ(relay_infos[1]->peeraddr_, IOAddress("2001:db8:2::1"));
     ASSERT_EQ(relay_infos[1]->linkaddr_, IOAddress("2001:db8:2::2"));
 
     // It should have one option.
-    ASSERT_EQ(1, relay_infos[1]->options_.size());
+    ASSERT_EQ(1U, relay_infos[1]->options_.size());
     auto x = relay_infos[1]->options_.find(0x12);
     ASSERT_TRUE(x != relay_infos[1]->options_.end());
     ASSERT_EQ(std::string("type=00018, len=00004: 65:74:68:30 'eth0'"), x->second->toString());
 
     // Verify the third instance.
-    ASSERT_EQ(relay_infos[2]->hop_count_, 1);
+    ASSERT_EQ(relay_infos[2]->hop_count_, 1U);
     ASSERT_EQ(relay_infos[2]->peeraddr_, IOAddress("2001:db8:1::1"));
     ASSERT_EQ(relay_infos[2]->linkaddr_, IOAddress("2001:db8:1::2"));
 
     // We should have two options, "foo" and then "bar"
-    ASSERT_EQ(2, relay_infos[2]->options_.size());
+    ASSERT_EQ(2U, relay_infos[2]->options_.size());
 
     // Option "foo"
     x = relay_infos[2]->options_.find(0x1FF);
@@ -1367,27 +1367,27 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testMakeRelayOptionRelayInfo()
     ASSERT_NO_THROW_LOG(unpackRelayForwardMsg(relay_forw_data, relay_infos));
 
     // We should have two relays.
-    EXPECT_EQ(2, relay_infos.size());
+    EXPECT_EQ(2U, relay_infos.size());
 
     // Verify the first instance.
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_infos[0]->hop_count_, 1);
+    ASSERT_EQ(relay_infos[0]->hop_count_, 1U);
     ASSERT_EQ(relay_infos[0]->peeraddr_, IOAddress("2001:db8:2::1"));
     ASSERT_EQ(relay_infos[0]->linkaddr_, IOAddress("2001:db8:2::2"));
 
     // It should have one option.
-    ASSERT_EQ(1, relay_infos[0]->options_.size());
+    ASSERT_EQ(1U, relay_infos[0]->options_.size());
     auto x = relay_infos[0]->options_.find(0x12);
     ASSERT_TRUE(x != relay_infos[0]->options_.end());
     ASSERT_EQ(std::string("type=00018, len=00004: 65:74:68:30 'eth0'"), x->second->toString());
 
     // Verify the second instance.
-    ASSERT_EQ(relay_infos[1]->hop_count_, 0);
+    ASSERT_EQ(relay_infos[1]->hop_count_, 0U);
     ASSERT_EQ(relay_infos[1]->peeraddr_, IOAddress("2001:db8:1::1"));
     ASSERT_EQ(relay_infos[1]->linkaddr_, IOAddress("2001:db8:1::2"));
 
     // It should have no options.
-    ASSERT_EQ(0, relay_infos[1]->options_.size());
+    ASSERT_EQ(0U, relay_infos[1]->options_.size());
 }
 
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, makeRelayOptionRelayInfo) {
@@ -1442,27 +1442,27 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testOldMakeRelayOptionRelayInf
     ASSERT_NO_THROW_LOG(unpackRelayForwardMsg(relay_forw_data, relay_infos));
 
     // We should have two relays.
-    EXPECT_EQ(2, relay_infos.size());
+    EXPECT_EQ(2U, relay_infos.size());
 
     // Verify the first instance.
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_infos[0]->hop_count_, 1);
+    ASSERT_EQ(relay_infos[0]->hop_count_, 1U);
     ASSERT_EQ(relay_infos[0]->peeraddr_, IOAddress("2001:db8:2::1"));
     ASSERT_EQ(relay_infos[0]->linkaddr_, IOAddress("2001:db8:2::2"));
 
     // It should have one option.
-    ASSERT_EQ(1, relay_infos[0]->options_.size());
+    ASSERT_EQ(1U, relay_infos[0]->options_.size());
     auto x = relay_infos[0]->options_.find(0x12);
     ASSERT_TRUE(x != relay_infos[0]->options_.end());
     ASSERT_EQ(std::string("type=00018, len=00004: 65:74:68:30 'eth0'"), x->second->toString());
 
     // Verify the second instance.
-    ASSERT_EQ(relay_infos[1]->hop_count_, 0);
+    ASSERT_EQ(relay_infos[1]->hop_count_, 0U);
     ASSERT_EQ(relay_infos[1]->peeraddr_, IOAddress("2001:db8:1::1"));
     ASSERT_EQ(relay_infos[1]->linkaddr_, IOAddress("2001:db8:1::2"));
 
     // It should have no options.
-    ASSERT_EQ(0, relay_infos[1]->options_.size());
+    ASSERT_EQ(0U, relay_infos[1]->options_.size());
 }
 
 TEST_F(MemfileLeaseQueryImpl6ProcessTest, oldMakeRelayOptionRelayInfo) {
@@ -1702,7 +1702,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressActiveLeas
     ASSERT_TRUE(data_option);
 
     auto options = data_option->getOptions();
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     auto opt_iter = options.find(D6O_CLIENTID);
@@ -1837,7 +1837,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
     // We should have the addresses for subnet2_, subnet3_, and subnet4_
     // in that order.
     Option6AddrLst::AddressContainer links = link_opt->getAddresses();
-    ASSERT_EQ(3, links.size());
+    ASSERT_EQ(3U, links.size());
     EXPECT_EQ(subnet2_->get().first, links[0]);
     EXPECT_EQ(subnet3_->get().first, links[1]);
     EXPECT_EQ(subnet4_->get().first, links[2]);
@@ -1975,7 +1975,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
 
     // Client data option should have four sub options.
     auto options = data_option->getOptions();
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Verify client id.
     auto opt_iter = options.find(D6O_CLIENTID);
@@ -2023,16 +2023,16 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
     ASSERT_NO_THROW_LOG(unpackRelayForwardMsg(relay_forw_data, relay_infos));
 
     // We should have two relays.
-    EXPECT_EQ(1, relay_infos.size());
+    EXPECT_EQ(1U, relay_infos.size());
 
     // Verify the first instance.
     // Make sure the field contents are correct.
-    ASSERT_EQ(relay_infos[0]->hop_count_, 1);
+    ASSERT_EQ(relay_infos[0]->hop_count_, 1U);
     ASSERT_EQ(relay_infos[0]->peeraddr_, IOAddress("2001:db8:2::1"));
     ASSERT_EQ(relay_infos[0]->linkaddr_, IOAddress("2001:db8:2::2"));
 
     // It should have one option.
-    ASSERT_EQ(1, relay_infos[0]->options_.size());
+    ASSERT_EQ(1U, relay_infos[0]->options_.size());
     auto x = relay_infos[0]->options_.find(0x12);
     ASSERT_TRUE(x != relay_infos[0]->options_.end());
     ASSERT_EQ(std::string("type=00018, len=00004: 65:74:68:30 'eth0'"), x->second->toString());
@@ -2077,13 +2077,13 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdLinkAddr() 
     leases.clear();
     ASSERT_NO_THROW_LOG(status = impl->queryByClientId(cid1_, IOAddress("3001::"), leases));
     checkStatus(status, STATUS_NotConfigured, "not a configured link");
-    ASSERT_EQ(0, leases.size());
+    ASSERT_EQ(0U, leases.size());
 
     // With no link address filter. We should get all three cid1_ leases
     // ordered by CLTT : lease2, lease4, lease1
     ASSERT_NO_THROW_LOG(status = impl->queryByClientId(cid1_, IOAddress("::"), leases));
     checkStatus(status, STATUS_Success, "active lease(s) found");
-    ASSERT_EQ(3, leases.size());
+    ASSERT_EQ(3U, leases.size());
     EXPECT_EQ(lease2->addr_, leases[0]->addr_);
     EXPECT_EQ(lease4->addr_, leases[1]->addr_);
     EXPECT_EQ(lease1->addr_, leases[2]->addr_);
@@ -2092,20 +2092,20 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByClientIdLinkAddr() 
     leases.clear();
     ASSERT_NO_THROW_LOG(status = impl->queryByClientId(cid1_, IOAddress("2001:db8:4::"), leases));
     checkStatus(status, STATUS_Success, "active lease(s) found");
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(lease4->addr_, leases[0]->addr_);
 
     // With link address filter = subnet3, we should no active lease for cid1_.
     leases.clear();
     ASSERT_NO_THROW_LOG(status = impl->queryByClientId(cid1_, IOAddress("2001:db8:3::"), leases));
-    ASSERT_EQ(0, leases.size());
+    ASSERT_EQ(0U, leases.size());
     checkStatus(status, STATUS_Success, "no active leases");
 
     // With link address filter = subnet3, we should get one active lease for cid2_.
     leases.clear();
     ASSERT_NO_THROW_LOG(status = impl->queryByClientId(cid2_, IOAddress("2001:db8:3::"), leases));
     checkStatus(status, STATUS_Success, "active lease(s) found");
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(lease3->addr_, leases[0]->addr_);
 }
 
@@ -2239,7 +2239,7 @@ BaseLeaseQueryImpl6ProcessTest<TestLeaseMgrType>::testQueryByIpaddressPDLeases()
             ASSERT_TRUE(data_option);
 
             auto options = data_option->getOptions();
-            EXPECT_EQ(3, options.size());
+            EXPECT_EQ(3U, options.size());
 
             // Now let's check we should have one TYPE_PD lease.
             auto opt_iter = options.find(D6O_IAPREFIX);

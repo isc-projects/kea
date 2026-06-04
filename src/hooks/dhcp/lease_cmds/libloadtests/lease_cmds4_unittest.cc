@@ -695,7 +695,7 @@ void Lease4CmdsTest::testLease4Add() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(3U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -704,8 +704,8 @@ void Lease4CmdsTest::testLease4Add() {
     // Test execution is fast. The cltt should be set to now. In some rare
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
-    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
-    EXPECT_EQ(0, l->state_);
+    EXPECT_LE(abs(l->cltt_ - time(0)), 1);
+    EXPECT_EQ(0U, l->state_);
 }
 
 void Lease4CmdsTest::testLease4AddDeclinedLeases() {
@@ -745,7 +745,7 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(3U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -754,8 +754,8 @@ void Lease4CmdsTest::testLease4AddDeclinedLeases() {
     // Test execution is fast. The cltt should be set to now. In some rare
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
-    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
-    EXPECT_EQ(1, l->state_);
+    EXPECT_LE(abs(l->cltt_ - time(0)), 1);
+    EXPECT_EQ(1U, l->state_);
 }
 
 void Lease4CmdsTest::testLease4AddReleasedLeases() {
@@ -795,7 +795,7 @@ void Lease4CmdsTest::testLease4AddReleasedLeases() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-    EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(3U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -804,8 +804,8 @@ void Lease4CmdsTest::testLease4AddReleasedLeases() {
     // Test execution is fast. The cltt should be set to now. In some rare
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
-    EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
-    EXPECT_EQ(3, l->state_);
+    EXPECT_LE(abs(l->cltt_ - time(0)), 1);
+    EXPECT_EQ(3U, l->state_);
 }
 
 void Lease4CmdsTest::testLease4AddExisting() {
@@ -870,7 +870,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissing() {
     // Now check that the lease is really there and has correct subnet-id.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
-    EXPECT_EQ(44, l->subnet_id_);
+    EXPECT_EQ(44U, l->subnet_id_);
 }
 
 void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
@@ -906,7 +906,7 @@ void Lease4CmdsTest::testLease4AddSubnetIdMissingDeclinedLeases() {
     // Now check that the lease is really there and has correct subnet-id.
     Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
     ASSERT_TRUE(l);
-    EXPECT_EQ(44, l->subnet_id_);
+    EXPECT_EQ(44U, l->subnet_id_);
 }
 
 void Lease4CmdsTest::testLease4AddSubnetIdMissingBadAddr() {
@@ -1064,7 +1064,7 @@ void Lease4CmdsTest::testLease4AddFullAddr() {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
-    EXPECT_EQ(5, l->pool_id_);
+    EXPECT_EQ(5U, l->pool_id_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
@@ -1179,12 +1179,12 @@ void Lease4CmdsTest::testLease4AddExtendedInfo() {
     leases = lmptr_->getLeases4ByRelayId(relay_id,
                                          IOAddress::IPV4_ZERO_ADDRESS(),
                                          LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*l, *leases[0]);
     leases = lmptr_->getLeases4ByRemoteId(remote_id,
                                           IOAddress::IPV4_ZERO_ADDRESS(),
                                           LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*l, *leases[0]);
 }
 
@@ -1482,7 +1482,7 @@ void Lease4CmdsTest::testLease4GetAllNoLeases() {
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
-    EXPECT_EQ(0, leases->size());
+    EXPECT_EQ(0U, leases->size());
 }
 
 void Lease4CmdsTest::testLease4GetAllBySubnetId() {
@@ -1544,7 +1544,7 @@ void Lease4CmdsTest::testLease4GetAllBySubnetIdNoLeases() {
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
-    EXPECT_EQ(0, leases->size());
+    EXPECT_EQ(0U, leases->size());
 }
 
 void Lease4CmdsTest::testLease4GetAllByMultipleSubnetIds() {
@@ -1706,10 +1706,10 @@ void Lease4CmdsTest::testLease4GetPaged() {
     }
 
     // Check if all addresses were returned.
-    EXPECT_EQ(1, lease_addresses.count("192.0.2.1"));
-    EXPECT_EQ(1, lease_addresses.count("192.0.2.2"));
-    EXPECT_EQ(1, lease_addresses.count("192.0.3.1"));
-    EXPECT_EQ(1, lease_addresses.count("192.0.3.2"));
+    EXPECT_EQ(1U, lease_addresses.count("192.0.2.1"));
+    EXPECT_EQ(1U, lease_addresses.count("192.0.2.2"));
+    EXPECT_EQ(1U, lease_addresses.count("192.0.3.1"));
+    EXPECT_EQ(1U, lease_addresses.count("192.0.3.2"));
 }
 
 void Lease4CmdsTest::testLease4GetPagedZeroAddress() {
@@ -1906,7 +1906,7 @@ void Lease4CmdsTest::testLease4GetByHwAddressFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(2, leases->size());
+    ASSERT_EQ(2U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -1991,7 +1991,7 @@ void Lease4CmdsTest::testLease4GetByClientIdFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(2, leases->size());
+    ASSERT_EQ(2U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2099,7 +2099,7 @@ void Lease4CmdsTest::testLease4GetByStateFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(4, leases->size());
+    ASSERT_EQ(4U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2171,7 +2171,7 @@ void Lease4CmdsTest::testLease4GetByStateFindN() {
         ConstElementPtr leases_rsp = map->get("leases");
         ASSERT_TRUE(leases_rsp);
         ASSERT_EQ(Element::list, leases_rsp->getType());
-        ASSERT_EQ(1, leases_rsp->size());
+        ASSERT_EQ(1U, leases_rsp->size());
 
         // Let's check if the response makes any sense.
         ConstElementPtr lease = leases_rsp->get(0);
@@ -2253,7 +2253,7 @@ void Lease4CmdsTest::testLease4GetByHostnameFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(4, leases->size());
+    ASSERT_EQ(4U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2461,7 +2461,7 @@ void Lease4CmdsTest::testLease4Update() {
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-    EXPECT_EQ(3, l->pool_id_);
+    EXPECT_EQ(3U, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
@@ -2504,7 +2504,7 @@ void Lease4CmdsTest::testLease4UpdateDeclinedLeases() {
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
-    EXPECT_EQ(3, l->pool_id_);
+    EXPECT_EQ(3U, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
@@ -2543,7 +2543,7 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetId() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is correct.
-    EXPECT_EQ(44, l->subnet_id_);
+    EXPECT_EQ(44U, l->subnet_id_);
 
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
@@ -2586,7 +2586,7 @@ void Lease4CmdsTest::testLease4UpdateNoSubnetIdDeclinedLeases() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is correct.
-    EXPECT_EQ(44, l->subnet_id_);
+    EXPECT_EQ(44U, l->subnet_id_);
 
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->hwaddr_);
@@ -2672,7 +2672,7 @@ void Lease4CmdsTest::testLease4UpdateForceCreateNoSubnetId() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is figured out correctly.
-    EXPECT_EQ(44, l->subnet_id_);
+    EXPECT_EQ(44U, l->subnet_id_);
 
     // Make sure the lease is correct.
     ASSERT_TRUE(l->hwaddr_);
@@ -2757,7 +2757,7 @@ void Lease4CmdsTest::testLease4UpdateComment() {
     // Check user context.
     ConstElementPtr ctx = l->getContext();
     ASSERT_TRUE(ctx);
-    EXPECT_EQ(2, ctx->size());
+    EXPECT_EQ(2U, ctx->size());
     ASSERT_TRUE(ctx->contains("comment"));
     EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
     ASSERT_TRUE(ctx->contains("foobar"));
@@ -2833,12 +2833,12 @@ void Lease4CmdsTest::testLease4UpdateExtendedInfo() {
     leases = lmptr_->getLeases4ByRelayId(relay_id,
                                          IOAddress::IPV4_ZERO_ADDRESS(),
                                          LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*l, *leases[0]);
     leases = lmptr_->getLeases4ByRemoteId(remote_id,
                                           IOAddress::IPV4_ZERO_ADDRESS(),
                                           LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_EQ(*l, *leases[0]);
 }
 
@@ -3931,7 +3931,7 @@ void Lease4CmdsTest::testLease4WriteSecurityWarn() {
     testCommand(cmd, CONTROL_RESULT_SUCCESS,
                 "IPv4 lease database into '/tmp/kea-lease-write-test.txt'.");
 
-    EXPECT_EQ(1, countFile(os.str()));
+    EXPECT_EQ(1U, countFile(os.str()));
 }
 
 TEST_F(Lease4CmdsTest, lease4AddMissingParams) {

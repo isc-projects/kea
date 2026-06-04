@@ -182,7 +182,7 @@ TEST(GssTsigCfgTest, dnsServer) {
     ASSERT_TRUE(srv);
     EXPECT_EQ(id, srv->getID());
     EXPECT_EQ(addr, srv->getIpAddress());
-    EXPECT_EQ(53, srv->getPort());
+    EXPECT_EQ(53U, srv->getPort());
 
     // ID.
     id = "foo";
@@ -195,7 +195,7 @@ TEST(GssTsigCfgTest, dnsServer) {
     ASSERT_NO_THROW(info.reset(new DnsServerInfo("", addr)));
     ASSERT_TRUE(info);
     srv->addServerInfo(info);
-    ASSERT_EQ(1, srv->getServerInfos().size());
+    ASSERT_EQ(1U, srv->getServerInfos().size());
     DnsServerInfoPtr got;
     ASSERT_NO_THROW(got = srv->getServerInfos().at(0));
     EXPECT_EQ(info, got);
@@ -230,19 +230,19 @@ TEST(GssTsigCfgTest, dnsServer) {
     EXPECT_TRUE(srv->getGssSequenceFlag());
 
     // TKEY lifetime.
-    EXPECT_EQ(3600, srv->getKeyLifetime());
+    EXPECT_EQ(3600U, srv->getKeyLifetime());
     srv->setKeyLifetime(7200);
-    EXPECT_EQ(7200, srv->getKeyLifetime());
+    EXPECT_EQ(7200U, srv->getKeyLifetime());
 
     // Rekey interval.
-    EXPECT_EQ(2700, srv->getRekeyInterval());
+    EXPECT_EQ(2700U, srv->getRekeyInterval());
     srv->setRekeyInterval(5400);
-    EXPECT_EQ(5400, srv->getRekeyInterval());
+    EXPECT_EQ(5400U, srv->getRekeyInterval());
 
     // Retry interval.
-    EXPECT_EQ(120, srv->getRetryInterval());
+    EXPECT_EQ(120U, srv->getRetryInterval());
     srv->setRetryInterval(240);
-    EXPECT_EQ(240, srv->getRetryInterval());
+    EXPECT_EQ(240U, srv->getRetryInterval());
 
     // TKEY protocol.
     EXPECT_EQ(IOFetch::TCP, srv->getKeyProto());
@@ -258,12 +258,12 @@ TEST(GssTsigCfgTest, dnsServer) {
     DnsServerPtr srv2(new DnsServer(id, { }, addr, 1234));
     ASSERT_TRUE(srv2);
     EXPECT_EQ(addr, srv2->getIpAddress());
-    EXPECT_EQ(1234, srv2->getPort());
+    EXPECT_EQ(1234U, srv2->getPort());
 
     // TKEY exchange timeout.
-    EXPECT_EQ(3000, srv->getExchangeTimeout());
+    EXPECT_EQ(3000U, srv->getExchangeTimeout());
     srv->setExchangeTimeout(5000);
-    EXPECT_EQ(5000, srv->getExchangeTimeout());
+    EXPECT_EQ(5000U, srv->getExchangeTimeout());
 
     // User context.
     ConstElementPtr user_ctx = srv->getContext();
@@ -351,17 +351,17 @@ TEST(GssTsigCfgTest, buildServerInfo) {
                      "empty D2 config");
     ASSERT_NO_THROW(srv->buildServerInfo(ctx));
     const DnsServerInfoStorage& infos = srv->getServerInfos();
-    ASSERT_EQ(2, infos.size());
+    ASSERT_EQ(2U, infos.size());
     DnsServerInfoPtr info1;
     ASSERT_NO_THROW(info1 = infos.at(0));
     ASSERT_TRUE(info1);
     EXPECT_EQ(addr, info1->getIpAddress());
-    EXPECT_EQ(53, info1->getPort());
+    EXPECT_EQ(53U, info1->getPort());
     DnsServerInfoPtr info2;
     ASSERT_NO_THROW(info2 = infos.at(1));
     ASSERT_TRUE(info2);
     EXPECT_EQ(addr, info2->getIpAddress());
-    EXPECT_EQ(53, info2->getPort());
+    EXPECT_EQ(53U, info2->getPort());
     EXPECT_NE(info1, info2);
 
     // buildServerInfo can be called only once.
@@ -408,17 +408,17 @@ TEST(GssTsigCfgTest, buildServerInfoTwo) {
     // Check the buildServerInfo method.
     ASSERT_NO_THROW(srv->buildServerInfo(ctx));
     const DnsServerInfoStorage& infos = srv->getServerInfos();
-    ASSERT_EQ(2, infos.size());
+    ASSERT_EQ(2U, infos.size());
     DnsServerInfoPtr info1;
     ASSERT_NO_THROW(info1 = infos.at(0));
     ASSERT_TRUE(info1);
     EXPECT_EQ(addr, info1->getIpAddress());
-    EXPECT_EQ(53, info1->getPort());
+    EXPECT_EQ(53U, info1->getPort());
     DnsServerInfoPtr info2;
     ASSERT_NO_THROW(info2 = infos.at(1));
     ASSERT_TRUE(info2);
     EXPECT_EQ(addr, info2->getIpAddress());
-    EXPECT_EQ(53, info2->getPort());
+    EXPECT_EQ(53U, info2->getPort());
     EXPECT_NE(info1, info2);
 }
 
@@ -461,12 +461,12 @@ TEST(GssTsigCfgTest, buildServerInfoOneDomain) {
     // Check the buildServerInfo method.
     ASSERT_NO_THROW(srv->buildServerInfo(ctx));
     const DnsServerInfoStorage& infos = srv->getServerInfos();
-    ASSERT_EQ(1, infos.size());
+    ASSERT_EQ(1U, infos.size());
     DnsServerInfoPtr info;
     ASSERT_NO_THROW(info = infos.at(0));
     ASSERT_TRUE(info);
     EXPECT_EQ(addr, info->getIpAddress());
-    EXPECT_EQ(53, info->getPort());
+    EXPECT_EQ(53U, info->getPort());
 }
 
 /// @build Check buildServerInfo with no server.
@@ -567,9 +567,9 @@ TEST(GssTsigCfgTest, config) {
     EXPECT_EQ("KCM:", cfg.getCredsCache());
 
     // maximum tkey lifetime.
-    EXPECT_EQ(0, cfg.getMaxKeyLifetime());
+    EXPECT_EQ(0U, cfg.getMaxKeyLifetime());
     cfg.setMaxKeyLifetime(12345);
-    EXPECT_EQ(12345, cfg.getMaxKeyLifetime());
+    EXPECT_EQ(12345U, cfg.getMaxKeyLifetime());
 }
 
 /// @brief Check the DNS server containers.
@@ -593,7 +593,7 @@ TEST(GssTsigCfgTest, dnsServers) {
 
     // Check the server list.
     cfg.addServer(srv);
-    EXPECT_EQ(1, cfg.getServerList().size());
+    EXPECT_EQ(1U, cfg.getServerList().size());
     EXPECT_EQ(srv, cfg.getServerList().front());
     EXPECT_EQ(srv, cfg.getServer(id));
     EXPECT_FALSE(cfg.getServer("bar"));
@@ -640,12 +640,12 @@ TEST(GssTsigCfgTest, buildServerRevMap) {
     EXPECT_THROW(cfg.buildServerRevMap(D2CfgContextPtr()), D2CfgError);
     ASSERT_NO_THROW(cfg.buildServerRevMap(ctx));
     const DnsServerRevMap& rev_map = cfg.getServerRevMap();
-    ASSERT_EQ(2, rev_map.size());
+    ASSERT_EQ(2U, rev_map.size());
     for (auto const& it : rev_map) {
         DnsServerInfoPtr info = it.first;
         ASSERT_TRUE(info);
         EXPECT_EQ(addr, info->getIpAddress());
-        EXPECT_EQ(53, info->getPort());
+        EXPECT_EQ(53U, info->getPort());
         EXPECT_EQ(srv, it.second);
     }
 
@@ -697,46 +697,46 @@ TEST(GssTsigCfgTest, configure) {
     ASSERT_NO_THROW(cfg.configure(json));
     EXPECT_EQ("FILE:/etc/krb5.keytab", cfg.getClientKeyTab());
     EXPECT_EQ("FILE:/etc/ccache", cfg.getCredsCache());
-    EXPECT_EQ(86400, cfg.getMaxKeyLifetime());
+    EXPECT_EQ(86400U, cfg.getMaxKeyLifetime());
     EXPECT_TRUE(cfg.getIgnoreBadDirection());
     EXPECT_TRUE(GssApiSecCtx::ignore_bad_direction_);
     // Put this in the fixture if one is created...
     GssApiSecCtx::ignore_bad_direction_ = false;
     const DnsServerList& servers = cfg.getServerList();
-    ASSERT_EQ(2, servers.size());
+    ASSERT_EQ(2U, servers.size());
 
     DnsServerPtr server;
     ASSERT_NO_THROW(server = servers.at(0));
     ASSERT_TRUE(server);
     EXPECT_EQ("foo", server->getID());
     EXPECT_EQ("192.0.2.1", server->getIpAddress().toText());
-    EXPECT_EQ(53, server->getPort());
+    EXPECT_EQ(53U, server->getPort());
     EXPECT_EQ("DNS/server1.example.org@REALM", server->getServerPrincipal());
     EXPECT_EQ("sig-server1.example.org.", server->getKeyNameSuffix());
     EXPECT_EQ("DHCP/admin1.example.org@REALM", server->getClientPrincipal());
     EXPECT_TRUE(server->getGssReplayFlag());
     EXPECT_FALSE(server->getGssSequenceFlag());
-    EXPECT_EQ(64800, server->getRekeyInterval());
-    EXPECT_EQ(2880, server->getRetryInterval());
-    EXPECT_EQ(86400, server->getKeyLifetime());
+    EXPECT_EQ(64800U, server->getRekeyInterval());
+    EXPECT_EQ(2880U, server->getRetryInterval());
+    EXPECT_EQ(86400U, server->getKeyLifetime());
     EXPECT_EQ(IOFetch::UDP, server->getKeyProto());
-    EXPECT_EQ(4000, server->getExchangeTimeout());
+    EXPECT_EQ(4000U, server->getExchangeTimeout());
 
     ASSERT_NO_THROW(server = servers.at(1));
     ASSERT_TRUE(server);
     EXPECT_EQ("bar", server->getID());
     EXPECT_EQ("192.0.2.2", server->getIpAddress().toText());
-    EXPECT_EQ(5300, server->getPort());
+    EXPECT_EQ(5300U, server->getPort());
     EXPECT_EQ("DNS/server.example.org@REALM", server->getServerPrincipal());
     EXPECT_EQ("sig-server.example.org.", server->getKeyNameSuffix());
     EXPECT_EQ("DHCP/admin.example.org@REALM", server->getClientPrincipal());
     EXPECT_FALSE(server->getGssReplayFlag());
     EXPECT_TRUE(server->getGssSequenceFlag());
-    EXPECT_EQ(5400, server->getRekeyInterval());
-    EXPECT_EQ(240, server->getRetryInterval());
-    EXPECT_EQ(7200, server->getKeyLifetime());
+    EXPECT_EQ(5400U, server->getRekeyInterval());
+    EXPECT_EQ(240U, server->getRetryInterval());
+    EXPECT_EQ(7200U, server->getKeyLifetime());
     EXPECT_EQ(IOFetch::UDP, server->getKeyProto());
-    EXPECT_EQ(2000, server->getExchangeTimeout());
+    EXPECT_EQ(2000U, server->getExchangeTimeout());
 }
 
 /// @brief Check configure requires a map.
@@ -1269,9 +1269,9 @@ TEST(GssTsigCfgTest, tkeyProtoDefault) {
     ASSERT_TRUE(json);
     GssTsigCfg cfg;
     ASSERT_NO_THROW(cfg.configure(json));
-    EXPECT_EQ(3600, cfg.getMaxKeyLifetime());
+    EXPECT_EQ(3600U, cfg.getMaxKeyLifetime());
     const DnsServerList& servers = cfg.getServerList();
-    ASSERT_EQ(1, servers.size());
+    ASSERT_EQ(1U, servers.size());
 
     DnsServerPtr server;
     ASSERT_NO_THROW(server = servers.at(0));
@@ -1291,7 +1291,7 @@ TEST(GssTsigCfgTest, tkeyProtoGlobal) {
     GssTsigCfg cfg;
     ASSERT_NO_THROW(cfg.configure(json));
     const DnsServerList& servers = cfg.getServerList();
-    ASSERT_EQ(1, servers.size());
+    ASSERT_EQ(1U, servers.size());
 
     DnsServerPtr server;
     ASSERT_NO_THROW(server = servers.at(0));
@@ -1312,7 +1312,7 @@ TEST(GssTsigCfgTest, tkeyProtoLocal) {
     GssTsigCfg cfg;
     ASSERT_NO_THROW(cfg.configure(json));
     const DnsServerList& servers = cfg.getServerList();
-    ASSERT_EQ(1, servers.size());
+    ASSERT_EQ(1U, servers.size());
 
     DnsServerPtr server;
     ASSERT_NO_THROW(server = servers.at(0));

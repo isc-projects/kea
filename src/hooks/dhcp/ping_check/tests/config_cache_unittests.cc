@@ -71,7 +71,7 @@ public:
 
         // Create a new cache.
         TestConfigCache configs;
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
 
         // Verify that last_flush_time_ has been set and that the
         // cache has no entries.
@@ -89,7 +89,7 @@ public:
     void testInvalidConfig() {
         // Create a new cache.
         TestConfigCache configs;
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
 
         // An invalid keyword should fail.
         std::string json =
@@ -105,14 +105,14 @@ public:
         ASSERT_THROW_MSG(configs.parseAndCacheConfig(1, user_context), DhcpConfigError,
                          "spurious 'bogus' parameter");
 
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
     }
 
     /// @brief Verifies that valid user-context supplied config are cached correctly.
     void testValidConfig() {
         // Create a new cache.
         TestConfigCache configs;
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
 
         // A valid config should get cached.
         std::string json =
@@ -133,7 +133,7 @@ public:
         PingCheckConfigPtr config;
         ASSERT_NO_THROW_LOG(config = configs.parseAndCacheConfig(1, user_context));
         ASSERT_TRUE(config);
-        EXPECT_EQ(configs.size(), 1);
+        EXPECT_EQ(configs.size(), 1U);
 
         // Verify we can retrieve the cached config.
         PingCheckConfigPtr fetched_config;
@@ -145,12 +145,12 @@ public:
     void testConfigCacheEmptyConfig() {
         // Create a new cache.
         TestConfigCache configs;
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
 
         // Verify that we can cache an empty config pointer.
         PingCheckConfigPtr no_config;
         ASSERT_NO_THROW_LOG(configs.cacheConfig(1, no_config));
-        EXPECT_EQ(configs.size(), 1);
+        EXPECT_EQ(configs.size(), 1U);
 
         // Verify we can retrieve the cached empty config pointer.
         PingCheckConfigPtr fetched_config;
@@ -162,7 +162,7 @@ public:
     void testFlushCache() {
         // Create a new cache.
         TestConfigCache configs;
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
 
         ptime last_flush_time = configs.getLastFlushTime();
 
@@ -182,7 +182,7 @@ public:
         ConstElementPtr user_context;
         ASSERT_NO_THROW_LOG(user_context = Element::fromJSON(json));
 
-        for (int id = 1; id < 5; ++id) {
+        for (unsigned id = 1; id < 5; ++id) {
             PingCheckConfigPtr config;
             ASSERT_NO_THROW_LOG(config = configs.parseAndCacheConfig(id, user_context));
             ASSERT_TRUE(config);
@@ -193,7 +193,7 @@ public:
         // and last_flush_time should be updated.
         configs.flush();
         EXPECT_GT(configs.getLastFlushTime(), last_flush_time);
-        EXPECT_EQ(configs.size(), 0);
+        EXPECT_EQ(configs.size(), 0U);
     }
 };
 

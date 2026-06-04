@@ -833,7 +833,7 @@ void Lease6CmdsTest::testLease6Add() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
-    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(4U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -843,7 +843,7 @@ void Lease6CmdsTest::testLease6Add() {
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(0)), 1);
-    EXPECT_EQ(0, l->state_);
+    EXPECT_EQ(0U, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddDeclinedLeases() {
@@ -884,7 +884,7 @@ void Lease6CmdsTest::testLease6AddDeclinedLeases() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
-    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(4U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -894,7 +894,7 @@ void Lease6CmdsTest::testLease6AddDeclinedLeases() {
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(0)), 1);
-    EXPECT_EQ(1, l->state_);
+    EXPECT_EQ(1U, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddReleasedLeases() {
@@ -935,7 +935,7 @@ void Lease6CmdsTest::testLease6AddReleasedLeases() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
-    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(4U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -945,7 +945,7 @@ void Lease6CmdsTest::testLease6AddReleasedLeases() {
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(0)), 1);
-    EXPECT_EQ(3, l->state_);
+    EXPECT_EQ(3U, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddRegisteredLeases() {
@@ -986,7 +986,7 @@ void Lease6CmdsTest::testLease6AddRegisteredLeases() {
     // Make sure the lease has proper value set.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->duid_->toText());
-    EXPECT_EQ(4, l->valid_lft_); // taken from subnet configuration
+    EXPECT_EQ(4U, l->valid_lft_); // taken from subnet configuration
     EXPECT_FALSE(l->fqdn_fwd_);
     EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
@@ -996,7 +996,7 @@ void Lease6CmdsTest::testLease6AddRegisteredLeases() {
     // cases we could have the seconds counter to tick, so having a value off
     // by one is ok.
     EXPECT_LE(abs(l->cltt_ - time(0)), 1);
-    EXPECT_EQ(4, l->state_);
+    EXPECT_EQ(4U, l->state_);
 }
 
 void Lease6CmdsTest::testLease6AddExisting() {
@@ -1063,7 +1063,7 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissing() {
     // Now check that the lease is really there and has correct subnet-id.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
-    EXPECT_EQ(66, l->subnet_id_);
+    EXPECT_EQ(66U, l->subnet_id_);
 }
 
 void Lease6CmdsTest::testLease6AddSubnetIdMissingDeclinedLeases() {
@@ -1100,7 +1100,7 @@ void Lease6CmdsTest::testLease6AddSubnetIdMissingDeclinedLeases() {
     // Now check that the lease is really there and has correct subnet-id.
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
-    EXPECT_EQ(66, l->subnet_id_);
+    EXPECT_EQ(66U, l->subnet_id_);
 }
 
 void Lease6CmdsTest::testLease6AddSubnetIdMissingBadAddr() {
@@ -1249,7 +1249,7 @@ void Lease6CmdsTest::testLease6AddPrefix() {
     Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_PD, IOAddress("2001:db8:abcd::"));
     ASSERT_TRUE(l);
     EXPECT_EQ(Lease::TYPE_PD, l->type_);
-    EXPECT_EQ(48, l->prefixlen_);
+    EXPECT_EQ(48U, l->prefixlen_);
     EXPECT_EQ("", l->hostname_);
     EXPECT_FALSE(l->getContext());
 }
@@ -1307,7 +1307,7 @@ void Lease6CmdsTest::testLease6AddFullAddr() {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
-    EXPECT_EQ(5, l->pool_id_);
+    EXPECT_EQ(5U, l->pool_id_);
     ASSERT_TRUE(l->getContext());
     EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
 }
@@ -1409,7 +1409,7 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
 
     // Check the user context / extended info too.
     ConstElementPtr ctx = l->getContext();
@@ -1424,7 +1424,7 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
                                           IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     // The lease must be retrieved from the remote id table.
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     Lease6Ptr lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
@@ -1434,7 +1434,7 @@ void Lease6CmdsTest::testLease6AddExtendedInfo() {
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
@@ -1746,7 +1746,7 @@ void Lease6CmdsTest::testLease6GetAllNoLeases() {
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
-    EXPECT_EQ(0, leases->size());
+    EXPECT_EQ(0U, leases->size());
 }
 
 void Lease6CmdsTest::testLease6GetAllBySubnetId() {
@@ -1808,7 +1808,7 @@ void Lease6CmdsTest::testLease6GetAllBySubnetIdNoLeases() {
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
 
-    EXPECT_EQ(0, leases->size());
+    EXPECT_EQ(0U, leases->size());
 }
 
 void Lease6CmdsTest::testLease6GetAllByMultipleSubnetIds() {
@@ -1971,10 +1971,10 @@ void Lease6CmdsTest::testLease6GetPaged() {
     }
 
     // Check if all addresses were returned.
-    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::1"));
-    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::2"));
-    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::1"));
-    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::2"));
+    EXPECT_EQ(1U, lease_addresses.count("2001:db8:1::1"));
+    EXPECT_EQ(1U, lease_addresses.count("2001:db8:1::2"));
+    EXPECT_EQ(1U, lease_addresses.count("2001:db8:2::1"));
+    EXPECT_EQ(1U, lease_addresses.count("2001:db8:2::2"));
 }
 
 void Lease6CmdsTest::testLease6GetPagedZeroAddress() {
@@ -2170,7 +2170,7 @@ void Lease6CmdsTest::testLease6GetByHwAddressFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(2, leases->size());
+    ASSERT_EQ(2U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2255,7 +2255,7 @@ void Lease6CmdsTest::testLease6GetByDuidFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(2, leases->size());
+    ASSERT_EQ(2U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2363,7 +2363,7 @@ void Lease6CmdsTest::testLease6GetByStateFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(4, leases->size());
+    ASSERT_EQ(4U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2441,7 +2441,7 @@ void Lease6CmdsTest::testLease6GetByStateFindN() {
         ConstElementPtr leases_rsp = map->get("leases");
         ASSERT_TRUE(leases_rsp);
         ASSERT_EQ(Element::list, leases_rsp->getType());
-        ASSERT_EQ(1, leases_rsp->size());
+        ASSERT_EQ(1U, leases_rsp->size());
 
         // Let's check if the response makes any sense.
         ConstElementPtr lease = leases_rsp->get(0);
@@ -2523,7 +2523,7 @@ void Lease6CmdsTest::testLease6GetByHostnameFind2() {
     ConstElementPtr leases = map->get("leases");
     ASSERT_TRUE(leases);
     ASSERT_EQ(Element::list, leases->getType());
-    ASSERT_EQ(4, leases->size());
+    ASSERT_EQ(4U, leases->size());
 
     // Let's check if the response makes any sense.
     ConstElementPtr lease = leases->get(0);
@@ -2794,9 +2794,9 @@ void Lease6CmdsTest::testLease6Update() {
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ(3, l->pool_id_);
+    EXPECT_EQ(3U, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -2839,9 +2839,9 @@ void Lease6CmdsTest::testLease6UpdateDeclinedLeases() {
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
-    EXPECT_EQ(3, l->pool_id_);
+    EXPECT_EQ(3U, l->pool_id_);
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -2880,13 +2880,13 @@ void Lease6CmdsTest::testLease6UpdateNoSubnetId() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is correct.
-    EXPECT_EQ(66, l->subnet_id_);
+    EXPECT_EQ(66U, l->subnet_id_);
 
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -2925,13 +2925,13 @@ void Lease6CmdsTest::testLease6UpdateNoSubnetIdDeclinedLeases() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is correct.
-    EXPECT_EQ(66, l->subnet_id_);
+    EXPECT_EQ(66U, l->subnet_id_);
 
     // Make sure the lease has been updated.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -2975,7 +2975,7 @@ void Lease6CmdsTest::testLease6UpdateForceCreate() {
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -3015,13 +3015,13 @@ void Lease6CmdsTest::testLease6UpdateForceCreateNoSubnetId() {
     ASSERT_TRUE(l);
 
     // Make sure the subnet-id is figured out correctly.
-    EXPECT_EQ(66, l->subnet_id_);
+    EXPECT_EQ(66U, l->subnet_id_);
 
     // Make sure the lease is correct.
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
     EXPECT_FALSE(l->getContext());
 }
 
@@ -3103,7 +3103,7 @@ void Lease6CmdsTest::testLease6UpdateComment() {
     // Check user context.
     ConstElementPtr ctx = l->getContext();
     ASSERT_TRUE(ctx);
-    EXPECT_EQ(2, ctx->size());
+    EXPECT_EQ(2U, ctx->size());
     ASSERT_TRUE(ctx->contains("comment"));
     EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
     ASSERT_TRUE(ctx->contains("foobar"));
@@ -3165,7 +3165,7 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_EQ(7654321U, l->iaid_);
 
     // Check the user context / extended info too.
     ConstElementPtr ctx = l->getContext();
@@ -3180,7 +3180,7 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
                                           IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
     // The lease must be retrieved from the remote id table.
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     Lease6Ptr lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
@@ -3190,7 +3190,7 @@ void Lease6CmdsTest::testLease6UpdateExtendedInfo() {
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::1"), lx->addr_);
@@ -3312,9 +3312,9 @@ void Lease6CmdsTest::testLease6UpdateRegistered() {
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
-    EXPECT_EQ(7654321, l->iaid_);
-    EXPECT_EQ(4, l->state_);
-    EXPECT_EQ(99, l->subnet_id_);
+    EXPECT_EQ(7654321U, l->iaid_);
+    EXPECT_EQ(4U, l->state_);
+    EXPECT_EQ(99U, l->subnet_id_);
 }
 
 void Lease6CmdsTest::testLease6DelMissingParams() {
@@ -4106,7 +4106,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyBadParam() {
     ASSERT_TRUE(lease1);
 
     // The IAID should have not been updated for the existing lease.
-    EXPECT_EQ(42, lease1->iaid_);
+    EXPECT_EQ(42U, lease1->iaid_);
 }
 
 void Lease6CmdsTest::testLease6BulkApplyUpdatesOnly() {
@@ -4158,8 +4158,8 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnly() {
     ASSERT_TRUE(lease2);
 
     // The IAIDs should have been updated for the existing leases.
-    EXPECT_EQ(1234, lease1->iaid_);
-    EXPECT_EQ(1234, lease2->iaid_);
+    EXPECT_EQ(1234U, lease1->iaid_);
+    EXPECT_EQ(1234U, lease2->iaid_);
 }
 
 void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
@@ -4227,8 +4227,8 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     ASSERT_TRUE(lease2);
 
     // The IAIDs should have been updated for the existing leases.
-    EXPECT_EQ(1234, lease1->iaid_);
-    EXPECT_EQ(1234, lease2->iaid_);
+    EXPECT_EQ(1234U, lease1->iaid_);
+    EXPECT_EQ(1234U, lease2->iaid_);
 
     // The user context have been updated too.
     EXPECT_FALSE(lease1->getContext());
@@ -4243,7 +4243,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     leases = lmptr_->getLeases6ByRemoteId(remote_id,
                                           IOAddress::IPV6_ZERO_ADDRESS(),
                                           LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     Lease6Ptr lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::2"), lx->addr_);
@@ -4251,7 +4251,7 @@ void Lease6CmdsTest::testLease6BulkApplyUpdatesOnlyExtendedInfo() {
     leases = lmptr_->getLeases6ByRelayId(*relay_id,
                                          IOAddress::IPV6_ZERO_ADDRESS(),
                                          LeasePageSize(10));
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     lx = leases[0];
     ASSERT_TRUE(lx);
     EXPECT_EQ(IOAddress("2001:db8:1::2"), lx->addr_);
@@ -4348,7 +4348,7 @@ void Lease6CmdsTest::testLease6BulkApplyDeleteNonExiting() {
     auto failed_deleted_leases = args->get("failed-deleted-leases");
     ASSERT_TRUE(failed_deleted_leases);
     ASSERT_EQ(Element::list, failed_deleted_leases->getType());
-    ASSERT_EQ(2, failed_deleted_leases->size());
+    ASSERT_EQ(2U, failed_deleted_leases->size());
 
     {
         SCOPED_TRACE("lease address 2001:db8:1::123");
@@ -4928,7 +4928,7 @@ void Lease6CmdsTest::testLease6ConflictingBulkApplyAdd() {
     auto failed_leases = args->get("failed-leases");
     ASSERT_TRUE(failed_leases);
     ASSERT_EQ(Element::list, failed_leases->getType());
-    ASSERT_EQ(1, failed_leases->size());
+    ASSERT_EQ(1U, failed_leases->size());
     checkFailedLease(failed_leases, "IA_NA", locked_addr.toText(),
                      CONTROL_RESULT_CONFLICT,
                      "ResourceBusy: IP address:2001:db8:2::77 could not be updated.");

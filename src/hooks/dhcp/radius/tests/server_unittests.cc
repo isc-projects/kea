@@ -102,9 +102,9 @@ TEST_F(ServerTest, basic) {
                                             "foo", 10, 0)));
     ASSERT_TRUE(server);
     EXPECT_EQ(addr4, server->getPeerAddress());
-    EXPECT_EQ(1234, server->getPeerPort());
+    EXPECT_EQ(1234U, server->getPeerPort());
     EXPECT_NO_THROW(server->setPeerPort(2345));
-    EXPECT_EQ(2345, server->getPeerPort());
+    EXPECT_EQ(2345U, server->getPeerPort());
     EXPECT_EQ(addr4, server->getLocalAddress());
     EXPECT_FALSE(server->getTlsContext());
     expected = "address family mismatch: peer ";
@@ -117,10 +117,10 @@ TEST_F(ServerTest, basic) {
     EXPECT_THROW_MSG(server->setSecret(""), BadValue, "empty secret");
     EXPECT_NO_THROW(server->setSecret("bar"));
     EXPECT_EQ("bar", server->getSecret());
-    EXPECT_EQ(10, server->getTimeout());
+    EXPECT_EQ(10U, server->getTimeout());
     // Zero timeout is rounded to 1.
     EXPECT_NO_THROW(server->setTimeout(0));
-    EXPECT_EQ(1, server->getTimeout());
+    EXPECT_EQ(1U, server->getTimeout());
     if (numeric_limits<unsigned>::max() > numeric_limits<long>::max() / 1000) {
         auto div1000 = numeric_limits<long>::max() / 1000;
         unsigned large = static_cast<unsigned>(div1000 + 1);
@@ -129,9 +129,9 @@ TEST_F(ServerTest, basic) {
         EXPECT_THROW_MSG(server->setTimeout(large), OutOfRange, ss.str());
         cerr << ss.str() << "\n";
     }
-    EXPECT_EQ(0, server->getDeadtime());
+    EXPECT_EQ(0U, server->getDeadtime());
     EXPECT_NO_THROW(server->setDeadtime(60));
-    EXPECT_EQ(60, server->getDeadtime());
+    EXPECT_EQ(60U, server->getDeadtime());
     steady_clock::time_point now = steady_clock::now();
     EXPECT_TRUE(server->getDeadtimeEnd() <= now);
     steady_clock::time_point later = now + seconds(10);

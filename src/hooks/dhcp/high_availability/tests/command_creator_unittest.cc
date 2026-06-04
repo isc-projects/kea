@@ -101,7 +101,7 @@ testCommandBasics(const ConstElementPtr& command,
     ConstElementPtr service = command->get("service");
     ASSERT_TRUE(service);
     ASSERT_EQ(Element::list, service->getType());
-    ASSERT_EQ(1, service->size());
+    ASSERT_EQ(1U, service->size());
     ASSERT_EQ(Element::string, service->get(0)->getType());
     EXPECT_EQ(expected_service, service->get(0)->stringValue());
 
@@ -141,7 +141,7 @@ testCommandBasics(const ConstElementPtr& command,
     ConstElementPtr service = command->get("service");
     ASSERT_TRUE(service);
     ASSERT_EQ(Element::list, service->getType());
-    ASSERT_EQ(1, service->size());
+    ASSERT_EQ(1U, service->size());
     ASSERT_EQ(Element::string, service->get(0)->getType());
     EXPECT_EQ(expected_service, service->get(0)->stringValue());
 
@@ -157,7 +157,7 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(3, arguments->size());
+    ASSERT_EQ(3U, arguments->size());
     ConstElementPtr max_period = arguments->get("max-period");
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
@@ -174,7 +174,7 @@ TEST(CommandCreatorTest, createDHCPDisable4) {
                                                 HAServerType::DHCPv4);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(2U, arguments->size());
     origin_id = arguments->get("origin-id");
     ASSERT_TRUE(origin_id);
     ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin_id->intValue());
@@ -190,7 +190,7 @@ TEST(CommandCreatorTest, createDHCPEnable4) {
                                                                HAServerType::DHCPv4);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp4",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(2U, arguments->size());
     ConstElementPtr origin_id = arguments->get("origin-id");
     ASSERT_TRUE(origin_id);
     ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+1, origin_id->intValue());
@@ -312,7 +312,7 @@ TEST(CommandCreatorTest, createDHCPDisable6) {
     ConstElementPtr arguments;
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(3, arguments->size());
+    ASSERT_EQ(3U, arguments->size());
     ConstElementPtr max_period = arguments->get("max-period");
     ASSERT_TRUE(max_period);
     ASSERT_EQ(Element::integer, max_period->getType());
@@ -328,7 +328,7 @@ TEST(CommandCreatorTest, createDHCPDisable6) {
     command = CommandCreator::createDHCPDisable(NetworkState::HA_REMOTE_COMMAND+2, 0, HAServerType::DHCPv6);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-disable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(2U, arguments->size());
     origin_id = arguments->get("origin-id");
     ASSERT_TRUE(origin_id);
     ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin_id->intValue());
@@ -344,7 +344,7 @@ TEST(CommandCreatorTest, createDHCPEnable6) {
     ConstElementPtr command = CommandCreator::createDHCPEnable(NetworkState::HA_REMOTE_COMMAND+2, HAServerType::DHCPv6);
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "dhcp-enable", "dhcp6",
                                               arguments));
-    ASSERT_EQ(2, arguments->size());
+    ASSERT_EQ(2U, arguments->size());
     ConstElementPtr origin_id = arguments->get("origin-id");
     ASSERT_TRUE(origin_id);
     ASSERT_EQ(NetworkState::HA_REMOTE_COMMAND+2, origin_id->intValue());
@@ -415,7 +415,7 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     auto deleted_leases_json = arguments->get("deleted-leases");
     ASSERT_TRUE(deleted_leases_json);
     ASSERT_EQ(Element::list, deleted_leases_json->getType());
-    ASSERT_EQ(1, deleted_leases_json->size());
+    ASSERT_EQ(1U, deleted_leases_json->size());
     auto lease_as_json = deleted_leases_json->get(0);
     EXPECT_EQ(leaseAsJson(deleted_lease)->str(), lease_as_json->str());
 
@@ -423,7 +423,7 @@ TEST(CommandCreatorTest, createLease6BulkApply) {
     auto leases_json = arguments->get("leases");
     ASSERT_TRUE(leases_json);
     ASSERT_EQ(Element::list, leases_json->getType());
-    ASSERT_EQ(1, leases_json->size());
+    ASSERT_EQ(1U, leases_json->size());
     lease_as_json = leases_json->get(0);
     EXPECT_EQ(leaseAsJson(lease)->str(), lease_as_json->str());
 }
@@ -454,13 +454,13 @@ TEST(CommandCreatorTest, createLease6BulkApplySoftDelete) {
     auto deleted_leases_json = arguments->get("deleted-leases");
     ASSERT_TRUE(deleted_leases_json);
     ASSERT_EQ(Element::list, deleted_leases_json->getType());
-    EXPECT_EQ(0, deleted_leases_json->size());
+    EXPECT_EQ(0U, deleted_leases_json->size());
 
     // The lease in the released state should be in the updated leases list.
     auto leases_json = arguments->get("leases");
     ASSERT_TRUE(leases_json);
     ASSERT_EQ(Element::list, leases_json->getType());
-    ASSERT_EQ(1, leases_json->size());
+    ASSERT_EQ(1U, leases_json->size());
     auto lease_as_json = leases_json->get(0);
     EXPECT_EQ(leaseAsJson(released_lease)->str(), lease_as_json->str());
 }
@@ -488,7 +488,7 @@ TEST(CommandCreatorTest, createLease6BulkApplyFromBacklog) {
     auto deleted_leases_json = arguments->get("deleted-leases");
     ASSERT_TRUE(deleted_leases_json);
     ASSERT_EQ(Element::list, deleted_leases_json->getType());
-    ASSERT_EQ(1, deleted_leases_json->size());
+    ASSERT_EQ(1U, deleted_leases_json->size());
     auto lease_as_json = deleted_leases_json->get(0);
     EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
 
@@ -496,12 +496,12 @@ TEST(CommandCreatorTest, createLease6BulkApplyFromBacklog) {
     auto leases_json = arguments->get("leases");
     ASSERT_TRUE(leases_json);
     ASSERT_EQ(Element::list, leases_json->getType());
-    ASSERT_EQ(1, leases_json->size());
+    ASSERT_EQ(1U, leases_json->size());
     lease_as_json = leases_json->get(0);
     EXPECT_EQ(leaseAsJson(createLease6())->str(), lease_as_json->str());
 
     // Make sure the backlog is now empty.
-    EXPECT_EQ(0, backlog.size());
+    EXPECT_EQ(0U, backlog.size());
 }
 
 // This test verifies that the lease6-get-all command is correct.

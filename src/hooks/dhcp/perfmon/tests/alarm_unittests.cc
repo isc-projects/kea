@@ -61,7 +61,7 @@ TEST(Alarm, validConstructors) {
     EXPECT_EQ(alarm->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(alarm->getStartEventLabel(), "mt_queued");
     EXPECT_EQ(alarm->getStopEventLabel(), "process_started");
-    EXPECT_EQ(alarm->getSubnetId(), 77);
+    EXPECT_EQ(alarm->getSubnetId(), 77U);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", alarm->getLabel());
     EXPECT_EQ(alarm->getLowWater(), low_water);
     EXPECT_EQ(alarm->getHighWater(), high_water);

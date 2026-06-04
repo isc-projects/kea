@@ -445,8 +445,8 @@ TEST_F(HostCmdsTest, ReservationAdd) {
         ASSERT_TRUE(hds);
 
         // Check that there are no hosts
-        EXPECT_EQ(0, hds->size());
-        EXPECT_EQ(0, CfgMgr::instance().getCurrentCfg()->getCfgHosts()->getAll4(SubnetID(1)).size());
+        EXPECT_EQ(0U, hds->size());
+        EXPECT_EQ(0U, CfgMgr::instance().getCurrentCfg()->getCfgHosts()->getAll4(SubnetID(1)).size());
 
         string exp_rsp = "Host added.";
         testCommand(boost::get<0>(test_case), CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -470,7 +470,7 @@ TEST_F(HostCmdsTest, reservationAddNoAddress) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // The inserted reservation lacks IPv4 address. It should be added
     // correctly.
@@ -489,7 +489,7 @@ TEST_F(HostCmdsTest, reservationAddNoAddress) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the host was really there.
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 }
 
 // Check that adding new host works only when actual data source is
@@ -525,7 +525,7 @@ TEST_F(HostCmdsTest, reservationAddBadHwAddr) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string txt =
@@ -643,7 +643,7 @@ TEST_F(HostCmdsTest, reservationAdd6) {
         ASSERT_TRUE(hds);
 
         // Check that there are no hosts
-        EXPECT_EQ(0, hds->size());
+        EXPECT_EQ(0U, hds->size());
 
         string exp_rsp = "Host added.";
         testCommand(boost::get<0>(test_case), CONTROL_RESULT_SUCCESS, exp_rsp);
@@ -669,7 +669,7 @@ TEST_F(HostCmdsTest, reservationAdd6NoAddresses) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // The inserted reservation lacks IPv6 addresses and prefixes. It
     // should be added correctly.
@@ -688,7 +688,7 @@ TEST_F(HostCmdsTest, reservationAdd6NoAddresses) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the host was really there.
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 }
 
 // Checks that the reservation without any subnet and IPv4 address is added
@@ -701,7 +701,7 @@ TEST_F(HostCmdsTest, reservationAddNoSubnetNoAddress4) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // The inserted reservation lacks subnet id and IPv4 address.
     string txt =
@@ -719,7 +719,7 @@ TEST_F(HostCmdsTest, reservationAddNoSubnetNoAddress4) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the host was really there.
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 
     // Verify the host is global.
     uint8_t hw_addr[] = { 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f };
@@ -885,7 +885,7 @@ TEST_F(HostCmdsTest, reservationAddNoSubnetNoAddress6) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // The inserted reservation lacks subnet id and IPv6 address/prefixes.
     string txt =
@@ -903,7 +903,7 @@ TEST_F(HostCmdsTest, reservationAddNoSubnetNoAddress6) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the host was really there.
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 
     // Verify the host is global.
     uint8_t hw_addr[] = { 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f };
@@ -1167,7 +1167,7 @@ TEST_F(HostCmdsTest, reservationAdd6PrefixExclude) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Add a reservation with a Prefix Exclude option.
     string txt =
@@ -1186,7 +1186,7 @@ TEST_F(HostCmdsTest, reservationAdd6PrefixExclude) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the host was really there.
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 
     // Verify there is a host with the Prefix Exclude option.
     uint8_t hw_addr[] = { 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f };
@@ -1480,7 +1480,7 @@ TEST_F(HostCmdsTest, reservationGetBadHwAddr) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts.
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     uint8_t duid[21];
     for (uint8_t i = 0; i < 21; ++i) {
@@ -2183,7 +2183,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetID) {
     // Create in-memory hosts database to be used for the test.
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Address for which the reservation is added is valid for the prefix
     // of the configured subnet, but the subnet id is not matching.
@@ -2203,7 +2203,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetID) {
     testCommand(cmd, CONTROL_RESULT_ERROR, "IPv4 subnet with ID of '100' is not configured");
 
     // Make sure the host wasn't added.
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 }
 
 // Checks that the reservation is not added if the specified subnet identifier
@@ -2219,7 +2219,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetID6) {
     // Create in-memory hosts database to be used for the test.
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Address for which the reservation is added is valid for the prefix
     // of the configured subnet, but the subnet id is not matching.
@@ -2239,7 +2239,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetID6) {
     testCommand(cmd, CONTROL_RESULT_ERROR, "IPv6 subnet with ID of '100' is not configured");
 
     // Make sure the host wasn't added.
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 }
 
 // Checks that the reservation is not added if the specified IP address
@@ -2253,7 +2253,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetPrefix) {
     // Create in-memory hosts database to be used for the test.
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Subnet id matches the configured subnet, but the reserved IP
     // address should be in range of the subnet prefix, so between
@@ -2277,7 +2277,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetPrefix) {
                 "IPv4 subnet prefix '192.0.2.64/26'");
 
     // Make sure the host wasn't added.
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 }
 
 // Checks that the reservation is not added if any of the specified IPv6
@@ -2293,7 +2293,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetPrefix6) {
     // Create in-memory hosts database to be used for the test.
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Subnet id matches the configured subnet, but all reserved IP
     // addresses should be in range of the subnet prefix.
@@ -2316,7 +2316,7 @@ TEST_F(HostCmdsTest, reservationAddNonMatchingSubnetPrefix6) {
                 "IPv6 subnet prefix '2001:db8:1::/64'");
 
     // Make sure the host wasn't added.
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 }
 
 // Checks that reservation-get-all can handle a situation when the query is
@@ -2447,7 +2447,7 @@ TEST_F(HostCmdsTest, getAll4) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -2496,7 +2496,7 @@ TEST_F(HostCmdsTest, getAll4) {
                            IOAddress("192.0.3.5"),
                            "host5.example.org"));
     hds->add(host5);
-    EXPECT_EQ(5, hds->size());
+    EXPECT_EQ(5U, hds->size());
 
     // Retry command.
     exp_rsp = "5 IPv4 host(s) found.";
@@ -2509,7 +2509,7 @@ TEST_F(HostCmdsTest, getAll4) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(5, hosts->size());
+    ASSERT_EQ(5U, hosts->size());
 
     // Assume the order is kept.
     ElementPtr rsp0 = host0->toElement4();
@@ -2580,7 +2580,7 @@ TEST_F(HostCmdsTest, getAll4BadHwAddr) {
                            IOAddress("192.0.3.5"),
                            "host5.example.org"));
     hds->add(host5);
-    EXPECT_EQ(5, hds->size());
+    EXPECT_EQ(5U, hds->size());
 
     // Add a host with illegal hardware address.
     uint8_t duid[21];
@@ -2597,7 +2597,7 @@ TEST_F(HostCmdsTest, getAll4BadHwAddr) {
     EXPECT_NO_THROW(bad->setIdentifierType(Host::IDENT_HWADDR));
     ASSERT_THROW(bad->getHWAddress(), BadValue);
     hds->add(bad);
-    EXPECT_EQ(6, hds->size());
+    EXPECT_EQ(6U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -2631,7 +2631,7 @@ TEST_F(HostCmdsTest, getAll6) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -2691,7 +2691,7 @@ TEST_F(HostCmdsTest, getAll6) {
     host5->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8:2::5")));
     hds->add(host5);
-    EXPECT_EQ(5, hds->size());
+    EXPECT_EQ(5U, hds->size());
 
     // Retry command.
     exp_rsp = "5 IPv6 host(s) found.";
@@ -2704,7 +2704,7 @@ TEST_F(HostCmdsTest, getAll6) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(5, hosts->size());
+    ASSERT_EQ(5U, hosts->size());
 
     // Assume the order is kept.
     ElementPtr rsp0 = host0->toElement6();
@@ -2853,7 +2853,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd_txt =
@@ -2881,7 +2881,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
                               addr));
         hds->add(host);
     }
-    EXPECT_EQ(25, hds->size());
+    EXPECT_EQ(25U, hds->size());
 
     // Get all.
     cmd_txt =
@@ -2901,7 +2901,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     ConstElementPtr hosts_all = rsp_args->get("hosts");
     ASSERT_TRUE(hosts_all);
     ASSERT_EQ(Element::list, hosts_all->getType());
-    ASSERT_EQ(25, hosts_all->size());
+    ASSERT_EQ(25U, hosts_all->size());
 
     // Get first page.
     ElementPtr cmd = Element::createMap();
@@ -2919,7 +2919,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     ConstElementPtr page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    ASSERT_EQ(10, page->size());
+    ASSERT_EQ(10U, page->size());
     ElementPtr hosts = data::copy(page);
     ConstElementPtr count = rsp_args->get("count");
     ASSERT_TRUE(count);
@@ -2947,7 +2947,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(10, page->size());
+    EXPECT_EQ(10U, page->size());
     for (size_t i = 0; i < page->size(); ++i) {
         hosts->add(data::copy(page->get(i)));
     }
@@ -2967,7 +2967,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(5, page->size());
+    EXPECT_EQ(5U, page->size());
     for (size_t i = 0; i < page->size(); ++i) {
         hosts->add(data::copy(page->get(i)));
     }
@@ -2987,7 +2987,7 @@ TEST_F(HostCmdsTest, getPage4Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(0, page->size());
+    EXPECT_EQ(0U, page->size());
     next = rsp_args->get("next");
     EXPECT_FALSE(next);
 
@@ -3016,7 +3016,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd_txt =
@@ -3045,7 +3045,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
         host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA, addr));
         hds->add(host);
     }
-    EXPECT_EQ(25, hds->size());
+    EXPECT_EQ(25U, hds->size());
 
     // Get all.
     cmd_txt =
@@ -3065,7 +3065,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     ConstElementPtr hosts_all = rsp_args->get("hosts");
     ASSERT_TRUE(hosts_all);
     ASSERT_EQ(Element::list, hosts_all->getType());
-    ASSERT_EQ(25, hosts_all->size());
+    ASSERT_EQ(25U, hosts_all->size());
 
     // Get first page.
     ElementPtr cmd = Element::createMap();
@@ -3083,7 +3083,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     ConstElementPtr page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    ASSERT_EQ(10, page->size());
+    ASSERT_EQ(10U, page->size());
     ElementPtr hosts = data::copy(page);
     ConstElementPtr count = rsp_args->get("count");
     ASSERT_TRUE(count);
@@ -3111,7 +3111,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(10, page->size());
+    EXPECT_EQ(10U, page->size());
     for (size_t i = 0; i < page->size(); ++i) {
         hosts->add(data::copy(page->get(i)));
     }
@@ -3131,7 +3131,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(5, page->size());
+    EXPECT_EQ(5U, page->size());
     for (size_t i = 0; i < page->size(); ++i) {
         hosts->add(data::copy(page->get(i)));
     }
@@ -3151,7 +3151,7 @@ TEST_F(HostCmdsTest, getPage6Subnet) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(0, page->size());
+    EXPECT_EQ(0U, page->size());
     next = rsp_args->get("next");
     EXPECT_FALSE(next);
 
@@ -3172,7 +3172,7 @@ TEST_F(HostCmdsTest, getPage4) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd_txt =
@@ -3211,7 +3211,7 @@ TEST_F(HostCmdsTest, getPage4) {
     hostu->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8:2::6")));
     hds->add(hostu);
-    EXPECT_EQ(26, hds->size());
+    EXPECT_EQ(26U, hds->size());
 
     // Get first page.
     ElementPtr cmd = Element::createMap();
@@ -3228,7 +3228,7 @@ TEST_F(HostCmdsTest, getPage4) {
     ConstElementPtr page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    ASSERT_EQ(10, page->size());
+    ASSERT_EQ(10U, page->size());
     ConstElementPtr count = rsp_args->get("count");
     ASSERT_TRUE(count);
     ASSERT_EQ(Element::integer, count->getType());
@@ -3257,7 +3257,7 @@ TEST_F(HostCmdsTest, getPage4) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(10, page->size());
+    EXPECT_EQ(10U, page->size());
     next = rsp_args->get("next");
     ASSERT_TRUE(next);
     ASSERT_EQ(Element::map, next->getType());
@@ -3274,7 +3274,7 @@ TEST_F(HostCmdsTest, getPage4) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(5, page->size());
+    EXPECT_EQ(5U, page->size());
     next = rsp_args->get("next");
     ASSERT_TRUE(next);
     ASSERT_EQ(Element::map, next->getType());
@@ -3291,7 +3291,7 @@ TEST_F(HostCmdsTest, getPage4) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(0, page->size());
+    EXPECT_EQ(0U, page->size());
     next = rsp_args->get("next");
     EXPECT_FALSE(next);
 }
@@ -3305,7 +3305,7 @@ TEST_F(HostCmdsTest, getPage6) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd_txt =
@@ -3343,7 +3343,7 @@ TEST_F(HostCmdsTest, getPage6) {
                            SubnetID(2), SubnetID(SUBNET_ID_UNUSED),
                            IOAddress("192.0.3.6")));
     hds->add(hostu);
-    EXPECT_EQ(26, hds->size());
+    EXPECT_EQ(26U, hds->size());
 
     // Get first page.
     ElementPtr cmd = Element::createMap();
@@ -3360,7 +3360,7 @@ TEST_F(HostCmdsTest, getPage6) {
     ConstElementPtr page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    ASSERT_EQ(10, page->size());
+    ASSERT_EQ(10U, page->size());
     ConstElementPtr count = rsp_args->get("count");
     ASSERT_TRUE(count);
     ASSERT_EQ(Element::integer, count->getType());
@@ -3389,7 +3389,7 @@ TEST_F(HostCmdsTest, getPage6) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(10, page->size());
+    EXPECT_EQ(10U, page->size());
     next = rsp_args->get("next");
     ASSERT_TRUE(next);
     ASSERT_EQ(Element::map, next->getType());
@@ -3406,7 +3406,7 @@ TEST_F(HostCmdsTest, getPage6) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(5, page->size());
+    EXPECT_EQ(5U, page->size());
     next = rsp_args->get("next");
     ASSERT_TRUE(next);
     ASSERT_EQ(Element::map, next->getType());
@@ -3423,7 +3423,7 @@ TEST_F(HostCmdsTest, getPage6) {
     page = rsp_args->get("hosts");
     ASSERT_TRUE(page);
     ASSERT_EQ(Element::list, page->getType());
-    EXPECT_EQ(0, page->size());
+    EXPECT_EQ(0U, page->size());
     next = rsp_args->get("next");
     EXPECT_FALSE(next);
 }
@@ -3433,7 +3433,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal4) {
     // First, let's create a dummy host data source (don't insert any hosts)
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Command to add global host.
     string cmd =
@@ -3452,7 +3452,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal4) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, "Host added.");
 
     // Make sure we now have at least one host.
-    ASSERT_EQ(1, hds->size());
+    ASSERT_EQ(1U, hds->size());
 
     // Verify that we can fetch the host using global subnet id.
     cmd =
@@ -3526,7 +3526,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal4) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, "Host deleted.");
 
     // Make sure we now have at least one host.
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 }
 
 // Checks that subnetID = SUBNET_ID_GLOBAL is ok for IPv6 host reservations
@@ -3536,7 +3536,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal6) {
     // First, let's create a dummy host data source (don't insert any hosts)
     MemHostDataSourcePtr hds = setHostsDataSource(false, false);
     ASSERT_TRUE(hds);
-    ASSERT_EQ(0, hds->size());
+    ASSERT_EQ(0U, hds->size());
 
     // Command to add global host.
     string cmd =
@@ -3555,7 +3555,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal6) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, "Host added.");
 
     // Make sure we now have at least one host.
-    ASSERT_EQ(1, hds->size());
+    ASSERT_EQ(1U, hds->size());
 
     // Verify that we can fetch the host using global subnet id.
     cmd =
@@ -3630,7 +3630,7 @@ TEST_F(HostCmdsTest, subnetIdGlobal6) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, "Host deleted.");
 
     // Make sure we now have at least one host.
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 }
 
 // Checks that reservation-get-by-hostname with some IPv4 hosts.
@@ -3648,7 +3648,7 @@ TEST_F(HostCmdsTest, getByHostname4) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -3711,7 +3711,7 @@ TEST_F(HostCmdsTest, getByHostname4) {
     hostu->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8:2::6")));
     hds->add(hostu);
-    EXPECT_EQ(6, hds->size());
+    EXPECT_EQ(6U, hds->size());
 
     // Retry command.
     exp_rsp = "4 IPv4 host(s) found.";
@@ -3724,7 +3724,7 @@ TEST_F(HostCmdsTest, getByHostname4) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(4, hosts->size());
+    ASSERT_EQ(4U, hosts->size());
 
     // Assume the order is kept.
     compResponseHost4(hosts->get(0), host1);
@@ -3743,7 +3743,7 @@ TEST_F(HostCmdsTest, getByHostname4) {
     hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(3, hosts->size());
+    ASSERT_EQ(3U, hosts->size());
 
     // Assume the order is kept.
     ElementPtr expected = host1->toElement4();
@@ -3776,7 +3776,7 @@ TEST_F(HostCmdsTest, getByHostname6) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -3847,7 +3847,7 @@ TEST_F(HostCmdsTest, getByHostname6) {
                            SubnetID(2), SubnetID(SUBNET_ID_UNUSED),
                            IOAddress("192.0.3.6")));
     hds->add(hostu);
-    EXPECT_EQ(6, hds->size());
+    EXPECT_EQ(6U, hds->size());
 
     // Retry command.
     exp_rsp = "4 IPv6 host(s) found.";
@@ -3860,7 +3860,7 @@ TEST_F(HostCmdsTest, getByHostname6) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(4, hosts->size());
+    ASSERT_EQ(4U, hosts->size());
 
     // Assume the order is kept.
     compResponseHost6(hosts->get(0), host1);
@@ -3879,7 +3879,7 @@ TEST_F(HostCmdsTest, getByHostname6) {
     hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(3, hosts->size());
+    ASSERT_EQ(3U, hosts->size());
 
     // Assume the order is kept.
     ElementPtr expected = host1->toElement6();
@@ -4035,7 +4035,7 @@ TEST_F(HostCmdsTest, getById4) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -4081,7 +4081,7 @@ TEST_F(HostCmdsTest, getById4) {
     hostu->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
                                     IOAddress("2001:db8:2::6")));
     hds->add(hostu);
-    EXPECT_EQ(6, hds->size());
+    EXPECT_EQ(6U, hds->size());
 
     // Retry command.
     exp_rsp = "4 IPv4 host(s) found.";
@@ -4094,7 +4094,7 @@ TEST_F(HostCmdsTest, getById4) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(4, hosts->size());
+    ASSERT_EQ(4U, hosts->size());
 
     // Assume the order is kept.
     compResponseHost4(hosts->get(0), host1);
@@ -4112,7 +4112,7 @@ TEST_F(HostCmdsTest, getById6) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -4166,7 +4166,7 @@ TEST_F(HostCmdsTest, getById6) {
                            SubnetID(2), SubnetID(SUBNET_ID_UNUSED),
                            IOAddress("192.0.3.6")));
     hds->add(hostu);
-    EXPECT_EQ(6, hds->size());
+    EXPECT_EQ(6U, hds->size());
 
     // Retry command.
     exp_rsp = "4 IPv6 host(s) found.";
@@ -4179,7 +4179,7 @@ TEST_F(HostCmdsTest, getById6) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(4, hosts->size());
+    ASSERT_EQ(4U, hosts->size());
 
     // Assume the order is kept.
     compResponseHost6(hosts->get(0), host1);
@@ -4438,7 +4438,7 @@ TEST_F(HostCmdsTest, reservationUpdateSimpleHost) {
                 "Host updated.");
 
     ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1));
-    EXPECT_EQ(1, hosts.size());
+    EXPECT_EQ(1U, hosts.size());
     EXPECT_EQ("domain.example.com", hosts[0]->getHostname());
 }
 
@@ -4480,7 +4480,7 @@ TEST_F(HostCmdsTest, reservationUpdateSimpleHostAllDataSources) {
                 "Host updated.");
 
     ConstHostCollection hosts = HostMgr::instance().getAll6(SubnetID(1));
-    EXPECT_EQ(2, hosts.size());
+    EXPECT_EQ(2U, hosts.size());
     for (auto const& h : hosts) {
         EXPECT_EQ("domain.example.com", h->getHostname());
     }
@@ -4722,7 +4722,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress4HostFound) {
     ASSERT_TRUE(hds);
 
     // Check that there are no hosts
-    EXPECT_EQ(0, hds->size());
+    EXPECT_EQ(0U, hds->size());
 
     // Add host to the configuration.
     HostPtr host0(new Host("01:02:03:04:05:00", "hw-address",
@@ -4730,7 +4730,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress4HostFound) {
                            IOAddress("192.0.2.10"),
                            "host0.example.org"));
     hds->add(host0);
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -4752,7 +4752,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress4HostFound) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(1, hosts->size());
+    ASSERT_EQ(1U, hosts->size());
 
     ElementPtr rsp0 = host0->toElement4();
     SubnetID subnet_id0 = host0->getIPv4SubnetID();
@@ -4822,7 +4822,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress4) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(2, hosts->size());
+    ASSERT_EQ(2U, hosts->size());
 
     // Let's verify if hosts received in a response are as expected.
     compResponseHost4(hosts->get(0), host1);
@@ -4847,7 +4847,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress4) {
     hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(3, hosts->size());
+    ASSERT_EQ(3U, hosts->size());
 
     // Let's verify if hosts received in a response are as expected.
     compResponseHost4(hosts->get(0), host1);
@@ -4918,7 +4918,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress6HostFound) {
     MemHostDataSourcePtr hds = setHostsDataSource(false, true);
     ASSERT_TRUE(hds);
 
-    EXPECT_EQ(1, hds->size());
+    EXPECT_EQ(1U, hds->size());
 
     // Now send the command.
     string cmd =
@@ -4940,7 +4940,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress6HostFound) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(1, hosts->size());
+    ASSERT_EQ(1U, hosts->size());
 }
 
 // Checks that reservation-get-by-address detects not configured subnet IDs
@@ -5009,7 +5009,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress6) {
     ConstElementPtr hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(2, hosts->size());
+    ASSERT_EQ(2U, hosts->size());
 
     // Let's verify if hosts received in a response are as expected.
     compResponseHost6(hosts->get(0), host1);
@@ -5034,7 +5034,7 @@ TEST_F(HostCmdsTest, reservationGetByAddress6) {
     hosts = args->get("hosts");
     ASSERT_TRUE(hosts);
     ASSERT_EQ(Element::list, hosts->getType());
-    ASSERT_EQ(3, hosts->size());
+    ASSERT_EQ(3U, hosts->size());
 
     // Let's verify if hosts received in a response are as expected.
     compResponseHost6(hosts->get(0), host1);

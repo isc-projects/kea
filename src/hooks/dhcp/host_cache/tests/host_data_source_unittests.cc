@@ -144,14 +144,14 @@ public:
     ///
     /// @param subnets number of subnets to test
     /// @param id Host identifier type.
-    void hcMultipleSubnets(int subnets, const Host::IdentifierType& id);
+    void hcMultipleSubnets(size_t subnets, const Host::IdentifierType& id);
 
     /// @brief Test if host reservations made for different IPv6 subnets
     ///        are handled correctly.
     ///
     /// @param subnets number of subnets to test
     /// @param id identifier type (IDENT_HWADDR or IDENT_DUID)
-    void hcSubnetId6(int subnets, Host::IdentifierType id);
+    void hcSubnetId6(size_t subnets, Host::IdentifierType id);
 
     /// @brief Test that DHCPv4 options can be inserted and retrieved from
     /// the database.
@@ -179,7 +179,7 @@ public:
 /// Redefined tests
 
 void
-HostDataSourceTest::hcMultipleSubnets(int subnets,
+HostDataSourceTest::hcMultipleSubnets(size_t subnets,
                                       const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -187,7 +187,7 @@ HostDataSourceTest::hcMultipleSubnets(int subnets,
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
     host->setIPv6SubnetID(SUBNET_ID_UNUSED);
 
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         host->setIPv4SubnetID(i);
 
         // Check that the same host can have reservations in multiple subnets.
@@ -196,7 +196,7 @@ HostDataSourceTest::hcMultipleSubnets(int subnets,
 
     // Now check that the reservations can be retrieved by IPv4 address from
     // each subnet separately.
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Try to retrieve the host by IPv4 address.
         ConstHostPtr from_hds =
             hdsptr_->get4(i, host->getIPv4Reservation());
@@ -215,14 +215,14 @@ HostDataSourceTest::hcMultipleSubnets(int subnets,
 }
 
 void
-HostDataSourceTest::hcSubnetId6(int subnets, Host::IdentifierType id) {
+HostDataSourceTest::hcSubnetId6(size_t subnets, Host::IdentifierType id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host;
     IOAddress current_address("2001:db8::");
     ASSERT_LT(subnets, std::numeric_limits<uint16_t>::max()) << "Too many subnets. Broken test?";
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
         host = HostDataSourceUtils::initializeHost6(current_address.toText(),
@@ -240,7 +240,7 @@ HostDataSourceTest::hcSubnetId6(int subnets, Host::IdentifierType id) {
     }
 
     // Check that the reservations can be retrieved from each subnet separately.
-    for (int i = 0; i < subnets; ++i) {
+    for (size_t i = 0; i < subnets; ++i) {
         // Try to retrieve the host
         ConstHostPtr from_hds = hdsptr_->get6(i, id, &host->getIdentifier()[0],
                                               host->getIdentifier().size());

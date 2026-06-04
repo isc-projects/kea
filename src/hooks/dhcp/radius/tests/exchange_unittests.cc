@@ -340,7 +340,7 @@ TEST_F(ExchangeTest, start) {
     ASSERT_FALSE(exchange_->identifier_.empty());
     ASSERT_FALSE(exchange_->sync_);
     ASSERT_FALSE(exchange_->server_);
-    ASSERT_EQ(0, exchange_->idx_);
+    ASSERT_EQ(0U, exchange_->idx_);
     ASSERT_FALSE(exchange_->started_);
     ASSERT_FALSE(exchange_->terminated_);
     ASSERT_EQ(ERROR_RC, exchange_->rc_);
@@ -348,12 +348,12 @@ TEST_F(ExchangeTest, start) {
     ASSERT_FALSE(exchange_->ep_);
     ASSERT_FALSE(exchange_->timer_);
     ASSERT_FALSE(exchange_->server_);
-    ASSERT_EQ(0, exchange_->idx_);
+    ASSERT_EQ(0U, exchange_->idx_);
     ASSERT_FALSE(exchange_->sent_);
     ASSERT_FALSE(exchange_->received_);
     ASSERT_TRUE(exchange_->buffer_.empty());
-    ASSERT_EQ(0, exchange_->size_);
-    ASSERT_EQ(0, exchange_->retries_);
+    ASSERT_EQ(0U, exchange_->size_);
+    ASSERT_EQ(0U, exchange_->retries_);
     ASSERT_TRUE(exchange_->postponed_.empty());
     ASSERT_FALSE(called_);
 
@@ -371,7 +371,7 @@ TEST_F(ExchangeTest, openInit) {
 
     // Check initial state.
     EXPECT_FALSE(exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
+    EXPECT_EQ(0U, exchange_->idx_);
 
     // Call open.
     ASSERT_NO_THROW_LOG(exchange_->open());
@@ -379,7 +379,7 @@ TEST_F(ExchangeTest, openInit) {
     // Check new state.
     EXPECT_TRUE(exchange_->server_);
     EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
+    EXPECT_EQ(0U, exchange_->idx_);
     EXPECT_TRUE(exchange_->sent_);
     ASSERT_TRUE(exchange_->ep_);
     EXPECT_TRUE(exchange_->timer_);
@@ -428,9 +428,9 @@ TEST_F(ExchangeTest, openPostpone) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(1, exchange_->idx_);
-    ASSERT_EQ(1, exchange_->postponed_.size());
-    EXPECT_EQ(0, exchange_->postponed_.front());
+    EXPECT_EQ(1U, exchange_->idx_);
+    ASSERT_EQ(1U, exchange_->postponed_.size());
+    EXPECT_EQ(0U, exchange_->postponed_.front());
 }
 
 // Verify open in second pass with no postponed servers.
@@ -449,7 +449,7 @@ TEST_F(ExchangeTest, openNoPostponed) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(1, exchange_->idx_);
+    EXPECT_EQ(1U, exchange_->idx_);
     EXPECT_FALSE(exchange_->terminated_);
     EXPECT_FALSE(called_);
 
@@ -519,7 +519,7 @@ TEST_F(ExchangeTest, openPostponed) {
     // Check new state.
     EXPECT_TRUE(exchange_->server_);
     EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(1, exchange_->idx_);
+    EXPECT_EQ(1U, exchange_->idx_);
     EXPECT_TRUE(exchange_->sent_);
     EXPECT_TRUE(exchange_->timer_);
     ASSERT_TRUE(exchange_->ep_);
@@ -549,7 +549,7 @@ TEST_F(ExchangeTest, openSendError) {
     msg += "too too too too too too too too too too  too too ";
     msg += "too too too too too too too too too too  too too long!!!";
     // Hard limit is 253 so be close but lower...
-    EXPECT_EQ(252, msg.size());
+    EXPECT_EQ(252U, msg.size());
     AttributePtr attr = Attribute::fromString(PW_REPLY_MESSAGE, msg);
     ASSERT_TRUE(attr);
     for (size_t i = 0; i < 16; ++i) {
@@ -568,12 +568,12 @@ TEST_F(ExchangeTest, openSendError) {
     // Check new state.
     EXPECT_TRUE(exchange_->server_);
     EXPECT_EQ(servers_[0], exchange_->server_);
-    EXPECT_EQ(0, exchange_->idx_);
+    EXPECT_EQ(0U, exchange_->idx_);
     EXPECT_TRUE(exchange_->sent_);
     EXPECT_FALSE(exchange_->ep_);
     EXPECT_FALSE(exchange_->timer_);
     EXPECT_FALSE(exchange_->socket_);
-    EXPECT_EQ(0, exchange_->retries_);
+    EXPECT_EQ(0U, exchange_->retries_);
     EXPECT_EQ(ERROR_RC, exchange_->rc_);
 }
 
@@ -619,10 +619,10 @@ TEST_F(ExchangeTest, openNextServer) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check next state.
-    EXPECT_EQ(0, exchange_->retries_);
+    EXPECT_EQ(0U, exchange_->retries_);
     EXPECT_FALSE(exchange_->server_);
     EXPECT_FALSE(exchange_->ep_);
-    EXPECT_EQ(1, exchange_->idx_);
+    EXPECT_EQ(1U, exchange_->idx_);
 
     // Poll the I/O service.
     ASSERT_NO_THROW_LOG(io_service_->poll());
@@ -651,7 +651,7 @@ TEST_F(ExchangeTest, openLastServer) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(2, exchange_->idx_);
+    EXPECT_EQ(2U, exchange_->idx_);
     EXPECT_EQ(servers_.size(), exchange_->idx_);
     EXPECT_FALSE(exchange_->terminated_);
     EXPECT_FALSE(called_);
@@ -680,7 +680,7 @@ TEST_F(ExchangeTest, openNextPostponedServer) {
     // Add servers to the postponed list.
     exchange_->postponed_.push_back(0);
     exchange_->postponed_.push_back(1);
-    ASSERT_EQ(2, exchange_->postponed_.size());
+    ASSERT_EQ(2U, exchange_->postponed_.size());
 
     // Set the exchange on last retry.
     exchange_->server_ = servers_[0];
@@ -690,10 +690,10 @@ TEST_F(ExchangeTest, openNextPostponedServer) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check next state.
-    EXPECT_EQ(0, exchange_->retries_);
+    EXPECT_EQ(0U, exchange_->retries_);
     EXPECT_FALSE(exchange_->server_);
     EXPECT_FALSE(exchange_->ep_);
-    EXPECT_EQ(2, exchange_->idx_);
+    EXPECT_EQ(2U, exchange_->idx_);
 
     // Poll the I/O service.
     ASSERT_NO_THROW_LOG(io_service_->poll());
@@ -720,13 +720,13 @@ TEST_F(ExchangeTest, openLastPostponedServer) {
     // Set the exchange on last retry of last server.
     exchange_->server_ = servers_[0];
     exchange_->retries_ = maxretries_;
-    ASSERT_EQ(1, exchange_->postponed_.size());
+    ASSERT_EQ(1U, exchange_->postponed_.size());
 
     // Call open.
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(2, exchange_->idx_);
+    EXPECT_EQ(2U, exchange_->idx_);
     EXPECT_EQ(servers_.size(), exchange_->idx_);
     EXPECT_FALSE(exchange_->terminated_);
     EXPECT_FALSE(called_);
@@ -756,7 +756,7 @@ TEST_F(ExchangeTest, openRetry) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(1, exchange_->retries_);
+    EXPECT_EQ(1U, exchange_->retries_);
     EXPECT_TRUE(exchange_->sent_);
     EXPECT_TRUE(exchange_->timer_);
     ASSERT_TRUE(exchange_->ep_);
@@ -791,7 +791,7 @@ TEST_F(ExchangeTest, openRetryError) {
     ASSERT_NO_THROW_LOG(exchange_->open());
 
     // Check new state.
-    EXPECT_EQ(1, exchange_->retries_);
+    EXPECT_EQ(1U, exchange_->retries_);
     EXPECT_FALSE(exchange_->sent_);
     EXPECT_FALSE(exchange_->timer_);
     EXPECT_FALSE(exchange_->socket_);

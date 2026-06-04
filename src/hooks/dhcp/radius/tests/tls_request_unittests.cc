@@ -472,14 +472,14 @@ TEST_F(TlsRequestTest, noResponse) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_ACCOUNTING_REQUEST, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     ASSERT_LE(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(56, size);
+    EXPECT_EQ(56U, size);
     uint8_t expected[] = {
         0x01, // User-Name
         0x06, // length
@@ -579,7 +579,7 @@ TEST_F(TlsRequestTest, accept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -631,8 +631,8 @@ TEST_F(TlsRequestTest, accept) {
     // Check result.
     EXPECT_EQ(OK_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -694,7 +694,7 @@ TEST_F(TlsRequestTest, response) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -801,7 +801,7 @@ TEST_F(TlsRequestTest, badAccept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -854,8 +854,8 @@ TEST_F(TlsRequestTest, badAccept) {
     // Check result.
     EXPECT_EQ(BADRESP_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -917,7 +917,7 @@ TEST_F(TlsRequestTest, badResponse) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1025,7 +1025,7 @@ TEST_F(TlsRequestTest, tooShort) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1133,7 +1133,7 @@ TEST_F(TlsRequestTest, reject) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -1185,8 +1185,8 @@ TEST_F(TlsRequestTest, reject) {
     // Check result.
     EXPECT_EQ(REJECT_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());

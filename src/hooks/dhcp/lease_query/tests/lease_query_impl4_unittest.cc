@@ -829,14 +829,14 @@ TEST(LeaseQueryImpl4Test, winnowLeases) {
 
     // Verify that an empty list in produces an empty list out.
     output_leases = LeaseQueryImpl4::winnowLeases(input_leases);
-    EXPECT_EQ(0, output_leases.size());
+    EXPECT_EQ(0U, output_leases.size());
 
     // Verify that an list with only inactive leases
     // in produces an empty list out.
     input_leases.push_back(declined);
     input_leases.push_back(reclaimed);
     output_leases = LeaseQueryImpl4::winnowLeases(input_leases);
-    EXPECT_EQ(0, output_leases.size());
+    EXPECT_EQ(0U, output_leases.size());
 
     // Now let's make sure a mixed list gives us only
     // active leases and in the proper order.
@@ -872,14 +872,14 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByIpAddress) {
     IOAddress addr1("192.0.2.101");
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(addr1, leases));
     EXPECT_EQ(DHCPLEASEUNASSIGNED, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for an known address with active lease.
     // We should return active and the lease in the collection.
     Lease4Ptr lease = addLease(addr1, subnet2_, HWAddrPtr(), ClientIdPtr(), time(0));
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(addr1, leases));
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_TRUE(*leases[0] == *lease);
 
     // Look for an known address with inactive lease
@@ -890,7 +890,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByIpAddress) {
     leases.clear();
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(addr2, leases));
     EXPECT_EQ(DHCPLEASEUNASSIGNED, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for an known address with an expired active lease
     // We should return unassigned and an empty lease collection
@@ -899,19 +899,19 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByIpAddress) {
     leases.clear();
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(addr2, leases));
     EXPECT_EQ(DHCPLEASEUNASSIGNED, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for an out-of-subnet address.
     // We should return unknown and an empty collection.
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(IOAddress("192.0.9.101"), leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for an in-subnet but out-of-pool address.
     // We should return unknown and an empty collection.
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByIpAddress(IOAddress("192.0.3.99"), leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 }
 
 // Exercises LeaseQueryImpl4::queryByClientId().
@@ -927,7 +927,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByClientId) {
     // We should return unknown and an empty collection.
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByClientId(cid1_, leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for a ClientId with a inactive lease.
     // We should return unknown and an empty lease collection.
@@ -936,7 +936,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByClientId) {
                                 Lease::STATE_EXPIRED_RECLAIMED);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByClientId(cid1_, leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for a ClientId with an active lease.
     // We should return active with the lease in the collection.
@@ -944,7 +944,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByClientId) {
     Lease4Ptr lease2 = addLease(addr2, subnet2_, HWAddrPtr(), cid1_, time(0) - 50);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByClientId(cid1_, leases));
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_TRUE(*leases[0] == *lease2);
 
     // Look for a ClientId with more than one active lease.
@@ -953,7 +953,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByClientId) {
     Lease4Ptr lease3 = addLease(addr3, subnet3_, HWAddrPtr(), cid1_, time(0) - 100);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByClientId(cid1_, leases));
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
-    ASSERT_EQ(2, leases.size());
+    ASSERT_EQ(2U, leases.size());
     EXPECT_TRUE(*leases[0] == *lease2);
     EXPECT_TRUE(*leases[1] == *lease3);
 }
@@ -971,7 +971,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByHWAddress) {
     // We should return unknown and an empty collection.
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByHWAddr(hwaddr1_, leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for a HWAddress with a inactive lease.
     // We should return unknown and an empty lease collection.
@@ -980,7 +980,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByHWAddress) {
                                 Lease::STATE_EXPIRED_RECLAIMED);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByHWAddr(hwaddr1_, leases));
     EXPECT_EQ(DHCPLEASEUNKNOWN, ret_type);
-    EXPECT_EQ(0, leases.size());
+    EXPECT_EQ(0U, leases.size());
 
     // Look for a HWAddress with an active lease.
     // We should return active with the lease in the collection.
@@ -988,7 +988,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByHWAddress) {
     Lease4Ptr lease2 = addLease(addr2, subnet2_, hwaddr1_, ClientIdPtr(), time(0) - 50);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByHWAddr(hwaddr1_, leases));
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
-    ASSERT_EQ(1, leases.size());
+    ASSERT_EQ(1U, leases.size());
     EXPECT_TRUE(*leases[0] == *lease2);
 
     // Look for a HWAddress with more than one active lease.
@@ -997,7 +997,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, queryByHWAddress) {
     Lease4Ptr lease3 = addLease(addr3, subnet3_, hwaddr1_, ClientIdPtr(), time(0) - 100);
     ASSERT_NO_THROW_LOG(ret_type = LeaseQueryImpl4::queryByHWAddr(hwaddr1_, leases));
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
-    ASSERT_EQ(2, leases.size());
+    ASSERT_EQ(2U, leases.size());
     EXPECT_TRUE(*leases[0] == *lease2);
     EXPECT_TRUE(*leases[1] == *lease3);
 }
@@ -1444,7 +1444,7 @@ TEST_F(LeaseQueryImpl4ProcessTest, buildResponseActive) {
     EXPECT_EQ(DHCPLEASEACTIVE, ret_type);
 
     // We should have found three leases.  Lease2 should be first in the list.
-    ASSERT_EQ(3, leases.size());
+    ASSERT_EQ(3U, leases.size());
     ASSERT_EQ(lease2->addr_, leases[0]->addr_);
 
     // Build a response for DHCPLEASEACTIVE.

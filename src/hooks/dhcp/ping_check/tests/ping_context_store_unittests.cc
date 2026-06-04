@@ -57,8 +57,8 @@ public:
             // Check initial values.
             EXPECT_EQ(PingContext::WAITING_TO_SEND, context->getState());
             EXPECT_LE(now, context->getSendWaitStart());
-            EXPECT_EQ(2, context->getMinEchos());
-            EXPECT_EQ(300, context->getReplyTimeout());
+            EXPECT_EQ(2U, context->getMinEchos());
+            EXPECT_EQ(300U, context->getReplyTimeout());
         }
 
         // Make sure they can be fetched by address and by query individually.
@@ -290,12 +290,12 @@ public:
         PingContextCollectionPtr expired_since;
         ASSERT_NO_THROW_LOG(expired_since = store.getExpiredSince());
         ASSERT_TRUE(expired_since);
-        EXPECT_EQ(0, expired_since->size());
+        EXPECT_EQ(0U, expired_since->size());
 
         // Fetch all that have expired since start time + 750 ms, should be third context.
         ASSERT_NO_THROW_LOG(expired_since = store.getExpiredSince(start_time + milliseconds(750)));
         ASSERT_TRUE(expired_since);
-        EXPECT_EQ(1, expired_since->size());
+        EXPECT_EQ(1U, expired_since->size());
         context = (*expired_since)[0];
         EXPECT_EQ(leases_[2], context->getLease());
         EXPECT_EQ(queries_[2], context->getQuery());
@@ -305,7 +305,7 @@ public:
         // Should be the third and second contexts
         ASSERT_NO_THROW_LOG(expired_since = store.getExpiredSince(start_time + milliseconds(1500)));
         ASSERT_TRUE(expired_since);
-        EXPECT_EQ(2, expired_since->size());
+        EXPECT_EQ(2U, expired_since->size());
 
         // First in list should be the third context.
         context = (*expired_since)[0];
@@ -349,7 +349,7 @@ public:
         // Now clear the store. Verify it's empty.
         ASSERT_NO_THROW_LOG(store.clear());
         ASSERT_NO_THROW_LOG(contexts = store.getAll());
-        ASSERT_EQ(0, contexts->size());
+        ASSERT_EQ(0U, contexts->size());
 
         // Verify clearing an empty store does no harm.
         ASSERT_NO_THROW_LOG(store.clear());

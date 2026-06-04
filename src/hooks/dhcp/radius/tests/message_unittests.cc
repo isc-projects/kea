@@ -51,7 +51,7 @@ TEST_F(MessageTest, constructors) {
     ASSERT_TRUE(attrs);
     attrs->add(Attribute::fromString(PW_USER_NAME, "me"));
     attrs->add(Attribute::fromInt(PW_NAS_PORT, 1));
-    ASSERT_EQ(2, attrs->size());
+    ASSERT_EQ(2U, attrs->size());
 
     MessagePtr message;
     ASSERT_NO_THROW(message.reset(new Message(code, 1234, auth,
@@ -62,7 +62,7 @@ TEST_F(MessageTest, constructors) {
     EXPECT_EQ(PW_ACCESS_REQUEST, message->getCode());
     EXPECT_EQ("Access-Request", msgCodeToText(message->getCode()));
     message->setCode(123);
-    EXPECT_EQ(123, message->getCode());
+    EXPECT_EQ(123U, message->getCode());
     EXPECT_EQ("Message-Code-123", msgCodeToText(message->getCode()));
 
     // Identifier.
@@ -80,9 +80,9 @@ TEST_F(MessageTest, constructors) {
     EXPECT_EQ(id, message->getIdentifier());
 
     // Length.
-    EXPECT_EQ(1234, message->getLength());
+    EXPECT_EQ(1234U, message->getLength());
     message->setLength(2345);
-    EXPECT_EQ(2345, message->getLength());
+    EXPECT_EQ(2345U, message->getLength());
 
     // Authenticator.
     vector<uint8_t> got_auth = message->getAuth();
@@ -99,12 +99,12 @@ TEST_F(MessageTest, constructors) {
     got_auth = message->getAuth();
     ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
     for (size_t i = 0; i < AUTH_VECTOR_LEN; ++i) {
-        EXPECT_EQ(0, got_auth[i]);
+        EXPECT_EQ(0U, got_auth[i]);
     }
     got_auth = Message::ZERO_AUTH();
     ASSERT_EQ(AUTH_VECTOR_LEN, got_auth.size());
     for (size_t i = 0; i < AUTH_VECTOR_LEN; ++i) {
-        EXPECT_EQ(0, got_auth[i]);
+        EXPECT_EQ(0U, got_auth[i]);
     }
     bool got_zero = true;
     for (size_t round = 0; round < 5; ++round) {
@@ -206,7 +206,7 @@ TEST_F(MessageTest, acceptRequest) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -226,7 +226,7 @@ TEST_F(MessageTest, acceptRequest) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -281,7 +281,7 @@ TEST_F(MessageTest, accessAccept) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(26, length);
+    ASSERT_EQ(26U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -297,7 +297,7 @@ TEST_F(MessageTest, accessAccept) {
         // User-Name ("user").
         0x01, 0x06, 0x75, 0x73, 0x65, 0x72
     };
-    ASSERT_EQ(26, expected.size());
+    ASSERT_EQ(26U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 26) << "\n"
         << str::dumpAsHex(&expected[0], 26);
@@ -361,7 +361,7 @@ TEST_F(MessageTest, accountingRequest) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(44, length);
+    ASSERT_EQ(44U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -383,7 +383,7 @@ TEST_F(MessageTest, accountingRequest) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(44, expected.size());
+    ASSERT_EQ(44U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 44) << "\n"
         << str::dumpAsHex(&expected[0], 44);
@@ -442,7 +442,7 @@ TEST_F(MessageTest, accountingResponse) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(20, length);
+    ASSERT_EQ(20U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -456,7 +456,7 @@ TEST_F(MessageTest, accountingResponse) {
         0x88, 0xc4, 0x21, 0xc3, 0x25, 0xf3, 0xdc, 0x57,
         0x14, 0x01, 0x4c, 0xef, 0x78, 0x03, 0x64, 0xbe
     };
-    ASSERT_EQ(20, expected.size());
+    ASSERT_EQ(20U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 20) << "\n"
         << str::dumpAsHex(&expected[0], 20);
@@ -522,7 +522,7 @@ TEST_F(MessageTest, shortUserPassword) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(56, length);
+    ASSERT_EQ(56U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -546,7 +546,7 @@ TEST_F(MessageTest, shortUserPassword) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(56, expected.size());
+    ASSERT_EQ(56U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 56) << "\n"
         << str::dumpAsHex(&expected[0], 56);
@@ -607,7 +607,7 @@ TEST_F(MessageTest, longUserPassword) {
     // Check buffer.
     uint16_t length = request->getLength();
     ASSERT_EQ(length, buffer.size());
-    ASSERT_EQ(72, length);
+    ASSERT_EQ(72U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -633,7 +633,7 @@ TEST_F(MessageTest, longUserPassword) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(72, expected.size());
+    ASSERT_EQ(72U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 72) << "\n"
         << str::dumpAsHex(&expected[0], 72);
@@ -680,7 +680,7 @@ TEST_F(MessageTest, badEncode) {
         msg += "too too too too too too too too too too  too too ";
         msg += "too too too too too too too too too too  too too long!";
         // Hard limit is 253 so be close but lower...
-        EXPECT_EQ(250, msg.size());
+        EXPECT_EQ(250U, msg.size());
         AttributePtr rm_attr = Attribute::fromString(PW_REPLY_MESSAGE, msg);
         for (size_t i = 0; i < 17; ++i) {
             attrs->add(rm_attr);
@@ -1033,7 +1033,7 @@ TEST_F(MessageTest, basicStatusServer) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(20, length);
+    ASSERT_EQ(20U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1047,7 +1047,7 @@ TEST_F(MessageTest, basicStatusServer) {
         0x8a, 0x54, 0xf4, 0x68, 0x6f, 0xb3, 0x94, 0xc5,
         0x28, 0x66, 0xe3, 0x02, 0x18, 0x5d, 0x06, 0x23
     };
-    ASSERT_EQ(20, expected.size());
+    ASSERT_EQ(20U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 20) << "\n"
         << str::dumpAsHex(&expected[0], 20);
@@ -1102,7 +1102,7 @@ TEST_F(MessageTest, authStatusServer) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1120,7 +1120,7 @@ TEST_F(MessageTest, authStatusServer) {
         0x5a, 0x66, 0x5e, 0x2e, 0x1e, 0x84, 0x11, 0xf3,
         0xe2, 0x43, 0x82, 0x20, 0x97, 0xc8, 0x4f, 0xa3
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1184,7 +1184,7 @@ TEST_F(MessageTest, acctStatusServer) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1202,7 +1202,7 @@ TEST_F(MessageTest, acctStatusServer) {
         0xe8, 0xd6, 0xea, 0xbd, 0xa9, 0x10, 0x87, 0x5c,
         0xd9, 0x1f, 0xda, 0xde, 0x26, 0x36, 0x78, 0x58
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1268,7 +1268,7 @@ TEST_F(MessageTest, verboseStatusServer) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(44, length);
+    ASSERT_EQ(44U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1288,7 +1288,7 @@ TEST_F(MessageTest, verboseStatusServer) {
         0x85, 0x2d, 0x6f, 0xec, 0x61, 0xe7, 0xed, 0x74,
         0xb8, 0xe3, 0x2d, 0xac, 0x2f, 0x2a, 0x5f, 0xb2
     };
-    ASSERT_EQ(44, expected.size());
+    ASSERT_EQ(44U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 44) << "\n"
         << str::dumpAsHex(&expected[0], 44);
@@ -1350,7 +1350,7 @@ TEST_F(MessageTest, basicStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(20, length);
+    ASSERT_EQ(20U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1364,7 +1364,7 @@ TEST_F(MessageTest, basicStatusResponse) {
         0xef, 0x0d, 0x55, 0x2a, 0x4b, 0xf2, 0xd6, 0x93,
         0xec, 0x2b, 0x6f, 0xe8, 0xb5, 0x41, 0x1d, 0x66
     };
-    ASSERT_EQ(20, expected.size());
+    ASSERT_EQ(20U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 20) << "\n"
         << str::dumpAsHex(&expected[0], 20);
@@ -1428,7 +1428,7 @@ TEST_F(MessageTest, authStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1446,7 +1446,7 @@ TEST_F(MessageTest, authStatusResponse) {
         0x57, 0x56, 0x6a, 0x4a, 0x4a, 0x4c, 0x69, 0x0f,
         0x8e, 0x18, 0xb7, 0x3a, 0xe7, 0xa7, 0xf6, 0x5f
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1516,7 +1516,7 @@ TEST_F(MessageTest, acctStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(20, length);
+    ASSERT_EQ(20U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1530,7 +1530,7 @@ TEST_F(MessageTest, acctStatusResponse) {
         0x0f, 0x6f, 0x92, 0x14, 0x5f, 0x10, 0x7e, 0x2f,
         0x50, 0x4e, 0x86, 0x0a, 0x48, 0x60, 0x66, 0x9c
     };
-    ASSERT_EQ(20, expected.size());
+    ASSERT_EQ(20U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 20) << "\n"
         << str::dumpAsHex(&expected[0], 20);
@@ -1594,7 +1594,7 @@ TEST_F(MessageTest, verboseStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(52, length);
+    ASSERT_EQ(52U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1614,7 +1614,7 @@ TEST_F(MessageTest, verboseStatusResponse) {
         0x20, 0x32, 0x20, 0x64, 0x61, 0x79, 0x73, 0x2c,
         0x20, 0x31, 0x38, 0x3a, 0x34, 0x30
     };
-    ASSERT_EQ(52, expected.size());
+    ASSERT_EQ(52U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 52) << "\n"
         << str::dumpAsHex(&expected[0], 52);
@@ -1685,7 +1685,7 @@ TEST_F(MessageTest, signedBasicAccessRequest) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1703,7 +1703,7 @@ TEST_F(MessageTest, signedBasicAccessRequest) {
         0x8b, 0x9d, 0x0d, 0x3e, 0xc4, 0xf2, 0xc4, 0x4e,
         0x65, 0xcc, 0xe1, 0x8a, 0x2b, 0x63, 0x97, 0x4b
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1711,7 +1711,7 @@ TEST_F(MessageTest, signedBasicAccessRequest) {
     // Verify the message is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 // Verify signed Access-Request.
@@ -1748,7 +1748,7 @@ TEST_F(MessageTest, signedAccessRequest) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(74, length);
+    ASSERT_EQ(74U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1776,7 +1776,7 @@ TEST_F(MessageTest, signedAccessRequest) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(74, expected.size());
+    ASSERT_EQ(74U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 74) << "\n"
         << str::dumpAsHex(&expected[0], 74);
@@ -1784,7 +1784,7 @@ TEST_F(MessageTest, signedAccessRequest) {
     // Verify the message is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 
     // And correctly decoded.
     auto got_attr = got_attrs->get(PW_USER_NAME);
@@ -1795,7 +1795,7 @@ TEST_F(MessageTest, signedAccessRequest) {
     EXPECT_EQ("secret password", got_attr->toString());
     got_attr = got_attrs->get(PW_NAS_PORT);
     ASSERT_TRUE(got_attr);
-    EXPECT_EQ(1, got_attr->toInt());
+    EXPECT_EQ(1U, got_attr->toInt());
     got_attr = got_attrs->get(PW_NAS_IP_ADDRESS);
     ASSERT_TRUE(got_attr);
     EXPECT_EQ("127.0.0.1", got_attr->toIpAddr().toText());
@@ -1828,7 +1828,7 @@ TEST_F(MessageTest, signedBasicAccountingRequest) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1846,7 +1846,7 @@ TEST_F(MessageTest, signedBasicAccountingRequest) {
         0x60, 0xda, 0x7f, 0x9f, 0x0a, 0x11, 0xfe, 0x56,
         0xfc, 0x46, 0xcf, 0xef, 0x9c, 0x9c, 0x33, 0x60
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1854,7 +1854,7 @@ TEST_F(MessageTest, signedBasicAccountingRequest) {
     // Verify the message is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 // Verify signed Accounting-Request.
@@ -1887,7 +1887,7 @@ TEST_F(MessageTest, signedAccountingRequest) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(62, length);
+    ASSERT_EQ(62U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1913,7 +1913,7 @@ TEST_F(MessageTest, signedAccountingRequest) {
         // NAS-IP-Address (127.0.0.1).
         0x04, 0x06, 0x7f, 0x00, 0x00, 0x01
     };
-    ASSERT_EQ(62, expected.size());
+    ASSERT_EQ(62U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 62) << "\n"
         << str::dumpAsHex(&expected[0], 62);
@@ -1921,7 +1921,7 @@ TEST_F(MessageTest, signedAccountingRequest) {
     // Verify the message is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 
     // And correctly decoded.
     auto got_attr = got_attrs->get(PW_USER_NAME);
@@ -1929,10 +1929,10 @@ TEST_F(MessageTest, signedAccountingRequest) {
     EXPECT_EQ("user", got_attr->toString());
     got_attr = got_attrs->get(PW_NAS_PORT);
     ASSERT_TRUE(got_attr);
-    EXPECT_EQ(1, got_attr->toInt());
+    EXPECT_EQ(1U, got_attr->toInt());
     got_attr = got_attrs->get(PW_ACCT_DELAY_TIME);
     ASSERT_TRUE(got_attr);
-    EXPECT_EQ(0, got_attr->toInt());
+    EXPECT_EQ(0U, got_attr->toInt());
     got_attr = got_attrs->get(PW_NAS_IP_ADDRESS);
     ASSERT_TRUE(got_attr);
     EXPECT_EQ("127.0.0.1", got_attr->toIpAddr().toText());
@@ -1967,7 +1967,7 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -1985,7 +1985,7 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
         0x15, 0xa5, 0x8a, 0x0b, 0xaa, 0x3b, 0x5f, 0x6d,
         0xa0, 0xbd, 0xfc, 0xa6, 0xde, 0x60, 0xf9, 0x0f
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -1993,7 +1993,7 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
     // Verify the message is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 
     // Create message (response).
     vector<uint8_t> dumped = {
@@ -2018,7 +2018,7 @@ TEST_F(MessageTest, signedAuthStatusResponse) {
     // Verify the response is signed.
     got_attrs = response->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 // Verify signed Accounting-Response response to signed Status-Server.
@@ -2051,7 +2051,7 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
 
     // Check buffer.
     uint16_t length = request->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = request->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -2069,7 +2069,7 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
         0xab, 0x13, 0x50, 0x87, 0x20, 0xbd, 0xf6, 0xe1,
         0xf1, 0x89, 0x02, 0x81, 0xf7, 0xeb, 0xac, 0x1d
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -2077,7 +2077,7 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
     // Verify the request is signed.
     auto got_attrs = request->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 
     // Create message (response).
     vector<uint8_t> dumped = {
@@ -2102,7 +2102,7 @@ TEST_F(MessageTest, signedAcctStatusResponse) {
     // Verify the response is signed.
     got_attrs = response->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 // Verify signed Access-Reject (only used message not yet tested).
@@ -2135,7 +2135,7 @@ TEST_F(MessageTest, signedAccessReject) {
 
     // Check buffer.
     uint16_t length = reject->getLength();
-    ASSERT_EQ(38, length);
+    ASSERT_EQ(38U, length);
     vector<uint8_t> got_buffer = reject->getBuffer();
     ASSERT_EQ(buffer.size(), got_buffer.size());
     EXPECT_TRUE(memcmp(&buffer[0], &got_buffer[0], buffer.size()) == 0);
@@ -2153,7 +2153,7 @@ TEST_F(MessageTest, signedAccessReject) {
         0x13, 0x40, 0x2f, 0xae, 0x82, 0x71, 0x59, 0x80,
         0xff, 0xfc, 0xb7, 0x9a, 0xf8, 0xbf, 0x97, 0x89
     };
-    ASSERT_EQ(38, expected.size());
+    ASSERT_EQ(38U, expected.size());
     EXPECT_TRUE(memcmp(&expected[0], &buffer[0], buffer.size()) == 0)
         << str::dumpAsHex(&buffer[0], 38) << "\n"
         << str::dumpAsHex(&expected[0], 38);
@@ -2161,7 +2161,7 @@ TEST_F(MessageTest, signedAccessReject) {
     // Verify the message is signed.
     auto got_attrs = reject->getAttributes();
     ASSERT_TRUE(got_attrs);
-    EXPECT_EQ(1, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
+    EXPECT_EQ(1U, got_attrs->count(PW_MESSAGE_AUTHENTICATOR));
 }
 
 } // end of anonymous namespace

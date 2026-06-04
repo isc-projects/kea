@@ -45,9 +45,9 @@ public:
         ASSERT_NO_THROW_LOG(config.reset(new PerfMonConfig(family_)));
         ASSERT_TRUE(config);
         EXPECT_FALSE(config->getEnableMonitoring());
-        EXPECT_EQ(config->getIntervalWidthSecs(), 60);
+        EXPECT_EQ(config->getIntervalWidthSecs(), 60U);
         EXPECT_TRUE(config->getStatsMgrReporting());
-        EXPECT_EQ(config->getAlarmReportSecs(), 300);
+        EXPECT_EQ(config->getAlarmReportSecs(), 300U);
         EXPECT_TRUE(config->getAlarmStore());
 
         // Verify accessors.
@@ -55,13 +55,13 @@ public:
         EXPECT_TRUE(config->getEnableMonitoring());
 
         EXPECT_NO_THROW_LOG(config->setIntervalWidthSecs(4));
-        EXPECT_EQ(config->getIntervalWidthSecs(), 4);
+        EXPECT_EQ(config->getIntervalWidthSecs(), 4U);
 
         EXPECT_NO_THROW_LOG(config->setStatsMgrReporting(false));
         EXPECT_FALSE(config->getStatsMgrReporting());
 
         EXPECT_NO_THROW_LOG(config->setAlarmReportSecs(120));
-        EXPECT_EQ(config->getAlarmReportSecs(), 120);
+        EXPECT_EQ(config->getAlarmReportSecs(), 120U);
     }
 
     /// @brief Exercises PerfMonConfig parameter parsing with valid configuration

@@ -381,12 +381,12 @@ TEST(RunScript, extractBoolean) {
     ProcessEnvVars vars;
     bool flag = false;
     RunScriptImpl::extractBoolean(vars, flag, "FALSE_PREFIX", "_FALSE_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "FALSE_PREFIX_FALSE_SUFFIX=false\n";
     EXPECT_EQ(expected, join(vars));
     flag = true;
     RunScriptImpl::extractBoolean(vars, flag, "TRUE_PREFIX", "_TRUE_SUFFIX");
-    ASSERT_EQ(2, vars.size());
+    ASSERT_EQ(2U, vars.size());
     expected = "FALSE_PREFIX_FALSE_SUFFIX=false\n"
                "TRUE_PREFIX_TRUE_SUFFIX=true\n";
     EXPECT_EQ(expected, join(vars));
@@ -397,18 +397,18 @@ TEST(RunScript, extractInteger) {
     ProcessEnvVars vars;
     uint64_t value = 0;
     RunScriptImpl::extractInteger(vars, value, "ZERO_PREFIX", "_ZERO_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     value = 1;
     RunScriptImpl::extractInteger(vars, value, "ONE_PREFIX", "_ONE_SUFFIX");
-    ASSERT_EQ(2, vars.size());
+    ASSERT_EQ(2U, vars.size());
     expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n"
                "ONE_PREFIX_ONE_SUFFIX=1\n";
     EXPECT_EQ(expected, join(vars));
     value = 1000;
     RunScriptImpl::extractInteger(vars, value, "THOUSAND_PREFIX", "_THOUSAND_SUFFIX");
-    ASSERT_EQ(3, vars.size());
+    ASSERT_EQ(3U, vars.size());
     expected = "ZERO_PREFIX_ZERO_SUFFIX=0\n"
                "ONE_PREFIX_ONE_SUFFIX=1\n"
                "THOUSAND_PREFIX_THOUSAND_SUFFIX=1000\n";
@@ -420,12 +420,12 @@ TEST(RunScript, extractString) {
     ProcessEnvVars vars;
     string value = "";
     RunScriptImpl::extractString(vars, value, "EMPTY_PREFIX", "_EMPTY_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "EMPTY_PREFIX_EMPTY_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     value = "SOMETHING";
     RunScriptImpl::extractString(vars, value, "NON_EMPTY_PREFIX", "_NON_EMPTY_SUFFIX");
-    ASSERT_EQ(2, vars.size());
+    ASSERT_EQ(2U, vars.size());
     expected = "EMPTY_PREFIX_EMPTY_SUFFIX=\n"
                "NON_EMPTY_PREFIX_NON_EMPTY_SUFFIX=SOMETHING\n";
     EXPECT_EQ(expected, join(vars));
@@ -436,14 +436,14 @@ TEST(RunScript, extractHWAddr) {
     ProcessEnvVars vars;
     HWAddrPtr hwaddr;
     RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFFIX");
-    ASSERT_EQ(2, vars.size());
+    ASSERT_EQ(2U, vars.size());
     string expected = "HWADDR_PREFIX_HWADDR_SUFFIX=\n"
                       "HWADDR_PREFIX_TYPE_HWADDR_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     hwaddr = generateHWAddr();
     RunScriptImpl::extractHWAddr(vars, hwaddr, "HWADDR_PREFIX", "_HWADDR_SUFFIX");
-    ASSERT_EQ(2, vars.size());
+    ASSERT_EQ(2U, vars.size());
     expected = "HWADDR_PREFIX_HWADDR_SUFFIX=00:01:02:03\n"
                "HWADDR_PREFIX_TYPE_HWADDR_SUFFIX=1\n";
     EXPECT_EQ(expected, join(vars));
@@ -454,13 +454,13 @@ TEST(RunScript, extractDUID) {
     ProcessEnvVars vars;
     DuidPtr duid;
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "DUID_PREFIX_DUID_SUFFIX=\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
     duid = generateDUID();
     RunScriptImpl::extractDUID(vars, duid, "DUID_PREFIX", "_DUID_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     expected = "DUID_PREFIX_DUID_SUFFIX=00:01:02:03:04:05:06\n";
     EXPECT_EQ(expected, join(vars));
 }
@@ -470,11 +470,11 @@ TEST(RunScript, extractOption) {
     ProcessEnvVars vars;
     OptionPtr option;
     RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
-    ASSERT_EQ(0, vars.size());
+    ASSERT_EQ(0U, vars.size());
     OptionBuffer buffer = { 0xca, 0xfe, 0xba, 0xbe };
     option = generateOption(Option::V4, DHO_USER_CLASS, buffer);
     RunScriptImpl::extractOption(vars, option, "OPTION_PREFIX", "_OPTION_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "OPTION_PREFIX_OPTION_77_OPTION_SUFFIX=0xCAFEBABE\n";
     EXPECT_EQ(expected, join(vars));
 }
@@ -484,7 +484,7 @@ TEST(RunScript, extractSubOption) {
     ProcessEnvVars vars;
     OptionPtr option;
     RunScriptImpl::extractOption(vars, option, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
-    ASSERT_EQ(0, vars.size());
+    ASSERT_EQ(0U, vars.size());
     OptionBuffer data;
     option = generateOption(Option::V4, DHO_DHCP_AGENT_OPTIONS, data);
     uint8_t subscriber_id[] = { 0x1a, 0x2b, 0x3c, 0x4d, 0x5e, 0x6f };
@@ -493,7 +493,7 @@ TEST(RunScript, extractSubOption) {
                                            subscriber_id + sizeof(subscriber_id))));
     option->addOption(subscriber_id_opt);
     RunScriptImpl::extractSubOption(vars, option, RAI_OPTION_SUBSCRIBER_ID, "OPTION_SUBOPTION_PREFIX", "_OPTION_SUBOPTION_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "OPTION_SUBOPTION_PREFIX_OPTION_82_SUB_OPTION_6_OPTION_SUBOPTION_SUFFIX=0x1A2B3C4D5E6F\n";
     EXPECT_EQ(expected, join(vars));
 }
@@ -503,7 +503,7 @@ TEST(RunScript, extractOptionIA) {
     ProcessEnvVars vars;
     Option6IAPtr optionia;
     RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     string expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFFIX=\n"
                       "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFFIX=\n"
                       "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFFIX=\n"
@@ -512,7 +512,7 @@ TEST(RunScript, extractOptionIA) {
     vars.clear();
     optionia = generateOptionIA();
     RunScriptImpl::extractOptionIA(vars, optionia, "OPTIONIA_PREFIX", "_OPTIONIA_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     expected = "OPTIONIA_PREFIX_IAID_OPTIONIA_SUFFIX=2711790500\n"
                "OPTIONIA_PREFIX_IA_TYPE_OPTIONIA_SUFFIX=3\n"
                "OPTIONIA_PREFIX_IA_T1_OPTIONIA_SUFFIX=2164392708\n"
@@ -525,7 +525,7 @@ TEST(RunScript, extractSubnet4) {
     ProcessEnvVars vars;
     Subnet4Ptr subnet4;
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     string expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFFIX=\n"
                       "SUBNET4_PREFIX_NAME_SUBNET4_SUFFIX=\n"
                       "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFFIX=\n"
@@ -534,7 +534,7 @@ TEST(RunScript, extractSubnet4) {
     vars.clear();
     subnet4 = generateSubnet4();
     RunScriptImpl::extractSubnet4(vars, subnet4, "SUBNET4_PREFIX", "_SUBNET4_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     expected = "SUBNET4_PREFIX_ID_SUBNET4_SUFFIX=6\n"
                "SUBNET4_PREFIX_NAME_SUBNET4_SUFFIX=182.168.0.1/2\n"
                "SUBNET4_PREFIX_PREFIX_SUBNET4_SUFFIX=182.168.0.1\n"
@@ -547,7 +547,7 @@ TEST(RunScript, extractSubnet6) {
     ProcessEnvVars vars;
     Subnet6Ptr subnet6;
     RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     string expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFFIX=\n"
                       "SUBNET6_PREFIX_NAME_SUBNET6_SUFFIX=\n"
                       "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFFIX=\n"
@@ -556,7 +556,7 @@ TEST(RunScript, extractSubnet6) {
     vars.clear();
     subnet6 = generateSubnet6();
     RunScriptImpl::extractSubnet6(vars, subnet6, "SUBNET6_PREFIX", "_SUBNET6_SUFFIX");
-    ASSERT_EQ(4, vars.size());
+    ASSERT_EQ(4U, vars.size());
     expected = "SUBNET6_PREFIX_ID_SUBNET6_SUFFIX=7\n"
                "SUBNET6_PREFIX_NAME_SUBNET6_SUFFIX=2003:db8::1/2\n"
                "SUBNET6_PREFIX_PREFIX_SUBNET6_SUFFIX=2003:db8::1\n"
@@ -569,7 +569,7 @@ TEST(RunScript, extractLease4) {
     ProcessEnvVars vars;
     Lease4Ptr lease4;
     RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFFIX");
-    ASSERT_EQ(9, vars.size());
+    ASSERT_EQ(9U, vars.size());
     string expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFFIX=\n"
                       "LEASE4_PREFIX_CLTT_LEASE4_SUFFIX=\n"
                       "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFFIX=\n"
@@ -583,7 +583,7 @@ TEST(RunScript, extractLease4) {
     vars.clear();
     lease4 = generateLease4();
     RunScriptImpl::extractLease4(vars, lease4, "LEASE4_PREFIX", "_LEASE4_SUFFIX");
-    ASSERT_EQ(9, vars.size());
+    ASSERT_EQ(9U, vars.size());
     expected = "LEASE4_PREFIX_ADDRESS_LEASE4_SUFFIX=192.168.0.1\n"
                "LEASE4_PREFIX_CLTT_LEASE4_SUFFIX=3\n"
                "LEASE4_PREFIX_HOSTNAME_LEASE4_SUFFIX=test.hostname\n"
@@ -601,7 +601,7 @@ TEST(RunScript, extractLease6) {
     ProcessEnvVars vars;
     Lease6Ptr lease6;
     RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFFIX");
-    ASSERT_EQ(13, vars.size());
+    ASSERT_EQ(13U, vars.size());
     string expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFFIX=\n"
                       "LEASE6_PREFIX_CLTT_LEASE6_SUFFIX=\n"
                       "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFFIX=\n"
@@ -619,7 +619,7 @@ TEST(RunScript, extractLease6) {
     vars.clear();
     lease6 = generateLease6();
     RunScriptImpl::extractLease6(vars, lease6, "LEASE6_PREFIX", "_LEASE6_SUFFIX");
-    ASSERT_EQ(13, vars.size());
+    ASSERT_EQ(13U, vars.size());
     expected = "LEASE6_PREFIX_ADDRESS_LEASE6_SUFFIX=2003:db8::1\n"
                "LEASE6_PREFIX_CLTT_LEASE6_SUFFIX=7\n"
                "LEASE6_PREFIX_HOSTNAME_LEASE6_SUFFIX=test.hostname\n"
@@ -641,7 +641,7 @@ TEST(RunScript, extractLeases4) {
     ProcessEnvVars vars;
     Lease4CollectionPtr leases4;
     RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
@@ -649,7 +649,7 @@ TEST(RunScript, extractLeases4) {
     leases4->push_back(generateLease4());
     leases4->push_back(generateLease4());
     RunScriptImpl::extractLeases4(vars, leases4, "LEASES4_PREFIX", "_LEASES4_SUFFIX");
-    ASSERT_EQ(19, vars.size());
+    ASSERT_EQ(19U, vars.size());
     expected = "LEASES4_PREFIX_SIZE_LEASES4_SUFFIX=2\n"
                "LEASES4_PREFIX_AT0_ADDRESS_LEASES4_SUFFIX=192.168.0.1\n"
                "LEASES4_PREFIX_AT0_CLTT_LEASES4_SUFFIX=3\n"
@@ -677,7 +677,7 @@ TEST(RunScript, extractLeases6) {
     ProcessEnvVars vars;
     Lease6CollectionPtr leases6;
     RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFFIX");
-    ASSERT_EQ(1, vars.size());
+    ASSERT_EQ(1U, vars.size());
     string expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFFIX=0\n";
     EXPECT_EQ(expected, join(vars));
     vars.clear();
@@ -685,7 +685,7 @@ TEST(RunScript, extractLeases6) {
     leases6->push_back(generateLease6());
     leases6->push_back(generateLease6());
     RunScriptImpl::extractLeases6(vars, leases6, "LEASES6_PREFIX", "_LEASES6_SUFFIX");
-    ASSERT_EQ(27, vars.size());
+    ASSERT_EQ(27U, vars.size());
     expected = "LEASES6_PREFIX_SIZE_LEASES6_SUFFIX=2\n"
                "LEASES6_PREFIX_AT0_ADDRESS_LEASES6_SUFFIX=2003:db8::1\n"
                "LEASES6_PREFIX_AT0_CLTT_LEASES6_SUFFIX=7\n"
@@ -721,7 +721,7 @@ TEST(RunScript, extractPkt4) {
     ProcessEnvVars vars;
     Pkt4Ptr pkt4;
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
-    ASSERT_EQ(22, vars.size());
+    ASSERT_EQ(22U, vars.size());
     string expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_TXID_PKT4_SUFFIX=\n"
                       "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=\n"
@@ -748,7 +748,7 @@ TEST(RunScript, extractPkt4) {
     vars.clear();
     pkt4 = generatePkt4();
     RunScriptImpl::extractPkt4(vars, pkt4, "PKT4_PREFIX", "_PKT4_SUFFIX");
-    ASSERT_EQ(25, vars.size());
+    ASSERT_EQ(25U, vars.size());
     expected = "PKT4_PREFIX_TYPE_PKT4_SUFFIX=UNKNOWN\n"
                "PKT4_PREFIX_TXID_PKT4_SUFFIX=0\n"
                "PKT4_PREFIX_LOCAL_ADDR_PKT4_SUFFIX=0.0.0.0\n"
@@ -782,7 +782,7 @@ TEST(RunScript, extractPkt6) {
     ProcessEnvVars vars;
     Pkt6Ptr pkt6;
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
-    ASSERT_EQ(12, vars.size());
+    ASSERT_EQ(12U, vars.size());
     string expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=\n"
                       "PKT6_PREFIX_TXID_PKT6_SUFFIX=\n"
                       "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=\n"
@@ -799,7 +799,7 @@ TEST(RunScript, extractPkt6) {
     vars.clear();
     pkt6 = generatePkt6();
     RunScriptImpl::extractPkt6(vars, pkt6, "PKT6_PREFIX", "_PKT6_SUFFIX");
-    ASSERT_EQ(15, vars.size());
+    ASSERT_EQ(15U, vars.size());
     expected = "PKT6_PREFIX_TYPE_PKT6_SUFFIX=UNKNOWN\n"
                "PKT6_PREFIX_TXID_PKT6_SUFFIX=0\n"
                "PKT6_PREFIX_LOCAL_ADDR_PKT6_SUFFIX=ff02::1:2\n"

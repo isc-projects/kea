@@ -79,13 +79,13 @@ TEST(LeaseUpdateBacklogTest, clear) {
     }
 
     // Make sure all lease updates have been added.
-    EXPECT_EQ(3, backlog.size());
+    EXPECT_EQ(3U, backlog.size());
 
     // Remove lease updates.
     ASSERT_NO_THROW(backlog.clear());
 
     // There should be no lease updates.
-    EXPECT_EQ(0, backlog.size());
+    EXPECT_EQ(0U, backlog.size());
 }
 
 } // end of anonymous namespace

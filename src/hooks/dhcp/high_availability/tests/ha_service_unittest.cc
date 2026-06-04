@@ -892,7 +892,8 @@ public:
         // contacted servers because we send one lease update and one
         // lease deletion to each contacted server from which we expect
         // an acknowledgment.
-        EXPECT_EQ(2 * num_updates, service_->getPendingRequest(query));
+        EXPECT_EQ(static_cast<int>(2 * num_updates),
+                  service_->getPendingRequest(query));
 
         // Let's park the packet and associate it with the callback function which
         // simply records the fact that it has been called. We expect that it wasn't
@@ -1012,7 +1013,7 @@ public:
         // The number of requests we send is equal to the number of servers
         // from which we expect an acknowledgement. We send both lease updates
         // and the deletions in a single bulk update command.
-        EXPECT_EQ(num_updates, service_->getPendingRequest(query));
+        EXPECT_EQ(static_cast<int>(num_updates), service_->getPendingRequest(query));
 
         EXPECT_FALSE(boost::dynamic_pointer_cast<NakedCommunicationState6>
                      (service_->communication_state_)->isPoked());
@@ -1129,10 +1130,10 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // Updates have been sent so this counter should remain 0.
-        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(0U, service_->communication_state_->getUnsentUpdateCount());
 
         // The server 2 should have received two commands.
-        EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease4-update command.
         auto update_request2 =
@@ -1147,7 +1148,7 @@ public:
         EXPECT_TRUE(delete_request2);
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease4-update command.
         auto update_request3 =
@@ -1183,10 +1184,10 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // Updates have been sent so this counter should remain 0.
-        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(0U, service_->communication_state_->getUnsentUpdateCount());
 
         // The server 2 should have received two commands.
-        EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease4-update command.
         auto update_request2 =
@@ -1202,7 +1203,7 @@ public:
         EXPECT_TRUE(soft_delete_request2);
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease4-update command.
         auto update_request3 =
@@ -1239,7 +1240,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1260,7 +1261,7 @@ public:
                                                                  "192.2.3.4"));
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests sending outstanding lease updates in the communication-recovery
@@ -1284,7 +1285,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1305,7 +1306,7 @@ public:
                                                                  "192.2.3.4"));
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Test the cases when the trying to recover from the communication
@@ -1339,7 +1340,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // When testing the case when the backlog should be overflown, we need
         // to add several more leases to the backlog to exceed the limit.
@@ -1402,7 +1403,7 @@ public:
         }
 
         // The backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1429,7 +1430,7 @@ public:
         // This is later returned in the heartbeat so the partner can
         // determine whether it should synchronize its lease database or
         // not.
-        EXPECT_EQ(1, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(1U, service_->communication_state_->getUnsentUpdateCount());
 
         // Server 2 should not receive lease4-update.
         auto update_request2 =
@@ -1491,7 +1492,7 @@ public:
 
         // The updates should be sent to server 2 and this server should
         // return error code.
-        EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Server 2 should receive lease4-update.
         auto update_request2 =
@@ -1506,7 +1507,7 @@ public:
         EXPECT_TRUE(delete_request2);
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease4-update command.
         auto update_request3 =
@@ -1544,7 +1545,7 @@ public:
         EXPECT_TRUE(factory2_->getResponseCreator()->getReceivedRequests().empty());
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(2, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease4-update command.
         auto update_request3 =
@@ -1575,7 +1576,7 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // The server 2 should have received two commands.
-        EXPECT_EQ(2, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(2U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease4-update command.
         auto update_request2 =
@@ -1623,7 +1624,7 @@ public:
 
         // Ensure that the server has recorded a lease update conflict. The conflict
         // reported by the backup server should not count.
-        EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
+        EXPECT_EQ(1U, service_->communication_state_->getRejectedLeaseUpdatesCount());
 
         // Change the partner's response to success.
         factory2_->getResponseCreator()->setControlResult(CONTROL_RESULT_SUCCESS);
@@ -1638,7 +1639,7 @@ public:
             unpark_called = true;
         }, false, 1, MyState(HA_LOAD_BALANCING_ST), true, false);
         EXPECT_TRUE(unpark_called);
-        EXPECT_EQ(0, service_->communication_state_->getRejectedLeaseUpdatesCount());
+        EXPECT_EQ(0U, service_->communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     /// @brief Tests scenarios when all lease updates are sent successfully.
@@ -1660,10 +1661,10 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // Updates have been sent so this counter should remain 0.
-        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(0U, service_->communication_state_->getUnsentUpdateCount());
 
         // The server 2 should have received one command.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease6-bulk-apply command.
         auto update_request2 =
@@ -1673,7 +1674,7 @@ public:
         EXPECT_TRUE(update_request2);
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease6-bulk-apply command.
         auto update_request3 =
@@ -1704,10 +1705,10 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // Updates have been sent so this counter should remain 0.
-        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(0U, service_->communication_state_->getUnsentUpdateCount());
 
         // The server 2 should have received one command.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease6-bulk-apply command.
         auto update_request2 =
@@ -1724,10 +1725,10 @@ public:
         auto leases = arguments->get("leases");
         ASSERT_TRUE(leases);
         EXPECT_EQ(Element::list, leases->getType());
-        EXPECT_EQ(2, leases->size());
+        EXPECT_EQ(2U, leases->size());
 
         // Lease updates should be successfully sent to server3.
-        EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease6-bulk-apply command.
         auto update_request3 =
@@ -1740,7 +1741,7 @@ public:
         EXPECT_EQ(Element::map, arguments->getType());
         leases = arguments->get("leases");
         EXPECT_EQ(Element::list, leases->getType());
-        EXPECT_EQ(2, leases->size());
+        EXPECT_EQ(2U, leases->size());
     }
 
     /// @brief Tests that DHCPv6 lease updates are queued when the server is in the
@@ -1764,7 +1765,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1790,14 +1791,14 @@ public:
         auto leases = arguments->get("leases");
         ASSERT_TRUE(leases);
         EXPECT_EQ(Element::list, leases->getType());
-        EXPECT_EQ(1, leases->size());
+        EXPECT_EQ(1U, leases->size());
         auto deleted_leases = arguments->get("deleted-leases");
         ASSERT_TRUE(deleted_leases);
         EXPECT_EQ(Element::list, deleted_leases->getType());
-        EXPECT_EQ(1, deleted_leases->size());
+        EXPECT_EQ(1U, deleted_leases->size());
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests sending outstanding lease updates in the communication-recovery
@@ -1821,7 +1822,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // Make partner available.
         service_->communication_state_->poke();
@@ -1847,10 +1848,10 @@ public:
         EXPECT_EQ(Element::map, arguments->getType());
         auto leases = arguments->get("leases");
         EXPECT_EQ(Element::list, leases->getType());
-        EXPECT_EQ(2, leases->size());
+        EXPECT_EQ(2U, leases->size());
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Test the cases when the trying to recover from the communication
@@ -1883,7 +1884,7 @@ public:
         EXPECT_FALSE(unpark_called);
 
         // Let's make sure they have been queued.
-        EXPECT_EQ(2, service_->lease_update_backlog_.size());
+        EXPECT_EQ(2U, service_->lease_update_backlog_.size());
 
         // When testing the case when the backlog should be overflown, we need
         // to add several more leases to the backlog to exceed the limit.
@@ -1943,7 +1944,7 @@ public:
         }
 
         // Backlog should be empty.
-        EXPECT_EQ(0, service_->lease_update_backlog_.size());
+        EXPECT_EQ(0U, service_->lease_update_backlog_.size());
     }
 
     /// @brief Tests scenarios when lease updates are not sent to the failover peer.
@@ -1970,7 +1971,7 @@ public:
         // This is later returned in the heartbeat so the partner can
         // determine whether it should synchronize its lease database or
         // not.
-        EXPECT_EQ(1, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(1U, service_->communication_state_->getUnsentUpdateCount());
 
         // Server 2 should not receive lease6-bulk-apply.
         auto update_request2 =
@@ -2018,7 +2019,7 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // The server 2 should have received one command.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease6-bulk-apply command.
         auto update_request2 =
@@ -2054,7 +2055,7 @@ public:
         }, true, 1);
 
         // The updates should be sent to server 2 and this server should return error code.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Server 2 should receive lease6-bulk-apply.
         auto update_request2 =
@@ -2150,7 +2151,7 @@ public:
         EXPECT_TRUE(unpark_called);
 
         // The server 2 should have received one command.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease6-bulk-apply command.
         auto update_request2 =
@@ -2208,7 +2209,7 @@ public:
 
         // Ensure that the server has recorded the lease update conflict. The conflict
         // reported by the backup server should not count.
-        EXPECT_EQ(1, service_->communication_state_->getRejectedLeaseUpdatesCount());
+        EXPECT_EQ(1U, service_->communication_state_->getRejectedLeaseUpdatesCount());
 
         // Change the active server's response to success. The initially rejected
         // lease update should no longer be tracked.
@@ -2220,7 +2221,7 @@ public:
             unpark_called = true;
         }, false, 1, MyState(HA_LOAD_BALANCING_ST), true, false);
         EXPECT_TRUE(unpark_called);
-        EXPECT_EQ(0, service_->communication_state_->getRejectedLeaseUpdatesCount());
+        EXPECT_EQ(0U, service_->communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     /// @brief Test the scenario when the server receiving a lease update returns
@@ -2283,7 +2284,7 @@ public:
 
         // The conflict should not be recorded because the error status code
         // takes precedence.
-        EXPECT_EQ(0, service_->communication_state_->getRejectedLeaseUpdatesCount());
+        EXPECT_EQ(0U, service_->communication_state_->getRejectedLeaseUpdatesCount());
     }
 
     /// @brief Runs HAService::processSynchronize for the DHCPv4 server and
@@ -2454,7 +2455,7 @@ public:
                   service_->asyncSendSingleLeaseUpdate(query, lease4, parking_lot_handle));
 
         // Verify we have the right number of updates pending.
-        EXPECT_EQ(num_updates, service_->getPendingRequest(query));
+        EXPECT_EQ(static_cast<int>(num_updates), service_->getPendingRequest(query));
 
         if (parking_lot) {
             // Let's park the packet and associate it with the callback function which
@@ -2514,10 +2515,10 @@ public:
         }
 
         // Updates have been sent so this counter should remain 0.
-        EXPECT_EQ(0, service_->communication_state_->getUnsentUpdateCount());
+        EXPECT_EQ(0U, service_->communication_state_->getUnsentUpdateCount());
 
         // The server 2 should have received two commands.
-        EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 2 has received lease4-update command.
         auto update_request2 =
@@ -2526,7 +2527,7 @@ public:
         EXPECT_TRUE(update_request2);
 
         // Lease update should be successfully sent to server3.
-        EXPECT_EQ(1, factory3_->getResponseCreator()->getReceivedRequests().size());
+        EXPECT_EQ(1U, factory3_->getResponseCreator()->getReceivedRequests().size());
 
         // Check that the server 3 has received lease4-update command.
         auto update_request3 =
@@ -3254,7 +3255,7 @@ TEST_F(HAServiceTest, processHeartbeat) {
     auto scopes_list = args->get("scopes");
     ASSERT_TRUE(scopes_list);
     EXPECT_EQ(Element::list, scopes_list->getType());
-    ASSERT_EQ(1, scopes_list->size());
+    ASSERT_EQ(1U, scopes_list->size());
     auto scope = scopes_list->get(0);
     ASSERT_TRUE(scope);
     EXPECT_EQ(Element::string, scope->getType());
@@ -3280,7 +3281,7 @@ TEST_F(HAServiceTest, processHeartbeat) {
     ConstElementPtr unsent_update_count = args->get("unsent-update-count");
     ASSERT_TRUE(unsent_update_count);
     EXPECT_EQ(Element::integer, unsent_update_count->getType());
-    EXPECT_EQ(unsent_updates, static_cast<uint64_t>(unsent_update_count->intValue()));
+    EXPECT_EQ(unsent_updates, unsent_update_count->intValue());
 }
 
 // This test verifies that the correct value of the heartbeat-delay is used.
@@ -3305,7 +3306,7 @@ TEST_F(HAServiceTest, recurringHeartbeatDelay) {
     ASSERT_NO_THROW(service.runModel(HAService::NOP_EVT));
 
     ASSERT_TRUE(state->timer_);
-    EXPECT_EQ(6000, state->timer_->getInterval());
+    EXPECT_EQ(6000U, state->timer_->getInterval());
 }
 
 // This test verifies that the heartbeat is periodically sent to the
@@ -3323,7 +3324,7 @@ TEST_F(HAServiceTest, recurringHeartbeat) {
     ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_SUCCESS, true));
 
     // Server 2 should have received the heartbeat
-    EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0);
+    EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0U);
 }
 
 // This test verifies that the heartbeat is periodically sent to the
@@ -3349,7 +3350,7 @@ TEST_F(HAServiceTest, recurringHeartbeatAuthorized) {
     ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_SUCCESS, true));
 
     // Server 2 should have received the heartbeat
-    EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0);
+    EXPECT_GE(factory2_->getResponseCreator()->getReceivedRequests().size(), 0U);
 }
 
 // This test verifies that the heartbeat is considered being unsuccessful if the
@@ -3384,7 +3385,7 @@ TEST_F(HAServiceTest, recurringHeartbeatControlResultError) {
     ASSERT_NO_FATAL_FAILURE(testRecurringHeartbeat(CONTROL_RESULT_ERROR, false));
 
     // Server 2 should have received the heartbeat.
-    EXPECT_EQ(1, factory2_->getResponseCreator()->getReceivedRequests().size());
+    EXPECT_EQ(1U, factory2_->getResponseCreator()->getReceivedRequests().size());
 }
 
 // This test verifies that the heartbeat is considered being unsuccessful if
@@ -4507,7 +4508,7 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
     // was unsupported.
 
     auto requests = factory2_->getResponseCreator()->getReceivedRequests();
-    ASSERT_GE(requests.size(), 3);
+    ASSERT_GE(requests.size(), 3U);
 
     // The dhcp-disable should be the first request.
     auto request = factory2_->getResponseCreator()->findRequest("dhcp-disable","20");
@@ -4553,7 +4554,7 @@ TEST_F(HAServiceTest, processSynchronizeNotifyError) {
 
     auto requests = factory2_->getResponseCreator()->getReceivedRequests();
 
-    ASSERT_GE(requests.size(), 3);
+    ASSERT_GE(requests.size(), 3U);
 
     // The dhcp-disable should be the first request.
     auto request = factory2_->getResponseCreator()->findRequest("dhcp-disable","20");
@@ -7984,7 +7985,7 @@ TEST_F(HAServiceStateMachineTest, stateTransitionsLoadBalancingBackup) {
         // In the backup state the DHCP service is disabled by default.
         // It can only be enabled manually.
         ASSERT_FALSE(service_->network_state_->isServiceEnabled());
-        ASSERT_EQ(0, service_->query_filter_.getServedScopes().size());
+        ASSERT_EQ(0U, service_->query_filter_.getServedScopes().size());
     }
 }
 

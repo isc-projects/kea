@@ -114,12 +114,12 @@ public:
         if (processed) {
             EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle.getStatus());
             EXPECT_FALSE(pkt->getOption(DHO_DHCP_MESSAGE_TYPE));
-            EXPECT_LE(300, pkt->getBuffer().getLength());
+            EXPECT_LE(300U, pkt->getBuffer().getLength());
         } else {
             EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
             EXPECT_TRUE(pkt->getOption(DHO_DHCP_MESSAGE_TYPE));
             // This works because we did not add options to the response.
-            EXPECT_GT(300, pkt->getBuffer().getLength());
+            EXPECT_GT(300U, pkt->getBuffer().getLength());
         }
     }
 

@@ -488,7 +488,7 @@ public:
                         iana_count++;
                         auto iana = boost::dynamic_pointer_cast<Option6IA>(opt.second);
                         if (context_iana_count == 1) {
-                            ASSERT_EQ(iana->getIAID(), 0);
+                            ASSERT_EQ(iana->getIAID(), 0U);
                         } else {
                             ASSERT_EQ(iana->getIAID(), iana_count);
                         }
@@ -502,7 +502,7 @@ public:
                         iapd_count++;
                         auto iapd = boost::dynamic_pointer_cast<Option6IA>(opt.second);
                         if (context_iapd_count == 1) {
-                            ASSERT_EQ(iapd->getIAID(), 0);
+                            ASSERT_EQ(iapd->getIAID(), 0U);
                         } else {
                             ASSERT_EQ(iapd->getIAID(), iapd_count);
                         }

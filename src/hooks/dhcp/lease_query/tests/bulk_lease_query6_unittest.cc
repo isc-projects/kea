@@ -867,7 +867,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyRelay(
     ASSERT_NO_THROW_LOG(unpackRelayForwardMsg(relay_forw_data, relay_infos));
 
     // We should have one relay.
-    EXPECT_EQ(1, relay_infos.size());
+    EXPECT_EQ(1U, relay_infos.size());
 
     // Verify the first instance.
     ASSERT_EQ(hop, relay_infos[0]->hop_count_);
@@ -1085,7 +1085,7 @@ TEST_F(MemfileBulkLeaseQuery6ProcessTest, validConfig6) {
     ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl6(config)));
 
     // Verify known and unknown requesters check correctly.
-    EXPECT_EQ(2, impl->getNumRequesters());
+    EXPECT_EQ(2U, impl->getNumRequesters());
     EXPECT_FALSE(impl->isRequester(IOAddress("2001:db8:1::")));
     EXPECT_TRUE(impl->isRequester(IOAddress("2001:db8:1::1")));
     EXPECT_FALSE(impl->isRequester(IOAddress("2001:db8:1::2")));
@@ -1099,10 +1099,10 @@ TEST_F(MemfileBulkLeaseQuery6ProcessTest, validConfig6) {
     // Verify prefix length list.
     PrefixLengthList prefix_lengths;
     ASSERT_NO_THROW_LOG(prefix_lengths = impl->getPrefixLengthList());
-    EXPECT_EQ(2, prefix_lengths.size());
+    EXPECT_EQ(2U, prefix_lengths.size());
     auto it = prefix_lengths.crbegin();
-    EXPECT_EQ(*it++, 72);
-    EXPECT_EQ(*it, 64);
+    EXPECT_EQ(*it++, 72U);
+    EXPECT_EQ(*it, 64U);
 
     // Verify the advanced config.
     auto mgr = BulkLeaseQueryService::instance();
@@ -1112,29 +1112,29 @@ TEST_F(MemfileBulkLeaseQuery6ProcessTest, validConfig6) {
     EXPECT_FALSE(mgr->getActiveQueryEnabled());
     EXPECT_FALSE(mgr->getExtendedInfoTablesEnabled());
     EXPECT_EQ(IOAddress("::1"), mgr->getLeaseQueryIp());
-    EXPECT_EQ(12345, mgr->getLeaseQueryTcpPort());
-    EXPECT_EQ(10, mgr->getMaxBulkQueryThreads());
-    EXPECT_EQ(10, mgr->getMaxRequesterConnections());
-    EXPECT_EQ(5, mgr->getMaxConcurrentQueries());
-    EXPECT_EQ(300, mgr->getMaxRequesterIdleTime());
-    EXPECT_EQ(100, mgr->getMaxLeasePerFetch());
+    EXPECT_EQ(12345U, mgr->getLeaseQueryTcpPort());
+    EXPECT_EQ(10U, mgr->getMaxBulkQueryThreads());
+    EXPECT_EQ(10U, mgr->getMaxRequesterConnections());
+    EXPECT_EQ(5U, mgr->getMaxConcurrentQueries());
+    EXPECT_EQ(300U, mgr->getMaxRequesterIdleTime());
+    EXPECT_EQ(100U, mgr->getMaxLeasePerFetch());
 
     // Verify setters.
     EXPECT_NO_THROW(mgr->setMaxBulkQueryThreads(20));
-    EXPECT_EQ(20, mgr->getMaxBulkQueryThreads());
+    EXPECT_EQ(20U, mgr->getMaxBulkQueryThreads());
 
     EXPECT_THROW_MSG(mgr->setMaxRequesterConnections(0), BadValue,
                      "new max requester connections is 0");
     EXPECT_NO_THROW(mgr->setMaxRequesterConnections(20));
-    EXPECT_EQ(20, mgr->getMaxRequesterConnections());
+    EXPECT_EQ(20U, mgr->getMaxRequesterConnections());
 
     EXPECT_NO_THROW(mgr->setMaxConcurrentQueries(0));
-    EXPECT_EQ(0, mgr->getMaxConcurrentQueries());
+    EXPECT_EQ(0U, mgr->getMaxConcurrentQueries());
 
     EXPECT_THROW_MSG(mgr->setMaxLeasePerFetch(0), BadValue,
                      "new max leases per fetch is 0");
     EXPECT_NO_THROW(mgr->setMaxLeasePerFetch(200));
-    EXPECT_EQ(200, mgr->getMaxLeasePerFetch());
+    EXPECT_EQ(200U, mgr->getMaxLeasePerFetch());
 
     // Make sure listener involved functions do not misbehave.
     ASSERT_NO_THROW(mgr->startListener());
@@ -1540,13 +1540,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressActiveLeas
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(100, options);
+    verifyCLTT(100U, options);
 
     // Now let's check w should have one TYPE_NA lease.
     verifyIAADDR(active_lease->addr_, options);
@@ -1650,13 +1650,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(100, options);
+    verifyCLTT(100U, options);
 
     // Now let's check w should have one TYPE_NA lease.
     // Most recent lease is lease2.
@@ -1670,13 +1670,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(200, options);
+    verifyCLTT(200U, options);
 
     // Now let's check w should have one TYPE_NA lease.
     // Second lease is lease3.
@@ -1690,13 +1690,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(300, options);
+    verifyCLTT(300U, options);
 
     // Now let's check w should have one TYPE_NA lease.
     // Third lease is lease1.
@@ -1710,13 +1710,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdMultipleLin
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(400, options);
+    verifyCLTT(400U, options);
 
     // Now let's check w should have one TYPE_PD lease.
     verifyIAPREFIX(pd_lease->addr_, options);
@@ -1766,13 +1766,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
     // Should have client data option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify that CLTT comes from lease2.
-    verifyCLTT(100, options);
+    verifyCLTT(100U, options);
 
     // Now let's check we should have one TYPE_NA lease.
     auto opt_iter = options.find(D6O_IAADDR);
@@ -1793,13 +1793,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByClientIdActiveLease
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(200, options);
+    verifyCLTT(200U, options);
 
     // Now let's check we should have one TYPE_PD lease.
     opt_iter = options.find(D6O_IAPREFIX);
@@ -1875,7 +1875,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // First lease is lease2.
@@ -1884,7 +1884,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(300, options);
+        verifyCLTT(300U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease2->addr_, options);
@@ -1895,7 +1895,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(200, options);
+        verifyCLTT(200U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease3->addr_, options);
@@ -1916,7 +1916,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Second lease is lease 3.
@@ -1925,7 +1925,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(200, options);
+        verifyCLTT(200U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease3->addr_, options);
@@ -1936,7 +1936,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(100, options);
+        verifyCLTT(100U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease4->addr_, options);
@@ -1956,7 +1956,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Next lease is lease 4.
@@ -1964,7 +1964,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(100, options);
+        verifyCLTT(100U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease4->addr_, options);
@@ -1974,7 +1974,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease->addr_, options);
@@ -1994,7 +1994,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Next lease is pd_lease.
@@ -2002,7 +2002,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease->addr_, options);
@@ -2012,7 +2012,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease2->addr_, options);
@@ -2038,7 +2038,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Last lease is pd lease 2.
 
@@ -2046,7 +2046,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRelayId(
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(50, options);
+    verifyCLTT(50U, options);
 
     // Verify IAPREFIX.
     verifyIAPREFIX(pd_lease2->addr_, options);
@@ -2159,7 +2159,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // First lease is lease2.
@@ -2168,7 +2168,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(300, options);
+        verifyCLTT(300U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease2->addr_, options);
@@ -2179,7 +2179,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(200, options);
+        verifyCLTT(200U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease3->addr_, options);
@@ -2200,7 +2200,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Second lease is lease 3.
@@ -2209,7 +2209,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(200, options);
+        verifyCLTT(200U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease3->addr_, options);
@@ -2220,7 +2220,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(100, options);
+        verifyCLTT(100U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease4->addr_, options);
@@ -2240,7 +2240,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Next lease is lease 4.
@@ -2248,7 +2248,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid2_, options);
 
         // Verify CLTT.
-        verifyCLTT(100, options);
+        verifyCLTT(100U, options);
 
         // Verify IAADDR.
         verifyIAADDR(lease4->addr_, options);
@@ -2258,7 +2258,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease->addr_, options);
@@ -2278,7 +2278,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     if (link_addr.isV6Zero()) {
         // Next lease is pd_lease.
@@ -2286,7 +2286,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease->addr_, options);
@@ -2296,7 +2296,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
         verifyClientId(cid1_, options);
 
         // Verify CLTT.
-        verifyCLTT(50, options);
+        verifyCLTT(50U, options);
 
         // Verify IAPREFIX.
         verifyIAPREFIX(pd_lease2->addr_, options);
@@ -2322,7 +2322,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Last lease is pd lease 2.
 
@@ -2330,7 +2330,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByRemoteId(
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(50, options);
+    verifyCLTT(50U, options);
 
     // Verify IAPREFIX.
     verifyIAPREFIX(pd_lease2->addr_, options);
@@ -2450,7 +2450,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // First lease is lease 3.
 
@@ -2458,7 +2458,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(200, options);
+    verifyCLTT(200U, options);
 
     // Verify IAADDR.
     verifyIAADDR(lease3->addr_, options);
@@ -2479,7 +2479,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Second lease is lease 4.
 
@@ -2487,7 +2487,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     verifyClientId(cid2_, options);
 
     // Verify CLTT.
-    verifyCLTT(100, options);
+    verifyCLTT(100U, options);
 
     // Verify IAADDR.
     verifyIAADDR(lease4->addr_, options);
@@ -2502,7 +2502,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Third lease is lease 5.
 
@@ -2510,7 +2510,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(300, options);
+    verifyCLTT(300U, options);
 
     // Verify IAADDR.
     verifyIAADDR(lease5->addr_, options);
@@ -2531,7 +2531,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Forth lease is pd_lease.
 
@@ -2539,7 +2539,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(50, options);
+    verifyCLTT(50U, options);
 
     // Verify IAPREFIX.
     verifyIAPREFIX(pd_lease->addr_, options);
@@ -2554,7 +2554,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
 
     // We should have D6O_CLIENT_DATA option.
     verifyClientData(rsp, options);
-    EXPECT_EQ(4, options.size());
+    EXPECT_EQ(4U, options.size());
 
     // Last lease is pd_lease2,
 
@@ -2562,7 +2562,7 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::verifyByLinkAddress(
     verifyClientId(cid2_, options);
 
     // Verify CLTT.
-    verifyCLTT(50, options);
+    verifyCLTT(50U, options);
 
     // Verify IAPREFIX.
     verifyIAPREFIX(pd_lease2->addr_, options);
@@ -2642,10 +2642,10 @@ template <typename TestLeaseMgrType> void
         }
         OptionCollection options;
         verifyClientData(rsp, options);
-        EXPECT_EQ(4, options.size());
+        EXPECT_EQ(4U, options.size());
 
         // Verify CLTT.
-        verifyCLTT(100, options);
+        verifyCLTT(100U, options);
 
         switch (i) {
         case 0:
@@ -2886,13 +2886,13 @@ BaseBulkLeaseQuery6ProcessTest<TestLeaseMgrType>::testQueryByIpAddressActivePDLe
     // We should have D6O_CLIENT_DATA option.
     OptionCollection options;
     verifyClientData(rsp, options);
-    EXPECT_EQ(3, options.size());
+    EXPECT_EQ(3U, options.size());
 
     // Verify client id.
     verifyClientId(cid1_, options);
 
     // Verify CLTT.
-    verifyCLTT(100, options);
+    verifyCLTT(100U, options);
 
     // Now let's check we should have one TYPE_NA lease.
     verifyIAPREFIX(pd_lease->addr_, options);

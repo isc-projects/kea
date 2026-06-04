@@ -425,7 +425,7 @@ TEST_F(ClassCmdsTest, ClassAdd) {
     ASSERT_TRUE(cfg_option_def);
     auto option_def = cfg_option_def->get(DHCP4_OPTION_SPACE, 224);
     ASSERT_TRUE(option_def);
-    EXPECT_EQ(224, option_def->getCode());
+    EXPECT_EQ(224U, option_def->getCode());
 
     // Verify that option has been added.
     auto cfg_option = def->getCfgOption();
@@ -480,7 +480,7 @@ TEST_F(ClassCmdsTest, TemplateClassAdd) {
     ASSERT_TRUE(cfg_option_def);
     auto option_def = cfg_option_def->get(DHCP4_OPTION_SPACE, 224);
     ASSERT_TRUE(option_def);
-    EXPECT_EQ(224, option_def->getCode());
+    EXPECT_EQ(224U, option_def->getCode());
 
     // Verify that option has been added.
     auto cfg_option = def->getCfgOption();
@@ -697,7 +697,7 @@ TEST_F(ClassCmdsTest, ClassListEmpty) {
     ASSERT_TRUE(args);
     ConstElementPtr defs = args->get("client-classes");
     ASSERT_TRUE(defs);
-    EXPECT_EQ(0, defs->size());
+    EXPECT_EQ(0U, defs->size());
 }
 
 // Checks that class-list can handle a situation when one class is
@@ -723,8 +723,8 @@ TEST_F(ClassCmdsTest, ClassListOne) {
     ASSERT_TRUE(args);
     ConstElementPtr defs = args->get("client-classes");
     ASSERT_TRUE(defs);
-    ASSERT_GE(1, defs->size());
-    EXPECT_EQ(1, defs->size());
+    ASSERT_GE(1U, defs->size());
+    EXPECT_EQ(1U, defs->size());
     ConstElementPtr def = defs->get(0);
     ASSERT_TRUE(def);
     ASSERT_TRUE(def->get("name"));
@@ -755,8 +755,8 @@ TEST_F(ClassCmdsTest, ClassListTwo) {
     ASSERT_TRUE(args);
     ConstElementPtr defs = args->get("client-classes");
     ASSERT_TRUE(defs);
-    ASSERT_GE(2, defs->size());
-    EXPECT_EQ(2, defs->size());
+    ASSERT_GE(2U, defs->size());
+    EXPECT_EQ(2U, defs->size());
     ConstElementPtr def = defs->get(0);
     ASSERT_TRUE(def);
     ASSERT_TRUE(def->get("name"));

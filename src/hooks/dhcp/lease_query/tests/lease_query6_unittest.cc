@@ -89,7 +89,7 @@ public:
     void checkStat(const std::string& name, uint64_t exp_value) {
         ObservationPtr obs = StatsMgr::instance().getObservation(name);
         ASSERT_TRUE(obs) << "no such stat: " << name;
-        EXPECT_EQ(exp_value, obs->getInteger().first);
+        EXPECT_EQ(exp_value, static_cast<uint64_t>(obs->getInteger().first));
     }
 
     /// @brief Callout manager accessed by this CalloutHandle.

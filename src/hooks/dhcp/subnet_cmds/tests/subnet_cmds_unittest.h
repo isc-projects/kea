@@ -335,7 +335,7 @@ public:
         isc::data::ConstElementPtr subnet_list = args->get(subnet_parameter);
         ASSERT_TRUE(subnet_list);
         ASSERT_EQ(isc::data::Element::list, subnet_list->getType());
-        ASSERT_EQ(1, subnet_list->size());
+        ASSERT_EQ(1U, subnet_list->size());
 
         // Subnet is stored within a list, even though this is a single element.
         // In the future we may want to query for a collection of subnets.

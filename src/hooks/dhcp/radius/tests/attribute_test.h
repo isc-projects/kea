@@ -22,7 +22,7 @@ public:
     AttributeTest() : host_mgr_(isc::dhcp::HostMgr::instance()) {
         uint32_t vendor = 0;
         AttrDefs::instance().readDictionary(TEST_DICTIONARY, vendor);
-        EXPECT_EQ(0, vendor);
+        EXPECT_EQ(0U, vendor);
     }
 
     /// @brief Destructor.

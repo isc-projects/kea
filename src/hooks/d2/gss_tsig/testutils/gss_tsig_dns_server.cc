@@ -79,7 +79,7 @@ DummyDNSServer::readTKey(InputBufferPtr inbuf, GssApiBufferPtr& intoken,
     ASSERT_FALSE(msg->getHeaderFlag(Message::HEADERFLAG_QR));
     ASSERT_EQ(msg->getRcode(), Rcode::NOERROR());
     ASSERT_EQ(msg->getOpcode(), Opcode::QUERY());
-    ASSERT_EQ(msg->getRRCount(Message::SECTION_QUESTION), 1);
+    ASSERT_EQ(msg->getRRCount(Message::SECTION_QUESTION), 1U);
     QuestionPtr question = *msg->beginQuestion();
     ASSERT_TRUE(question);
     ASSERT_EQ(question->getClass(), RRClass::ANY());
@@ -89,7 +89,7 @@ DummyDNSServer::readTKey(InputBufferPtr inbuf, GssApiBufferPtr& intoken,
     key_name = rrset->getName();
     ASSERT_EQ(rrset->getClass(), RRClass::ANY());
     ASSERT_EQ(rrset->getType(), RRType::TKEY());
-    ASSERT_EQ(rrset->getRdataCount(), 1);
+    ASSERT_EQ(rrset->getRdataCount(), 1U);
     auto rdata_it = rrset->getRdataIterator();
     const TKEY& tkey = dynamic_cast<const TKEY&>(rdata_it->getCurrent());
     ASSERT_EQ(tkey.getError(), Rcode::NOERROR_CODE);

@@ -92,11 +92,11 @@ TEST_F(XidQueue6Test, queue) {
 
     // Create an empty list.
     XidQueue<TestQuery> queries;
-    ASSERT_EQ(0, queries.size());
+    ASSERT_EQ(0U, queries.size());
 
     // Add a query to the list.
     ASSERT_NO_THROW(queries.add(query1));
-    EXPECT_EQ(1, queries.size());
+    EXPECT_EQ(1U, queries.size());
     TestQueryPtr query;
 
     // Verify we can find the query.
@@ -106,7 +106,7 @@ TEST_F(XidQueue6Test, queue) {
 
     // Add a second one.
     ASSERT_NO_THROW(queries.add(query2));
-    EXPECT_EQ(2, queries.size());
+    EXPECT_EQ(2U, queries.size());
 
     // Verify we can find it.
     ASSERT_NO_THROW(query = queries.find(query2->getXid()));
@@ -115,7 +115,7 @@ TEST_F(XidQueue6Test, queue) {
 
     // Add another one.
     ASSERT_NO_THROW(queries.add(query3));
-    EXPECT_EQ(3, queries.size());
+    EXPECT_EQ(3U, queries.size());
 
     // Verify we can find the last one.
     ASSERT_NO_THROW(query = queries.find(query3->getXid()));
@@ -124,7 +124,7 @@ TEST_F(XidQueue6Test, queue) {
 
     // Remove one.
     ASSERT_NO_THROW(queries.remove(query2->getXid()));
-    EXPECT_EQ(2, queries.size());
+    EXPECT_EQ(2U, queries.size());
 
     // Verify it's gone.
     ASSERT_NO_THROW(query = queries.find(query2->getXid()));
@@ -134,11 +134,11 @@ TEST_F(XidQueue6Test, queue) {
     ASSERT_NO_THROW(query = queries.pop());
     ASSERT_TRUE(query);
     EXPECT_EQ(query, query1);
-    EXPECT_EQ(1, queries.size());
+    EXPECT_EQ(1U, queries.size());
 
     // Clear the list.
     ASSERT_NO_THROW(queries.clear());
-    EXPECT_EQ(0, queries.size());
+    EXPECT_EQ(0U, queries.size());
 }
 
 /// @brief Test fixture class for @ref LeaseQueryListener.  It exercises
@@ -371,7 +371,7 @@ TEST_F(LeaseQueryListenerTest6, listen) {
     ASSERT_NO_THROW(startRequest(request));
 
     ASSERT_NO_THROW(runIOService());
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     LeaseQueryTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_TRUE(client->receiveDone());
@@ -395,7 +395,7 @@ TEST_F(LeaseQueryListenerTest6, idleTimeoutTest) {
     ASSERT_EQ(SERVER_ADDRESS, listener->getLocalAddress().toText());
     ASSERT_EQ(SERVER_PORT, listener->getLocalPort());
     ASSERT_NO_THROW(connectClient());
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     LeaseQueryTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
 
@@ -435,7 +435,7 @@ TEST_F(LeaseQueryListenerTest6, multipleQueries) {
     ASSERT_NO_THROW(startRequests(requests));
     ASSERT_NO_THROW(runIOService());
 
-    ASSERT_EQ(1, clients_.size());
+    ASSERT_EQ(1U, clients_.size());
     LeaseQueryTestClientPtr client = *clients_.begin();
     ASSERT_TRUE(client);
     EXPECT_TRUE(client->receiveDone());
@@ -553,13 +553,13 @@ TEST_F(LeaseQueryListenerTest6, filterClientsTest) {
             // These clients should have been accepted and received responses.
             EXPECT_TRUE(client->receiveDone());
             EXPECT_FALSE(client->expectedEof());
-            EXPECT_EQ(1, client->getResponses().size());
+            EXPECT_EQ(1U, client->getResponses().size());
             client->checkResponses();
         } else {
             // These clients should have been rejected and gotten EOF'd.
             EXPECT_FALSE(client->receiveDone());
             EXPECT_TRUE(client->expectedEof());
-            EXPECT_EQ(0, client->getResponses().size());
+            EXPECT_EQ(0U, client->getResponses().size());
         }
 
         ++i;

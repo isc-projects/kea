@@ -132,15 +132,15 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_EQ(HAConfig::LOAD_BALANCING, impl->getConfig()->getHAMode());
     EXPECT_FALSE(impl->getConfig()->amSendingLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amSyncingLeases());
-    EXPECT_EQ(20000, impl->getConfig()->getSyncTimeout());
-    EXPECT_EQ(3, impl->getConfig()->getSyncPageLimit());
-    EXPECT_EQ(111, impl->getConfig()->getDelayedUpdatesLimit());
+    EXPECT_EQ(20000U, impl->getConfig()->getSyncTimeout());
+    EXPECT_EQ(3U, impl->getConfig()->getSyncPageLimit());
+    EXPECT_EQ(111U, impl->getConfig()->getDelayedUpdatesLimit());
     EXPECT_TRUE(impl->getConfig()->amAllowingCommRecovery());
-    EXPECT_EQ(8, impl->getConfig()->getHeartbeatDelay());
-    EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
-    EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
-    EXPECT_EQ(20, impl->getConfig()->getMaxUnackedClients());
-    EXPECT_EQ(9, impl->getConfig()->getMaxRejectedLeaseUpdates());
+    EXPECT_EQ(8U, impl->getConfig()->getHeartbeatDelay());
+    EXPECT_EQ(11U, impl->getConfig()->getMaxResponseDelay());
+    EXPECT_EQ(5U, impl->getConfig()->getMaxAckDelay());
+    EXPECT_EQ(20U, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(9U, impl->getConfig()->getMaxRejectedLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();
@@ -259,14 +259,14 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_EQ(HAConfig::HOT_STANDBY, impl->getConfig()->getHAMode());
     EXPECT_TRUE(impl->getConfig()->amSendingLeaseUpdates());
     EXPECT_TRUE(impl->getConfig()->amSyncingLeases());
-    EXPECT_EQ(60000, impl->getConfig()->getSyncTimeout());
-    EXPECT_EQ(10000, impl->getConfig()->getSyncPageLimit());
-    EXPECT_EQ(0, impl->getConfig()->getDelayedUpdatesLimit());
+    EXPECT_EQ(60000U, impl->getConfig()->getSyncTimeout());
+    EXPECT_EQ(10000U, impl->getConfig()->getSyncPageLimit());
+    EXPECT_EQ(0U, impl->getConfig()->getDelayedUpdatesLimit());
     EXPECT_FALSE(impl->getConfig()->amAllowingCommRecovery());
-    EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
-    EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
-    EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());
-    EXPECT_EQ(10, impl->getConfig()->getMaxRejectedLeaseUpdates());
+    EXPECT_EQ(10000U, impl->getConfig()->getHeartbeatDelay());
+    EXPECT_EQ(10000U, impl->getConfig()->getMaxAckDelay());
+    EXPECT_EQ(10U, impl->getConfig()->getMaxUnackedClients());
+    EXPECT_EQ(10U, impl->getConfig()->getMaxRejectedLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amWaitingBackupAck());
 
     HAConfig::PeerConfigPtr cfg = impl->getConfig()->getThisServerConfig();

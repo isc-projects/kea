@@ -39,7 +39,7 @@ TEST(DurationDataInterval, basics) {
     // Verify contents.
     // Start time is set to current time by default.
     EXPECT_GE(interval->getStartTime(), start_time);
-    EXPECT_EQ(interval->getOccurrences(), 0);
+    EXPECT_EQ(interval->getOccurrences(), 0U);
     EXPECT_EQ(interval->getMinDuration(), pos_infin);
     EXPECT_EQ(interval->getMaxDuration(), neg_infin);
     EXPECT_EQ(interval->getTotalDuration(), DurationDataInterval::ZERO_DURATION());
@@ -53,7 +53,7 @@ TEST(DurationDataInterval, basics) {
     // Add 100ms duration and check contents.
     Duration d100(milliseconds(100));
     interval->addDuration(d100);
-    EXPECT_EQ(interval->getOccurrences(), 1);
+    EXPECT_EQ(interval->getOccurrences(), 1U);
     EXPECT_EQ(interval->getMinDuration(), d100);
     EXPECT_EQ(interval->getMaxDuration(), d100);
     EXPECT_EQ(interval->getTotalDuration(), d100);
@@ -62,7 +62,7 @@ TEST(DurationDataInterval, basics) {
     // Add 300ms duration and check contents.
     Duration d300(milliseconds(300));
     interval->addDuration(d300);
-    EXPECT_EQ(interval->getOccurrences(), 2);
+    EXPECT_EQ(interval->getOccurrences(), 2U);
     EXPECT_EQ(interval->getMinDuration(), d100);
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300);
@@ -71,7 +71,7 @@ TEST(DurationDataInterval, basics) {
     // Add 50ms duration and check contents.
     Duration d50(milliseconds(50));
     interval->addDuration(d50);
-    EXPECT_EQ(interval->getOccurrences(), 3);
+    EXPECT_EQ(interval->getOccurrences(), 3U);
     EXPECT_EQ(interval->getMinDuration(), d50);
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300 + d50);
@@ -79,7 +79,7 @@ TEST(DurationDataInterval, basics) {
 
     // Add a zero duration and check contents.
     interval->addDuration(DurationDataInterval::ZERO_DURATION());
-    EXPECT_EQ(interval->getOccurrences(), 4);
+    EXPECT_EQ(interval->getOccurrences(), 4U);
     EXPECT_EQ(interval->getMinDuration(), DurationDataInterval::ZERO_DURATION());
     EXPECT_EQ(interval->getMaxDuration(), d300);
     EXPECT_EQ(interval->getTotalDuration(), d100 + d300 + d50);
@@ -115,7 +115,7 @@ TEST(DurationKey, basics) {
     EXPECT_EQ(key->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(key->getStartEventLabel(), "mt_queued");
     EXPECT_EQ(key->getStopEventLabel(), "process_started");
-    EXPECT_EQ(key->getSubnetId(), 77);
+    EXPECT_EQ(key->getSubnetId(), 77U);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77",
               key->getLabel());
     EXPECT_EQ("subnet-id[77].perfmon.SOLICIT-ADVERTISE.mt_queued-process_started.mean-usecs",
@@ -332,7 +332,7 @@ TEST(MonitoredDuration, validConstructors) {
     EXPECT_EQ(mond->getResponseType(), DHCPV6_ADVERTISE);
     EXPECT_EQ(mond->getStartEventLabel(), "mt_queued");
     EXPECT_EQ(mond->getStopEventLabel(), "process_started");
-    EXPECT_EQ(mond->getSubnetId(), 77);
+    EXPECT_EQ(mond->getSubnetId(), 77U);
     EXPECT_EQ("SOLICIT-ADVERTISE.mt_queued-process_started.77", mond->getLabel());
     EXPECT_EQ(mond->getIntervalDuration(), interval_duration);
     EXPECT_FALSE(mond->getCurrentInterval());
@@ -481,7 +481,7 @@ TEST(MonitoredDuration, addSampleAndClear) {
     // nothing to report, one occurrence and a total duration of 10ms.
     EXPECT_FALSE(mond->getPreviousInterval());
     EXPECT_FALSE(should_report);
-    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getOccurrences(), 1U);
     EXPECT_EQ(current_interval->getTotalDuration(), two_ms);
 
     // Save a copy of the current interval pointer.
@@ -489,7 +489,7 @@ TEST(MonitoredDuration, addSampleAndClear) {
 
     // Add 4 two ms samples during the current interval.
     DurationDataIntervalPtr previous_interval;
-    for (int i = 1; i < 5; ++i) {
+    for (unsigned i = 1; i < 5; ++i) {
         // Add a two ms sample, it should return false as its not
         // time to report.
         ASSERT_NO_THROW(should_report = mond->addSample(two_ms));
@@ -522,7 +522,7 @@ TEST(MonitoredDuration, addSampleAndClear) {
     EXPECT_TRUE(previous_interval);
     EXPECT_EQ(previous_interval, original_interval);
     EXPECT_TRUE(should_report);
-    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getOccurrences(), 1U);
     EXPECT_EQ(current_interval->getTotalDuration(), two_ms);
 
     // Verify that clear wipes the intervals.
@@ -555,7 +555,7 @@ TEST(MonitoredDuration, expireInterval) {
     ASSERT_NO_THROW(mond->addSample(ten_ms));
     auto current_interval = mond->getCurrentInterval();
     ASSERT_TRUE(current_interval);
-    EXPECT_EQ(current_interval->getOccurrences(), 1);
+    EXPECT_EQ(current_interval->getOccurrences(), 1U);
     EXPECT_EQ(current_interval->getTotalDuration(), ten_ms);
     EXPECT_FALSE(mond->getPreviousInterval());
     EXPECT_GE(mond->getCurrentIntervalStart(), start_time);

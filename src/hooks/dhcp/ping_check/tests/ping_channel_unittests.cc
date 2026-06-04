@@ -799,7 +799,7 @@ TEST_F(RootPingChannelTest, writeSendFailedErrorST) {
             });
 
         // Sanity check, we should have sent one less than we targeted.
-        EXPECT_EQ(echos_sent_.size(), 9);
+        EXPECT_EQ(echos_sent_.size(), 9U);
     }
 }
 
@@ -825,7 +825,7 @@ TEST_F(RootPingChannelTest, writeSendFailedErrorMT) {
             });
 
         // Sanity check, we should have sent one less than we targeted.
-        EXPECT_EQ(echos_sent_.size(), 9);
+        EXPECT_EQ(echos_sent_.size(), 9U);
     }
 }
 

@@ -465,7 +465,7 @@ TEST_F(TcpExchangeTest, sendError) {
     msg += "too too too too too too too too too too  too too ";
     msg += "too too too too too too too too too too  too too long!!!";
     // Hard limit is 253 so be close but lower...
-    EXPECT_EQ(252, msg.size());
+    EXPECT_EQ(252U, msg.size());
     AttributePtr attr = Attribute::fromString(PW_REPLY_MESSAGE, msg);
     ASSERT_TRUE(attr);
     for (size_t i = 0; i < 16; ++i) {

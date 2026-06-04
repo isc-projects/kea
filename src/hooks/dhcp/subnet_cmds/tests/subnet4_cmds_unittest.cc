@@ -1956,7 +1956,7 @@ TEST_F(Subnet4CmdsTest, subnet4Add) {
 
     // Updated configuration should contain two subnets.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    ASSERT_EQ(2, cfg->getAll()->size());
+    ASSERT_EQ(2U, cfg->getAll()->size());
 
     // Make sure that the subnets are correct.
     ConstSubnet4Ptr subnet = cfg->getBySubnetId(SubnetID(101));
@@ -1965,9 +1965,9 @@ TEST_F(Subnet4CmdsTest, subnet4Add) {
 
     // Make sure we inherited the server's globals
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(1111, subnet->getT1().get());
+    EXPECT_EQ(1111U, subnet->getT1().get());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(2222, subnet->getT2().get());
+    EXPECT_EQ(2222U, subnet->getT2().get());
 
     // The subnet we have added initially should still be there.
     subnet = cfg->getBySubnetId(SubnetID(5));
@@ -1976,9 +1976,9 @@ TEST_F(Subnet4CmdsTest, subnet4Add) {
 
     // Make sure we didn't overwrite its timer values
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(30, subnet->getT1().get());
+    EXPECT_EQ(30U, subnet->getT1().get());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(40, subnet->getT2().get());
+    EXPECT_EQ(40U, subnet->getT2().get());
 
     // Make sure that the statistics have been updated for the new subnet.
     auto total_addresses = stats::StatsMgr::instance().getObservation("subnet[101].total-addresses");
@@ -2023,7 +2023,7 @@ TEST_F(Subnet4CmdsTest, subnet4AddFLQAllocator) {
 
     // Updated configuration should contain one subnet.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    ASSERT_EQ(1, cfg->getAll()->size());
+    ASSERT_EQ(1U, cfg->getAll()->size());
 
     // Make sure that the subnet is correct.
     ConstSubnet4Ptr subnet = cfg->getBySubnetId(SubnetID(101));
@@ -2227,33 +2227,33 @@ TEST_F(Subnet4CmdsTest, subnet4Update) {
 
     // Updated configuration should contain two subnets.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    ASSERT_EQ(2, cfg->getAll()->size());
+    ASSERT_EQ(2U, cfg->getAll()->size());
 
     // Make sure that the subnets are correct.
     auto subnet_it = cfg->getAll()->begin();
     // The other subnet we have added initially should still be there.
     Subnet4Ptr subnet = *subnet_it;;
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(5, subnet->getID());
+    EXPECT_EQ(5U, subnet->getID());
     EXPECT_EQ("10.0.0.0/8", subnet->toText());
 
     // Make sure we didn't overwrite its timer values
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(30, subnet->getT1().get());
+    EXPECT_EQ(30U, subnet->getT1().get());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(40, subnet->getT2().get());
+    EXPECT_EQ(40U, subnet->getT2().get());
 
     // Verify the updated subnet.
     subnet = *++subnet_it;
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(101, subnet->getID());
+    EXPECT_EQ(101U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 
     // Make sure we inherited the server's globals
     EXPECT_FALSE(subnet->getT1().unspecified());
-    EXPECT_EQ(1111, subnet->getT1().get());
+    EXPECT_EQ(1111U, subnet->getT1().get());
     EXPECT_FALSE(subnet->getT2().unspecified());
-    EXPECT_EQ(2222, subnet->getT2().get());
+    EXPECT_EQ(2222U, subnet->getT2().get());
 
     // Make sure that the statistics have been updated for the new subnet.
     total_addresses = stats::StatsMgr::instance().getObservation("subnet[101].total-addresses");
@@ -2299,13 +2299,13 @@ TEST_F(Subnet4CmdsTest, subnet4UpdateFLQAllocator) {
 
     // Updated configuration should contain one subnet.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    ASSERT_EQ(1, cfg->getAll()->size());
+    ASSERT_EQ(1U, cfg->getAll()->size());
 
     // Make sure that the subnet is correct.
     auto subnet_it = cfg->getAll()->begin();
     Subnet4Ptr subnet = *subnet_it;;
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(101, subnet->getID());
+    EXPECT_EQ(101U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
     EXPECT_EQ("flq", subnet->getAllocatorType().get());
 
@@ -2445,7 +2445,7 @@ TEST_F(Subnet4CmdsTest, subnet4Del) {
 
     // Updated configuration should contain two subnets.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    ASSERT_EQ(2, cfg->getAll()->size());
+    ASSERT_EQ(2U, cfg->getAll()->size());
     EXPECT_FALSE(cfg->getBySubnetId(SubnetID(10)));
 
     // Make sure that the reservations are gone after the subnet was
@@ -2555,35 +2555,35 @@ TEST_F(Subnet4CmdsTest, subnet4DeltaAdd) {
 
         // Updated configuration should contain two subnets.
         auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-        ASSERT_EQ(2, cfg->getAll()->size());
+        ASSERT_EQ(2U, cfg->getAll()->size());
 
         // Make sure that the subnets are correct.
         auto subnet_it = cfg->getAll()->begin();
         // The other subnet we have added initially should still be there.
         Subnet4Ptr subnet = *subnet_it;;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(5, subnet->getID());
+        EXPECT_EQ(5U, subnet->getID());
         EXPECT_EQ("10.0.0.0/8", subnet->toText());
-        EXPECT_EQ(0, subnet->getPools(Lease::TYPE_V4).size());
+        EXPECT_EQ(0U, subnet->getPools(Lease::TYPE_V4).size());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
 
         // Verify the updated subnet.
         subnet = *++subnet_it;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(101, subnet->getID());
+        EXPECT_EQ(101U, subnet->getID());
         EXPECT_EQ("192.0.2.0/24", subnet->toText());
-        EXPECT_EQ(i + 1, subnet->getPools(Lease::TYPE_V4).size());
+        EXPECT_EQ(i + 1U, subnet->getPools(Lease::TYPE_V4).size());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
 
         // Make sure that the statistics have been updated for the subnet.
         total_addresses = stats::StatsMgr::instance().getObservation("subnet[101].total-addresses");
@@ -2807,35 +2807,35 @@ TEST_F(Subnet4CmdsTest, subnet4DeltaDel) {
 
         // Updated configuration should contain two subnets.
         auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-        ASSERT_EQ(2, cfg->getAll()->size());
+        ASSERT_EQ(2U, cfg->getAll()->size());
 
         // Make sure that the subnets are correct.
         auto subnet_it = cfg->getAll()->begin();
         // The other subnet we have added initially should still be there.
         Subnet4Ptr subnet = *subnet_it;;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(5, subnet->getID());
+        EXPECT_EQ(5U, subnet->getID());
         EXPECT_EQ("10.0.0.0/8", subnet->toText());
-        EXPECT_EQ(0, subnet->getPools(Lease::TYPE_V4).size());
+        EXPECT_EQ(0U, subnet->getPools(Lease::TYPE_V4).size());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
 
         // Verify the updated subnet.
         subnet = *++subnet_it;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(101, subnet->getID());
+        EXPECT_EQ(101U, subnet->getID());
         EXPECT_EQ("192.0.2.0/24", subnet->toText());
-        EXPECT_EQ(16 - (i + 1), subnet->getPools(Lease::TYPE_V4).size());
+        EXPECT_EQ(16U - (i + 1), subnet->getPools(Lease::TYPE_V4).size());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
     }
 
     // The pools should have been removed, so the statistics is 0.
@@ -2968,33 +2968,33 @@ TEST_F(Subnet4CmdsTest, subnet4DeltaAddAndDelMultiple) {
 
         // Updated configuration should contain two subnets.
         auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-        ASSERT_EQ(2, cfg->getAll()->size());
+        ASSERT_EQ(2U, cfg->getAll()->size());
 
         // Make sure that the subnets are correct.
         auto subnet_it = cfg->getAll()->begin();
         // The other subnet we have added initially should still be there.
         Subnet4Ptr subnet = *subnet_it;;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(5, subnet->getID());
+        EXPECT_EQ(5U, subnet->getID());
         EXPECT_EQ("10.0.0.0/8", subnet->toText());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
 
         // Verify the updated subnet.
         subnet = *++subnet_it;
         ASSERT_TRUE(subnet);
-        EXPECT_EQ(101, subnet->getID());
+        EXPECT_EQ(101U, subnet->getID());
         EXPECT_EQ("192.0.2.0/24", subnet->toText());
 
         // Make sure we didn't overwrite its timer values
         EXPECT_FALSE(subnet->getT1().unspecified());
-        EXPECT_EQ(30, subnet->getT1().get());
+        EXPECT_EQ(30U, subnet->getT1().get());
         EXPECT_FALSE(subnet->getT2().unspecified());
-        EXPECT_EQ(40, subnet->getT2().get());
+        EXPECT_EQ(40U, subnet->getT2().get());
         for (auto const& again : test.rerun_scenario_) {
             handler(test_steps[again]);
         }
@@ -3167,18 +3167,18 @@ TEST_F(Subnet4CmdsTest, network4Add) {
     // Now make sure the network is there and the two subnets are associated
     // with that network.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks4();
-    ASSERT_EQ(1, cfg->getAll()->size());
+    ASSERT_EQ(1U, cfg->getAll()->size());
 
     auto net = cfg->getByName("floor1");
     ASSERT_TRUE(net);
 
     EXPECT_FALSE(net->getT1().unspecified());
-    EXPECT_EQ(1011, net->getT1().get());
+    EXPECT_EQ(1011U, net->getT1().get());
     EXPECT_FALSE(net->getT2().unspecified());
-    EXPECT_EQ(2222, net->getT2().get());
+    EXPECT_EQ(2222U, net->getT2().get());
 
     auto subnets = net->getAllSubnets();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
     ConstSubnet4Ptr subnet1 = net->getSubnet(100);
     ConstSubnet4Ptr subnet2 = net->getSubnet(101);
     ASSERT_TRUE(subnet1);
@@ -3189,20 +3189,20 @@ TEST_F(Subnet4CmdsTest, network4Add) {
 
     // Make sure subnet1 inherited the server and network globals
     EXPECT_FALSE(subnet1->getT1().unspecified());
-    EXPECT_EQ(1011, subnet1->getT1().get());
+    EXPECT_EQ(1011U, subnet1->getT1().get());
     EXPECT_FALSE(subnet1->getT2().unspecified());
-    EXPECT_EQ(2222, subnet1->getT2().get());
+    EXPECT_EQ(2222U, subnet1->getT2().get());
 
     // Make sure subnet2 one kept its own
     EXPECT_FALSE(subnet2->getT1().unspecified());
-    EXPECT_EQ(1001, subnet2->getT1().get());
+    EXPECT_EQ(1001U, subnet2->getT1().get());
     EXPECT_FALSE(subnet2->getT2().unspecified());
-    EXPECT_EQ(2002, subnet2->getT2().get());
+    EXPECT_EQ(2002U, subnet2->getT2().get());
 
     // Also make sure the subnets from this network are added to the generic pool
     // of subnets.
     auto cfg_subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    EXPECT_EQ(2, cfg_subnets->getAll()->size());
+    EXPECT_EQ(2U, cfg_subnets->getAll()->size());
     subnet1 = cfg_subnets->getBySubnetId(100);
     subnet2 = cfg_subnets->getBySubnetId(101);
     ASSERT_TRUE(subnet1);
@@ -3267,13 +3267,13 @@ TEST_F(Subnet4CmdsTest, network4AddFLQAllocator) {
     // Now make sure the network is there and the two subnets are associated
     // with that network.
     auto cfg = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks4();
-    ASSERT_EQ(1, cfg->getAll()->size());
+    ASSERT_EQ(1U, cfg->getAll()->size());
 
     auto net = cfg->getByName("floor1");
     ASSERT_TRUE(net);
 
     auto subnets = net->getAllSubnets();
-    EXPECT_EQ(2, subnets->size());
+    EXPECT_EQ(2U, subnets->size());
     ConstSubnet4Ptr subnet1 = net->getSubnet(100);
     ConstSubnet4Ptr subnet2 = net->getSubnet(101);
     ASSERT_TRUE(subnet1);
@@ -3291,7 +3291,7 @@ TEST_F(Subnet4CmdsTest, network4AddFLQAllocator) {
     // Also make sure the subnets from this network are added to the generic pool
     // of subnets.
     auto cfg_subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
-    EXPECT_EQ(2, cfg_subnets->getAll()->size());
+    EXPECT_EQ(2U, cfg_subnets->getAll()->size());
     subnet1 = cfg_subnets->getBySubnetId(100);
     subnet2 = cfg_subnets->getBySubnetId(101);
     ASSERT_TRUE(subnet1);
@@ -3405,7 +3405,7 @@ TEST_F(Subnet4CmdsTest, network4SubnetAdd) {
 
     // Now check that the subnet was added to the network.
     auto networks = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks4();
-    ASSERT_EQ(1, networks->getAll()->size());
+    ASSERT_EQ(1U, networks->getAll()->size());
 
     auto net = networks->getByName("floor1");
     ASSERT_TRUE(net);
@@ -3449,7 +3449,7 @@ TEST_F(Subnet4CmdsTest, network4SubnetDel) {
     auto networks = CfgMgr::instance().getCurrentCfg()->getCfgSharedNetworks4();
     auto subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets4();
 
-    ASSERT_EQ(1, networks->getAll()->size());
+    ASSERT_EQ(1U, networks->getAll()->size());
 
     auto net = networks->getByName("floor1");
     ASSERT_TRUE(net);

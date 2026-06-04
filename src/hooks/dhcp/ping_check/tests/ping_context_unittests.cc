@@ -38,9 +38,9 @@ TEST(PingContextTest, validConstruction) {
 
     // Verify initial content.
     EXPECT_EQ(lease->addr_, context->getTarget());
-    EXPECT_EQ(1, context->getMinEchos());
-    EXPECT_EQ(100, context->getReplyTimeout());
-    EXPECT_EQ(0, context->getEchosSent());
+    EXPECT_EQ(1U, context->getMinEchos());
+    EXPECT_EQ(100U, context->getReplyTimeout());
+    EXPECT_EQ(0U, context->getEchosSent());
     EXPECT_EQ(PingContext::EMPTY_TIME(), context->getLastEchoSentTime());
     EXPECT_EQ(PingContext::EMPTY_TIME(), context->getSendWaitStart());
     EXPECT_EQ(PingContext::EMPTY_TIME(), context->getNextExpiry());
@@ -108,13 +108,13 @@ TEST(PingContext, accessors) {
     ASSERT_NO_THROW_LOG(context.reset(new PingContext(lease, query, 1, 50)));
 
     EXPECT_NO_THROW_LOG(context->setMinEchos(4));
-    EXPECT_EQ(4, context->getMinEchos());
+    EXPECT_EQ(4U, context->getMinEchos());
 
     EXPECT_NO_THROW_LOG(context->setReplyTimeout(200));
-    EXPECT_EQ(200, context->getReplyTimeout());
+    EXPECT_EQ(200U, context->getReplyTimeout());
 
     EXPECT_NO_THROW_LOG(context->setEchosSent(7));
-    EXPECT_EQ(7, context->getEchosSent());
+    EXPECT_EQ(7U, context->getEchosSent());
 
     EXPECT_NO_THROW_LOG(context->setLastEchoSentTime(time_now));
     EXPECT_EQ(time_now, context->getLastEchoSentTime());

@@ -58,10 +58,10 @@ TEST(RootPingCheckMgr, basicsST) {
     // elsewhere.
     auto& config = mgr->getGlobalConfig();
     EXPECT_TRUE(config->getEnablePingCheck());
-    EXPECT_EQ(1, config->getMinPingRequests());
-    EXPECT_EQ(100, config->getReplyTimeout());
-    EXPECT_EQ(60, config->getPingClttSecs());
-    EXPECT_EQ(0, config->getPingChannelThreads());
+    EXPECT_EQ(1U, config->getMinPingRequests());
+    EXPECT_EQ(100U, config->getReplyTimeout());
+    EXPECT_EQ(60U, config->getPingClttSecs());
+    EXPECT_EQ(0U, config->getPingChannelThreads());
 
     // Verify we report as stopped.
     EXPECT_FALSE(mgr->isRunning());
@@ -131,10 +131,10 @@ TEST(RootPingCheckMgr, basicsMT) {
     // elsewhere.
     auto& config = mgr->getGlobalConfig();
     EXPECT_TRUE(config->getEnablePingCheck());
-    EXPECT_EQ(1, config->getMinPingRequests());
-    EXPECT_EQ(100, config->getReplyTimeout());
-    EXPECT_EQ(60, config->getPingClttSecs());
-    EXPECT_EQ(3, config->getPingChannelThreads());
+    EXPECT_EQ(1U, config->getMinPingRequests());
+    EXPECT_EQ(100U, config->getReplyTimeout());
+    EXPECT_EQ(60U, config->getPingClttSecs());
+    EXPECT_EQ(3U, config->getPingChannelThreads());
 
     // It should not be running yet.
     EXPECT_FALSE(mgr->isRunning());
@@ -196,10 +196,10 @@ TEST(PingCheckMgr, configure) {
     // Verify initial global configuration.
     auto& default_config = mgr->getGlobalConfig();
     EXPECT_TRUE(default_config->getEnablePingCheck());
-    EXPECT_EQ(1, default_config->getMinPingRequests());
-    EXPECT_EQ(100, default_config->getReplyTimeout());
-    EXPECT_EQ(60, default_config->getPingClttSecs());
-    EXPECT_EQ(0, default_config->getPingChannelThreads());
+    EXPECT_EQ(1U, default_config->getMinPingRequests());
+    EXPECT_EQ(100U, default_config->getReplyTimeout());
+    EXPECT_EQ(60U, default_config->getPingClttSecs());
+    EXPECT_EQ(0U, default_config->getPingChannelThreads());
 
     //Create a valid configuration.
     std::string valid_json_cfg =
@@ -220,10 +220,10 @@ TEST(PingCheckMgr, configure) {
     auto& config = mgr->getGlobalConfig();
     ASSERT_TRUE(config);
     EXPECT_FALSE(config->getEnablePingCheck());
-    EXPECT_EQ(2, config->getMinPingRequests());
-    EXPECT_EQ(250, config->getReplyTimeout());
-    EXPECT_EQ(90, config->getPingClttSecs());
-    EXPECT_EQ(3, config->getPingChannelThreads());
+    EXPECT_EQ(2U, config->getMinPingRequests());
+    EXPECT_EQ(250U, config->getReplyTimeout());
+    EXPECT_EQ(90U, config->getPingClttSecs());
+    EXPECT_EQ(3U, config->getPingChannelThreads());
 
     // Create an invalid configuration.
     std::string invalid_json_cfg =
@@ -744,7 +744,7 @@ public:
         auto store = mgr_->getStore();
         ASSERT_TRUE(store);
         auto pings = store->getAll();
-        ASSERT_EQ(0, pings->size());
+        ASSERT_EQ(0U, pings->size());
 
         // Destruction should be graceful.
         ASSERT_NO_THROW_LOG(mgr_.reset());
@@ -788,15 +788,15 @@ public:
         // Our context should be present.
         auto const& store = mgr_->getStore();
         auto pings = store->getAll();
-        ASSERT_EQ(1, pings->size());
+        ASSERT_EQ(1U, pings->size());
         PingContextPtr context1;
         ASSERT_NO_THROW_LOG(context1 = store->getContextByAddress(lqp1.lease_->addr_));
         ASSERT_TRUE(context1);
 
         // Verify the context's state.
-        EXPECT_EQ(2, context1->getMinEchos());
-        EXPECT_EQ(250, context1->getReplyTimeout());
-        EXPECT_EQ(0, context1->getEchosSent());
+        EXPECT_EQ(2U, context1->getMinEchos());
+        EXPECT_EQ(250U, context1->getReplyTimeout());
+        EXPECT_EQ(0U, context1->getEchosSent());
         EXPECT_EQ(PingContext::EMPTY_TIME(), context1->getLastEchoSentTime());
         EXPECT_LE(test_start_time_, context1->getSendWaitStart());
         EXPECT_EQ(PingContext::EMPTY_TIME(), context1->getNextExpiry());
@@ -816,7 +816,7 @@ public:
 
         // Both contexts should be present.
         pings = store->getAll();
-        ASSERT_EQ(2, pings->size());
+        ASSERT_EQ(2U, pings->size());
 
         // Fetch the second context by address.
         PingContextPtr context2;
@@ -824,9 +824,9 @@ public:
         ASSERT_TRUE(context2);
 
         // Verify the second context's state.
-        EXPECT_EQ(2, context2->getMinEchos());
-        EXPECT_EQ(250, context2->getReplyTimeout());
-        EXPECT_EQ(0, context2->getEchosSent());
+        EXPECT_EQ(2U, context2->getMinEchos());
+        EXPECT_EQ(250U, context2->getReplyTimeout());
+        EXPECT_EQ(0U, context2->getEchosSent());
         EXPECT_EQ(PingContext::EMPTY_TIME(), context2->getLastEchoSentTime());
         // Its send_wait_start_time_ should be more recent than context1.
         EXPECT_LE(context1->getSendWaitStart(), context2->getSendWaitStart());
@@ -863,7 +863,7 @@ public:
             ASSERT_TRUE(context);
 
             // Verify the context's initial state is correct.
-            EXPECT_EQ(0, context->getEchosSent());
+            EXPECT_EQ(0U, context->getEchosSent());
             EXPECT_EQ(PingContext::EMPTY_TIME(), context->getLastEchoSentTime());
             EXPECT_LE(test_start_time_, context->getSendWaitStart());
             EXPECT_EQ(PingContext::EMPTY_TIME(), context->getNextExpiry());
@@ -893,7 +893,7 @@ public:
             ASSERT_TRUE(context);
 
             // Verify the state has properly moved to SENDING.
-            EXPECT_EQ(0, context->getEchosSent());
+            EXPECT_EQ(0U, context->getEchosSent());
             EXPECT_EQ(PingContext::EMPTY_TIME(), context->getLastEchoSentTime());
             EXPECT_EQ(PingContext::EMPTY_TIME(), context->getNextExpiry());
             EXPECT_EQ(PingContext::SENDING, context->getState());
@@ -1041,7 +1041,7 @@ public:
         context = getContext(context->getLease()->addr_);
 
         EXPECT_EQ(PingContext::WAITING_FOR_REPLY, context->getState());
-        EXPECT_EQ(1, context->getEchosSent());
+        EXPECT_EQ(1U, context->getEchosSent());
         EXPECT_GE(context->getLastEchoSentTime(), test_start_time_);
 
         // Verify the mgr has the same next expiration as the context and
@@ -1106,7 +1106,7 @@ public:
         ASSERT_NO_THROW_LOG(mgr_->sendCompleted(echo_request, false));
 
         // Should still have one parked query.
-        EXPECT_EQ(1, mgr_->parkingLotSize());
+        EXPECT_EQ(1U, mgr_->parkingLotSize());
 
         // Verify the expiration timer is running.
         EXPECT_TRUE(fuzzyEqual(mgr_->getExpirationTimerInterval(), 500));
@@ -1122,8 +1122,8 @@ public:
         EXPECT_FALSE(getContext(lqp));
 
         // We should have dropped the query from the lot rather than unparking it.
-        EXPECT_EQ(mgr_->parkingLotSize(), 0);
-        EXPECT_EQ(unparked_, 1);
+        EXPECT_EQ(mgr_->parkingLotSize(), 0U);
+        EXPECT_EQ(unparked_, 1U);
 
         // We should have one decline that matches our lease query pair.
         compareLeaseQueryPairs(declines_);
@@ -1177,7 +1177,7 @@ public:
         ASSERT_NO_THROW_LOG(mgr_->sendCompleted(echo_request, false));
 
         // Should still have one parked query.
-        EXPECT_EQ(1, mgr_->parkingLotSize());
+        EXPECT_EQ(1U, mgr_->parkingLotSize());
 
         // Verify the expiration timer is running.
         EXPECT_TRUE(fuzzyEqual(mgr_->getExpirationTimerInterval(), 500));
@@ -1193,8 +1193,8 @@ public:
         EXPECT_FALSE(getContext(lqp));
 
         // We should have unparked the query from the lot.
-        EXPECT_EQ(mgr_->parkingLotSize(), 0);
-        EXPECT_EQ(unparked_, 1);
+        EXPECT_EQ(mgr_->parkingLotSize(), 0U);
+        EXPECT_EQ(unparked_, 1U);
 
         // We should have one free that matches our lease query pair.
         compareLeaseQueryPairs(frees_);
@@ -1268,8 +1268,8 @@ public:
         IOAddress address = lease_query_pairs_[1].lease_->addr_;
         context2 = getContext(address);
         ASSERT_FALSE(context2);
-        EXPECT_EQ(unparked_, 1);
-        ASSERT_EQ(frees_.size(), 1);
+        EXPECT_EQ(unparked_, 1U);
+        ASSERT_EQ(frees_.size(), 1U);
         EXPECT_EQ(frees_[0].lease_->addr_, address);
 
         // Context3 should be in WAITING_TO_SEND.
@@ -1477,8 +1477,8 @@ public:
         EXPECT_FALSE(getContext(lqp));
 
         // We should have unparked the query from the lot.
-        EXPECT_EQ(mgr_->parkingLotSize(), 0);
-        EXPECT_EQ(unparked_, 1);
+        EXPECT_EQ(mgr_->parkingLotSize(), 0U);
+        EXPECT_EQ(unparked_, 1U);
 
         // We should have one free that matches our lease query pair.
         compareLeaseQueryPairs(frees_);
@@ -1686,7 +1686,7 @@ public:
         ASSERT_NO_THROW_LOG(config = mgr_->getScopedConfig(lease));
         ASSERT_TRUE(config);
         ASSERT_NE(config, mgr_->getGlobalConfig());
-        EXPECT_EQ(config->getMinPingRequests(), 13);
+        EXPECT_EQ(config->getMinPingRequests(), 13U);
     }
 
     /// @brief Exercises checkSuspended().
@@ -1721,7 +1721,7 @@ public:
         auto store = mgr_->getStore();
         ASSERT_TRUE(store);
         auto pings = store->getAll();
-        ASSERT_EQ(0, pings->size());
+        ASSERT_EQ(0U, pings->size());
 
         // Make a lease query pair.
         auto lqp1 = makeLeaseQueryPair(IOAddress("127.0.0.2"), 111);
@@ -1734,7 +1734,7 @@ public:
 
         // Verify we have an entry in the store.
         pings = store->getAll();
-        ASSERT_EQ(1, pings->size());
+        ASSERT_EQ(1U, pings->size());
 
         // Disable the DHCP service.
         network_state->disableService(NetworkState::USER_COMMAND);
@@ -1752,7 +1752,7 @@ public:
 
         // Store should be empty, having been flushed by suspension detection.
         pings = store->getAll();
-        ASSERT_EQ(0, pings->size());
+        ASSERT_EQ(0U, pings->size());
 
         // Ping checking should report as suspended.
         ASSERT_TRUE(mgr_->checkSuspended());
@@ -1766,7 +1766,7 @@ public:
 
         // Store should have one check in it.
         pings = store->getAll();
-        ASSERT_EQ(1, pings->size());
+        ASSERT_EQ(1U, pings->size());
 
         // Ping checking should report as not suspended.
         ASSERT_FALSE(mgr_->checkSuspended());

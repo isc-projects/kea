@@ -708,8 +708,8 @@ CacheTest::testCache(bool soft, bool& status) {
     for (auto const& host : hosts) {
         ASSERT_NO_THROW(hdsptr_->add(host));
     }
-    EXPECT_EQ(0, testptr()->hcptr_->hits_);
-    EXPECT_EQ(0, testptr()->hcptr_->inserts_);
+    EXPECT_EQ(0U, testptr()->hcptr_->hits_);
+    EXPECT_EQ(0U, testptr()->hcptr_->inserts_);
 
     // First pass filling the cache.
     for (auto const& host : hosts) {
@@ -718,8 +718,8 @@ CacheTest::testCache(bool soft, bool& status) {
         ASSERT_TRUE(entry);
         HostDataSourceUtils::compareHosts(entry, host);
     }
-    EXPECT_EQ(0, testptr()->hcptr_->hits_);
-    EXPECT_EQ(1000, testptr()->hcptr_->inserts_);
+    EXPECT_EQ(0U, testptr()->hcptr_->hits_);
+    EXPECT_EQ(1000U, testptr()->hcptr_->inserts_);
 
     // Second pass checking the cache.
     for (auto const& host : hosts) {
@@ -730,13 +730,13 @@ CacheTest::testCache(bool soft, bool& status) {
         ASSERT_TRUE(entry);
         HostDataSourceUtils::compareHosts(entry, host);
     }
-    EXPECT_EQ(1000, testptr()->hcptr_->size());
-    EXPECT_EQ(1000, testptr()->hcptr_->hits_);
-    EXPECT_EQ(1000, testptr()->hcptr_->inserts_);
+    EXPECT_EQ(1000U, testptr()->hcptr_->size());
+    EXPECT_EQ(1000U, testptr()->hcptr_->hits_);
+    EXPECT_EQ(1000U, testptr()->hcptr_->inserts_);
 
     // Try a 100 entry cache.
     testptr()->hcptr_->flush(testptr()->hcptr_->size() - 100);
-    ASSERT_EQ(100, testptr()->hcptr_->size());
+    ASSERT_EQ(100U, testptr()->hcptr_->size());
     testptr()->hcptr_->setMaximum(100);
     size_t hits100 = testptr()->hcptr_->hits_;
     size_t inserts100 = testptr()->hcptr_->inserts_;
@@ -752,7 +752,7 @@ CacheTest::testCache(bool soft, bool& status) {
     size_t hits_delta = testptr()->hcptr_->hits_ - hits100;
     size_t inserts_delta = testptr()->hcptr_->inserts_ - inserts100;
     // 100 from and to cache.
-    EXPECT_EQ(100, hits_delta + inserts_delta);
+    EXPECT_EQ(100U, hits_delta + inserts_delta);
     cerr << "100 rounds with cache 100: " << hits_delta << endl;
     // Prob(hits_delta < 2) ~= 3.10^-4
     if (soft) {
@@ -761,7 +761,7 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_LT(2, hits_delta);
+        EXPECT_LT(2U, hits_delta);
     }
     // Prob(hits_delta >= 22) ~= 3.10^-4
     if (soft) {
@@ -770,13 +770,13 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_GE(22, hits_delta);
+        EXPECT_GE(22U, hits_delta);
     }
 
     // Try a 10 entry cache.
     testptr()->hcptr_->flush(testptr()->hcptr_->size() - 10);
     testptr()->hcptr_->setMaximum(10);
-    ASSERT_EQ(10, testptr()->hcptr_->size());
+    ASSERT_EQ(10U, testptr()->hcptr_->size());
     size_t hits10 = testptr()->hcptr_->hits_;
     size_t inserts10 = testptr()->hcptr_->inserts_;
     // Go for 1000 rounds.
@@ -788,7 +788,7 @@ CacheTest::testCache(bool soft, bool& status) {
     }
     hits_delta = testptr()->hcptr_->hits_ - hits10;
     inserts_delta = testptr()->hcptr_->inserts_ - inserts10;
-    EXPECT_EQ(1000, hits_delta + inserts_delta);
+    EXPECT_EQ(1000U, hits_delta + inserts_delta);
     cerr << "1000 rounds with cache 10: " << hits_delta << endl;
     // Prob(hits_delta < 2) ~= 5.10-4
     if (soft) {
@@ -797,7 +797,7 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_LT(2, hits_delta);
+        EXPECT_LT(2U, hits_delta);
     }
     // Prob(hits_delta > 22) ~= 3.10-4
     if (soft) {
@@ -806,13 +806,13 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_GT(22, hits_delta);
+        EXPECT_GT(22U, hits_delta);
     }
 
     // Try a 5 entry cache.
     testptr()->hcptr_->flush(testptr()->hcptr_->size() - 5);
     testptr()->hcptr_->setMaximum(5);
-    ASSERT_EQ(5, testptr()->hcptr_->size());
+    ASSERT_EQ(5U, testptr()->hcptr_->size());
     size_t hits5 = testptr()->hcptr_->hits_;
     size_t inserts5 = testptr()->hcptr_->inserts_;
     // Go for 1000 rounds.
@@ -826,7 +826,7 @@ CacheTest::testCache(bool soft, bool& status) {
     }
     hits_delta = testptr()->hcptr_->hits_ - hits5;
     inserts_delta = testptr()->hcptr_->inserts_ - inserts5;
-    EXPECT_EQ(1000, hits_delta + inserts_delta);
+    EXPECT_EQ(1000U, hits_delta + inserts_delta);
     cerr << "1000 rounds with cache 5: " << hits_delta << endl;
     // Prob(hits_delta >= 15) ~= 2.10-4
     if (soft) {
@@ -835,13 +835,13 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_GE(15, hits_delta);
+        EXPECT_GE(15U, hits_delta);
     }
 
     // Try a 2 entry cache.
     testptr()->hcptr_->flush(testptr()->hcptr_->size() - 2);
     testptr()->hcptr_->setMaximum(2);
-    ASSERT_EQ(2, testptr()->hcptr_->size());
+    ASSERT_EQ(2U, testptr()->hcptr_->size());
     size_t hits2 = testptr()->hcptr_->hits_;
     size_t inserts2 = testptr()->hcptr_->inserts_;
     // Go for 1000 rounds.
@@ -853,7 +853,7 @@ CacheTest::testCache(bool soft, bool& status) {
     }
     hits_delta = testptr()->hcptr_->hits_ - hits2;
     inserts_delta = testptr()->hcptr_->inserts_ - inserts2;
-    EXPECT_EQ(1000, hits_delta + inserts_delta);
+    EXPECT_EQ(1000U, hits_delta + inserts_delta);
     cerr << "1000 rounds with cache 2: " << hits_delta << endl;
     // Prob(hits_delta >= 9) ~= 2.10^-4
     if (soft) {
@@ -862,12 +862,12 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_GE(9, hits_delta);
+        EXPECT_GE(9U, hits_delta);
     }
 
     // And finish with an 1 entry cache.
     testptr()->hcptr_->flush(0);
-    ASSERT_EQ(0, testptr()->hcptr_->size());
+    ASSERT_EQ(0U, testptr()->hcptr_->size());
     testptr()->hcptr_->setMaximum(1);
     size_t hits1 = testptr()->hcptr_->hits_;
     size_t inserts1 = testptr()->hcptr_->inserts_;
@@ -880,7 +880,7 @@ CacheTest::testCache(bool soft, bool& status) {
     }
     hits_delta = testptr()->hcptr_->hits_ - hits1;
     inserts_delta = testptr()->hcptr_->inserts_ - inserts1;
-    EXPECT_EQ(8000, hits_delta + inserts_delta);
+    EXPECT_EQ(8000U, hits_delta + inserts_delta);
     cerr << "8000 rounds with cache 1: " << hits_delta << endl;
     // Prob(hits_delta == 0) ~= 5.10-4
     if (soft) {
@@ -889,7 +889,7 @@ CacheTest::testCache(bool soft, bool& status) {
             status = false;
         }
     } else {
-        EXPECT_NE(0, hits_delta);
+        EXPECT_NE(0U, hits_delta);
     }
 }
 

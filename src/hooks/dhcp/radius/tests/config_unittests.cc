@@ -185,17 +185,17 @@ TEST_F(ConfigTest, global) {
     EXPECT_TRUE(impl_.canonical_mac_address_);
     EXPECT_TRUE(impl_.clientid_pop0_);
     EXPECT_TRUE(impl_.clientid_printable_);
-    EXPECT_EQ(10, impl_.deadtime_);
+    EXPECT_EQ(10U, impl_.deadtime_);
     EXPECT_EQ("/dev/null", impl_.dictionary_);
     EXPECT_FALSE(impl_.extract_duid_);
     EXPECT_EQ(Host::IDENT_HWADDR, impl_.id_type4_);
     EXPECT_EQ(Host::IDENT_FLEX, impl_.id_type6_);
-    EXPECT_EQ(5, impl_.retries_);
+    EXPECT_EQ(5U, impl_.retries_);
     EXPECT_TRUE(impl_.reselect_subnet_address_);
     EXPECT_TRUE(impl_.reselect_subnet_pool_);
     EXPECT_EQ("/tmp/foobar", impl_.session_history_filename_);
-    EXPECT_EQ(8, impl_.thread_pool_size_);
-    EXPECT_EQ(12, impl_.timeout_);
+    EXPECT_EQ(8U, impl_.thread_pool_size_);
+    EXPECT_EQ(12U, impl_.timeout_);
     EXPECT_FALSE(impl_.use_message_authenticator_);
     EXPECT_TRUE(impl_.remap_.empty());
 }
@@ -425,8 +425,8 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(1, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[SUBNET_ID_DEFAULT]);
+    EXPECT_EQ(1U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[SUBNET_ID_DEFAULT]);
 
     // Subnet-id.
     impl_.reset();
@@ -438,8 +438,8 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(1, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[1]);
+    EXPECT_EQ(1U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[1]);
 
     // Subnet-prefix - IPv4.
     impl_.reset();
@@ -454,8 +454,8 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(1, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[1]);
+    EXPECT_EQ(1U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[1]);
 
     // Subnet-prefix - IPv6.
     impl_.reset();
@@ -471,8 +471,8 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(1, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[1]);
+    EXPECT_EQ(1U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[1]);
 
     // Shared-network - IPv4.
     impl_.reset();
@@ -497,9 +497,9 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(2, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[1]);
-    EXPECT_EQ(10, impl_.remap_[2]);
+    EXPECT_EQ(2U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[1]);
+    EXPECT_EQ(10U, impl_.remap_[2]);
 
     // Shared-network - IPv6.
     impl_.reset();
@@ -524,9 +524,9 @@ TEST_F(ConfigTest, nasPorts) {
     ports->add(entry);
     config->set("nas-ports", ports);
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(2, impl_.remap_.size());
-    EXPECT_EQ(10, impl_.remap_[1]);
-    EXPECT_EQ(10, impl_.remap_[2]);
+    EXPECT_EQ(2U, impl_.remap_.size());
+    EXPECT_EQ(10U, impl_.remap_[1]);
+    EXPECT_EQ(10U, impl_.remap_[2]);
 
     // Error cases.
     CfgMgr::instance().clear();
@@ -714,11 +714,11 @@ TEST_F(ConfigTest, services) {
 
     // Check state.
     Servers srvs = impl_.acct_->servers_;
-    ASSERT_EQ(2, srvs.size());
+    ASSERT_EQ(2U, srvs.size());
     ServerPtr srv = srvs[0];
     ASSERT_TRUE(srv);
     EXPECT_EQ("127.0.0.1", srv->getPeerAddress().toText());
-    EXPECT_EQ(16460, srv->getPeerPort());
+    EXPECT_EQ(16460U, srv->getPeerPort());
 
     // Add auth too.
     ElementPtr auth = Element::createMap();
@@ -773,11 +773,11 @@ TEST_F(ConfigTest, services) {
 
     // Check state.
     srvs = impl_.auth_->servers_;
-    ASSERT_EQ(2, srvs.size());
+    ASSERT_EQ(2U, srvs.size());
     srv = srvs[0];
     ASSERT_TRUE(srv);
     EXPECT_EQ("127.0.0.1", srv->getPeerAddress().toText());
-    EXPECT_EQ(16450, srv->getPeerPort());
+    EXPECT_EQ(16450U, srv->getPeerPort());
 }
 
 // Verify syntax of tls service.
@@ -880,9 +880,9 @@ TEST_F(ConfigTest, tls) {
     config->set("tls", tls);
     tls->set("idle-timer-interval", Element::create(60));
     EXPECT_NO_THROW(impl_.init(config));
-    EXPECT_EQ(60, impl_.tls_->idle_timer_interval_);
-    EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
-    EXPECT_EQ(0, impl_.acct_->idle_timer_interval_);
+    EXPECT_EQ(60U, impl_.tls_->idle_timer_interval_);
+    EXPECT_EQ(0U, impl_.auth_->idle_timer_interval_);
+    EXPECT_EQ(0U, impl_.acct_->idle_timer_interval_);
 
     // Servers for tls require TLS.
     ElementPtr servers = Element::createList();
@@ -1048,7 +1048,7 @@ TEST_F(ConfigTest, attribute) {
 
     // Get the option to look at into.
     EXPECT_FALSE(srv->attributes_.empty());
-    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_EQ(1U, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getDef(1));
     EXPECT_FALSE(srv->attributes_.getExpr(1));
     EXPECT_EQ("", srv->attributes_.getTest(1));
@@ -1071,7 +1071,7 @@ TEST_F(ConfigTest, attribute) {
     attr->set("type", Element::create(1));
     EXPECT_NO_THROW(parser.parse(srv, attr));
     EXPECT_FALSE(srv->attributes_.empty());
-    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_EQ(1U, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
     EXPECT_FALSE(srv->attributes_.getExpr(1, 3561));
     EXPECT_EQ("", srv->attributes_.getTest(1, 3561));
@@ -1133,7 +1133,7 @@ TEST_F(ConfigTest, attribute) {
     srv->attributes_.clear();
     attr->set("raw", Element::create("660102626172"));
     EXPECT_NO_THROW(parser.parse(srv, attr));
-    EXPECT_EQ(1, srv->attributes_.getAll().size());
+    EXPECT_EQ(1U, srv->attributes_.getAll().size());
     EXPECT_FALSE(srv->attributes_.getExpr(1));
     EXPECT_EQ("", srv->attributes_.getTest(1));
     const ConstAttributePtr& firstr = srv->attributes_.get(1);
@@ -1153,7 +1153,7 @@ TEST_F(ConfigTest, attribute) {
     attr->set("type", Element::create(1));
     EXPECT_NO_THROW(parser.parse(srv, attr));
     EXPECT_FALSE(srv->attributes_.empty());
-    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_EQ(1U, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
     EXPECT_FALSE(srv->attributes_.getExpr(1, 3561));
     EXPECT_EQ("", srv->attributes_.getTest(1, 3561));
@@ -1190,11 +1190,11 @@ TEST_F(ConfigTest, attribute) {
     // Try the 'foobar' expression.
     attr->set("expr", Element::create("'foobar'"));
     EXPECT_NO_THROW(parser.parse(srv, attr));
-    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_EQ(1U, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getAll().empty());
     ExpressionPtr expr = srv->attributes_.getExpr(1);
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     TokenPtr token = (*expr)[0];
     boost::shared_ptr<TokenString> tokstr =
         boost::dynamic_pointer_cast<TokenString>(token);
@@ -1215,13 +1215,13 @@ TEST_F(ConfigTest, attribute) {
     attr->set("type", Element::create(1));
     attr->set("expr", Element::create("'foobar'"));
     EXPECT_NO_THROW(parser.parse(srv, attr));
-    EXPECT_EQ(1, srv->attributes_.size());
+    EXPECT_EQ(1U, srv->attributes_.size());
     EXPECT_TRUE(srv->attributes_.getDef(1, 3561));
     EXPECT_FALSE(srv->attributes_.get(1, 3561));
     EXPECT_TRUE(srv->attributes_.getAll().empty());
     expr = srv->attributes_.getExpr(1, 3561);
     ASSERT_TRUE(expr);
-    ASSERT_EQ(1, expr->size());
+    ASSERT_EQ(1U, expr->size());
     token = (*expr)[0];
     tokstr = boost::dynamic_pointer_cast<TokenString>(token);
     EXPECT_TRUE(tokstr);
@@ -1237,7 +1237,7 @@ TEST_F(ConfigTest, attribute) {
     Pkt4Ptr query(new Pkt4(DHCPDISCOVER, 12345));
     Attributes evaluated;
     EXPECT_NO_THROW_LOG(evaluated = srv->attributes_.getEvalAll(*query));
-    EXPECT_EQ(1, evaluated.size());
+    EXPECT_EQ(1U, evaluated.size());
     expected = "[ { "
         " \"name\": \"Vendor-Specific\", "
         " \"type\": 26, "
@@ -1606,13 +1606,13 @@ TEST_F(ConfigTest, maxPendingRequests) {
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
     ASSERT_TRUE(impl_.auth_);
-    EXPECT_EQ(10, impl_.auth_->max_pending_requests_);
+    EXPECT_EQ(10U, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::createMap();
     EXPECT_NO_THROW_LOG(impl_.init(config));
     ASSERT_TRUE(impl_.auth_);
-    EXPECT_EQ(0, impl_.auth_->max_pending_requests_);
+    EXPECT_EQ(0U, impl_.auth_->max_pending_requests_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::fromJSON(R"({
@@ -1658,13 +1658,13 @@ TEST_F(ConfigTest, idleTimerInterval) {
     })");
     EXPECT_NO_THROW_LOG(impl_.init(config));
     ASSERT_TRUE(impl_.auth_);
-    EXPECT_EQ(10, impl_.auth_->idle_timer_interval_);
+    EXPECT_EQ(10U, impl_.auth_->idle_timer_interval_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 
     config = Element::createMap();
     EXPECT_NO_THROW_LOG(impl_.init(config));
     ASSERT_TRUE(impl_.auth_);
-    EXPECT_EQ(0, impl_.auth_->idle_timer_interval_);
+    EXPECT_EQ(0U, impl_.auth_->idle_timer_interval_);
     EXPECT_NO_THROW_LOG(impl_.reset());
 }
 

@@ -378,7 +378,7 @@ public:
     mutex mutex_;
 
     /// @brief Histogram of next steps set after callouts.
-    unordered_map<CalloutHandle::CalloutNextStep, int> steps_;
+    unordered_map<CalloutHandle::CalloutNextStep, size_t> steps_;
 
     /// @brief Number of unparked packets.
     uint32_t unparked_;
@@ -433,9 +433,9 @@ struct MTAccessTest : AccessTest {
         // Start the core thread pool with 4 threads.
         // Pause the thread pool and resume only after work items have
         // been added to it to increase the chance of finding race conditions.
-        EXPECT_EQ(4, impl_.thread_pool_size_);
+        EXPECT_EQ(4U, impl_.thread_pool_size_);
         EXPECT_TRUE(impl_.udp_client_);
-        EXPECT_EQ(4, impl_.udp_client_->getThreadPoolSize());
+        EXPECT_EQ(4U, impl_.udp_client_->getThreadPoolSize());
         EXPECT_NO_THROW_LOG(thread_pool_.start(impl_.thread_pool_size_));
         EXPECT_NO_THROW_LOG(thread_pool_.pause());
 
@@ -699,7 +699,7 @@ AccessTest::testHostPool4(uint32_t const test_id /* = 12345 */) {
     map->set("radius", attrs->toElement());
     host->setContext(map);
     host->setNegative(true);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet4_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -714,7 +714,7 @@ AccessTest::testHostPool4(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet4", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 }
 
@@ -742,7 +742,7 @@ AccessTest::testHostPool6(uint32_t const test_id /* = 12345 */) {
     map->set("radius", attrs->toElement());
     host->setContext(map);
     host->setNegative(true);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet6_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -757,7 +757,7 @@ AccessTest::testHostPool6(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet6", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("2001:db8::/64", subnet->toText());
 }
 
@@ -797,7 +797,7 @@ AccessTest::testHostReselect4(uint32_t const test_id /* = 12345 */) {
              Element::create(static_cast<int64_t>(subnet2->getID())));
     host1->setContext(map);
     host1->setNegative(true);
-    ASSERT_EQ(0, cache_->insert(host1, true));
+    ASSERT_EQ(0U, cache_->insert(host1, true));
 
     // Add a RADIUS with pool cache entry for the host in subnet 2.
     HostPtr host2(new Host(&id[1], id.size() - 1, impl_.id_type4_,
@@ -809,7 +809,7 @@ AccessTest::testHostReselect4(uint32_t const test_id /* = 12345 */) {
     map->set("radius", attrs->toElement());
     host2->setContext(map);
     host2->setNegative(true); // no reserved address nor hostname
-    ASSERT_EQ(0, cache_->insert(host2, true));
+    ASSERT_EQ(0U, cache_->insert(host2, true));
 
     // Now call subnet4_select callout and check the second subnet is selected.
     // Note reselect is checked twice: on the return of host cache
@@ -868,7 +868,7 @@ AccessTest::testHostReselect6(uint32_t const test_id /* = 12345 */) {
              Element::create(static_cast<int64_t>(subnet2->getID())));
     host1->setContext(map);
     host1->setNegative(true);
-    ASSERT_EQ(0, cache_->insert(host1, true));
+    ASSERT_EQ(0U, cache_->insert(host1, true));
 
     // Add a RADIUS with pool cache entry for the host in subnet 2.
     HostPtr host2(new Host(&id[2], id.size() - 2, impl_.id_type6_,
@@ -880,7 +880,7 @@ AccessTest::testHostReselect6(uint32_t const test_id /* = 12345 */) {
     map->set("radius", attrs->toElement());
     host2->setContext(map);
     host2->setNegative(true); // no reserved address nor hostname
-    ASSERT_EQ(0, cache_->insert(host2, true));
+    ASSERT_EQ(0U, cache_->insert(host2, true));
 
     // Now call subnet6_select callout and check the second subnet is selected.
     // Note reselect is checked twice: on the return of host cache
@@ -903,7 +903,7 @@ AccessTest::testHostReselect6(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet6", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(2, subnet->getID());
+    EXPECT_EQ(2U, subnet->getID());
     EXPECT_EQ("2001:db8:0:2::/64", subnet->toText());
 }
 
@@ -929,7 +929,7 @@ AccessTest::testHostReservation4(uint32_t const test_id /* = 12345 */) {
     attrs->add(Attribute::fromString(PW_FRAMED_POOL, "foobar"));
     map->set("radius", attrs->toElement());
     host->setContext(map);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet4_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -945,7 +945,7 @@ AccessTest::testHostReservation4(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet4", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 }
 
@@ -974,7 +974,7 @@ AccessTest::testHostReservation6(uint32_t const test_id /* = 12345 */) {
     attrs->add(Attribute::fromString(PW_FRAMED_POOL, "foobar"));
     map->set("radius", attrs->toElement());
     host->setContext(map);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet6_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -990,7 +990,7 @@ AccessTest::testHostReservation6(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet6", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("2001:db8::/64", subnet->toText());
 }
 
@@ -1020,7 +1020,7 @@ AccessTest::testHostReservation6Prefix(uint32_t const test_id /* = 12345 */) {
     attrs->add(Attribute::fromString(PW_FRAMED_POOL, "foobar"));
     map->set("radius", attrs->toElement());
     host->setContext(map);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet6_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -1036,7 +1036,7 @@ AccessTest::testHostReservation6Prefix(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet6", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("2001:db8::/64", subnet->toText());
 }
 
@@ -1068,7 +1068,7 @@ AccessTest::testHostReservation6Both(uint32_t const test_id /* = 12345 */) {
     attrs->add(Attribute::fromString(PW_FRAMED_POOL, "foobar"));
     map->set("radius", attrs->toElement());
     host->setContext(map);
-    ASSERT_EQ(0, cache_->insert(host, true));
+    ASSERT_EQ(0U, cache_->insert(host, true));
 
     HooksManager::park("subnet6_select", pkt,
                        [] () { FAIL() << "unparked"; });
@@ -1084,7 +1084,7 @@ AccessTest::testHostReservation6Both(uint32_t const test_id /* = 12345 */) {
     subnet.reset();
     handle->getArgument("subnet6", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("2001:db8::/64", subnet->toText());
 }
 
@@ -1338,7 +1338,7 @@ AccessTest::checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t i /* = 12345 */
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
 
     for (PktPtr const& pkt : packets_) {
         EXPECT_TRUE(pkt->inClass("foobar"));
@@ -1347,7 +1347,7 @@ AccessTest::checkNoHost4Results(ConstSubnet4Ptr subnet, uint32_t i /* = 12345 */
         ConstSubnet4Ptr subneth;
         EXPECT_NO_THROW(handle->getContext("subnet4", subneth));
         ASSERT_TRUE(subneth);
-        EXPECT_EQ(1, subneth->getID());
+        EXPECT_EQ(1U, subneth->getID());
     }
 }
 
@@ -1413,7 +1413,7 @@ AccessTest::checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t i /* = 12345 */
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
 
     for (PktPtr const& pkt : packets_) {
         EXPECT_TRUE(pkt->inClass("foobar"));
@@ -1422,7 +1422,7 @@ AccessTest::checkNoHost6Results(ConstSubnet6Ptr subnet, uint32_t i /* = 12345 */
         ConstSubnet6Ptr subneth;
         EXPECT_NO_THROW(handle->getContext("subnet6", subneth));
         ASSERT_TRUE(subneth);
-        EXPECT_EQ(1, subneth->getID());
+        EXPECT_EQ(1U, subneth->getID());
     }
 }
 
@@ -1443,12 +1443,12 @@ AccessTest::testNoIdentifier4(uint32_t const test_id /* = 12345 */) {
     ASSERT_NO_THROW(ret = subnet4_select(*handle));
     EXPECT_EQ(0, ret);
     EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle->getStatus());
-    EXPECT_EQ(0, impl_.auth_->requests4_.size());
+    EXPECT_EQ(0U, impl_.auth_->requests4_.size());
 
     subnet.reset();
     handle->getArgument("subnet4", subnet);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(1, subnet->getID());
+    EXPECT_EQ(1U, subnet->getID());
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 }
 
@@ -1470,7 +1470,7 @@ AccessTest::testNoIdentifier6(uint32_t const test_id /* = 12345 */) {
     ASSERT_NO_THROW(ret = subnet6_select(*handle));
     EXPECT_EQ(0, ret);
     EXPECT_EQ(CalloutHandle::NEXT_STEP_SKIP, handle->getStatus());
-    EXPECT_EQ(0, impl_.auth_->requests6_.size());
+    EXPECT_EQ(0U, impl_.auth_->requests6_.size());
 }
 
 /// Verify that getIdentifier handles correctly IPv4 packets using
@@ -1754,12 +1754,12 @@ TEST_F(AccessTest, buildHWAddr4) {
     ASSERT_NO_THROW(handler = impl_.auth_->buildAuth(*pkt, 1, id, text));
     ASSERT_TRUE(handler);
 
-    EXPECT_EQ(1, handler->env_.subnet_id_);
+    EXPECT_EQ(1U, handler->env_.subnet_id_);
     ASSERT_EQ(id.size(), handler->env_.id_.size());
     EXPECT_EQ(0, memcmp(&id[0], &handler->env_.id_[0], id.size()));
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(2, handler->env_.send_attrs_->size());
+    EXPECT_LE(2U, handler->env_.send_attrs_->size());
     ConstAttributePtr user_name = handler->env_.send_attrs_->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     string expected = "User-Name='" + text + "'";
@@ -1782,12 +1782,12 @@ TEST_F(AccessTest, buildHWAddr6) {
     ASSERT_NO_THROW(handler = impl_.auth_->buildAuth(*pkt, 1, id, text));
     ASSERT_TRUE(handler);
 
-    EXPECT_EQ(1, handler->env_.subnet_id_);
+    EXPECT_EQ(1U, handler->env_.subnet_id_);
     ASSERT_EQ(id.size(), handler->env_.id_.size());
     EXPECT_EQ(0, memcmp(&id[0], &handler->env_.id_[0], id.size()));
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(2, handler->env_.send_attrs_->size());
+    EXPECT_LE(2U, handler->env_.send_attrs_->size());
     ConstAttributePtr user_name = handler->env_.send_attrs_->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     string expected = "User-Name='" + text + "'";
@@ -1812,7 +1812,7 @@ TEST_F(AccessTest, buildCanonHWAddr4) {
     ASSERT_TRUE(handler);
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(2, handler->env_.send_attrs_->size());
+    EXPECT_LE(2U, handler->env_.send_attrs_->size());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
@@ -1833,7 +1833,7 @@ TEST_F(AccessTest, buildCanonHWAddr6) {
     ASSERT_TRUE(handler);
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(2, handler->env_.send_attrs_->size());
+    EXPECT_LE(2U, handler->env_.send_attrs_->size());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
@@ -1855,7 +1855,7 @@ TEST_F(AccessTest, buildNoHWAddr4) {
     ASSERT_TRUE(handler);
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(1, handler->env_.send_attrs_->size());
+    EXPECT_LE(1U, handler->env_.send_attrs_->size());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_FALSE(calling_station_id);
@@ -1873,7 +1873,7 @@ TEST_F(AccessTest, buildNoHWAddr6) {
     ASSERT_TRUE(handler);
 
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(1, handler->env_.send_attrs_->size());
+    EXPECT_LE(1U, handler->env_.send_attrs_->size());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_FALSE(calling_station_id);
@@ -1892,7 +1892,7 @@ TEST_F(AccessTest, buildSimple6) {
 
     // Simple Solicit has no hardware address.
     ASSERT_TRUE(handler->env_.send_attrs_);
-    EXPECT_LE(1, handler->env_.send_attrs_->size());
+    EXPECT_LE(1U, handler->env_.send_attrs_->size());
     ConstAttributePtr calling_station_id =
         handler->env_.send_attrs_->get(PW_CALLING_STATION_ID);
     ASSERT_FALSE(calling_station_id);
@@ -1910,38 +1910,38 @@ TEST_F(AccessTest, terminate4Error) {
     drop = false;
     ASSERT_NO_THROW(impl_.auth_->terminate4Internal(env, -3, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests4_.set(id, Pkt4Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate4Internal(env, BADRESP_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests4_.set(id, Pkt4Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate4Internal(env, ERROR_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests4_.set(id, Pkt4Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate4Internal(env, TIMEOUT_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 }
 
 /// Verify the terminate behavior on error - IPv6.
@@ -1956,38 +1956,38 @@ TEST_F(AccessTest, terminate6Error) {
     drop = false;
     ASSERT_NO_THROW(impl_.auth_->terminate6Internal(env, -3, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests6_.set(id, Pkt6Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate6Internal(env, BADRESP_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests6_.set(id, Pkt6Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate6Internal(env, ERROR_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 
     impl_.auth_->requests6_.set(id, Pkt6Ptr());
     ASSERT_NO_THROW(impl_.auth_->terminate6Internal(env, TIMEOUT_RC, attrs,
                                                     pkt, drop));
-    EXPECT_EQ(1, env.subnet_id_);
+    EXPECT_EQ(1U, env.subnet_id_);
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
-    EXPECT_EQ(0, cache_->size());
+    EXPECT_EQ(0U, cache_->size());
 }
 
 /// Verify the terminate behavior on reject - IPv4.
@@ -2008,7 +2008,7 @@ TEST_F(AccessTest, terminate4Reject) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2016,7 +2016,7 @@ TEST_F(AccessTest, terminate4Reject) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2058,7 +2058,7 @@ TEST_F(AccessTest, terminate6Reject) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2067,7 +2067,7 @@ TEST_F(AccessTest, terminate6Reject) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2107,7 +2107,7 @@ TEST_F(AccessTest, terminate4RejectGlobal) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type4_,
                                                     &id[0], id.size());
@@ -2158,7 +2158,7 @@ TEST_F(AccessTest, terminate6RejectGlobal) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -2207,8 +2207,8 @@ TEST_F(AccessTest, terminate4AcceptEmpty) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2216,7 +2216,7 @@ TEST_F(AccessTest, terminate4AcceptEmpty) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2254,8 +2254,8 @@ TEST_F(AccessTest, terminate6AcceptEmpty) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2264,7 +2264,7 @@ TEST_F(AccessTest, terminate6AcceptEmpty) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2300,8 +2300,8 @@ TEST_F(AccessTest, terminate4AcceptEmptyGlobal) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type4_,
                                                     &id[0], id.size());
@@ -2348,8 +2348,8 @@ TEST_F(AccessTest, terminate6AcceptEmptyGlobal) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -2397,8 +2397,8 @@ TEST_F(AccessTest, terminate4AcceptUnrelevant) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2406,7 +2406,7 @@ TEST_F(AccessTest, terminate4AcceptUnrelevant) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2425,7 +2425,7 @@ TEST_F(AccessTest, terminate4AcceptUnrelevant) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -2449,8 +2449,8 @@ TEST_F(AccessTest, terminate6AcceptUnrelevant) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2459,7 +2459,7 @@ TEST_F(AccessTest, terminate6AcceptUnrelevant) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2477,7 +2477,7 @@ TEST_F(AccessTest, terminate6AcceptUnrelevant) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -2501,7 +2501,7 @@ TEST_F(AccessTest, terminate4RejectUnrelevant) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2509,7 +2509,7 @@ TEST_F(AccessTest, terminate4RejectUnrelevant) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2553,7 +2553,7 @@ TEST_F(AccessTest, terminate6RejectUnrelevant) {
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
     EXPECT_EQ(SUBNET_ID_UNUSED, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2562,7 +2562,7 @@ TEST_F(AccessTest, terminate6RejectUnrelevant) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2605,8 +2605,8 @@ TEST_F(AccessTest, terminate4AcceptPool) {
     ASSERT_TRUE(pkt2);
     EXPECT_EQ(pkt, pkt2);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2614,7 +2614,7 @@ TEST_F(AccessTest, terminate4AcceptPool) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2633,7 +2633,7 @@ TEST_F(AccessTest, terminate4AcceptPool) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(pkt->inClass("foobar"));
 }
@@ -2660,8 +2660,8 @@ TEST_F(AccessTest, terminate6AcceptPool) {
     ASSERT_TRUE(pkt2);
     EXPECT_EQ(pkt, pkt2);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2670,7 +2670,7 @@ TEST_F(AccessTest, terminate6AcceptPool) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2688,7 +2688,7 @@ TEST_F(AccessTest, terminate6AcceptPool) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(pkt->inClass("foobar"));
 }
@@ -2714,8 +2714,8 @@ TEST_F(AccessTest, terminate4AcceptPoolGlobal) {
     ASSERT_TRUE(pkt2);
     EXPECT_EQ(pkt, pkt2);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type4_,
                                                     &id[0], id.size());
@@ -2743,7 +2743,7 @@ TEST_F(AccessTest, terminate4AcceptPoolGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(pkt->inClass("foobar"));
 }
@@ -2770,8 +2770,8 @@ TEST_F(AccessTest, terminate6AcceptPoolGlobal) {
     ASSERT_TRUE(pkt2);
     EXPECT_EQ(pkt, pkt2);
     EXPECT_FALSE(drop);
-    ASSERT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    ASSERT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -2799,7 +2799,7 @@ TEST_F(AccessTest, terminate6AcceptPoolGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(pkt->inClass("foobar"));
 }
@@ -2824,8 +2824,8 @@ TEST_F(AccessTest, terminate4AcceptAddress) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2833,7 +2833,7 @@ TEST_F(AccessTest, terminate4AcceptAddress) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.1", host->getIPv4Reservation().toText());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -2852,7 +2852,7 @@ TEST_F(AccessTest, terminate4AcceptAddress) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -2876,8 +2876,8 @@ TEST_F(AccessTest, terminate4AcceptAddressGlobal) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type4_,
                                                     &id[0], id.size());
@@ -2905,7 +2905,7 @@ TEST_F(AccessTest, terminate4AcceptAddressGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -2930,8 +2930,8 @@ TEST_F(AccessTest, terminate6AcceptAddress4) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2940,7 +2940,7 @@ TEST_F(AccessTest, terminate6AcceptAddress4) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -2958,7 +2958,7 @@ TEST_F(AccessTest, terminate6AcceptAddress4) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -2983,8 +2983,8 @@ TEST_F(AccessTest, terminate6AcceptAddress) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -2993,7 +2993,7 @@ TEST_F(AccessTest, terminate6AcceptAddress) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_TRUE(host->hasIPv6Reservation());
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
@@ -3014,7 +3014,7 @@ TEST_F(AccessTest, terminate6AcceptAddress) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3039,8 +3039,8 @@ TEST_F(AccessTest, terminate6AcceptAddressGlobal) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -3071,7 +3071,7 @@ TEST_F(AccessTest, terminate6AcceptAddressGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3096,8 +3096,8 @@ TEST_F(AccessTest, terminate6AcceptPrefix) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -3106,13 +3106,13 @@ TEST_F(AccessTest, terminate6AcceptPrefix) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_TRUE(host->hasIPv6Reservation());
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
     EXPECT_EQ("2001:db8:1::", resrvs.first->second.getPrefix().toText());
-    EXPECT_EQ(64, resrvs.first->second.getPrefixLen());
+    EXPECT_EQ(64U, resrvs.first->second.getPrefixLen());
     EXPECT_TRUE(host->getHostname().empty());
     EXPECT_TRUE(host->getClientClasses4().empty());
     EXPECT_TRUE(host->getClientClasses6().empty());
@@ -3128,7 +3128,7 @@ TEST_F(AccessTest, terminate6AcceptPrefix) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3153,8 +3153,8 @@ TEST_F(AccessTest, terminate6AcceptPrefixGlobal) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -3170,7 +3170,7 @@ TEST_F(AccessTest, terminate6AcceptPrefixGlobal) {
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
     EXPECT_EQ("2001:db8:1::", resrvs.first->second.getPrefix().toText());
-    EXPECT_EQ(64, resrvs.first->second.getPrefixLen());
+    EXPECT_EQ(64U, resrvs.first->second.getPrefixLen());
     EXPECT_TRUE(host->getHostname().empty());
     EXPECT_TRUE(host->getClientClasses4().empty());
     EXPECT_TRUE(host->getClientClasses6().empty());
@@ -3186,7 +3186,7 @@ TEST_F(AccessTest, terminate6AcceptPrefixGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(1, saved_attrs->size());
+    EXPECT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3214,8 +3214,8 @@ TEST_F(AccessTest, terminate6AcceptBoth) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(1, impl_.id_type6_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -3224,7 +3224,7 @@ TEST_F(AccessTest, terminate6AcceptBoth) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(1, host->getIPv6SubnetID());
+    EXPECT_EQ(1U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_TRUE(host->hasIPv6Reservation());
     IPv6ResrvRange resrvs = host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
@@ -3233,7 +3233,7 @@ TEST_F(AccessTest, terminate6AcceptBoth) {
     resrvs = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
     EXPECT_EQ("2001:db8:1::", resrvs.first->second.getPrefix().toText());
-    EXPECT_EQ(64, resrvs.first->second.getPrefixLen());
+    EXPECT_EQ(64U, resrvs.first->second.getPrefixLen());
     EXPECT_TRUE(host->getHostname().empty());
     EXPECT_TRUE(host->getClientClasses4().empty());
     EXPECT_TRUE(host->getClientClasses6().empty());
@@ -3249,7 +3249,7 @@ TEST_F(AccessTest, terminate6AcceptBoth) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(2, saved_attrs->size());
+    EXPECT_EQ(2U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3277,8 +3277,8 @@ TEST_F(AccessTest, terminate6AcceptBothGlobal) {
     EXPECT_FALSE(impl_.auth_->requests6_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
                                                     impl_.id_type6_,
                                                     &id[0], id.size());
@@ -3297,7 +3297,7 @@ TEST_F(AccessTest, terminate6AcceptBothGlobal) {
     resrvs = host->getIPv6Reservations(IPv6Resrv::TYPE_PD);
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
     EXPECT_EQ("2001:db8:1::", resrvs.first->second.getPrefix().toText());
-    EXPECT_EQ(64, resrvs.first->second.getPrefixLen());
+    EXPECT_EQ(64U, resrvs.first->second.getPrefixLen());
     EXPECT_TRUE(host->getHostname().empty());
     EXPECT_TRUE(host->getClientClasses4().empty());
     EXPECT_TRUE(host->getClientClasses6().empty());
@@ -3313,7 +3313,7 @@ TEST_F(AccessTest, terminate6AcceptBothGlobal) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    EXPECT_EQ(2, saved_attrs->size());
+    EXPECT_EQ(2U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3337,8 +3337,8 @@ TEST_F(AccessTest, terminate4AcceptAddress6) {
     EXPECT_FALSE(impl_.auth_->requests4_.get(id));
     EXPECT_FALSE(pkt);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(1, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(1U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
     ConstHostPtr host = HostMgr::instance().get4Any(1, impl_.id_type4_,
                                                     &id[0], id.size());
     ASSERT_TRUE(host);
@@ -3346,7 +3346,7 @@ TEST_F(AccessTest, terminate4AcceptAddress6) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(1, host->getIPv4SubnetID());
+    EXPECT_EQ(1U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -3365,7 +3365,7 @@ TEST_F(AccessTest, terminate4AcceptAddress6) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -3792,7 +3792,7 @@ TEST_F(MTAccessTest, noHost4) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_EQ(expected_received_, unparked_);
-    EXPECT_EQ(0, ServerHooks::getServerHooks().getParkingLotPtr("subnet4_select")->size());
+    EXPECT_EQ(0U, ServerHooks::getServerHooks().getParkingLotPtr("subnet4_select")->size());
 
     // Join threads.
     EXPECT_NO_THROW_LOG(thread_pool_.wait());
@@ -3803,9 +3803,9 @@ TEST_F(MTAccessTest, noHost4) {
     EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
 
     // Half should be parked and then unparked. Half should be dropped.
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_SKIP]);
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_DROP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_SKIP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_DROP]);
     EXPECT_EQ(expected_received_, steps_[CalloutHandle::NEXT_STEP_PARK]);
     EXPECT_EQ(expected_received_, unparked_);
 
@@ -3851,7 +3851,7 @@ TEST_F(MTAccessTest, noHost6) {
         this_thread::sleep_for(1ms);
     }
     EXPECT_EQ(expected_received_, unparked_);
-    EXPECT_EQ(0, ServerHooks::getServerHooks().getParkingLotPtr("subnet6_select")->size());
+    EXPECT_EQ(0U, ServerHooks::getServerHooks().getParkingLotPtr("subnet6_select")->size());
 
     // Join threads.
     EXPECT_NO_THROW_LOG(thread_pool_.wait());
@@ -3862,9 +3862,9 @@ TEST_F(MTAccessTest, noHost6) {
     EXPECT_NO_THROW_LOG(impl_.udp_client_->stop());
 
     // Half should be parked and then unparked. Half should be dropped.
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_SKIP]);
-    EXPECT_EQ(0, steps_[CalloutHandle::NEXT_STEP_DROP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_CONTINUE]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_SKIP]);
+    EXPECT_EQ(0U, steps_[CalloutHandle::NEXT_STEP_DROP]);
     EXPECT_EQ(expected_received_, steps_[CalloutHandle::NEXT_STEP_PARK]);
     EXPECT_EQ(expected_received_, unparked_);
 
@@ -3920,14 +3920,14 @@ TEST_F(ReselectTest, goodClass4) {
     uint32_t id = 14;
     bool both = false;
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
     subnet->setReservationsGlobal(true);
     subnet->setReservationsInSubnet(false);
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -3960,7 +3960,7 @@ TEST_F(ReselectTest, badClass4) {
     uint32_t id = 13;
     bool both = false;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
@@ -3968,7 +3968,7 @@ TEST_F(ReselectTest, badClass4) {
     subnet1->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Both subnets.
@@ -3976,7 +3976,7 @@ TEST_F(ReselectTest, badClass4) {
     subnet2->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_TRUE(both);
 
     // Last case.
@@ -3985,7 +3985,7 @@ TEST_F(ReselectTest, badClass4) {
     subnet1->setReservationsOutOfPool(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4007,14 +4007,14 @@ TEST_F(ReselectTest, goodClass6) {
     uint32_t id = 14;
     bool both = false;
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
     subnet->setReservationsGlobal(true);
     subnet->setReservationsInSubnet(false);
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4049,7 +4049,7 @@ TEST_F(ReselectTest, badClass6) {
     uint32_t id = 13;
     bool both = false;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
@@ -4057,7 +4057,7 @@ TEST_F(ReselectTest, badClass6) {
     subnet1->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Both subnets.
@@ -4065,7 +4065,7 @@ TEST_F(ReselectTest, badClass6) {
     subnet2->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_TRUE(both);
 
     // Last case.
@@ -4074,7 +4074,7 @@ TEST_F(ReselectTest, badClass6) {
     subnet1->setReservationsOutOfPool(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, "foo"));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4092,14 +4092,14 @@ TEST_F(ReselectTest, goodAddress4) {
     uint32_t id = 14;
     bool both = false;
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
     subnet->setReservationsGlobal(true);
     subnet->setReservationsInSubnet(false);
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4129,7 +4129,7 @@ TEST_F(ReselectTest, badAddress4) {
     uint32_t id = 13;
     bool both = false;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
@@ -4137,7 +4137,7 @@ TEST_F(ReselectTest, badAddress4) {
     subnet1->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Both subnets.
@@ -4145,7 +4145,7 @@ TEST_F(ReselectTest, badAddress4) {
     subnet2->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_TRUE(both);
 
     // Last case.
@@ -4154,7 +4154,7 @@ TEST_F(ReselectTest, badAddress4) {
     subnet1->setReservationsOutOfPool(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4173,14 +4173,14 @@ TEST_F(ReselectTest, goodAddress6) {
     uint32_t id = 14;
     bool both = false;
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
     subnet->setReservationsGlobal(true);
     subnet->setReservationsInSubnet(false);
     EXPECT_FALSE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4211,7 +4211,7 @@ TEST_F(ReselectTest, badAddress6) {
     uint32_t id = 13;
     bool both = false;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Retrying using global reservations.
@@ -4219,7 +4219,7 @@ TEST_F(ReselectTest, badAddress6) {
     subnet1->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 
     // Both subnets.
@@ -4227,7 +4227,7 @@ TEST_F(ReselectTest, badAddress6) {
     subnet2->setReservationsInSubnet(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_TRUE(both);
 
     // Last case.
@@ -4236,7 +4236,7 @@ TEST_F(ReselectTest, badAddress6) {
     subnet1->setReservationsOutOfPool(false);
     id = 13;
     EXPECT_TRUE(RadiusAccess::reselectSubnet(query, id, both, addr));
-    EXPECT_EQ(14, id);
+    EXPECT_EQ(14U, id);
     EXPECT_FALSE(both);
 }
 
@@ -4282,8 +4282,8 @@ TEST_F(AccessTest, terminate4ReselectPool) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(13, impl_.id_type4_,
@@ -4293,7 +4293,7 @@ TEST_F(AccessTest, terminate4ReselectPool) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(13, host->getIPv4SubnetID());
+    EXPECT_EQ(13U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -4313,7 +4313,7 @@ TEST_F(AccessTest, terminate4ReselectPool) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(14, impl_.id_type4_, &id[0], id.size());
@@ -4322,7 +4322,7 @@ TEST_F(AccessTest, terminate4ReselectPool) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(14, host->getIPv4SubnetID());
+    EXPECT_EQ(14U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -4341,7 +4341,7 @@ TEST_F(AccessTest, terminate4ReselectPool) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 
@@ -4397,8 +4397,8 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal1) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -4429,7 +4429,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal1) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(14, impl_.id_type4_, &id[0], id.size());
@@ -4438,7 +4438,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal1) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(14, host->getIPv4SubnetID());
+    EXPECT_EQ(14U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -4457,7 +4457,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal1) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -4507,8 +4507,8 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal2) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(13, impl_.id_type4_,
@@ -4518,7 +4518,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal2) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(13, host->getIPv4SubnetID());
+    EXPECT_EQ(13U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -4538,7 +4538,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal2) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -4567,7 +4567,7 @@ TEST_F(AccessTest, terminate4ReselectPoolGlobal2) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -4620,8 +4620,8 @@ TEST_F(AccessTest, terminate4ReselectPoolBoth) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
 
     // Check merged host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -4652,11 +4652,11 @@ TEST_F(AccessTest, terminate4ReselectPoolBoth) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -4705,8 +4705,8 @@ TEST_F(AccessTest, terminate6ReselectPool) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(13, impl_.id_type6_,
@@ -4717,7 +4717,7 @@ TEST_F(AccessTest, terminate6ReselectPool) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(13, host->getIPv6SubnetID());
+    EXPECT_EQ(13U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -4736,7 +4736,7 @@ TEST_F(AccessTest, terminate6ReselectPool) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(14, impl_.id_type6_, &id[0], id.size());
@@ -4746,7 +4746,7 @@ TEST_F(AccessTest, terminate6ReselectPool) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(14, host->getIPv6SubnetID());
+    EXPECT_EQ(14U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -4764,7 +4764,7 @@ TEST_F(AccessTest, terminate6ReselectPool) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 
@@ -4822,8 +4822,8 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal1) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -4854,7 +4854,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal1) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(14, impl_.id_type6_, &id[0], id.size());
@@ -4864,7 +4864,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal1) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(14, host->getIPv6SubnetID());
+    EXPECT_EQ(14U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -4882,7 +4882,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal1) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -4934,8 +4934,8 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal2) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(13, impl_.id_type6_,
@@ -4946,7 +4946,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal2) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(13, host->getIPv6SubnetID());
+    EXPECT_EQ(13U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -4965,7 +4965,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal2) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -4994,7 +4994,7 @@ TEST_F(AccessTest, terminate6ReselectPoolGlobal2) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -5049,8 +5049,8 @@ TEST_F(AccessTest, terminate6ReselectPool6Both) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
 
     // Check merged host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -5081,11 +5081,11 @@ TEST_F(AccessTest, terminate6ReselectPool6Both) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -5129,8 +5129,8 @@ TEST_F(AccessTest, terminate4ReselectAddress) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(13, impl_.id_type4_,
@@ -5140,7 +5140,7 @@ TEST_F(AccessTest, terminate4ReselectAddress) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(13, host->getIPv4SubnetID());
+    EXPECT_EQ(13U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -5160,7 +5160,7 @@ TEST_F(AccessTest, terminate4ReselectAddress) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(14, impl_.id_type4_, &id[0], id.size());
@@ -5169,7 +5169,7 @@ TEST_F(AccessTest, terminate4ReselectAddress) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(14, host->getIPv4SubnetID());
+    EXPECT_EQ(14U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.1", host->getIPv4Reservation().toText());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -5188,7 +5188,7 @@ TEST_F(AccessTest, terminate4ReselectAddress) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 
@@ -5241,8 +5241,8 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal1) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -5273,7 +5273,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal1) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(14, impl_.id_type4_, &id[0], id.size());
@@ -5282,7 +5282,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal1) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(14, host->getIPv4SubnetID());
+    EXPECT_EQ(14U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.1", host->getIPv4Reservation().toText());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -5301,7 +5301,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal1) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -5348,8 +5348,8 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal2) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(13, impl_.id_type4_,
@@ -5359,7 +5359,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal2) {
     ASSERT_EQ(id.size(), hid.size());
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type4_, host->getIdentifierType());
-    EXPECT_EQ(13, host->getIPv4SubnetID());
+    EXPECT_EQ(13U, host->getIPv4SubnetID());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
@@ -5379,7 +5379,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal2) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -5408,7 +5408,7 @@ TEST_F(AccessTest, terminate4ReselectAddressGlobal2) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -5458,8 +5458,8 @@ TEST_F(AccessTest, terminate4ReselectAddressBoth) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
 
     // Check merged host entry.
     ConstHostPtr host = HostMgr::instance().get4Any(SUBNET_ID_GLOBAL,
@@ -5489,11 +5489,11 @@ TEST_F(AccessTest, terminate4ReselectAddressBoth) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
     EXPECT_TRUE(query->inClass("foo"));
 }
@@ -5538,8 +5538,8 @@ TEST_F(AccessTest, terminate6ReselectAddress) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(13, impl_.id_type6_,
@@ -5550,7 +5550,7 @@ TEST_F(AccessTest, terminate6ReselectAddress) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(13, host->getIPv6SubnetID());
+    EXPECT_EQ(13U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -5569,7 +5569,7 @@ TEST_F(AccessTest, terminate6ReselectAddress) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(14, impl_.id_type6_, &id[0], id.size());
@@ -5579,7 +5579,7 @@ TEST_F(AccessTest, terminate6ReselectAddress) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(14, host->getIPv6SubnetID());
+    EXPECT_EQ(14U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_TRUE(host->hasIPv6Reservation());
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
@@ -5600,7 +5600,7 @@ TEST_F(AccessTest, terminate6ReselectAddress) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 
     // There should be no global host entry.
@@ -5653,8 +5653,8 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal1) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -5685,7 +5685,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal1) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(14, impl_.id_type6_, &id[0], id.size());
@@ -5695,7 +5695,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal1) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(14, host->getIPv6SubnetID());
+    EXPECT_EQ(14U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_TRUE(host->hasIPv6Reservation());
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
@@ -5716,7 +5716,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal1) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -5763,8 +5763,8 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal2) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(2, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(2U, cache_->size());
 
     // Check reselect host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(13, impl_.id_type6_,
@@ -5775,7 +5775,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal2) {
     EXPECT_EQ(0, memcmp(&id[0], &hid[0], id.size()));
     EXPECT_EQ(impl_.id_type6_, host->getIdentifierType());
     EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv4SubnetID());
-    EXPECT_EQ(13, host->getIPv6SubnetID());
+    EXPECT_EQ(13U, host->getIPv6SubnetID());
     EXPECT_TRUE(host->getIPv4Reservation().isV4Zero());
     EXPECT_FALSE(host->hasIPv6Reservation());
     EXPECT_TRUE(host->getHostname().empty());
@@ -5794,7 +5794,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal2) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
 
     // Check class host entry.
     host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -5826,7 +5826,7 @@ TEST_F(AccessTest, terminate6ReselectAddressGlobal2) {
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 
@@ -5876,8 +5876,8 @@ TEST_F(AccessTest, terminate6ReselectAddressBoth) {
     ASSERT_TRUE(pkt);
     EXPECT_EQ(pkt, query);
     EXPECT_FALSE(drop);
-    EXPECT_EQ(14, env.subnet_id_);
-    EXPECT_EQ(1, cache_->size());
+    EXPECT_EQ(14U, env.subnet_id_);
+    EXPECT_EQ(1U, cache_->size());
 
     // Check merged host entry.
     ConstHostPtr host = HostMgr::instance().get6Any(SUBNET_ID_GLOBAL,
@@ -5910,11 +5910,11 @@ TEST_F(AccessTest, terminate6ReselectAddressBoth) {
     ConstElementPtr reselected = ctx->get("subnet-id");
     ASSERT_TRUE(reselected);
     ASSERT_EQ(Element::integer, reselected->getType());
-    EXPECT_EQ(14, SubnetID(reselected->intValue()));
+    EXPECT_EQ(14U, SubnetID(reselected->intValue()));
     ConstElementPtr saved_attrs = ctx->get("radius");
     ASSERT_TRUE(saved_attrs);
     ASSERT_EQ(Element::list, saved_attrs->getType());
-    ASSERT_EQ(1, saved_attrs->size());
+    ASSERT_EQ(1U, saved_attrs->size());
     EXPECT_TRUE(*saved_attrs == *received->toElement());
 }
 

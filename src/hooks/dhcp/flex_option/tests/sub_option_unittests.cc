@@ -379,9 +379,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeNoCSVFormat) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto smap = map[109];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the definition is not required when csv-format is false.
@@ -407,9 +407,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigUnknownCodeDisableCSVFormat) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto smap = map[109];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the code must be a known sub-option when csv-format is true.
@@ -463,9 +463,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigDefinedName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto smap = map[109];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the name can be a last resort space defined sub-option.
@@ -496,9 +496,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigLastResortName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    EXPECT_EQ(1U, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
     auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the sub-option definition can be fetched from the last
@@ -535,9 +535,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigLastResortCode) {
     EXPECT_NO_THROW(impl_->testConfigure(options));
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
+    EXPECT_EQ(1U, map.count(DHO_VENDOR_ENCAPSULATED_OPTIONS));
     auto smap = map[DHO_VENDOR_ENCAPSULATED_OPTIONS];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the name can be a vendor defined sub-option.
@@ -569,9 +569,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigVendorName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
+    EXPECT_EQ(1U, map.count(D6O_VENDOR_OPTS));
     auto smap = map[D6O_VENDOR_OPTS];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the sub-option definition can be fetched from a custom
@@ -610,9 +610,9 @@ TEST_F(FlexSubOptionTest, subOptionConfigVendorCode) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(D6O_VENDOR_OPTS));
+    EXPECT_EQ(1U, map.count(D6O_VENDOR_OPTS));
     auto smap = map[D6O_VENDOR_OPTS];
-    EXPECT_EQ(1, smap.count(222));
+    EXPECT_EQ(1U, smap.count(222));
 }
 
 // Verify that the name can be a vendor standard sub-option.
@@ -637,10 +637,10 @@ TEST_F(FlexSubOptionTest, subOptionConfigDosSISName) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
+    EXPECT_EQ(1U, map.count(DHO_VIVSO_SUBOPTIONS));
     auto smap = map[DHO_VIVSO_SUBOPTIONS];
     // DOCSIS3_V4_TFTP_SERVERS is 2
-    EXPECT_EQ(1, smap.count(2));
+    EXPECT_EQ(1U, smap.count(2));
 }
 
 // Verify that the sub-option definition can be fetched from a standard
@@ -668,10 +668,10 @@ TEST_F(FlexSubOptionTest, subOptionConfigDosSISCode) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(DHO_VIVSO_SUBOPTIONS));
+    EXPECT_EQ(1U, map.count(DHO_VIVSO_SUBOPTIONS));
     auto smap = map[DHO_VIVSO_SUBOPTIONS];
     // DOCSIS3_V4_TFTP_SERVERS is 2
-    EXPECT_EQ(1, smap.count(2));
+    EXPECT_EQ(1U, smap.count(2));
 }
 
 // Verify that the name must match the code.
@@ -1042,40 +1042,40 @@ TEST_F(FlexSubOptionTest, subOptionConfigComplex) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto smap = map[109];
     FlexOptionImpl::SubOptionConfigPtr sub_cfg;
     ASSERT_NO_THROW(sub_cfg = smap.at(1));
     ASSERT_TRUE(sub_cfg);
-    EXPECT_EQ(1, sub_cfg->getCode());
+    EXPECT_EQ(1U, sub_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::ADD, sub_cfg->getAction());
     EXPECT_EQ(FlexOptionImpl::ADD, sub_cfg->getContainerAction());
     EXPECT_EQ("'abc'", sub_cfg->getText());
-    EXPECT_EQ(109, sub_cfg->getContainerCode());
+    EXPECT_EQ(109U, sub_cfg->getContainerCode());
 
     ASSERT_NO_THROW(sub_cfg = smap.at(2));
     ASSERT_TRUE(sub_cfg);
-    EXPECT_EQ(2, sub_cfg->getCode());
+    EXPECT_EQ(2U, sub_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::SUPERSEDE, sub_cfg->getAction());
     EXPECT_EQ(FlexOptionImpl::NONE, sub_cfg->getContainerAction());
     EXPECT_EQ("'def'", sub_cfg->getText());
-    EXPECT_EQ(109, sub_cfg->getContainerCode());
+    EXPECT_EQ(109U, sub_cfg->getContainerCode());
 
     ASSERT_NO_THROW(sub_cfg = smap.at(3));
     ASSERT_TRUE(sub_cfg);
-    EXPECT_EQ(3, sub_cfg->getCode());
+    EXPECT_EQ(3U, sub_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::REMOVE, sub_cfg->getAction());
     EXPECT_EQ(FlexOptionImpl::REMOVE, sub_cfg->getContainerAction());
     EXPECT_EQ("'a' == 'b'", sub_cfg->getText());
-    EXPECT_EQ(109, sub_cfg->getContainerCode());
+    EXPECT_EQ(109U, sub_cfg->getContainerCode());
 
     ASSERT_NO_THROW(sub_cfg = smap.at(4));
     ASSERT_TRUE(sub_cfg);
-    EXPECT_EQ(4, sub_cfg->getCode());
+    EXPECT_EQ(4U, sub_cfg->getCode());
     EXPECT_EQ(FlexOptionImpl::REMOVE, sub_cfg->getAction());
     EXPECT_EQ(FlexOptionImpl::NONE, sub_cfg->getContainerAction());
     EXPECT_EQ("'b' == 'a'", sub_cfg->getText());
-    EXPECT_EQ(109, sub_cfg->getContainerCode());
+    EXPECT_EQ(109U, sub_cfg->getContainerCode());
 }
 
 // Empty sub-option config list doing nothing is the same as empty option list.
@@ -1144,18 +1144,18 @@ TEST_F(FlexSubOptionTest, subProcessAddEnableCSVFormat) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     // The fqdn array is the most complex encoding of one element...
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(13, buffer.size());
-    EXPECT_EQ(7, buffer[0]);
+    ASSERT_EQ(13U, buffer.size());
+    EXPECT_EQ(7U, buffer[0]);
     EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
-    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(3U, buffer[8]);
     EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
-    EXPECT_EQ(0, buffer[12]);
+    EXPECT_EQ(0U, buffer[12]);
 }
 
 // Verify that ADD action does nothing when the container does not exist and
@@ -1242,17 +1242,17 @@ TEST_F(FlexSubOptionTest, subProcessAddDisableCSVFormat) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(13, buffer.size());
-    EXPECT_EQ(7, buffer[0]);
+    ASSERT_EQ(13U, buffer.size());
+    EXPECT_EQ(7U, buffer[0]);
     EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
-    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(3U, buffer[8]);
     EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
-    EXPECT_EQ(0, buffer[12]);
+    EXPECT_EQ(0U, buffer[12]);
 }
 
 // Verify that ADD action adds the specified sub-option in an already
@@ -1296,21 +1296,21 @@ TEST_F(FlexSubOptionTest, subProcessAdd) {
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
     // Only one option with code 222.
-    EXPECT_EQ(1, response->options_.count(222));
+    EXPECT_EQ(1U, response->options_.count(222));
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     // Only one sub-option.
     auto const& opts = opt->getOptions();
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
 }
 
 // Verify that ADD action does not add an already existing sub-option.
@@ -1358,17 +1358,17 @@ TEST_F(FlexSubOptionTest, subProcessAddExisting) {
     EXPECT_EQ(response_txt, response->toText());
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 
     // Only one sub-option.
     auto const& opts = opt->getOptions();
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
 }
 
 // Verify that ADD action does not add an empty value.
@@ -1448,9 +1448,9 @@ TEST_F(FlexSubOptionTest, subProcessAdd43) {
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -1492,7 +1492,7 @@ TEST_F(FlexSubOptionTest, subProcessAddDocSISVIVSO) {
     Option4AddrLstPtr addr = boost::dynamic_pointer_cast<Option4AddrLst>(sub);
     ASSERT_TRUE(addr);
     auto const& addrs = addr->getAddresses();
-    ASSERT_EQ(1, addrs.size());
+    ASSERT_EQ(1U, addrs.size());
     EXPECT_EQ("10.1.2.3", addrs[0].toText());
 }
 
@@ -1533,7 +1533,7 @@ TEST_F(FlexSubOptionTest, subProcessAddDocSISVendorOps) {
     OptionPtr sub = vendor->getOption(DOCSIS3_V6_VENDOR_NAME);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -1573,11 +1573,11 @@ TEST_F(FlexSubOptionTest, subProcessAddVivso) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
+    EXPECT_EQ(123456U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -1623,13 +1623,13 @@ TEST_F(FlexSubOptionTest, subProcessAddVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -1671,11 +1671,11 @@ TEST_F(FlexSubOptionTest, subProcessAddVendorOpts) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
+    EXPECT_EQ(123456U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -1723,13 +1723,13 @@ TEST_F(FlexSubOptionTest, subProcessAddVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -1773,18 +1773,18 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeEnableCSVFormat) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     // The fqdn array is the most complex encoding of one element...
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(13, buffer.size());
-    EXPECT_EQ(7, buffer[0]);
+    ASSERT_EQ(13U, buffer.size());
+    EXPECT_EQ(7U, buffer[0]);
     EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
-    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(3U, buffer[8]);
     EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
-    EXPECT_EQ(0, buffer[12]);
+    EXPECT_EQ(0U, buffer[12]);
 }
 
 // Verify that SUPERSEDE action does nothing when the container does not exist
@@ -1871,17 +1871,17 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDisableCSVFormat) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(13, buffer.size());
-    EXPECT_EQ(7, buffer[0]);
+    ASSERT_EQ(13U, buffer.size());
+    EXPECT_EQ(7U, buffer[0]);
     EXPECT_EQ(0, memcmp(&buffer[1], "example", 7));
-    EXPECT_EQ(3, buffer[8]);
+    EXPECT_EQ(3U, buffer[8]);
     EXPECT_EQ(0, memcmp(&buffer[9], "com", 3));
-    EXPECT_EQ(0, buffer[12]);
+    EXPECT_EQ(0U, buffer[12]);
 }
 
 // Verify that SUPERSEDE action adds the specified sub-option in an already
@@ -1925,21 +1925,21 @@ TEST_F(FlexSubOptionTest, subProcessSupersede) {
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
     // Only one option with code 222.
-    EXPECT_EQ(1, response->options_.count(222));
+    EXPECT_EQ(1U, response->options_.count(222));
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     // Only one sub-option.
     auto const& opts = opt->getOptions();
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
 }
 
 // Verify that SUPERSEDE action replaces an already existing sub-option.
@@ -1984,21 +1984,21 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeExisting) {
     EXPECT_NO_THROW(impl_->process<Pkt4Ptr>(Option::V4, query, response));
 
     // Only one option with code 222.
-    EXPECT_EQ(1, response->options_.count(222));
+    EXPECT_EQ(1U, response->options_.count(222));
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 
     // Only one sub-option.
     auto const& opts = opt->getOptions();
-    EXPECT_EQ(1, opts.size());
+    EXPECT_EQ(1U, opts.size());
 }
 
 // Verify that SUPERSEDE action does not add an empty value.
@@ -2078,9 +2078,9 @@ TEST_F(FlexSubOptionTest, subProcessSupersede43) {
     EXPECT_EQ(DHO_VENDOR_ENCAPSULATED_OPTIONS, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -2119,7 +2119,7 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVIVSO) {
     OptionPtr sub = vendor->getOption(DOCSIS3_V4_TFTP_SERVERS);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     uint8_t expected[] = { 10, 1, 2, 3 };
     EXPECT_EQ(0, memcmp(&buffer[0], expected, 4));
 }
@@ -2161,7 +2161,7 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeDocSISVendorOps) {
     OptionPtr sub = vendor->getOption(DOCSIS3_V6_VENDOR_NAME);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -2201,11 +2201,11 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVivso) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
+    EXPECT_EQ(123456U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -2251,13 +2251,13 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -2299,11 +2299,11 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVendorOpts) {
     ASSERT_TRUE(opt);
     OptionVendorPtr vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(123456, vendor->getVendorId());
+    EXPECT_EQ(123456U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(6, buffer.size());
+    ASSERT_EQ(6U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "foobar", 6));
 }
 
@@ -2351,13 +2351,13 @@ TEST_F(FlexSubOptionTest, subProcessSupersedeVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -2507,11 +2507,11 @@ TEST_F(FlexSubOptionTest, subProcessRemoveContainerNotEmpty) {
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
     EXPECT_FALSE(opt->getOption(2));
-    EXPECT_EQ(1, opt->getOptions().size());
+    EXPECT_EQ(1U, opt->getOptions().size());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
@@ -2606,12 +2606,12 @@ TEST_F(FlexSubOptionTest, subProcessRemoveFalse) {
     EXPECT_EQ(response_txt, response->toText());
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
@@ -2819,13 +2819,13 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVivsoMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -2917,13 +2917,13 @@ TEST_F(FlexSubOptionTest, subProcessRemoveVendorOptsMismatch) {
     ASSERT_TRUE(opt);
     vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
-    EXPECT_EQ(67890, vendor->getVendorId());
+    EXPECT_EQ(67890U, vendor->getVendorId());
     OptionPtr sub = vendor->getOption(1);
     EXPECT_FALSE(sub);
     sub = vendor->getOption(2);
     ASSERT_TRUE(sub);
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(4, buffer.size());
+    ASSERT_EQ(4U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "xyzt", 4));
 }
 
@@ -2970,13 +2970,13 @@ TEST_F(FlexSubOptionTest, subOptionConfigGuardValid) {
     EXPECT_TRUE(impl_->getErrMsg().empty()) << impl_->getErrMsg();
 
     auto map = impl_->getSubOptionConfigMap();
-    EXPECT_EQ(1, map.count(109));
+    EXPECT_EQ(1U, map.count(109));
     auto smap = map[109];
     FlexOptionImpl::SubOptionConfigPtr sub_cfg;
     ASSERT_NO_THROW(sub_cfg = smap.at(222));
     ASSERT_TRUE(sub_cfg);
-    EXPECT_EQ(222, sub_cfg->getCode());
-    EXPECT_EQ(109, sub_cfg->getContainerCode());
+    EXPECT_EQ(222U, sub_cfg->getCode());
+    EXPECT_EQ(109U, sub_cfg->getContainerCode());
     EXPECT_EQ("foobar", sub_cfg->getClass());
 }
 
@@ -3066,12 +3066,12 @@ TEST_F(FlexSubOptionTest, subOptionConfigGuardOptiondMatch) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
@@ -3161,12 +3161,12 @@ TEST_F(FlexSubOptionTest, subOptionConfigGuardSubOptiondMatch) {
 
     OptionPtr opt = response->getOption(222);
     ASSERT_TRUE(opt);
-    EXPECT_EQ(222, opt->getType());
+    EXPECT_EQ(222U, opt->getType());
     OptionPtr sub = opt->getOption(1);
     ASSERT_TRUE(sub);
-    EXPECT_EQ(1, sub->getType());
+    EXPECT_EQ(1U, sub->getType());
     const OptionBuffer& buffer = sub->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 

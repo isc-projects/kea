@@ -59,9 +59,9 @@ TEST_F(UtilsTest, pop0_4) {
     // Standard case.
     cid.reset(new ClientId(vec));
     vector<uint8_t> ret = pop0(cid);
-    ASSERT_EQ(2, ret.size());
-    EXPECT_EQ(0x01, ret[0]);
-    EXPECT_EQ(0x02, ret[1]);
+    ASSERT_EQ(2U, ret.size());
+    EXPECT_EQ(0x01U, ret[0]);
+    EXPECT_EQ(0x02U, ret[1]);
 
     // One element: pop0 does nothing.
     // (vec, 1) throws because MIN_CLIENT_ID_LEN is 2.
@@ -69,8 +69,8 @@ TEST_F(UtilsTest, pop0_4) {
     vector<uint8_t>& content = const_cast<vector<uint8_t>&>(cid->getClientId());
     content.resize(1);
     ret = pop0(cid);
-    ASSERT_EQ(1, ret.size());
-    EXPECT_EQ(0x00, ret[0]);
+    ASSERT_EQ(1U, ret.size());
+    EXPECT_EQ(0x00U, ret[0]);
 
     // Empty: pop0 does nothing.
     cid.reset(new ClientId(&vec[0], 2));
@@ -83,10 +83,10 @@ TEST_F(UtilsTest, pop0_4) {
     vector<uint8_t> vec1 = { 0x01, 0x02, 0x03 };
     cid.reset(new ClientId(vec1));
     ret = pop0(cid);
-    ASSERT_EQ(3, ret.size());
-    EXPECT_EQ(0x01, ret[0]);
-    EXPECT_EQ(0x02, ret[1]);
-    EXPECT_EQ(0x03, ret[2]);
+    ASSERT_EQ(3U, ret.size());
+    EXPECT_EQ(0x01U, ret[0]);
+    EXPECT_EQ(0x02U, ret[1]);
+    EXPECT_EQ(0x03U, ret[2]);
 }
 
 // Verifies the DHCPv6 pop0 util.
@@ -97,28 +97,28 @@ TEST_F(UtilsTest, pop0_6) {
     // Standard case.
     duid.reset(new DUID(vec));
     vector<uint8_t> ret = pop0(duid);
-    ASSERT_EQ(2, ret.size());
-    EXPECT_EQ(0x02, ret[0]);
-    EXPECT_EQ(0x03, ret[1]);
+    ASSERT_EQ(2U, ret.size());
+    EXPECT_EQ(0x02U, ret[0]);
+    EXPECT_EQ(0x03U, ret[1]);
 
     // Not zero: pop0 does nothing.
     vector<uint8_t> vec1 = { 0x00, 0x01, 0x02, 0x03 };
     duid.reset(new DUID(vec1));
     ret = pop0(duid);
-    ASSERT_EQ(4, ret.size());
-    EXPECT_EQ(0x00, ret[0]);
-    EXPECT_EQ(0x01, ret[1]);
-    EXPECT_EQ(0x02, ret[2]);
-    EXPECT_EQ(0x03, ret[3]);
+    ASSERT_EQ(4U, ret.size());
+    EXPECT_EQ(0x00U, ret[0]);
+    EXPECT_EQ(0x01U, ret[1]);
+    EXPECT_EQ(0x02U, ret[2]);
+    EXPECT_EQ(0x03U, ret[3]);
 
     vector<uint8_t> vec2 = { 0x01, 0x00, 0x02, 0x03 };
     duid.reset(new DUID(vec2));
     ret = pop0(duid);
-    ASSERT_EQ(4, ret.size());
-    EXPECT_EQ(0x01, ret[0]);
-    EXPECT_EQ(0x00, ret[1]);
-    EXPECT_EQ(0x02, ret[2]);
-    EXPECT_EQ(0x03, ret[3]);
+    ASSERT_EQ(4U, ret.size());
+    EXPECT_EQ(0x01U, ret[0]);
+    EXPECT_EQ(0x00U, ret[1]);
+    EXPECT_EQ(0x02U, ret[2]);
+    EXPECT_EQ(0x03U, ret[3]);
 }
 
 // Verifies the toPrintable util.
@@ -141,17 +141,17 @@ TEST_F(UtilsTest, extractDuid) {
     bool extracted = false;
     vector<uint8_t> ret = extractDuid(cid, extracted);
     EXPECT_TRUE(extracted);
-    ASSERT_EQ(3, ret.size());
-    EXPECT_EQ(0x41, ret[0]);
-    EXPECT_EQ(0x42, ret[1]);
-    EXPECT_EQ(0x43, ret[2]);
+    ASSERT_EQ(3U, ret.size());
+    EXPECT_EQ(0x41U, ret[0]);
+    EXPECT_EQ(0x42U, ret[1]);
+    EXPECT_EQ(0x43U, ret[2]);
 
     // Short case.
     cid.reset(new ClientId(&vec[0], 5));
     extracted = false;
     ret = extractDuid(cid, extracted);
     EXPECT_FALSE(extracted);
-    EXPECT_EQ(5, ret.size());
+    EXPECT_EQ(5U, ret.size());
     EXPECT_EQ(vec[0], ret[0]);
 
     // Not duid case.

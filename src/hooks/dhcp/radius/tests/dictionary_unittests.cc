@@ -105,7 +105,7 @@ TEST_F(DictionaryTest, standard) {
     uint32_t vendor = 0;
     ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY,
                                                             vendor));
-    EXPECT_EQ(0, vendor);
+    EXPECT_EQ(0U, vendor);
 }
 
 // Verifies parseLine internal routine.
@@ -351,10 +351,10 @@ TEST_F(DictionaryTest, beginEndVendor) {
     EXPECT_NO_THROW_LOG(parseLines(positive, 0, 3561));
     auto aci = AttrDefs::instance().getByName("Agent-Circuit-Id", 3561);
     ASSERT_TRUE(aci);
-    EXPECT_EQ(1, aci->type_);
+    EXPECT_EQ(1U, aci->type_);
     EXPECT_EQ(PW_TYPE_STRING, aci->value_type_);
     EXPECT_EQ("Agent-Circuit-Id", aci->name_);
-    EXPECT_EQ(3561, aci->vendor_);
+    EXPECT_EQ(3561U, aci->vendor_);
 
     // Positive using an integer.
     list<string> positive_n = {
@@ -364,10 +364,10 @@ TEST_F(DictionaryTest, beginEndVendor) {
     EXPECT_NO_THROW_LOG(parseLines(positive_n, 0, 3561));
     auto adru = AttrDefs::instance().getByType(129, 3561);
     ASSERT_TRUE(adru);
-    EXPECT_EQ(129, adru->type_);
+    EXPECT_EQ(129U, adru->type_);
     EXPECT_EQ(PW_TYPE_INTEGER, adru->value_type_);
     EXPECT_EQ("Actual-Data-Rate-Upstream", adru->name_);
-    EXPECT_EQ(3561, adru->vendor_);
+    EXPECT_EQ(3561U, adru->vendor_);
 
     // End using a name.
     list<string> end_name = {
@@ -398,7 +398,7 @@ TEST_F(DictionaryTest, badFile) {
     EXPECT_THROW_MSG(AttrDefs::instance().readDictionary("/does-not-exist",
                                                          vendor),
                      BadValue, expected);
-    EXPECT_EQ(0, vendor);
+    EXPECT_EQ(0U, vendor);
     list<string> bad_include = {
         "$INCLUDE /does-not-exist"
     };
@@ -413,7 +413,7 @@ TEST_F(DictionaryTest, hookAttributes) {
     uint32_t vendor = 0;
     ASSERT_NO_THROW_LOG(AttrDefs::instance().readDictionary(TEST_DICTIONARY,
                                                             vendor));
-    EXPECT_EQ(0, vendor);
+    EXPECT_EQ(0U, vendor);
     EXPECT_NO_THROW_LOG(AttrDefs::instance().
         checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
 }
@@ -430,7 +430,7 @@ TEST_F(DictionaryTest, include) {
         checkStandardDefs(RadiusConfigParser::USED_STANDARD_ATTR_DEFS));
     auto isc = AttrDefs::instance().getByName(PW_VENDOR_SPECIFIC, "ISC");
     ASSERT_TRUE(isc);
-    EXPECT_EQ(2495, isc->value_);
+    EXPECT_EQ(2495U, isc->value_);
 
     // max depth is 5.
     EXPECT_THROW_MSG(parseLines(include, 0, 0, 4), BadValue,
@@ -480,7 +480,7 @@ TEST_F(DictionaryTest, DISABLED_readDictionaries) {
         SCOPED_TRACE(file_name);
         EXPECT_NO_THROW_LOG(defs.readDictionary(file_name, vendor));
     }
-    EXPECT_EQ(0, vendor);
+    EXPECT_EQ(0U, vendor);
 }
 
 // Verifies attribute definitions.
@@ -490,10 +490,10 @@ TEST_F(AttributeTest, attrDefs) {
     // getByType.
     ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1));
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ("User-Name", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(0, def->vendor_);
+    EXPECT_EQ(0U, def->vendor_);
     def.reset();
 
     // Type 0 is reserved.
@@ -509,10 +509,10 @@ TEST_F(AttributeTest, attrDefs) {
     // getByName.
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("User-Name"));
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ("User-Name", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(0, def->vendor_);
+    EXPECT_EQ(0U, def->vendor_);
     def.reset();
 
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("Does-not-exist"));
@@ -540,17 +540,17 @@ TEST_F(AttributeTest, attrDefs) {
     ASSERT_NO_THROW(AttrDefs::instance().add(def1));
     ASSERT_NO_THROW(def = AttrDefs::instance().getByType(252));
     ASSERT_TRUE(def);
-    EXPECT_EQ(252, def->type_);
+    EXPECT_EQ(252U, def->type_);
     EXPECT_EQ("Foo-Bar", def->name_);
     EXPECT_EQ(PW_TYPE_IPADDR, def->value_type_);
-    EXPECT_EQ(0, def->vendor_);
+    EXPECT_EQ(0U, def->vendor_);
     def.reset();
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("Foo-Bar"));
     ASSERT_TRUE(def);
-    EXPECT_EQ(252, def->type_);
+    EXPECT_EQ(252U, def->type_);
     EXPECT_EQ("Foo-Bar", def->name_);
     EXPECT_EQ(PW_TYPE_IPADDR, def->value_type_);
-    EXPECT_EQ(0, def->vendor_);
+    EXPECT_EQ(0U, def->vendor_);
     def.reset();
 
     // add (alias).
@@ -559,9 +559,9 @@ TEST_F(AttributeTest, attrDefs) {
     ASSERT_NO_THROW(AttrDefs::instance().add(def2));
     AttrDefPtr got = AttrDefs::instance().getByName("Error-Message");
     ASSERT_TRUE(got);
-    EXPECT_EQ(18, got->type_);
+    EXPECT_EQ(18U, got->type_);
     EXPECT_EQ(PW_TYPE_STRING, got->value_type_);
-    EXPECT_EQ(0, got->vendor_);
+    EXPECT_EQ(0U, got->vendor_);
     def.reset();
 
     // add (vendor).
@@ -569,18 +569,18 @@ TEST_F(AttributeTest, attrDefs) {
     ASSERT_NO_THROW(AttrDefs::instance().add(defv));
     ASSERT_NO_THROW(def = AttrDefs::instance().getByType(1, 3561));
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ("Agent-Circuit-Id", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(3561, def->vendor_);
+    EXPECT_EQ(3561U, def->vendor_);
     def.reset();
     ASSERT_NO_THROW(def =
         AttrDefs::instance().getByName("Agent-Circuit-Id", 3561));
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ("Agent-Circuit-Id", def->name_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(3561, def->vendor_);
+    EXPECT_EQ(3561U, def->vendor_);
     def.reset();
     ASSERT_NO_THROW(name = AttrDefs::instance().getName(1, 3561));
     EXPECT_EQ("Agent-Circuit-Id", name);
@@ -589,9 +589,9 @@ TEST_F(AttributeTest, attrDefs) {
     // add (change type).
     ASSERT_NO_THROW(def = AttrDefs::instance().getByName("User-Password"));
     ASSERT_TRUE(def);
-    EXPECT_EQ(2, def->type_);
+    EXPECT_EQ(2U, def->type_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(0, def->vendor_);
+    EXPECT_EQ(0U, def->vendor_);
     AttrDefPtr def3(new AttrDef(17, "User-Password", PW_TYPE_STRING));
     string expected = "Illegal attribute redefinition of ";
     expected += "'User-Password' type 2 value type string by 17 string";
@@ -613,9 +613,9 @@ TEST_F(AttributeTest, attrDefs) {
     ASSERT_NO_THROW(def =
         AttrDefs::instance().getByName("Agent-Circuit-Id", 3561));
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
-    EXPECT_EQ(3561, def->vendor_);
+    EXPECT_EQ(3561U, def->vendor_);
     AttrDefPtr def3v(new AttrDef(2, "Agent-Circuit-Id", PW_TYPE_STRING, 3561));
     expected = "Illegal attribute redefinition of 'Agent-Circuit-Id' ";
     expected += "vendor 3561 type 1 value type string by 2 string";

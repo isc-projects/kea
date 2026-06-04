@@ -299,13 +299,19 @@ TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
     MySqlConnection::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
 
     // Are the times the same?
-    EXPECT_EQ(tm_expire.tm_year + 1900, mysql_expire.year);
-    EXPECT_EQ(tm_expire.tm_mon + 1,  mysql_expire.month);
-    EXPECT_EQ(tm_expire.tm_mday, mysql_expire.day);
-    EXPECT_EQ(tm_expire.tm_hour, mysql_expire.hour);
-    EXPECT_EQ(tm_expire.tm_min, mysql_expire.minute);
-    EXPECT_EQ(tm_expire.tm_sec, mysql_expire.second);
-    EXPECT_EQ(0, mysql_expire.second_part);
+    EXPECT_EQ(tm_expire.tm_year + 1900,
+              static_cast<int>(mysql_expire.year));
+    EXPECT_EQ(tm_expire.tm_mon + 1,
+              static_cast<int>(mysql_expire.month));
+    EXPECT_EQ(tm_expire.tm_mday,
+              static_cast<int>(mysql_expire.day));
+    EXPECT_EQ(tm_expire.tm_hour,
+              static_cast<int>(mysql_expire.hour));
+    EXPECT_EQ(tm_expire.tm_min,
+              static_cast<int>(mysql_expire.minute));
+    EXPECT_EQ(tm_expire.tm_sec,
+              static_cast<int>(mysql_expire.second));
+    EXPECT_EQ(0U, mysql_expire.second_part);
     EXPECT_EQ(0, mysql_expire.neg);
 
     // Convert back
@@ -1245,7 +1251,7 @@ TEST_F(MySqlGenericBackendTest, leaseCount) {
 
     // Check that the countRows is working. It's used extensively in other
     // tests, so basic check is enough here.
-    EXPECT_EQ(0, countRows(conn, "lease4"));
+    EXPECT_EQ(0U, countRows(conn, "lease4"));
 }
 
 // Verifies that v4 class lease counts are correctly adjusted

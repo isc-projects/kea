@@ -195,7 +195,7 @@ public:
 
         // Verify we added three of them.
         auto alarms = store.getAll();
-        ASSERT_EQ(alarms->size(), 3);
+        ASSERT_EQ(alarms->size(), 3U);
 
         // Fetch the second alarm.
         AlarmPtr alarm;
@@ -216,7 +216,7 @@ public:
 
         // Verify there are two left.
         alarms = store.getAll();
-        ASSERT_EQ(alarms->size(), 2);
+        ASSERT_EQ(alarms->size(), 2U);
     }
 
     /// @brief Verify an invalid alarm key on delete is detected.

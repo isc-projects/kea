@@ -82,7 +82,7 @@ public:
         // cache has no entries.
         ptime last_flush_time = expressions.getLastFlushTime();
         EXPECT_GE(last_flush_time, start_time);
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
 
         // Verify that looking for an entry in an empty cache
         // gracefully finds nothing.
@@ -107,7 +107,7 @@ public:
                          "error parsing expression: [addrtotext(relay6[0].linkaddr)] :"
                          " <string>:1.19: Nest level invalid for DHCPv4 packets");
 
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
     }
 
     /// @brief Verifies that valid DHCPv4 expressions are cached correctly.
@@ -124,7 +124,7 @@ public:
         };
 
         // Verify that we can cache valid expressions.
-        int id = 1;
+        unsigned id = 1;
         for (auto const& expression_str : expression_strs) {
             ExpressionPtr expression;
             ASSERT_NO_THROW_LOG(expression = expressions.parseAndCacheExpression(id, expression_str, AF_INET));
@@ -156,7 +156,7 @@ public:
                          "error parsing expression: [addrtotext(pkt4.yiaddr)] :"
                          " <string>:1.12-15: pkt4 can only be used in DHCPv4.");
 
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
     }
 
     /// @brief Verifies that valid DHCPv6 expressions are cached correctly.
@@ -173,7 +173,7 @@ public:
         };
 
         // Verify that we can cache valid expressions.
-        int id = 1;
+        unsigned id = 1;
         for (auto const& expression_str : expression_strs) {
             ExpressionPtr expression;
             ASSERT_NO_THROW_LOG(expression = expressions.parseAndCacheExpression(id, expression_str, AF_INET6));
@@ -193,12 +193,12 @@ public:
     void testExpressionCacheNullExpressions() {
         // Create a new cache.
         TestExpressionCache expressions;
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
 
         // Verify that we can cache a null pointer expression.
         ExpressionPtr no_exp;
         ASSERT_NO_THROW_LOG(expressions.cacheExpression(1, no_exp));
-        EXPECT_EQ(expressions.size(), 1);
+        EXPECT_EQ(expressions.size(), 1U);
 
         // Verify we can retrieve the cached null expression pointer.
         ExpressionPtr fetched_exp;
@@ -210,7 +210,7 @@ public:
     void testFlushCache() {
         // Create a new cache.
         TestExpressionCache expressions;
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
         ptime last_flush_time = expressions.getLastFlushTime();
 
         // Now let's wind the clock back on last_flush_time.
@@ -219,7 +219,7 @@ public:
         last_flush_time = expressions.getLastFlushTime();
 
         std::vector<std::string> expression_strs { "'one'", "'two'", "'three'" };
-        int id = 1;
+        unsigned id = 1;
         for (auto const& expression_str : expression_strs) {
             ExpressionPtr expression;
             ASSERT_NO_THROW_LOG(expression = expressions.parseAndCacheExpression(id, expression_str, AF_INET));
@@ -233,7 +233,7 @@ public:
         // and last_flush_time should be updated.
         expressions.clear();
         EXPECT_GT(expressions.getLastFlushTime(), last_flush_time);
-        EXPECT_EQ(expressions.size(), 0);
+        EXPECT_EQ(expressions.size(), 0U);
     }
 };
 

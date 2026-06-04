@@ -374,15 +374,15 @@ TEST_F(RequestTest, exchangeRCtoText) {
 /// Verify subnet ID to NAS port remap.
 TEST_F(RequestTest, getNASPort) {
     // No remap.
-    EXPECT_EQ(44, getNASPort(44));
+    EXPECT_EQ(44U, getNASPort(44));
 
     // Default.
     impl_.remap_[SUBNET_ID_DEFAULT] = 2;
-    EXPECT_EQ(2, getNASPort(44));
+    EXPECT_EQ(2U, getNASPort(44));
 
     // Specific/matching remap entry.
     impl_.remap_[44] = 3;
-    EXPECT_EQ(3, getNASPort(44));
+    EXPECT_EQ(3U, getNASPort(44));
 }
 
 /// Verify what happens when there is no listening authentication server at all.
@@ -523,14 +523,14 @@ TEST_F(RequestTest, noAuthResponse) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_ACCESS_REQUEST, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     ASSERT_LE(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(38, size);
+    EXPECT_EQ(38U, size);
     uint8_t expected[] = {
         0x01, // User-Name
         0x06, // length
@@ -605,14 +605,14 @@ TEST_F(RequestTest, noAcctResponse) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_ACCOUNTING_REQUEST, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     ASSERT_LE(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    EXPECT_EQ(44U, size);
     uint8_t expected[] = {
         0x01, // User-Name
         0x06, // length
@@ -696,7 +696,7 @@ TEST_F(RequestTest, accept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -744,8 +744,8 @@ TEST_F(RequestTest, accept) {
     // Check result.
     EXPECT_EQ(OK_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -797,7 +797,7 @@ TEST_F(RequestTest, response) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -890,7 +890,7 @@ TEST_F(RequestTest, badAccept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -939,8 +939,8 @@ TEST_F(RequestTest, badAccept) {
     // Check result.
     EXPECT_EQ(BADRESP_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -992,7 +992,7 @@ TEST_F(RequestTest, badResponse) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1086,7 +1086,7 @@ TEST_F(RequestTest, shortAuth) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -1127,7 +1127,7 @@ TEST_F(RequestTest, shortAuth) {
     EXPECT_TRUE(finished_);
     EXPECT_TRUE(sent_);
     EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
+    EXPECT_EQ(10U, sent_size);
 
     // Done.
     stop();
@@ -1184,7 +1184,7 @@ TEST_F(RequestTest, shortAcct) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1222,7 +1222,7 @@ TEST_F(RequestTest, shortAcct) {
     EXPECT_TRUE(finished_);
     EXPECT_TRUE(sent_);
     EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
+    EXPECT_EQ(10U, sent_size);
 
     // Done.
     stop();
@@ -1278,7 +1278,7 @@ TEST_F(RequestTest, reject) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -1326,8 +1326,8 @@ TEST_F(RequestTest, reject) {
     // Check result.
     EXPECT_EQ(REJECT_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -1379,7 +1379,7 @@ TEST_F(RequestTest, accept2) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(26, size);
+    ASSERT_LE(26U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;          // header + User-Name attribute.
@@ -1427,8 +1427,8 @@ TEST_F(RequestTest, accept2) {
     // Check result.
     EXPECT_EQ(OK_RC, result_);
     ASSERT_TRUE(received_attributes_);
-    ASSERT_EQ(1, received_attributes_->size());
-    ASSERT_EQ(1, received_attributes_->count(1));
+    ASSERT_EQ(1U, received_attributes_->size());
+    ASSERT_EQ(1U, received_attributes_->count(1));
     const ConstAttributePtr& attr = received_attributes_->get(1);
     ASSERT_TRUE(attr);
     EXPECT_EQ("User-Name='user'", attr->toText());
@@ -1480,7 +1480,7 @@ TEST_F(RequestTest, response2) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).

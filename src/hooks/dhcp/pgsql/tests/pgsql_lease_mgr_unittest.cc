@@ -1209,7 +1209,7 @@ TEST_F(PgSqlGenericBackendTest, leaseCount) {
 
     // Check that the countRows is working. It's used extensively in other
     // tests, so basic check is enough here.
-    EXPECT_EQ(0, countRows(conn, "lease4"));
+    EXPECT_EQ(0U, countRows(conn, "lease4"));
 }
 
 // Verifies that v4 class lease counts are correctly adjusted

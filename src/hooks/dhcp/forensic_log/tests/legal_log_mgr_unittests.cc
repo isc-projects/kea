@@ -120,44 +120,44 @@ TEST_F(LegalLogMgrTest, genDurationString) {
 
 // Verifies the LegalLogDbLogger class works as expected
 TEST_F(LegalLogMgrTest, legalLogDbLogger) {
-    EXPECT_EQ(1, db_logger_stack.size());
+    EXPECT_EQ(1U, db_logger_stack.size());
 
     // Open a block
     {
-        EXPECT_EQ(1, db_logger_stack.size());
+        EXPECT_EQ(1U, db_logger_stack.size());
 
         // Push local logger
         LegalLogDbLogger pushed(legal_log_db_logger);
 
         // Check now we have a second logger
-        EXPECT_EQ(2, db_logger_stack.size());
+        EXPECT_EQ(2U, db_logger_stack.size());
     }
 
     // Logger was popped when existing the block
-    EXPECT_EQ(1, db_logger_stack.size());
+    EXPECT_EQ(1U, db_logger_stack.size());
 
     // Open a try block to check it works with it
     try {
-        EXPECT_EQ(1, db_logger_stack.size());
+        EXPECT_EQ(1U, db_logger_stack.size());
         LegalLogDbLogger pushed(legal_log_db_logger);
-        EXPECT_EQ(2, db_logger_stack.size());
+        EXPECT_EQ(2U, db_logger_stack.size());
     } catch (const std::exception&) {
         ADD_FAILURE() << "no exception was raised";
     }
-    EXPECT_EQ(1, db_logger_stack.size());
+    EXPECT_EQ(1U, db_logger_stack.size());
 
     // Another check with an exception now
     try {
-        EXPECT_EQ(1, db_logger_stack.size());
+        EXPECT_EQ(1U, db_logger_stack.size());
         LegalLogDbLogger pushed(legal_log_db_logger);
-        EXPECT_EQ(2, db_logger_stack.size());
+        EXPECT_EQ(2U, db_logger_stack.size());
         isc_throw(Unexpected, "for testing");
         ADD_FAILURE() << "an exception was raised";
     } catch (const std::exception&) {
         // The handler is outside the block
-        EXPECT_EQ(1, db_logger_stack.size());
+        EXPECT_EQ(1U, db_logger_stack.size());
     }
-    ASSERT_EQ(1, db_logger_stack.size());
+    ASSERT_EQ(1U, db_logger_stack.size());
 }
 
 // Verifies that vectorDump handles empty content (for static analyzers)
@@ -239,7 +239,7 @@ TEST_F(LegalLogMgrTest, pathValidationSecurityDisabled) {
        << " invalid path specified: '/tmp', supported path is '"
        << LegalLogMgr::getLogPath() << "'";
 
-    EXPECT_EQ(1, countFile(os.str()));
+    EXPECT_EQ(1U, countFile(os.str()));
 }
 
 // Verify that parsing extra parameters for rotate file works

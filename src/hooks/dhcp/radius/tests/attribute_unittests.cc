@@ -79,14 +79,14 @@ TEST_F(AttributeTest, attrString) {
     // Using User-Name (1) string attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_USER_NAME);
     ASSERT_TRUE(def);
-    EXPECT_EQ(1, def->type_);
+    EXPECT_EQ(1U, def->type_);
     EXPECT_EQ(PW_TYPE_STRING, def->value_type_);
 
     AttributePtr attr;
     ASSERT_NO_THROW(attr = Attribute::fromString(PW_USER_NAME, "foobar"));
     ASSERT_TRUE(attr);
 
-    EXPECT_EQ(1, attr->getType());
+    EXPECT_EQ(1U, attr->getType());
     EXPECT_EQ(PW_TYPE_STRING, attr->getValueType());
     string to_string;
     EXPECT_NO_THROW_LOG(to_string = attr->toString());
@@ -166,7 +166,7 @@ TEST_F(AttributeTest, rawAttrString) {
     ASSERT_NO_THROW(attr = Attribute::fromString(PW_USER_NAME, "\x01\x02\x03"));
     ASSERT_TRUE(attr);
 
-    EXPECT_EQ(1, attr->getType());
+    EXPECT_EQ(1U, attr->getType());
     EXPECT_EQ(PW_TYPE_STRING, attr->getValueType());
     string to_string;
     EXPECT_NO_THROW_LOG(to_string = attr->toString());
@@ -189,18 +189,18 @@ TEST_F(AttributeTest, attrInt) {
     // Using NAS-Port-Type (61) integer attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_NAS_PORT_TYPE);
     ASSERT_TRUE(def);
-    EXPECT_EQ(61, def->type_);
+    EXPECT_EQ(61U, def->type_);
     EXPECT_EQ(PW_TYPE_INTEGER, def->value_type_);
 
     AttributePtr attr;
     ASSERT_NO_THROW(attr = Attribute::fromInt(61, 15));
     ASSERT_TRUE(attr);
 
-    EXPECT_EQ(61, attr->getType());
+    EXPECT_EQ(61U, attr->getType());
     EXPECT_EQ(PW_TYPE_INTEGER, attr->getValueType());
     uint32_t to_int;
     EXPECT_NO_THROW_LOG(to_int = attr->toInt());
-    EXPECT_EQ(15, to_int);
+    EXPECT_EQ(15U, to_int);
     EXPECT_EQ("NAS-Port-Type=Ethernet", attr->toText());
     vector<uint8_t> binary = { 61, 6, 0, 0, 0, 15 };
     EXPECT_EQ(binary, attr->toBytes());
@@ -269,14 +269,14 @@ TEST_F(AttributeTest, attrIpAddr) {
     // Using Framed-IP-Address (8) IP address attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_FRAMED_IP_ADDRESS);
     ASSERT_TRUE(def);
-    EXPECT_EQ(8, def->type_);
+    EXPECT_EQ(8U, def->type_);
     EXPECT_EQ(PW_TYPE_IPADDR, def->value_type_);
 
     AttributePtr attr;
     ASSERT_NO_THROW(attr = Attribute::fromIpAddr(8, IOAddress("192.0.2.1")));
     ASSERT_TRUE(attr);
 
-    EXPECT_EQ(8, attr->getType());
+    EXPECT_EQ(8U, attr->getType());
     EXPECT_EQ(PW_TYPE_IPADDR, attr->getValueType());
     IOAddress addr("0.0.0.0");
     EXPECT_NO_THROW_LOG(addr = attr->toIpAddr());
@@ -338,14 +338,14 @@ TEST_F(AttributeTest, attrIpv6Addr) {
     // Using Framed-IPv6-Address (168) IPv6 address attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_FRAMED_IPV6_ADDRESS);
     ASSERT_TRUE(def);
-    EXPECT_EQ(168, def->type_);
+    EXPECT_EQ(168U, def->type_);
     EXPECT_EQ(PW_TYPE_IPV6ADDR, def->value_type_);
 
     AttributePtr attr;
     ASSERT_NO_THROW(attr = Attribute::fromIpv6Addr(168,
                                                 IOAddress("2001:db8::1235")));
     ASSERT_TRUE(attr);
-    EXPECT_EQ(168, attr->getType());
+    EXPECT_EQ(168U, attr->getType());
     EXPECT_EQ(PW_TYPE_IPV6ADDR, attr->getValueType());
     IOAddress addr("::");
     EXPECT_NO_THROW_LOG(addr = attr->toIpv6Addr());
@@ -413,21 +413,21 @@ TEST_F(AttributeTest, attrIpv6Prefix) {
     // Using Delegated-IPv6-Prefix (123) IPv6 prefix attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_DELEGATED_IPV6_PREFIX);
     ASSERT_TRUE(def);
-    EXPECT_EQ(123, def->type_);
+    EXPECT_EQ(123U, def->type_);
     EXPECT_EQ(PW_TYPE_IPV6PREFIX, def->value_type_);
 
     AttributePtr attr;
     ASSERT_NO_THROW(attr = Attribute::fromIpv6Prefix(123, 128,
                                                 IOAddress("2001:db8::1235")));
     ASSERT_TRUE(attr);
-    EXPECT_EQ(123, attr->getType());
+    EXPECT_EQ(123U, attr->getType());
     EXPECT_EQ(PW_TYPE_IPV6PREFIX, attr->getValueType());
     IOAddress addr("::");
     EXPECT_NO_THROW_LOG(addr = attr->toIpv6Prefix());
     EXPECT_EQ("2001:db8::1235", addr.toText());
     uint8_t len = 0;
     EXPECT_NO_THROW_LOG(len = attr->toIpv6PrefixLen());
-    EXPECT_EQ(128, len);
+    EXPECT_EQ(128U, len);
     EXPECT_EQ("Delegated-IPv6-Prefix=2001:db8::1235/128", attr->toText());
     vector<uint8_t> binary = { 123, 20, 0, 128,
         0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
@@ -507,7 +507,7 @@ TEST_F(AttributeTest, attrVsa) {
     // Using Vector-Specific (26) *only* vsa attribute.
     AttrDefPtr def = AttrDefs::instance().getByType(PW_VENDOR_SPECIFIC);
     ASSERT_TRUE(def);
-    EXPECT_EQ(26, def->type_);
+    EXPECT_EQ(26U, def->type_);
     EXPECT_EQ(PW_TYPE_VSA, def->value_type_);
 
     AttributePtr attr;
@@ -515,11 +515,11 @@ TEST_F(AttributeTest, attrVsa) {
                                               1234, "foobar"));
     ASSERT_TRUE(attr);
 
-    EXPECT_EQ(26, attr->getType());
+    EXPECT_EQ(26U, attr->getType());
     EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
     uint32_t vendor = 0;
     ASSERT_NO_THROW(vendor = attr->toVendorId());
-    EXPECT_EQ(1234, vendor);
+    EXPECT_EQ(1234U, vendor);
     EXPECT_EQ("Vendor-Specific=[1234]0x666F6F626172", attr->toText());
     vector<uint8_t> binary = { 26, 12, 0, 0, 0x04, 0xd2,
                                0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
@@ -612,8 +612,8 @@ TEST_F(AttributeTest, vendorFromText) {
     ASSERT_TRUE(attr);
     EXPECT_EQ(PW_VENDOR_SPECIFIC, attr->getType());
     EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
-    EXPECT_EQ(3561, attr->toVendorId());
-    EXPECT_EQ(12, attr->getValueLen());
+    EXPECT_EQ(3561U, attr->toVendorId());
+    EXPECT_EQ(12U, attr->getValueLen());
     vector<uint8_t> vsa_data = { 1, 8, 0x66, 0x6f, 0x6f, 0x62, 0x61, 0x72 };
     EXPECT_EQ(vsa_data, attr->toVsaData());
 }
@@ -629,8 +629,8 @@ TEST_F(AttributeTest, vendorFromBytes) {
     ASSERT_TRUE(attr);
     EXPECT_EQ(PW_VENDOR_SPECIFIC, attr->getType());
     EXPECT_EQ(PW_TYPE_VSA, attr->getValueType());
-    EXPECT_EQ(3561, attr->toVendorId());
-    EXPECT_EQ(9, attr->getValueLen());
+    EXPECT_EQ(3561U, attr->toVendorId());
+    EXPECT_EQ(9U, attr->getValueLen());
     vector<uint8_t> vsa_data = { 144, 5, 2, 0, 0 };
     EXPECT_EQ(vsa_data, attr->toVsaData());
 }
@@ -639,29 +639,29 @@ TEST_F(AttributeTest, vendorFromBytes) {
 TEST_F(AttributeTest, attributesBasic) {
     Attributes attrs;
     EXPECT_TRUE(attrs.empty());
-    EXPECT_EQ(0, attrs.size());
+    EXPECT_EQ(0U, attrs.size());
 
     // Add a string attribute.
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(1, "foobar")));
     EXPECT_FALSE(attrs.empty());
-    EXPECT_EQ(1, attrs.size());
+    EXPECT_EQ(1U, attrs.size());
 
     // Add an integer attribute.
     ASSERT_NO_THROW(attrs.add(Attribute::fromInt(6, 2)));
     EXPECT_FALSE(attrs.empty());
-    EXPECT_EQ(2, attrs.size());
+    EXPECT_EQ(2U, attrs.size());
 
     // Clear.
     attrs.clear();
     EXPECT_TRUE(attrs.empty());
-    EXPECT_EQ(0, attrs.size());
+    EXPECT_EQ(0U, attrs.size());
 }
 
 // Verifies attributes can be added and deleted.
 TEST_F(AttributeTest, attributesAddDel) {
     Attributes attrs;
     EXPECT_TRUE(attrs.empty());
-    EXPECT_EQ(0, attrs.size());
+    EXPECT_EQ(0U, attrs.size());
 
     // Add 3 User-Name and a Service-Type.
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
@@ -670,10 +670,10 @@ TEST_F(AttributeTest, attributesAddDel) {
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "bar")));
 
     // Verify counts.
-    EXPECT_EQ(4, attrs.size());
-    EXPECT_EQ(3, attrs.count(PW_USER_NAME));
-    EXPECT_EQ(1, attrs.count(PW_SERVICE_TYPE));
-    EXPECT_EQ(0, attrs.count(PW_FRAMED_IP_ADDRESS));
+    EXPECT_EQ(4U, attrs.size());
+    EXPECT_EQ(3U, attrs.count(PW_USER_NAME));
+    EXPECT_EQ(1U, attrs.count(PW_SERVICE_TYPE));
+    EXPECT_EQ(0U, attrs.count(PW_FRAMED_IP_ADDRESS));
 
     // Gets.
     ConstAttributePtr attr;
@@ -686,7 +686,7 @@ TEST_F(AttributeTest, attributesAddDel) {
     ASSERT_TRUE(attr);
     EXPECT_EQ(PW_SERVICE_TYPE, attr->getType());
     EXPECT_EQ(PW_TYPE_INTEGER, attr->getValueType());
-    EXPECT_EQ(20, attr->toInt());
+    EXPECT_EQ(20U, attr->toInt());
     attr.reset();
     ASSERT_NO_THROW(attr = attrs.get(PW_FRAMED_IP_ADDRESS));
     EXPECT_FALSE(attr);
@@ -723,18 +723,18 @@ TEST_F(AttributeTest, attributesAddDel) {
     EXPECT_TRUE(attrs.del(PW_SERVICE_TYPE));
     EXPECT_TRUE(attrs.del(PW_USER_NAME));
     EXPECT_FALSE(attrs.del(PW_SERVICE_TYPE));
-    EXPECT_EQ(1, attrs.count(PW_USER_NAME));
+    EXPECT_EQ(1U, attrs.count(PW_USER_NAME));
     EXPECT_TRUE(attrs.del(PW_USER_NAME));
     EXPECT_FALSE(attrs.del(PW_USER_NAME));
     EXPECT_TRUE(attrs.empty());
-    EXPECT_EQ(0, attrs.size());
+    EXPECT_EQ(0U, attrs.size());
 }
 
 // Verifies add front.
 TEST_F(AttributeTest, attributesAddFront) {
     Attributes attrs;
     EXPECT_TRUE(attrs.empty());
-    EXPECT_EQ(0, attrs.size());
+    EXPECT_EQ(0U, attrs.size());
 
     // Add 2 User-Name and a Service-Type at the front.
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
@@ -742,7 +742,7 @@ TEST_F(AttributeTest, attributesAddFront) {
     ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20), false));
 
     // Get front.
-    ASSERT_EQ(3, attrs.size());
+    ASSERT_EQ(3U, attrs.size());
     ConstAttributePtr attr = *(attrs.begin());
     ASSERT_TRUE(attr);
     EXPECT_EQ(PW_SERVICE_TYPE, attr->getType());
@@ -752,7 +752,7 @@ TEST_F(AttributeTest, attributesAddFront) {
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foobar")));
     ASSERT_NO_THROW(attrs.add(Attribute::fromString(PW_USER_NAME, "foo")));
     ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 20)));
-    ASSERT_EQ(3, attrs.size());
+    ASSERT_EQ(3U, attrs.size());
     attr = *(attrs.begin());
     ASSERT_TRUE(attr);
     EXPECT_EQ(PW_USER_NAME, attr->getType());
@@ -766,12 +766,12 @@ TEST_F(AttributeTest, attributesAppend) {
     Attributes attrs1;
     attrs1.add(Attribute::fromInt(PW_NAS_PORT, 123));
     attrs1.add(Attribute::fromString(PW_USER_NAME, "me"));
-    EXPECT_EQ(2, attrs.size());
-    EXPECT_EQ(2, attrs1.size());
+    EXPECT_EQ(2U, attrs.size());
+    EXPECT_EQ(2U, attrs1.size());
     ASSERT_NO_THROW(attrs.append(attrs1));
-    EXPECT_EQ(4, attrs.size());
-    EXPECT_EQ(2, attrs1.size());
-    EXPECT_EQ(2, attrs.count(PW_USER_NAME));
+    EXPECT_EQ(4U, attrs.size());
+    EXPECT_EQ(2U, attrs1.size());
+    EXPECT_EQ(2U, attrs.count(PW_USER_NAME));
 }
 
 // Verifies parse and unparse.
@@ -781,7 +781,7 @@ TEST_F(AttributeTest, attributesElement) {
     vector<uint8_t> binary = { 1, 2, 3 };
     ASSERT_NO_THROW(attrs.add(Attribute::fromBinary(PW_USER_NAME, binary)));
     ASSERT_NO_THROW(attrs.add(Attribute::fromInt(PW_SERVICE_TYPE, 2)));
-    EXPECT_EQ(3, attrs.size());
+    EXPECT_EQ(3U, attrs.size());
 
     // toElement.
     string expected = "[ { \"type\": 1, \"name\": \"User-Name\", \"data\": ";

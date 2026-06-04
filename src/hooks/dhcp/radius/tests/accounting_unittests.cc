@@ -484,11 +484,11 @@ struct MTAccountingTest : AccountingTest {
         // Start the core thread pool with 4 threads.
         // Pause the thread pool and resume only after work items have
         // been added to it to increase the chance of finding race conditions.
-        EXPECT_EQ(4, impl_.thread_pool_size_);
+        EXPECT_EQ(4U, impl_.thread_pool_size_);
         // Can't use ASSERT here.
         EXPECT_TRUE(impl_.udp_client_);
         if (impl_.udp_client_) {
-            EXPECT_EQ(4, impl_.udp_client_->getThreadPoolSize());
+            EXPECT_EQ(4U, impl_.udp_client_->getThreadPoolSize());
         }
         EXPECT_NO_THROW_LOG(thread_pool_.start(impl_.thread_pool_size_));
         EXPECT_NO_THROW_LOG(thread_pool_.pause());
@@ -741,10 +741,10 @@ void AccountingTest::testBuildAcctLease4() {
     ASSERT_TRUE(handler);
 
     EXPECT_EQ(EVENT_CREATE, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -765,7 +765,7 @@ void AccountingTest::testBuildAcctLease4() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with canonical hardware address.
@@ -783,12 +783,12 @@ void AccountingTest::testBuildAcctLease4canon() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
     EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with not duid client-id.
@@ -806,11 +806,11 @@ void AccountingTest::testBuildAcctLease4noDuid() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with not pop0 client-id.
@@ -828,11 +828,11 @@ void AccountingTest::testBuildAcctLease4noPop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with not printable client-id.
@@ -850,11 +850,11 @@ void AccountingTest::testBuildAcctLease4notPrintable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with duid client-id.
@@ -874,11 +874,11 @@ void AccountingTest::testBuildAcctLease4Duid() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='05:06:07:08:09'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with printable duid client-id.
@@ -899,11 +899,11 @@ void AccountingTest::testBuildAcctLease4DuidPrintable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with pop0 client-id.
@@ -921,11 +921,11 @@ void AccountingTest::testBuildAcctLease4Pop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with printable pop0 client-id.
@@ -943,11 +943,11 @@ void AccountingTest::testBuildAcctLease4Pop0Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works without client-id.
@@ -963,13 +963,13 @@ void AccountingTest::testBuildAcctLease4noClientId() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(4, attrs->size());
+    ASSERT_LE(4U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='20:e5:2a:b8:15:14'", user_name->toText());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     EXPECT_FALSE(calling_station_id);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with RENEW event.
@@ -987,13 +987,13 @@ void AccountingTest::testBuildAcctLease4Renew() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with EXPIRE event.
@@ -1011,13 +1011,13 @@ void AccountingTest::testBuildAcctLease4expire() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with RELEASE event.
@@ -1035,13 +1035,13 @@ void AccountingTest::testBuildAcctLease4Release() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with DECLINE event.
@@ -1059,13 +1059,13 @@ void AccountingTest::testBuildAcctLease4Decline() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with ADD event.
@@ -1083,13 +1083,13 @@ void AccountingTest::testBuildAcctLease4Add() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with UPDATE event.
@@ -1107,13 +1107,13 @@ void AccountingTest::testBuildAcctLease4Update() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4 lease works with DELete event.
@@ -1131,13 +1131,13 @@ void AccountingTest::testBuildAcctLease4Del() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv4/ClientId can get the Class from host cache.
@@ -1167,7 +1167,7 @@ void AccountingTest::testBuildAcctLease4ClassClientID() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1201,7 +1201,7 @@ void AccountingTest::testBuildAcctLease4ClassHwAddr() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1236,7 +1236,7 @@ void AccountingTest::testBuildAcctLease4ClassDuid() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1269,7 +1269,7 @@ void AccountingTest::testBuildAcctLease4ClassFlex() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1290,10 +1290,10 @@ void AccountingTest::testBuildAcctLease6() {
     ASSERT_TRUE(handler);
 
     EXPECT_EQ(EVENT_CREATE, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -1315,7 +1315,7 @@ void AccountingTest::testBuildAcctLease6() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 prefix lease works.
@@ -1333,10 +1333,10 @@ void AccountingTest::testBuildAcctLease6prefix() {
     ASSERT_TRUE(handler);
 
     EXPECT_EQ(EVENT_CREATE, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -1358,7 +1358,7 @@ void AccountingTest::testBuildAcctLease6prefix() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with canonical hardware address.
@@ -1377,12 +1377,12 @@ void AccountingTest::testBuildAcctLease6canon() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
     EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with not pop0 duid.
@@ -1401,7 +1401,7 @@ void AccountingTest::testBuildAcctLease6noPop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -1423,11 +1423,11 @@ void AccountingTest::testBuildAcctLease6notPrintable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with pop0 duid.
@@ -1446,11 +1446,11 @@ void AccountingTest::testBuildAcctLease6Pop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with printable duid.
@@ -1469,11 +1469,11 @@ void AccountingTest::testBuildAcctLease6Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with printable pop0 duid.
@@ -1492,11 +1492,11 @@ void AccountingTest::testBuildAcctLease6Pop0Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with RENEW event.
@@ -1515,13 +1515,13 @@ void AccountingTest::testBuildAcctLease6Renew() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with EXPIRE event.
@@ -1540,13 +1540,13 @@ void AccountingTest::testBuildAcctLease6expire() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with RELEASE event.
@@ -1565,13 +1565,13 @@ void AccountingTest::testBuildAcctLease6Release() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with DECLINE event.
@@ -1590,13 +1590,13 @@ void AccountingTest::testBuildAcctLease6Decline() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with ADD event.
@@ -1615,13 +1615,13 @@ void AccountingTest::testBuildAcctLease6Add() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with UPDATE event.
@@ -1640,13 +1640,13 @@ void AccountingTest::testBuildAcctLease6Update() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6 lease works with DELete event.
@@ -1665,13 +1665,13 @@ void AccountingTest::testBuildAcctLease6Del() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct on IPv6/DUID can get the Class from host cache.
@@ -1702,7 +1702,7 @@ void AccountingTest::testBuildAcctLease6ClassDUID() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1737,7 +1737,7 @@ void AccountingTest::testBuildAcctLease6ClassHwAddr() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1771,7 +1771,7 @@ void AccountingTest::testBuildAcctLease6ClassFlex() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -1792,10 +1792,10 @@ void AccountingTest::testBuildAcct4() {
 
     // EXPECT_EQ(xxx, handler->env_.session_id_);
     EXPECT_EQ(EVENT_ADD, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -1816,7 +1816,7 @@ void AccountingTest::testBuildAcct4() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 requires address.
@@ -1873,14 +1873,14 @@ void AccountingTest::testBuildAcct4canon() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
     EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
               calling_station_id->toText());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IP_ADDRESS);
     EXPECT_EQ("Framed-IP-Address=192.0.2.1", framed_ip_address->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with no pop0 client-id.
@@ -1898,11 +1898,11 @@ void AccountingTest::testBuildAcct4noPop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with not printable client-id.
@@ -1920,11 +1920,11 @@ void AccountingTest::testBuildAcct4notPrintable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with pop0 client-id.
@@ -1942,11 +1942,11 @@ void AccountingTest::testBuildAcct4Pop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with printable client-id.
@@ -1964,11 +1964,11 @@ void AccountingTest::testBuildAcct4Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with printable pop0 client-id.
@@ -1986,11 +1986,11 @@ void AccountingTest::testBuildAcct4Pop0Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works without force-create.
@@ -2007,13 +2007,13 @@ void AccountingTest::testBuildAcct4noForce() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works without client-id.
@@ -2030,11 +2030,11 @@ void AccountingTest::testBuildAcct4noClientId() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(4, attrs->size());
+    ASSERT_LE(4U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='20:e5:2a:b8:15:14'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works without client-id and with canonical.
@@ -2051,11 +2051,11 @@ void AccountingTest::testBuildAcct4noClientIdcanon() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(4, attrs->size());
+    ASSERT_LE(4U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='20-e5-2a-b8-15-14'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with UPDATE event.
@@ -2072,13 +2072,13 @@ void AccountingTest::testBuildAcct4update() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 works with DELete event.
@@ -2095,13 +2095,13 @@ void AccountingTest::testBuildAcct4del() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct4 on ClientId can get the Class from host cache.
@@ -2133,7 +2133,7 @@ void AccountingTest::testBuildAcct4ClassClientID() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -2168,7 +2168,7 @@ void AccountingTest::testBuildAcct4ClassHwAddr() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -2203,7 +2203,7 @@ void AccountingTest::testBuildAcct4ClassFlex() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -2224,10 +2224,10 @@ void AccountingTest::testBuildAcct6() {
     ASSERT_TRUE(handler);
 
     EXPECT_EQ(EVENT_ADD, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -2249,7 +2249,7 @@ void AccountingTest::testBuildAcct6() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with a prefix.
@@ -2268,10 +2268,10 @@ void AccountingTest::testBuildAcct6prefix() {
     ASSERT_TRUE(handler);
 
     EXPECT_EQ(EVENT_ADD, handler->env_.event_);
-    EXPECT_EQ(4, handler->env_.subnet_id_);
+    EXPECT_EQ(4U, handler->env_.subnet_id_);
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
@@ -2293,7 +2293,7 @@ void AccountingTest::testBuildAcct6prefix() {
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_START, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 requires address.
@@ -2416,12 +2416,12 @@ void AccountingTest::testBuildAcct6noType() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IPV6_ADDRESS);
     ASSERT_TRUE(framed_ip_address);
     EXPECT_EQ("Framed-IPv6-Address=2001:db8::1235",
               framed_ip_address->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with prefix.
@@ -2441,12 +2441,12 @@ void AccountingTest::testBuildAcct6Prefix() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr delegated_prefix = attrs->get(PW_DELEGATED_IPV6_PREFIX);
     ASSERT_TRUE(delegated_prefix);
     EXPECT_EQ("Delegated-IPv6-Prefix=2001:db8::/64",
               delegated_prefix->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with canonical.
@@ -2465,7 +2465,7 @@ void AccountingTest::testBuildAcct6canon() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr calling_station_id = attrs->get(PW_CALLING_STATION_ID);
     ASSERT_TRUE(calling_station_id);
     EXPECT_EQ("Calling-Station-Id='20-e5-2a-b8-15-14'",
@@ -2473,7 +2473,7 @@ void AccountingTest::testBuildAcct6canon() {
     ConstAttributePtr framed_ip_address = attrs->get(PW_FRAMED_IPV6_ADDRESS);
     EXPECT_EQ("Framed-IPv6-Address=2001:db8::1235",
               framed_ip_address->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with no pop0 duid.
@@ -2492,11 +2492,11 @@ void AccountingTest::testBuildAcct6noPop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with not printable duid.
@@ -2515,11 +2515,11 @@ void AccountingTest::testBuildAcct6notPrintable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with pop0 duid.
@@ -2538,11 +2538,11 @@ void AccountingTest::testBuildAcct6Pop0() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='01:02:03:04'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with printable duid.
@@ -2561,11 +2561,11 @@ void AccountingTest::testBuildAcct6Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with printable pop0 duid.
@@ -2584,11 +2584,11 @@ void AccountingTest::testBuildAcct6Pop0Printable() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr user_name = attrs->get(PW_USER_NAME);
     ASSERT_TRUE(user_name);
     EXPECT_EQ("User-Name='Foobar'", user_name->toText());
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works without force-create.
@@ -2606,13 +2606,13 @@ void AccountingTest::testBuildAcct6noForce() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with UPDATE event.
@@ -2630,13 +2630,13 @@ void AccountingTest::testBuildAcct6update() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_ALIVE, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 works with DELete event.
@@ -2654,13 +2654,13 @@ void AccountingTest::testBuildAcct6del() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(5, attrs->size());
+    ASSERT_LE(5U, attrs->size());
     ConstAttributePtr status_type = attrs->get(PW_ACCT_STATUS_TYPE);
     ASSERT_TRUE(status_type);
     uint32_t lvalue = 111;
     EXPECT_NO_THROW(lvalue = status_type->toInt());
     EXPECT_EQ(PW_STATUS_STOP, lvalue);
-    EXPECT_EQ(0, attrs->count(PW_CLASS));
+    EXPECT_EQ(0U, attrs->count(PW_CLASS));
 }
 
 /// Verify that buildAcct6 on DUID can get the Class from host cache.
@@ -2691,7 +2691,7 @@ void AccountingTest::testBuildAcct6ClassDUID() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -2725,7 +2725,7 @@ void AccountingTest::testBuildAcct6ClassHwAddr() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -2759,7 +2759,7 @@ void AccountingTest::testBuildAcct6ClassFlex() {
 
     AttributesPtr attrs = handler->env_.send_attrs_;
     ASSERT_TRUE(attrs);
-    ASSERT_LE(6, attrs->size());
+    ASSERT_LE(6U, attrs->size());
     ConstAttributePtr cclass = attrs->get(PW_CLASS);
     ASSERT_TRUE(cclass);
     EXPECT_EQ("Class='foobar'", cclass->toText());
@@ -3022,7 +3022,7 @@ void AccountingTest::testCommandProcessed() {
     handle.setArgument("arguments", arguments);
     handle.setArgument("response", response);
 
-    EXPECT_EQ(0, service_->pollOne());
+    EXPECT_EQ(0U, service_->pollOne());
 
     int ret(-1);
     EXPECT_NO_THROW_LOG(ret = command_processed(handle));
@@ -3063,7 +3063,7 @@ void AccountingTest::testCommandProcessedNoOrigin() {
     handle.setArgument("arguments", arguments);
     handle.setArgument("response", response);
 
-    EXPECT_EQ(0, service_->pollOne());
+    EXPECT_EQ(0U, service_->pollOne());
 
     int ret(-1);
     EXPECT_NO_THROW_LOG(ret = command_processed(handle));
@@ -3105,7 +3105,7 @@ void AccountingTest::testNoPeerUpdates() {
     handle.setArgument("arguments", arguments);
     handle.setArgument("response", response);
 
-    EXPECT_EQ(0, service_->pollOne());
+    EXPECT_EQ(0U, service_->pollOne());
 
     int ret(-1);
     EXPECT_NO_THROW_LOG(ret = command_processed(handle));
@@ -3147,7 +3147,7 @@ void AccountingTest::testNoPeerUpdatesNoOrigin() {
     handle.setArgument("arguments", arguments);
     handle.setArgument("response", response);
 
-    EXPECT_EQ(0, service_->pollOne());
+    EXPECT_EQ(0U, service_->pollOne());
 
     int ret(-1);
     EXPECT_NO_THROW_LOG(ret = command_processed(handle));
@@ -3161,7 +3161,7 @@ void AccountingTest::testCommandProcessedNullArguments() {
     handle.setArgument("arguments", ConstElementPtr());
     handle.setArgument("response", ConstElementPtr());
 
-    EXPECT_EQ(0, service_->pollOne());
+    EXPECT_EQ(0U, service_->pollOne());
 
     int ret(-1);
     EXPECT_NO_THROW_LOG(ret = command_processed(handle));
@@ -3466,7 +3466,7 @@ TEST_F(AccountingTest, lease4Select) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_START, status_types_[0]);
 }
 TEST_F(AccountingTest, lease4Renew) {
@@ -3476,7 +3476,7 @@ TEST_F(AccountingTest, lease4Renew) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
 TEST_F(AccountingTest, lease4Release) {
@@ -3486,7 +3486,7 @@ TEST_F(AccountingTest, lease4Release) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, lease4Decline) {
@@ -3496,7 +3496,7 @@ TEST_F(AccountingTest, lease4Decline) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, lease4Expire) {
@@ -3506,7 +3506,7 @@ TEST_F(AccountingTest, lease4Expire) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, lease6SelectFake) {
@@ -3519,7 +3519,7 @@ TEST_F(AccountingTest, lease6Select) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_START, status_types_[0]);
 }
 TEST_F(AccountingTest, lease6Renew) {
@@ -3529,7 +3529,7 @@ TEST_F(AccountingTest, lease6Renew) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
 TEST_F(AccountingTest, lease6Release) {
@@ -3539,7 +3539,7 @@ TEST_F(AccountingTest, lease6Release) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, lease6Decline) {
@@ -3549,7 +3549,7 @@ TEST_F(AccountingTest, lease6Decline) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, lease6Expire) {
@@ -3559,7 +3559,7 @@ TEST_F(AccountingTest, lease6Expire) {
 
     waitForServerToFinish();
 
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_STOP, status_types_[0]);
 }
 TEST_F(AccountingTest, commandProcessed) {
@@ -3571,7 +3571,7 @@ TEST_F(AccountingTest, commandProcessed) {
 
     // The mocked accounting request should have been sent, effectively
     // setting the status type.
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
 TEST_F(AccountingTest, commandProcessedNoOrigin) {
@@ -3583,7 +3583,7 @@ TEST_F(AccountingTest, commandProcessedNoOrigin) {
 
     // The mocked accounting request should have been sent, effectively
     // setting the status type.
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
 TEST_F(AccountingTest, commandProcessedNullArguments) {
@@ -3596,7 +3596,7 @@ TEST_F(AccountingTest, commandProcessedNullArguments) {
     waitForServerToFinish();
 
     // No accounting request should have been called. There should be no status type.
-    ASSERT_EQ(0, status_types_.size());
+    ASSERT_EQ(0U, status_types_.size());
 }
 TEST_F(AccountingTest, noPeerUpdates) {
     impl_.acct_->peer_updates_ = false;
@@ -3608,7 +3608,7 @@ TEST_F(AccountingTest, noPeerUpdates) {
     waitForServerToFinish();
 
     // No accounting request should have been called. There should be no status type.
-    ASSERT_EQ(0, status_types_.size());
+    ASSERT_EQ(0U, status_types_.size());
 }
 TEST_F(AccountingTest, noPeerUpdatesNoOrigin) {
     impl_.acct_->peer_updates_ = false;
@@ -3620,7 +3620,7 @@ TEST_F(AccountingTest, noPeerUpdatesNoOrigin) {
 
     // The mocked accounting request should have been sent, effectively
     // setting the status type.
-    ASSERT_EQ(1, status_types_.size());
+    ASSERT_EQ(1U, status_types_.size());
     EXPECT_EQ(PW_STATUS_ALIVE, status_types_[0]);
 }
 
@@ -4078,7 +4078,7 @@ TEST_F(MTAccountingTest, commandProcessedNullArguments) {
     waitForServerToFinish();
 
     // No accounting request should have been called. There should be no status type.
-    ASSERT_EQ(0, status_types_.size());
+    ASSERT_EQ(0U, status_types_.size());
 }
 TEST_F(MTAccountingTest, noPeerUpdates) {
     impl_.acct_->peer_updates_ = false;
@@ -4090,7 +4090,7 @@ TEST_F(MTAccountingTest, noPeerUpdates) {
     waitForServerToFinish();
 
     // No accounting request should have been called. There should be no status type.
-    ASSERT_EQ(0, status_types_.size());
+    ASSERT_EQ(0U, status_types_.size());
 }
 TEST_F(MTAccountingTest, noPeerUpdatesNoOrigin) {
     impl_.acct_->peer_updates_ = false;

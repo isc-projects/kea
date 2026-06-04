@@ -220,14 +220,14 @@ public:
     void fill() {
         ASSERT_EQ(4294967295U, SUBNET_ID_UNUSED);
         HostPtr host = createHost4();
-        EXPECT_EQ(0, hcptr_->insert(host, false));
+        EXPECT_EQ(0U, hcptr_->insert(host, false));
         host = createHost4bis();
-        EXPECT_EQ(0, hcptr_->insert(host, false));
+        EXPECT_EQ(0U, hcptr_->insert(host, false));
         host = createHost6();
-        EXPECT_EQ(0, hcptr_->insert(host, false));
+        EXPECT_EQ(0U, hcptr_->insert(host, false));
         host = createHost6bis();
-        EXPECT_EQ(0, hcptr_->insert(host, false));
-        EXPECT_EQ(4, hcptr_->size());
+        EXPECT_EQ(0U, hcptr_->insert(host, false));
+        EXPECT_EQ(4U, hcptr_->size());
     }
 
     /// @brief Check host ID handling.
@@ -409,7 +409,7 @@ TEST_F(CommandTest, config) {
     EXPECT_NO_THROW(hcptr_->configure(config));
 
     // Check defaults.
-    EXPECT_EQ(0, hcptr_->getMaximum());
+    EXPECT_EQ(0U, hcptr_->getMaximum());
 
     // Config must be a map.
     config = Element::createList();
@@ -418,12 +418,12 @@ TEST_F(CommandTest, config) {
     // Fill config.
     config = Element::fromJSON("{ \"maximum\": 19 }");
     EXPECT_NO_THROW(hcptr_->configure(config));
-    EXPECT_EQ(19, hcptr_->getMaximum());
+    EXPECT_EQ(19U, hcptr_->getMaximum());
 
     // Check maximum.
     config = Element::fromJSON("{ \"maximum\": 0 }");
     EXPECT_NO_THROW(hcptr_->configure(config));
-    EXPECT_EQ(0, hcptr_->getMaximum());
+    EXPECT_EQ(0U, hcptr_->getMaximum());
 
     config = Element::fromJSON("{ \"maximum\": -1 }");
     EXPECT_THROW(hcptr_->configure(config), ConfigError);
@@ -464,16 +464,16 @@ CommandTest::testFlushCommand() {
     // Flush an entry
     checkCommand(flush_handler, flush1_cmd, 0, 0,
                  "Cache flushed (1 entries removed).");
-    EXPECT_EQ(3, hcptr_->size());
+    EXPECT_EQ(3U, hcptr_->size());
 
     // Flush another
     checkCommand(flush_handler, flush1_cmd, 0, 0,
                  "Cache flushed (1 entries removed).");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Flush all aka clear
     checkCommand(clear_handler, clear_cmd, 0, 0, "Cache cleared.");
-    EXPECT_EQ(0, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->size());
 
     // No issue to flush an empty cache
     checkCommand(flush_handler, flush1_cmd, 0, 0,
@@ -510,12 +510,12 @@ CommandTest::testDumpCommand() {
     checkCommand(get_handler, get_cmd, 0, 3, entries);
 
     // Dump cache with host4
-    EXPECT_EQ(0, hcptr_->insert(createHost4(), false));
+    EXPECT_EQ(0U, hcptr_->insert(createHost4(), false));
     entries->add(Element::fromJSON(host4_txt));
     checkCommand(get_handler, get_cmd, 0, 0, entries);
 
     // Dump cache with host4 and host6
-    EXPECT_EQ(0, hcptr_->insert(createHost6(), false));
+    EXPECT_EQ(0U, hcptr_->insert(createHost6(), false));
     entries->add(Element::fromJSON(host6_txt));
     checkCommand(get_handler, get_cmd, 0, 0, entries);
 }
@@ -534,12 +534,12 @@ CommandTest::testByHwAddressCommand() {
     checkCommand(get_by_id_handler, get_by_id_cmd, 0, 3, entries);
 
     // From cache with host4
-    EXPECT_EQ(0, hcptr_->insert(createHost4(), false));
+    EXPECT_EQ(0U, hcptr_->insert(createHost4(), false));
     entries->add(Element::fromJSON(host4_txt));
     checkCommand(get_by_id_handler, get_by_id_cmd, 0, 0, entries);
 
     // From cache with host4 and host6
-    EXPECT_EQ(0, hcptr_->insert(createHost6(), false));
+    EXPECT_EQ(0U, hcptr_->insert(createHost6(), false));
     entries->add(Element::fromJSON(host6_txt));
     checkCommand(get_by_id_handler, get_by_id_cmd, 0, 0, entries);
 }
@@ -580,7 +580,7 @@ CommandTest::testByClientIdCommand() {
         "\"server-hostname\": \"server-hostname.example.org\",\n"
         "\"boot-file-name\": \"bootfile.efi\",\n"
         "\"host-id\": 0 }\n";
-    EXPECT_EQ(0, hcptr_->insert(h, false));
+    EXPECT_EQ(0U, hcptr_->insert(h, false));
     entries->add(Element::fromJSON(txt));
     checkCommand(get_by_id_handler, get_by_id_cmd, 0, 0, entries);
 }
@@ -621,7 +621,7 @@ CommandTest::testByFlexIdCommand() {
         "\"server-hostname\": \"server-hostname.example.org\",\n"
         "\"boot-file-name\": \"bootfile.efi\",\n"
         "\"host-id\": 0 }\n";
-    EXPECT_EQ(0, hcptr_->insert(h, false));
+    EXPECT_EQ(0U, hcptr_->insert(h, false));
     entries->add(Element::fromJSON(txt));
     checkCommand(get_by_id_handler, get_by_id_cmd, 0, 0, entries);
 }
@@ -659,14 +659,14 @@ CommandTest::testInsertCommand() {
     add->set("arguments", args);
     checkCommand(add_handler, add, 0, 0,
                  "0 entries inserted (0 overwritten by more recent entries).");
-    EXPECT_EQ(0, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->size());
 
     // Insert one entry
     args = Element::fromJSON(host4_txt);
     add->set("arguments", args);
     checkCommand(add_handler, add, 0, 0,
                  "1 entries inserted (0 overwritten by more recent entries).");
-    EXPECT_EQ(1, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->size());
 
     // Insert a list
     args = Element::createList();
@@ -674,7 +674,7 @@ CommandTest::testInsertCommand() {
     add->set("arguments", args);
     checkCommand(add_handler, add, 0, 0,
                  "1 entries inserted (0 overwritten by more recent entries).");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Overwrite an entry
     args = Element::createList();
@@ -682,7 +682,7 @@ CommandTest::testInsertCommand() {
     add->set("arguments", args);
     checkCommand(add_handler, add, 0, 0,
                  "1 entries inserted (1 overwritten by more recent entries).");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Check the order
     ElementPtr entries = Element::createList();
@@ -720,9 +720,9 @@ CommandTest::testWriteCommand() {
         "{ \"command\": \"cache-write\", \"arguments\": \"" + file_txt + "\" }";
 
     // Insert two entries
-    EXPECT_EQ(0, hcptr_->insert(createHost4(), false));
-    EXPECT_EQ(0, hcptr_->insert(createHost6(), false));
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->insert(createHost4(), false));
+    EXPECT_EQ(0U, hcptr_->insert(createHost6(), false));
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Write file
     checkCommand(write_handler, write_cmd, 0, 0,
@@ -786,8 +786,8 @@ CommandTest::testWriteCommandSecurityWarning() {
         "{ \"command\": \"cache-write\", \"arguments\": \"" + badpath + "\" }";
 
     // Insert an entry.
-    EXPECT_EQ(0, hcptr_->insert(createHost4(), false));
-    EXPECT_EQ(1, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->insert(createHost4(), false));
+    EXPECT_EQ(1U, hcptr_->size());
 
     // Write file
     checkCommand(write_handler, write_cmd, 0, 0,
@@ -797,7 +797,7 @@ CommandTest::testWriteCommandSecurityWarning() {
     oss << "HOST_CACHE_PATH_SECURITY_WARNING Cache file path specified"
         << " is NOT SECURE: invalid path specified: '/tmp', supported path is '"
         << CfgMgr::instance().getDataDir() << "'";
-    EXPECT_EQ(1, countFile(oss.str()));
+    EXPECT_EQ(1U, countFile(oss.str()));
 }
 
 // Verifies that cache-load can load a dump file.
@@ -823,7 +823,7 @@ CommandTest::testLoadCommand() {
     checkCommand(load_handler, load_cmd, 0, 0,
                  "3 entries loaded from '" + file_txt + "' (1 overwritten "
                  "by more recent entries).");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Check errors
     string noarg_cmd =  "{ \"command\": \"cache-load\" }";
@@ -856,7 +856,7 @@ CommandTest::testRemoveCommand() {
     ElementPtr del = Element::createMap();
     del->set("command", Element::create(string("cache-remove")));
     fill();
-    ASSERT_EQ(4, hcptr_->size());
+    ASSERT_EQ(4U, hcptr_->size());
 
     // Common remove by address.
     ElementPtr args = Element::createMap();
@@ -864,11 +864,11 @@ CommandTest::testRemoveCommand() {
     args->set("ip-address", Element::create(string("192.0.2.200")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(3, hcptr_->size());
+    EXPECT_EQ(3U, hcptr_->size());
 
     // Remove it a second time won't find it.
     checkCommand(del_handler, del, 0, 3, "Host not removed (not found).");
-    EXPECT_EQ(3, hcptr_->size());
+    EXPECT_EQ(3U, hcptr_->size());
 
     // Common remove by identifier.
     args = Element::createMap();
@@ -876,7 +876,7 @@ CommandTest::testRemoveCommand() {
     args->set("hw-address", Element::create(string("07:08:09:0a:0b:0c")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Subnet-id specification is flexible for by address.
     args = Element::createMap();
@@ -884,7 +884,7 @@ CommandTest::testRemoveCommand() {
     args->set("ip-address", Element::create(string("2001:db8:dead:beef::")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(1, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->size());
 
     // Check errors.
 
@@ -979,7 +979,7 @@ CommandTest::testRemoveCommand() {
     checkCommand(del_handler, del, 1, 1, "invalid (empty) identifier");
 
     // All of these failed.
-    EXPECT_EQ(1, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->size());
 }
 
 // Verifies that global reservations are handled.
@@ -993,17 +993,17 @@ CommandTest::testGlobal() {
     // Like fill() but replacing the subnet ID by global (0).
     HostPtr host = createHost4();
     host->setIPv4SubnetID(SUBNET_ID_GLOBAL);
-    EXPECT_EQ(0, hcptr_->insert(host, false));
+    EXPECT_EQ(0U, hcptr_->insert(host, false));
     host = createHost4bis();
     host->setIPv4SubnetID(SUBNET_ID_GLOBAL);
-    EXPECT_EQ(0, hcptr_->insert(host, false));
+    EXPECT_EQ(0U, hcptr_->insert(host, false));
     host = createHost6();
     host->setIPv6SubnetID(SUBNET_ID_GLOBAL);
-    EXPECT_EQ(0, hcptr_->insert(host, false));
+    EXPECT_EQ(0U, hcptr_->insert(host, false));
     host = createHost6bis();
     host->setIPv6SubnetID(SUBNET_ID_GLOBAL);
-    EXPECT_EQ(0, hcptr_->insert(host, false));
-    EXPECT_EQ(4, hcptr_->size());
+    EXPECT_EQ(0U, hcptr_->insert(host, false));
+    EXPECT_EQ(4U, hcptr_->size());
 
     // Copy of remove positive tests.
 
@@ -1014,11 +1014,11 @@ CommandTest::testGlobal() {
     args->set("ip-address", Element::create(string("192.0.2.200")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(3, hcptr_->size());
+    EXPECT_EQ(3U, hcptr_->size());
 
     // Remove it a second time won't find it.
     checkCommand(del_handler, del, 0, 3, "Host not removed (not found).");
-    EXPECT_EQ(3, hcptr_->size());
+    EXPECT_EQ(3U, hcptr_->size());
 
     // Common remove by identifier.
     args = Element::createMap();
@@ -1027,7 +1027,7 @@ CommandTest::testGlobal() {
     args->set("hw-address", Element::create(string("07:08:09:0a:0b:0c")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(2, hcptr_->size());
+    EXPECT_EQ(2U, hcptr_->size());
 
     // Subnet-id specification is flexible for by address.
     args = Element::createMap();
@@ -1036,7 +1036,7 @@ CommandTest::testGlobal() {
     args->set("ip-address", Element::create(string("2001:db8:dead:beef::")));
     del->set("arguments", args);
     checkCommand(del_handler, del, 0, 0, "Host removed.");
-    EXPECT_EQ(1, hcptr_->size());
+    EXPECT_EQ(1U, hcptr_->size());
 }
 
 // Verifies that host-id is correctly handled.

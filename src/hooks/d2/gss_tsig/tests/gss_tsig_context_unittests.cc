@@ -59,7 +59,7 @@ TEST_F(GssTsigContextTest, basic) {
     EXPECT_EQ(TSIGContext::INIT, ctx->getState());
     EXPECT_EQ(TSIGError::NOERROR(), ctx->getError());
     // Length is 26 + 26 + 10 + 128 + 0 = 190.
-    EXPECT_EQ(190, ctx->getTSIGLength());
+    EXPECT_EQ(190U, ctx->getTSIGLength());
 }
 
 /// @brief Check sign direct errors.
@@ -139,19 +139,19 @@ TEST_F(GssTsigContextTest, unsigned) {
     ASSERT_TRUE(tsig);
     EXPECT_EQ(Name(name), tsig->getName());
     EXPECT_EQ(RRClass::ANY(), tsig->getClass());
-    EXPECT_EQ(0, tsig->getTTL().getValue());
+    EXPECT_EQ(0U, tsig->getTTL().getValue());
     // Length is 26 + 26 + 10 = 62.
-    EXPECT_EQ(62, tsig->getLength());
+    EXPECT_EQ(62U, tsig->getLength());
     const TSIG& rdata = tsig->getRdata();
     EXPECT_EQ(Name("gss-tsig."), rdata.getAlgorithm());
     EXPECT_LE(before, rdata.getTimeSigned());
     EXPECT_GE(after, rdata.getTimeSigned());
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, rdata.getFudge());
-    EXPECT_EQ(0, rdata.getMACSize());
+    EXPECT_EQ(0U, rdata.getMACSize());
     EXPECT_FALSE(rdata.getMAC());
-    EXPECT_EQ(0x1234, rdata.getOriginalID());
+    EXPECT_EQ(0x1234U, rdata.getOriginalID());
     EXPECT_EQ(TSIGError::BAD_SIG_CODE, rdata.getError());
-    EXPECT_EQ(0, rdata.getOtherLen());
+    EXPECT_EQ(0U, rdata.getOtherLen());
     EXPECT_FALSE(rdata.getOtherData());
     EXPECT_EQ(TSIGContext::SENT_RESPONSE, ctx->getState());
     EXPECT_EQ(TSIGError::BAD_SIG(), ctx->getError());
@@ -170,19 +170,19 @@ TEST_F(GssTsigContextTest, unsigned) {
     ASSERT_TRUE(tsig);
     EXPECT_EQ(Name(name), tsig->getName());
     EXPECT_EQ(RRClass::ANY(), tsig->getClass());
-    EXPECT_EQ(0, tsig->getTTL().getValue());
+    EXPECT_EQ(0U, tsig->getTTL().getValue());
     // Length is 26 + 26 + 10 = 62.
-    EXPECT_EQ(62, tsig->getLength());
+    EXPECT_EQ(62U, tsig->getLength());
     const TSIG& rdata2 = tsig->getRdata();
     EXPECT_EQ(Name("gss-tsig."), rdata2.getAlgorithm());
     EXPECT_LE(before, rdata2.getTimeSigned());
     EXPECT_GE(after, rdata2.getTimeSigned());
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, rdata2.getFudge());
-    EXPECT_EQ(0, rdata2.getMACSize());
+    EXPECT_EQ(0U, rdata2.getMACSize());
     EXPECT_FALSE(rdata2.getMAC());
     EXPECT_EQ(0x1234, rdata2.getOriginalID());
     EXPECT_EQ(TSIGError::BAD_KEY_CODE, rdata2.getError());
-    EXPECT_EQ(0, rdata2.getOtherLen());
+    EXPECT_EQ(0U, rdata2.getOtherLen());
     EXPECT_FALSE(rdata2.getOtherData());
     EXPECT_EQ(TSIGContext::SENT_RESPONSE, ctx->getState());
     EXPECT_EQ(TSIGError::BAD_KEY(), ctx->getError());
@@ -242,7 +242,7 @@ TEST_F(GssTsigContextTest, verifyBadData) {
     const size_t MESSAGE_HEADER_LEN = 12;
     size_t len = MESSAGE_HEADER_LEN + tsig->getLength();
     // len is 12 + 26 + 26 + 10 = 74.
-    EXPECT_EQ(74, len);
+    EXPECT_EQ(74U, len);
     EXPECT_THROW_MSG(ctx->verify(tsig.get(), 0, len - 1), InvalidParameter,
                      "TSIG verify: data length is invalid: 73");
     EXPECT_THROW_MSG(ctx->verify(tsig.get(), 0, len), InvalidParameter,
@@ -328,7 +328,7 @@ TEST_F(GssTsigContextTest, sign) {
     EXPECT_NO_THROW(message_.toWire(renderer));
     // len is 12 + 17 + 4 = 33
     ASSERT_TRUE(buf.getData());
-    EXPECT_EQ(33, buf.getLength());
+    EXPECT_EQ(33U, buf.getLength());
 
     // Sign.
     GssTsigContextPtr ctx;
@@ -341,8 +341,8 @@ TEST_F(GssTsigContextTest, sign) {
     ASSERT_TRUE(tsig);
     EXPECT_EQ(Name(name), tsig->getName());
     EXPECT_EQ(RRClass::ANY(), tsig->getClass());
-    EXPECT_EQ(0, tsig->getTTL().getValue());
-    EXPECT_LT(62, tsig->getLength());
+    EXPECT_EQ(0U, tsig->getTTL().getValue());
+    EXPECT_LT(62U, tsig->getLength());
     const TSIG& rdata = tsig->getRdata();
     EXPECT_EQ(Name("gss-tsig."), rdata.getAlgorithm());
     EXPECT_LE(before, rdata.getTimeSigned());
@@ -350,15 +350,15 @@ TEST_F(GssTsigContextTest, sign) {
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, rdata.getFudge());
     EXPECT_EQ(tsig->getLength() - 62, rdata.getMACSize());
     EXPECT_TRUE(rdata.getMAC());
-    EXPECT_EQ(0x4321, rdata.getOriginalID());
-    EXPECT_EQ(0, rdata.getError());
-    EXPECT_EQ(0, rdata.getOtherLen());
+    EXPECT_EQ(0x4321U, rdata.getOriginalID());
+    EXPECT_EQ(0U, rdata.getError());
+    EXPECT_EQ(0U, rdata.getOtherLen());
     EXPECT_FALSE(rdata.getOtherData());
     EXPECT_EQ(TSIGContext::SENT_REQUEST, ctx->getState());
     EXPECT_EQ(TSIGError::NOERROR(), ctx->getError());
 
     // Depend on setup.
-    EXPECT_EQ(28, rdata.getMACSize());
+    EXPECT_EQ(28U, rdata.getMACSize());
 }
 
 /// @brief Check that toWire with sign works as expected.
@@ -423,7 +423,7 @@ TEST_F(GssTsigContextTest, signToWire) {
     uint64_t after = static_cast<uint64_t>(time(0));
     // len is 33 + 62 + 28 = 123.
     ASSERT_TRUE(obuf.getData());
-    EXPECT_EQ(123, obuf.getLength());
+    EXPECT_EQ(123U, obuf.getLength());
 
     // Check the TSIG RR.
     message_.clear(Message::PARSE);
@@ -433,8 +433,8 @@ TEST_F(GssTsigContextTest, signToWire) {
     ASSERT_TRUE(tsig);
     EXPECT_EQ(Name(name), tsig->getName());
     EXPECT_EQ(RRClass::ANY(), tsig->getClass());
-    EXPECT_EQ(0, tsig->getTTL().getValue());
-    EXPECT_LT(62, tsig->getLength());
+    EXPECT_EQ(0U, tsig->getTTL().getValue());
+    EXPECT_LT(62U, tsig->getLength());
     const TSIG& rdata = tsig->getRdata();
     EXPECT_EQ(Name("gss-tsig."), rdata.getAlgorithm());
     EXPECT_LE(before, rdata.getTimeSigned());
@@ -442,15 +442,15 @@ TEST_F(GssTsigContextTest, signToWire) {
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, rdata.getFudge());
     EXPECT_EQ(tsig->getLength() - 62, rdata.getMACSize());
     EXPECT_TRUE(rdata.getMAC());
-    EXPECT_EQ(0x1234, rdata.getOriginalID());
-    EXPECT_EQ(0, rdata.getError());
-    EXPECT_EQ(0, rdata.getOtherLen());
+    EXPECT_EQ(0x1234U, rdata.getOriginalID());
+    EXPECT_EQ(0U, rdata.getError());
+    EXPECT_EQ(0U, rdata.getOtherLen());
     EXPECT_FALSE(rdata.getOtherData());
     EXPECT_EQ(TSIGContext::SENT_REQUEST, ctx->getState());
     EXPECT_EQ(TSIGError::NOERROR(), ctx->getError());
 
     // Depend on setup.
-    EXPECT_EQ(28, rdata.getMACSize());
+    EXPECT_EQ(28U, rdata.getMACSize());
 }
 
 /// @brief Check that sign and verify work as expected.
@@ -516,7 +516,7 @@ TEST_F(GssTsigContextTest, signVerify) {
     EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
     // len is 33 + 62 + 28 = 123.
     ASSERT_TRUE(obuf.getData());
-    EXPECT_EQ(123, obuf.getLength());
+    EXPECT_EQ(123U, obuf.getLength());
 
     // Check the TSIG RR.
     message_.clear(Message::PARSE);
@@ -622,13 +622,13 @@ TEST_F(GssTsigContextTest, signBadVerify) {
     EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
     // len is 33 + 62 + 28 = 123.
     ASSERT_TRUE(obuf.getData());
-    EXPECT_EQ(123, obuf.getLength());
+    EXPECT_EQ(123U, obuf.getLength());
 
     // Check the TSIG RR.
     message_.clear(Message::PARSE);
     InputBuffer ibuf(obuf.getData(), obuf.getLength());
     // Change the signature at 93..121.
-    ASSERT_EQ(123, obuf.getLength());
+    ASSERT_EQ(123U, obuf.getLength());
     const uint8_t* ptr = obuf.getData();
     obuf.writeUint8At(ptr[120] ^ 1, 120);
     EXPECT_NO_THROW(message_.fromWire(ibuf));
@@ -645,7 +645,8 @@ TEST_F(GssTsigContextTest, signBadVerify) {
     EXPECT_EQ(TSIGError::BAD_SIG(), error);
     EXPECT_EQ(TSIGError::BAD_SIG(), ctx->getError());
     EXPECT_EQ(TSIGContext::RECEIVED_REQUEST, ctx->getState());
-    EXPECT_EQ(GSS_S_BAD_SIG, srv_key->getSecCtx().getLastError());
+    EXPECT_EQ(static_cast<int>(GSS_S_BAD_SIG),
+              srv_key->getSecCtx().getLastError());
 }
 
 /// @brief Check that verify fail on bad direction.
@@ -711,7 +712,7 @@ TEST_F(GssTsigContextTest, badDirection) {
     EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
     // len is 33 + 62 + 28 = 123.
     ASSERT_TRUE(obuf.getData());
-    EXPECT_EQ(123, obuf.getLength());
+    EXPECT_EQ(123U, obuf.getLength());
 
     // Check the TSIG RR.
     message_.clear(Message::PARSE);
@@ -731,7 +732,7 @@ TEST_F(GssTsigContextTest, badDirection) {
     EXPECT_EQ(TSIGError::BAD_SIG(), error);
     EXPECT_EQ(TSIGError::BAD_SIG(), ctx->getError());
     EXPECT_EQ(TSIGContext::RECEIVED_REQUEST, ctx->getState());
-    EXPECT_EQ(GSS_S_BAD_SIG, key->getSecCtx().getLastError());
+    EXPECT_EQ(GSS_S_BAD_SIG, static_cast<OM_uint32>(key->getSecCtx().getLastError()));
 }
 
 /// @brief Check that verify fail on bad direction instead ignored.
@@ -797,7 +798,7 @@ TEST_F(GssTsigContextTest, ignoreBadDirection) {
     EXPECT_NO_THROW(message_.toWire(renderer, ctx.get()));
     // len is 33 + 62 + 28 = 123.
     ASSERT_TRUE(obuf.getData());
-    EXPECT_EQ(123, obuf.getLength());
+    EXPECT_EQ(123U, obuf.getLength());
 
     // Check the TSIG RR.
     message_.clear(Message::PARSE);

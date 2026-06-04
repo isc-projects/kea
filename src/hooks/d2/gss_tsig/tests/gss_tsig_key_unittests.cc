@@ -41,8 +41,8 @@ TEST_F(GssTsigKeyTest, basic) {
     EXPECT_EQ(Name("gss-tsig."), key->getAlgorithmName());
     EXPECT_EQ(TSIGKey::GSSTSIG_NAME(), key->getAlgorithmName());
     EXPECT_EQ(UNKNOWN_HASH, key->getAlgorithm());
-    EXPECT_EQ(0, key->getDigestbits());
-    EXPECT_EQ(0, key->getSecretLength());
+    EXPECT_EQ(0U, key->getDigestbits());
+    EXPECT_EQ(0U, key->getSecretLength());
     EXPECT_FALSE(key->getSecret());
     string expected = name + "::gss-tsig.";
     EXPECT_EQ(expected, key->toText());
@@ -51,9 +51,9 @@ TEST_F(GssTsigKeyTest, basic) {
     system_clock::time_point now = system_clock::now();
     uint32_t now32 = static_cast<uint32_t>(system_clock::to_time_t(now));
     EXPECT_EQ(epoch, key->getInception());
-    EXPECT_EQ(0, key->getInception32());
+    EXPECT_EQ(0U, key->getInception32());
     EXPECT_EQ(epoch, key->getExpire());
-    EXPECT_EQ(0, key->getExpire32());
+    EXPECT_EQ(0U, key->getExpire32());
     EXPECT_NO_THROW(key->setInception(now));
     EXPECT_EQ(now, key->getInception());
     EXPECT_EQ(now32, key->getInception32());

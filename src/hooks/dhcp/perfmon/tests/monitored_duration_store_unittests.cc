@@ -190,7 +190,7 @@ public:
 
         // Verify we added three of them.
         auto durations = store.getAll();
-        ASSERT_EQ(durations->size(), 3);
+        ASSERT_EQ(durations->size(), 3U);
 
         // Fetch the second duration.
         MonitoredDurationPtr mond;
@@ -211,7 +211,7 @@ public:
 
         // Verify there are two left.
         durations = store.getAll();
-        ASSERT_EQ(durations->size(), 2);
+        ASSERT_EQ(durations->size(), 2U);
     }
 
     /// @brief Verify an invalid duration key on delete is detected.
@@ -281,7 +281,7 @@ public:
         DurationDataIntervalPtr current;
         ASSERT_TRUE(current = found->getCurrentInterval());
         ASSERT_NE(current, mond->getCurrentInterval());
-        EXPECT_EQ(current->getOccurrences(), 1);
+        EXPECT_EQ(current->getOccurrences(), 1U);
         EXPECT_EQ(current->getTotalDuration(), milliseconds(75));
     }
 
@@ -353,7 +353,7 @@ public:
         ASSERT_TRUE(mond);
         auto current_interval = mond->getCurrentInterval();
         ASSERT_TRUE(current_interval);
-        EXPECT_EQ(current_interval->getOccurrences(), 1);
+        EXPECT_EQ(current_interval->getOccurrences(), 1U);
         EXPECT_EQ(current_interval->getTotalDuration(), (five_ms));
         auto previous_interval = mond->getPreviousInterval();
         ASSERT_FALSE(previous_interval);
@@ -368,7 +368,7 @@ public:
         ASSERT_TRUE(mond);
         current_interval = mond->getCurrentInterval();
         ASSERT_TRUE(current_interval);
-        EXPECT_EQ(current_interval->getOccurrences(), 2);
+        EXPECT_EQ(current_interval->getOccurrences(), 2U);
         EXPECT_EQ(current_interval->getTotalDuration(), (five_ms * 2));
         previous_interval = mond->getPreviousInterval();
         ASSERT_FALSE(previous_interval);
@@ -384,12 +384,12 @@ public:
         // Make sure the duration's current interval and prevous intervals correct.
         current_interval = mond->getCurrentInterval();
         ASSERT_TRUE(current_interval);
-        EXPECT_EQ(current_interval->getOccurrences(), 1);
+        EXPECT_EQ(current_interval->getOccurrences(), 1U);
         EXPECT_EQ(current_interval->getTotalDuration(), (five_ms));
 
         previous_interval = mond->getPreviousInterval();
         ASSERT_TRUE(previous_interval);
-        EXPECT_EQ(previous_interval->getOccurrences(), 2);
+        EXPECT_EQ(previous_interval->getOccurrences(), 2U);
         EXPECT_EQ(previous_interval->getTotalDuration(), (five_ms) * 2);
     }
 
@@ -459,7 +459,7 @@ public:
         // Key[3] and key[2] should be returned by getOverdueReports().
         ASSERT_NO_THROW_LOG(durations = store.getOverdueReports());
         ASSERT_TRUE(durations);
-        EXPECT_EQ(durations->size(), 2);
+        EXPECT_EQ(durations->size(), 2U);
         EXPECT_EQ(*(*durations)[0], *keys[3]);
         EXPECT_EQ(*(*durations)[1], *keys[2]);
 
@@ -521,7 +521,7 @@ public:
 
         auto add_samples_time = PktEvent::now();
 
-        EXPECT_GT(report_count, 0);
+        EXPECT_GT(report_count, 0U);
         auto durations = store.getAll();
         EXPECT_EQ(durations->size(), num_subnets);
 
@@ -552,7 +552,7 @@ public:
 
         // Get all should retrieve all four in ascending order.
         MonitoredDurationCollectionPtr durations = store.getAll();
-        ASSERT_EQ(durations->size(), 2);
+        ASSERT_EQ(durations->size(), 2U);
 
         auto mond = (*durations)[0];
         ASSERT_EQ(*key2, *mond);

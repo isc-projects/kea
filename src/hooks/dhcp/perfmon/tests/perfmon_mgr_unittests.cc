@@ -206,13 +206,13 @@ public:
         EXPECT_TRUE(mgr_->getAlarmStore());
         EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
         AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
-        ASSERT_EQ(alarms->size(), 0);
+        ASSERT_EQ(alarms->size(), 0U);
 
         // Duration store should exist but be empty.
         EXPECT_TRUE(mgr_->getDurationStore());
         EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
-        ASSERT_EQ(durations->size(), 0);
+        ASSERT_EQ(durations->size(), 0U);
     }
 
     /// @brief Exercises PerfMonConfig parameter parsing with valid configuration
@@ -250,7 +250,7 @@ public:
         EXPECT_TRUE(mgr_->getAlarmStore());
         EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
         AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
-        ASSERT_EQ(alarms->size(), 1);
+        ASSERT_EQ(alarms->size(), 1U);
         DurationKeyPtr key(new DurationKey(family_, 0, 0, "process-started",
                                            "process-completed", 70));
         AlarmPtr alarm = (*alarms)[0];
@@ -264,7 +264,7 @@ public:
         EXPECT_TRUE(mgr_->getDurationStore());
         EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
-        ASSERT_EQ(durations->size(), 0);
+        ASSERT_EQ(durations->size(), 0U);
     }
 
     /// @brief Verifies that PerfMonConfig handles a configuration error properly.
@@ -291,13 +291,13 @@ public:
         EXPECT_TRUE(mgr_->getAlarmStore());
         EXPECT_EQ(mgr_->getAlarmStore()->getFamily(), family_);
         AlarmCollectionPtr alarms = mgr_->getAlarmStore()->getAll();
-        ASSERT_EQ(alarms->size(), 0);
+        ASSERT_EQ(alarms->size(), 0U);
 
         // Duration store should exist but be empty.
         EXPECT_TRUE(mgr_->getDurationStore());
         EXPECT_EQ(mgr_->getDurationStore()->getFamily(), family_);
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
-        ASSERT_EQ(durations->size(), 0);
+        ASSERT_EQ(durations->size(), 0U);
     }
 
     /// @brief Exercises PerfMonMgr::reportToStatsMgr().
@@ -397,7 +397,7 @@ public:
         beforeAndAfterAlarm(__LINE__, before_alarm, Alarm::CLEAR, false);
 
         // No stats should have been reported.
-        EXPECT_EQ(0, StatsMgr::instance().count());
+        EXPECT_EQ(0U, StatsMgr::instance().count());
 
         // Sleep 100ms second to make sure the current interval duration elapses.
         usleep(100 * 1000);
@@ -410,7 +410,7 @@ public:
         checkDuration(__LINE__, key, 95, true, 160);
 
         // Should have one stat reported with a mean value of 80.
-        EXPECT_EQ(1, StatsMgr::instance().count());
+        EXPECT_EQ(1U, StatsMgr::instance().count());
         auto obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(80000, obs->getInteger().first);
@@ -449,7 +449,7 @@ public:
         addString("reported mean duration 00:00:00.100000 exceeds high-water-ms: 50");
 
         // Should have one stat reported with a value of 100.
-        EXPECT_EQ(1, StatsMgr::instance().count());
+        EXPECT_EQ(1U, StatsMgr::instance().count());
         obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(100000, obs->getInteger().first);
@@ -469,7 +469,7 @@ public:
         addString("reported mean duration 00:00:00.010000 is now below low-water-ms: 25");
 
         // Should have one stat reported with a value of 10.
-        EXPECT_EQ(1, StatsMgr::instance().count());
+        EXPECT_EQ(1U, StatsMgr::instance().count());
         obs = StatsMgr::instance().getObservation(key->getStatName("mean-usecs"));
         ASSERT_TRUE(obs);
         EXPECT_EQ(10000, obs->getInteger().first);
@@ -542,7 +542,7 @@ public:
 
         // Fetch all the durations in primary key order.
         MonitoredDurationCollectionPtr durations = mgr_->getDurationStore()->getAll();
-        ASSERT_EQ(durations->size(), 0);
+        ASSERT_EQ(durations->size(), 0U);
 
         // Enabled monitoring and process the queries again.
         mgr_->setEnableMonitoring(true);
@@ -552,7 +552,7 @@ public:
 
         // Fetch all the durations in primary key order.
         durations = mgr_->getDurationStore()->getAll();
-        ASSERT_EQ(durations->size(), 12);
+        ASSERT_EQ(durations->size(), 12U);
 
         // Contains the expected values for single duration.
         struct ExpectedDuration {

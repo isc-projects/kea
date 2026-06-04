@@ -72,8 +72,8 @@ TEST_F(BackendTest, getAllId) {
     EXPECT_NO_THROW(hosts =
                     back_->getAll(Host::IDENT_FLEX, &id[0], id.size()));
     EXPECT_TRUE(hosts.empty());
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that reservation-get-all* returns an empty collection.
@@ -106,8 +106,8 @@ TEST_F(BackendTest, getAll4) {
     addr = IOAddress("2001:db8::1235");
     EXPECT_NO_THROW(hosts = back_->getAll4(addr));
     EXPECT_TRUE(hosts.empty());
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that get4 by subnet and address return null host.
@@ -121,8 +121,8 @@ TEST_F(BackendTest, get4SA) {
     addr = IOAddress("2001:db8::1235");
     EXPECT_NO_THROW(host = back_->get4(1, addr));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that get6 by prefix and length return null host.
@@ -138,8 +138,8 @@ TEST_F(BackendTest, get6PL) {
     addr = IOAddress("192.0.2.1");
     EXPECT_NO_THROW(host = back_->get6(addr, 24));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that get6 by subnet and address return null host.
@@ -153,8 +153,8 @@ TEST_F(BackendTest, get6SA) {
     addr = IOAddress("192.0.2.1");
     EXPECT_NO_THROW(host = back_->get6(1, addr));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that add does nothing.
@@ -171,8 +171,8 @@ TEST_F(BackendTest, add) {
                                                 Host::IDENT_DUID, true);
     ASSERT_TRUE(host);
     EXPECT_NO_THROW(back_->add(host));
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that del always return false.
@@ -188,8 +188,8 @@ TEST_F(BackendTest, del) {
     EXPECT_FALSE(result);
     EXPECT_NO_THROW(result = back_->del(1, addr));
     EXPECT_FALSE(result);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that del4 always return false.
@@ -226,8 +226,8 @@ TEST_F(BackendTest, del4) {
     EXPECT_NO_THROW(result =
                     back_->del4(1, Host::IDENT_FLEX, &id[0], id.size()));
     EXPECT_FALSE(result);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify that del6 always return false.
@@ -264,8 +264,8 @@ TEST_F(BackendTest, del6) {
     EXPECT_NO_THROW(result =
                     back_->del6(1, Host::IDENT_FLEX, &id[0], id.size()));
     EXPECT_FALSE(result);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify the backend type.
@@ -292,8 +292,8 @@ TEST_F(BackendTest, get4SIdDifferent) {
     EXPECT_NO_THROW(host =
                     back_->get4(1, Host::IDENT_HWADDR, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify get6 by subnet and id with a different type than the radius one.
@@ -315,8 +315,8 @@ TEST_F(BackendTest, get6SIdDifferent) {
     EXPECT_NO_THROW(host =
                     back_->get6(1, Host::IDENT_HWADDR, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify get4 by subnet and id called from the hook.
@@ -334,8 +334,8 @@ TEST_F(BackendTest, get4SIdHook) {
     EXPECT_NO_THROW(host =
                     back_->get4(1, Host::IDENT_DUID, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify get6 by subnet and id called from the hook.
@@ -353,8 +353,8 @@ TEST_F(BackendTest, get6SIdHook) {
     EXPECT_NO_THROW(host =
                     back_->get6(1, Host::IDENT_DUID, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify get4 by subnet and id called in an unexpected way, i.e.,
@@ -371,8 +371,8 @@ TEST_F(BackendTest, get4SIdUnexpected) {
     EXPECT_NO_THROW(host =
                     back_->get4(1, Host::IDENT_DUID, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(2, back_->getUnexpected4());
-    EXPECT_EQ(0, back_->getUnexpected6());
+    EXPECT_EQ(2U, back_->getUnexpected4());
+    EXPECT_EQ(0U, back_->getUnexpected6());
 }
 
 /// Verify get6 by subnet and id called in an unexpected way, i.e.,
@@ -389,8 +389,8 @@ TEST_F(BackendTest, get6SIdUnexpected) {
     EXPECT_NO_THROW(host =
                     back_->get6(1, Host::IDENT_DUID, &id[0], id.size()));
     EXPECT_FALSE(host);
-    EXPECT_EQ(0, back_->getUnexpected4());
-    EXPECT_EQ(2, back_->getUnexpected6());
+    EXPECT_EQ(0U, back_->getUnexpected4());
+    EXPECT_EQ(2U, back_->getUnexpected6());
 }
 
 /// Verify that the Radius backend does not support using non-unique

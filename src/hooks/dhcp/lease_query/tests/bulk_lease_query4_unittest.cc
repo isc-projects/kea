@@ -779,7 +779,7 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, validConfig4) {
     ASSERT_NO_THROW_LOG(impl.reset(new LeaseQueryImpl4(config)));
 
     // Verify known and unknown requesters check correctly.
-    EXPECT_EQ(2, impl->getNumRequesters());
+    EXPECT_EQ(2U, impl->getNumRequesters());
     EXPECT_FALSE(impl->isRequester(IOAddress("192.0.2.1")));
     EXPECT_TRUE(impl->isRequester(IOAddress("127.0.0.1")));
     EXPECT_TRUE(impl->isRequester(IOAddress("192.0.2.2")));
@@ -797,29 +797,29 @@ TEST_F(MemfileBulkLeaseQuery4ProcessTest, validConfig4) {
     EXPECT_FALSE(mgr->getActiveQueryEnabled());
     EXPECT_FALSE(mgr->getExtendedInfoTablesEnabled());
     EXPECT_EQ(IOAddress("127.0.0.1"), mgr->getLeaseQueryIp());
-    EXPECT_EQ(12345, mgr->getLeaseQueryTcpPort());
-    EXPECT_EQ(10, mgr->getMaxBulkQueryThreads());
-    EXPECT_EQ(10, mgr->getMaxRequesterConnections());
-    EXPECT_EQ(5, mgr->getMaxConcurrentQueries());
-    EXPECT_EQ(300, mgr->getMaxRequesterIdleTime());
-    EXPECT_EQ(100, mgr->getMaxLeasePerFetch());
+    EXPECT_EQ(12345U, mgr->getLeaseQueryTcpPort());
+    EXPECT_EQ(10U, mgr->getMaxBulkQueryThreads());
+    EXPECT_EQ(10U, mgr->getMaxRequesterConnections());
+    EXPECT_EQ(5U, mgr->getMaxConcurrentQueries());
+    EXPECT_EQ(300U, mgr->getMaxRequesterIdleTime());
+    EXPECT_EQ(100U, mgr->getMaxLeasePerFetch());
 
     // Verify setters.
     EXPECT_NO_THROW(mgr->setMaxBulkQueryThreads(20));
-    EXPECT_EQ(20, mgr->getMaxBulkQueryThreads());
+    EXPECT_EQ(20U, mgr->getMaxBulkQueryThreads());
 
     EXPECT_THROW_MSG(mgr->setMaxRequesterConnections(0), BadValue,
                      "new max requester connections is 0");
     EXPECT_NO_THROW(mgr->setMaxRequesterConnections(20));
-    EXPECT_EQ(20, mgr->getMaxRequesterConnections());
+    EXPECT_EQ(20U, mgr->getMaxRequesterConnections());
 
     EXPECT_NO_THROW(mgr->setMaxConcurrentQueries(0));
-    EXPECT_EQ(0, mgr->getMaxConcurrentQueries());
+    EXPECT_EQ(0U, mgr->getMaxConcurrentQueries());
 
     EXPECT_THROW_MSG(mgr->setMaxLeasePerFetch(0), BadValue,
                      "new max leases per fetch is 0");
     EXPECT_NO_THROW(mgr->setMaxLeasePerFetch(200));
-    EXPECT_EQ(200, mgr->getMaxLeasePerFetch());
+    EXPECT_EQ(200U, mgr->getMaxLeasePerFetch());
 
     // Make sure listener involved functions do not misbehave.
     ASSERT_NO_THROW(mgr->startListener());

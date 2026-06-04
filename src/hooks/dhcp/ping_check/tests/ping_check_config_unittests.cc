@@ -26,34 +26,34 @@ TEST(PingCheckConfigTest, basics) {
 
     // Verify initial values.
     EXPECT_TRUE(config.getEnablePingCheck());
-    EXPECT_EQ(1, config.getMinPingRequests());
-    EXPECT_EQ(100, config.getReplyTimeout());
-    EXPECT_EQ(60, config.getPingClttSecs());
-    EXPECT_EQ(0, config.getPingChannelThreads());
+    EXPECT_EQ(1U, config.getMinPingRequests());
+    EXPECT_EQ(100U, config.getReplyTimeout());
+    EXPECT_EQ(60U, config.getPingClttSecs());
+    EXPECT_EQ(0U, config.getPingChannelThreads());
 
     // Verify accessors.
     EXPECT_NO_THROW_LOG(config.setEnablePingCheck(false));
     EXPECT_FALSE(config.getEnablePingCheck());
 
     EXPECT_NO_THROW_LOG(config.setMinPingRequests(4));
-    EXPECT_EQ(4, config.getMinPingRequests());
+    EXPECT_EQ(4U, config.getMinPingRequests());
 
     EXPECT_NO_THROW_LOG(config.setReplyTimeout(250));
-    EXPECT_EQ(250, config.getReplyTimeout());
+    EXPECT_EQ(250U, config.getReplyTimeout());
 
     EXPECT_NO_THROW_LOG(config.setPingClttSecs(120));
-    EXPECT_EQ(120, config.getPingClttSecs());
+    EXPECT_EQ(120U, config.getPingClttSecs());
 
     EXPECT_NO_THROW_LOG(config.setPingChannelThreads(6));
-    EXPECT_EQ(6, config.getPingChannelThreads());
+    EXPECT_EQ(6U, config.getPingChannelThreads());
 
     // Verify copy construction.
     PingCheckConfig config2(config);
     EXPECT_FALSE(config2.getEnablePingCheck());
-    EXPECT_EQ(4, config2.getMinPingRequests());
-    EXPECT_EQ(250, config2.getReplyTimeout());
-    EXPECT_EQ(120, config2.getPingClttSecs());
-    EXPECT_EQ(6, config2.getPingChannelThreads());
+    EXPECT_EQ(4U, config2.getMinPingRequests());
+    EXPECT_EQ(250U, config2.getReplyTimeout());
+    EXPECT_EQ(120U, config2.getPingClttSecs());
+    EXPECT_EQ(6U, config2.getPingChannelThreads());
 }
 
 // Exercises PingCheckConfig parameter parsing with valid configuration

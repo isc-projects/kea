@@ -30,7 +30,7 @@ TEST(MySqlConfigBackendImplTest, createBindingFromTriplet) {
     ASSERT_FALSE(binding->amNull());
     ASSERT_EQ(MYSQL_TYPE_LONG, binding->getType());
     // Check that the correct value was stored in the binding.
-    EXPECT_EQ(123, binding->getInteger<uint32_t>());
+    EXPECT_EQ(123U, binding->getInteger<uint32_t>());
 }
 
 // Test that the triplet can be created from the MySQL binding.
@@ -44,7 +44,7 @@ TEST(MySqlConfigBackendImplTest, createTripletFromBinding) {
     // The triplet should be specified and equal to the value stored in the
     // binding.
     ASSERT_FALSE(triplet.unspecified());
-    EXPECT_EQ(234, triplet.get());
+    EXPECT_EQ(234U, triplet.get());
 
     // Create a null binding and then use it to create a triplet.
     binding = MySqlBinding::createNull();

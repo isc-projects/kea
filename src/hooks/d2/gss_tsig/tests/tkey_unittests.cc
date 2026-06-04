@@ -104,22 +104,22 @@ TKeyTest::decodeTKey(const vector<uint8_t>& input, bool& query, qid_t& qid,
     qid = msg_->getQid();
     EXPECT_EQ(Rcode::NOERROR(), msg_->getRcode());
     EXPECT_EQ(Opcode(Opcode::QUERY_CODE), msg_->getOpcode());
-    ASSERT_EQ(1, msg_->getRRCount(Message::SECTION_QUESTION));
+    ASSERT_EQ(1U, msg_->getRRCount(Message::SECTION_QUESTION));
     QuestionPtr question = *msg_->beginQuestion();
     ASSERT_TRUE(question);
     key_name = question->getName();
     EXPECT_EQ(RRClass::ANY(), question->getClass());
     EXPECT_EQ(RRType::TKEY(), question->getType());
-    EXPECT_EQ(0, msg_->getRRCount(Message::SECTION_ANSWER));
-    EXPECT_EQ(0, msg_->getRRCount(Message::SECTION_AUTHORITY));
-    ASSERT_EQ(1, msg_->getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(0U, msg_->getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0U, msg_->getRRCount(Message::SECTION_AUTHORITY));
+    ASSERT_EQ(1U, msg_->getRRCount(Message::SECTION_ADDITIONAL));
     RRsetPtr rrset = *msg_->beginSection(Message::SECTION_ADDITIONAL);
     ASSERT_TRUE(rrset);
     EXPECT_EQ(key_name, rrset->getName());
     EXPECT_EQ(RRClass::ANY(), rrset->getClass());
     ASSERT_EQ(RRType::TKEY(), rrset->getType());
     EXPECT_EQ(RRTTL(0), rrset->getTTL());
-    ASSERT_EQ(1, rrset->getRdataCount());
+    ASSERT_EQ(1U, rrset->getRdataCount());
     auto rdata_it = rrset->getRdataIterator();
     try {
         const TKEY& tkey =
@@ -130,7 +130,7 @@ TKeyTest::decodeTKey(const vector<uint8_t>& input, bool& query, qid_t& qid,
         EXPECT_EQ(TKEY::GSS_API_MODE, tkey.getMode());
         EXPECT_EQ(Rcode::NOERROR().getCode(), tkey.getError());
         token.reset(new GssApiBuffer(tkey.getKeyLen(), tkey.getKey()));
-        EXPECT_EQ(0, tkey.getOtherLen());
+        EXPECT_EQ(0U, tkey.getOtherLen());
         EXPECT_FALSE(tkey.getOtherData());
     } catch (const exception& ex) {
         FAIL() << ex.what();
@@ -146,7 +146,7 @@ TEST_F(TKeyTest, build) {
     msg_.reset();
     ASSERT_NO_THROW(output = buildTKey(true, qid, key_name, token));
     ASSERT_TRUE(msg_);
-    ASSERT_NE(0, output->getLength());
+    ASSERT_NE(0U, output->getLength());
 }
 
 /// @brief Check TKEY message decode.
@@ -156,7 +156,7 @@ TEST_F(TKeyTest, decode) {
     GssApiBuffer token("foobar");
     OutputBufferPtr output;
     ASSERT_NO_THROW(output = buildTKey(true, qid, key_name, token));
-    ASSERT_NE(0, output->getLength());
+    ASSERT_NE(0U, output->getLength());
 
     const vector<uint8_t>& input = output->getVector();
     bool query = false;

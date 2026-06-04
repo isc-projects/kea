@@ -403,12 +403,12 @@ public:
         config->set("hostname-expr", Element::create("'global'"));
         ASSERT_NO_THROW_LOG(impl_->configure(config));
         // We should have a global expression.
-        ASSERT_EQ(impl_->getCacheSize(), 1);  // global only
+        ASSERT_EQ(impl_->getCacheSize(), 1U);  // global only
         ASSERT_TRUE(impl_->getGlobalHostnameExpression());
 
         // Flush the cache. Verify it contains only the global expression.
         impl_->flushCache();
-        ASSERT_EQ(impl_->getCacheSize(), 1);  // global only
+        ASSERT_EQ(impl_->getCacheSize(), 1U);  // global only
         ASSERT_TRUE(impl_->getGlobalHostnameExpression());
 
         if (make_pre_existing) {
@@ -420,7 +420,7 @@ public:
             ASSERT_NO_THROW_LOG(impl_->calculateHostname(pkt, subnet));
             // Verify we added an entry to the cache.  We'll take it on faith that the
             // expression content is correct. First exposure tests should cover this.
-            ASSERT_EQ(impl_->getCacheSize(), 2);
+            ASSERT_EQ(impl_->getCacheSize(), 2U);
         }
 
         // Wind clock back 10 seconds.  This ensures we can verify whether
@@ -445,7 +445,7 @@ public:
         }
 
         // Verify cache size is correct: global + subnet.
-        EXPECT_EQ(impl_->getCacheSize(), 2);
+        EXPECT_EQ(impl_->getCacheSize(), 2U);
 
         // Verify the cached expression is what we expect.
         ExpressionPtr cached_expr = impl_->getHostnameExpression(subnet->getID());
@@ -486,7 +486,7 @@ public:
         impl_->setHostnameExpression(999, expression);
 
         // Cache size should be two.
-        EXPECT_EQ(2, impl_->getCacheSize());
+        EXPECT_EQ(2U, impl_->getCacheSize());
 
         // Verify both expressions are cached correctly.
         ASSERT_EQ(evaluateExpression(0), "global");

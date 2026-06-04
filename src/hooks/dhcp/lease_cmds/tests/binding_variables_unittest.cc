@@ -281,7 +281,7 @@ TEST(BindingVariableCacheTest, basics) {
     BindingVariableListPtr var_list;
     ASSERT_NO_THROW_LOG(var_list = cache->getAll());
     ASSERT_TRUE(var_list);
-    EXPECT_EQ(var_list->size(), 0);
+    EXPECT_EQ(var_list->size(), 0U);
 
     BindingVariablePtr var;
     ASSERT_NO_THROW_LOG(var = cache->getByName("foo"));
@@ -289,11 +289,11 @@ TEST(BindingVariableCacheTest, basics) {
 
     ASSERT_NO_THROW_LOG(var_list = cache->getBySource(BindingVariable::QUERY));
     ASSERT_TRUE(var_list);
-    EXPECT_EQ(var_list->size(), 0);
+    EXPECT_EQ(var_list->size(), 0U);
 
     ASSERT_NO_THROW_LOG(var_list = cache->getBySource(BindingVariable::RESPONSE));
     ASSERT_TRUE(var_list);
-    EXPECT_EQ(var_list->size(), 0);
+    EXPECT_EQ(var_list->size(), 0U);
 
     // Add four variables.
     std::string valid_v6_exp = "pkt6.transid";
@@ -321,7 +321,7 @@ TEST(BindingVariableCacheTest, basics) {
     // Make sure getAll() returns all four in order added.
     ASSERT_NO_THROW_LOG(var_list = cache->getAll());
     ASSERT_TRUE(var_list);
-    EXPECT_EQ(var_list->size(), 4);
+    EXPECT_EQ(var_list->size(), 4U);
 
     auto var_iter = var_list->begin();
     for (auto const& ref_iter : ref_list) {
@@ -340,7 +340,7 @@ TEST(BindingVariableCacheTest, basics) {
     // Make sure getBySource() works for QUERY.
     ASSERT_NO_THROW_LOG(var_list = cache->getBySource(BindingVariable::QUERY));
     ASSERT_TRUE(var_list);
-    ASSERT_EQ(var_list->size(), 2);
+    ASSERT_EQ(var_list->size(), 2U);
 
     var_iter = var_list->begin();
     for (auto const& ref_iter : ref_list) {
@@ -353,7 +353,7 @@ TEST(BindingVariableCacheTest, basics) {
     // Make sure getBySource() works for RESPONSE.
     ASSERT_NO_THROW_LOG(var_list = cache->getBySource(BindingVariable::RESPONSE));
     ASSERT_TRUE(var_list);
-    ASSERT_EQ(var_list->size(), 2);
+    ASSERT_EQ(var_list->size(), 2U);
 
     var_iter = var_list->begin();
     for (auto const& ref_iter : ref_list) {
@@ -369,7 +369,7 @@ TEST(BindingVariableCacheTest, basics) {
     // Sleep 1s so we can check flush time gets updated.
     usleep(1000000);
     ASSERT_NO_THROW_LOG(cache->clear());
-    EXPECT_EQ(cache->size(), 0);
+    EXPECT_EQ(cache->size(), 0U);
 
     EXPECT_GT(cache->getLastFlushTime(), ref_time);
 }
@@ -392,7 +392,7 @@ TEST(BindingVariableCacheTest, duplicateEntries) {
     bool add_flag;
     ASSERT_NO_THROW_LOG(add_flag = cache->add(var1));
     EXPECT_TRUE(add_flag);
-    EXPECT_EQ(cache->size(), 1);
+    EXPECT_EQ(cache->size(), 1U);
 
     // Make sure getByName returns the added variable.
     BindingVariablePtr found_var;
@@ -402,7 +402,7 @@ TEST(BindingVariableCacheTest, duplicateEntries) {
     // Adding a duplicate should fail.
     ASSERT_NO_THROW_LOG(add_flag = cache->add(var2));
     EXPECT_FALSE(add_flag);
-    EXPECT_EQ(cache->size(), 1);
+    EXPECT_EQ(cache->size(), 1U);
 
     // Make sure getByName returns the original variable.
     ASSERT_NO_THROW_LOG(found_var = cache->getByName("one"));
@@ -517,7 +517,7 @@ TEST(BindingVariableMgrTest, clearOnConfigure) {
     ASSERT_NO_THROW_LOG(mgr->configure(config));
     auto cache = mgr->getCache();
     ASSERT_TRUE(cache);
-    ASSERT_EQ(cache->size(), 2);
+    ASSERT_EQ(cache->size(), 2U);
     ASSERT_TRUE(cache->getByName("one"));
     ASSERT_TRUE(cache->getByName("two"));
 
@@ -525,7 +525,7 @@ TEST(BindingVariableMgrTest, clearOnConfigure) {
     ASSERT_NO_THROW_LOG(mgr->configure(config));
     cache = mgr->getCache();
     ASSERT_TRUE(cache);
-    ASSERT_EQ(cache->size(), 2);
+    ASSERT_EQ(cache->size(), 2U);
     ASSERT_FALSE(cache->getByName("one"));
     ASSERT_FALSE(cache->getByName("two"));
     ASSERT_TRUE(cache->getByName("three"));
@@ -571,7 +571,7 @@ TEST(BindingVariableMgrTest, invalidConfigure) {
                          scenario.expected_error_);
         auto cache = mgr->getCache();
         ASSERT_TRUE(cache);
-        EXPECT_EQ(cache->size(), 0);
+        EXPECT_EQ(cache->size(), 0U);
     }
 }
 

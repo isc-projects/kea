@@ -31,21 +31,21 @@ TEST_F(GssApiTest, buffer) {
     EXPECT_NO_THROW(buf.reset(new GssApiBuffer()));
     ASSERT_TRUE(buf);
     ASSERT_TRUE(buf->getPtr());
-    EXPECT_EQ(0, buf->getLength());
+    EXPECT_EQ(0U, buf->getLength());
     EXPECT_FALSE(buf->getValue());
     EXPECT_TRUE(buf->empty());
     const vector<uint8_t>& empty = buf->getContent();
-    EXPECT_EQ(0, empty.size());
+    EXPECT_EQ(0U, empty.size());
 
     const vector<uint8_t>& test = { 1, 2, 3, 0 };
     EXPECT_NO_THROW(buf.reset(new GssApiBuffer(test)));
     ASSERT_TRUE(buf);
     ASSERT_TRUE(buf->getPtr());
-    EXPECT_EQ(4, buf->getLength());
+    EXPECT_EQ(4U, buf->getLength());
     EXPECT_TRUE(buf->getValue());
     EXPECT_FALSE(buf->empty());
     const vector<uint8_t>& content = buf->getContent();
-    ASSERT_EQ(4, content.size());
+    ASSERT_EQ(4U, content.size());
     EXPECT_EQ(0, memcmp(&test[0], &content[0], 4));
 
     const string& strpp = buf->getString();
@@ -53,12 +53,12 @@ TEST_F(GssApiTest, buffer) {
     // Enforce the embedded nul.
     expected.resize(4);
     EXPECT_EQ(expected, strpp);
-    EXPECT_EQ(4, strpp.size());
-    EXPECT_EQ(3, strlen(strpp.c_str()));
+    EXPECT_EQ(4U, strpp.size());
+    EXPECT_EQ(3U, strlen(strpp.c_str()));
     EXPECT_NO_THROW(buf.reset(new GssApiBuffer(strpp)));
     ASSERT_TRUE(buf);
     ASSERT_TRUE(buf->getPtr());
-    EXPECT_EQ(4, buf->getLength());
+    EXPECT_EQ(4U, buf->getLength());
     EXPECT_TRUE(buf->getValue());
     EXPECT_FALSE(buf->empty());
     EXPECT_EQ(0, memcmp(&test[0], buf->getValue(), 4));
@@ -67,12 +67,12 @@ TEST_F(GssApiTest, buffer) {
     // Trim the embedded nul.
     expected.resize(3);
     EXPECT_EQ(expected, str);
-    EXPECT_EQ(3, str.size());
-    EXPECT_EQ(3, strlen(str.c_str()));
+    EXPECT_EQ(3U, str.size());
+    EXPECT_EQ(3U, strlen(str.c_str()));
     EXPECT_NO_THROW(buf.reset(new GssApiBuffer(str)));
     ASSERT_TRUE(buf);
     ASSERT_TRUE(buf->getPtr());
-    EXPECT_EQ(3, buf->getLength());
+    EXPECT_EQ(3U, buf->getLength());
     EXPECT_TRUE(buf->getValue());
     EXPECT_FALSE(buf->empty());
     EXPECT_EQ(0, memcmp(&test[0], buf->getValue(), 4));
@@ -80,7 +80,7 @@ TEST_F(GssApiTest, buffer) {
     EXPECT_NO_THROW(buf.reset(new GssApiBuffer(4, &test[0])));
     ASSERT_TRUE(buf);
     ASSERT_TRUE(buf->getPtr());
-    EXPECT_EQ(4, buf->getLength());
+    EXPECT_EQ(4U, buf->getLength());
     EXPECT_TRUE(buf->getValue());
     EXPECT_FALSE(buf->empty());
     EXPECT_EQ(0, memcmp(&test[0], buf->getValue(), 4));
@@ -123,7 +123,7 @@ TEST_F(GssApiTest, name) {
     OM_uint32 expected_major = 0x20000;
 #endif
     EXPECT_THROW_MSG(name->toString(), GssApiError, expected);
-    EXPECT_EQ(expected_major, name->getLastError());
+    EXPECT_EQ(static_cast<int>(expected_major), name->getLastError());
 
     string principal = "DNS/server.example.org@EXAMPLE.NET";
     EXPECT_NO_THROW(name.reset(new GssApiName(principal)));
@@ -198,7 +198,7 @@ TEST_F(GssApiTest, credDefault) {
     EXPECT_NO_THROW(cred->inquire(name, usage, lifetime));
     EXPECT_TRUE(name.get());
     // lifetime == 0 means expired.
-    EXPECT_NE(0, lifetime);
+    EXPECT_NE(0U, lifetime);
     const uint64_t now = static_cast<uint64_t>(time(0));
     // krbtgt/EXAMPLE.NIL@EXAMPLE.NIL cached credential expires at
     // Apr 6 19:04:36 2036.
@@ -221,7 +221,7 @@ TEST_F(GssApiTest, credExplicit) {
     OM_uint32 lifetime = 0;
     EXPECT_NO_THROW(cred.reset(new GssApiCred(name, GSS_C_ACCEPT,
                                               lifetime)));
-    EXPECT_NE(0, lifetime);
+    EXPECT_NE(0U, lifetime);
     ASSERT_TRUE(cred);
     EXPECT_TRUE(cred->get());
     EXPECT_EQ(0, cred->getLastError());
@@ -233,7 +233,7 @@ TEST_F(GssApiTest, credExplicit) {
     EXPECT_TRUE(namep->compare(name));
     EXPECT_EQ(GSS_C_ACCEPT, usage);
     // lifetime == 0 means expired.
-    EXPECT_NE(0, lifetime);
+    EXPECT_NE(0U, lifetime);
     const uint64_t now = static_cast<uint64_t>(time(0));
     // DNS/blu.example.nil@EXAMPLE.NIL cached credential expires at
     // Apr 6 19:04:36 2036.
@@ -327,12 +327,12 @@ TEST_F(GssApiTest, exchange) {
             }
         }
     }
-    EXPECT_EQ(2, loop);
+    EXPECT_EQ(2U, loop);
     ASSERT_TRUE(clnt_ret);
     ASSERT_TRUE(clnt_ctx.get());
     EXPECT_EQ(0, clnt_ctx.getLastError());
     // lifetime == 0 means expired.
-    EXPECT_NE(0, clnt_lifetime);
+    EXPECT_NE(0U, clnt_lifetime);
     uint64_t now = static_cast<uint64_t>(time(0));
     // Cached credentials expire at Apr 6 19:04:36 2036.
     const uint64_t expire = timeFromText64("20260406190436");
@@ -360,7 +360,7 @@ TEST_F(GssApiTest, exchange) {
     EXPECT_NO_THROW(tgt_txt = target.toString());
     EXPECT_EQ("DNS/blu.example.nil@EXAMPLE.NIL", tgt_txt);
     // lifetime == 0 means expired.
-    EXPECT_NE(0, clnt_lifetime);
+    EXPECT_NE(0U, clnt_lifetime);
     now = static_cast<uint64_t>(time(0));
     EXPECT_LE(expire, now + clnt_lifetime);
     EXPECT_EQ(flags, (got_flags & flags));
@@ -384,7 +384,7 @@ TEST_F(GssApiTest, exchange) {
     EXPECT_NO_THROW(tgt_txt = target2.toString());
     EXPECT_EQ("DNS/blu.example.nil@EXAMPLE.NIL", tgt_txt);
     // lifetime == 0 means expired.
-    EXPECT_NE(0, srv_lifetime);
+    EXPECT_NE(0U, srv_lifetime);
     now = static_cast<uint64_t>(time(0));
     EXPECT_LE(expire, now + srv_lifetime);
     // Server side shall expire after the client (experiments showed 300s).

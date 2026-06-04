@@ -445,11 +445,11 @@ TEST_F(StatusTest, noAuthResponse) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     ASSERT_LE(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 }
 
 /// Verify what happens when no response is sent.
@@ -497,11 +497,11 @@ TEST_F(StatusTest, noAcctResponse) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     ASSERT_LE(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 }
 
 /// Verify what happens with Access-Accept response.
@@ -541,7 +541,7 @@ TEST_F(StatusTest, accept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -625,7 +625,7 @@ TEST_F(StatusTest, unsecureAccept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -712,7 +712,7 @@ TEST_F(StatusTest, reject) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -796,7 +796,7 @@ TEST_F(StatusTest, unsecureReject) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -883,7 +883,7 @@ TEST_F(StatusTest, response) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -967,7 +967,7 @@ TEST_F(StatusTest, unsecureResponse) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1056,7 +1056,7 @@ TEST_F(StatusTest, errorResponse) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN + 2 + 4;               // header + Error-Cause attribute.
@@ -1147,7 +1147,7 @@ TEST_F(StatusTest, badAccept) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -1232,7 +1232,7 @@ TEST_F(StatusTest, badResponse) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1317,7 +1317,7 @@ TEST_F(StatusTest, shortAuth) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -1356,7 +1356,7 @@ TEST_F(StatusTest, shortAuth) {
     EXPECT_TRUE(finished_);
     EXPECT_TRUE(sent_);
     EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
+    EXPECT_EQ(10U, sent_size);
 
     // Done.
     stop();
@@ -1403,7 +1403,7 @@ TEST_F(StatusTest, shortAcct) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1442,7 +1442,7 @@ TEST_F(StatusTest, shortAcct) {
     EXPECT_TRUE(finished_);
     EXPECT_TRUE(sent_);
     EXPECT_FALSE(timeout_);
-    EXPECT_EQ(10, sent_size);
+    EXPECT_EQ(10U, sent_size);
 
     // Done.
     stop();
@@ -1489,7 +1489,7 @@ TEST_F(StatusTest, accept2) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                  // header.
@@ -1573,7 +1573,7 @@ TEST_F(StatusTest, response2) {
 
     // Sanity checks on the request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
 
     // Build the response.
     size = AUTH_HDR_LEN;                       // header (no attributes).
@@ -1654,14 +1654,14 @@ TEST_F(StatusTest, accessIdleTimerCallback) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    EXPECT_EQ(44U, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
@@ -1706,14 +1706,14 @@ TEST_F(StatusTest, accountingIdleTimerCallback) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    EXPECT_EQ(44U, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
@@ -1760,14 +1760,14 @@ TEST_F(StatusTest, accessIdleTimer) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    EXPECT_EQ(44U, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {
@@ -1814,14 +1814,14 @@ TEST_F(StatusTest, accountingIdleTimer) {
 
     // Check received request.
     receive_buffer_.resize(size);
-    ASSERT_LE(20, size);
+    ASSERT_LE(20U, size);
     EXPECT_EQ(PW_STATUS_SERVER, receive_buffer_[0]);
     uint16_t length = (receive_buffer_[2] << 8) | receive_buffer_[3];
     EXPECT_EQ(length, size);
-    EXPECT_GE(4096, length);
+    EXPECT_GE(4096U, length);
 
     // Check attributes.
-    EXPECT_EQ(44, size);
+    EXPECT_EQ(44U, size);
     EXPECT_EQ(PW_MESSAGE_AUTHENTICATOR, receive_buffer_[AUTH_HDR_LEN]);
     EXPECT_EQ(AUTH_VECTOR_LEN + 2, receive_buffer_[AUTH_HDR_LEN + 1]);
     uint8_t expected[] = {

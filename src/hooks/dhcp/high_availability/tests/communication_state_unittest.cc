@@ -309,17 +309,17 @@ CommunicationStateTest::partnerScopesTest() {
 
     // Get them back.
     auto returned = state_.getPartnerScopes();
-    EXPECT_EQ(2, returned.size());
-    EXPECT_EQ(1, returned.count("server1"));
-    EXPECT_EQ(1, returned.count("server2"));
+    EXPECT_EQ(2U, returned.size());
+    EXPECT_EQ(1U, returned.count("server1"));
+    EXPECT_EQ(1U, returned.count("server2"));
 
     // Override the scopes.
     ASSERT_NO_THROW(
         state_.setPartnerScopes(Element::fromJSON("[ \"server1\" ]"))
     );
     returned = state_.getPartnerScopes();
-    EXPECT_EQ(1, returned.size());
-    EXPECT_EQ(1, returned.count("server1"));
+    EXPECT_EQ(1U, returned.size());
+    EXPECT_EQ(1U, returned.count("server1"));
 
     // Clear the scopes.
     ASSERT_NO_THROW(
@@ -386,9 +386,9 @@ void
 CommunicationStateTest::detectFailureV4Test() {
     // Initially, there should be no unacked clients recorded.
     ASSERT_FALSE(state_.failureDetected());
-    EXPECT_EQ(0, state_.getUnackedClientsCount());
-    EXPECT_EQ(0, state_.getConnectingClientsCount());
-    EXPECT_EQ(0, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(0U, state_.getUnackedClientsCount());
+    EXPECT_EQ(0U, state_.getConnectingClientsCount());
+    EXPECT_EQ(0U, state_.getAnalyzedMessagesCount());
 
     // The maximum number of unacked clients is 10. Let's provide 10
     // DHCPDISCOVER messages with the "secs" value of 15 which exceeds
@@ -407,9 +407,9 @@ CommunicationStateTest::detectFailureV4Test() {
             << "failure detected for the request number "
             << static_cast<int>(i);
     }
-    EXPECT_EQ(10, state_.getUnackedClientsCount());
-    EXPECT_EQ(10, state_.getConnectingClientsCount());
-    EXPECT_EQ(10, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state_.getUnackedClientsCount());
+    EXPECT_EQ(10U, state_.getConnectingClientsCount());
+    EXPECT_EQ(10U, state_.getAnalyzedMessagesCount());
 
     // Let's provide similar set of requests but this time the "secs" field is
     // below the threshold. They should not be counted as failures. Also,
@@ -421,9 +421,9 @@ CommunicationStateTest::detectFailureV4Test() {
             << "failure detected for the request number "
             << static_cast<int>(i);
     }
-    EXPECT_EQ(10, state_.getUnackedClientsCount());
-    EXPECT_EQ(15, state_.getConnectingClientsCount());
-    EXPECT_EQ(20, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state_.getUnackedClientsCount());
+    EXPECT_EQ(15U, state_.getConnectingClientsCount());
+    EXPECT_EQ(20U, state_.getAnalyzedMessagesCount());
 
     // Let's create a message from a new (not recorded yet) client with the
     // "secs" field value below the threshold. It should not be counted as failure.
@@ -431,26 +431,26 @@ CommunicationStateTest::detectFailureV4Test() {
 
     // Still no failure.
     ASSERT_FALSE(state_.failureDetected());
-    EXPECT_EQ(10, state_.getUnackedClientsCount());
-    EXPECT_EQ(16, state_.getConnectingClientsCount());
-    EXPECT_EQ(21, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state_.getUnackedClientsCount());
+    EXPECT_EQ(16U, state_.getConnectingClientsCount());
+    EXPECT_EQ(21U, state_.getAnalyzedMessagesCount());
 
     // Let's repeat one of the requests which already have been recorded as
     // unacked but with a greater value of "secs" field. This should not
     // be counted because only new clients count.
     ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 3, 3, 20)));
     ASSERT_FALSE(state_.failureDetected());
-    EXPECT_EQ(10, state_.getUnackedClientsCount());
-    EXPECT_EQ(16, state_.getConnectingClientsCount());
-    EXPECT_EQ(22, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state_.getUnackedClientsCount());
+    EXPECT_EQ(16U, state_.getConnectingClientsCount());
+    EXPECT_EQ(22U, state_.getAnalyzedMessagesCount());
 
     // This time let's simulate a client with a MAC address already recorded but
     // with a client identifier. This should be counted as a new unacked request.
     ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 7, 7, 15)));
     ASSERT_TRUE(state_.failureDetected());
-    EXPECT_EQ(11, state_.getUnackedClientsCount());
-    EXPECT_EQ(16, state_.getConnectingClientsCount());
-    EXPECT_EQ(23, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(11U, state_.getUnackedClientsCount());
+    EXPECT_EQ(16U, state_.getConnectingClientsCount());
+    EXPECT_EQ(23U, state_.getAnalyzedMessagesCount());
 
     // Poking should cause all counters to reset as it is an indication that the
     // control connection has been re-established.
@@ -458,9 +458,9 @@ CommunicationStateTest::detectFailureV4Test() {
 
     // We're back to no failure state.
     EXPECT_FALSE(state_.failureDetected());
-    EXPECT_EQ(0, state_.getUnackedClientsCount());
-    EXPECT_EQ(0, state_.getConnectingClientsCount());
-    EXPECT_EQ(0, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(0U, state_.getUnackedClientsCount());
+    EXPECT_EQ(0U, state_.getConnectingClientsCount());
+    EXPECT_EQ(0U, state_.getAnalyzedMessagesCount());
 
     // Send 11 DHCPDISCOVER messages with the "secs" field bytes swapped. Swapping
     // bytes was reported for some misbehaving Windows clients. The server should
@@ -475,9 +475,9 @@ CommunicationStateTest::detectFailureV4Test() {
             << static_cast<int>(i)
             << " when testing swapped secs field bytes";
     }
-    EXPECT_EQ(0, state_.getUnackedClientsCount());
-    EXPECT_EQ(11, state_.getConnectingClientsCount());
-    EXPECT_EQ(11, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(0U, state_.getUnackedClientsCount());
+    EXPECT_EQ(11U, state_.getConnectingClientsCount());
+    EXPECT_EQ(11U, state_.getAnalyzedMessagesCount());
 
     // Repeat the same test, but this time either the first byte exceeds the
     // secs threshold or the second byte is non-zero. All should be counted
@@ -496,9 +496,9 @@ CommunicationStateTest::detectFailureV4Test() {
     ASSERT_NO_THROW(state_.analyzeMessage(createMessage4(DHCPDISCOVER, 11, 11,
                                                          0x30)));
     EXPECT_TRUE(state_.failureDetected());
-    EXPECT_EQ(11, state_.getUnackedClientsCount());
-    EXPECT_EQ(12, state_.getConnectingClientsCount());
-    EXPECT_EQ(22, state_.getAnalyzedMessagesCount());
+    EXPECT_EQ(11U, state_.getUnackedClientsCount());
+    EXPECT_EQ(12U, state_.getConnectingClientsCount());
+    EXPECT_EQ(22U, state_.getAnalyzedMessagesCount());
 }
 
 // This test verifies that it is possible to disable analysis of the DHCPv4
@@ -515,9 +515,9 @@ void
 CommunicationStateTest::detectFailureV6Test() {
     // Initially, there should be no unacked clients recorded.
     ASSERT_FALSE(state6_.failureDetected());
-    EXPECT_EQ(0, state6_.getUnackedClientsCount());
-    EXPECT_EQ(0, state6_.getConnectingClientsCount());
-    EXPECT_EQ(0, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(0U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(0U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(0U, state6_.getAnalyzedMessagesCount());
 
     // The maximum number of unacked clients is 10. Let's provide 10
     // Solicit messages with the "elapsed time" value of 1500 which exceeds
@@ -533,9 +533,9 @@ CommunicationStateTest::detectFailureV6Test() {
             << "failure detected for the request number "
             << static_cast<int>(i);
     }
-    EXPECT_EQ(10, state6_.getUnackedClientsCount());
-    EXPECT_EQ(10, state6_.getConnectingClientsCount());
-    EXPECT_EQ(10, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(10U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(10U, state6_.getAnalyzedMessagesCount());
 
     // Let's provide similar set of requests but this time the "elapsed time" is
     // below the threshold. This should not reduce the number of unacked or new
@@ -547,9 +547,9 @@ CommunicationStateTest::detectFailureV6Test() {
             << "failure detected for the request number "
             << static_cast<int>(i);
     }
-    EXPECT_EQ(10, state6_.getUnackedClientsCount());
-    EXPECT_EQ(10, state6_.getConnectingClientsCount());
-    EXPECT_EQ(20, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(10U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(20U, state6_.getAnalyzedMessagesCount());
 
     // Let's create a message from a new (not recorded yet) client with the
     // "elapsed time" value below the threshold. It should not count as failure.
@@ -557,25 +557,25 @@ CommunicationStateTest::detectFailureV6Test() {
 
     // Still no failure.
     ASSERT_FALSE(state6_.failureDetected());
-    EXPECT_EQ(10, state6_.getUnackedClientsCount());
-    EXPECT_EQ(11, state6_.getConnectingClientsCount());
-    EXPECT_EQ(21, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(11U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(21U, state6_.getAnalyzedMessagesCount());
 
     // Let's repeat one of the requests which already have been recorded as
     // unacked but with a greater value of "elapsed time". This should not
     // be counted because only new clients count.
     ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, 3, 2000)));
     ASSERT_FALSE(state6_.failureDetected());
-    EXPECT_EQ(10, state6_.getUnackedClientsCount());
-    EXPECT_EQ(11, state6_.getConnectingClientsCount());
-    EXPECT_EQ(22, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(10U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(11U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(22U, state6_.getAnalyzedMessagesCount());
 
     // New unacked client should cause failure to be detected.
     ASSERT_NO_THROW(state6_.analyzeMessage(createMessage6(DHCPV6_SOLICIT, 11, 1500)));
     ASSERT_TRUE(state6_.failureDetected());
-    EXPECT_EQ(11, state6_.getUnackedClientsCount());
-    EXPECT_EQ(12, state6_.getConnectingClientsCount());
-    EXPECT_EQ(23, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(11U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(12U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(23U, state6_.getAnalyzedMessagesCount());
 
     // Poking should cause all counters to reset as it is an indication that the
     // control connection has been re-established.
@@ -583,9 +583,9 @@ CommunicationStateTest::detectFailureV6Test() {
 
     // We're back to no failure state.
     EXPECT_FALSE(state6_.failureDetected());
-    EXPECT_EQ(0, state6_.getUnackedClientsCount());
-    EXPECT_EQ(0, state6_.getConnectingClientsCount());
-    EXPECT_EQ(0, state6_.getAnalyzedMessagesCount());
+    EXPECT_EQ(0U, state6_.getUnackedClientsCount());
+    EXPECT_EQ(0U, state6_.getConnectingClientsCount());
+    EXPECT_EQ(0U, state6_.getAnalyzedMessagesCount());
 }
 
 // This test verifies that it is possible to disable analysis of the DHCPv6
@@ -858,21 +858,21 @@ CommunicationStateTest::getReportWithClockSkewTest() {
 void
 CommunicationStateTest::getUnsentUpdateCountTest() {
     // Initially the count should be 0.
-    EXPECT_EQ(0, state_.getUnsentUpdateCount());
+    EXPECT_EQ(0U, state_.getUnsentUpdateCount());
 
     // Increasing the value by 1 several times.
     EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
-    EXPECT_EQ(1, state_.getUnsentUpdateCount());
+    EXPECT_EQ(1U, state_.getUnsentUpdateCount());
     EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
-    EXPECT_EQ(2, state_.getUnsentUpdateCount());
+    EXPECT_EQ(2U, state_.getUnsentUpdateCount());
     EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
-    EXPECT_EQ(3, state_.getUnsentUpdateCount());
+    EXPECT_EQ(3U, state_.getUnsentUpdateCount());
 
     // Test that the method under test protects against an overflow
     // resetting the value to 0.
     state_.unsent_update_count_ = std::numeric_limits<uint64_t>::max();
     EXPECT_NO_THROW(state_.increaseUnsentUpdateCount());
-    EXPECT_EQ(1, state_.getUnsentUpdateCount());
+    EXPECT_EQ(1U, state_.getUnsentUpdateCount());
 }
 
 void
@@ -900,62 +900,62 @@ CommunicationStateTest::hasPartnerNewUnsentUpdatesTest() {
 void
 CommunicationStateTest::reportRejectedLeasesV4Test() {
     // Initially, there should be no rejected leases.
-    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state_.getRejectedLeaseUpdatesCount());
 
     // Reject lease update.
     auto msg = createMessage4(DHCPREQUEST, 1, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state_.getRejectedLeaseUpdatesCount());
 
     // Reject another lease update.
     msg = createMessage4(DHCPREQUEST, 2, 0, 0);
     state_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state_.getRejectedLeaseUpdatesCount());
 
     // Reject a lease with a short (zero) lease lifetime.
     // This lease should be discarded when we call the
     // getRejectedLeaseUpdatesCount().
     msg = createMessage4(DHCPREQUEST, 3, 0, 0);
     state_.reportRejectedLeaseUpdate(msg, 0);
-    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state_.getRejectedLeaseUpdatesCount());
 
     // Reject lease update for a client using the same MAC
     // address but different client identifier. It should
     // be treated as a different lease.
     msg = createMessage4(DHCPREQUEST, 2, 1, 0);
     state_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(3, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(3U, state_.getRejectedLeaseUpdatesCount());
 
     // Clear rejected leases and make sure the counter
     // is now 0.
     state_.clearRejectedLeaseUpdates();
-    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state_.getRejectedLeaseUpdatesCount());
 }
 
 void
 CommunicationStateTest::reportSuccessfulLeasesV4Test() {
     // Initially, there should be no rejected leases.
-    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state_.getRejectedLeaseUpdatesCount());
     auto msg0 = createMessage4(DHCPREQUEST, 1, 0, 0);
     // Reject lease update.
     state_.reportRejectedLeaseUpdate(msg0);
-    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state_.getRejectedLeaseUpdatesCount());
     // Reject another lease update.
     auto msg1 = createMessage4(DHCPREQUEST, 2, 0, 0);
     state_.reportRejectedLeaseUpdate(msg1);
-    EXPECT_EQ(2, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state_.getRejectedLeaseUpdatesCount());
     // Report successful lease for the first message.
     // It should reduce the number of rejected lease
     // updates.
     EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg0));
-    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state_.getRejectedLeaseUpdatesCount());
     // Report successful lease update for another message.
     auto msg2 = createMessage4(DHCPREQUEST, 1, 1, 0);
     EXPECT_FALSE(state_.reportSuccessfulLeaseUpdate(msg2));
-    EXPECT_EQ(1, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state_.getRejectedLeaseUpdatesCount());
     // There should be no rejected lease updates.
     EXPECT_TRUE(state_.reportSuccessfulLeaseUpdate(msg1));
-    EXPECT_EQ(0, state_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state_.getRejectedLeaseUpdatesCount());
 }
 
 void
@@ -973,62 +973,62 @@ CommunicationStateTest::reportRejectedLeasesV4InvalidValuesTest() {
 void
 CommunicationStateTest::reportRejectedLeasesV6Test() {
     // Initially, there should be no rejected leases.
-    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state6_.getRejectedLeaseUpdatesCount());
 
     // Reject lease update.
     auto msg = createMessage6(DHCPV6_REQUEST, 1, 0);
     state6_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state6_.getRejectedLeaseUpdatesCount());
 
     // Reject another lease update.
     msg = createMessage6(DHCPV6_REQUEST, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state6_.getRejectedLeaseUpdatesCount());
 
     // Reject a lease with a short (zero) lease lifetime.
     // This lease should be discarded when we call the
     // getRejectedLeaseUpdatesCount().
     msg = createMessage6(DHCPV6_REQUEST, 3, 0);
     state6_.reportRejectedLeaseUpdate(msg, 0);
-    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state6_.getRejectedLeaseUpdatesCount());
 
     // Reject it again. It should not affect the counter.
     msg = createMessage6(DHCPV6_REQUEST, 2, 0);
     state6_.reportRejectedLeaseUpdate(msg);
-    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state6_.getRejectedLeaseUpdatesCount());
 
     // Clear rejected lease updates and make sure they
     // are now 0.
     state6_.clearRejectedLeaseUpdates();
-    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state6_.getRejectedLeaseUpdatesCount());
 }
 
 void
 CommunicationStateTest::reportSuccessfulLeasesV6Test() {
     // Initially, there should be no rejected leases.
-    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state6_.getRejectedLeaseUpdatesCount());
     // Reject lease update.
     auto msg0 = createMessage6(DHCPV6_SOLICIT, 1, 0);
     EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg0));
-    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state6_.getRejectedLeaseUpdatesCount());
     // Reject another lease update.
     auto msg1 = createMessage6(DHCPV6_SOLICIT, 2, 0);
     EXPECT_TRUE(state6_.reportRejectedLeaseUpdate(msg1));
-    EXPECT_EQ(2, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(2U, state6_.getRejectedLeaseUpdatesCount());
     // Report successful lease for the first message.
     // It should reduce the number of rejected lease
     // updates.
     EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg0));
-    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state6_.getRejectedLeaseUpdatesCount());
     // Report successful lease update for a lease that wasn't
     // rejected. It should not affect the counter.
     auto msg2 = createMessage6(DHCPV6_SOLICIT, 3, 0);
     EXPECT_FALSE(state6_.reportSuccessfulLeaseUpdate(msg2));
-    EXPECT_EQ(1, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(1U, state6_.getRejectedLeaseUpdatesCount());
     // Report successful lease update for the last lease.
     // The counter should now be 0.
     EXPECT_TRUE(state6_.reportSuccessfulLeaseUpdate(msg1));
-    EXPECT_EQ(0, state6_.getRejectedLeaseUpdatesCount());
+    EXPECT_EQ(0U, state6_.getRejectedLeaseUpdatesCount());
 }
 
 void
@@ -1082,8 +1082,8 @@ CommunicationStateTest::getRejectedLeaseUpdatesCountFromContainerTest() {
     // Get the count of valid entries. It should remove the expiring
     // entries.
     auto valid_entries_count = state_.getRejectedLeaseUpdatesCountFromContainer(entries);
-    EXPECT_EQ(500, valid_entries_count);
-    EXPECT_EQ(500, entries.size());
+    EXPECT_EQ(500U, valid_entries_count);
+    EXPECT_EQ(500U, entries.size());
 
     // Validate that we removed expired entries, not the valid ones.
     for (auto const& entry : entries) {

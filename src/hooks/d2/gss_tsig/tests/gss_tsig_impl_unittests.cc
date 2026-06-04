@@ -1059,7 +1059,7 @@ TEST_F(GssTsigImplTest, purgeHandler) {
         EXPECT_FALSE(impl_->findKey(name2));
         ASSERT_TRUE(impl_->findKey(name3));
         EXPECT_EQ(key3, impl_->findKey(name3));
-        EXPECT_EQ(2, impl_->keys_.size());
+        EXPECT_EQ(2U, impl_->keys_.size());
     }
 }
 
@@ -1134,7 +1134,7 @@ TEST_F(GssTsigImplTest, purgeAllHandler) {
         EXPECT_EQ(key1, impl_->findKey(name1));
         EXPECT_FALSE(impl_->findKey(name2));
         EXPECT_FALSE(impl_->findKey(name3));
-        EXPECT_EQ(1, impl_->keys_.size());
+        EXPECT_EQ(1U, impl_->keys_.size());
     }
 }
 
@@ -1242,7 +1242,7 @@ TEST_F(GssTsigImplTest, rekeyHandler) {
         expected_status = CONTROL_RESULT_SUCCESS;
         expected_txt = "GSS-TSIG server[" + id + "] rekeyed";
         checkAnswer(response, expected_status, expected_txt, expected);
-        EXPECT_EQ(impl_->keys_.size(), 1);
+        EXPECT_EQ(impl_->keys_.size(), 1U);
         impl_->keys_.clear();
     }
 }
@@ -1265,7 +1265,7 @@ TEST_F(GssTsigImplTest, rekeyAllHandler) {
         ASSERT_TRUE(response);
         checkAnswer(response, expected_status, expected_txt, expected);
         io_service_->poll();
-        EXPECT_EQ(impl_->keys_.size(), 0);
+        EXPECT_EQ(impl_->keys_.size(), 0U);
         impl_->keys_.clear();
     }
 
@@ -1286,7 +1286,7 @@ TEST_F(GssTsigImplTest, rekeyAllHandler) {
         ASSERT_TRUE(response);
         checkAnswer(response, expected_status, expected_txt, expected);
         io_service_->poll();
-        EXPECT_EQ(impl_->keys_.size(), 1);
+        EXPECT_EQ(impl_->keys_.size(), 1U);
         for (auto const& key : impl_->keys_) {
             key->getTKeyExchange().reset();
         }
@@ -1319,7 +1319,7 @@ TEST_F(GssTsigImplTest, rekeyAllHandler) {
         ASSERT_TRUE(response);
         checkAnswer(response, expected_status, expected_txt, expected);
         io_service_->poll();
-        EXPECT_EQ(impl_->keys_.size(), 3);
+        EXPECT_EQ(impl_->keys_.size(), 3U);
         for (auto const& temp_key : impl_->keys_) {
             temp_key->getTKeyExchange().reset();
         }
@@ -1550,9 +1550,9 @@ TEST_F(GssTsigImplTest, purgeKeys) {
     ASSERT_TRUE(impl_->findKey(name5));
     EXPECT_EQ(key5, impl_->findKey(name5));
 
-    EXPECT_EQ(5, impl_->keys_.size());
+    EXPECT_EQ(5U, impl_->keys_.size());
     ASSERT_NO_THROW(impl_->purgeKeys());
-    EXPECT_EQ(2, impl_->keys_.size());
+    EXPECT_EQ(2U, impl_->keys_.size());
     EXPECT_EQ(key1, impl_->findKey(name1));
     EXPECT_EQ(key5, impl_->findKey(name5));
 }

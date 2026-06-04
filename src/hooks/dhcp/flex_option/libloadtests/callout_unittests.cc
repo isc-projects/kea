@@ -128,7 +128,7 @@ TEST_F(CalloutTest, pkt4Send) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(DHO_HOST_NAME, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
@@ -174,7 +174,7 @@ TEST_F(CalloutTest, pkt6Send) {
     ASSERT_TRUE(opt);
     EXPECT_EQ(D6O_BOOTFILE_URL, opt->getType());
     const OptionBuffer& buffer = opt->getData();
-    ASSERT_EQ(3, buffer.size());
+    ASSERT_EQ(3U, buffer.size());
     EXPECT_EQ(0, memcmp(&buffer[0], "abc", 3));
 }
 
